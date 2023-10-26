@@ -1,4 +1,4 @@
-```release-note:enhancement
-`resource/pingone_application`: Implemented new data source enabling search by `application_id` or application `name`.
+```release-note:new-data-source
+pingone_application
 ```
 

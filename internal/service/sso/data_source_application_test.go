@@ -27,7 +27,6 @@ func TestAccApplicationDataSource_OIDCAppByID(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -84,8 +83,6 @@ func TestAccApplicationDataSource_OIDCAppByID(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.support_unsigned_request_object", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.require_signed_request_object", "false"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(dataSourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(dataSourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "hidden_from_app_portal", "true"),
@@ -109,7 +106,6 @@ func TestAccApplicationDataSource_OIDCAppByName(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -140,11 +136,9 @@ func TestAccApplicationDataSource_OIDCAppByName(t *testing.T) {
 					}),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.#", "1"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.type", "NATIVE_APP"),
-
 					resource.TestCheckNoResourceAttr(dataSourceFullName, "oidc_options.0.home_page_url"),
 					resource.TestCheckNoResourceAttr(dataSourceFullName, "oidc_options.0.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(dataSourceFullName, "oidc_options.0.target_link_uri"),
-
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.grant_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "oidc_options.0.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.response_types.#", "0"),
@@ -178,11 +172,7 @@ func TestAccApplicationDataSource_OIDCAppByName(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_type", "INTERNAL"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_key", "DUMMY_SUPPRESS_VALUE"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.decryption_key", "DUMMY_SUPPRESS_VALUE"),
-
 					resource.TestCheckNoResourceAttr(dataSourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.service_account_credentials_json"),
-
-					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
-					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "hidden_from_app_portal", "true"),
@@ -206,7 +196,6 @@ func TestAccApplicationDataSource_ExternalLinkAppByID(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -255,7 +244,6 @@ func TestAccApplicationDataSource_ExternalLinkAppByName(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -268,9 +256,7 @@ func TestAccApplicationDataSource_ExternalLinkAppByName(t *testing.T) {
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", name),
-
 					resource.TestCheckNoResourceAttr(dataSourceFullName, "description"),
-
 					resource.TestCheckResourceAttr(dataSourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "icon.#", "0"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.#", "0"),
@@ -298,7 +284,6 @@ func TestAccApplicationDataSource_SAMLAppByID(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -337,11 +322,8 @@ func TestAccApplicationDataSource_SAMLAppByID(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "saml_options.0.acs_urls.*", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.assertion_duration", "3600"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.assertion_signed_enabled", "false"),
-					resource.TestMatchResourceAttr(dataSourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.idp_signing_key.#", "1"),
-
 					resource.TestCheckNoResourceAttr(dataSourceFullName, "saml_options.0.idp_signing_key.0.algorithm"),
-
 					resource.TestMatchResourceAttr(dataSourceFullName, "saml_options.0.idp_signing_key.0.key_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.enable_requested_authn_context", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.nameid_format", "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"),
@@ -371,7 +353,6 @@ func TestAccApplicationDataSource_SAMLAppByName(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -426,7 +407,6 @@ func TestAccApplicationDataSource_FailureChecks(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -444,8 +424,6 @@ func TestAccApplicationDataSource_FailureChecks(t *testing.T) {
 		},
 	})
 }
-
-// TestAccApplicationDataSource_SAMLAppByName
 
 func testAccApplicationDataSource_OIDCAppByID(resourceName, name, image string) string {
 	return fmt.Sprintf(`

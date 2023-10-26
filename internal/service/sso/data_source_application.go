@@ -45,7 +45,7 @@ type applicationDataSourceModel struct {
 }
 
 var (
-	oidcOptionsTFObjectTypes = map[string]attr.Type{
+	applicationOidcOptionsTFObjectTypes = map[string]attr.Type{
 		"type":                                        types.StringType,
 		"home_page_url":                               types.StringType,
 		"initiate_login_uri":                          types.StringType,
@@ -68,12 +68,10 @@ var (
 		"certificate_based_authentication": types.ListType{ElemType: types.ObjectType{AttrTypes: certificateAuthenticationTFObjectTypes}},
 		"support_unsigned_request_object":  types.BoolType,
 		"require_signed_request_object":    types.BoolType,
-		"mobile_app":                       types.ListType{ElemType: types.ObjectType{AttrTypes: mobileAppTFObjectTypes}},
-		"bundle_id":                        types.StringType,
-		"package_name":                     types.StringType,
+		"mobile_app":                       types.ListType{ElemType: types.ObjectType{AttrTypes: applicationOidcMobileAppTFObjectTypes}},
 	}
 
-	mobileAppTFObjectTypes = map[string]attr.Type{
+	applicationOidcMobileAppTFObjectTypes = map[string]attr.Type{
 		"bundle_id":                types.StringType,
 		"package_name":             types.StringType,
 		"huawei_app_id":            types.StringType,
@@ -112,7 +110,6 @@ var (
 		"acs_urls":                        types.SetType{ElemType: types.StringType},
 		"assertion_duration":              types.Int64Type,
 		"assertion_signed_enabled":        types.BoolType,
-		"idp_signing_key_id":              types.StringType,
 		"idp_signing_key":                 types.ListType{ElemType: types.ObjectType{AttrTypes: idpSigningKeyTFObjectTypes}},
 		"enable_requested_authn_context":  types.BoolType,
 		"nameid_format":                   types.StringType,
@@ -164,9 +161,53 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 	// schema descriptions and validation settings
 	const attrMinLength = 1
 
+	applicationIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The identifier (UUID) of the application.",
+	).ExactlyOneOf([]string{"application_id", "name"}).AppendMarkdownString("Must be a valid PingOne resource ID.")
+
+	nameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The name of the application.",
+	).ExactlyOneOf([]string{"application_id", "name"})
+
+	accessControlRoleTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The user role required to access the application.  A user is an admin user if the user has one or more of the following roles: `Organization Admin`, `Environment Admin`, `Identity Data Admin`, or `Client Application Developer`.",
+	)
+
+	externalLinkHomePageURLDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The custom home page URL for the application.  Both `http://` and `https://` URLs are permitted.",
+	)
+
+	oidcHhomePageURLDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The custom home page URL for the application.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.",
+	)
+
+	oidcAllowWildcardsInRedirectUris := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean to specify whether wildcards are allowed in redirect URIs. For more information, see [Wildcards in Redirect URIs](https://docs.pingidentity.com/csh?context=p1_c_wildcard_redirect_uri).",
+	)
+
+	oidcPostLogoutRedirectUris := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A list of strings that specifies the URLs that the browser can be redirected to after logout.  The provided URLs are expected to use the `https://`, `http://` schema, or a custom mobile native schema (e.g., `org.bxretail.app://logout`).",
+	)
+
+	oidcAdditionalRefreshTokenReplayProtectionEnabled := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, if you attempt to reuse the refresh token, the authorization server immediately revokes the reused refresh token, as well as all descendant tokens.",
+	).DefaultValue("true")
+
+	oidcRequireSignedRequestObject := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that indicates that the Java Web Token (JWT) for the [request query](https://openid.net/specs/openid-connect-core-1_0.html#RequestObject) parameter is required to be signed. If `false` or null, a signed request object is not required. Both `support_unsigned_request_object` and this property cannot be set to `true`.",
+	).DefaultValue("false")
+
+	googlePlayDecryptionKey := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Play Integrity verdict decryption key from your Google Play Services account. This parameter must be provided if you have set `verification_type` to `INTERNAL`.  Cannot be set with `service_account_credentials_json`.",
+	)
+
+	samlEnableRequestedAuthnContext := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether `requestedAuthnContext` is taken into account in policy decision-making.",
+	)
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Data source to retrieve a PingOne application.",
+		Description: "Data source to retrieve a PingOne application from ID or by name.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -174,8 +215,9 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 				framework.SchemaAttributeDescriptionFromMarkdown("PingOne environment identifier (UUID) in which the application exists."),
 			),
 			"application_id": schema.StringAttribute{
-				Description: "A string that specifies the identifier (UUID) of the application.",
-				Optional:    true,
+				Description:         applicationIdDescription.Description,
+				MarkdownDescription: applicationIdDescription.MarkdownDescription,
+				Optional:            true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("name"),
@@ -184,8 +226,9 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 				},
 			},
 			"name": schema.StringAttribute{
-				Description: "A string that specifies the name of the application.",
-				Optional:    true,
+				Description:         nameDescription.Description,
+				MarkdownDescription: nameDescription.MarkdownDescription,
+				Optional:            true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("application_id"),
@@ -227,8 +270,9 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 				},
 			},
 			"access_control_role_type": schema.StringAttribute{
-				Description: "A string that specifies the user role required to access the application. A user is an admin user if the user has one or more of the following roles: Organization Admin, Environment Admin, Identity Data Admin, or Client Application Developer.",
-				Computed:    true,
+				Description:         accessControlRoleTypeDescription.Description,
+				MarkdownDescription: accessControlRoleTypeDescription.MarkdownDescription,
+				Computed:            true,
 			},
 			"access_control_group_options": schema.ListNestedAttribute{
 				Description: "Group access control settings.",
@@ -257,8 +301,9 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"home_page_url": schema.StringAttribute{
-							Description: "A string that specifies the custom home page URL for the application.  Both `http://` and `https://` URLs are permitted.",
-							Computed:    true,
+							Description:         externalLinkHomePageURLDescription.Description,
+							MarkdownDescription: externalLinkHomePageURLDescription.MarkdownDescription,
+							Computed:            true,
 						},
 					},
 				},
@@ -273,8 +318,9 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 							Computed:    true,
 						},
 						"home_page_url": schema.StringAttribute{
-							Description: "A string that specifies the custom home page URL for the application.",
-							Computed:    true,
+							Description:         oidcHhomePageURLDescription.Description,
+							MarkdownDescription: oidcHhomePageURLDescription.MarkdownDescription,
+							Computed:            true,
 						},
 						"initiate_login_uri": schema.StringAttribute{
 							Description: "A string that specifies the URI to use for third-parties to begin the sign-on process for the application.",
@@ -316,13 +362,15 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 							Computed:    true,
 						},
 						"allow_wildcards_in_redirect_uris": schema.BoolAttribute{
-							Description: "A boolean to specify whether wildcards are allowed in redirect URIs. For more information, see [Wildcards in Redirect URIs](https://docs.pingidentity.com/csh?context=p1_c_wildcard_redirect_uri).",
-							Computed:    true,
+							Description:         oidcAllowWildcardsInRedirectUris.Description,
+							MarkdownDescription: oidcAllowWildcardsInRedirectUris.MarkdownDescription,
+							Computed:            true,
 						},
 						"post_logout_redirect_uris": schema.SetAttribute{
-							Description: "A list of strings that specifies the URLs that the browser can be redirected to after logout.  The provided URLs are expected to use the `https://`, `http://` schema, or a custom mobile native schema (e.g., `org.bxretail.app://logout`).",
-							ElementType: types.StringType,
-							Computed:    true,
+							Description:         oidcPostLogoutRedirectUris.Description,
+							MarkdownDescription: oidcPostLogoutRedirectUris.MarkdownDescription,
+							ElementType:         types.StringType,
+							Computed:            true,
 						},
 						"refresh_token_duration": schema.Int64Attribute{
 							Description: "An integer that specifies the lifetime in seconds of the refresh token.",
@@ -337,8 +385,9 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 							Computed:    true,
 						},
 						"additional_refresh_token_replay_protection_enabled": schema.BoolAttribute{
-							Description: "A boolean that, when set to `true` (the default), if you attempt to reuse the refresh token, the authorization server immediately revokes the reused refresh token, as well as all descendant tokens.",
-							Computed:    true,
+							Description:         oidcAdditionalRefreshTokenReplayProtectionEnabled.Description,
+							MarkdownDescription: oidcAdditionalRefreshTokenReplayProtectionEnabled.MarkdownDescription,
+							Computed:            true,
 						},
 						"client_id": schema.StringAttribute{
 							Description: "A string that specifies the application ID used to authenticate to the authorization server.",
@@ -347,6 +396,7 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						"client_secret": schema.StringAttribute{
 							Description: "A string that specifies the application secret ID used to authenticate to the authorization server.",
 							Computed:    true,
+							Sensitive:   true,
 						},
 						"certificate_based_authentication": schema.ListNestedAttribute{
 							Description: "Certificate based authentication settings.",
@@ -365,8 +415,9 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 							Computed:    true,
 						},
 						"require_signed_request_object": schema.BoolAttribute{
-							Description: "A boolean that indicates that the Java Web Token (JWT) for the [request query](https://openid.net/specs/openid-connect-core-1_0.html#RequestObject) parameter is required to be signed. If `false` or null (default), a signed request object is not required. Both `support_unsigned_request_object` and this property cannot be set to `true`.",
-							Computed:    true,
+							Description:         oidcRequireSignedRequestObject.Description,
+							MarkdownDescription: oidcRequireSignedRequestObject.MarkdownDescription,
+							Computed:            true,
 						},
 						"mobile_app": schema.ListNestedAttribute{
 							Description: "Mobile application integration settings.",
@@ -433,16 +484,20 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 													NestedObject: schema.NestedAttributeObject{
 														Attributes: map[string]schema.Attribute{
 															"decryption_key": schema.StringAttribute{
-																Description: "Play Integrity verdict decryption key from your Google Play Services account. This parameter must be provided if you have set `verification_type` to `INTERNAL`.  Cannot be set with `service_account_credentials_json`.",
-																Computed:    true,
+																Description:         googlePlayDecryptionKey.Description,
+																MarkdownDescription: googlePlayDecryptionKey.MarkdownDescription,
+																Computed:            true,
+																Sensitive:           true,
 															},
 															"service_account_credentials_json": schema.StringAttribute{
 																Description: "Contents of the JSON file that represents your Service Account Credentials.",
 																Computed:    true,
+																Sensitive:   true,
 															},
 															"verification_key": schema.StringAttribute{
 																Description: "Play Integrity verdict signature verification key from your Google Play Services account.",
 																Computed:    true,
+																Sensitive:   true,
 															},
 															"verification_type": schema.StringAttribute{
 																Description: "The type of verification.",
@@ -456,14 +511,6 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 									},
 								},
 							},
-						},
-						"bundle_id": schema.StringAttribute{
-							Description: "**Deprecation Notice** This field is deprecated and will be removed in a future release. Use `oidc_options.mobile_app.bundle_id` instead. A string that specifies the bundle associated with the application, for push notifications in native apps.",
-							Computed:    true,
-						},
-						"package_name": schema.StringAttribute{
-							Description: "**Deprecation Notice** This field is deprecated and will be removed in a future release. Use `oidc_options.mobile_app.package_name` instead. A string that specifies the package name associated with the application, for push notifications in native apps.",
-							Computed:    true,
 						},
 					},
 				},
@@ -494,10 +541,6 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 							Description: "A boolean that specifies whether the SAML assertion itself should be signed.",
 							Computed:    true,
 						},
-						"idp_signing_key_id": schema.StringAttribute{
-							Description: "An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.",
-							Computed:    true,
-						},
 						"idp_signing_key": schema.ListNestedAttribute{
 							Description: "SAML application assertion/response signing key settings.",
 							Computed:    true,
@@ -515,8 +558,9 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 							},
 						},
 						"enable_requested_authn_context": schema.BoolAttribute{
-							Description: "A boolean that specifies whether `requestedAuthnContext` is taken into account in policy decision-making.",
-							Computed:    true,
+							Description:         samlEnableRequestedAuthnContext.Description,
+							MarkdownDescription: samlEnableRequestedAuthnContext.MarkdownDescription,
+							Computed:            true,
 						},
 						"nameid_format": schema.StringAttribute{
 							Description: "A string that specifies the format of the Subject NameID attibute in the SAML assertion.",
@@ -600,28 +644,26 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	var application management.ReadOneApplication200Response
+	var application *management.ReadOneApplication200Response
 
 	// Application API does not support SCIM filtering
 	if !data.ApplicationId.IsNull() {
 		// Run the API call
-		var response *management.ReadOneApplication200Response
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.ManagementAPIClient.ApplicationsApi.ReadOneApplication(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString()).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationsApi.ReadOneApplication(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneApplication",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&response,
+			&application,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
-
-		application = *response
 
 	} else if !data.Name.IsNull() {
 		// Run the API call
@@ -630,7 +672,8 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.ManagementAPIClient.ApplicationsApi.ReadAllApplications(ctx, data.EnvironmentId.ValueString()).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationsApi.ReadAllApplications(ctx, data.EnvironmentId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadAllApplications",
 			framework.DefaultCustomError,
@@ -644,8 +687,9 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 		if applications, ok := entityArray.Embedded.GetApplicationsOk(); ok {
 			found := false
 
-			for _, applicationObject := range applications {
-				applicationInstance := applicationObject.GetActualInstance()
+			var applicationObj management.ReadOneApplication200Response
+			for _, applicationObj = range applications {
+				applicationInstance := applicationObj.GetActualInstance()
 
 				applicationName := ""
 
@@ -661,7 +705,7 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 				}
 
 				if applicationName == data.Name.ValueString() {
-					application = applicationObject
+					application = &applicationObj
 					found = true
 					break
 				}
@@ -669,8 +713,9 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 			if !found {
 				resp.Diagnostics.AddError(
-					"Cannot find the application from name",
-					fmt.Sprintf("The application name %s for environment %s cannot be found", data.Name.String(), data.EnvironmentId.String()),
+					"Cannot find the application from name or application is not the correct type",
+					fmt.Sprintf("The application name %s for environment %s cannot be found, and only %s, %s or %s application types are retrievable", data.Name.String(), data.EnvironmentId.String(),
+						string(management.ENUMAPPLICATIONPROTOCOL_OPENID_CONNECT), string(management.ENUMAPPLICATIONPROTOCOL_SAML), string(management.ENUMAPPLICATIONPROTOCOL_EXTERNAL_LINK)),
 				)
 				return
 			}
@@ -692,7 +737,9 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.ManagementAPIClient.ApplicationSecretApi.ReadApplicationSecret(ctx, *application.ApplicationOIDC.GetEnvironment().Id, application.ApplicationOIDC.GetId()).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationSecretApi.ReadApplicationSecret(ctx, *application.ApplicationOIDC.GetEnvironment().Id, application.ApplicationOIDC.GetId()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+
 			},
 			"ReadApplicationSecret",
 			framework.DefaultCustomError,
@@ -707,7 +754,7 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&application, secret)...)
+	resp.Diagnostics.Append(data.toState(application, secret)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -877,7 +924,7 @@ func (p *applicationDataSourceModel) toStateOIDCOptions(apiObject *management.Ap
 	objOIDCOptions := []attr.Value{}
 
 	if apiObject == nil {
-		return types.ListNull(types.ObjectType{AttrTypes: oidcOptionsTFObjectTypes}), diags
+		return types.ListNull(types.ObjectType{AttrTypes: applicationOidcOptionsTFObjectTypes}), diags
 	}
 
 	kerberoObj, d := p.toStateKerberos(apiObject.GetKerberosOk())
@@ -911,16 +958,14 @@ func (p *applicationDataSourceModel) toStateOIDCOptions(apiObject *management.Ap
 		"support_unsigned_request_object":  framework.BoolOkToTF(apiObject.GetSupportUnsignedRequestObjectOk()),
 		"require_signed_request_object":    framework.BoolOkToTF(apiObject.GetRequireSignedRequestObjectOk()),
 		"mobile_app":                       mobileObj,
-		"bundle_id":                        framework.StringOkToTF(apiObject.GetBundleIdOk()),
-		"package_name":                     framework.StringOkToTF(apiObject.GetPackageNameOk()),
 	}
 
-	oidcObject, d := types.ObjectValue(oidcOptionsTFObjectTypes, oidcOptions)
+	oidcObject, d := types.ObjectValue(applicationOidcOptionsTFObjectTypes, oidcOptions)
 	diags.Append(d...)
 
 	objOIDCOptions = append(objOIDCOptions, oidcObject)
 
-	returnVar, d := types.ListValue(types.ObjectType{AttrTypes: oidcOptionsTFObjectTypes}, objOIDCOptions)
+	returnVar, d := types.ListValue(types.ObjectType{AttrTypes: applicationOidcOptionsTFObjectTypes}, objOIDCOptions)
 	diags.Append(d...)
 
 	return returnVar, diags
@@ -952,7 +997,7 @@ func (p *applicationDataSourceModel) toStateKerberos(apiObject *management.Appli
 
 func (p *applicationDataSourceModel) toStateMobile(apiObject *management.ApplicationOIDCAllOfMobile, ok bool) (basetypes.ListValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	tfObjType := types.ObjectType{AttrTypes: mobileAppTFObjectTypes}
+	tfObjType := types.ObjectType{AttrTypes: applicationOidcMobileAppTFObjectTypes}
 
 	if !ok || apiObject == nil {
 		return types.ListNull(tfObjType), diags
@@ -985,7 +1030,7 @@ func (p *applicationDataSourceModel) toStateMobile(apiObject *management.Applica
 		"integrity_detection":      integrityDetection,
 	}
 
-	flattenedObj, d := types.ObjectValue(mobileAppTFObjectTypes, mobileApp)
+	flattenedObj, d := types.ObjectValue(applicationOidcMobileAppTFObjectTypes, mobileApp)
 	diags.Append(d...)
 
 	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
@@ -1117,7 +1162,6 @@ func (p *applicationDataSourceModel) toStateSAMLOptions(apiObject *management.Ap
 		"home_page_url":                   framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
 		"assertion_signed_enabled":        framework.BoolOkToTF(apiObject.GetAssertionSignedOk()),
 		"idp_signing_key":                 idpSigningKeyObj,
-		"idp_signing_key_id":              idpSigningKey["key_id"],
 		"enable_requested_authn_context":  framework.BoolOkToTF(apiObject.GetEnableRequestedAuthnContextOk()),
 		"nameid_format":                   framework.StringOkToTF(apiObject.GetNameIdFormatOk()),
 		"response_is_signed":              framework.BoolOkToTF(apiObject.GetResponseSignedOk()),

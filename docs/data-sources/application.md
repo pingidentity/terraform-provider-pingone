@@ -2,12 +2,12 @@
 page_title: "pingone_application Data Source - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Data source to retrieve a PingOne application.
+  Data source to retrieve a PingOne application from ID or by name.
 ---
 
 # pingone_application (Data Source)
 
-Data source to retrieve a PingOne application.
+Data source to retrieve a PingOne application from ID or by name.
 
 ## Example Usage
 
@@ -32,13 +32,13 @@ data "pingone_application" "example_by_id" {
 
 ### Optional
 
-- `application_id` (String) A string that specifies the identifier (UUID) of the application.
-- `name` (String) A string that specifies the name of the application.
+- `application_id` (String) The identifier (UUID) of the application.  At least one of the following must be defined: `application_id`, `name`.  Must be a valid PingOne resource ID.
+- `name` (String) The name of the application.  At least one of the following must be defined: `application_id`, `name`.
 
 ### Read-Only
 
 - `access_control_group_options` (Attributes List) Group access control settings. (see [below for nested schema](#nestedatt--access_control_group_options))
-- `access_control_role_type` (String) A string that specifies the user role required to access the application. A user is an admin user if the user has one or more of the following roles: Organization Admin, Environment Admin, Identity Data Admin, or Client Application Developer.
+- `access_control_role_type` (String) The user role required to access the application.  A user is an admin user if the user has one or more of the following roles: `Organization Admin`, `Environment Admin`, `Identity Data Admin`, or `Client Application Developer`.
 - `description` (String) A string that specifies the description of the application.
 - `enabled` (Boolean) A boolean that specifies whether the application is enabled in the environment.
 - `external_link_options` (Attributes List) External link application specific settings. (see [below for nested schema](#nestedatt--external_link_options))
@@ -64,7 +64,7 @@ Read-Only:
 
 Read-Only:
 
-- `home_page_url` (String) A string that specifies the custom home page URL for the application.  Both `http://` and `https://` URLs are permitted.
+- `home_page_url` (String) The custom home page URL for the application.  Both `http://` and `https://` URLs are permitted.
 
 
 <a id="nestedatt--icon"></a>
@@ -81,17 +81,15 @@ Read-Only:
 
 Read-Only:
 
-- `additional_refresh_token_replay_protection_enabled` (Boolean) A boolean that, when set to `true` (the default), if you attempt to reuse the refresh token, the authorization server immediately revokes the reused refresh token, as well as all descendant tokens.
+- `additional_refresh_token_replay_protection_enabled` (Boolean) A boolean that, when set to `true`, if you attempt to reuse the refresh token, the authorization server immediately revokes the reused refresh token, as well as all descendant tokens.  Defaults to `true`.
 - `allow_wildcards_in_redirect_uris` (Boolean) A boolean to specify whether wildcards are allowed in redirect URIs. For more information, see [Wildcards in Redirect URIs](https://docs.pingidentity.com/csh?context=p1_c_wildcard_redirect_uri).
-- `bundle_id` (String) **Deprecation Notice** This field is deprecated and will be removed in a future release. Use `oidc_options.mobile_app.bundle_id` instead. A string that specifies the bundle associated with the application, for push notifications in native apps.
 - `certificate_based_authentication` (Attributes List) Certificate based authentication settings. (see [below for nested schema](#nestedatt--oidc_options--certificate_based_authentication))
 - `client_id` (String) A string that specifies the application ID used to authenticate to the authorization server.
-- `client_secret` (String) A string that specifies the application secret ID used to authenticate to the authorization server.
+- `client_secret` (String, Sensitive) A string that specifies the application secret ID used to authenticate to the authorization server.
 - `grant_types` (Set of String) A list that specifies the grant type for the authorization request.
-- `home_page_url` (String) A string that specifies the custom home page URL for the application.
+- `home_page_url` (String) The custom home page URL for the application.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.
 - `initiate_login_uri` (String) A string that specifies the URI to use for third-parties to begin the sign-on process for the application.
 - `mobile_app` (Attributes List) Mobile application integration settings. (see [below for nested schema](#nestedatt--oidc_options--mobile_app))
-- `package_name` (String) **Deprecation Notice** This field is deprecated and will be removed in a future release. Use `oidc_options.mobile_app.package_name` instead. A string that specifies the package name associated with the application, for push notifications in native apps.
 - `par_requirement` (String) A string that specifies whether pushed authorization requests (PAR) are required.
 - `par_timeout` (Number) An integer that specifies the pushed authorization request (PAR) timeout in seconds.
 - `pkce_enforcement` (String) A string that specifies how `PKCE` request parameters are handled on the authorize request.
@@ -100,7 +98,7 @@ Read-Only:
 - `refresh_token_duration` (Number) An integer that specifies the lifetime in seconds of the refresh token.
 - `refresh_token_rolling_duration` (Number) An integer that specifies the number of seconds a refresh token can be exchanged before re-authentication is required.
 - `refresh_token_rolling_grace_period_duration` (Number) The number of seconds that a refresh token may be reused after having been exchanged for a new set of tokens.
-- `require_signed_request_object` (Boolean) A boolean that indicates that the Java Web Token (JWT) for the [request query](https://openid.net/specs/openid-connect-core-1_0.html#RequestObject) parameter is required to be signed. If `false` or null (default), a signed request object is not required. Both `support_unsigned_request_object` and this property cannot be set to `true`.
+- `require_signed_request_object` (Boolean) A boolean that indicates that the Java Web Token (JWT) for the [request query](https://openid.net/specs/openid-connect-core-1_0.html#RequestObject) parameter is required to be signed. If `false` or null, a signed request object is not required. Both `support_unsigned_request_object` and this property cannot be set to `true`.  Defaults to `false`.
 - `response_types` (Set of String) A list that specifies the code or token type returned by an authorization request.
 - `support_unsigned_request_object` (Boolean) A boolean that specifies whether the request query parameter JWT is allowed to be unsigned.
 - `target_link_uri` (String) The URI for the application.
@@ -152,9 +150,9 @@ Read-Only:
 
 Read-Only:
 
-- `decryption_key` (String) Play Integrity verdict decryption key from your Google Play Services account. This parameter must be provided if you have set `verification_type` to `INTERNAL`.  Cannot be set with `service_account_credentials_json`.
-- `service_account_credentials_json` (String) Contents of the JSON file that represents your Service Account Credentials.
-- `verification_key` (String) Play Integrity verdict signature verification key from your Google Play Services account.
+- `decryption_key` (String, Sensitive) Play Integrity verdict decryption key from your Google Play Services account. This parameter must be provided if you have set `verification_type` to `INTERNAL`.  Cannot be set with `service_account_credentials_json`.
+- `service_account_credentials_json` (String, Sensitive) Contents of the JSON file that represents your Service Account Credentials.
+- `verification_key` (String, Sensitive) Play Integrity verdict signature verification key from your Google Play Services account.
 - `verification_type` (String) The type of verification.
 
 
@@ -172,7 +170,6 @@ Read-Only:
 - `enable_requested_authn_context` (Boolean) A boolean that specifies whether `requestedAuthnContext` is taken into account in policy decision-making.
 - `home_page_url` (String) A string that specifies the custom home page URL for the application.
 - `idp_signing_key` (Attributes List) SAML application assertion/response signing key settings. (see [below for nested schema](#nestedatt--saml_options--idp_signing_key))
-- `idp_signing_key_id` (String) An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.
 - `nameid_format` (String) A string that specifies the format of the Subject NameID attibute in the SAML assertion.
 - `response_is_signed` (Boolean) A boolean that specifies whether the SAML assertion response itself should be signed.
 - `slo_binding` (String) A string that specifies the binding protocol to be used for the logout response.
