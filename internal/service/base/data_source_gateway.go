@@ -32,7 +32,9 @@ type gatewayDataSourceModel struct {
 	Enabled                               types.Bool   `tfsdk:"enabled"`
 	Type                                  types.String `tfsdk:"type"`
 	BindDN                                types.String `tfsdk:"bind_dn"`
+	BindPassword                          types.String `tfsdk:"bind_password"`
 	ConnectionSecurity                    types.String `tfsdk:"connection_security"`
+	KerberosServiceAccountPassword        types.String `tfsdk:"kerberos_service_account_password"`
 	KerberosServiceAccountUPN             types.String `tfsdk:"kerberos_service_account_upn"`
 	KerberosRetainPreviousCredentialsMins types.Int64  `tfsdk:"kerberos_retain_previous_credentials_mins"`
 	Servers                               types.Set    `tfsdk:"servers"`
@@ -45,28 +47,28 @@ type gatewayDataSourceModel struct {
 }
 
 var (
-	gatewayRadiusClientTFObjectTypes = map[string]attr.Type{
+	radiusClientTFObjectTypes = map[string]attr.Type{
 		"ip":            types.StringType,
 		"shared_secret": types.StringType,
 	}
 
-	gatewayLdapUserTypeTFObjectTypes = map[string]attr.Type{
+	ldapUserTypeTFObjectTypes = map[string]attr.Type{
 		"id":                            types.StringType,
 		"name":                          types.StringType,
 		"password_authority":            types.StringType,
 		"push_password_changes_to_ldap": types.BoolType,
 		"search_base_dn":                types.StringType,
 		"user_link_attributes":          types.ListType{ElemType: types.StringType},
-		"user_migration":                types.ListType{ElemType: types.ObjectType{AttrTypes: gatewayUserMigrationTFObjectTypes}},
+		"user_migration":                types.ListType{ElemType: types.ObjectType{AttrTypes: userMigrationTFObjectTypes}},
 	}
 
-	gatewayUserMigrationTFObjectTypes = map[string]attr.Type{
+	userMigrationTFObjectTypes = map[string]attr.Type{
 		"lookup_filter_pattern": types.StringType,
 		"population_id":         types.StringType,
-		"attribute_mapping":     types.SetType{ElemType: types.ObjectType{AttrTypes: gatewayAttributeMappingTFObjectTypes}},
+		"attribute_mapping":     types.SetType{ElemType: types.ObjectType{AttrTypes: attributeMappingTFObjectTypes}},
 	}
 
-	gatewayAttributeMappingTFObjectTypes = map[string]attr.Type{
+	attributeMappingTFObjectTypes = map[string]attr.Type{
 		"name":  types.StringType,
 		"value": types.StringType,
 	}
@@ -90,14 +92,6 @@ func (r *GatewayDataSource) Metadata(ctx context.Context, req datasource.Metadat
 func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	// schema descriptions and validation settings
 	const attrMinLength = 1
-
-	gatewayIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The identifier (UUID) of the gateway.",
-	).ExactlyOneOf([]string{"gateway_id", "name"}).AppendMarkdownString("Must be a valid PingOne resource ID.")
-
-	nameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The name of the gateway.",
-	).ExactlyOneOf([]string{"gateway_id", "name"})
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Specifies the type of gateway resource.",
@@ -157,7 +151,7 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Data source to retrieve a PingOne gateway from ID or by name.",
+		Description: "Data source to retrieve a PingOne gateway.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -165,9 +159,8 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				framework.SchemaAttributeDescriptionFromMarkdown("PingOne environment identifier (UUID) in which the gateway exists."),
 			),
 			"gateway_id": schema.StringAttribute{
-				Description:         gatewayIdDescription.Description,
-				MarkdownDescription: gatewayIdDescription.MarkdownDescription,
-				Optional:            true,
+				Description: "A string that specifies the identifier (UUID) of the gateway.",
+				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("name"),
@@ -176,9 +169,8 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				},
 			},
 			"name": schema.StringAttribute{
-				Description:         nameDescription.Description,
-				MarkdownDescription: nameDescription.MarkdownDescription,
-				Optional:            true,
+				Description: "A string that specifies the name of the gateway.",
+				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("gateway_id"),
@@ -206,10 +198,18 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				MarkdownDescription: bindDNDescription.MarkdownDescription,
 				Computed:            true,
 			},
+			"bind_password": schema.StringAttribute{
+				Description: "For LDAP gateways only: The Bind password for the LDAP database.",
+				Computed:    true,
+			},
 			"connection_security": schema.StringAttribute{
 				Description:         connectionSecurity.Description,
 				MarkdownDescription: connectionSecurity.MarkdownDescription,
 				Computed:            true,
+			},
+			"kerberos_service_account_password": schema.StringAttribute{
+				Description: "For LDAP gateways only: The password for the Kerberos service account.",
+				Computed:    true,
 			},
 			"kerberos_service_account_upn": schema.StringAttribute{
 				Description:         kerberosServiceAccountUPNDescription.Description,
@@ -316,7 +316,6 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 			"radius_default_shared_secret": schema.StringAttribute{
 				Description: "For RADIUS gateways only: Value to use for the shared secret if the shared secret is not provided for one or more of the RADIUS clients specified.",
 				Computed:    true,
-				Sensitive:   true,
 			},
 			"radius_client": schema.SetNestedAttribute{
 				Description: "For RADIUS gateways only: A collection of RADIUS clients.",
@@ -331,7 +330,6 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 							Description:         radiusClientSharedSecretDescription.Description,
 							MarkdownDescription: radiusClientSharedSecretDescription.MarkdownDescription,
 							Computed:            true,
-							Sensitive:           true,
 						},
 					},
 				},
@@ -429,48 +427,27 @@ func (r *GatewayDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		if gateways, ok := entityArray.Embedded.GetGatewaysOk(); ok {
 			found := false
 
-			// TODO: Patrick about optimising the code
-			//gatewayName := ""
+			fmt.Print(gateways)
 			for _, gatewayObject := range gateways {
-				if gateway := gatewayObject.Gateway; gateway != nil && gateway.GetId() != "" && gateway.GetName() == data.Name.ValueString() {
-					gatewayInstance = gateway
-					found = true
-					break
+				gatewayName := ""
 
-				} else if gateway := gatewayObject.GatewayTypeLDAP; gateway != nil && gateway.GetId() != "" && gateway.GetName() == data.Name.ValueString() {
-					gatewayInstance = gateway
-					found = true
-					break
+				if gateway := gatewayObject.Gateway; gateway != nil && gateway.GetId() != "" {
+					gatewayName = gateway.GetName()
 
-				} else if gateway := gatewayObject.GatewayTypeRADIUS; gateway != nil && gateway.GetId() != "" && gateway.GetName() == data.Name.ValueString() {
-					gatewayInstance = gateway
-					found = true
-					break
+				} else if gateway := gatewayObject.GatewayTypeLDAP; gateway != nil && gateway.GetId() != "" {
+					gatewayName = gateway.GetName()
+
+				} else if gateway := gatewayObject.GatewayTypeRADIUS; gateway != nil && gateway.GetId() != "" {
+					gatewayName = gateway.GetName()
 
 				}
 
-				// if gateway := gatewayObject.Gateway; gateway != nil && gateway.GetId() != "" {
-				// 	fmt.Println("****** A *******")
-				// 	gatewayName = gateway.GetName()
-				// 	gatewayInstance = gateway
+				if gatewayName == data.Name.ValueString() {
+					gatewayInstance = gatewayObject
 
-				// } else if gateway := gatewayObject.GatewayTypeLDAP; gateway != nil && gateway.GetId() != "" {
-				// 	fmt.Println("****** B *******")
-				// 	gatewayName = gateway.GetName()
-				// 	gatewayInstance = gateway
-
-				// } else if gateway := gatewayObject.GatewayTypeRADIUS; gateway != nil && gateway.GetId() != "" {
-				// 	fmt.Println("****** C *******")
-				// 	gatewayName = gateway.GetName()
-				// 	gatewayInstance = gateway
-
-				// }
-
-				// if gatewayName == data.Name.ValueString() {
-				// 	fmt.Println("**** WTF ***")
-				// 	found = true
-				// 	break
-				// }
+					found = true
+					break
+				}
 			}
 
 			if !found {
@@ -526,6 +503,7 @@ func (p *gatewayDataSourceModel) toState(apiObject interface{}) diag.Diagnostics
 		p.Enabled = framework.BoolOkToTF(v.GetEnabledOk())
 		p.Type = framework.EnumOkToTF(v.GetTypeOk())
 		p.BindDN = framework.StringOkToTF(v.GetBindDNOk())
+		//p.BindPassword = framework.StringOkToTF(v.GetBindPasswordOk())
 		p.Vendor = framework.EnumOkToTF(v.GetVendorOk())
 		p.ConnectionSecurity = framework.EnumOkToTF(v.GetConnectionSecurityOk())
 		p.Servers = framework.StringSetOkToTF(v.GetServersHostAndPortOk())
@@ -534,9 +512,11 @@ func (p *gatewayDataSourceModel) toState(apiObject interface{}) diag.Diagnostics
 		if v1, ok := v.GetKerberosOk(); ok {
 			p.KerberosServiceAccountUPN = framework.StringOkToTF(v1.GetServiceAccountUserPrincipalNameOk())
 			p.KerberosRetainPreviousCredentialsMins = framework.Int32OkToTF(v1.GetMinutesToRetainPreviousCredentialsOk())
+			p.KerberosServiceAccountPassword = framework.StringOkToTF(v1.GetServiceAccountPasswordOk())
 		} else {
 			p.KerberosServiceAccountUPN = types.StringNull()
 			p.KerberosRetainPreviousCredentialsMins = types.Int64Null()
+			p.KerberosServiceAccountPassword = types.StringNull()
 		}
 
 		// usertype
@@ -563,19 +543,13 @@ func (p *gatewayDataSourceModel) toState(apiObject interface{}) diag.Diagnostics
 		p.RadiusClient, d = p.toStateRadiusClient(v.GetRadiusClientsOk())
 		diags.Append(d...)
 
-	default:
-		diags.AddError(
-			"Undefined gateway type",
-			"Cannot identify the gateway type from the data object.  Please report this to the provider maintainers.",
-		)
-
 	}
 
 	return diags
 }
 func (p *gatewayDataSourceModel) toStateUserType(apiObject []management.GatewayTypeLDAPAllOfUserTypes, ok bool) (basetypes.SetValue, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
-	tfObjType := types.ObjectType{AttrTypes: gatewayLdapUserTypeTFObjectTypes}
+	tfObjType := types.ObjectType{AttrTypes: ldapUserTypeTFObjectTypes}
 
 	if !ok || apiObject == nil {
 		return types.SetNull(tfObjType), diags
@@ -585,35 +559,36 @@ func (p *gatewayDataSourceModel) toStateUserType(apiObject []management.GatewayT
 	for _, v := range apiObject {
 
 		// build user migration object
-		userMigration := types.ListNull(types.ObjectType{AttrTypes: gatewayUserMigrationTFObjectTypes})
+		userMigration := map[string]attr.Value{}
 		if v1, ok := v.GetNewUserLookupOk(); ok {
+
 			attributeMapObj, d := p.toStateLDAPUserLookupAttributeMappings(v1.GetAttributeMappingsOk())
 			diags.Append(d...)
-
-			o := map[string]attr.Value{
+			userMigration = map[string]attr.Value{
 				"lookup_filter_pattern": framework.StringOkToTF(v1.GetLdapFilterPatternOk()),
 				"population_id":         framework.StringToTF(v1.GetPopulation().Id),
 				"attribute_mapping":     attributeMapObj,
 			}
 
-			flattenedObj, d := types.ObjectValue(gatewayUserMigrationTFObjectTypes, o)
-			diags.Append(d...)
-
-			objValue, d := types.ListValue(types.ObjectType{AttrTypes: gatewayUserMigrationTFObjectTypes}, append([]attr.Value{}, flattenedObj))
-			diags.Append(d...)
-
-			userMigration = objValue
 		}
 
-		userTypesObj, d := types.ObjectValue(gatewayLdapUserTypeTFObjectTypes, map[string]attr.Value{
+		flattenedObj, d := types.ObjectValue(userMigrationTFObjectTypes, userMigration)
+		diags.Append(d...)
+
+		userMigrationObj, d := types.ListValue(types.ObjectType{AttrTypes: userMigrationTFObjectTypes}, append([]attr.Value{}, flattenedObj))
+		diags.Append(d...)
+
+		// build main object
+		userType := map[string]attr.Value{
 			"id":                            framework.StringOkToTF(v.GetIdOk()),
 			"name":                          framework.StringOkToTF(v.GetNameOk()),
 			"password_authority":            framework.EnumOkToTF(v.GetPasswordAuthorityOk()),
 			"search_base_dn":                framework.StringOkToTF(v.GetSearchBaseDnOk()),
 			"user_link_attributes":          framework.StringListOkToTF(v.GetOrderedCorrelationAttributesOk()),
 			"push_password_changes_to_ldap": framework.BoolOkToTF(v.GetAllowPasswordChangesOk()),
-			"user_migration":                userMigration,
-		})
+			"user_migration":                userMigrationObj,
+		}
+		userTypesObj, d := types.ObjectValue(ldapUserTypeTFObjectTypes, userType)
 		diags.Append(d...)
 
 		userTypes = append(userTypes, userTypesObj)
@@ -627,7 +602,7 @@ func (p *gatewayDataSourceModel) toStateUserType(apiObject []management.GatewayT
 
 func (p *gatewayDataSourceModel) toStateRadiusClient(apiObject []management.GatewayTypeRADIUSAllOfRadiusClients, ok bool) (basetypes.SetValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	tfObjType := types.ObjectType{AttrTypes: gatewayRadiusClientTFObjectTypes}
+	tfObjType := types.ObjectType{AttrTypes: radiusClientTFObjectTypes}
 
 	if !ok || apiObject == nil {
 		return types.SetNull(tfObjType), diags
@@ -640,7 +615,7 @@ func (p *gatewayDataSourceModel) toStateRadiusClient(apiObject []management.Gate
 			"ip":            framework.StringOkToTF(v.GetIpOk()),
 			"shared_secret": framework.StringOkToTF(v.GetSharedSecretOk()),
 		}
-		radiusClientsObj, d := types.ObjectValue(gatewayRadiusClientTFObjectTypes, radiusClient)
+		radiusClientsObj, d := types.ObjectValue(radiusClientTFObjectTypes, radiusClient)
 		diags.Append(d...)
 
 		radiusClients = append(radiusClients, radiusClientsObj)
@@ -654,7 +629,7 @@ func (p *gatewayDataSourceModel) toStateRadiusClient(apiObject []management.Gate
 
 func (p *gatewayDataSourceModel) toStateLDAPUserLookupAttributeMappings(apiObject []management.GatewayTypeLDAPAllOfNewUserLookupAttributeMappings, ok bool) (basetypes.SetValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	tfObjType := types.ObjectType{AttrTypes: gatewayAttributeMappingTFObjectTypes}
+	tfObjType := types.ObjectType{AttrTypes: attributeMappingTFObjectTypes}
 
 	if !ok || apiObject == nil {
 		return types.SetNull(tfObjType), diags
@@ -667,7 +642,7 @@ func (p *gatewayDataSourceModel) toStateLDAPUserLookupAttributeMappings(apiObjec
 			"name":  framework.StringOkToTF(v.GetNameOk()),
 			"value": framework.StringOkToTF(v.GetValueOk()),
 		}
-		attributeMappingObj, d := types.ObjectValue(gatewayAttributeMappingTFObjectTypes, attributeMap)
+		attributeMappingObj, d := types.ObjectValue(attributeMappingTFObjectTypes, attributeMap)
 		diags.Append(d...)
 
 		attributeMappings = append(attributeMappings, attributeMappingObj)

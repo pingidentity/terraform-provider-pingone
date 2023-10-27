@@ -2,12 +2,12 @@
 page_title: "pingone_gateway Data Source - terraform-provider-pingone"
 subcategory: "Platform"
 description: |-
-  Data source to retrieve a PingOne gateway from ID or by name.
+  Data source to retrieve a PingOne gateway.
 ---
 
 # pingone_gateway (Data Source)
 
-Data source to retrieve a PingOne gateway from ID or by name.
+Data source to retrieve a PingOne gateway.
 
 
 
@@ -20,21 +20,23 @@ Data source to retrieve a PingOne gateway from ID or by name.
 
 ### Optional
 
-- `gateway_id` (String) The identifier (UUID) of the gateway.  At least one of the following must be defined: `gateway_id`, `name`.  Must be a valid PingOne resource ID.
-- `name` (String) The name of the gateway.  At least one of the following must be defined: `gateway_id`, `name`.
+- `gateway_id` (String) A string that specifies the identifier (UUID) of the gateway.
+- `name` (String) A string that specifies the name of the gateway.
 
 ### Read-Only
 
 - `bind_dn` (String) For LDAP gateways only: The distinguished name information to bind to the LDAP database (for example, `uid=pingone,dc=bxretail,dc=org`).
+- `bind_password` (String) For LDAP gateways only: The Bind password for the LDAP database.
 - `connection_security` (String) For LDAP gateways only: The connection security type.  Options are `None`, `StartTLS`, `TLS`.
 - `description` (String) A string that specifies the description of the gateway.
 - `enabled` (Boolean) A boolean that specifies whether the gateway is enabled in the environment.
 - `id` (String) The ID of this resource.
 - `kerberos_retain_previous_credentials_mins` (Number) For LDAP gateways only: The number of minutes for which the previous credentials are persisted.
+- `kerberos_service_account_password` (String) For LDAP gateways only: The password for the Kerberos service account.
 - `kerberos_service_account_upn` (String) For LDAP gateways only: The Kerberos service account user principal name (for example, `username@bxretail.org`).
 - `radius_client` (Attributes Set) For RADIUS gateways only: A collection of RADIUS clients. (see [below for nested schema](#nestedatt--radius_client))
 - `radius_davinci_policy_id` (String) For RADIUS gateways only: The ID of the DaVinci flow policy to use.
-- `radius_default_shared_secret` (String, Sensitive) For RADIUS gateways only: Value to use for the shared secret if the shared secret is not provided for one or more of the RADIUS clients specified.
+- `radius_default_shared_secret` (String) For RADIUS gateways only: Value to use for the shared secret if the shared secret is not provided for one or more of the RADIUS clients specified.
 - `servers` (Set of String) For LDAP gateways only: A list of LDAP server host name and port number combinations (for example, [`ds1.bxretail.org:636`, `ds2.bxretail.org:636`]).
 - `type` (String) Specifies the type of gateway resource.  Options are `API_GATEWAY_INTEGRATION`, `LDAP`, `PING_FEDERATE`, `PING_INTELLIGENCE`, `RADIUS`.
 - `user_type` (Attributes Set) For LDAP gateways only: A collection of properties that define how users should be provisioned in PingOne. The `user_type` block specifies which user properties in PingOne correspond to the user properties in an external LDAP directory. You can use an LDAP browser to view the user properties in the external LDAP directory. (see [below for nested schema](#nestedatt--user_type))
@@ -47,7 +49,7 @@ Data source to retrieve a PingOne gateway from ID or by name.
 Read-Only:
 
 - `ip` (String) The IP of the RADIUS client.
-- `shared_secret` (String, Sensitive) The shared secret for the RADIUS client. If this value is not provided, the shared secret specified with `default_shared_secret` is used.
+- `shared_secret` (String) The shared secret for the RADIUS client. If this value is not provided, the shared secret specified with `default_shared_secret` is used.
 
 
 <a id="nestedatt--user_type"></a>

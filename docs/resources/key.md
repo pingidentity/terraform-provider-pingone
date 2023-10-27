@@ -46,7 +46,7 @@ resource "pingone_key" "my_tls_key" {
 ### Required
 
 - `environment_id` (String) The ID of the environment to manage the key in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
-- `usage_type` (String) A string that specifies how the certificate is used.  Options are `ENCRYPTION`, `ISSUANCE`, `OUTBOUND_MTLS`, `SIGNING`, `SSL/TLS`.
+- `usage_type` (String) A string that specifies how the certificate is used.  Options are `ENCRYPTION`, `ISSUANCE`, `SIGNING`, `SSL/TLS`.
 
 ### Optional
 
