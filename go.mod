@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/bflad/tfproviderlint v0.29.0
 	github.com/golangci/golangci-lint v1.54.2
-	github.com/google/uuid v1.3.1
+	github.com/google/uuid v1.4.0
 	github.com/hashicorp/go-changelog v0.0.0-20220419201213-5edfc0d651d8
 	github.com/hashicorp/terraform-plugin-docs v0.16.0
 	github.com/hashicorp/terraform-plugin-framework v1.4.1
