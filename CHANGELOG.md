@@ -8,6 +8,10 @@ NOTES:
 * `resource/pingone_environment`: Deprecated the `default_population` block and `default_population_id` attribute in favour of the new `pingone_population_default` resource. ([#485](https://github.com/pingidentity/terraform-provider-pingone/issues/485))
 * `resource/pingone_environment`: Removed the ability to import the resource including a default population.  Default populations are now managed with the `pingone_population_default` resource. ([#485](https://github.com/pingidentity/terraform-provider-pingone/issues/485))
 
+FEATURES:
+
+* **New Data Source:** `pingone_application` ([#598](https://github.com/pingidentity/terraform-provider-pingone/issues/598))
+
 ## 0.22.0 (17 October 2023)
 
 NOTES:
