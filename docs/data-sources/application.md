@@ -2,12 +2,12 @@
 page_title: "pingone_application Data Source - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Data source to retrieve a PingOne application from ID or by name.
+  Data source to retrieve a PingOne application in an environment by ID or by name.
 ---
 
 # pingone_application (Data Source)
 
-Data source to retrieve a PingOne application from ID or by name.
+Data source to retrieve a PingOne application in an environment by ID or by name.
 
 ## Example Usage
 
