@@ -57,16 +57,16 @@ var (
 		"push_password_changes_to_ldap": types.BoolType,
 		"search_base_dn":                types.StringType,
 		"user_link_attributes":          types.ListType{ElemType: types.StringType},
-		"user_migration":                types.ListType{ElemType: types.ObjectType{AttrTypes: gatewayUserMigrationTFObjectTypes}},
+		"user_migration":                types.ListType{ElemType: types.ObjectType{AttrTypes: gatewayLdapUserMigrationTFObjectTypes}},
 	}
 
-	gatewayUserMigrationTFObjectTypes = map[string]attr.Type{
+	gatewayLdapUserMigrationTFObjectTypes = map[string]attr.Type{
 		"lookup_filter_pattern": types.StringType,
 		"population_id":         types.StringType,
-		"attribute_mapping":     types.SetType{ElemType: types.ObjectType{AttrTypes: gatewayAttributeMappingTFObjectTypes}},
+		"attribute_mapping":     types.SetType{ElemType: types.ObjectType{AttrTypes: gatewayLdapUserLookupAttributeMappingTFObjectTypes}},
 	}
 
-	gatewayAttributeMappingTFObjectTypes = map[string]attr.Type{
+	gatewayLdapUserLookupAttributeMappingTFObjectTypes = map[string]attr.Type{
 		"name":  types.StringType,
 		"value": types.StringType,
 	}
@@ -127,6 +127,10 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 		"For LDAP gateways only: The LDAP vendor",
 	).AllowedValuesEnum(management.AllowedEnumGatewayVendorEnumValues)
 
+	userTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"For LDAP gateways only: A collection of properties that define how users should be provisioned in PingOne. The `user_type` block specifies which user properties in PingOne correspond to the user properties in an external LDAP directory. You can use an LDAP browser to view the user properties in the external LDAP directory.",
+	)
+
 	userTypeIdsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Identifies the user type. This correlates to the `password.external.gateway.userType.id` User property.",
 	)
@@ -157,7 +161,7 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Data source to retrieve a PingOne gateway from ID or by name.",
+		Description: "Data source to retrieve a PingOne gateway in an environment from ID or by name.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -187,11 +191,11 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				},
 			},
 			"description": schema.StringAttribute{
-				Description: "A string that specifies the description of the gateway.",
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the description of the gateway.").Description,
 				Computed:    true,
 			},
 			"enabled": schema.BoolAttribute{
-				Description: "A boolean that specifies whether the gateway is enabled in the environment.",
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the gateway is enabled in the environment.").Description,
 				Computed:    true,
 			},
 			"type": schema.StringAttribute{
@@ -217,7 +221,7 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				Computed:            true,
 			},
 			"kerberos_retain_previous_credentials_mins": schema.Int64Attribute{
-				Description: "For LDAP gateways only: The number of minutes for which the previous credentials are persisted.",
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("For LDAP gateways only: The number of minutes for which the previous credentials are persisted.").Description,
 				Computed:    true,
 			},
 			"servers": schema.SetAttribute{
@@ -237,8 +241,9 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				Computed:            true,
 			},
 			"user_type": schema.SetNestedAttribute{
-				Description: "For LDAP gateways only: A collection of properties that define how users should be provisioned in PingOne. The `user_type` block specifies which user properties in PingOne correspond to the user properties in an external LDAP directory. You can use an LDAP browser to view the user properties in the external LDAP directory.",
-				Computed:    true,
+				Description:         userTypeDescription.Description,
+				MarkdownDescription: userTypeDescription.MarkdownDescription,
+				Computed:            true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{
@@ -247,7 +252,7 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 							Computed:            true,
 						},
 						"name": schema.StringAttribute{
-							Description: "The name of the user type.",
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("The name of the user type.").Description,
 							Computed:    true,
 						},
 						"password_authority": schema.StringAttribute{
@@ -256,20 +261,20 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 							Computed:            true,
 						},
 						"push_password_changes_to_ldap": schema.BoolAttribute{
-							Description: "A boolean that determines whether password updates in PingOne should be pushed to the user's record in LDAP.  If false, the user cannot change the password and have it updated in the remote LDAP directory. In this case, operations for forgotten passwords or resetting of passwords are not available to a user referencing this gateway.",
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("Determines whether password updates in PingOne should be pushed to the user's record in LDAP.  If false, the user cannot change the password and have it updated in the remote LDAP directory. In this case, operations for forgotten passwords or resetting of passwords are not available to a user referencing this gateway.").Description,
 							Computed:    true,
 						},
 						"search_base_dn": schema.StringAttribute{
-							Description: "The LDAP base domain name (DN) for this user type.",
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("The LDAP base domain name (DN) for this user type.").Description,
 							Computed:    true,
 						},
 						"user_link_attributes": schema.ListAttribute{
-							Description: "A list of strings that represent LDAP attribute names that uniquely identify the user, and link to users in PingOne.",
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("Represents LDAP attribute names that uniquely identify the user, and link to users in PingOne.").Description,
 							ElementType: types.StringType,
 							Computed:    true,
 						},
 						"user_migration": schema.ListNestedAttribute{
-							Description: "The configurations for initially authenticating new users who will be migrated to PingOne. Note: If there are multiple users having the same user name, only the first user processed is provisioned.",
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("The configurations for initially authenticating new users who will be migrated to PingOne. Note: If there are multiple users having the same user name, only the first user processed is provisioned.").Description,
 							Computed:    true,
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
@@ -279,7 +284,7 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 										Computed:            true,
 									},
 									"population_id": schema.StringAttribute{
-										Description: "The ID of the population to use to create user entries during lookup.",
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("The ID of the population to use to create user entries during lookup.").Description,
 										Computed:    true,
 									},
 									"attribute_mapping": schema.SetNestedAttribute{
@@ -310,21 +315,21 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 
 			// RADIUS
 			"radius_davinci_policy_id": schema.StringAttribute{
-				Description: "For RADIUS gateways only: The ID of the DaVinci flow policy to use.",
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("For RADIUS gateways only: The ID of the DaVinci flow policy to use.").Description,
 				Computed:    true,
 			},
 			"radius_default_shared_secret": schema.StringAttribute{
-				Description: "For RADIUS gateways only: Value to use for the shared secret if the shared secret is not provided for one or more of the RADIUS clients specified.",
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("For RADIUS gateways only: Value to use for the shared secret if the shared secret is not provided for one or more of the RADIUS clients specified.").Description,
 				Computed:    true,
 				Sensitive:   true,
 			},
 			"radius_client": schema.SetNestedAttribute{
-				Description: "For RADIUS gateways only: A collection of RADIUS clients.",
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("For RADIUS gateways only: A collection of RADIUS clients.").Description,
 				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"ip": schema.StringAttribute{
-							Description: "The IP of the RADIUS client.",
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("The IP of the RADIUS client.").Description,
 							Computed:    true,
 						},
 						"shared_secret": schema.StringAttribute{
@@ -513,7 +518,7 @@ func (p *gatewayDataSourceModel) toState(apiObject interface{}) diag.Diagnostics
 			p.KerberosRetainPreviousCredentialsMins = types.Int64Null()
 		}
 
-		p.UserType, d = p.toStateUserType(v.GetUserTypesOk())
+		p.UserType, d = p.gatewayLdapUserTypeOkToTF(v.GetUserTypesOk())
 		diags.Append(d...)
 
 	case *management.GatewayTypeRADIUS:
@@ -533,7 +538,7 @@ func (p *gatewayDataSourceModel) toState(apiObject interface{}) diag.Diagnostics
 
 		p.RadiusDefaultSharedSecret = framework.StringOkToTF(v.GetDefaultSharedSecretOk())
 
-		p.RadiusClient, d = p.toStateRadiusClient(v.GetRadiusClientsOk())
+		p.RadiusClient, d = p.gatewayRadiusClientOkToTF(v.GetRadiusClientsOk())
 		diags.Append(d...)
 
 	default:
@@ -546,7 +551,7 @@ func (p *gatewayDataSourceModel) toState(apiObject interface{}) diag.Diagnostics
 
 	return diags
 }
-func (p *gatewayDataSourceModel) toStateUserType(apiObject []management.GatewayTypeLDAPAllOfUserTypes, ok bool) (basetypes.SetValue, diag.Diagnostics) {
+func (p *gatewayDataSourceModel) gatewayLdapUserTypeOkToTF(apiObject []management.GatewayTypeLDAPAllOfUserTypes, ok bool) (basetypes.SetValue, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 	tfObjType := types.ObjectType{AttrTypes: gatewayLdapUserTypeTFObjectTypes}
 
@@ -558,9 +563,9 @@ func (p *gatewayDataSourceModel) toStateUserType(apiObject []management.GatewayT
 	for _, v := range apiObject {
 
 		// build user migration object
-		userMigration := types.ListNull(types.ObjectType{AttrTypes: gatewayUserMigrationTFObjectTypes})
+		userMigration := types.ListNull(types.ObjectType{AttrTypes: gatewayLdapUserMigrationTFObjectTypes})
 		if v1, ok := v.GetNewUserLookupOk(); ok {
-			attributeMapObj, d := p.toStateLDAPUserLookupAttributeMappings(v1.GetAttributeMappingsOk())
+			attributeMapObj, d := p.gatewayLdapUserLookupAttributeMappingsOkToTF(v1.GetAttributeMappingsOk())
 			diags.Append(d...)
 
 			o := map[string]attr.Value{
@@ -569,10 +574,10 @@ func (p *gatewayDataSourceModel) toStateUserType(apiObject []management.GatewayT
 				"attribute_mapping":     attributeMapObj,
 			}
 
-			flattenedObj, d := types.ObjectValue(gatewayUserMigrationTFObjectTypes, o)
+			flattenedObj, d := types.ObjectValue(gatewayLdapUserMigrationTFObjectTypes, o)
 			diags.Append(d...)
 
-			objValue, d := types.ListValue(types.ObjectType{AttrTypes: gatewayUserMigrationTFObjectTypes}, append([]attr.Value{}, flattenedObj))
+			objValue, d := types.ListValue(types.ObjectType{AttrTypes: gatewayLdapUserMigrationTFObjectTypes}, append([]attr.Value{}, flattenedObj))
 			diags.Append(d...)
 
 			userMigration = objValue
@@ -598,7 +603,7 @@ func (p *gatewayDataSourceModel) toStateUserType(apiObject []management.GatewayT
 	return returnVar, diags
 }
 
-func (p *gatewayDataSourceModel) toStateRadiusClient(apiObject []management.GatewayTypeRADIUSAllOfRadiusClients, ok bool) (basetypes.SetValue, diag.Diagnostics) {
+func (p *gatewayDataSourceModel) gatewayRadiusClientOkToTF(apiObject []management.GatewayTypeRADIUSAllOfRadiusClients, ok bool) (basetypes.SetValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	tfObjType := types.ObjectType{AttrTypes: gatewayRadiusClientTFObjectTypes}
 
@@ -625,9 +630,9 @@ func (p *gatewayDataSourceModel) toStateRadiusClient(apiObject []management.Gate
 	return returnVar, diags
 }
 
-func (p *gatewayDataSourceModel) toStateLDAPUserLookupAttributeMappings(apiObject []management.GatewayTypeLDAPAllOfNewUserLookupAttributeMappings, ok bool) (basetypes.SetValue, diag.Diagnostics) {
+func (p *gatewayDataSourceModel) gatewayLdapUserLookupAttributeMappingsOkToTF(apiObject []management.GatewayTypeLDAPAllOfNewUserLookupAttributeMappings, ok bool) (basetypes.SetValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	tfObjType := types.ObjectType{AttrTypes: gatewayAttributeMappingTFObjectTypes}
+	tfObjType := types.ObjectType{AttrTypes: gatewayLdapUserLookupAttributeMappingTFObjectTypes}
 
 	if !ok || apiObject == nil {
 		return types.SetNull(tfObjType), diags
@@ -640,7 +645,7 @@ func (p *gatewayDataSourceModel) toStateLDAPUserLookupAttributeMappings(apiObjec
 			"name":  framework.StringOkToTF(v.GetNameOk()),
 			"value": framework.StringOkToTF(v.GetValueOk()),
 		}
-		attributeMappingObj, d := types.ObjectValue(gatewayAttributeMappingTFObjectTypes, attributeMap)
+		attributeMappingObj, d := types.ObjectValue(gatewayLdapUserLookupAttributeMappingTFObjectTypes, attributeMap)
 		diags.Append(d...)
 
 		attributeMappings = append(attributeMappings, attributeMappingObj)
