@@ -132,7 +132,7 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 	)
 
 	userTypeIdsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Identifies the user type. This correlates to the `password.external.gateway.userType.id` User property.",
+		"Identifies the user type. This correlates to the `password.external.gateway.user_type.id` User property.",
 	)
 
 	userTypePasswordAuthorityDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -454,8 +454,8 @@ func (r *GatewayDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 			if !found {
 				resp.Diagnostics.AddError(
-					"Cannot find the application from name",
-					fmt.Sprintf("The application name %s for environment %s cannot be found", data.Name.String(), data.EnvironmentId.String()),
+					"Cannot find the gateway from name",
+					fmt.Sprintf("The gateway name %s for environment %s cannot be found", data.Name.String(), data.EnvironmentId.String()),
 				)
 				return
 			}
@@ -464,7 +464,7 @@ func (r *GatewayDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",
-			"Cannot find the requested PingOne Application: application_id or name argument must be set.",
+			"Cannot find the requested PingOne Gateway: gateway_id or name argument must be set.",
 		)
 		return
 	}

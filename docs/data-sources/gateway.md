@@ -67,7 +67,7 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String) Identifies the user type. This correlates to the `password.external.gateway.userType.id` User property.
+- `id` (String) Identifies the user type. This correlates to the `password.external.gateway.user_type.id` User property.
 - `name` (String) The name of the user type.
 - `password_authority` (String) This can be either `PING_ONE` or `LDAP`. If set to `PING_ONE`, PingOne authenticates with the external directory initially, then PingOne authenticates all subsequent sign-ons.
 - `push_password_changes_to_ldap` (Boolean) Determines whether password updates in PingOne should be pushed to the user's record in LDAP.  If false, the user cannot change the password and have it updated in the remote LDAP directory. In this case, operations for forgotten passwords or resetting of passwords are not available to a user referencing this gateway.
