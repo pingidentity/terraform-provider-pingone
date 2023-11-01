@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_environment`: Added `service.tags` parameter allows for a creation of an environment without example/demo configuration in the DaVinci service.
+```
+
+```release-note:enhancement
+`data-source/pingone_environment`: Added `service.tags` computed attribute that signifies whether the selected PingOne environment was created without example/demo configuration in the DaVinci service.
+```

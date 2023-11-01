@@ -494,6 +494,42 @@ func TestAccEnvironment_Services(t *testing.T) {
 	})
 }
 
+func TestAccEnvironment_ServicesTags(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGenEnvironment()
+	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
+
+	name := resourceName
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.Environment_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccEnvironmentConfig_DVTags(resourceName, name, licenseID),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "service.#", "2"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
+						"type":        "DaVinci",
+						"console_url": "",
+						"bookmark.#":  "0",
+						"tags.#":      "1",
+						"tags.0":      "DAVINCI_MINIMAL",
+					}),
+				),
+			},
+		},
+	})
+}
+
 func TestAccEnvironment_BadParameters(t *testing.T) {
 	t.Parallel()
 
@@ -569,6 +605,23 @@ resource "pingone_environment" "%[1]s" {
 
   %[4]s
 }`, resourceName, name, licenseID, composedServices)
+}
+
+func testAccEnvironmentConfig_DVTags(resourceName, name, licenseID string) string {
+	return fmt.Sprintf(`
+resource "pingone_environment" "%[1]s" {
+  name       = "%[2]s"
+  license_id = "%[3]s"
+
+  service {
+    type = "SSO"
+  }
+
+  service {
+    type = "DaVinci"
+    tags = ["DAVINCI_MINIMAL"]
+  }
+}`, resourceName, name, licenseID)
 }
 
 func testAccEnvironmentConfig_MinimalWithPopulation(resourceName, name, licenseID string) string {

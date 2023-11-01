@@ -20,6 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -34,6 +35,7 @@ import (
 	stringdefaultinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringdefaultinternal"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -68,6 +70,7 @@ type environmentServiceModel struct {
 	Type       types.String `tfsdk:"type"`
 	ConsoleUrl types.String `tfsdk:"console_url"`
 	Bookmarks  types.Set    `tfsdk:"bookmark"`
+	Tags       types.Set    `tfsdk:"tags"`
 }
 
 type environmentServiceBookmarkModel struct {
@@ -90,6 +93,7 @@ var (
 		"type":        types.StringType,
 		"console_url": types.StringType,
 		"bookmark":    types.SetType{ElemType: types.ObjectType{AttrTypes: environmentServiceBookmarkTFObjectTypes}},
+		"tags":        types.SetType{ElemType: types.StringType},
 	}
 
 	environmentServiceBookmarkTFObjectTypes = map[string]attr.Type{
@@ -161,6 +165,24 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 	serviceConsoleUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A custom console URL to set.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`.",
 	)
+
+	daVinciService, err := model.FindProductByAPICode(management.ENUMPRODUCTTYPE_ONE_DAVINCI)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Cannot find DaVinci product",
+			"In compiling the schema, the DaVinci product could not be found.  This is always a bug in the provider.  Please report this issue to the provider maintainers.",
+		)
+
+		return
+	}
+
+	serviceTagsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A set of tags to apply upon environment creation.  Only configurable when the service `type` is `%s`.", daVinciService.ProductCode),
+	).AllowedValuesComplex(
+		map[string]string{
+			string(management.ENUMBILLOFMATERIALSPRODUCTTAGS_DAVINCI_MINIMAL): "allows for a creation of an environment without example/demo configuration in the DaVinci service",
+		},
+	).RequiresReplace()
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -343,6 +365,25 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 
 							Optional: true,
 						},
+
+						"tags": schema.SetAttribute{
+							Description:         serviceTagsDescription.Description,
+							MarkdownDescription: serviceTagsDescription.MarkdownDescription,
+
+							ElementType: types.StringType,
+
+							Optional: true,
+
+							PlanModifiers: []planmodifier.Set{
+								setplanmodifier.RequiresReplace(),
+							},
+
+							Validators: []validator.Set{
+								setvalidator.ValueStringsAre(
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumBillOfMaterialsProductTagsEnumValues)...),
+								),
+							},
+						},
 					},
 
 					Blocks: map[string]schema.Block{
@@ -481,6 +522,7 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 			"type":        framework.StringToTF("SSO"),
 			"console_url": types.StringNull(),
 			"bookmark":    types.SetNull(types.ObjectType{AttrTypes: environmentServiceBookmarkTFObjectTypes}),
+			"tags":        types.SetNull(types.StringType),
 		}
 
 		serviceDefault, d := types.SetValue(
@@ -497,6 +539,48 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 		}
 
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("service"), serviceDefault)...)
+	}
+
+}
+
+func (r *EnvironmentResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var data environmentResourceModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+
+	if !data.Services.IsNull() {
+
+		var servicesPlan []environmentServiceModel
+		resp.Diagnostics.Append(data.Services.ElementsAs(ctx, &servicesPlan, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		if len(servicesPlan) > 0 {
+
+			daVinciService, err := model.FindProductByAPICode(management.ENUMPRODUCTTYPE_ONE_DAVINCI)
+			if err != nil {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("service").AtName("tags"),
+					"Cannot find DaVinci product",
+					"In validating the configuration, the DaVinci product could not be found.  This is always a bug in the provider.  Please report this issue to the provider maintainers.",
+				)
+
+				return
+			}
+
+			for _, service := range servicesPlan {
+				if !service.Type.Equal(types.StringValue(daVinciService.ProductCode)) {
+					if !service.Tags.IsNull() {
+						resp.Diagnostics.AddAttributeError(
+							path.Root("service").AtName("tags"),
+							"Invalid configuration",
+							fmt.Sprintf("The `tags` parameter is only configurable where the `type` is set to `%s`.  Please unset the `tags` to an empty set or remove the `tags` parameter for the service.", daVinciService.ProductCode),
+						)
+					}
+				}
+			}
+		}
 	}
 
 }
@@ -1177,6 +1261,22 @@ func (p *environmentServiceModel) expand(ctx context.Context) (*management.BillO
 		bomService.SetBookmarks(bookmarks)
 	}
 
+	if !p.Tags.IsNull() {
+
+		var servicesTagsPlan []string
+		diags.Append(p.Tags.ElementsAs(ctx, &servicesTagsPlan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		servicesTagsEnum := make([]management.EnumBillOfMaterialsProductTags, 0)
+		for _, v := range servicesTagsPlan {
+			servicesTagsEnum = append(servicesTagsEnum, management.EnumBillOfMaterialsProductTags(v))
+		}
+
+		bomService.SetTags(servicesTagsEnum)
+	}
+
 	return bomService, diags
 }
 
@@ -1333,6 +1433,8 @@ func toStateEnvironmentServices(services []management.BillOfMaterialsProductsInn
 		} else {
 			service["console_url"] = types.StringNull()
 		}
+
+		service["tags"] = framework.EnumSetOkToTF(v.GetTagsOk())
 
 		bookmarks, d := toStateEnvironmentServicesBookmark(v.GetBookmarks())
 		diags.Append(d...)
