@@ -3,19 +3,19 @@ module github.com/pingidentity/terraform-provider-pingone
 go 1.20
 
 require (
-	github.com/google/uuid v1.3.1
-	github.com/hashicorp/terraform-plugin-framework v1.4.1
+	github.com/google/uuid v1.4.0
+	github.com/hashicorp/terraform-plugin-framework v1.4.2
 	github.com/hashicorp/terraform-plugin-framework-timeouts v0.4.1
 	github.com/hashicorp/terraform-plugin-framework-validators v0.12.0
 	github.com/hashicorp/terraform-plugin-go v0.19.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-mux v0.12.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.29.0
-	github.com/patrickcping/pingone-go-sdk-v2 v0.10.8
+	github.com/patrickcping/pingone-go-sdk-v2 v0.10.9
 	github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement v0.2.2
 	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.3.1
-	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.4.1
-	github.com/patrickcping/pingone-go-sdk-v2/management v0.30.0
+	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.5.0
+	github.com/patrickcping/pingone-go-sdk-v2/management v0.31.0
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.17.0
 	github.com/patrickcping/pingone-go-sdk-v2/risk v0.11.0
 	github.com/patrickcping/pingone-go-sdk-v2/verify v0.3.1
@@ -36,7 +36,7 @@ require (
 	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/google/go-cmp v0.5.9 // indirect
+	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-checkpoint v0.5.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
