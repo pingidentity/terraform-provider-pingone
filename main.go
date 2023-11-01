@@ -5,7 +5,6 @@ import (
 	"flag"
 	"log"
 
-	_ "github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6/tf6server"
 	"github.com/pingidentity/terraform-provider-pingone/internal/provider"
 )
