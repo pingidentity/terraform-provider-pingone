@@ -342,7 +342,7 @@ data "pingone_role" "%[3]s" {
 
 resource "pingone_group_role_assignment" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  group_id = pingone_group.%[3]s.id
+  group_id       = pingone_group.%[3]s.id
   role_id        = data.pingone_role.%[3]s.id
 
   scope_population_id = pingone_population.%[3]s.id
@@ -370,7 +370,7 @@ data "pingone_role" "%[2]s" {
 
 resource "pingone_group_role_assignment" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  group_id = pingone_group.%[2]s.id
+  group_id       = pingone_group.%[2]s.id
   role_id        = data.pingone_role.%[2]s.id
 
   scope_population_id = pingone_population.%[2]s.id
@@ -392,7 +392,7 @@ data "pingone_role" "%[2]s" {
 
 resource "pingone_group_role_assignment" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  group_id = pingone_group.%[2]s.id
+  group_id       = pingone_group.%[2]s.id
   role_id        = data.pingone_role.%[2]s.id
 
   scope_organization_id = "%[5]s"
@@ -414,7 +414,7 @@ data "pingone_role" "%[2]s" {
 
 resource "pingone_group_role_assignment" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  group_id = pingone_group.%[2]s.id
+  group_id       = pingone_group.%[2]s.id
   role_id        = data.pingone_role.%[2]s.id
 
   scope_environment_id = data.pingone_environment.general_test.id
