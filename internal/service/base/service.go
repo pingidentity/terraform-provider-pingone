@@ -43,6 +43,7 @@ func DataSources() []func() datasource.DataSource {
 		NewAgreementLocalizationDataSource,
 		NewEnvironmentDataSource,
 		NewEnvironmentsDataSource,
+		NewGatewayDataSource,
 		NewOrganizationDataSource,
 		NewPhoneDeliverySettingsListDataSource,
 		NewRoleDataSource,
