@@ -297,8 +297,7 @@ func MinimalSandboxEnvironment(resourceName, licenseID string) string {
 			name = "%[1]s"
 			type = "SANDBOX"
 			license_id = "%[2]s"
-			default_population {
-			}
+
 			service {
 				type = "SSO"
 			}

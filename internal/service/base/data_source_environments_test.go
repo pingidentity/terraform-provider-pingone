@@ -80,8 +80,7 @@ resource "pingone_environment" "%[1]s-1" {
   name       = "%[2]s-1"
   type       = "SANDBOX"
   license_id = "%[3]s"
-  default_population {
-  }
+
   service {
   }
 }
@@ -90,8 +89,7 @@ resource "pingone_environment" "%[1]s-2" {
   name       = "%[2]s-2"
   type       = "SANDBOX"
   license_id = "%[3]s"
-  default_population {
-  }
+
   service {
   }
 }
@@ -100,8 +98,7 @@ resource "pingone_environment" "%[1]s-3" {
   name       = "%[2]s-3"
   type       = "SANDBOX"
   license_id = "%[3]s"
-  default_population {
-  }
+
   service {
   }
 }

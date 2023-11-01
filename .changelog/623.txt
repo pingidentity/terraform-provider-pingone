@@ -1,0 +1,19 @@
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.8 => v0.10.9
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.4.1 => v0.5.0
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.30.0 => v0.31.0
+```
+
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-framework` v1.4.1 => v1.4.2
+```
+
+```release-note:note
+bump `github.com/google/uuid` v1.3.1 => v1.4.0
+```

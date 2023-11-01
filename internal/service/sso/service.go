@@ -40,5 +40,6 @@ func DataSources() []func() datasource.DataSource {
 		NewSchemaDataSource,
 		NewUserDataSource,
 		NewUsersDataSource,
+		NewApplicationDataSource,
 	}
 }
