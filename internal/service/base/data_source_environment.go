@@ -75,6 +75,20 @@ func (r *EnvironmentDataSource) Schema(ctx context.Context, req datasource.Schem
 		"A custom console URL set for the service.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`.",
 	)
 
+	daVinciService, err := model.FindProductByAPICode(management.ENUMPRODUCTTYPE_ONE_DAVINCI)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Cannot find DaVinci product",
+			"In compiling the schema, the DaVinci product could not be found.  This is always a bug in the provider.  Please report this issue to the provider maintainers.",
+		)
+
+		return
+	}
+
+	serviceTagsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A set of tags applied upon environment creation.  Only configurable when the service `type` is `%s`.", daVinciService.ProductCode),
+	).AllowedValuesEnum(management.AllowedEnumBillOfMaterialsProductTagsEnumValues)
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Datasource to retrieve details of a PingOne environment.",
@@ -151,6 +165,15 @@ func (r *EnvironmentDataSource) Schema(ctx context.Context, req datasource.Schem
 							Description:         serviceConsoleUrlDescription.Description,
 							MarkdownDescription: serviceConsoleUrlDescription.MarkdownDescription,
 							Computed:            true,
+						},
+
+						"tags": schema.SetAttribute{
+							Description:         serviceTagsDescription.Description,
+							MarkdownDescription: serviceTagsDescription.MarkdownDescription,
+
+							ElementType: types.StringType,
+
+							Computed: true,
 						},
 					},
 
