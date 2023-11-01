@@ -543,6 +543,48 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 
 }
 
+func (r *EnvironmentResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var data environmentResourceModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+
+	if !data.Services.IsNull() {
+
+		var servicesPlan []environmentServiceModel
+		resp.Diagnostics.Append(data.Services.ElementsAs(ctx, &servicesPlan, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		if len(servicesPlan) > 0 {
+
+			daVinciService, err := model.FindProductByAPICode(management.ENUMPRODUCTTYPE_ONE_DAVINCI)
+			if err != nil {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("service").AtName("tags"),
+					"Cannot find DaVinci product",
+					"In validating the configuration, the DaVinci product could not be found.  This is always a bug in the provider.  Please report this issue to the provider maintainers.",
+				)
+
+				return
+			}
+
+			for _, service := range servicesPlan {
+				if !service.Type.Equal(types.StringValue(daVinciService.ProductCode)) {
+					if !service.Tags.IsNull() {
+						resp.Diagnostics.AddAttributeError(
+							path.Root("service").AtName("tags"),
+							"Invalid configuration",
+							fmt.Sprintf("The `tags` parameter is only configurable where the `type` is set to `%s`.  Please unset the `tags` to an empty set or remove the `tags` parameter for the service.", daVinciService.ProductCode),
+						)
+					}
+				}
+			}
+		}
+	}
+
+}
+
 func (r *EnvironmentResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
