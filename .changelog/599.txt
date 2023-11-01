@@ -1,0 +1,11 @@
+```release-note:enhancement
+`data-source/pingone_role`: Now supports read-only attributes `applicable_to` and `permissions`.
+```
+
+```release-note:enhancement
+`data-source/pingone_role`: Now supports the ability to look up role data by ID.
+```
+
+```release-note:new-data-source
+pingone_roles
+```
