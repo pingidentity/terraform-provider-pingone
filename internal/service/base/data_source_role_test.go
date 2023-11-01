@@ -144,7 +144,7 @@ func TestAccRoleDataSource_ByIdFull(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccRoleDataSourceConfig_ByNameFull(resourceName, "Organization Admin"),
+				Config: testAccRoleDataSourceConfig_ByIdFull(resourceName, "Organization Admin"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "Organization Admin"),
@@ -200,7 +200,7 @@ data "pingone_role" "%[2]s-lookup" {
 }
 
 data "pingone_role" "%[2]s" {
-  role_id = pingone_role.%[2]s-lookup.id
+  role_id = data.pingone_role.%[2]s-lookup.id
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 

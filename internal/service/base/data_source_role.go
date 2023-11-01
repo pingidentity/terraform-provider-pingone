@@ -94,7 +94,7 @@ func (r *RoleDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 				Description:         nameDescription.Description,
 				Optional:            true,
 				Validators: []validator.String{
-					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
+					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("role_id")),
 					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumRoleNameEnumValues)...),
 				},
 			},
@@ -181,7 +181,7 @@ func (r *RoleDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-	var role management.Role
+	var role *management.Role
 
 	if !data.Name.IsNull() {
 
@@ -208,7 +208,8 @@ func (r *RoleDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 			for _, roleItem := range roles {
 
 				if string(roleItem.GetName()) == data.Name.ValueString() {
-					role = roleItem
+					roleItem := roleItem
+					role = &roleItem
 					found = true
 					break
 				}
@@ -250,7 +251,7 @@ func (r *RoleDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&role)...)
+	resp.Diagnostics.Append(data.toState(role)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
