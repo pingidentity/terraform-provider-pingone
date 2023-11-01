@@ -1,0 +1,34 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: "SSO"
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+## Example Usage - Assign Population Scope
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-population.tf") }}
+
+## Example Usage - Assign Environment Scope
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-environment.tf") }}
+
+## Example Usage - Assign Organization Scope
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-organization.tf") }}
+
+~> When defining a role assignment, one of `scope_environment_id`, `scope_organization_id` or `scope_population_id` must be defined.
+
+{{ .SchemaMarkdown | trimspace }}
+
+{{ if .HasImport -}}
+## Import
+
+Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
+
+{{ codefile "shell" (printf "%s%s%s" "examples/resources/" .Name "/import.sh") }}
+{{- end }}
