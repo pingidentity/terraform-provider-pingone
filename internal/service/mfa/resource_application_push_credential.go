@@ -38,7 +38,6 @@ type applicationPushCredentialResourceModel struct {
 }
 
 type applicationPushCredentialFcmResourceModel struct {
-	Key                             types.String `tfsdk:"key"`
 	GoogleServiceAccountCredentials types.String `tfsdk:"google_service_account_credentials"`
 }
 
@@ -75,19 +74,9 @@ func (r *ApplicationPushCredentialResource) Schema(ctx context.Context, req reso
 
 	const attrMinLength = 1
 
-	fcmKeyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that represents the server key of the Firebase cloud messaging service.",
-	).ExactlyOneOf([]string{
-		"key",
-		"google_service_account_credentials",
-	})
-
 	fcmGoogleServiceAccountCredentialsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string in JSON format that represents the service account credentials of Firebase cloud messaging service.",
-	).ExactlyOneOf([]string{
-		"key",
-		"google_service_account_credentials",
-	})
+	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -113,34 +102,10 @@ func (r *ApplicationPushCredentialResource) Schema(ctx context.Context, req reso
 				NestedObject: schema.NestedBlockObject{
 
 					Attributes: map[string]schema.Attribute{
-						"key": schema.StringAttribute{
-							Description:         fcmKeyDescription.Description,
-							MarkdownDescription: fcmKeyDescription.MarkdownDescription,
-							Optional:            true,
-							Sensitive:           true,
-							DeprecationMessage:  "This field is deprecated and will be removed in a future release.  Use `google_service_account_credentials` instead.",
-
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.RequiresReplaceIf(
-									stringplanmodifierinternal.RequiresReplaceIfNowNull(),
-									"The attribute has been previously defined.  To nullify the attribute, this will change the credential type and it must be replaced.",
-									"The attribute has been previously defined.  To nullify the attribute, this will change the credential type and it must be replaced.",
-								),
-							},
-
-							Validators: []validator.String{
-								stringvalidator.LengthAtLeast(attrMinLength),
-								stringvalidator.ExactlyOneOf(
-									path.MatchRelative().AtParent().AtName("key"),
-									path.MatchRelative().AtParent().AtName("google_service_account_credentials"),
-								),
-							},
-						},
-
 						"google_service_account_credentials": schema.StringAttribute{
 							Description:         fcmGoogleServiceAccountCredentialsDescription.Description,
 							MarkdownDescription: fcmGoogleServiceAccountCredentialsDescription.MarkdownDescription,
-							Optional:            true,
+							Required:            true,
 							Sensitive:           true,
 
 							PlanModifiers: []planmodifier.String{
@@ -153,10 +118,6 @@ func (r *ApplicationPushCredentialResource) Schema(ctx context.Context, req reso
 
 							Validators: []validator.String{
 								stringvalidatorinternal.IsParseableJSON(),
-								stringvalidator.ExactlyOneOf(
-									path.MatchRelative().AtParent().AtName("key"),
-									path.MatchRelative().AtParent().AtName("google_service_account_credentials"),
-								),
 							},
 						},
 					},
@@ -538,14 +499,6 @@ func (p *applicationPushCredentialResourceModel) expand(ctx context.Context) (*m
 		}
 
 		fcmPlan := plan[0]
-
-		if !fcmPlan.Key.IsNull() && !fcmPlan.Key.IsUnknown() {
-			data.MFAPushCredentialFCM = mfa.NewMFAPushCredentialFCM(
-				mfa.ENUMMFAPUSHCREDENTIALATTRTYPE_FCM,
-				fcmPlan.Key.ValueString(),
-			)
-		}
-
 		if !fcmPlan.GoogleServiceAccountCredentials.IsNull() && !fcmPlan.GoogleServiceAccountCredentials.IsUnknown() {
 			data.MFAPushCredentialFCMHTTPV1 = mfa.NewMFAPushCredentialFCMHTTPV1(
 				mfa.ENUMMFAPUSHCREDENTIALATTRTYPE_FCM_HTTP_V1,
