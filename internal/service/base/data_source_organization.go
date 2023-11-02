@@ -15,17 +15,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 // Types
-type OrganizationDataSource struct {
-	Client *pingone.Client
-	region model.RegionMapping
-}
+type OrganizationDataSource serviceClientType
 
 type OrganizationDataSourceModel struct {
 	Id                   types.String `tfsdk:"id"`
@@ -125,7 +120,6 @@ func (r *OrganizationDataSource) Configure(ctx context.Context, req datasource.C
 		)
 		return
 	}
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -216,11 +210,11 @@ func (r *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRe
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&organization, r.region)...)
+	resp.Diagnostics.Append(data.toState(&organization)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (p *OrganizationDataSourceModel) toState(v *management.Organization, region model.RegionMapping) diag.Diagnostics {
+func (p *OrganizationDataSourceModel) toState(v *management.Organization) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if v == nil {
