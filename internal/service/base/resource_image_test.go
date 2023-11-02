@@ -87,7 +87,6 @@ func TestAccImage_PNG(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
-			acctest.PreCheckPKCS7Cert(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Image_CheckDestroy,
@@ -140,7 +139,6 @@ func TestAccImage_JPG(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
-			acctest.PreCheckPKCS7Cert(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Image_CheckDestroy,
@@ -174,7 +172,6 @@ func TestAccImage_GIF(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
-			acctest.PreCheckPKCS7Cert(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Image_CheckDestroy,
@@ -221,19 +218,19 @@ func TestAccImage_BadParameters(t *testing.T) {
 			{
 				ResourceName: resourceFullName,
 				ImportState:  true,
-				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/image_id" and must match regex: .*`),
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "/",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/image_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "badformat/badformat",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/image_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})
