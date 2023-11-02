@@ -90,10 +90,36 @@ This resource was previously deprecated and has been removed.  Review the [Upgra
 
 Review the [Upgrade MFA Policies to use FIDO2 with Passkeys](./upgrade-mfa-policy-for-fido2) to ensure all MFA Policies are upgraded in the PingOne tenant prior to upgrading the PingOne provider version to `v1.0.0`.
 
-### `platform` parameter removed
+### `platform` optional parameter removed
 
 This parameter was previously deprecated and has been removed.  Use the `fido2` parameter going forward.
 
-### `security_key` parameter removed
+### `security_key` optional parameter removed
 
 This parameter was previously deprecated and has been removed.  Use the `fido2` parameter going forward.
+
+## Data Source: pingone_organization
+
+### `base_url_agreement_management` computed attribute removed
+
+This parameter was previously deprecated and has been removed.  Consider using the [PingOne Utilities module](https://registry.terraform.io/modules/pingidentity/utils/pingone/latest) going foward.
+
+### `base_url_api` computed attribute removed
+
+This parameter was previously deprecated and has been removed.  Consider using the [PingOne Utilities module](https://registry.terraform.io/modules/pingidentity/utils/pingone/latest) going foward.
+
+### `base_url_apps` computed attribute removed
+
+This parameter was previously deprecated and has been removed.  Consider using the [PingOne Utilities module](https://registry.terraform.io/modules/pingidentity/utils/pingone/latest) going foward.
+
+### `base_url_auth` computed attribute removed
+
+This parameter was previously deprecated and has been removed.  Consider using the [PingOne Utilities module](https://registry.terraform.io/modules/pingidentity/utils/pingone/latest) going foward.
+
+### `base_url_console` computed attribute removed
+
+This parameter was previously deprecated and has been removed.  Consider using the [PingOne Utilities module](https://registry.terraform.io/modules/pingidentity/utils/pingone/latest) going foward.
+
+### `base_url_orchestrate` computed attribute removed
+
+This parameter was previously deprecated and has been removed.  Consider using the [PingOne Utilities module](https://registry.terraform.io/modules/pingidentity/utils/pingone/latest) going foward.
