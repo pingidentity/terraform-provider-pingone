@@ -88,6 +88,12 @@ resource "pingone_branding_theme" "my_awesome_theme" {
 }
 ```
 
+## Resource: pingone_mfa_application_push_credential
+
+### `fcm.key` optional parameter removed
+
+This parameter was previously deprecated and has been removed.  Use the `fcm.google_service_account_credentials` parameter going forward.
+
 ## Resource: pingone_mfa_fido_policy
 
 This resource was previously deprecated and has been removed.  Use the `pingone_mfa_fido2_policy` resource going forward.
