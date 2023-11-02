@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_user`: Fixed ineffectual `initial_password` parameter.
+```

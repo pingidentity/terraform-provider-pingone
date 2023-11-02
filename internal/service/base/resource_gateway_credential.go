@@ -2,9 +2,7 @@ package base
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -12,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -75,7 +74,8 @@ func resourceGatewayCredentialCreate(ctx context.Context, d *schema.ResourceData
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.GatewayCredentialsApi.CreateGatewayCredential(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string)).Execute()
+			fO, fR, fErr := apiClient.GatewayCredentialsApi.CreateGatewayCredential(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string)).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateGatewayCredential",
 		sdk.DefaultCustomError,
@@ -103,7 +103,8 @@ func resourceGatewayCredentialRead(ctx context.Context, d *schema.ResourceData, 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.GatewayCredentialsApi.ReadOneGatewayCredential(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.GatewayCredentialsApi.ReadOneGatewayCredential(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneGatewayCredential",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -145,8 +146,8 @@ func resourceGatewayCredentialDelete(ctx context.Context, d *schema.ResourceData
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.GatewayCredentialsApi.DeleteGatewayCredential(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.GatewayCredentialsApi.DeleteGatewayCredential(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteGatewayCredential",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -160,18 +161,30 @@ func resourceGatewayCredentialDelete(ctx context.Context, d *schema.ResourceData
 }
 
 func resourceGatewayCredentialImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 3
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/gatewayID/gatewayCredentialID\"", d.Id())
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "gateway_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "gateway_credential_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
 	}
 
-	environmentID, gatewayID, gatewayCredentialID := attributes[0], attributes[1], attributes[2]
+	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	if err != nil {
+		return nil, err
+	}
 
-	d.Set("environment_id", environmentID)
-	d.Set("gateway_id", gatewayID)
-	d.SetId(gatewayCredentialID)
+	d.Set("environment_id", attributes["environment_id"])
+	d.Set("gateway_id", attributes["gateway_id"])
+	d.SetId(attributes["gateway_credential_id"])
 
 	resourceGatewayCredentialRead(ctx, d, meta)
 

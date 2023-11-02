@@ -3,84 +3,18 @@ package sso_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
+	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-func testAccCheckIdentityProviderAttributeDestroy(s *terraform.State) error {
-	var ctx = context.Background()
-
-	p1Client, err := acctest.TestClient(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_identity_provider_attribute" {
-			continue
-		}
-
-		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.IdentityProviderAttributesApi.ReadOneIdentityProviderAttribute(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["identity_provider_id"], rs.Primary.ID).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne Identity Provider attribute %s still exists", rs.Primary.ID)
-	}
-
-	return nil
-}
-
-func testAccGetIdentityProviderAttributeIDs(resourceName string, environmentID, identityProviderID, resourceID *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
-		}
-
-		*resourceID = rs.Primary.ID
-		*identityProviderID = rs.Primary.Attributes["identity_provider_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
-
-		return nil
-	}
-}
 
 func TestAccIdentityProviderAttribute_RemovalDrift(t *testing.T) {
 	t.Parallel()
@@ -88,41 +22,61 @@ func TestAccIdentityProviderAttribute_RemovalDrift(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_identity_provider_attribute.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
 	name := resourceName
 
-	var resourceID, identityProviderID, environmentID string
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var identityProviderAttributeID, identityProviderID, environmentID string
+
+	var p1Client *client.Client
+	var ctx = context.Background()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+
+			p1Client = acctest.PreCheckTestClient(ctx, t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckIdentityProviderAttributeDestroy,
+		CheckDestroy:             sso.IdentityProviderAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			// Configure
+			// Test removal of the resource
 			{
 				Config: testAccIdentityProviderAttributeConfig_Minimal(resourceName, name),
-				Check:  testAccGetIdentityProviderAttributeIDs(resourceFullName, &environmentID, &identityProviderID, &resourceID),
+				Check:  sso.IdentityProviderAttribute_GetIDs(resourceFullName, &environmentID, &identityProviderID, &identityProviderAttributeID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-
-					if environmentID == "" || identityProviderID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID, identity provider ID or resource ID cannot be determined. Environment ID: %s, Identity provider ID: %s, Resource ID: %s", environmentID, identityProviderID, resourceID)
-					}
-
-					_, err = apiClient.IdentityProviderAttributesApi.DeleteIdentityProviderAttribute(ctx, environmentID, identityProviderID, resourceID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete identity provider attribute mapping: %v", err)
-					}
+					sso.IdentityProviderAttribute_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, identityProviderID, identityProviderAttributeID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the IDP
+			{
+				Config: testAccIdentityProviderAttributeConfig_Minimal(resourceName, name),
+				Check:  sso.IdentityProviderAttribute_GetIDs(resourceFullName, &environmentID, &identityProviderID, &identityProviderAttributeID),
+			},
+			{
+				PreConfig: func() {
+					sso.IdentityProvider_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, identityProviderID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccIdentityProviderAttributeConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  sso.IdentityProviderAttribute_GetIDs(resourceFullName, &environmentID, &identityProviderID, &identityProviderAttributeID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -142,9 +96,9 @@ func TestAccIdentityProviderAttribute_Full(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccIdentityProviderAttributeConfig_Full(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "identity_provider_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "identity_provider_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
 			resource.TestCheckResourceAttr(resourceFullName, "update", "ALWAYS"),
 			resource.TestCheckResourceAttr(resourceFullName, "value", "${providerAttributes.emailAddress.value}"),
@@ -155,9 +109,9 @@ func TestAccIdentityProviderAttribute_Full(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccIdentityProviderAttributeConfig_Minimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "identity_provider_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "identity_provider_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", "email"),
 			resource.TestCheckResourceAttr(resourceFullName, "update", "EMPTY_ONLY"),
 			resource.TestCheckResourceAttr(resourceFullName, "value", "${providerAttributes.name.givenName}"),
@@ -175,9 +129,12 @@ func TestAccIdentityProviderAttribute_Full(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckIdentityProviderAttributeDestroy,
+		CheckDestroy:             sso.IdentityProviderAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -196,12 +153,44 @@ func TestAccIdentityProviderAttribute_Full(t *testing.T) {
 			fullStep,
 			minimalStep,
 			fullStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["identity_provider_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			{
 				Config:  testAccIdentityProviderAttributeConfig_Full(resourceName, name),
 				Destroy: true,
 			},
 			// Expression
 			expressionStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["identity_provider_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -214,9 +203,12 @@ func TestAccIdentityProviderAttribute_ReservedAttributeName(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckIdentityProviderAttributeDestroy,
+		CheckDestroy:             sso.IdentityProviderAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -238,9 +230,9 @@ func TestAccIdentityProviderAttribute_Core(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccIdentityProviderAttributeConfig_Core_Full(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "identity_provider_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "identity_provider_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", "username"),
 			resource.TestCheckResourceAttr(resourceFullName, "update", "EMPTY_ONLY"),
 			resource.TestCheckResourceAttr(resourceFullName, "value", "${providerAttributes.emailAddress.value}"),
@@ -251,9 +243,9 @@ func TestAccIdentityProviderAttribute_Core(t *testing.T) {
 	updateStep := resource.TestStep{
 		Config: testAccIdentityProviderAttributeConfig_Core_Update(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "identity_provider_id", verify.P1ResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "identity_provider_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", "username"),
 			resource.TestCheckResourceAttr(resourceFullName, "update", "EMPTY_ONLY"),
 			resource.TestCheckResourceAttr(resourceFullName, "value", "${providerAttributes.name.displayName}"),
@@ -275,9 +267,12 @@ func TestAccIdentityProviderAttribute_Core(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckIdentityProviderAttributeDestroy,
+		CheckDestroy:             sso.IdentityProviderAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -290,6 +285,22 @@ func TestAccIdentityProviderAttribute_Core(t *testing.T) {
 			fullStep,
 			updateStep,
 			fullStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["identity_provider_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			{
 				Config:  testAccIdentityProviderAttributeConfig_Core_Full(resourceName, name),
 				Destroy: true,
@@ -304,6 +315,73 @@ func TestAccIdentityProviderAttribute_Core(t *testing.T) {
 			badParameterStep,
 		},
 	})
+}
+
+func TestAccIdentityProviderAttribute_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_identity_provider_attribute.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.IdentityProviderAttribute_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccIdentityProviderAttributeConfig_Minimal(resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+		},
+	})
+}
+
+func testAccIdentityProviderAttributeConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_identity_provider" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+
+  google {
+    client_id     = "testclientid"
+    client_secret = "testclientsecret"
+  }
+}
+
+resource "pingone_identity_provider_attribute" "%[3]s" {
+  environment_id       = pingone_environment.%[2]s.id
+  identity_provider_id = pingone_identity_provider.%[3]s.id
+
+  name   = "email"
+  update = "ALWAYS"
+  value  = "$${providerAttributes.emailAddress.value}"
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccIdentityProviderAttributeConfig_Full(resourceName, name string) string {

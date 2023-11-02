@@ -11,17 +11,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 // Types
-type FlowPoliciesDataSource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type FlowPoliciesDataSource serviceClientType
 
 type FlowPoliciesDataSourceModel struct {
 	EnvironmentId types.String `tfsdk:"environment_id"`
@@ -58,26 +54,26 @@ func (r *FlowPoliciesDataSource) Schema(ctx context.Context, req datasource.Sche
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
-			"environment_id": framework.Attr_LinkID(framework.SchemaAttributeDescription{
-				Description: "The ID of the environment to filter DaVinci flow policies from.",
-			}),
+			"environment_id": framework.Attr_LinkID(framework.SchemaAttributeDescriptionFromMarkdown(
+				"The ID of the environment to filter DaVinci flow policies from.",
+			)),
 
-			"scim_filter": framework.Attr_SCIMFilter(framework.SchemaAttributeDescription{
-				Description: "A SCIM filter to apply to the DaVinci flow policy selection.  A SCIM filter offers the greatest flexibility in filtering DaVinci flow policies.",
-			},
+			"scim_filter": framework.Attr_SCIMFilter(framework.SchemaAttributeDescriptionFromMarkdown(
+				"A SCIM filter to apply to the DaVinci flow policy selection.  A SCIM filter offers the greatest flexibility in filtering DaVinci flow policies.",
+			),
 				filterableAttributes,
 				[]string{"data_filter"},
 			),
 
-			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescription{
-				Description: "The list of resulting IDs of DaVinci flow policies that have been successfully retrieved and filtered.",
-			}),
+			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescriptionFromMarkdown(
+				"The list of resulting IDs of DaVinci flow policies that have been successfully retrieved and filtered.",
+			)),
 		},
 
 		Blocks: map[string]schema.Block{
-			"data_filter": framework.Attr_DataFilter(framework.SchemaAttributeDescription{
-				Description: "Individual data filters to apply to the DaVinci flow policy selection.",
-			},
+			"data_filter": framework.Attr_DataFilter(framework.SchemaAttributeDescriptionFromMarkdown(
+				"Individual data filters to apply to the DaVinci flow policy selection.",
+			),
 				filterableAttributes,
 				[]string{"scim_filter"},
 			),
@@ -101,24 +97,20 @@ func (r *FlowPoliciesDataSource) Configure(ctx context.Context, req datasource.C
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *FlowPoliciesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *FlowPoliciesDataSourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -136,7 +128,7 @@ func (r *FlowPoliciesDataSource) Read(ctx context.Context, req datasource.ReadRe
 	if !data.ScimFilter.IsNull() {
 
 		filterFunction = func() (any, *http.Response, error) {
-			return r.client.FlowPoliciesApi.ReadAllFlowPolicies(ctx, data.EnvironmentId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute()
+			return r.Client.ManagementAPIClient.FlowPoliciesApi.ReadAllFlowPolicies(ctx, data.EnvironmentId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute()
 		}
 
 	} else if !data.DataFilter.IsNull() {
@@ -170,7 +162,7 @@ func (r *FlowPoliciesDataSource) Read(ctx context.Context, req datasource.ReadRe
 		})
 
 		filterFunction = func() (any, *http.Response, error) {
-			return r.client.FlowPoliciesApi.ReadAllFlowPolicies(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
+			return r.Client.ManagementAPIClient.FlowPoliciesApi.ReadAllFlowPolicies(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
 		}
 
 	} else {

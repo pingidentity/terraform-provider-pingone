@@ -2,16 +2,15 @@ package sso
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"regexp"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -70,7 +69,8 @@ func resourceSignOnPolicyCreate(ctx context.Context, d *schema.ResourceData, met
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.SignOnPoliciesApi.CreateSignOnPolicy(ctx, d.Get("environment_id").(string)).SignOnPolicy(signOnPolicy).Execute()
+			fO, fR, fErr := apiClient.SignOnPoliciesApi.CreateSignOnPolicy(ctx, d.Get("environment_id").(string)).SignOnPolicy(signOnPolicy).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateSignOnPolicy",
 		sdk.DefaultCustomError,
@@ -97,7 +97,8 @@ func resourceSignOnPolicyRead(ctx context.Context, d *schema.ResourceData, meta 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.SignOnPoliciesApi.ReadOneSignOnPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.SignOnPoliciesApi.ReadOneSignOnPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneSignOnPolicy",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -141,7 +142,8 @@ func resourceSignOnPolicyUpdate(ctx context.Context, d *schema.ResourceData, met
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.SignOnPoliciesApi.UpdateSignOnPolicy(ctx, d.Get("environment_id").(string), d.Id()).SignOnPolicy(signOnPolicy).Execute()
+			fO, fR, fErr := apiClient.SignOnPoliciesApi.UpdateSignOnPolicy(ctx, d.Get("environment_id").(string), d.Id()).SignOnPolicy(signOnPolicy).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateSignOnPolicy",
 		sdk.DefaultCustomError,
@@ -164,8 +166,8 @@ func resourceSignOnPolicyDelete(ctx context.Context, d *schema.ResourceData, met
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.SignOnPoliciesApi.DeleteSignOnPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.SignOnPoliciesApi.DeleteSignOnPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteSignOnPolicy",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -179,18 +181,25 @@ func resourceSignOnPolicyDelete(ctx context.Context, d *schema.ResourceData, met
 }
 
 func resourceSignOnPolicyImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 2
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/signOnPolicyID\"", d.Id())
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "sign_on_policy_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
 	}
 
-	environmentID, signOnPolicyID := attributes[0], attributes[1]
+	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	if err != nil {
+		return nil, err
+	}
 
-	d.Set("environment_id", environmentID)
-
-	d.SetId(signOnPolicyID)
+	d.Set("environment_id", attributes["environment_id"])
+	d.SetId(attributes["sign_on_policy_id"])
 
 	resourceSignOnPolicyRead(ctx, d, meta)
 

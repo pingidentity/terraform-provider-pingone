@@ -20,10 +20,7 @@ import (
 )
 
 // Types
-type EnvironmentDataSource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type EnvironmentDataSource serviceClientType
 
 type EnvironmentDataSourceModel struct {
 	Id             types.String `tfsdk:"id"`
@@ -77,6 +74,20 @@ func (r *EnvironmentDataSource) Schema(ctx context.Context, req datasource.Schem
 	serviceConsoleUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A custom console URL set for the service.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`.",
 	)
+
+	daVinciService, err := model.FindProductByAPICode(management.ENUMPRODUCTTYPE_ONE_DAVINCI)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Cannot find DaVinci product",
+			"In compiling the schema, the DaVinci product could not be found.  This is always a bug in the provider.  Please report this issue to the provider maintainers.",
+		)
+
+		return
+	}
+
+	serviceTagsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A set of tags applied upon environment creation.  Only configurable when the service `type` is `%s`.", daVinciService.ProductCode),
+	).AllowedValuesEnum(management.AllowedEnumBillOfMaterialsProductTagsEnumValues)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -155,6 +166,15 @@ func (r *EnvironmentDataSource) Schema(ctx context.Context, req datasource.Schem
 							MarkdownDescription: serviceConsoleUrlDescription.MarkdownDescription,
 							Computed:            true,
 						},
+
+						"tags": schema.SetAttribute{
+							Description:         serviceTagsDescription.Description,
+							MarkdownDescription: serviceTagsDescription.MarkdownDescription,
+
+							ElementType: types.StringType,
+
+							Computed: true,
+						},
 					},
 
 					Blocks: map[string]schema.Block{
@@ -199,24 +219,20 @@ func (r *EnvironmentDataSource) Configure(ctx context.Context, req datasource.Co
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *EnvironmentDataSourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -241,7 +257,7 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.EnvironmentsApi.ReadAllEnvironments(ctx).Filter(scimFilter).Execute()
+				return r.Client.ManagementAPIClient.EnvironmentsApi.ReadAllEnvironments(ctx).Filter(scimFilter).Execute()
 			},
 			"ReadAllEnvironments",
 			framework.DefaultCustomError,
@@ -282,7 +298,8 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.EnvironmentsApi.ReadOneEnvironment(ctx, data.EnvironmentId.ValueString()).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.EnvironmentsApi.ReadOneEnvironment(ctx, data.EnvironmentId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneEnvironment",
 			framework.DefaultCustomError,
@@ -308,7 +325,8 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, environment.GetId()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, environment.GetId()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environment.GetId(), fO, fR, fErr)
 		},
 		"ReadOneBillOfMaterials",
 		framework.CustomErrorResourceNotFoundWarning,

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
@@ -24,7 +23,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	boolvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
 	objectvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
@@ -36,10 +34,7 @@ import (
 )
 
 // Types
-type SchemaAttributeResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type SchemaAttributeResource serviceClientType
 
 type SchemaAttributeResourceModelV1 struct {
 	Id               types.String `tfsdk:"id"`
@@ -423,24 +418,20 @@ func (r *SchemaAttributeResource) Configure(ctx context.Context, req resource.Co
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *SchemaAttributeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state SchemaAttributeResourceModelV1
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -454,7 +445,7 @@ func (r *SchemaAttributeResource) Create(ctx context.Context, req resource.Creat
 	}
 
 	// Get the schema ID
-	schema, d := fetchSchemaFromName(ctx, r.client, plan.EnvironmentId.ValueString(), plan.SchemaName.ValueString())
+	schema, d := fetchSchemaFromName(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), plan.SchemaName.ValueString())
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -473,7 +464,8 @@ func (r *SchemaAttributeResource) Create(ctx context.Context, req resource.Creat
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.SchemasApi.CreateAttribute(ctx, plan.EnvironmentId.ValueString(), schema.GetId()).SchemaAttribute(*schemaAttribute).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.SchemasApi.CreateAttribute(ctx, plan.EnvironmentId.ValueString(), schema.GetId()).SchemaAttribute(*schemaAttribute).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateAttribute",
 		framework.DefaultCustomError,
@@ -489,14 +481,14 @@ func (r *SchemaAttributeResource) Create(ctx context.Context, req resource.Creat
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(state.toState(response, schema)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
 func (r *SchemaAttributeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *SchemaAttributeResourceModelV1
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -515,7 +507,8 @@ func (r *SchemaAttributeResource) Read(ctx context.Context, req resource.ReadReq
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.SchemasApi.ReadOneAttribute(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.SchemasApi.ReadOneAttribute(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneAttribute",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -532,15 +525,38 @@ func (r *SchemaAttributeResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
+	var schemaResponse *management.Schema
+	resp.Diagnostics.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			fO, fR, fErr := r.Client.ManagementAPIClient.SchemasApi.ReadOneSchema(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+		},
+		"ReadOneSchema",
+		framework.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
+		&schemaResponse,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Remove from state if resource is not found
+	if schemaResponse == nil {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response)...)
+	resp.Diagnostics.Append(data.toState(response, schemaResponse)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state SchemaAttributeResourceModelV1
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -554,7 +570,7 @@ func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.Updat
 	}
 
 	// Get the schema ID
-	schema, d := fetchSchemaFromName(ctx, r.client, plan.EnvironmentId.ValueString(), plan.SchemaName.ValueString())
+	schema, d := fetchSchemaFromName(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), plan.SchemaName.ValueString())
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -573,7 +589,8 @@ func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.Updat
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.SchemasApi.UpdateAttributePut(ctx, plan.EnvironmentId.ValueString(), schema.GetId(), plan.Id.ValueString()).SchemaAttribute(*schemaAttribute).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.SchemasApi.UpdateAttributePut(ctx, plan.EnvironmentId.ValueString(), schema.GetId(), plan.Id.ValueString()).SchemaAttribute(*schemaAttribute).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateAttributePut",
 		framework.DefaultCustomError,
@@ -588,14 +605,14 @@ func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.Updat
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(state.toState(response, schema)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
 func (r *SchemaAttributeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *SchemaAttributeResourceModelV1
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -613,8 +630,8 @@ func (r *SchemaAttributeResource) Delete(ctx context.Context, req resource.Delet
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.SchemasApi.DeleteAttribute(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
+			fR, fErr := r.Client.ManagementAPIClient.SchemasApi.DeleteAttribute(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteAttribute",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -628,19 +645,41 @@ func (r *SchemaAttributeResource) Delete(ctx context.Context, req resource.Delet
 }
 
 func (r *SchemaAttributeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 2
-	attributes := strings.SplitN(req.ID, "/", splitLength)
 
-	if len(attributes) != splitLength {
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "schema_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:     "schema_attribute_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/schema_attribute_id\"", req.ID),
+			err.Error(),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
+
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
 func (p *SchemaAttributeResourceModelV1) expand(ctx context.Context, action string) (*management.SchemaAttribute, diag.Diagnostics) {
@@ -752,7 +791,7 @@ func (p *SchemaAttributeResourceModelV1) expand(ctx context.Context, action stri
 	return &data, diags
 }
 
-func (p *SchemaAttributeResourceModelV1) toState(apiObject *management.SchemaAttribute) diag.Diagnostics {
+func (p *SchemaAttributeResourceModelV1) toState(apiObject *management.SchemaAttribute, schemaApiObject *management.Schema) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -784,6 +823,7 @@ func (p *SchemaAttributeResourceModelV1) toState(apiObject *management.SchemaAtt
 
 	p.Required = framework.BoolOkToTF(apiObject.GetRequiredOk())
 	p.SchemaId = framework.StringOkToTF(apiObject.Schema.GetIdOk())
+	p.SchemaName = framework.StringOkToTF(schemaApiObject.GetNameOk())
 	p.SchemaType = framework.EnumOkToTF(apiObject.GetSchemaTypeOk())
 	p.Type = framework.EnumOkToTF(apiObject.GetTypeOk())
 	p.Unique = framework.BoolOkToTF(apiObject.GetUniqueOk())

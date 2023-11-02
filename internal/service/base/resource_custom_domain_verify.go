@@ -19,10 +19,7 @@ import (
 )
 
 // Types
-type CustomDomainVerifyResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type CustomDomainVerifyResource serviceClientType
 
 type CustomDomainVerifyResourceModel struct {
 	Id             types.String   `tfsdk:"id"`
@@ -109,24 +106,20 @@ func (r *CustomDomainVerifyResource) Configure(ctx context.Context, req resource
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *CustomDomainVerifyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state CustomDomainVerifyResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -147,7 +140,8 @@ func (r *CustomDomainVerifyResource) Create(ctx context.Context, req resource.Cr
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.CustomDomainsApi.UpdateDomain(ctx, plan.EnvironmentId.ValueString(), plan.CustomDomainId.ValueString()).ContentType(management.ENUMCUSTOMDOMAINPOSTHEADER_DOMAIN_NAME_VERIFYJSON).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.CustomDomainsApi.UpdateDomain(ctx, plan.EnvironmentId.ValueString(), plan.CustomDomainId.ValueString()).ContentType(management.ENUMCUSTOMDOMAINPOSTHEADER_DOMAIN_NAME_VERIFYJSON).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateDomain",
 		func(error model.P1Error) diag.Diagnostics {
@@ -197,7 +191,7 @@ func (r *CustomDomainVerifyResource) Create(ctx context.Context, req resource.Cr
 func (r *CustomDomainVerifyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *CustomDomainVerifyResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -216,7 +210,8 @@ func (r *CustomDomainVerifyResource) Read(ctx context.Context, req resource.Read
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.CustomDomainsApi.ReadOneDomain(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.CustomDomainsApi.ReadOneDomain(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneDomain",
 		framework.CustomErrorResourceNotFoundWarning,

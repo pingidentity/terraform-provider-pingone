@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -12,6 +11,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -125,7 +125,8 @@ func resourcePingOneRoleAssignmentUserCreate(ctx context.Context, d *schema.Reso
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.UserRoleAssignmentsApi.CreateUserRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("user_id").(string)).RoleAssignment(userRoleAssignment).Execute()
+			fO, fR, fErr := apiClient.UserRoleAssignmentsApi.CreateUserRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("user_id").(string)).RoleAssignment(userRoleAssignment).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateUserRoleAssignment",
 		func(error model.P1Error) diag.Diagnostics {
@@ -164,7 +165,8 @@ func resourcePingOneRoleAssignmentUserRead(ctx context.Context, d *schema.Resour
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.UserRoleAssignmentsApi.ReadOneUserRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("user_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.UserRoleAssignmentsApi.ReadOneUserRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("user_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneUserRoleAssignment",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -222,8 +224,8 @@ func resourcePingOneRoleAssignmentUserDelete(ctx context.Context, d *schema.Reso
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.UserRoleAssignmentsApi.DeleteUserRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("user_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.UserRoleAssignmentsApi.DeleteUserRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("user_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteUserRoleAssignment",
 		sdk.DefaultCustomError,
@@ -237,18 +239,30 @@ func resourcePingOneRoleAssignmentUserDelete(ctx context.Context, d *schema.Reso
 }
 
 func resourcePingOneRoleAssignmentUserImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 3
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/userID/roleAssignmentID\"", d.Id())
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "user_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "role_assignment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
 	}
 
-	environmentID, userID, roleAssignmentID := attributes[0], attributes[1], attributes[2]
+	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	if err != nil {
+		return nil, err
+	}
 
-	d.Set("environment_id", environmentID)
-	d.Set("user_id", userID)
-	d.SetId(roleAssignmentID)
+	d.Set("environment_id", attributes["environment_id"])
+	d.Set("user_id", attributes["user_id"])
+	d.SetId(attributes["role_assignment_id"])
 
 	resourcePingOneRoleAssignmentUserRead(ctx, d, meta)
 

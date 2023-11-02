@@ -5,15 +5,11 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-func testAccCheckFlowPolicyDestroy(s *terraform.State) error {
-	return nil
-}
 
 func TestAccFlowPolicyDataSource_ByIDFull(t *testing.T) {
 	t.Parallel()
@@ -23,21 +19,24 @@ func TestAccFlowPolicyDataSource_ByIDFull(t *testing.T) {
 	dataSourceFullName := fmt.Sprintf("data.%s", resourceFullName)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckFlowPolicyDestroy,
+		CheckDestroy:             sso.FlowPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccFlowPolicyDataSourceConfig_ByIDFull(resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1DVResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "name", regexp.MustCompile(`^Test Flow Policy( 2)?$`)),
 					resource.TestCheckResourceAttr(dataSourceFullName, "enabled", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "davinci_application.#", "1"),
-					resource.TestMatchResourceAttr(dataSourceFullName, "davinci_application.0.id", verify.P1DVResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "davinci_application.0.id", verify.P1DVResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "davinci_application.0.name", regexp.MustCompile(`^Test Application( 2)?$`)),
 					resource.TestCheckResourceAttr(dataSourceFullName, "trigger.#", "1"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "trigger.0.type", "AUTHENTICATION"),
@@ -53,9 +52,12 @@ func TestAccFlowPolicyDataSource_NotFound(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckFlowPolicyDestroy,
+		CheckDestroy:             sso.FlowPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{

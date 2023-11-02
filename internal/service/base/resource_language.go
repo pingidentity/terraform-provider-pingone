@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 	"golang.org/x/exp/slices"
@@ -83,7 +83,8 @@ func resourceLanguageCreate(ctx context.Context, d *schema.ResourceData, meta in
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.LanguagesApi.CreateLanguage(ctx, d.Get("environment_id").(string)).Language(language).Execute()
+			fO, fR, fErr := apiClient.LanguagesApi.CreateLanguage(ctx, d.Get("environment_id").(string)).Language(language).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateLanguage",
 		sdk.DefaultCustomError,
@@ -110,7 +111,8 @@ func resourceLanguageRead(ctx context.Context, d *schema.ResourceData, meta inte
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.LanguagesApi.ReadOneLanguage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.LanguagesApi.ReadOneLanguage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneLanguage",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -162,8 +164,8 @@ func resourceLanguageDelete(ctx context.Context, d *schema.ResourceData, meta in
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.LanguagesApi.DeleteLanguage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.LanguagesApi.DeleteLanguage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteLanguage",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -177,18 +179,25 @@ func resourceLanguageDelete(ctx context.Context, d *schema.ResourceData, meta in
 }
 
 func resourceLanguageImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 2
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/languageID\"", d.Id())
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "language_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
 	}
 
-	environmentID, languageID := attributes[0], attributes[1]
+	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	if err != nil {
+		return nil, err
+	}
 
-	d.Set("environment_id", environmentID)
-
-	d.SetId(languageID)
+	d.Set("environment_id", attributes["environment_id"])
+	d.SetId(attributes["language_id"])
 
 	resourceLanguageRead(ctx, d, meta)
 

@@ -47,6 +47,7 @@ Read-Only:
 
 - `bookmark` (Block Set) Custom bookmark links for the service. (see [below for nested schema](#nestedblock--service--bookmark))
 - `console_url` (String) A custom console URL set for the service.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`.
+- `tags` (Set of String) A set of tags applied upon environment creation.  Only configurable when the service `type` is `DaVinci`.  Options are `DAVINCI_MINIMAL`.
 - `type` (String) The service type applied to the environment.  Valid options are `APIIntelligence`, `Authorize`, `Credentials`, `DaVinci`, `MFA`, `PingAccess`, `PingAuthorize`, `PingCentral`, `PingDirectory`, `PingFederate`, `PingID`, `Risk`, `SSO`, `Verify`.
 
 <a id="nestedblock--service--bookmark"></a>

@@ -30,23 +30,27 @@ data "pingone_credential_type" "example_by_id" {
 
 - `card_design_template` (String) An SVG formatted image containing placeholders for the credentials fields that need to be displayed in the image.
 - `card_type` (String) A descriptor of the credential type. Can be non-identity types such as proof of employment or proof of insurance.
+- `created_at` (String) Date and time the object was created.
 - `description` (String) A description of the credential type.
 - `id` (String) The ID of this resource.
+- `issuer_id` (String) Identifier (UUID) of the credential issuer.
 - `metadata` (Attributes) An object that contains the names, data types, and other metadata related to the credentia (see [below for nested schema](#nestedatt--metadata))
+- `revoke_on_delete` (Boolean) Specifies whether a user's issued verifiable credentials are automatically revoked when the credential type is deleted.
 - `title` (String) Title of the credential.
+- `updated_at` (String) Date and time the object was updated. Can be null.
 
 <a id="nestedatt--metadata"></a>
 ### Nested Schema for `metadata`
 
 Read-Only:
 
-- `background_image` (String) A base64 encoded image of the background to show in the credential.
+- `background_image` (String) URL or fully qualified path to the image file used for the credential background.
 - `bg_opacity_percent` (Number) Percent opacity of the background image in the credential.
 - `card_color` (String) Color to show on the credential.
 - `columns` (Number) Number of columns to organize the fields displayed on the credential.
 - `description` (String) Description of the credential.
 - `fields` (Attributes List) Array of objects representing the credential fields. (see [below for nested schema](#nestedatt--metadata--fields))
-- `logo_image` (String) A base64 encoded image of the logo to show in the credential.
+- `logo_image` (String) URL or fully qualified path to the image file used for the credential logo.
 - `name` (String) Name of the credential.
 - `text_color` (String) Color of the text to show on the credential.
 - `version` (Number) Version of this credential.
@@ -57,7 +61,8 @@ Read-Only:
 Read-Only:
 
 - `attribute` (String) Name of the PingOne Directory attribute. Present if field.type is Directory Attribute.
-- `id` (String) Identifier of the field formatted as “<fields.type> -> <fields.title>.
+- `file_support` (String) Specifies how an image is stored in the credential field.
+- `id` (String) Identifier of the field object.
 - `is_visible` (Boolean) Specifies whether the field should be visible to viewers of the credential.
 - `title` (String) Descriptive text when showing the field.
 - `type` (String) Type of data in the field.

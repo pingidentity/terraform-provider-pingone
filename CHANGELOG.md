@@ -1,14 +1,195 @@
-## 0.19.1 (Unreleased)
+## 0.23.0 (Unreleased)
 
 NOTES:
 
+* Updated documentation examples to remove reference to deprecated parameters/attributes. ([#603](https://github.com/pingidentity/terraform-provider-pingone/issues/603))
+* `data-source/pingone_role`: Migrated to plugin framework. ([#592](https://github.com/pingidentity/terraform-provider-pingone/issues/592))
+* `data-source/pingone_trusted_email_domain`: Corrected documentation descriptions. ([#593](https://github.com/pingidentity/terraform-provider-pingone/issues/593))
+* `resource/pingone_environment`: Deprecated the `default_population` block and `default_population_id` attribute in favour of the new `pingone_population_default` resource. ([#485](https://github.com/pingidentity/terraform-provider-pingone/issues/485))
+* `resource/pingone_environment`: Removed the ability to import the resource including a default population.  Default populations are now managed with the `pingone_population_default` resource. ([#485](https://github.com/pingidentity/terraform-provider-pingone/issues/485))
+* bump `github.com/google/uuid` v1.3.1 => v1.4.0 ([#623](https://github.com/pingidentity/terraform-provider-pingone/issues/623))
+* bump `github.com/hashicorp/terraform-plugin-framework` v1.4.1 => v1.4.2 ([#623](https://github.com/pingidentity/terraform-provider-pingone/issues/623))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.4.1 => v0.5.0 ([#623](https://github.com/pingidentity/terraform-provider-pingone/issues/623))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.30.0 => v0.31.0 ([#623](https://github.com/pingidentity/terraform-provider-pingone/issues/623))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.8 => v0.10.9 ([#623](https://github.com/pingidentity/terraform-provider-pingone/issues/623))
+
+FEATURES:
+
+* **New Data Source:** `pingone_application` ([#598](https://github.com/pingidentity/terraform-provider-pingone/issues/598))
+* **New Data Source:** `pingone_gateway` ([#613](https://github.com/pingidentity/terraform-provider-pingone/issues/613))
+* **New Data Source:** `pingone_roles` ([#599](https://github.com/pingidentity/terraform-provider-pingone/issues/599))
+* **New Resource:** `pingone_group_role_assignment` ([#602](https://github.com/pingidentity/terraform-provider-pingone/issues/602))
+
+ENHANCEMENTS:
+
+* `data-source/pingone_environment`: Added `service.tags` computed attribute that signifies whether the selected PingOne environment was created without example/demo configuration in the DaVinci service. ([#620](https://github.com/pingidentity/terraform-provider-pingone/issues/620))
+* `data-source/pingone_role`: Now supports read-only attributes `applicable_to` and `permissions`. ([#599](https://github.com/pingidentity/terraform-provider-pingone/issues/599))
+* `data-source/pingone_role`: Now supports the ability to look up role data by ID. ([#599](https://github.com/pingidentity/terraform-provider-pingone/issues/599))
+* `resource/pingone_environment`: Added `service.tags` parameter allows for a creation of an environment without example/demo configuration in the DaVinci service. ([#620](https://github.com/pingidentity/terraform-provider-pingone/issues/620))
+
+## 0.22.0 (17 October 2023)
+
+NOTES:
+
+* `data-source/pingone_population`: Corrected deprecated retry method. ([#574](https://github.com/pingidentity/terraform-provider-pingone/issues/574))
+* `resource/pingone_certificate`: Adjusted documentation for PEM certificate import. ([#572](https://github.com/pingidentity/terraform-provider-pingone/issues/572))
+* `resource/pingone_environment`: Corrected deprecated retry method. ([#574](https://github.com/pingidentity/terraform-provider-pingone/issues/574))
+* `resource/pingone_key`: Migrated to plugin framework. ([#575](https://github.com/pingidentity/terraform-provider-pingone/issues/575))
+* `resource/pingone_risk_predictor`: Adjust code to no longer use deprecated API parameter `composition`.  Full support of multiple risk composition policies is planned for a future release. ([#590](https://github.com/pingidentity/terraform-provider-pingone/issues/590))
+* `resource/pingone_system_application`: Corrected deprecated retry method. ([#574](https://github.com/pingidentity/terraform-provider-pingone/issues/574))
+* bump `github.com/hashicorp/terraform-plugin-framework` v1.4.0 => v1.4.1 ([#588](https://github.com/pingidentity/terraform-provider-pingone/issues/588))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement` v0.2.1 => v0.2.2 ([#588](https://github.com/pingidentity/terraform-provider-pingone/issues/588))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.3.0 => v0.3.1 ([#588](https://github.com/pingidentity/terraform-provider-pingone/issues/588))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.4.0 => v0.4.1 ([#588](https://github.com/pingidentity/terraform-provider-pingone/issues/588))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.29.0 => v0.30.0 ([#588](https://github.com/pingidentity/terraform-provider-pingone/issues/588))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.16.0 => v0.17.0 ([#588](https://github.com/pingidentity/terraform-provider-pingone/issues/588))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` v0.10.0 => v0.11.0 ([#588](https://github.com/pingidentity/terraform-provider-pingone/issues/588))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/verify` v0.3.0 => v0.3.1 ([#588](https://github.com/pingidentity/terraform-provider-pingone/issues/588))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.7 => v0.10.8 ([#588](https://github.com/pingidentity/terraform-provider-pingone/issues/588))
+
+ENHANCEMENTS:
+
+* `data_source/pingone_credential_type`: Added support for image attributes in a verifiable credential configuration. ([#579](https://github.com/pingidentity/terraform-provider-pingone/issues/579))
+* `resource/pingone_application`: Added pushed authorization request (PAR) support for OIDC configurations. ([#583](https://github.com/pingidentity/terraform-provider-pingone/issues/583))
+* `resource/pingone_credential_type`: Added support for image attributes in a verifiable credential configuration. ([#579](https://github.com/pingidentity/terraform-provider-pingone/issues/579))
+
+BUG FIXES:
+
+* Fixed blocking error on plan on multiple resources when the parent PingOne environment is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
+* `resource/pingone_application_resource_grant`: Fixed inability to apply application grants to the Self-Service and Portal system applications. ([#573](https://github.com/pingidentity/terraform-provider-pingone/issues/573))
+* `resource/pingone_application_role_assignment`: Fixed blocking error on plan when the parent application is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
+* `resource/pingone_gateway`: Fixed incorrect unchanged plan when updating the `user_type` parameter. ([#586](https://github.com/pingidentity/terraform-provider-pingone/issues/586))
+* `resource/pingone_resource_attribute`: Fixed blocking error on delete when the parent PingOne resource is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
+* `resource/pingone_resource_attribute`: Fixed blocking error on plan when the parent PingOne resource is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
+* `resource/pingone_resource_scope_openid`: Fixed blocking error on delete when the parent PingOne resource is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
+* `resource/pingone_resource_scope_openid`: Fixed blocking error on plan when the parent PingOne resource is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
+* `resource/pingone_resource_scope_openid`: Fixed missing `resource_id` on import. ([#585](https://github.com/pingidentity/terraform-provider-pingone/issues/585))
+* `resource/pingone_resource_scope_pingone_api`: Fixed blocking error on delete when the parent PingOne resource is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
+* `resource/pingone_resource_scope_pingone_api`: Fixed blocking error on plan when the parent PingOne resource is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
+* `resource/pingone_resource_scope_pingone_api`: Fixed missing `resource_id` on import. ([#585](https://github.com/pingidentity/terraform-provider-pingone/issues/585))
+* `resource/pingone_resource_scope`: Fixed blocking error on plan when the parent PingOne resource is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
+* `resource/pingone_system_application`: Fixed blocking error on plan when the parent environment is removed outside of Terraform. ([#578](https://github.com/pingidentity/terraform-provider-pingone/issues/578))
+
+## 0.21.0 (18 September 2023)
+
+NOTES:
+
+* `data-source/pingone_organization`: Deprecated the calculated attributes `base_url_agreement_management`, `base_url_api`, `base_url_apps`, `base_url_auth`, `base_url_console`, `base_url_orchestrate`.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality. ([#564](https://github.com/pingidentity/terraform-provider-pingone/issues/564))
+* `data-source/pingone_resource_scope`: Migrated to plugin framework. ([#555](https://github.com/pingidentity/terraform-provider-pingone/issues/555))
+* `resource/pingone_application_resource_grant`: Deprecated the `resource_id` parameter in favour of the `resource_name` parameter to avoid dependency on the `pingone_resource` data-source. The `resource_id` parameter will be made read-only in a future release. ([#555](https://github.com/pingidentity/terraform-provider-pingone/issues/555))
+* `resource/pingone_application_resource_grant`: Deprecated the `scopes` parameter in favour of the `scope_names` parameter to avoid dependency on the `pingone_resource_scope` data-source. The `scopes` parameter will be made read-only in a future release. ([#555](https://github.com/pingidentity/terraform-provider-pingone/issues/555))
+* `resource/pingone_group_nesting`: Migrated to plugin framework. ([#543](https://github.com/pingidentity/terraform-provider-pingone/issues/543))
+* `resource/pingone_group`: Migrated to plugin framework. ([#543](https://github.com/pingidentity/terraform-provider-pingone/issues/543))
+* `resource/pingone_resource_scope_openid`: Migrated to plugin framework. ([#555](https://github.com/pingidentity/terraform-provider-pingone/issues/555))
+* `resource/pingone_resource_scope_pingone_api`: Migrated to plugin framework. ([#555](https://github.com/pingidentity/terraform-provider-pingone/issues/555))
+* `resource/pingone_resource_scope`: Migrated to plugin framework. ([#555](https://github.com/pingidentity/terraform-provider-pingone/issues/555))
+* bump `github.com/hashicorp/terraform-plugin-framework` v1.3.5 => v1.4.0 ([#568](https://github.com/pingidentity/terraform-provider-pingone/issues/568))
+* bump `github.com/hashicorp/terraform-plugin-go` v0.18.0 => v0.19.0 ([#568](https://github.com/pingidentity/terraform-provider-pingone/issues/568))
+* bump `github.com/hashicorp/terraform-plugin-mux` v0.11.2 => v0.12.0 ([#568](https://github.com/pingidentity/terraform-provider-pingone/issues/568))
+* bump `github.com/hashicorp/terraform-plugin-sdk/v2` v2.28.0 => v2.29.0 ([#568](https://github.com/pingidentity/terraform-provider-pingone/issues/568))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.27.0 => v0.28.0 ([#556](https://github.com/pingidentity/terraform-provider-pingone/issues/556))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.28.0 => v0.29.0 ([#568](https://github.com/pingidentity/terraform-provider-pingone/issues/568))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` v0.9.0 => v0.10.0 ([#568](https://github.com/pingidentity/terraform-provider-pingone/issues/568))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.5 => v0.10.6 ([#556](https://github.com/pingidentity/terraform-provider-pingone/issues/556))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.6 => v0.10.7 ([#568](https://github.com/pingidentity/terraform-provider-pingone/issues/568))
+
+ENHANCEMENTS:
+
+* `resource/pingone_application`: Added support ability to require a signed request object for OIDC applications. ([#559](https://github.com/pingidentity/terraform-provider-pingone/issues/559))
+* `resource/pingone_application`: Added support for additional refresh token replay protection configuration on OIDC applications. ([#560](https://github.com/pingidentity/terraform-provider-pingone/issues/560))
+* `resource/pingone_application`: Added support for whether `requestedAuthnContext` is taken into account in SAML application policy decision-making. ([#542](https://github.com/pingidentity/terraform-provider-pingone/issues/542))
+* `resource/pingone_risk_predictor`: Added support for Bot detection and Suspicious device predictor types. ([#558](https://github.com/pingidentity/terraform-provider-pingone/issues/558))
+* `resource/pingone_system_application`: Support the ability to apply active theme configuration to the PingOne Portal and Self-Service applications. ([#541](https://github.com/pingidentity/terraform-provider-pingone/issues/541))
+
+BUG FIXES:
+
+* `resource/pingone_user`: Fixed ineffectual `initial_password` parameter. ([#566](https://github.com/pingidentity/terraform-provider-pingone/issues/566))
+
+## 0.20.1 (05 September 2023)
+
+NOTES:
+
+* bump `github.com/golangci/golangci-lint` v1.54.1 => v1.54.2 ([#538](https://github.com/pingidentity/terraform-provider-pingone/issues/538))
+* bump `github.com/google/uuid` v1.3.0 => v1.3.1 ([#538](https://github.com/pingidentity/terraform-provider-pingone/issues/538))
+* bump `github.com/hashicorp/terraform-plugin-framework-validators` v0.11.0 => v0.12.0 ([#538](https://github.com/pingidentity/terraform-provider-pingone/issues/538))
+* bump `github.com/hashicorp/terraform-plugin-sdk/v2` v2.27.0 => v2.28.0 ([#538](https://github.com/pingidentity/terraform-provider-pingone/issues/538))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.26.0 => v0.27.0 ([#538](https://github.com/pingidentity/terraform-provider-pingone/issues/538))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.4 => v0.10.5 ([#538](https://github.com/pingidentity/terraform-provider-pingone/issues/538))
+* bump `github.com/terraform-linters/tflint` v0.47.0 => v0.48.0 ([#538](https://github.com/pingidentity/terraform-provider-pingone/issues/538))
+
+BUG FIXES:
+
+* `resource/pingone_environment`: Fixed "Incompatible environment region for the organization tenant" error when the `region` parameter is defaulted from the client connection. ([#535](https://github.com/pingidentity/terraform-provider-pingone/issues/535))
+
+## 0.20.0 (29 August 2023)
+
+NOTES:
+
+* Code optimisation for all resources and data sources to remove redundant code. ([#507](https://github.com/pingidentity/terraform-provider-pingone/issues/507))
+* Optimised code and add input validation to import resource state for every resource. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_credential_issuer_profile`: Removal of redundant code. ([#518](https://github.com/pingidentity/terraform-provider-pingone/issues/518))
+* `resource/pingone_credential_type`: Improved the `credential_type` documentation example. Corrected the placement of `card_design_template` within the example, and clarified the usage of `pingone_image` resource to assign the `background_image` and `logo_image` values. ([#518](https://github.com/pingidentity/terraform-provider-pingone/issues/518))
+* `resource/pingone_sign_on_policy_action`: Fix potential "slice out of bounds" issues. ([#525](https://github.com/pingidentity/terraform-provider-pingone/issues/525))
+* bump `github.com/hashicorp/terraform-plugin-framework` v1.3.4 => v1.3.5 ([#524](https://github.com/pingidentity/terraform-provider-pingone/issues/524))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.3.1 => v0.4.0 ([#524](https://github.com/pingidentity/terraform-provider-pingone/issues/524))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.3 => v0.10.4 ([#524](https://github.com/pingidentity/terraform-provider-pingone/issues/524))
+
+FEATURES:
+
+* **New Data Source:** `pingone_verify_voice_phrase` ([#512](https://github.com/pingidentity/terraform-provider-pingone/issues/512))
+* **New Data Source:** `pingone_verify_voice_phrase_content` ([#512](https://github.com/pingidentity/terraform-provider-pingone/issues/512))
+* **New Data Source:** `pingone_verify_voice_phrase_contents` ([#512](https://github.com/pingidentity/terraform-provider-pingone/issues/512))
+* **New Resource:** `pingone_verify_voice_phrase` ([#512](https://github.com/pingidentity/terraform-provider-pingone/issues/512))
+* **New Resource:** `pingone_verify_voice_phrase_content` ([#512](https://github.com/pingidentity/terraform-provider-pingone/issues/512))
+
+ENHANCEMENTS:
+
+* `data-source/pingone_credential_type`: Now supports `revoke_on_delete`, `issuer_id`, `created_at`, and `updated_at` in the datasource response. ([#518](https://github.com/pingidentity/terraform-provider-pingone/issues/518))
+* `data-source/pingone_user` Enhance the user schema with the full attribute model. ([#467](https://github.com/pingidentity/terraform-provider-pingone/issues/467))
+* `resource/pingone_credential_type`: Now supports `revoke_on_delete` configuration option. Read only attributes `issuer_id`, `created_at`, and `updated_at` are available in state. ([#518](https://github.com/pingidentity/terraform-provider-pingone/issues/518))
+* `resource/pingone_user` Enhance the user schema with the full attribute model. ([#467](https://github.com/pingidentity/terraform-provider-pingone/issues/467))
+* `resource/pingone_verify_policy`: Now supports `voice` configuration option enabling voice verification. ([#512](https://github.com/pingidentity/terraform-provider-pingone/issues/512))
+
+BUG FIXES:
+
+* `resource/pingone_agreement_localization_enable`: Fixed error when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_agreement_localization_revision`: Fixed `Cannot import non-existent remote object` error when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_agreement_localization`: Fixed missing `language_id` parameter value when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_application_attribute_mapping`: Fixed `Provider produced inconsistent result after apply` error when attempting to remove the previously configured `saml_subject_nameformat` parameter value from the `saml_subject` core attribute. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_application_attribute_mapping`: Fixed missing `saml_subject_nameformat` parameter value when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_application_sign_on_policy_assignment`: Fixed missing `sign_on_policy_id` parameter value when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_branding_theme_default`: Fixed error when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_credential_issuer_profile`: Corrected `created_at` attribute value. ([#518](https://github.com/pingidentity/terraform-provider-pingone/issues/518))
+* `resource/pingone_group_nesting`: Fixed missing `nested_group_id` parameter value when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_language_update`: Fixed missing `language_id` parameter value when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_mfa_settings`: Fixed `Not Found` error when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_notification_template_content`: Fixed missing `locale` parameter value when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_phone_delivery_settings`: Fixed `Value Conversion Error` error when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_resource_schema_attribute`: Fixed undefined response type error when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_resource_scope_openid`: Fixed panic error when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_resource_scope_pingone_api`: Fixed panic error when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_risk_predictor`: Fixed missing `predictor_composite.composition.condition_json` parameter value when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_schema_attribute`: Fixed missing `schema_name` parameter value when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+* `resource/pingone_system_application`: Fixed validation error when attempting to import resource state. ([#520](https://github.com/pingidentity/terraform-provider-pingone/issues/520))
+
+## 0.19.1 (16 August 2023)
+
+NOTES:
+
+* Code optimisation for all resources and data sources to remove duplicate service client code. ([#511](https://github.com/pingidentity/terraform-provider-pingone/issues/511))
 * `resource/pingone_custom_domain_ssl`: Migrated to plugin framework. ([#506](https://github.com/pingidentity/terraform-provider-pingone/issues/506))
 * `resource/pingone_custom_domain_verify`: Migrated to plugin framework. ([#506](https://github.com/pingidentity/terraform-provider-pingone/issues/506))
 * `resource/pingone_custom_domain`: Migrated to plugin framework. ([#506](https://github.com/pingidentity/terraform-provider-pingone/issues/506))
 * `resource/pingone_trusted_email_domain`: Migrated to plugin framework. ([#508](https://github.com/pingidentity/terraform-provider-pingone/issues/508))
+* `resource/pingone_webhook`: Migrated to plugin framework. ([#505](https://github.com/pingidentity/terraform-provider-pingone/issues/505))
+* bump `github.com/golangci/golangci-lint` v1.53.3 => v1.54.1 ([#515](https://github.com/pingidentity/terraform-provider-pingone/issues/515))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.3.0 => v0.3.1 ([#515](https://github.com/pingidentity/terraform-provider-pingone/issues/515))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.25.0 => v0.26.0 ([#515](https://github.com/pingidentity/terraform-provider-pingone/issues/515))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.2 => v0.10.3 ([#515](https://github.com/pingidentity/terraform-provider-pingone/issues/515))
 
 BUG FIXES:
 
+* `data-source/pingone_credential_types` Fixed panic error when retrieving credential types. ([#515](https://github.com/pingidentity/terraform-provider-pingone/issues/515))
 * `resource/pingone_resource`: Fixed blocking error on plan when OpenID resource is removed outside of Terraform. ([#501](https://github.com/pingidentity/terraform-provider-pingone/issues/501))
 
 ## 0.19.0 (08 August 2023)

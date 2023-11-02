@@ -3,83 +3,16 @@ package sso_test
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
+	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-func testAccCheckApplicationFlowPolicyAssignmentDestroy(s *terraform.State) error {
-	var ctx = context.Background()
-
-	p1Client, err := acctest.TestClient(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_application_flow_policy_assignment" {
-			continue
-		}
-
-		_, rEnv, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.ApplicationFlowPolicyAssignmentsApi.ReadOneFlowPolicyAssignment(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne Application Flow Policy assignment %s still exists", rs.Primary.ID)
-	}
-
-	return nil
-}
-
-func testAccGetApplicationFlowPolicyAssignmentIDs(resourceName string, environmentID, applicationID, resourceID *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
-		}
-
-		*resourceID = rs.Primary.ID
-		*applicationID = rs.Primary.Attributes["application_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
-
-		return nil
-	}
-}
 
 func TestAccApplicationFlowPolicyAssignment_RemovalDrift(t *testing.T) {
 	t.Parallel()
@@ -87,45 +20,65 @@ func TestAccApplicationFlowPolicyAssignment_RemovalDrift(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application_flow_policy_assignment.%s", resourceName)
 
+	// environmentName := acctest.ResourceNameGenEnvironment()
+
 	name := resourceName
 
-	var resourceID, applicationID, environmentID string
+	// licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var flowPolicyAssignmentID, applicationID, environmentID string
+
+	var p1Client *client.Client
+	var ctx = context.Background()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
+
+			p1Client = acctest.PreCheckTestClient(ctx, t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationFlowPolicyAssignmentDestroy,
+		CheckDestroy:             sso.ApplicationFlowPolicyAssignment_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			// Configure
+			// Test removal of the resource
 			{
 				Config: testAccApplicationFlowPolicyAssignmentConfig_Single(resourceName, name),
-				Check:  testAccGetApplicationFlowPolicyAssignmentIDs(resourceFullName, &environmentID, &applicationID, &resourceID),
+				Check:  sso.ApplicationFlowPolicyAssignment_GetIDs(resourceFullName, &environmentID, &applicationID, &flowPolicyAssignmentID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-
-					if environmentID == "" || applicationID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID, application ID or resource ID cannot be determined. Environment ID: %s, Application ID: %s, Resource ID: %s", environmentID, applicationID, resourceID)
-					}
-
-					_, err = apiClient.ApplicationFlowPolicyAssignmentsApi.DeleteFlowPolicyAssignment(ctx, environmentID, applicationID, resourceID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete Application flow policy assignment: %v", err)
-					}
+					sso.ApplicationFlowPolicyAssignment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, applicationID, flowPolicyAssignmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
 			},
+			// Test removal of the application
+			{
+				Config: testAccApplicationFlowPolicyAssignmentConfig_Single(resourceName, name),
+				Check:  sso.ApplicationFlowPolicyAssignment_GetIDs(resourceFullName, &environmentID, &applicationID, &flowPolicyAssignmentID),
+			},
+			{
+				PreConfig: func() {
+					sso.Application_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, applicationID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			// {
+			// 	Config: testAccApplicationFlowPolicyAssignmentConfig_Single(environmentName, licenseID, resourceName, name),
+			// 	Check:  sso.TestAccGetApplicationFlowPolicyAssignmentIDs(resourceFullName, &environmentID, &applicationID, &flowPolicyAssignmentID),
+			// },
+			// {
+			// 	PreConfig: func() {
+			// 		base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+			// 	},
+			// 	RefreshState:       true,
+			// 	ExpectNonEmptyPlan: true,
+			// },
 		},
 	})
 }
@@ -141,10 +94,10 @@ func TestAccApplicationFlowPolicyAssignment_Full(t *testing.T) {
 	singleStep := resource.TestStep{
 		Config: testAccApplicationFlowPolicyAssignmentConfig_Single(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "priority", "1"),
 		),
 	}
@@ -152,10 +105,10 @@ func TestAccApplicationFlowPolicyAssignment_Full(t *testing.T) {
 	singleStepChange := resource.TestStep{
 		Config: testAccApplicationFlowPolicyAssignmentConfig_Change(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "priority", "1"),
 		),
 	}
@@ -163,23 +116,26 @@ func TestAccApplicationFlowPolicyAssignment_Full(t *testing.T) {
 	multipleStep := resource.TestStep{
 		Config: testAccApplicationFlowPolicyAssignmentConfig_Multiple(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(resourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexp),
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "priority", "2"),
-			resource.TestMatchResourceAttr(fmt.Sprintf("%s-2", resourceFullName), "id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(fmt.Sprintf("%s-2", resourceFullName), "environment_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(fmt.Sprintf("%s-2", resourceFullName), "application_id", verify.P1ResourceIDRegexp),
-			resource.TestMatchResourceAttr(fmt.Sprintf("%s-2", resourceFullName), "flow_policy_id", verify.P1DVResourceIDRegexp),
+			resource.TestMatchResourceAttr(fmt.Sprintf("%s-2", resourceFullName), "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(fmt.Sprintf("%s-2", resourceFullName), "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(fmt.Sprintf("%s-2", resourceFullName), "application_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(fmt.Sprintf("%s-2", resourceFullName), "flow_policy_id", verify.P1DVResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(fmt.Sprintf("%s-2", resourceFullName), "priority", "1"),
 		),
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationFlowPolicyAssignmentDestroy,
+		CheckDestroy:             sso.ApplicationFlowPolicyAssignment_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Single from new
@@ -199,6 +155,22 @@ func TestAccApplicationFlowPolicyAssignment_Full(t *testing.T) {
 			multipleStep,
 			singleStep,
 			singleStepChange,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -212,20 +184,82 @@ func TestAccApplicationFlowPolicyAssignment_SystemApplication(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckApplicationFlowPolicyAssignmentDestroy,
+		CheckDestroy:             sso.ApplicationFlowPolicyAssignment_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccApplicationFlowPolicyAssignmentConfig_SystemApplication(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(resourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "priority", "1"),
 				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccApplicationFlowPolicyAssignment_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application_flow_policy_assignment.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.ApplicationFlowPolicyAssignment_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccApplicationFlowPolicyAssignmentConfig_Single(resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})

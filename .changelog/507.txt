@@ -1,0 +1,3 @@
+```release-note:note
+Code optimisation for all resources and data sources to remove redundant code.
+```

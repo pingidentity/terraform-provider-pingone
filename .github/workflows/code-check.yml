@@ -34,7 +34,7 @@ jobs:
     steps:
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Go
       uses: actions/setup-go@v4
@@ -64,30 +64,32 @@ jobs:
     needs: [build]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
           cache: true
       
-      - run: go generate ./...
+      - run: cd tools && go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
+      - run: make generate
 
       - name: git diff
         run: |
           git diff --compact-summary --exit-code || \
-            (echo; echo "Unexpected difference in directories after code generation. Run 'go generate ./...' command and commit."; exit 1)
+            (echo; echo "Unexpected difference in directories after code generation. Run 'make generate' command and commit."; exit 1)
 
   docscategory-lint:
     needs: [build]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
           cache: true
       
-      - run: go generate ./...
+      - run: cd tools && go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
+      - run: make generate
 
       - name: docscategory lint
         run: |
@@ -97,14 +99,13 @@ jobs:
     needs: [build]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
           cache: true
 
-      - run: go generate -tags tools tools/tools.go
-      
+      - run: cd tools && go install github.com/katbyte/terrafmt
       - name: terrafmtcheck lint
         run: |
           make terrafmtcheck
@@ -113,32 +114,37 @@ jobs:
     needs: [build]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
           cache: true
 
-      - run: go generate -tags tools tools/tools.go
+      - id: golangci-lint-version
+        working-directory: tools
+        run: >-
+          echo "version=$(
+            go list -m all |
+            grep github.com/golangci/golangci-lint |
+            awk '{print $2}'
+          )" >> $GITHUB_OUTPUT
 
-      - name: Check dependencies
-        run: make depscheck
-      
-      - name: golang lint
-        run: |
-          make golangci-lint
+      - name: lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: "${{ steps.golangci-lint-version.outputs.version }}"
 
   importlint:
     needs: [build]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
           cache: true
 
-      - run: go generate -tags tools tools/tools.go
+      - run: cd tools && go install github.com/pavius/impi/cmd/impi
 
       - name: Check dependencies
         run: make depscheck
@@ -152,13 +158,13 @@ jobs:
     needs: [build]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
           cache: true
 
-      - run: go generate -tags tools tools/tools.go
+      - run: cd tools && go install github.com/bflad/tfproviderlint/cmd/tfproviderlintx
 
       - name: Check dependencies
         run: make depscheck
@@ -171,13 +177,13 @@ jobs:
     needs: [build]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
           cache: true
 
-      - run: go generate -tags tools tools/tools.go
+      - run: cd tools && go install github.com/terraform-linters/tflint
 
       - name: Check dependencies
         run: make depscheck

@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -21,7 +21,11 @@ func TestAccTrustedEmailDomainDataSource_ByNameFull(t *testing.T) {
 	verifiedDomain := os.Getenv("PINGONE_VERIFIED_EMAIL_DOMAIN")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentDomainVerified(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckDomainVerification(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             nil, // The test environment is static and no resources are created, nothing to check on destroy
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -29,9 +33,9 @@ func TestAccTrustedEmailDomainDataSource_ByNameFull(t *testing.T) {
 			{
 				Config: testAccTrustedEmailDomainDataSourceConfig_ByNameFull(resourceName, verifiedDomain),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "trusted_email_domain_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "trusted_email_domain_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "domain_name", verifiedDomain),
 				),
 			},
@@ -49,7 +53,11 @@ func TestAccTrustedEmailDomainDataSource_ByIDFull(t *testing.T) {
 	verifiedDomain := os.Getenv("PINGONE_VERIFIED_EMAIL_DOMAIN")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentDomainVerified(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckDomainVerification(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             nil, // The test environment is static and no resources are created, nothing to check on destroy
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -57,9 +65,9 @@ func TestAccTrustedEmailDomainDataSource_ByIDFull(t *testing.T) {
 			{
 				Config: testAccTrustedEmailDomainDataSourceConfig_ByIDFull(resourceName, verifiedDomain),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexp),
-					resource.TestMatchResourceAttr(dataSourceFullName, "trusted_email_domain_id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "trusted_email_domain_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "domain_name", verifiedDomain),
 				),
 			},
@@ -73,7 +81,11 @@ func TestAccTrustedEmailDomainDataSource_NotFound(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironmentDomainVerified(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckDomainVerification(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             nil, // The test environment is static and no resources are created, nothing to check on destroy
 		ErrorCheck:               acctest.ErrorCheck(t),

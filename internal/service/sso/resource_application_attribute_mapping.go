@@ -17,7 +17,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	customboolvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -25,10 +24,7 @@ import (
 )
 
 // Types
-type ApplicationAttributeMappingResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type ApplicationAttributeMappingResource serviceClientType
 
 type ApplicationAttributeMappingResourceModel struct {
 	Id                    types.String `tfsdk:"id"`
@@ -234,24 +230,20 @@ func (r *ApplicationAttributeMappingResource) Configure(ctx context.Context, req
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *ApplicationAttributeMappingResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state ApplicationAttributeMappingResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -266,7 +258,7 @@ func (r *ApplicationAttributeMappingResource) Create(ctx context.Context, req re
 
 	var d diag.Diagnostics
 
-	applicationType, d := plan.getApplicationType(ctx, r.client)
+	applicationType, d := plan.getApplicationType(ctx, r.Client.ManagementAPIClient)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -280,7 +272,7 @@ func (r *ApplicationAttributeMappingResource) Create(ctx context.Context, req re
 	}
 
 	// Build the model for the API
-	applicationAttributeMapping, d := plan.expand(ctx, r.client, isCoreAttribute)
+	applicationAttributeMapping, d := plan.expand(ctx, r.Client.ManagementAPIClient, isCoreAttribute)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -293,7 +285,8 @@ func (r *ApplicationAttributeMappingResource) Create(ctx context.Context, req re
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.ApplicationAttributeMappingApi.CreateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationAttributeMappingApi.CreateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"CreateApplicationAttributeMapping",
 			framework.CustomErrorInvalidValue,
@@ -305,7 +298,8 @@ func (r *ApplicationAttributeMappingResource) Create(ctx context.Context, req re
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.ApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), applicationAttributeMapping.GetId()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), applicationAttributeMapping.GetId()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdateApplicationAttributeMapping",
 			framework.CustomErrorInvalidValue,
@@ -328,7 +322,7 @@ func (r *ApplicationAttributeMappingResource) Create(ctx context.Context, req re
 func (r *ApplicationAttributeMappingResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *ApplicationAttributeMappingResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -347,7 +341,8 @@ func (r *ApplicationAttributeMappingResource) Read(ctx context.Context, req reso
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationAttributeMappingApi.ReadOneApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationAttributeMappingApi.ReadOneApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneApplicationAttributeMapping",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -372,7 +367,7 @@ func (r *ApplicationAttributeMappingResource) Read(ctx context.Context, req reso
 func (r *ApplicationAttributeMappingResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state ApplicationAttributeMappingResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -385,7 +380,7 @@ func (r *ApplicationAttributeMappingResource) Update(ctx context.Context, req re
 		return
 	}
 
-	applicationType, d := plan.getApplicationType(ctx, r.client)
+	applicationType, d := plan.getApplicationType(ctx, r.Client.ManagementAPIClient)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -399,7 +394,7 @@ func (r *ApplicationAttributeMappingResource) Update(ctx context.Context, req re
 	}
 
 	// Build the model for the API
-	applicationAttributeMapping, d := plan.expand(ctx, r.client, isCoreAttribute)
+	applicationAttributeMapping, d := plan.expand(ctx, r.Client.ManagementAPIClient, isCoreAttribute)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -411,7 +406,8 @@ func (r *ApplicationAttributeMappingResource) Update(ctx context.Context, req re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateApplicationAttributeMapping",
 		framework.CustomErrorInvalidValue,
@@ -433,7 +429,7 @@ func (r *ApplicationAttributeMappingResource) Update(ctx context.Context, req re
 func (r *ApplicationAttributeMappingResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *ApplicationAttributeMappingResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -449,7 +445,7 @@ func (r *ApplicationAttributeMappingResource) Delete(ctx context.Context, req re
 	// Run the API call
 	if data.MappingType.Equal(types.StringValue(string(management.ENUMRESOURCEATTRIBUTETYPE_CORE))) {
 
-		applicationType, d := data.getApplicationType(ctx, r.client)
+		applicationType, d := data.getApplicationType(ctx, r.Client.ManagementAPIClient)
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -466,7 +462,7 @@ func (r *ApplicationAttributeMappingResource) Delete(ctx context.Context, req re
 
 		data.Value = framework.StringToTF(coreAttributeData.defaultValue)
 
-		applicationAttributeMapping, d := data.expand(ctx, r.client, true)
+		applicationAttributeMapping, d := data.expand(ctx, r.Client.ManagementAPIClient, true)
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -476,7 +472,8 @@ func (r *ApplicationAttributeMappingResource) Delete(ctx context.Context, req re
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.ApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdateApplicationAttributeMapping",
 			framework.CustomErrorResourceNotFoundWarning,
@@ -489,8 +486,8 @@ func (r *ApplicationAttributeMappingResource) Delete(ctx context.Context, req re
 			ctx,
 
 			func() (any, *http.Response, error) {
-				r, err := r.client.ApplicationAttributeMappingApi.DeleteApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
-				return nil, r, err
+				fR, fErr := r.Client.ManagementAPIClient.ApplicationAttributeMappingApi.DeleteApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 			},
 			"DeleteApplicationAttributeMapping",
 			framework.CustomErrorResourceNotFoundWarning,
@@ -504,20 +501,41 @@ func (r *ApplicationAttributeMappingResource) Delete(ctx context.Context, req re
 }
 
 func (r *ApplicationAttributeMappingResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 3
-	attributes := strings.SplitN(req.ID, "/", splitLength)
 
-	if len(attributes) != splitLength {
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "application_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:     "attribute_mapping_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/application_id/attribute_mapping_id\"", req.ID),
+			err.Error(),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("application_id"), attributes[1])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[2])...)
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
+
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
 func (p *ApplicationAttributeMappingResourceModel) getApplicationType(ctx context.Context, apiClient *management.APIClient) (*management.EnumApplicationProtocol, diag.Diagnostics) {
@@ -529,7 +547,8 @@ func (p *ApplicationAttributeMappingResourceModel) getApplicationType(ctx contex
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ApplicationsApi.ReadOneApplication(ctx, p.EnvironmentId.ValueString(), p.ApplicationId.ValueString()).Execute()
+			fO, fR, fErr := apiClient.ApplicationsApi.ReadOneApplication(ctx, p.EnvironmentId.ValueString(), p.ApplicationId.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, p.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneApplication",
 		framework.DefaultCustomError,
@@ -656,7 +675,8 @@ func (p *ApplicationAttributeMappingResourceModel) expand(ctx context.Context, a
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return apiClient.ApplicationAttributeMappingApi.ReadAllApplicationAttributeMappings(ctx, p.EnvironmentId.ValueString(), p.ApplicationId.ValueString()).Execute()
+				fO, fR, fErr := apiClient.ApplicationAttributeMappingApi.ReadAllApplicationAttributeMappings(ctx, p.EnvironmentId.ValueString(), p.ApplicationId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, p.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadAllApplicationAttributeMappings",
 			framework.DefaultCustomError,
@@ -694,6 +714,8 @@ func (p *ApplicationAttributeMappingResourceModel) expand(ctx context.Context, a
 
 		if !p.SAMLSubjectNameformat.IsNull() {
 			data.SetNameFormat(p.SAMLSubjectNameformat.ValueString())
+		} else {
+			data.NameFormat = nil
 		}
 
 	} else {
@@ -761,6 +783,8 @@ func (p *ApplicationAttributeMappingResourceModel) toState(apiObject *management
 	p.OIDCScopes = framework.StringSetOkToTF(apiObject.GetOidcScopesOk())
 	p.OIDCIDTokenEnabled = framework.BoolOkToTF(apiObject.GetIdTokenOk())
 	p.OIDCUserinfoEnabled = framework.BoolOkToTF(apiObject.GetUserInfoOk())
+
+	p.SAMLSubjectNameformat = framework.StringOkToTF(apiObject.GetNameFormatOk())
 
 	return diags
 }

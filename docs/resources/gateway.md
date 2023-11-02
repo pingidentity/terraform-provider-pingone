@@ -16,6 +16,11 @@ resource "pingone_environment" "my_environment" {
   # ...
 }
 
+resource "pingone_population" "my_population" {
+  environment_id = pingone_environment.my_environment.id
+  name           = "My Awesome Population"
+}
+
 resource "pingone_gateway" "my_ldap_gateway" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Active Directory"
@@ -44,7 +49,7 @@ resource "pingone_gateway" "my_ldap_gateway" {
     user_migration {
       lookup_filter_pattern = "(|(sAMAccountName=$${identifier})(UserPrincipalName=$${identifier}))"
 
-      population_id = pingone_environment.my_environment.default_population_id
+      population_id = pingone_population.my_population.id
 
       attribute_mapping {
         name  = "username"

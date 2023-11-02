@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -13,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -47,7 +47,7 @@ func ResourceCertificate() *schema.Resource {
 				ExactlyOneOf: []string{"pkcs7_file_base64", "pem_file"},
 			},
 			"pem_file": {
-				Description:  "A PEM encoded file to import.  Either `pkcs7_file_base64` or `pem_file` must be specified.",
+				Description:  "The contents of a PEM encoded file to import, which should be in plain text format and not base64 encoded.  The certificate should be properly formatted for the PEM format, that includes the correct header/footer lines.  Either `pkcs7_file_base64` or `pem_file` must be specified.",
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
@@ -97,7 +97,7 @@ func ResourceCertificate() *schema.Resource {
 			},
 			"signature_algorithm": {
 				Type:        schema.TypeString,
-				Description: fmt.Sprintf("Specifies the signature algorithm of the key. For RSA keys, options are `%s`, `%s`, `%s` and `%s`. For elliptical curve (EC) keys, options are `%s`, `%s`, `%s` and `%s`.", string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA224WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA224WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_ECDSA)),
+				Description: fmt.Sprintf("Specifies the signature algorithm of the key. For RSA keys, options are `%s`, `%s` and `%s`. For elliptical curve (EC) keys, options are `%s`, `%s` and `%s`.", string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_ECDSA)),
 				Computed:    true,
 			},
 			"starts_at": {
@@ -157,7 +157,8 @@ func resourceCertificateCreate(ctx context.Context, d *schema.ResourceData, meta
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.CertificateManagementApi.CreateCertificateFromFile(ctx, d.Get("environment_id").(string)).ContentType("multipart/form-data").UsageType(d.Get("usage_type").(string)).File(&archive).Execute()
+			fO, fR, fErr := apiClient.CertificateManagementApi.CreateCertificateFromFile(ctx, d.Get("environment_id").(string)).ContentType("multipart/form-data").UsageType(d.Get("usage_type").(string)).File(&archive).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateCertificateFromFile",
 		sdk.DefaultCustomError,
@@ -184,7 +185,8 @@ func resourceCertificateRead(ctx context.Context, d *schema.ResourceData, meta i
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.CertificateManagementApi.GetCertificate(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.CertificateManagementApi.GetCertificate(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"GetCertificate",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -230,8 +232,8 @@ func resourceCertificateDelete(ctx context.Context, d *schema.ResourceData, meta
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.CertificateManagementApi.DeleteCertificate(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.CertificateManagementApi.DeleteCertificate(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteCertificate",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -245,18 +247,25 @@ func resourceCertificateDelete(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func resourceCertificateImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 2
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/certificateID\"", d.Id())
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "certificate_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
 	}
 
-	environmentID, certificateID := attributes[0], attributes[1]
+	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	if err != nil {
+		return nil, err
+	}
 
-	d.Set("environment_id", environmentID)
-
-	d.SetId(certificateID)
+	d.Set("environment_id", attributes["environment_id"])
+	d.SetId(attributes["certificate_id"])
 
 	resourceCertificateRead(ctx, d, meta)
 

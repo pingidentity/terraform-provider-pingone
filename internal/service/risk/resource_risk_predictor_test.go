@@ -8,86 +8,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/risk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
-
-func testAccCheckRiskPredictorDestroy(s *terraform.State) error {
-	var ctx = context.Background()
-
-	p1Client, err := acctest.TestClient(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	apiClient := p1Client.API.RiskAPIClient
-
-	apiClientManagement := p1Client.API.ManagementAPIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_risk_predictor" {
-			continue
-		}
-
-		_, rEnv, err := apiClientManagement.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.Attributes["environment_id"]).Execute()
-
-		if err != nil {
-
-			if rEnv == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if rEnv.StatusCode == 404 {
-				continue
-			}
-
-			return err
-		}
-
-		body, r, err := apiClient.RiskAdvancedPredictorsApi.ReadOneRiskPredictor(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
-
-		if err != nil {
-
-			if r == nil {
-				return fmt.Errorf("Response object does not exist and no error detected")
-			}
-
-			if r.StatusCode == 404 {
-				continue
-			}
-
-			tflog.Error(ctx, fmt.Sprintf("Error: %v", body))
-			return err
-		}
-
-		return fmt.Errorf("PingOne risk predictor %s still exists", rs.Primary.ID)
-	}
-
-	return nil
-}
-
-func testAccCheckRiskPredictorDestroyUndeletable(s *terraform.State) error {
-	return nil
-}
-
-func testAccGetRiskPredictorIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
-		}
-
-		*resourceID = rs.Primary.ID
-		*environmentID = rs.Primary.Attributes["environment_id"]
-
-		return nil
-	}
-}
 
 func TestAccRiskPredictor_RemovalDrift(t *testing.T) {
 	t.Parallel()
@@ -95,41 +23,49 @@ func TestAccRiskPredictor_RemovalDrift(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
 	name := resourceName
 
-	var resourceID, environmentID string
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var riskPredictorID, environmentID string
+
+	var p1Client *client.Client
+	var ctx = context.Background()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+
+			p1Client = acctest.PreCheckTestClient(ctx, t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
 				Config: testAccRiskPredictorConfig_Minimal(resourceName, name),
-				Check:  testAccGetRiskPredictorIDs(resourceFullName, &environmentID, &resourceID),
+				Check:  risk.RiskPredictor_GetIDs(resourceFullName, &environmentID, &riskPredictorID),
 			},
-			// Replan after removal preconfig
 			{
 				PreConfig: func() {
-					var ctx = context.Background()
-					p1Client, err := acctest.TestClient(ctx)
-
-					if err != nil {
-						t.Fatalf("Failed to get API client: %v", err)
-					}
-
-					apiClient := p1Client.API.RiskAPIClient
-
-					if environmentID == "" || resourceID == "" {
-						t.Fatalf("One of environment ID or resource ID cannot be determined. Environment ID: %s, Resource ID: %s", environmentID, resourceID)
-					}
-
-					_, err = apiClient.RiskAdvancedPredictorsApi.DeleteRiskAdvancedPredictor(ctx, environmentID, resourceID).Execute()
-					if err != nil {
-						t.Fatalf("Failed to delete Risk Predictor: %v", err)
-					}
+					risk.RiskPredictor_RemovalDrift_PreConfig(ctx, p1Client.API.RiskAPIClient, t, environmentID, riskPredictorID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: testAccRiskPredictorConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  risk.RiskPredictor_GetIDs(resourceFullName, &environmentID, &riskPredictorID),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -151,15 +87,19 @@ func TestAccRiskPredictor_NewEnv(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccRiskPredictorConfig_NewEnv(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -175,8 +115,8 @@ func TestAccRiskPredictor_Full(t *testing.T) {
 	name := resourceName
 
 	fullCheck := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "compact_name", fmt.Sprintf("%s1", name)),
 		resource.TestCheckResourceAttr(resourceFullName, "description", "When my wife is upset, I let her colour in my black and white tattoos.  She just needs a shoulder to crayon.."),
@@ -187,8 +127,8 @@ func TestAccRiskPredictor_Full(t *testing.T) {
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "compact_name", fmt.Sprintf("%s1", name)),
 		resource.TestCheckNoResourceAttr(resourceFullName, "description"),
@@ -199,9 +139,12 @@ func TestAccRiskPredictor_Full(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -264,9 +207,12 @@ func TestAccRiskPredictor_Composite(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -299,6 +245,22 @@ func TestAccRiskPredictor_Composite(t *testing.T) {
 			{
 				Config: testAccRiskPredictorConfig_Composite_Full_1(resourceName, name),
 				Check:  fullCheck1,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			{
 				Config:  testAccRiskPredictorConfig_Composite_Full_1(resourceName, name),
@@ -339,9 +301,12 @@ func TestAccRiskPredictor_Anonymous_Network(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -375,6 +340,22 @@ func TestAccRiskPredictor_Anonymous_Network(t *testing.T) {
 				Config: testAccRiskPredictorConfig_Anonymous_Network_Full(resourceName, name),
 				Check:  fullCheck,
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -401,15 +382,168 @@ func TestAccRiskPredictor_Anonymous_Network_OverwriteUndeletable(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroyUndeletable,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
 			{
 				Config: testAccRiskPredictorConfig_Anonymous_Network_OverwriteUndeletable(resourceName, name, compactName),
 				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccRiskPredictor_Bot_Detection(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := resourceName
+
+	fullCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "BOT"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_bot_detection.#", "0"),
+	)
+
+	minimalCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "BOT"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "default.result.level"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_bot_detection.#", "0"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			{
+				Config: testAccRiskPredictorConfig_Bot_Detection_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_Bot_Detection_Full(resourceName, name),
+				Destroy: true,
+			},
+			// Minimal
+			{
+				Config: testAccRiskPredictorConfig_Bot_Detection_Minimal(resourceName, name),
+				Check:  minimalCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_Bot_Detection_Minimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			{
+				Config: testAccRiskPredictorConfig_Bot_Detection_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_Bot_Detection_Minimal(resourceName, name),
+				Check:  minimalCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_Bot_Detection_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccRiskPredictor_Bot_Detection_OverwriteUndeletable(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := resourceName
+	compactName := "botDetection"
+
+	fullCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "name", name),
+		resource.TestCheckResourceAttr(resourceFullName, "compact_name", "botDetection"),
+		resource.TestCheckResourceAttr(resourceFullName, "type", "BOT"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_bot_detection.#", "0"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroyUndeletable,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			{
+				Config: testAccRiskPredictorConfig_Bot_Detection_OverwriteUndeletable(resourceName, name, compactName),
+				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -441,9 +575,12 @@ func TestAccRiskPredictor_Geovelocity(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -477,6 +614,22 @@ func TestAccRiskPredictor_Geovelocity(t *testing.T) {
 				Config: testAccRiskPredictorConfig_Geovelocity_Full(resourceName, name),
 				Check:  fullCheck,
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -503,15 +656,34 @@ func TestAccRiskPredictor_Geovelocity_OverwriteUndeletable(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroyUndeletable,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
 			{
 				Config: testAccRiskPredictorConfig_Geovelocity_OverwriteUndeletable(resourceName, name, compactName),
 				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -543,9 +715,12 @@ func TestAccRiskPredictor_IP_Reputation(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -579,6 +754,22 @@ func TestAccRiskPredictor_IP_Reputation(t *testing.T) {
 				Config: testAccRiskPredictorConfig_IPReputation_Full(resourceName, name),
 				Check:  fullCheck,
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -605,15 +796,34 @@ func TestAccRiskPredictor_IP_Reputation_OverwriteUndeletable(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroyUndeletable,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
 			{
 				Config: testAccRiskPredictorConfig_IP_Reputation_OverwriteUndeletable(resourceName, name, compactName),
 				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -656,9 +866,12 @@ func TestAccRiskPredictor_CustomMap_BetweenRanges(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -691,6 +904,22 @@ func TestAccRiskPredictor_CustomMap_BetweenRanges(t *testing.T) {
 			{
 				Config: testAccRiskPredictorConfig_CustomMap_BetweenRanges_Full(resourceName, name),
 				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -733,9 +962,12 @@ func TestAccRiskPredictor_CustomMap_IPRanges(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -768,6 +1000,22 @@ func TestAccRiskPredictor_CustomMap_IPRanges(t *testing.T) {
 			{
 				Config: testAccRiskPredictorConfig_CustomMap_IPRanges_Full(resourceName, name),
 				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -810,9 +1058,12 @@ func TestAccRiskPredictor_CustomMap_StringList(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -846,6 +1097,22 @@ func TestAccRiskPredictor_CustomMap_StringList(t *testing.T) {
 				Config: testAccRiskPredictorConfig_CustomMap_StringList_Full(resourceName, name),
 				Check:  fullCheck,
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -878,9 +1145,12 @@ func TestAccRiskPredictor_NewDevice(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -914,6 +1184,22 @@ func TestAccRiskPredictor_NewDevice(t *testing.T) {
 				Config: testAccRiskPredictorConfig_NewDevice_Full(resourceName, name, activationAt),
 				Check:  fullCheck,
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -941,15 +1227,171 @@ func TestAccRiskPredictor_NewDevice_OverwriteUndeletable(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroyUndeletable,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
 			{
 				Config: testAccRiskPredictorConfig_NewDevice_OverwriteUndeletable(resourceName, name, compactName, activationAt),
 				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccRiskPredictor_SuspiciousDevice(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := resourceName
+
+	fullCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "DEVICE"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_device.detect", "SUSPICIOUS_DEVICE"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "predictor_device.activation_at"),
+	)
+
+	minimalCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "DEVICE"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "default.result.level"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_device.detect", "SUSPICIOUS_DEVICE"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "predictor_device.activation_at"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			{
+				Config: testAccRiskPredictorConfig_SuspiciousDevice_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_SuspiciousDevice_Full(resourceName, name),
+				Destroy: true,
+			},
+			// Minimal
+			{
+				Config: testAccRiskPredictorConfig_SuspiciousDevice_Minimal(resourceName, name),
+				Check:  minimalCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_SuspiciousDevice_Minimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			{
+				Config: testAccRiskPredictorConfig_SuspiciousDevice_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_SuspiciousDevice_Minimal(resourceName, name),
+				Check:  minimalCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_SuspiciousDevice_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccRiskPredictor_SuspiciousDevice_OverwriteUndeletable(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := resourceName
+	compactName := "suspiciousDevice"
+
+	fullCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "name", name),
+		resource.TestCheckResourceAttr(resourceFullName, "compact_name", "suspiciousDevice"),
+		resource.TestCheckResourceAttr(resourceFullName, "type", "DEVICE"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_device.detect", "SUSPICIOUS_DEVICE"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "predictor_device.activation_at"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroyUndeletable,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			{
+				Config: testAccRiskPredictorConfig_SuspiciousDevice_OverwriteUndeletable(resourceName, name, compactName),
+				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -969,7 +1411,7 @@ func TestAccRiskPredictor_UserLocationAnomaly(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.radius.distance", "100"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.radius.unit", "miles"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.days", "50"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.days", "90"),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
@@ -978,13 +1420,16 @@ func TestAccRiskPredictor_UserLocationAnomaly(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "default.result.level"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.radius.distance", "51"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.radius.unit", "kilometers"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.days", "50"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.days", "90"),
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
@@ -1018,6 +1463,22 @@ func TestAccRiskPredictor_UserLocationAnomaly(t *testing.T) {
 				Config: testAccRiskPredictorConfig_UserLocationAnomaly_Full(resourceName, name),
 				Check:  fullCheck,
 			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -1039,19 +1500,38 @@ func TestAccRiskPredictor_UserLocationAnomaly_OverwriteUndeletable(t *testing.T)
 		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.radius.distance", "100"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.radius.unit", "miles"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.days", "50"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_user_location_anomaly.days", "90"),
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroyUndeletable,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
 			{
 				Config: testAccRiskPredictorConfig_UserLocationAnomaly_OverwriteUndeletable(resourceName, name, compactName),
 				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -1108,15 +1588,34 @@ func TestAccRiskPredictor_Velocity(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// By User
 			{
 				Config: testAccRiskPredictorConfig_Velocity_ByUser_Full(resourceName, name),
 				Check:  byUserCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			{
 				Config:  testAccRiskPredictorConfig_Velocity_ByUser_Full(resourceName, name),
@@ -1126,6 +1625,22 @@ func TestAccRiskPredictor_Velocity(t *testing.T) {
 			{
 				Config: testAccRiskPredictorConfig_Velocity_ByIP_Full(resourceName, name),
 				Check:  byIPCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			{
 				Config:  testAccRiskPredictorConfig_Velocity_ByIP_Full(resourceName, name),
@@ -1204,15 +1719,34 @@ func TestAccRiskPredictor_Velocity_OverwriteUndeletable(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroyUndeletable,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// By User
 			{
 				Config: testAccRiskPredictorConfig_Velocity_ByUser_Full_OverwriteUndeletable(resourceName, name, compactNameByUser),
 				Check:  byUserCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			{
 				Config:  testAccRiskPredictorConfig_Velocity_ByUser_Full_OverwriteUndeletable(resourceName, name, compactNameByUser),
@@ -1222,6 +1756,22 @@ func TestAccRiskPredictor_Velocity_OverwriteUndeletable(t *testing.T) {
 			{
 				Config: testAccRiskPredictorConfig_Velocity_ByIP_Full_OverwriteUndeletable(resourceName, name, compactNameByIP),
 				Check:  byIPCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			{
 				Config:  testAccRiskPredictorConfig_Velocity_ByIP_Full_OverwriteUndeletable(resourceName, name, compactNameByIP),
@@ -1265,15 +1815,34 @@ func TestAccRiskPredictor_UserRiskBehavior(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroy,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// By User
 			{
 				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full(resourceName, name),
 				Check:  byUserCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			{
 				Config:  testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full(resourceName, name),
@@ -1283,6 +1852,22 @@ func TestAccRiskPredictor_UserRiskBehavior(t *testing.T) {
 			{
 				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full(resourceName, name),
 				Check:  byOrgCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			{
 				Config:  testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full(resourceName, name),
@@ -1332,15 +1917,34 @@ func TestAccRiskPredictor_UserRiskBehavior_OverwriteUndeletable(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckRiskPredictorDestroyUndeletable,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroyUndeletable,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// By User
 			{
 				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_OverwriteUndeletable(resourceName, name, compactNameByUser),
 				Check:  byUserCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			{
 				Config:  testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_OverwriteUndeletable(resourceName, name, compactNameByUser),
@@ -1350,6 +1954,22 @@ func TestAccRiskPredictor_UserRiskBehavior_OverwriteUndeletable(t *testing.T) {
 			{
 				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full_OverwriteUndeletable(resourceName, name, compactNameByOrg),
 				Check:  byOrgCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			{
 				Config:  testAccRiskPredictorConfig_UserRiskBehavior_ByOrg_Full_OverwriteUndeletable(resourceName, name, compactNameByOrg),
@@ -1367,6 +1987,49 @@ func TestAccRiskPredictor_UserRiskBehavior_OverwriteUndeletable(t *testing.T) {
 			{
 				Config: testAccRiskPredictorConfig_UserRiskBehavior_ByUser_Full_OverwriteUndeletable(resourceName, name, compactNameByUser),
 				Check:  byUserCheck,
+			},
+		},
+	})
+}
+
+func TestAccRiskPredictor_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: testAccRiskPredictorConfig_Minimal(resourceName, name),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})
@@ -1421,6 +2084,104 @@ resource "pingone_risk_predictor" "%[2]s" {
   }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_Anonymous_Network_Minimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+
+  predictor_anonymous_network = {}
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_Anonymous_Network_OverwriteUndeletable(resourceName, name, compactName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[4]s"
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  predictor_anonymous_network = {
+    allowed_cidr_list = [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/24"
+    ]
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
+}
+
+func testAccRiskPredictorConfig_Bot_Detection_Full(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+  description  = "The neighbours said their dog will retrieve sticks from 10 miles away.  Sounds far fetched to me."
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  predictor_bot_detection = {}
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_Bot_Detection_Minimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+
+  predictor_bot_detection = {}
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_Bot_Detection_OverwriteUndeletable(resourceName, name, compactName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[4]s"
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  predictor_bot_detection = {}
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
 }
 
 func testAccRiskPredictorConfig_Composite_Full_1(resourceName, name string) string {
@@ -1537,47 +2298,6 @@ resource "pingone_risk_predictor" "%[2]s" {
   }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
-}
-
-func testAccRiskPredictorConfig_Anonymous_Network_Minimal(resourceName, name string) string {
-	return fmt.Sprintf(`
-	%[1]s
-
-resource "pingone_risk_predictor" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name         = "%[3]s"
-  compact_name = "%[3]s1"
-
-  predictor_anonymous_network = {}
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
-}
-
-func testAccRiskPredictorConfig_Anonymous_Network_OverwriteUndeletable(resourceName, name, compactName string) string {
-	return fmt.Sprintf(`
-	%[1]s
-
-resource "pingone_risk_predictor" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name         = "%[3]s"
-  compact_name = "%[4]s"
-
-  default = {
-    result = {
-      level = "MEDIUM"
-    }
-  }
-
-  predictor_anonymous_network = {
-    allowed_cidr_list = [
-      "10.0.0.0/8",
-      "172.16.0.0/12",
-      "192.168.0.0/24"
-    ]
-  }
-
-}`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
 }
 
 func testAccRiskPredictorConfig_Geovelocity_Full(resourceName, name string) string {
@@ -1990,6 +2710,67 @@ resource "pingone_risk_predictor" "%[2]s" {
     activation_at = "%[5]s"
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName, activationAt)
+}
+
+func testAccRiskPredictorConfig_SuspiciousDevice_Full(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+  description  = "The neighbours said their dog will retrieve sticks from 10 miles away.  Sounds far fetched to me."
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  predictor_device = {
+    detect = "SUSPICIOUS_DEVICE"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_SuspiciousDevice_Minimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+
+  predictor_device = {
+    detect = "SUSPICIOUS_DEVICE"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_SuspiciousDevice_OverwriteUndeletable(resourceName, name, compactName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[4]s"
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  predictor_device = {
+    detect = "SUSPICIOUS_DEVICE"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
 }
 
 func testAccRiskPredictorConfig_UserLocationAnomaly_Full(resourceName, name string) string {

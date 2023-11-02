@@ -3,7 +3,7 @@ SWEEP_DIR=./internal/sweep
 NAMESPACE=pingidentity
 PKG_NAME=pingone
 BINARY=terraform-provider-${NAME}
-VERSION=0.19.1
+VERSION=0.23.0
 OS_ARCH=linux_amd64
 
 default: build
@@ -11,11 +11,14 @@ default: build
 tools:
 	go generate -tags tools tools/tools.go
 
+fmtcheck:
+	terraform fmt -recursive ./examples/
+
 build: fmtcheck
 	go install -ldflags="-X main.version=$(VERSION)"
 
 generate: fmtcheck
-	PINGONE_CLIENT_ID= PINGONE_CLIENT_SECRET= PINGONE_ENVIRONMENT_ID= PINGONE_API_ACCESS_TOKEN= PINGONE_REGION= PINGONE_ORGANIZATION_ID= go generate ./...
+	tfplugindocs generate
 
 test: fmtcheck
 	go test $(TEST) $(TESTARGS) -timeout=5m

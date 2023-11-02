@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -14,17 +13,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
-type ApplicationFlowPolicyAssignmentResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type ApplicationFlowPolicyAssignmentResource serviceClientType
 
 type ApplicationFlowPolicyAssignmentResourceModel struct {
 	Id            types.String `tfsdk:"id"`
@@ -104,24 +99,20 @@ func (r *ApplicationFlowPolicyAssignmentResource) Configure(ctx context.Context,
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *ApplicationFlowPolicyAssignmentResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state ApplicationFlowPolicyAssignmentResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -143,7 +134,8 @@ func (r *ApplicationFlowPolicyAssignmentResource) Create(ctx context.Context, re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationFlowPolicyAssignmentsApi.CreateFlowPolicyAssignment(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).FlowPolicyAssignment(*applicationFlowPolicyAssignment).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationFlowPolicyAssignmentsApi.CreateFlowPolicyAssignment(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).FlowPolicyAssignment(*applicationFlowPolicyAssignment).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateFlowPolicyAssignment",
 		framework.DefaultCustomError,
@@ -165,7 +157,7 @@ func (r *ApplicationFlowPolicyAssignmentResource) Create(ctx context.Context, re
 func (r *ApplicationFlowPolicyAssignmentResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *ApplicationFlowPolicyAssignmentResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -184,7 +176,8 @@ func (r *ApplicationFlowPolicyAssignmentResource) Read(ctx context.Context, req 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationFlowPolicyAssignmentsApi.ReadOneFlowPolicyAssignment(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationFlowPolicyAssignmentsApi.ReadOneFlowPolicyAssignment(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneFlowPolicyAssignment",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -209,7 +202,7 @@ func (r *ApplicationFlowPolicyAssignmentResource) Read(ctx context.Context, req 
 func (r *ApplicationFlowPolicyAssignmentResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state ApplicationFlowPolicyAssignmentResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -231,7 +224,8 @@ func (r *ApplicationFlowPolicyAssignmentResource) Update(ctx context.Context, re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.ApplicationFlowPolicyAssignmentsApi.UpdateFlowPolicyAssignment(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).FlowPolicyAssignment(*applicationFlowPolicyAssignment).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationFlowPolicyAssignmentsApi.UpdateFlowPolicyAssignment(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).FlowPolicyAssignment(*applicationFlowPolicyAssignment).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateFlowPolicyAssignment",
 		framework.DefaultCustomError,
@@ -253,7 +247,7 @@ func (r *ApplicationFlowPolicyAssignmentResource) Update(ctx context.Context, re
 func (r *ApplicationFlowPolicyAssignmentResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *ApplicationFlowPolicyAssignmentResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -271,8 +265,8 @@ func (r *ApplicationFlowPolicyAssignmentResource) Delete(ctx context.Context, re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.ApplicationFlowPolicyAssignmentsApi.DeleteFlowPolicyAssignment(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
+			fR, fErr := r.Client.ManagementAPIClient.ApplicationFlowPolicyAssignmentsApi.DeleteFlowPolicyAssignment(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteFlowPolicyAssignment",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -285,20 +279,41 @@ func (r *ApplicationFlowPolicyAssignmentResource) Delete(ctx context.Context, re
 }
 
 func (r *ApplicationFlowPolicyAssignmentResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 3
-	attributes := strings.SplitN(req.ID, "/", splitLength)
 
-	if len(attributes) != splitLength {
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "application_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:     "flow_policy_assignment_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/application_id/flow_policy_id\"", req.ID),
+			err.Error(),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("application_id"), attributes[1])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[2])...)
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
+
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
 func (p *ApplicationFlowPolicyAssignmentResourceModel) expand() *management.FlowPolicyAssignment {

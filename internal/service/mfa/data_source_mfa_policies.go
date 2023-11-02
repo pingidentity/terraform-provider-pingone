@@ -11,15 +11,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 )
 
 // Types
-type MFAPoliciesDataSource struct {
-	client *mfa.APIClient
-	region model.RegionMapping
-}
+type MFAPoliciesDataSource serviceClientType
 
 type MFAPoliciesDataSourceModel struct {
 	Id            types.String `tfsdk:"id"`
@@ -56,9 +52,9 @@ func (r *MFAPoliciesDataSource) Schema(ctx context.Context, req datasource.Schem
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to select MFA device policies from."),
 			),
 
-			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescription{
-				Description: "The list of resulting IDs of MFA Device Policies that have been successfully retrieved and filtered.",
-			}),
+			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescriptionFromMarkdown(
+				"The list of resulting IDs of MFA Device Policies that have been successfully retrieved and filtered.",
+			)),
 		},
 	}
 }
@@ -79,24 +75,20 @@ func (r *MFAPoliciesDataSource) Configure(ctx context.Context, req datasource.Co
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *MFAPoliciesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *MFAPoliciesDataSourceModel
 
-	if r.client == nil {
+	if r.Client.MFAAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -110,7 +102,7 @@ func (r *MFAPoliciesDataSource) Read(ctx context.Context, req datasource.ReadReq
 	}
 
 	filterFunction := func() (any, *http.Response, error) {
-		return r.client.DeviceAuthenticationPolicyApi.ReadDeviceAuthenticationPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
+		return r.Client.MFAAPIClient.DeviceAuthenticationPolicyApi.ReadDeviceAuthenticationPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
 	}
 
 	var entityArray *mfa.EntityArray

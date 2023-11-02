@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -19,13 +18,11 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
-type TrustedEmailAddressResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type TrustedEmailAddressResource serviceClientType
 
 type TrustedEmailAddressResourceModel struct {
 	EmailDomainId types.String `tfsdk:"email_domain_id"`
@@ -55,23 +52,17 @@ func (r *TrustedEmailAddressResource) Metadata(ctx context.Context, req resource
 // Schema
 func (r *TrustedEmailAddressResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 
-	resourceDescriptionFmt := "Resource to create and manage trusted email addresses in PingOne.  PingOne supports the ability to configure up to 10 trusted email addresses for an existing trusted email domain. See %s.  Once configured and if the email address has not been previously verified, a verification email is sent."
-	providerDescription := framework.SchemaAttributeDescription{
-		MarkdownDescription: fmt.Sprintf(resourceDescriptionFmt, "[Trusted email domains](https://apidocs.pingidentity.com/pingone/platform/v1/api/#trusted-email-domains)"),
-		Description:         fmt.Sprintf(resourceDescriptionFmt, "Trusted email domains (https://apidocs.pingidentity.com/pingone/platform/v1/api/#trusted-email-domains)"),
-	}
+	providerDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Resource to create and manage trusted email addresses in PingOne.  PingOne supports the ability to configure up to 10 trusted email addresses for an existing trusted email domain. See [Trusted email domains](https://apidocs.pingidentity.com/pingone/platform/v1/api/#trusted-email-domains).  Once configured and if the email address has not been previously verified, a verification email is sent.",
+	)
 
-	emailAddressDescriptionFmt := "The trusted email address, for example %s."
-	emailAddressDescription := framework.SchemaAttributeDescription{
-		MarkdownDescription: fmt.Sprintf(emailAddressDescriptionFmt, "`john.smith@bxretail.org`"),
-		Description:         fmt.Sprintf(emailAddressDescriptionFmt, "\"john.smith@bxretail.org\""),
-	}
+	emailAddressDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The trusted email address, for example `john.smith@bxretail.org`.",
+	)
 
-	statusDescriptionFmt := "The status of the trusted email address.  Possible values are %s."
-	statusDescription := framework.SchemaAttributeDescription{
-		MarkdownDescription: fmt.Sprintf(statusDescriptionFmt, "`ACTIVE` and `VERIFICATION_REQUIRED`"),
-		Description:         fmt.Sprintf(statusDescriptionFmt, "\"ACTIVE\" and \"VERIFICATION_REQUIRED\""),
-	}
+	statusDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The status of the trusted email address.  Possible values are `ACTIVE` and `VERIFICATION_REQUIRED`.",
+	)
 
 	const emailAddressMaxLength = 5
 
@@ -128,24 +119,20 @@ func (r *TrustedEmailAddressResource) Configure(ctx context.Context, req resourc
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *TrustedEmailAddressResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state TrustedEmailAddressResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -167,7 +154,8 @@ func (r *TrustedEmailAddressResource) Create(ctx context.Context, req resource.C
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.TrustedEmailAddressesApi.CreateTrustedEmailAddress(ctx, plan.EnvironmentId.ValueString(), plan.EmailDomainId.ValueString()).EmailDomainTrustedEmail(*emailDomainTrustedEmail).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.TrustedEmailAddressesApi.CreateTrustedEmailAddress(ctx, plan.EnvironmentId.ValueString(), plan.EmailDomainId.ValueString()).EmailDomainTrustedEmail(*emailDomainTrustedEmail).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateTrustedEmailAddress",
 		trustedEmailAddressAPIErrors,
@@ -189,7 +177,7 @@ func (r *TrustedEmailAddressResource) Create(ctx context.Context, req resource.C
 func (r *TrustedEmailAddressResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *TrustedEmailAddressResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -208,7 +196,8 @@ func (r *TrustedEmailAddressResource) Read(ctx context.Context, req resource.Rea
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.TrustedEmailAddressesApi.ReadOneTrustedEmailAddress(ctx, data.EnvironmentId.ValueString(), data.EmailDomainId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.TrustedEmailAddressesApi.ReadOneTrustedEmailAddress(ctx, data.EnvironmentId.ValueString(), data.EmailDomainId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneTrustedEmailAddress",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -236,7 +225,7 @@ func (r *TrustedEmailAddressResource) Update(ctx context.Context, req resource.U
 func (r *TrustedEmailAddressResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *TrustedEmailAddressResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -254,8 +243,8 @@ func (r *TrustedEmailAddressResource) Delete(ctx context.Context, req resource.D
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.TrustedEmailAddressesApi.DeleteTrustedEmailAddress(ctx, data.EnvironmentId.ValueString(), data.EmailDomainId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
+			fR, fErr := r.Client.ManagementAPIClient.TrustedEmailAddressesApi.DeleteTrustedEmailAddress(ctx, data.EnvironmentId.ValueString(), data.EmailDomainId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteTrustedEmailAddress",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -268,20 +257,41 @@ func (r *TrustedEmailAddressResource) Delete(ctx context.Context, req resource.D
 }
 
 func (r *TrustedEmailAddressResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 3
-	attributes := strings.SplitN(req.ID, "/", splitLength)
 
-	if len(attributes) != splitLength {
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "email_domain_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:     "trusted_email_address_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/email_domain_id/trusted_email_address_id\"", req.ID),
+			err.Error(),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("email_domain_id"), attributes[1])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[2])...)
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
+
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
 func (p *TrustedEmailAddressResourceModel) expand() *management.EmailDomainTrustedEmail {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -12,6 +11,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -125,7 +125,8 @@ func resourcePingOneGatewayRoleAssignmentCreate(ctx context.Context, d *schema.R
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.GatewayRoleAssignmentsApi.CreateGatewayRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string)).RoleAssignment(gatewayRoleAssignment).Execute()
+			fO, fR, fErr := apiClient.GatewayRoleAssignmentsApi.CreateGatewayRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string)).RoleAssignment(gatewayRoleAssignment).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateGatewayRoleAssignment",
 		func(error model.P1Error) diag.Diagnostics {
@@ -164,7 +165,8 @@ func resourcePingOneGatewayRoleAssignmentRead(ctx context.Context, d *schema.Res
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.GatewayRoleAssignmentsApi.ReadOneGatewayRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.GatewayRoleAssignmentsApi.ReadOneGatewayRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneGatewayRoleAssignment",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -222,11 +224,11 @@ func resourcePingOneGatewayRoleAssignmentDelete(ctx context.Context, d *schema.R
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.GatewayRoleAssignmentsApi.DeleteGatewayRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.GatewayRoleAssignmentsApi.DeleteGatewayRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteGatewayRoleAssignment",
-		sdk.DefaultCustomError,
+		sdk.CustomErrorResourceNotFoundWarning,
 		nil,
 	)
 	if diags.HasError() {
@@ -237,18 +239,30 @@ func resourcePingOneGatewayRoleAssignmentDelete(ctx context.Context, d *schema.R
 }
 
 func resourcePingOneGatewayRoleAssignmentImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 3
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/gatewayID/roleAssignmentID\"", d.Id())
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "gateway_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "role_assignment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
 	}
 
-	environmentID, gatewayID, roleAssignmentID := attributes[0], attributes[1], attributes[2]
+	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	if err != nil {
+		return nil, err
+	}
 
-	d.Set("environment_id", environmentID)
-	d.Set("gateway_id", gatewayID)
-	d.SetId(roleAssignmentID)
+	d.Set("environment_id", attributes["environment_id"])
+	d.Set("gateway_id", attributes["gateway_id"])
+	d.SetId(attributes["role_assignment_id"])
 
 	resourcePingOneGatewayRoleAssignmentRead(ctx, d, meta)
 

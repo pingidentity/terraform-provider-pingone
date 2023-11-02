@@ -1,7 +1,8 @@
 ---
 name: 🚀 Feature Request
 about: I have a suggestion (and might want to implement myself 🙂)!
-labels: enhancement
+labels: type/enhancement,status/needs-triage
+
 ---
 
 <!--- Please keep this note for the community --->

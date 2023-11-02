@@ -34,10 +34,10 @@ resource "pingone_application_resource_grant" "custom_grant" {
   environment_id = pingone_environment.my_environment.id
   application_id = pingone_application.my_awesome_spa.id
 
-  resource_id = pingone_resource.my_resource.id
+  resource_name = pingone_resource.my_resource.name
 
-  scopes = [
-    pingone_resource_scope.my_resource_scope.id
+  scope_names = [
+    pingone_resource_scope.my_resource_scope.name
   ]
 }
 

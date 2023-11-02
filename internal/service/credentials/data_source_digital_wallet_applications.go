@@ -10,16 +10,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 // Types
-type DigitalWalletApplicationsDataSource struct {
-	client *credentials.APIClient
-	region model.RegionMapping
-}
+type DigitalWalletApplicationsDataSource serviceClientType
 
 type DigitalWalletApplicationsDataSourceModel struct {
 	Id            types.String `tfsdk:"id"`
@@ -56,9 +52,9 @@ func (r *DigitalWalletApplicationsDataSource) Schema(ctx context.Context, req da
 				framework.SchemaAttributeDescriptionFromMarkdown("PingOne environment identifier (UUID) in which the credential digital wallet app exists."),
 			),
 
-			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescription{
-				Description: "The list of resulting IDs of digital walliet applications that have been successfully retrieved.",
-			}),
+			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescriptionFromMarkdown(
+				"The list of resulting IDs of digital wallet applications that have been successfully retrieved.",
+			)),
 		},
 	}
 }
@@ -79,24 +75,20 @@ func (r *DigitalWalletApplicationsDataSource) Configure(ctx context.Context, req
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *DigitalWalletApplicationsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *DigitalWalletApplicationsDataSourceModel
 
-	if r.client == nil {
+	if r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -115,7 +107,8 @@ func (r *DigitalWalletApplicationsDataSource) Read(ctx context.Context, req data
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.DigitalWalletAppsApi.ReadAllDigitalWalletApps(ctx, data.EnvironmentId.ValueString()).Execute()
+			fO, fR, fErr := r.Client.CredentialsAPIClient.DigitalWalletAppsApi.ReadAllDigitalWalletApps(ctx, data.EnvironmentId.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadAllDigitalWalletApplications",
 		framework.DefaultCustomError,

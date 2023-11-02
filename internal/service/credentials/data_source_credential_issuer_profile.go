@@ -17,10 +17,7 @@ import (
 )
 
 // Types
-type CredentialIssuerProfileDataSource struct {
-	client *credentials.APIClient
-	region model.RegionMapping
-}
+type CredentialIssuerProfileDataSource serviceClientType
 
 type CredentialIssuerProfileDataSourceModel struct {
 	Id                    types.String `tfsdk:"id"`
@@ -99,24 +96,20 @@ func (r *CredentialIssuerProfileDataSource) Configure(ctx context.Context, req d
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *CredentialIssuerProfileDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *CredentialIssuerProfileDataSourceModel
 
-	if r.client == nil {
+	if r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -135,7 +128,8 @@ func (r *CredentialIssuerProfileDataSource) Read(ctx context.Context, req dataso
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.CredentialIssuersApi.ReadCredentialIssuerProfile(ctx, data.EnvironmentId.ValueString()).Execute()
+			fO, fR, fErr := r.Client.CredentialsAPIClient.CredentialIssuersApi.ReadCredentialIssuerProfile(ctx, data.EnvironmentId.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadCredentialIssuerProfile",
 		framework.DefaultCustomError,

@@ -21,10 +21,7 @@ import (
 )
 
 // Types
-type CustomDomainSSLResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type CustomDomainSSLResource serviceClientType
 
 type CustomDomainSSLResourceModel struct {
 	Id                              types.String `tfsdk:"id"`
@@ -57,6 +54,18 @@ func (r *CustomDomainSSLResource) Metadata(ctx context.Context, req resource.Met
 // Schema
 func (r *CustomDomainSSLResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 
+	certificatePemFileDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the PEM-encoded certificate to import. The certificate must not be expired, must not be self signed and the domain must match one of the subject alternative name (SAN) values on the certificate.",
+	).RequiresReplace()
+
+	intermediateCertificatesPemFileDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the PEM-encoded certificate chain.",
+	).RequiresReplace()
+
+	privateKeyPemFileDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the PEM-encoded, unencrypted private key that matches the certificate's public key.",
+	).RequiresReplace()
+
 	statusDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the status of the custom domain.",
 	).AllowedValuesEnum(management.AllowedEnumCustomDomainStatusEnumValues)
@@ -79,8 +88,9 @@ func (r *CustomDomainSSLResource) Schema(ctx context.Context, req resource.Schem
 			),
 
 			"certificate_pem_file": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the PEM-encoded certificate to import. The certificate must not be expired, must not be self signed and the domain must match one of the subject alternative name (SAN) values on the certificate. This field is immutable and will trigger a replace plan if changed.").Description,
-				Required:    true,
+				Description:         certificatePemFileDescription.Description,
+				MarkdownDescription: certificatePemFileDescription.MarkdownDescription,
+				Required:            true,
 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -92,8 +102,9 @@ func (r *CustomDomainSSLResource) Schema(ctx context.Context, req resource.Schem
 			},
 
 			"intermediate_certificates_pem_file": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the PEM-encoded certificate chain. This field is immutable and will trigger a replace plan if changed.").Description,
-				Optional:    true,
+				Description:         intermediateCertificatesPemFileDescription.Description,
+				MarkdownDescription: intermediateCertificatesPemFileDescription.MarkdownDescription,
+				Optional:            true,
 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -105,9 +116,10 @@ func (r *CustomDomainSSLResource) Schema(ctx context.Context, req resource.Schem
 			},
 
 			"private_key_pem_file": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the PEM-encoded, unencrypted private key that matches the certificate's public key. This field is immutable and will trigger a replace plan if changed.").Description,
-				Required:    true,
-				Sensitive:   true,
+				Description:         privateKeyPemFileDescription.Description,
+				MarkdownDescription: privateKeyPemFileDescription.MarkdownDescription,
+				Required:            true,
+				Sensitive:           true,
 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -153,24 +165,20 @@ func (r *CustomDomainSSLResource) Configure(ctx context.Context, req resource.Co
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *CustomDomainSSLResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state CustomDomainSSLResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -192,7 +200,8 @@ func (r *CustomDomainSSLResource) Create(ctx context.Context, req resource.Creat
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.CustomDomainsApi.UpdateDomain(ctx, plan.EnvironmentId.ValueString(), plan.CustomDomainId.ValueString()).ContentType(management.ENUMCUSTOMDOMAINPOSTHEADER_CERTIFICATE_IMPORTJSON).CustomDomainCertificateRequest(*customDomainSSL).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.CustomDomainsApi.UpdateDomain(ctx, plan.EnvironmentId.ValueString(), plan.CustomDomainId.ValueString()).ContentType(management.ENUMCUSTOMDOMAINPOSTHEADER_CERTIFICATE_IMPORTJSON).CustomDomainCertificateRequest(*customDomainSSL).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateDomain",
 		func(error model.P1Error) diag.Diagnostics {
@@ -231,7 +240,7 @@ func (r *CustomDomainSSLResource) Create(ctx context.Context, req resource.Creat
 func (r *CustomDomainSSLResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *CustomDomainSSLResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -250,7 +259,8 @@ func (r *CustomDomainSSLResource) Read(ctx context.Context, req resource.ReadReq
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.CustomDomainsApi.ReadOneDomain(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.CustomDomainsApi.ReadOneDomain(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneDomain",
 		framework.CustomErrorResourceNotFoundWarning,

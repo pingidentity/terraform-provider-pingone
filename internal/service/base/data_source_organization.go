@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -22,7 +23,7 @@ import (
 
 // Types
 type OrganizationDataSource struct {
-	client *management.APIClient
+	Client *pingone.Client
 	region model.RegionMapping
 }
 
@@ -104,33 +105,39 @@ func (r *OrganizationDataSource) Schema(ctx context.Context, req datasource.Sche
 			},
 
 			"base_url_api": schema.StringAttribute{
-				Description: "Helper attribute that provides an indication of the hostname of the API endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
-				Computed:    true,
+				Description:        "**Deprecation message**.  This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.  Helper attribute that provides an indication of the hostname of the API endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
+				Computed:           true,
+				DeprecationMessage: "This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.",
 			},
 
 			"base_url_auth": schema.StringAttribute{
-				Description: "Helper attribute that provides an indication of the hostname of the Authentication endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
-				Computed:    true,
+				Description:        "**Deprecation message**.  This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.  Helper attribute that provides an indication of the hostname of the Authentication endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
+				Computed:           true,
+				DeprecationMessage: "This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.",
 			},
 
 			"base_url_orchestrate": schema.StringAttribute{
-				Description: "Helper attribute that provides an indication of the hostname of the Orchestration endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
-				Computed:    true,
+				Description:        "**Deprecation message**.  This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.  Helper attribute that provides an indication of the hostname of the Orchestration endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
+				Computed:           true,
+				DeprecationMessage: "This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.",
 			},
 
 			"base_url_agreement_management": schema.StringAttribute{
-				Description: "Helper attribute that provides an indication of the hostname of the Agreement Management endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
-				Computed:    true,
+				Description:        "**Deprecation message**.  This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.  Helper attribute that provides an indication of the hostname of the Agreement Management endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
+				Computed:           true,
+				DeprecationMessage: "This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.",
 			},
 
 			"base_url_console": schema.StringAttribute{
-				Description: "Helper attribute that provides an indication of the hostname of the Console endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
-				Computed:    true,
+				Description:        "**Deprecation message**.  This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.  Helper attribute that provides an indication of the hostname of the Console endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
+				Computed:           true,
+				DeprecationMessage: "This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.",
 			},
 
 			"base_url_apps": schema.StringAttribute{
-				Description: "Helper attribute that provides an indication of the hostname of the Applications endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
-				Computed:    true,
+				Description:        "**Deprecation message**.  This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.  Helper attribute that provides an indication of the hostname of the Applications endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
+				Computed:           true,
+				DeprecationMessage: "This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.",
 			},
 		},
 	}
@@ -152,24 +159,21 @@ func (r *OrganizationDataSource) Configure(ctx context.Context, req datasource.C
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
 	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *OrganizationDataSourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -192,7 +196,7 @@ func (r *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRe
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.OrganizationsApi.ReadAllOrganizations(ctx).Execute()
+				return r.Client.ManagementAPIClient.OrganizationsApi.ReadAllOrganizations(ctx).Execute()
 			},
 			"ReadAllOrganizations",
 			framework.DefaultCustomError,
@@ -233,7 +237,7 @@ func (r *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRe
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.OrganizationsApi.ReadOneOrganization(ctx, data.OrganizationId.ValueString()).Execute()
+				return r.Client.ManagementAPIClient.OrganizationsApi.ReadOneOrganization(ctx, data.OrganizationId.ValueString()).Execute()
 			},
 			"ReadOneOrganization",
 			framework.DefaultCustomError,
@@ -277,12 +281,12 @@ func (p *OrganizationDataSourceModel) toState(v *management.Organization, region
 	p.Type = organzationTypeEnumOkToTF(v.GetTypeOk())
 	p.BillingConnectionIds = organizationBillingConnectionIdsOkToTF(v.GetBillingConnectionsOk())
 
-	p.BaseUrlAPI = types.StringValue(fmt.Sprintf("api.pingone.%s", region.URLSuffix))
-	p.BaseUrlAuth = types.StringValue(fmt.Sprintf("auth.pingone.%s", region.URLSuffix))
-	p.BaseUrlOrchestrate = types.StringValue(fmt.Sprintf("orchestrate-api.pingone.%s", region.URLSuffix))
-	p.BaseUrlAgreementMgmt = types.StringValue(fmt.Sprintf("agreement-mgmt.pingone.%s", region.URLSuffix))
-	p.BaseUrlConsole = types.StringValue(fmt.Sprintf("console.pingone.%s", region.URLSuffix))
-	p.BaseUrlApps = types.StringValue(fmt.Sprintf("apps.pingone.%s", region.URLSuffix))
+	p.BaseUrlAPI = framework.StringToTF(fmt.Sprintf("api.pingone.%s", region.URLSuffix))
+	p.BaseUrlAuth = framework.StringToTF(fmt.Sprintf("auth.pingone.%s", region.URLSuffix))
+	p.BaseUrlOrchestrate = framework.StringToTF(fmt.Sprintf("orchestrate-api.pingone.%s", region.URLSuffix))
+	p.BaseUrlAgreementMgmt = framework.StringToTF(fmt.Sprintf("agreement-mgmt.pingone.%s", region.URLSuffix))
+	p.BaseUrlConsole = framework.StringToTF(fmt.Sprintf("console.pingone.%s", region.URLSuffix))
+	p.BaseUrlApps = framework.StringToTF(fmt.Sprintf("apps.pingone.%s", region.URLSuffix))
 
 	return diags
 }

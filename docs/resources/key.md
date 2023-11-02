@@ -2,12 +2,12 @@
 page_title: "pingone_key Resource - terraform-provider-pingone"
 subcategory: "Platform"
 description: |-
-  Resource to create and manage PingOne keys
+  Resource to create and manage PingOne keys for an environment.
 ---
 
 # pingone_key (Resource)
 
-Resource to create and manage PingOne keys
+Resource to create and manage PingOne keys for an environment.
 
 ## Example Usage - Create Key Pair
 
@@ -45,29 +45,29 @@ resource "pingone_key" "my_tls_key" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to create the key in.
-- `usage_type` (String) A string that specifies how the certificate is used. Options are `ENCRYPTION`, `SIGNING`, `SSL/TLS` and `ISSUANCE`.
+- `environment_id` (String) The ID of the environment to manage the key in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `usage_type` (String) A string that specifies how the certificate is used.  Options are `ENCRYPTION`, `ISSUANCE`, `OUTBOUND_MTLS`, `SIGNING`, `SSL/TLS`.
 
 ### Optional
 
-- `algorithm` (String) Specifies the key algorithm. Options are `RSA`, `EC`, and `UNKNOWN`.  Cannot be used with `pkcs12_file_base64`.
+- `algorithm` (String) A string that specifies the key algorithm.  Options are `EC`, `RSA`, `UNKNOWN`.  Conflicts with `pkcs12_file_base64`.  This field is immutable and will trigger a replace plan if changed.
 - `custom_crl` (String) A URL string of a custom Certificate Revokation List endpoint.  Used for certificates of type `ISSUANCE`.
-- `default` (Boolean) A boolean that specifies whether this is the default key for the specified environment. Defaults to `false`.
-- `issuer_dn` (String) A string that specifies the distinguished name of the certificate issuer.  Cannot be used with `pkcs12_file_base64`.
-- `key_length` (Number) An integer that specifies the key length. For RSA keys, options are `2048`, `3072`, `4096` and `7680`. For elliptical curve (EC) keys, options are `224`, `256`, `384` and `521`.  Cannot be used with `pkcs12_file_base64`.
-- `name` (String) The system name of the key.  Cannot be used with `pkcs12_file_base64`.
-- `pkcs12_file_base64` (String, Sensitive) A base64 encoded PKCS12 file.  Cannot be used with `name`, `algorithm`, `issuer_dn`, `key_length`, `serial_number`, `signature_algorithm`, `subject_dn` or `validity_period`.
-- `serial_number` (String) An integer (in string data type) that specifies the serial number of the key or certificate.  Cannot be used with `pkcs12_file_base64`.
-- `signature_algorithm` (String) Specifies the signature algorithm of the key. For RSA keys, options are `SHA256withRSA`, `SHA384withRSA` and `SHA512withRSA`. For elliptical curve (EC) keys, options are `SHA256withECDSA`, `SHA384withECDSA` and `SHA512withECDSA`.  Cannot be used with `pkcs12_file_base64`.
-- `subject_dn` (String) A string that specifies the distinguished name of the subject being secured.  Cannot be used with `pkcs12_file_base64`.
-- `validity_period` (Number) An integer that specifies the number of days the key is valid.  Cannot be used with `pkcs12_file_base64`.
+- `default` (Boolean) A boolean that specifies whether this is the default key for the specified environment.  Defaults to `false`.
+- `issuer_dn` (String) A string that specifies the distinguished name of the certificate issuer.  Conflicts with `pkcs12_file_base64`.  This field is immutable and will trigger a replace plan if changed.
+- `key_length` (Number) An integer that specifies the key length. For RSA keys, options are `2048`, `3072`, `4096` and `7680`. For elliptical curve (EC) keys, options are `224`, `256`, `384` and `521`.  Conflicts with `pkcs12_file_base64`.  This field is immutable and will trigger a replace plan if changed.
+- `name` (String) A string that specifies the system name of the key.  Conflicts with `pkcs12_file_base64`.  This field is immutable and will trigger a replace plan if changed.
+- `pkcs12_file_base64` (String, Sensitive) A base64 encoded PKCS12 file to import.  Conflicts with `name`, `algorithm`, `issuer_dn`, `key_length`, `serial_number`, `signature_algorithm`, `subject_dn`, `validity_period`, `custom_crl`.  This field is immutable and will trigger a replace plan if changed.
+- `serial_number` (String) An integer (in string data type) that specifies the serial number of the key or certificate.  Conflicts with `pkcs12_file_base64`.  This field is immutable and will trigger a replace plan if changed.
+- `signature_algorithm` (String) A string that specifies the signature algorithm of the key. For RSA keys, options are `SHA256withRSA`, `SHA384withRSA` and `SHA512withRSA`. For elliptical curve (EC) keys, options are `SHA256withECDSA`, `SHA384withECDSA` and `SHA512withECDSA`.  Conflicts with `pkcs12_file_base64`.  This field is immutable and will trigger a replace plan if changed.
+- `subject_dn` (String) A string that specifies the distinguished name of the subject being secured.  Conflicts with `pkcs12_file_base64`.  This field is immutable and will trigger a replace plan if changed.
+- `validity_period` (Number) An integer that specifies the number of days the key is valid.  Conflicts with `pkcs12_file_base64`.  This field is immutable and will trigger a replace plan if changed.
 
 ### Read-Only
 
-- `expires_at` (String) The time the key resource expires.
+- `expires_at` (String) A string that specifies the date and time the key resource expires.
 - `id` (String) The ID of this resource.
-- `starts_at` (String) The time the validity period starts.
-- `status` (String) A string that specifies the status of the key. Options are `VALID`, `EXPIRING`, `EXPIRED`, `NOT_YET_VALID`, and `REVOKED`.
+- `starts_at` (String) A string that specifies the date and time the validity period starts.
+- `status` (String) A string that specifies the status of the key.  Options are `EXPIRED`, `EXPIRING`, `NOT_YET_VALID`, `REVOKED`, `VALID`.
 
 ## Import
 

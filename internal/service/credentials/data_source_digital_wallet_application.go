@@ -13,17 +13,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
-type DigitalWalletApplicationDataSource struct {
-	client *credentials.APIClient
-	region model.RegionMapping
-}
+type DigitalWalletApplicationDataSource serviceClientType
 
 type DigitalWalletApplicationDataSourceModel struct {
 	Id              types.String `tfsdk:"id"`
@@ -127,24 +123,20 @@ func (r *DigitalWalletApplicationDataSource) Configure(ctx context.Context, req 
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *DigitalWalletApplicationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *DigitalWalletApplicationDataSourceModel
 
-	if r.client == nil {
+	if r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -166,7 +158,8 @@ func (r *DigitalWalletApplicationDataSource) Read(ctx context.Context, req datas
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.DigitalWalletAppsApi.ReadOneDigitalWalletApp(ctx, data.EnvironmentId.ValueString(), data.DigitalWalletId.ValueString()).Execute()
+				fO, fR, fErr := r.Client.CredentialsAPIClient.DigitalWalletAppsApi.ReadOneDigitalWalletApp(ctx, data.EnvironmentId.ValueString(), data.DigitalWalletId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneDigitalWalletApplication",
 			framework.DefaultCustomError,
@@ -187,7 +180,8 @@ func (r *DigitalWalletApplicationDataSource) Read(ctx context.Context, req datas
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.DigitalWalletAppsApi.ReadAllDigitalWalletApps(ctx, data.EnvironmentId.ValueString()).Execute()
+				fO, fR, fErr := r.Client.CredentialsAPIClient.DigitalWalletAppsApi.ReadAllDigitalWalletApps(ctx, data.EnvironmentId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadAllDigitalWalletApplication",
 			framework.DefaultCustomError,
@@ -228,7 +222,8 @@ func (r *DigitalWalletApplicationDataSource) Read(ctx context.Context, req datas
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.DigitalWalletAppsApi.ReadAllDigitalWalletApps(ctx, data.EnvironmentId.ValueString()).Execute()
+				fO, fR, fErr := r.Client.CredentialsAPIClient.DigitalWalletAppsApi.ReadAllDigitalWalletApps(ctx, data.EnvironmentId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadAllDigitalWalletApplication",
 			framework.DefaultCustomError,

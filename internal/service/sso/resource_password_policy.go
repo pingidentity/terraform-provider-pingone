@@ -2,15 +2,14 @@ package sso
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -181,7 +180,7 @@ func ResourcePasswordPolicy() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"max": {
-							Description:      "The maximum number of days the same password can be used before it must be changed. The value must be a positive, non-zero integer.  The value must be greater than the sum of minAgeDays (if set) + 21 (the expiration warning interval for passwords).",
+							Description:      "The maximum number of days the same password can be used before it must be changed. The value must be a positive, non-zero integer.  The value must be greater than the sum of `min` (if set) + 21 (the expiration warning interval for passwords).",
 							Type:             schema.TypeInt,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(1)),
 							Optional:         true,
@@ -240,7 +239,8 @@ func resourcePasswordPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.PasswordPoliciesApi.CreatePasswordPolicy(ctx, d.Get("environment_id").(string)).PasswordPolicy(passwordPolicy.(management.PasswordPolicy)).Execute()
+			fO, fR, fErr := apiClient.PasswordPoliciesApi.CreatePasswordPolicy(ctx, d.Get("environment_id").(string)).PasswordPolicy(passwordPolicy.(management.PasswordPolicy)).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreatePasswordPolicy",
 		sdk.DefaultCustomError,
@@ -267,7 +267,8 @@ func resourcePasswordPolicyRead(ctx context.Context, d *schema.ResourceData, met
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.PasswordPoliciesApi.ReadOnePasswordPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.PasswordPoliciesApi.ReadOnePasswordPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOnePasswordPolicy",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -399,7 +400,8 @@ func resourcePasswordPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.PasswordPoliciesApi.UpdatePasswordPolicy(ctx, d.Get("environment_id").(string), d.Id()).PasswordPolicy(passwordPolicy.(management.PasswordPolicy)).Execute()
+			fO, fR, fErr := apiClient.PasswordPoliciesApi.UpdatePasswordPolicy(ctx, d.Get("environment_id").(string), d.Id()).PasswordPolicy(passwordPolicy.(management.PasswordPolicy)).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdatePasswordPolicy",
 		sdk.DefaultCustomError,
@@ -422,8 +424,8 @@ func resourcePasswordPolicyDelete(ctx context.Context, d *schema.ResourceData, m
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.PasswordPoliciesApi.DeletePasswordPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.PasswordPoliciesApi.DeletePasswordPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeletePasswordPolicy",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -437,17 +439,25 @@ func resourcePasswordPolicyDelete(ctx context.Context, d *schema.ResourceData, m
 }
 
 func resourcePasswordPolicyImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 2
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/passwordPolicyID\"", d.Id())
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "password_policy_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
 	}
 
-	environmentID, passwordPolicyID := attributes[0], attributes[1]
+	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	if err != nil {
+		return nil, err
+	}
 
-	d.Set("environment_id", environmentID)
-	d.SetId(passwordPolicyID)
+	d.Set("environment_id", attributes["environment_id"])
+	d.SetId(attributes["password_policy_id"])
 
 	resourcePasswordPolicyRead(ctx, d, meta)
 

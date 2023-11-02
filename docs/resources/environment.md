@@ -9,7 +9,7 @@ description: |-
 
 Resource to create and manage PingOne environments.
 
-~> PingOne environments are created with a default population and at least one service added.
+~> PingOne environments are created with a default population and at least one service added.  Default populations can be managed with the `pingone_population_default` resource.
 
 ~> This `pingone_environment` resource does not yet support creation of WORKFORCE enabled environments.
 
@@ -47,7 +47,7 @@ resource "pingone_environment" "my_environment" {
 
 ### Optional
 
-- `default_population` (Block List) The environment's default population. (see [below for nested schema](#nestedblock--default_population))
+- `default_population` (Block List, Deprecated) **Deprecation Message** The `default_population` block has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.  To preserve user data, removal of this block from HCL will not delete the population from the service.  The default population configuration cannot be added after the environment has already been created, but will not trigger a replacement of the resource.  The environment's default population.  The values for this block will not be populated when importing the resource using `terraform import`. (see [below for nested schema](#nestedblock--default_population))
 - `description` (String) A description of the environment.
 - `region` (String) The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.  Default can be set with the `PINGONE_REGION` environment variable.
 - `service` (Block Set) The services to enable in the environment.  Defaults to `SSO`. (see [below for nested schema](#nestedblock--service))
@@ -57,7 +57,7 @@ resource "pingone_environment" "my_environment" {
 
 ### Read-Only
 
-- `default_population_id` (String) The ID of the environment's default population.  This attribute is only populated when also using the `default_population` block to define a default population.
+- `default_population_id` (String, Deprecated) **Deprecation Message** The `default_population_id` attribute has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.  The ID of the environment's default population.  This attribute is only populated when also using the `default_population` block to define a default population, but will not be populated when importing the resource using `terraform import`.
 - `id` (String) The ID of this resource.
 - `organization_id` (String) The ID of the PingOne organization tenant to which the environment belongs.
 
@@ -77,6 +77,7 @@ Optional:
 
 - `bookmark` (Block Set) Custom bookmark links for the service. (see [below for nested schema](#nestedblock--service--bookmark))
 - `console_url` (String) A custom console URL to set.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`.
+- `tags` (Set of String) A set of tags to apply upon environment creation.  Only configurable when the service `type` is `DaVinci`.  Options are `DAVINCI_MINIMAL` (allows for a creation of an environment without example/demo configuration in the DaVinci service).  This field is immutable and will trigger a replace plan if changed.
 - `type` (String) The service type to enable in the environment.  Valid options are `APIIntelligence`, `Authorize`, `Credentials`, `DaVinci`, `MFA`, `PingAccess`, `PingAuthorize`, `PingCentral`, `PingDirectory`, `PingFederate`, `PingID`, `Risk`, `SSO`, `Verify`.  Defaults to `SSO`.
 
 <a id="nestedblock--service--bookmark"></a>
@@ -102,10 +103,4 @@ Import is supported using the following syntax examples, where attributes in `<>
 
 ```shell
 $ terraform import pingone_environment.example <environment_id>
-```
-
-~> The following import command is supported for backward capability with previous provider versions or where a default population doesn't exist in the environment.  The following example associates the defined population as the default population in the resource.  Once imported, the `environment_id` of the import command will be stored in the `id` attribute of the environment resource, and the `population_id` stored in the `default_population_id` attribute of the environment resource.
-
-```shell
-$ terraform import pingone_environment.example <environment_id>/<population_id>
 ```

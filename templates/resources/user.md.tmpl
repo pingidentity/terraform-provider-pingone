@@ -9,6 +9,8 @@ description: |-
 
 {{ .Description | trimspace }}
 
+!> This resource is designed to support the creation of non-human users for testing and demo purposes, and is not designed for user migration activities.  Bulk user migration can be performed using the [PingOne User Import Tool](https://github.com/pingidentity/pingone-user-import-tool).
+
 {{ if .HasExample -}}
 ## Example Usage
 

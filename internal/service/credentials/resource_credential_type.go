@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -16,7 +15,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -26,22 +27,25 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	customstringvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
-type CredentialTypeResource struct {
-	client *credentials.APIClient
-	region model.RegionMapping
-}
+type CredentialTypeResource serviceClientType
 
 type CredentialTypeResourceModel struct {
 	Id                 types.String `tfsdk:"id"`
 	EnvironmentId      types.String `tfsdk:"environment_id"`
-	Title              types.String `tfsdk:"title"`
-	Description        types.String `tfsdk:"description"`
+	IssuerId           types.String `tfsdk:"issuer_id"`
 	CardType           types.String `tfsdk:"card_type"`
 	CardDesignTemplate types.String `tfsdk:"card_design_template"`
+	Description        types.String `tfsdk:"description"`
 	Metadata           types.Object `tfsdk:"metadata"`
+	RevokeOnDelete     types.Bool   `tfsdk:"revoke_on_delete"`
+	Title              types.String `tfsdk:"title"`
+	CreatedAt          types.String `tfsdk:"created_at"`
+	UpdatedAt          types.String `tfsdk:"updated_at"`
 }
 
 type MetadataModel struct {
@@ -58,12 +62,13 @@ type MetadataModel struct {
 }
 
 type FieldsModel struct {
-	Id        types.String `tfsdk:"id"`
-	Type      types.String `tfsdk:"type"`
-	Title     types.String `tfsdk:"title"`
-	IsVisible types.Bool   `tfsdk:"is_visible"`
-	Attribute types.String `tfsdk:"attribute"`
-	Value     types.String `tfsdk:"value"`
+	Id          types.String `tfsdk:"id"`
+	Type        types.String `tfsdk:"type"`
+	Title       types.String `tfsdk:"title"`
+	FileSupport types.String `tfsdk:"file_support"`
+	IsVisible   types.Bool   `tfsdk:"is_visible"`
+	Attribute   types.String `tfsdk:"attribute"`
+	Value       types.String `tfsdk:"value"`
 }
 
 var (
@@ -81,12 +86,13 @@ var (
 	}
 
 	innerFieldsServiceTFObjectTypes = map[string]attr.Type{
-		"id":         types.StringType,
-		"type":       types.StringType,
-		"title":      types.StringType,
-		"is_visible": types.BoolType,
-		"attribute":  types.StringType,
-		"value":      types.StringType,
+		"id":           types.StringType,
+		"type":         types.StringType,
+		"title":        types.StringType,
+		"file_support": types.StringType,
+		"is_visible":   types.BoolType,
+		"attribute":    types.StringType,
+		"value":        types.StringType,
 	}
 )
 
@@ -113,10 +119,8 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 	const attrMinLength = 1
 	const attrMinColumns = 1
 	const attrMaxColumns = 3
-	const attrDefaultVersion = 5
 	const attrMinPercent = 0
 	const attrMaxPercent = 100
-	const imageMaxSize = 50000
 
 	titleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Title of the credential. Verification sites are expected to be able to request the issued credential from the compatible wallet app using the title.  This value aligns to `${cardTitle}` in the `card_design_template`.",
@@ -125,6 +129,14 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 	credentialDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A description of the credential type. This value aligns to `${cardSubtitle}` in the `card_design_template`.",
 	)
+
+	issuerIdDescriptipion := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The identifier (UUID) of the issuer of the credential, which is the `id` of the `credential_issuer_profile` defined in the `environment`.",
+	)
+
+	revokeOnDeleteDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether a user's issued verifiable credentials are automatically revoked when a `credential_type`, `user`, or `environment` is deleted.",
+	).DefaultValue("true")
 
 	fieldsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"In a credential, the information is stored as key-value pairs where `fields` defines those key-value pairs. Effectively, `fields.title` is the key and its value is `fields.value` or extracted from the PingOne Directory attribute named in `fields.attribute`.",
@@ -135,8 +147,12 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 	)
 
 	fieldsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Type of data in the credential field. The must contain one of the following types: `Directory Attribute`, `Alphanumeric Text`, or `Issued Timestamp`.",
-	)
+		"Specifies the type of data in the credential field.",
+	).AllowedValuesEnum(credentials.AllowedEnumCredentialTypeMetaDataFieldsTypeEnumValues)
+
+	fieldsFileSupportDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Specifies how an image is stored in the credential field.",
+	).AllowedValuesEnum(credentials.AllowedEnumCredentialTypeMetaDataFieldsFileSupportEnumValues)
 
 	fieldsAttributeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Name of the PingOne Directory attribute. Present if `field.type` is `Directory Attribute`.",
@@ -157,6 +173,12 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 			"environment_id": framework.Attr_LinkID(
 				framework.SchemaAttributeDescriptionFromMarkdown("PingOne environment identifier (UUID) in which the credential type exists."),
 			),
+
+			"issuer_id": schema.StringAttribute{
+				Description:         issuerIdDescriptipion.Description,
+				MarkdownDescription: issuerIdDescriptipion.MarkdownDescription,
+				Computed:            true,
+			},
 
 			"title": schema.StringAttribute{
 				Description:         titleDescription.Description,
@@ -212,20 +234,24 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 				},
 			},
 
+			"revoke_on_delete": schema.BoolAttribute{
+				Description:         revokeOnDeleteDescription.Description,
+				MarkdownDescription: revokeOnDeleteDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(true),
+			},
+
 			"metadata": schema.SingleNestedAttribute{
 				Description: "Contains the names, data types, and other metadata related to the credential.",
 				Required:    true,
 
 				Attributes: map[string]schema.Attribute{
 					"background_image": schema.StringAttribute{
-						Description: "A base64 encoded image of the background to show in the credential. The value must include a Content-type prefix, such as data:image/png;base64.",
+						Description: "The URL or fully qualified path to the image file used for the credential background.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.  Image size must not exceed 50 KB.",
 						Optional:    true,
 						Validators: []validator.String{
-							stringvalidator.LengthAtMost(imageMaxSize),
-							// Required until P1Creds follows the standard PingOne image handling capability.
-							// Attempts of other stop-gap mechanisms to detect and update Content-Type yielded inconsistent results.
-							stringvalidator.RegexMatches(regexp.MustCompile(`^data:image\/(\w+);base64,`), "base64encoded image must include Content-type prefix, such as data:image/jpeg;base64, data:image/svg;base64, or data:image/png;base64."),
-							customstringvalidator.IsBase64Encoded(),
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
 							customstringvalidator.IsRequiredIfRegexMatchesPathValue(
 								regexp.MustCompile(`\${backgroundImage}`),
 								"The metadata.background_image argument is required because the ${backgroundImage} element is defined in the card_design_template.",
@@ -284,17 +310,14 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 					},
 
 					"logo_image": schema.StringAttribute{
-						Description: "A base64 encoded image of the logo to show in the credential. The value must include a Content-type prefix, such as data:image/png;base64.",
+						Description: "The URL or fully qualified path to the image file used for the credential logo.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.  Image size must not exceed 25 KB.",
 						Optional:    true,
+
 						Validators: []validator.String{
-							stringvalidator.LengthAtMost(imageMaxSize),
-							// Required until P1Creds follows the standard PingOne image handling capability.
-							// Attempts of other stop-gap mechanisms to detect and update Content-Type yielded inconsistent results.
-							stringvalidator.RegexMatches(regexp.MustCompile(`^data:image\/(\w+);base64,`), "base64encoded image must include Content-type prefix, such as data:image/jpeg;base64, data:image/svg;base64, or data:image/png;base64."),
-							customstringvalidator.IsBase64Encoded(),
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
 							customstringvalidator.IsRequiredIfRegexMatchesPathValue(
 								regexp.MustCompile(`\${logoImage}`),
-								"The metadata.card_color argument is required because the ${logoImage} element is defined in the card_design_template.",
+								"The metadata.logo_image argument is required because the ${logoImage} element is defined in the card_design_template.",
 								path.MatchRoot("card_design_template"),
 							),
 							customstringvalidator.RegexMatchesPathValue(
@@ -333,19 +356,9 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 							),
 						},
 					},
-					//fix
 					"version": schema.Int64Attribute{
 						Description: "Number version of this credential.",
 						Computed:    true,
-						Default:     int64default.StaticInt64(attrDefaultVersion),
-						// P1Creds has a limitation within the EarlyRelease.
-						// To resolve, we will compute the "version" argument with a value of "5";
-						// the same value set by the P1 admin console until resolved.
-						// Below are the actual settings to use once fixed.
-						// Optional: true,
-						// Validators: []validator.Int64{
-						// int64validator.AtLeast(attrMinVersion),
-						//},
 					},
 
 					"fields": schema.ListNestedAttribute{
@@ -367,10 +380,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 									MarkdownDescription: fieldsTypeDescription.MarkdownDescription,
 									Required:            true,
 									Validators: []validator.String{
-										stringvalidator.OneOf(
-											string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT),
-											string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE),
-											string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ISSUED_TIMESTAMP)),
+										stringvalidator.OneOf(utils.EnumSliceToStringSlice(credentials.AllowedEnumCredentialTypeMetaDataFieldsTypeEnumValues)...),
 									},
 								},
 								"title": schema.StringAttribute{
@@ -379,6 +389,25 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 									Validators: []validator.String{
 										stringvalidator.LengthAtLeast(attrMinLength),
 									},
+								},
+								"file_support": schema.StringAttribute{
+									Description:         fieldsFileSupportDescription.Description,
+									MarkdownDescription: fieldsFileSupportDescription.MarkdownDescription,
+									Optional:            true,
+									Validators: []validator.String{
+										stringvalidator.All(
+											customstringvalidator.RegexMatchesPathValue(
+												regexp.MustCompile(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE)),
+												fmt.Sprintf("The fields.file_support argument is only applicable when fields.type has a value of %s.", string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE)),
+												path.MatchRelative().AtParent().AtName("type"),
+											),
+											stringvalidator.OneOf(utils.EnumSliceToStringSlice(credentials.AllowedEnumCredentialTypeMetaDataFieldsFileSupportEnumValues)...),
+										),
+									},
+								},
+								"is_visible": schema.BoolAttribute{
+									Description: "Specifies whether the field should be visible to viewers of the credential.",
+									Optional:    true,
 								},
 								"attribute": schema.StringAttribute{
 									Description:         fieldsAttributeDescription.Description,
@@ -400,14 +429,24 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 										customstringvalidator.IsRequiredIfMatchesPathValue(basetypes.NewStringValue(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT)), path.MatchRelative().AtParent().AtName("type")),
 									},
 								},
-								"is_visible": schema.BoolAttribute{
-									Description: "Specifies whether the field should be visible to viewers of the credential.",
-									Optional:    true,
-								},
 							},
 						},
 					},
 				},
+			},
+
+			"created_at": schema.StringAttribute{
+				Description: "Date and time the object was created.",
+				Computed:    true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+
+			"updated_at": schema.StringAttribute{
+				Description: "Date and time the object was updated. Can be null.",
+				Computed:    true,
 			},
 		},
 	}
@@ -429,24 +468,20 @@ func (r *CredentialTypeResource) Configure(ctx context.Context, req resource.Con
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *CredentialTypeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state CredentialTypeResourceModel
 
-	if r.client == nil {
+	if r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -474,7 +509,8 @@ func (r *CredentialTypeResource) Create(ctx context.Context, req resource.Create
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.CredentialTypesApi.CreateCredentialType(ctx, plan.EnvironmentId.ValueString()).CredentialType(*credentialType).Execute()
+			fO, fR, fErr := r.Client.CredentialsAPIClient.CredentialTypesApi.CreateCredentialType(ctx, plan.EnvironmentId.ValueString()).CredentialType(*credentialType).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateCredentialType",
 		framework.DefaultCustomError,
@@ -497,7 +533,7 @@ func (r *CredentialTypeResource) Create(ctx context.Context, req resource.Create
 func (r *CredentialTypeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *CredentialTypeResourceModel
 
-	if r.client == nil {
+	if r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -516,19 +552,20 @@ func (r *CredentialTypeResource) Read(ctx context.Context, req resource.ReadRequ
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.CredentialTypesApi.ReadOneCredentialType(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.CredentialsAPIClient.CredentialTypesApi.ReadOneCredentialType(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneCredentialType",
 		framework.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultCreateReadRetryable,
+		credentialTypeRetryConditions,
 		&response,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Remove from state if resource is not found
-	if response == nil {
+	// Remove from state if resource is not found or soft deleted
+	if response == nil || response.DeletedAt != nil {
 		resp.State.RemoveResource(ctx)
 		return
 	}
@@ -541,7 +578,7 @@ func (r *CredentialTypeResource) Read(ctx context.Context, req resource.ReadRequ
 func (r *CredentialTypeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state CredentialTypeResourceModel
 
-	if r.client == nil {
+	if r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -567,7 +604,8 @@ func (r *CredentialTypeResource) Update(ctx context.Context, req resource.Update
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.CredentialTypesApi.UpdateCredentialType(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).CredentialType(*credentialType).Execute()
+			fO, fR, fErr := r.Client.CredentialsAPIClient.CredentialTypesApi.UpdateCredentialType(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).CredentialType(*credentialType).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateCredentialType",
 		framework.DefaultCustomError,
@@ -589,7 +627,7 @@ func (r *CredentialTypeResource) Update(ctx context.Context, req resource.Update
 func (r *CredentialTypeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *CredentialTypeResourceModel
 
-	if r.client == nil {
+	if r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -607,8 +645,8 @@ func (r *CredentialTypeResource) Delete(ctx context.Context, req resource.Delete
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.CredentialTypesApi.DeleteCredentialType(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
+			fR, fErr := r.Client.CredentialsAPIClient.CredentialTypesApi.DeleteCredentialType(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteCredentialType",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -621,19 +659,37 @@ func (r *CredentialTypeResource) Delete(ctx context.Context, req resource.Delete
 }
 
 func (r *CredentialTypeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 2
-	attributes := strings.SplitN(req.ID, "/", splitLength)
 
-	if len(attributes) != splitLength {
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:     "credential_type_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/credential_type_id/\"", req.ID),
+			err.Error(),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
+
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
 func (p *CredentialTypeResourceModel) expand(ctx context.Context) (*credentials.CredentialType, diag.Diagnostics) {
@@ -661,8 +717,21 @@ func (p *CredentialTypeResourceModel) expand(ctx context.Context) (*credentials.
 	}
 
 	data := credentials.NewCredentialType(p.CardDesignTemplate.ValueString(), *credentialTypeMetaData, p.Title.ValueString())
-	data.SetDescription(p.Description.ValueString())
-	data.SetCardType(p.CardType.ValueString())
+
+	if !p.Description.IsNull() && !p.Description.IsUnknown() {
+		data.SetDescription(p.Description.ValueString())
+	}
+
+	if !p.CardType.IsNull() && !p.CardType.IsUnknown() {
+		data.SetCardType(p.CardType.ValueString())
+	}
+
+	if !p.RevokeOnDelete.IsNull() && !p.RevokeOnDelete.IsUnknown() {
+		onDeleteObject := credentials.NewCredentialTypeOnDelete()
+		onDeleteObject.SetRevokeIssuedCredentials(p.RevokeOnDelete.ValueBool())
+
+		data.SetOnDelete(*onDeleteObject)
+	}
 
 	return data, diags
 }
@@ -738,7 +807,10 @@ func (p *FieldsModel) expandFields() (*credentials.CredentialTypeMetaDataFieldsI
 	innerFields := credentials.NewCredentialTypeMetaDataFieldsInnerWithDefaults()
 
 	attrType := credentials.EnumCredentialTypeMetaDataFieldsType(p.Type.ValueString())
+	innerFields.SetType(attrType)
+
 	attrId := p.Type.ValueString() + " -> " + p.Title.ValueString() // construct id per P1Creds API recommendations
+	innerFields.SetId(attrId)
 
 	if attrType == credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT {
 		innerFields.SetValue(p.Value.ValueString())
@@ -746,12 +818,20 @@ func (p *FieldsModel) expandFields() (*credentials.CredentialTypeMetaDataFieldsI
 
 	if attrType == credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE {
 		innerFields.SetAttribute(p.Attribute.ValueString())
+
+		if !p.FileSupport.IsNull() && !p.FileSupport.IsUnknown() {
+			innerFields.SetFileSupport(credentials.EnumCredentialTypeMetaDataFieldsFileSupport(p.FileSupport.ValueString()))
+		}
+
 	}
 
-	innerFields.SetId(attrId)
-	innerFields.SetType(attrType)
-	innerFields.SetTitle(p.Title.ValueString())
-	innerFields.SetIsVisible(p.IsVisible.ValueBool())
+	if !p.Title.IsNull() && !p.Title.IsUnknown() {
+		innerFields.SetTitle(p.Title.ValueString())
+	}
+
+	if !p.IsVisible.IsNull() && !p.IsVisible.IsUnknown() {
+		innerFields.SetIsVisible(p.IsVisible.ValueBool())
+	}
 
 	if innerFields == nil {
 		diags.AddWarning(
@@ -777,10 +857,19 @@ func (p *CredentialTypeResourceModel) toState(apiObject *credentials.CredentialT
 	// credential attributes
 	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
 	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.IssuerId = framework.StringToTF(*apiObject.GetIssuer().Id)
 	p.Title = framework.StringOkToTF(apiObject.GetTitleOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.CardType = framework.StringOkToTF(apiObject.GetCardTypeOk())
 	p.CardDesignTemplate = framework.StringOkToTF(apiObject.GetCardDesignTemplateOk())
+	p.CreatedAt = framework.TimeOkToTF(apiObject.GetCreatedAtOk())
+	p.UpdatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
+
+	revokeOnDelete := types.BoolNull()
+	if v, ok := apiObject.GetOnDeleteOk(); ok {
+		revokeOnDelete = framework.BoolOkToTF(v.GetRevokeIssuedCredentialsOk())
+	}
+	p.RevokeOnDelete = revokeOnDelete
 
 	// credential metadata
 	metadata, d := toStateMetadata(apiObject.GetMetadataOk())
@@ -825,12 +914,13 @@ func toStateFields(innerFields []credentials.CredentialTypeMetaDataFieldsInner, 
 	for _, v := range innerFields {
 
 		fieldsMap := map[string]attr.Value{
-			"id":         framework.StringOkToTF(v.GetIdOk()),
-			"title":      framework.StringOkToTF(v.GetTitleOk()),
-			"attribute":  framework.StringOkToTF(v.GetAttributeOk()),
-			"value":      framework.StringOkToTF(v.GetValueOk()),
-			"is_visible": framework.BoolOkToTF(v.GetIsVisibleOk()),
-			"type":       framework.EnumOkToTF(v.GetTypeOk()),
+			"id":           framework.StringOkToTF(v.GetIdOk()),
+			"type":         framework.EnumOkToTF(v.GetTypeOk()),
+			"title":        framework.StringOkToTF(v.GetTitleOk()),
+			"file_support": framework.EnumOkToTF(v.GetFileSupportOk()),
+			"is_visible":   framework.BoolOkToTF(v.GetIsVisibleOk()),
+			"attribute":    framework.StringOkToTF(v.GetAttributeOk()),
+			"value":        framework.StringOkToTF(v.GetValueOk()),
 		}
 		innerflattenedObj, d := types.ObjectValue(innerFieldsServiceTFObjectTypes, fieldsMap)
 		diags.Append(d...)

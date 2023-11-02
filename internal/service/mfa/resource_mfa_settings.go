@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -136,7 +136,8 @@ func resourceMFASettingsCreate(ctx context.Context, d *schema.ResourceData, meta
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.MFASettingsApi.UpdateMFASettings(ctx, d.Get("environment_id").(string)).MFASettings(mfaSettings).Execute()
+			fO, fR, fErr := apiClient.MFASettingsApi.UpdateMFASettings(ctx, d.Get("environment_id").(string)).MFASettings(mfaSettings).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateMFASettings",
 		sdk.DefaultCustomError,
@@ -163,10 +164,11 @@ func resourceMFASettingsRead(ctx context.Context, d *schema.ResourceData, meta i
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.MFASettingsApi.ReadMFASettings(ctx, d.Get("environment_id").(string)).Execute()
+			fO, fR, fErr := apiClient.MFASettingsApi.ReadMFASettings(ctx, d.Get("environment_id").(string)).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadMFASettings",
-		sdk.DefaultCustomError,
+		sdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 	)
 	if diags.HasError() {
@@ -227,7 +229,8 @@ func resourceMFASettingsUpdate(ctx context.Context, d *schema.ResourceData, meta
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.MFASettingsApi.UpdateMFASettings(ctx, d.Get("environment_id").(string)).MFASettings(mfaSettings).Execute()
+			fO, fR, fErr := apiClient.MFASettingsApi.UpdateMFASettings(ctx, d.Get("environment_id").(string)).MFASettings(mfaSettings).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateMFASettings",
 		sdk.DefaultCustomError,
@@ -250,10 +253,11 @@ func resourceMFASettingsDelete(ctx context.Context, d *schema.ResourceData, meta
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.MFASettingsApi.ResetMFASettings(ctx, d.Get("environment_id").(string)).Execute()
+			fO, fR, fErr := apiClient.MFASettingsApi.ResetMFASettings(ctx, d.Get("environment_id").(string)).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ResetMFASettings",
-		sdk.DefaultCustomError,
+		sdk.CustomErrorResourceNotFoundWarning,
 		nil,
 	)
 	if diags.HasError() {
@@ -264,16 +268,21 @@ func resourceMFASettingsDelete(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func resourceMFASettingsImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 1
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID\"", d.Id())
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
 	}
 
-	environmentID := attributes[0]
+	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	if err != nil {
+		return nil, err
+	}
 
-	d.SetId(environmentID)
+	d.SetId(attributes["environment_id"])
+	d.Set("environment_id", attributes["environment_id"])
 
 	resourceMFASettingsRead(ctx, d, meta)
 

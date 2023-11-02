@@ -10,16 +10,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 // Types
-type CredentialTypesDataSource struct {
-	client *credentials.APIClient
-	region model.RegionMapping
-}
+type CredentialTypesDataSource serviceClientType
 
 type CredentialTypesDataSourceModel struct {
 	Id            types.String `tfsdk:"id"`
@@ -55,9 +51,9 @@ func (r *CredentialTypesDataSource) Schema(ctx context.Context, req datasource.S
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create the credential type in."),
 			),
 
-			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescription{
-				Description: "The list of resulting IDs of credential types that have been successfully retrieved.",
-			}),
+			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescriptionFromMarkdown(
+				"The list of resulting IDs of credential types that have been successfully retrieved.",
+			)),
 		},
 	}
 }
@@ -78,24 +74,20 @@ func (r *CredentialTypesDataSource) Configure(ctx context.Context, req datasourc
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *CredentialTypesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *CredentialTypesDataSourceModel
 
-	if r.client == nil {
+	if r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -114,7 +106,8 @@ func (r *CredentialTypesDataSource) Read(ctx context.Context, req datasource.Rea
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.CredentialTypesApi.ReadAllCredentialTypes(ctx, data.EnvironmentId.ValueString()).Execute()
+			fO, fR, fErr := r.Client.CredentialsAPIClient.CredentialTypesApi.ReadAllCredentialTypes(ctx, data.EnvironmentId.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadAllCredentialTypes",
 		framework.DefaultCustomError,

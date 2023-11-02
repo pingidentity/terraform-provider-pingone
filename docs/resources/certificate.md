@@ -27,7 +27,7 @@ resource "pingone_certificate" "my_certificate" {
   environment_id = pingone_environment.my_environment.id
 
   usage_type = "SSL/TLS"
-  pem_file   = var.pem_file
+  pem_file   = file("../path/to/certificate.pem")
 }
 ```
 
@@ -41,7 +41,7 @@ resource "pingone_certificate" "my_certificate" {
 
 ### Optional
 
-- `pem_file` (String) A PEM encoded file to import.  Either `pkcs7_file_base64` or `pem_file` must be specified.
+- `pem_file` (String) The contents of a PEM encoded file to import, which should be in plain text format and not base64 encoded.  The certificate should be properly formatted for the PEM format, that includes the correct header/footer lines.  Either `pkcs7_file_base64` or `pem_file` must be specified.
 - `pkcs7_file_base64` (String) A base64 encoded PKCS7 (DER) file to import.  Either `pkcs7_file_base64` or `pem_file` must be specified.
 
 ### Read-Only
@@ -54,7 +54,7 @@ resource "pingone_certificate" "my_certificate" {
 - `key_length` (Number) An integer that specifies the key length. For RSA keys, options are `2048`, `3072`, `4096` and `7680`. For elliptical curve (EC) keys, options are `224`, `256`, `384` and `521`.
 - `name` (String) The system name of the certificate.
 - `serial_number` (String) An integer (in string data type) that specifies the serial number of the key or certificate.
-- `signature_algorithm` (String) Specifies the signature algorithm of the key. For RSA keys, options are `SHA224withRSA`, `SHA256withRSA`, `SHA384withRSA` and `SHA512withRSA`. For elliptical curve (EC) keys, options are `SHA224withECDSA`, `SHA256withECDSA`, `SHA384withECDSA` and `SHA512withECDSA`.
+- `signature_algorithm` (String) Specifies the signature algorithm of the key. For RSA keys, options are `SHA256withRSA`, `SHA384withRSA` and `SHA512withRSA`. For elliptical curve (EC) keys, options are `SHA256withECDSA`, `SHA384withECDSA` and `SHA512withECDSA`.
 - `starts_at` (String) The time the validity period starts.
 - `status` (String) A string that specifies the status of the key. Options are `VALID`, `EXPIRING`, `EXPIRED`, `NOT_YET_VALID`, and `REVOKED`.
 - `subject_dn` (String) A string that specifies the distinguished name of the subject being secured.

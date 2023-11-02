@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -14,6 +13,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -209,6 +209,20 @@ func ResourceApplication() *schema.Resource {
 							Required:         true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_NONE), string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_CLIENT_SECRET_BASIC), string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_CLIENT_SECRET_POST)}, false)),
 						},
+						"par_requirement": {
+							Description:      fmt.Sprintf("A string that specifies whether pushed authorization requests (PAR) are required.  Options are `%s` and `%s`.", string(management.ENUMAPPLICATIONOIDCPARREQUIREMENT_OPTIONAL), string(management.ENUMAPPLICATIONOIDCPARREQUIREMENT_REQUIRED)),
+							Type:             schema.TypeString,
+							Optional:         true,
+							Default:          string(management.ENUMAPPLICATIONOIDCPARREQUIREMENT_OPTIONAL),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMAPPLICATIONOIDCPARREQUIREMENT_OPTIONAL), string(management.ENUMAPPLICATIONOIDCPARREQUIREMENT_REQUIRED)}, false)),
+						},
+						"par_timeout": {
+							Description:      "An integer that specifies the pushed authorization request (PAR) timeout in seconds.  If a value is not provided, the default value is `60`.  Valid values are between `1` and `600`.",
+							Type:             schema.TypeInt,
+							Optional:         true,
+							Default:          60,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(1, 600)),
+						},
 						"pkce_enforcement": {
 							Description:      fmt.Sprintf("A string that specifies how `PKCE` request parameters are handled on the authorize request.  Options are `%s`, `%s` and `%s`.", string(management.ENUMAPPLICATIONOIDCPKCEOPTION_OPTIONAL), string(management.ENUMAPPLICATIONOIDCPKCEOPTION_REQUIRED), string(management.ENUMAPPLICATIONOIDCPKCEOPTION_S256_REQUIRED)),
 							Type:             schema.TypeString,
@@ -260,6 +274,12 @@ func ResourceApplication() *schema.Resource {
 							Optional:         true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(0, 86400)),
 						},
+						"additional_refresh_token_replay_protection_enabled": {
+							Description: "A boolean that, when set to `true` (the default), if you attempt to reuse the refresh token, the authorization server immediately revokes the reused refresh token, as well as all descendant tokens. Setting this to null equates to a `false` setting.",
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     true,
+						},
 						"client_id": {
 							Description: "A string that specifies the application ID used to authenticate to the authorization server.",
 							Type:        schema.TypeString,
@@ -289,6 +309,12 @@ func ResourceApplication() *schema.Resource {
 						},
 						"support_unsigned_request_object": {
 							Description: "A boolean that specifies whether the request query parameter JWT is allowed to be unsigned. If false or null (default), an unsigned request object is not allowed.",
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+						},
+						"require_signed_request_object": {
+							Description: "A boolean that indicates that the Java Web Token (JWT) for the [request query](https://openid.net/specs/openid-connect-core-1_0.html#RequestObject) parameter is required to be signed. If `false` or null (default), a signed request object is not required. Both `support_unsigned_request_object` and this property cannot be set to `true`.",
 							Type:        schema.TypeBool,
 							Optional:    true,
 							Default:     false,
@@ -556,6 +582,11 @@ func ResourceApplication() *schema.Resource {
 								},
 							},
 						},
+						"enable_requested_authn_context": {
+							Description: "A boolean that specifies whether `requestedAuthnContext` is taken into account in policy decision-making.",
+							Type:        schema.TypeBool,
+							Optional:    true,
+						},
 						"nameid_format": {
 							Description: "A string that specifies the format of the Subject NameID attibute in the SAML assertion.",
 							Type:        schema.TypeString,
@@ -652,7 +683,8 @@ func resourceApplicationCreate(ctx context.Context, d *schema.ResourceData, meta
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ApplicationsApi.CreateApplication(ctx, d.Get("environment_id").(string)).CreateApplicationRequest(*applicationRequest).Execute()
+			fO, fR, fErr := apiClient.ApplicationsApi.CreateApplication(ctx, d.Get("environment_id").(string)).CreateApplicationRequest(*applicationRequest).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateApplication",
 		applicationWriteCustomError,
@@ -693,7 +725,8 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ApplicationsApi.ReadOneApplication(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.ApplicationsApi.ReadOneApplication(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneApplication",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -716,7 +749,8 @@ func resourceApplicationRead(ctx context.Context, d *schema.ResourceData, meta i
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return apiClient.ApplicationSecretApi.ReadApplicationSecret(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+				fO, fR, fErr := apiClient.ApplicationSecretApi.ReadApplicationSecret(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 			},
 			"ReadApplicationSecret",
 			sdk.CustomErrorResourceNotFoundWarning,
@@ -994,7 +1028,8 @@ func resourceApplicationUpdate(ctx context.Context, d *schema.ResourceData, meta
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ApplicationsApi.UpdateApplication(ctx, d.Get("environment_id").(string), d.Id()).UpdateApplicationRequest(*applicationRequest).Execute()
+			fO, fR, fErr := apiClient.ApplicationsApi.UpdateApplication(ctx, d.Get("environment_id").(string), d.Id()).UpdateApplicationRequest(*applicationRequest).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateApplication",
 		applicationWriteCustomError,
@@ -1017,8 +1052,8 @@ func resourceApplicationDelete(ctx context.Context, d *schema.ResourceData, meta
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.ApplicationsApi.DeleteApplication(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.ApplicationsApi.DeleteApplication(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteApplication",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -1032,17 +1067,25 @@ func resourceApplicationDelete(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func resourceApplicationImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 2
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/applicationID\"", d.Id())
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "application_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
 	}
 
-	environmentID, applicationID := attributes[0], attributes[1]
+	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	if err != nil {
+		return nil, err
+	}
 
-	d.Set("environment_id", environmentID)
-	d.SetId(applicationID)
+	d.Set("environment_id", attributes["environment_id"])
+	d.SetId(attributes["application_id"])
 
 	resourceApplicationRead(ctx, d, meta)
 
@@ -1138,6 +1181,14 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 			application.SetResponseTypes(obj)
 		}
 
+		if v1, ok := oidcOptions["par_requirement"].(string); ok && v1 != "" {
+			application.SetParRequirement(management.EnumApplicationOIDCPARRequirement(v1))
+		}
+
+		if v1, ok := oidcOptions["par_timeout"].(int); ok {
+			application.SetParTimeout(int32(v1))
+		}
+
 		if v1, ok := oidcOptions["pkce_enforcement"].(string); ok && v1 != "" {
 			application.SetPkceEnforcement(management.EnumApplicationOIDCPKCEOption(v1))
 		}
@@ -1163,36 +1214,19 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 		}
 
 		if v1, ok := oidcOptions["refresh_token_duration"].(int); ok {
-			//if refreshTokenEnabled {
 			application.SetRefreshTokenDuration(int32(v1))
-			//} else {
-			//	diags = append(diags, diag.Diagnostic{
-			//		Severity: diag.Warning,
-			//		Summary:  fmt.Sprintf("`refresh_token_duration` has no effect when the %s grant type is not set", management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN),
-			//	})
-			//}
 		}
 
 		if v1, ok := oidcOptions["refresh_token_rolling_duration"].(int); ok {
-			//if refreshTokenEnabled {
 			application.SetRefreshTokenRollingDuration(int32(v1))
-			//} else {
-			//	diags = append(diags, diag.Diagnostic{
-			//		Severity: diag.Warning,
-			//		Summary:  fmt.Sprintf("`refresh_token_rolling_duration` has no effect when the %s grant type is not set", management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN),
-			//	})
-			//}
 		}
 
 		if v1, ok := oidcOptions["refresh_token_rolling_grace_period_duration"].(int); ok {
-			//if refreshTokenEnabled {
 			application.SetRefreshTokenRollingGracePeriodDuration(int32(v1))
-			//} else {
-			//	diags = append(diags, diag.Diagnostic{
-			//		Severity: diag.Warning,
-			//		Summary:  fmt.Sprintf("`refresh_token_rolling_duration` has no effect when the %s grant type is not set", management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN),
-			//	})
-			//}
+		}
+
+		if v1, ok := oidcOptions["additional_refresh_token_replay_protection_enabled"].(bool); ok {
+			application.SetAdditionalRefreshTokenReplayProtectionEnabled(v1)
 		}
 
 		if v, ok := oidcOptions["tags"]; ok {
@@ -1222,6 +1256,10 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 
 		if v1, ok := oidcOptions["support_unsigned_request_object"].(bool); ok {
 			application.SetSupportUnsignedRequestObject(v1)
+		}
+
+		if v1, ok := oidcOptions["require_signed_request_object"].(bool); ok {
+			application.SetRequireSignedRequestObject(v1)
 		}
 
 		if v1, ok := oidcOptions["mobile_app"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
@@ -1501,6 +1539,10 @@ func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML,
 			application.SetIdpSigning(idpSigning)
 		}
 
+		if v1, ok := samlOptions["enable_requested_authn_context"].(bool); ok {
+			application.SetEnableRequestedAuthnContext(v1)
+		}
+
 		if v1, ok := samlOptions["nameid_format"].(string); ok && v1 != "" {
 			application.SetNameIdFormat(v1)
 		}
@@ -1713,6 +1755,18 @@ func flattenOIDCOptions(application *management.ApplicationOIDC, secret *managem
 		item["response_types"] = nil
 	}
 
+	if v, ok := application.GetParRequirementOk(); ok {
+		item["par_requirement"] = v
+	} else {
+		item["par_requirement"] = nil
+	}
+
+	if v, ok := application.GetParTimeoutOk(); ok {
+		item["par_timeout"] = v
+	} else {
+		item["par_timeout"] = nil
+	}
+
 	if v, ok := application.GetPkceEnforcementOk(); ok {
 		item["pkce_enforcement"] = v
 	} else {
@@ -1755,6 +1809,12 @@ func flattenOIDCOptions(application *management.ApplicationOIDC, secret *managem
 		item["refresh_token_rolling_grace_period_duration"] = nil
 	}
 
+	if v, ok := application.GetAdditionalRefreshTokenReplayProtectionEnabledOk(); ok {
+		item["additional_refresh_token_replay_protection_enabled"] = v
+	} else {
+		item["additional_refresh_token_replay_protection_enabled"] = nil
+	}
+
 	if v, ok := secret.GetSecretOk(); ok {
 		item["client_secret"] = v
 	} else {
@@ -1771,6 +1831,12 @@ func flattenOIDCOptions(application *management.ApplicationOIDC, secret *managem
 		item["support_unsigned_request_object"] = v
 	} else {
 		item["support_unsigned_request_object"] = nil
+	}
+
+	if v, ok := application.GetRequireSignedRequestObjectOk(); ok {
+		item["require_signed_request_object"] = v
+	} else {
+		item["require_signed_request_object"] = nil
 	}
 
 	if v, ok := application.GetMobileOk(); ok {
@@ -1974,6 +2040,12 @@ func flattenSAMLOptions(application *management.ApplicationSAML) interface{} {
 	} else {
 		item["idp_signing_key"] = nil
 		item["idp_signing_key_id"] = nil
+	}
+
+	if v, ok := application.GetEnableRequestedAuthnContextOk(); ok {
+		item["enable_requested_authn_context"] = v
+	} else {
+		item["enable_requested_authn_context"] = nil
 	}
 
 	if v, ok := application.GetNameIdFormatOk(); ok {

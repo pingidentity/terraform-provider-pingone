@@ -5,8 +5,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/verify"
 	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -22,20 +23,24 @@ func TestAccVerifyPoliciesDataSource_NoFilter(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	findVerifyPolicies := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(dataSourceFullName, "id", validation.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", validation.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(dataSourceFullName, "id", validation.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", validation.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(dataSourceFullName, "ids.#", "5"), // includes environment default policy
-		resource.TestMatchResourceAttr(dataSourceFullName, "ids.0", validation.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(dataSourceFullName, "ids.1", validation.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(dataSourceFullName, "ids.2", validation.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(dataSourceFullName, "ids.3", validation.P1ResourceIDRegexp),
-		resource.TestMatchResourceAttr(dataSourceFullName, "ids.4", validation.P1ResourceIDRegexp),
+		resource.TestMatchResourceAttr(dataSourceFullName, "ids.0", validation.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(dataSourceFullName, "ids.1", validation.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(dataSourceFullName, "ids.2", validation.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(dataSourceFullName, "ids.3", validation.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(dataSourceFullName, "ids.4", validation.P1ResourceIDRegexpFullString),
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheckEnvironment(t) },
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             testAccCheckVerifyPolicyDestroy,
+		CheckDestroy:             verify.VerifyPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{

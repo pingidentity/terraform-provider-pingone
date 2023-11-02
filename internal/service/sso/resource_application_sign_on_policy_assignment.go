@@ -2,15 +2,14 @@ package sso
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -75,7 +74,8 @@ func resourcePingOneApplicationSignOnPolicyAssignmentCreate(ctx context.Context,
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ApplicationSignOnPolicyAssignmentsApi.CreateSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).SignOnPolicyAssignment(applicationSignOnPolicyAssignment).Execute()
+			fO, fR, fErr := apiClient.ApplicationSignOnPolicyAssignmentsApi.CreateSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).SignOnPolicyAssignment(applicationSignOnPolicyAssignment).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateSignOnPolicyAssignment",
 		sdk.DefaultCustomError,
@@ -102,7 +102,8 @@ func resourcePingOneApplicationSignOnPolicyAssignmentRead(ctx context.Context, d
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ApplicationSignOnPolicyAssignmentsApi.ReadOneSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.ApplicationSignOnPolicyAssignmentsApi.ReadOneSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneSignOnPolicyAssignment",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -121,6 +122,12 @@ func resourcePingOneApplicationSignOnPolicyAssignmentRead(ctx context.Context, d
 
 	d.Set("priority", respObject.GetPriority())
 
+	if v, ok := respObject.GetSignOnPolicyOk(); ok {
+		d.Set("sign_on_policy_id", v.GetId())
+	} else {
+		d.Set("sign_on_policy_id", nil)
+	}
+
 	return diags
 }
 
@@ -137,7 +144,8 @@ func resourcePingOneApplicationSignOnPolicyAssignmentUpdate(ctx context.Context,
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ApplicationSignOnPolicyAssignmentsApi.UpdateSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).SignOnPolicyAssignment(applicationSignOnPolicyAssignment).Execute()
+			fO, fR, fErr := apiClient.ApplicationSignOnPolicyAssignmentsApi.UpdateSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).SignOnPolicyAssignment(applicationSignOnPolicyAssignment).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateSignOnPolicyAssignment",
 		sdk.DefaultCustomError,
@@ -160,8 +168,8 @@ func resourcePingOneApplicationSignOnPolicyAssignmentDelete(ctx context.Context,
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.ApplicationSignOnPolicyAssignmentsApi.DeleteSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.ApplicationSignOnPolicyAssignmentsApi.DeleteSignOnPolicyAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteSignOnPolicyAssignment",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -175,18 +183,30 @@ func resourcePingOneApplicationSignOnPolicyAssignmentDelete(ctx context.Context,
 }
 
 func resourcePingOneApplicationSignOnPolicyAssignmentImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 3
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/applicationID/SignOnPolicyAssignmentID\"", d.Id())
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "application_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "sign_on_policy_assignment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
 	}
 
-	environmentID, applicationID, SignOnPolicyAssignmentID := attributes[0], attributes[1], attributes[2]
+	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	if err != nil {
+		return nil, err
+	}
 
-	d.Set("environment_id", environmentID)
-	d.Set("application_id", applicationID)
-	d.SetId(SignOnPolicyAssignmentID)
+	d.Set("environment_id", attributes["environment_id"])
+	d.Set("application_id", attributes["application_id"])
+	d.SetId(attributes["sign_on_policy_assignment_id"])
 
 	resourcePingOneApplicationSignOnPolicyAssignmentRead(ctx, d, meta)
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -14,17 +13,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
-type PopulationResource struct {
-	client *management.APIClient
-	region model.RegionMapping
-}
+type PopulationResource serviceClientType
 
 type PopulationResourceModel struct {
 	Id               types.String `tfsdk:"id"`
@@ -109,24 +104,20 @@ func (r *PopulationResource) Configure(ctx context.Context, req resource.Configu
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *PopulationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state PopulationResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -143,7 +134,7 @@ func (r *PopulationResource) Create(ctx context.Context, req resource.CreateRequ
 	population := plan.expand()
 
 	// Run the API call
-	response, d := PingOnePopulationCreate(ctx, r.client, plan.EnvironmentId.ValueString(), *population)
+	response, d := PingOnePopulationCreate(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), *population)
 
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
@@ -161,7 +152,7 @@ func (r *PopulationResource) Create(ctx context.Context, req resource.CreateRequ
 func (r *PopulationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *PopulationResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -180,7 +171,8 @@ func (r *PopulationResource) Read(ctx context.Context, req resource.ReadRequest,
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.PopulationsApi.ReadOnePopulation(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.ReadOnePopulation(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOnePopulation",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -205,7 +197,7 @@ func (r *PopulationResource) Read(ctx context.Context, req resource.ReadRequest,
 func (r *PopulationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state PopulationResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -227,7 +219,8 @@ func (r *PopulationResource) Update(ctx context.Context, req resource.UpdateRequ
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.PopulationsApi.UpdatePopulation(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Population(*population).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.UpdatePopulation(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Population(*population).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdatePopulation",
 		framework.DefaultCustomError,
@@ -249,7 +242,7 @@ func (r *PopulationResource) Update(ctx context.Context, req resource.UpdateRequ
 func (r *PopulationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *PopulationResourceModel
 
-	if r.client == nil {
+	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -267,8 +260,8 @@ func (r *PopulationResource) Delete(ctx context.Context, req resource.DeleteRequ
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := r.client.PopulationsApi.DeletePopulation(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return nil, r, err
+			fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.DeletePopulation(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeletePopulation",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -282,19 +275,37 @@ func (r *PopulationResource) Delete(ctx context.Context, req resource.DeleteRequ
 }
 
 func (r *PopulationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 2
-	attributes := strings.SplitN(req.ID, "/", splitLength)
 
-	if len(attributes) != splitLength {
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:     "population_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/population_id\"", req.ID),
+			err.Error(),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
+
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
 func (p *PopulationResourceModel) expand() *management.Population {
@@ -348,7 +359,8 @@ func PingOnePopulationCreate(ctx context.Context, apiClient *management.APIClien
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.PopulationsApi.CreatePopulation(ctx, environmentID).Population(population).Execute()
+			fO, fR, fErr := apiClient.PopulationsApi.CreatePopulation(ctx, environmentID).Population(population).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 		},
 		"CreatePopulation",
 		framework.DefaultCustomError,

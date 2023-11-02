@@ -3,13 +3,15 @@ package acctest
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/provider"
 	"github.com/pingidentity/terraform-provider-pingone/internal/provider/sdkv2"
@@ -95,12 +97,7 @@ const (
 	ENUMFEATUREFLAG_DAVINCI EnumFeatureFlag = "DAVINCI"
 )
 
-func PreCheck(t *testing.T) {
-	PreCheckFeatureFlag(t, "")
-}
-
-func PreCheckFeatureFlag(t *testing.T, flag EnumFeatureFlag) {
-
+func PreCheckClient(t *testing.T) {
 	if v := os.Getenv("PINGONE_CLIENT_ID"); v == "" {
 		t.Fatal("PINGONE_CLIENT_ID is missing and must be set")
 	}
@@ -116,68 +113,55 @@ func PreCheckFeatureFlag(t *testing.T, flag EnumFeatureFlag) {
 	if v := os.Getenv("PINGONE_REGION"); v == "" {
 		t.Fatal("PINGONE_REGION is missing and must be set")
 	}
+}
 
+func PreCheckNoFeatureFlag(t *testing.T) {
+	PreCheckFeatureFlag(t, "")
+}
+
+func PreCheckFeatureFlag(t *testing.T, flag EnumFeatureFlag) {
 	if v := os.Getenv("FEATURE_FLAG"); v != string(flag) {
 		t.Skipf("Skipping feature flag test.  Flag required: \"%s\"", string(flag))
 	}
-
 }
 
-func PreCheckOrganisation(t *testing.T) {
-
-	PreCheck(t)
-	if v := os.Getenv("PINGONE_ORGANIZATION_ID"); v == "" {
-		t.Fatal("PINGONE_ORGANIZATION_ID is missing and must be set")
-	}
-
+func PreCheckOrganisationName(t *testing.T) {
 	if v := os.Getenv("PINGONE_ORGANIZATION_NAME"); v == "" {
 		t.Fatal("PINGONE_ORGANIZATION_NAME is missing and must be set")
 	}
 }
 
-func PreCheckEnvironment(t *testing.T) {
+func PreCheckOrganisationID(t *testing.T) {
+	if v := os.Getenv("PINGONE_ORGANIZATION_ID"); v == "" {
+		t.Fatal("PINGONE_ORGANIZATION_ID is missing and must be set")
+	}
+}
 
-	PreCheck(t)
+func PreCheckNewEnvironment(t *testing.T) {
 	if v := os.Getenv("PINGONE_LICENSE_ID"); v == "" {
 		t.Fatal("PINGONE_LICENSE_ID is missing and must be set")
 	}
 }
 
-func PreCheckEnvironmentFeatureFlag(t *testing.T, flag EnumFeatureFlag) {
-
-	PreCheckFeatureFlag(t, flag)
-	if v := os.Getenv("PINGONE_LICENSE_ID"); v == "" {
-		t.Fatal("PINGONE_LICENSE_ID is missing and must be set")
-	}
-}
-
-func PreCheckEnvironmentDomainVerified(t *testing.T) {
-
-	PreCheckEnvironment(t)
+func PreCheckDomainVerification(t *testing.T) {
 	if v := os.Getenv("PINGONE_VERIFIED_EMAIL_DOMAIN"); v == "" {
 		t.Fatal("PINGONE_VERIFIED_EMAIL_DOMAIN is missing and must be set")
 	}
 }
 
-func PreCheckWorkforceEnvironment(t *testing.T) {
-
-	PreCheckEnvironment(t)
+func PreCheckRegionSupportsWorkforce(t *testing.T) {
 	if v := os.Getenv("PINGONE_REGION"); v == "Canada" {
 		t.Skipf("Workforce environment not supported in the Canada region")
 	}
 }
 
-func PreCheckEnvironmentAndPKCS12(t *testing.T) {
-
-	PreCheckEnvironment(t)
+func PreCheckPKCS12Key(t *testing.T) {
 	if v := os.Getenv("PINGONE_KEY_PKCS12"); v == "" {
 		t.Fatal("PINGONE_KEY_PKCS12 is missing and must be set")
 	}
 }
 
-func PreCheckEnvironmentAndPKCS12WithCSR(t *testing.T) {
-
-	PreCheckEnvironmentAndPKCS12(t)
+func PreCheckPKCS12WithCSR(t *testing.T) {
 	if v := os.Getenv("PINGONE_KEY_PKCS10_CSR"); v == "" {
 		t.Fatal("PINGONE_KEY_PKCS10_CSR is missing and must be set")
 	}
@@ -187,61 +171,37 @@ func PreCheckEnvironmentAndPKCS12WithCSR(t *testing.T) {
 	}
 }
 
-func PreCheckEnvironmentAndPKCS12WithCSRResponse(t *testing.T) {
-
-	PreCheckEnvironmentAndPKCS12(t)
+func PreCheckPKCS12CSRResponse(t *testing.T) {
 	if v := os.Getenv("PINGONE_KEY_PEM_CSR_RESPONSE"); v == "" {
 		t.Fatal("PINGONE_KEY_PEM_CSR_RESPONSE is missing and must be set")
 	}
 }
 
-func PreCheckEnvironmentAndPKCS12WithCerts(t *testing.T) {
-
-	PreCheckEnvironmentAndPKCS12(t)
+func PreCheckPKCS7Cert(t *testing.T) {
 	if v := os.Getenv("PINGONE_KEY_PKCS7_CERT"); v == "" {
 		t.Fatal("PINGONE_KEY_PKCS7_CERT is missing and must be set")
 	}
+}
 
+func PreCheckPEMCert(t *testing.T) {
 	if v := os.Getenv("PINGONE_KEY_PEM_CERT"); v == "" {
 		t.Fatal("PINGONE_KEY_PEM_CERT is missing and must be set")
 	}
 }
 
-func PreCheckEnvironmentAndPKCS7(t *testing.T) {
-
-	PreCheckEnvironment(t)
-	if v := os.Getenv("PINGONE_KEY_PKCS7_CERT"); v == "" {
-		t.Fatal("PINGONE_KEY_PKCS7_CERT is missing and must be set")
-	}
-}
-
-func PreCheckEnvironmentAndGoogleJSONKey(t *testing.T) {
-
-	PreCheckEnvironment(t)
+func PreCheckGoogleJSONKey(t *testing.T) {
 	if v := os.Getenv("PINGONE_GOOGLE_JSON_KEY"); v == "" {
 		t.Fatal("PINGONE_GOOGLE_JSON_KEY is missing and must be set")
 	}
 }
 
-func PreCheckEnvironmentAndGoogleFirebaseCredentials(t *testing.T) {
-
-	PreCheckEnvironment(t)
+func PreCheckGoogleFirebaseCredentials(t *testing.T) {
 	if v := os.Getenv("PINGONE_GOOGLE_FIREBASE_CREDENTIALS"); v == "" {
 		t.Fatal("PINGONE_GOOGLE_FIREBASE_CREDENTIALS is missing and must be set")
 	}
 }
 
-func PreCheckEnvironmentAndPEM(t *testing.T) {
-
-	PreCheckEnvironment(t)
-	if v := os.Getenv("PINGONE_KEY_PEM_CERT"); v == "" {
-		t.Fatal("PINGONE_KEY_PEM_CERT is missing and must be set")
-	}
-}
-
-func PreCheckEnvironmentAndCustomDomainSSL(t *testing.T) {
-
-	PreCheckEnvironment(t)
+func PreCheckCustomDomainSSL(t *testing.T) {
 	if v := os.Getenv("PINGONE_DOMAIN_CERTIFICATE_PEM"); v == "" {
 		t.Fatal("PINGONE_DOMAIN_CERTIFICATE_PEM is missing and must be set")
 	}
@@ -255,13 +215,12 @@ func PreCheckEnvironmentAndCustomDomainSSL(t *testing.T) {
 	}
 }
 
-func PreCheckEnvironmentAndTwilio(t *testing.T, skipTwilio bool) {
+func PreCheckTwilio(t *testing.T, skipTwilio bool) {
 
 	if skipTwilio {
 		t.Skipf("Twilio integration tests are skipped")
 	}
 
-	PreCheckEnvironment(t)
 	if v := os.Getenv("PINGONE_TWILIO_SID"); v == "" {
 		t.Fatal("PINGONE_TWILIO_SID is missing and must be set")
 	}
@@ -275,27 +234,18 @@ func PreCheckEnvironmentAndTwilio(t *testing.T, skipTwilio bool) {
 	}
 }
 
-func PreCheckEnvironmentAndSyniverse(t *testing.T, skipSyniverse bool) {
+func PreCheckSyniverse(t *testing.T, skipSyniverse bool) {
 
 	if skipSyniverse {
 		t.Skipf("Syniverse integration tests are skipped")
 	}
 
-	PreCheckEnvironment(t)
 	if v := os.Getenv("PINGONE_SYNIVERSE_AUTH_TOKEN"); v == "" {
 		t.Fatal("PINGONE_SYNIVERSE_AUTH_TOKEN is missing and must be set")
 	}
 
 	if v := os.Getenv("PINGONE_SYNIVERSE_NUMBER"); v == "" {
 		t.Fatal("PINGONE_SYNIVERSE_NUMBER is missing and must be set")
-	}
-}
-
-func PreCheckEnvironmentAndOrganisation(t *testing.T) {
-
-	PreCheckEnvironment(t)
-	if v := os.Getenv("PINGONE_ORGANIZATION_ID"); v == "" {
-		t.Fatal("PINGONE_ORGANIZATION_ID is missing and must be set")
 	}
 }
 
@@ -317,10 +267,6 @@ func ResourceNameGenEnvironment() string {
 	return fmt.Sprintf("tf-testacc-dynamic-%s", ResourceNameGen())
 }
 
-func ResourceNameGenDefaultPopulation() string {
-	return fmt.Sprintf("default-%s", ResourceNameGen())
-}
-
 func TestClient(ctx context.Context) (*client.Client, error) {
 
 	config := &client.Config{
@@ -335,14 +281,23 @@ func TestClient(ctx context.Context) (*client.Client, error) {
 
 }
 
+func PreCheckTestClient(ctx context.Context, t *testing.T) *client.Client {
+	p1Client, err := TestClient(ctx)
+
+	if err != nil {
+		t.Fatalf("Failed to get API client: %v", err)
+	}
+
+	return p1Client
+}
+
 func MinimalSandboxEnvironment(resourceName, licenseID string) string {
 	return fmt.Sprintf(`
 		resource "pingone_environment" "%[1]s" {
 			name = "%[1]s"
 			type = "SANDBOX"
 			license_id = "%[2]s"
-			default_population {
-			}
+
 			service {
 				type = "SSO"
 			}
@@ -394,4 +349,27 @@ func DaVinciFlowPolicySandboxEnvironment() string {
 		data "pingone_environment" "davinci_test" {
 			name = "tf-testacc-static-davinci-test"
 		}`
+}
+
+func CheckParentEnvironmentDestroy(ctx context.Context, apiClient *management.APIClient, environmentID string) (bool, error) {
+	_, r, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentID).Execute()
+
+	return CheckForResourceDestroy(r, err)
+}
+
+func CheckForResourceDestroy(r *http.Response, err error) (bool, error) {
+	if err != nil {
+
+		if r == nil {
+			return false, fmt.Errorf("Response object does not exist and no error detected")
+		}
+
+		if r.StatusCode == 404 {
+			return true, nil
+		}
+
+		return false, err
+	}
+
+	return false, nil
 }

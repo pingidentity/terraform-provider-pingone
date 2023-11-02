@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -99,7 +100,8 @@ func resourceFIDOPolicyCreate(ctx context.Context, d *schema.ResourceData, meta 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.FIDOPolicyApi.CreateFidoPolicy(ctx, d.Get("environment_id").(string)).FIDOPolicy(*fidoPolicy).Execute()
+			fO, fR, fErr := apiClient.FIDOPolicyApi.CreateFidoPolicy(ctx, d.Get("environment_id").(string)).FIDOPolicy(*fidoPolicy).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateFidoPolicy",
 		sdk.DefaultCustomError,
@@ -126,7 +128,8 @@ func resourceFIDOPolicyRead(ctx context.Context, d *schema.ResourceData, meta in
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.FIDOPolicyApi.ReadOneFidoPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.FIDOPolicyApi.ReadOneFidoPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneFidoPolicy",
 		sdk.DefaultCustomError,
@@ -195,7 +198,8 @@ func resourceFIDOPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.FIDOPolicyApi.UpdateFIDOPolicy(ctx, d.Get("environment_id").(string), d.Id()).FIDOPolicy(*fidoPolicy).Execute()
+			fO, fR, fErr := apiClient.FIDOPolicyApi.UpdateFIDOPolicy(ctx, d.Get("environment_id").(string), d.Id()).FIDOPolicy(*fidoPolicy).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateFIDOPolicy",
 		sdk.DefaultCustomError,
@@ -218,8 +222,8 @@ func resourceFIDOPolicyDelete(ctx context.Context, d *schema.ResourceData, meta 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.FIDOPolicyApi.DeleteFidoPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.FIDOPolicyApi.DeleteFidoPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteFidoPolicy",
 		sdk.DefaultCustomError,

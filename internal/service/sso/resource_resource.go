@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -14,6 +13,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -124,7 +124,8 @@ func resourceResourceCreate(ctx context.Context, d *schema.ResourceData, meta in
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ResourcesApi.CreateResource(ctx, d.Get("environment_id").(string)).Resource(resource).Execute()
+			fO, fR, fErr := apiClient.ResourcesApi.CreateResource(ctx, d.Get("environment_id").(string)).Resource(resource).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateResource",
 		sdk.DefaultCustomError,
@@ -151,7 +152,8 @@ func resourceResourceRead(ctx context.Context, d *schema.ResourceData, meta inte
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ResourcesApi.ReadOneResource(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.ResourcesApi.ReadOneResource(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneResource",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -184,7 +186,8 @@ func resourceResourceRead(ctx context.Context, d *schema.ResourceData, meta inte
 				ctx,
 
 				func() (any, *http.Response, error) {
-					return apiClient.ResourceClientSecretApi.ReadResourceSecret(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+					fO, fR, fErr := apiClient.ResourceClientSecretApi.ReadResourceSecret(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 				},
 				"ReadResourceSecret",
 				sdk.CustomErrorResourceNotFoundWarning,
@@ -288,7 +291,8 @@ func resourceResourceUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.ResourcesApi.UpdateResource(ctx, d.Get("environment_id").(string), d.Id()).Resource(resource).Execute()
+			fO, fR, fErr := apiClient.ResourcesApi.UpdateResource(ctx, d.Get("environment_id").(string), d.Id()).Resource(resource).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateResource",
 		sdk.DefaultCustomError,
@@ -311,8 +315,8 @@ func resourceResourceDelete(ctx context.Context, d *schema.ResourceData, meta in
 		ctx,
 
 		func() (any, *http.Response, error) {
-			r, err := apiClient.ResourcesApi.DeleteResource(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return nil, r, err
+			fR, fErr := apiClient.ResourcesApi.DeleteResource(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteResource",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -326,108 +330,27 @@ func resourceResourceDelete(ctx context.Context, d *schema.ResourceData, meta in
 }
 
 func resourceResourceImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	splitLength := 2
-	attributes := strings.SplitN(d.Id(), "/", splitLength)
 
-	if len(attributes) != splitLength {
-		return nil, fmt.Errorf("invalid id (\"%s\") specified, should be in format \"environmentID/resourceID\"", d.Id())
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "resource_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
 	}
 
-	environmentID, resourceID := attributes[0], attributes[1]
+	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	if err != nil {
+		return nil, err
+	}
 
-	d.Set("environment_id", environmentID)
-	d.SetId(resourceID)
+	d.Set("environment_id", attributes["environment_id"])
+	d.SetId(attributes["resource_id"])
 
 	resourceResourceRead(ctx, d, meta)
 
 	return []*schema.ResourceData{d}, nil
-}
-
-// replace with fetchResource_Framework when migrating to the plugin framework
-func fetchResource(ctx context.Context, apiClient *management.APIClient, environmentID, resourceID string) (*management.Resource, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	resp, diags := sdk.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			return apiClient.ResourcesApi.ReadOneResource(ctx, environmentID, resourceID).Execute()
-		},
-		"ReadOneResource",
-		sdk.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	respObject := resp.(*management.Resource)
-
-	return respObject, diags
-}
-
-func getResourceType(ctx context.Context, apiClient *management.APIClient, environmentID, resourceID string) (management.EnumResourceType, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	respObject, diags := fetchResource(ctx, apiClient, environmentID, resourceID)
-	if diags.HasError() {
-		return management.ENUMRESOURCETYPE_CUSTOM, diags
-	}
-
-	return respObject.GetType(), diags
-}
-
-func getPingOneAPIResource(ctx context.Context, apiClient *management.APIClient, environmentID string) (*management.Resource, diag.Diagnostics) {
-	return fetchResourceFromNameSDKv2(ctx, apiClient, environmentID, "PingOne API")
-}
-
-func getOpenIDResource(ctx context.Context, apiClient *management.APIClient, environmentID string) (*management.Resource, diag.Diagnostics) {
-	return fetchResourceFromNameSDKv2(ctx, apiClient, environmentID, "openid")
-}
-
-// Deprecated: use fetchResourceFromName when converting to plugin framework
-func fetchResourceFromNameSDKv2(ctx context.Context, apiClient *management.APIClient, environmentID, resourceName string) (*management.Resource, diag.Diagnostics) {
-
-	var resp *management.Resource
-
-	respList, diags := sdk.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			return apiClient.ResourcesApi.ReadAllResources(ctx, environmentID).Execute()
-		},
-		"ReadAllResources",
-		sdk.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	if resources, ok := respList.(*management.EntityArray).Embedded.GetResourcesOk(); ok {
-
-		found := false
-		for _, resource := range resources {
-
-			resource := resource // fix for exportloopref lint
-
-			if resource.GetName() == resourceName {
-				resp = &resource
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Cannot find resource %s", resourceName),
-			})
-
-			return nil, diags
-		}
-
-	}
-
-	return resp, diags
 }

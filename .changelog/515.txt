@@ -1,0 +1,19 @@
+```release-note:note
+bump `github.com/golangci/golangci-lint` v1.53.3 => v1.54.1
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.2 => v0.10.3
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.3.0 => v0.3.1
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.25.0 => v0.26.0
+```
+
+```release-note:bug
+`data-source/pingone_credential_types` Fixed panic error when retrieving credential types.
+```

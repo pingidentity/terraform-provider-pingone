@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -79,7 +80,8 @@ func certificateExport(ctx context.Context, apiClient *management.APIClient, env
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.CertificateManagementApi.GetKey(ctx, environmentID, keyID).Accept(exportFileType).Execute()
+			fO, fR, fErr := apiClient.CertificateManagementApi.GetKey(ctx, environmentID, keyID).Accept(exportFileType).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 		},
 		"GetKey",
 		sdk.DefaultCustomError,

@@ -31,6 +31,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/risk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -42,10 +43,7 @@ import (
 )
 
 // Types
-type RiskPredictorResource struct {
-	client *risk.APIClient
-	region model.RegionMapping
-}
+type RiskPredictorResource serviceClientType
 
 type riskPredictorResourceModel struct {
 	Id                           types.String `tfsdk:"id"`
@@ -58,11 +56,12 @@ type riskPredictorResourceModel struct {
 	Licensed                     types.Bool   `tfsdk:"licensed"`
 	Deletable                    types.Bool   `tfsdk:"deletable"`
 	PredictorAnonymousNetwork    types.Object `tfsdk:"predictor_anonymous_network"`
+	PredictorBotDetection        types.Object `tfsdk:"predictor_bot_detection"`
 	PredictorComposite           types.Object `tfsdk:"predictor_composite"`
 	PredictorCustomMap           types.Object `tfsdk:"predictor_custom_map"`
+	PredictorDevice              types.Object `tfsdk:"predictor_device"`
 	PredictorGeoVelocity         types.Object `tfsdk:"predictor_geovelocity"`
 	PredictorIPReputation        types.Object `tfsdk:"predictor_ip_reputation"`
-	PredictorDevice              types.Object `tfsdk:"predictor_device"`
 	PredictorUserLocationAnomaly types.Object `tfsdk:"predictor_user_location_anomaly"`
 	PredictorUserRiskBehavior    types.Object `tfsdk:"predictor_user_risk_behavior"`
 	PredictorVelocity            types.Object `tfsdk:"predictor_velocity"`
@@ -383,6 +382,11 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 		"A single nested object that specifies options for the Anonymous Network predictor.",
 	).ExactlyOneOf(descriptionPredictorObjectPaths)
 
+	// Bot Detection predictor
+	predictorBotDetectionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single nested object that specifies options for the Bot Detection predictor.",
+	).ExactlyOneOf(descriptionPredictorObjectPaths)
+
 	// Composite Predictor
 	predictorCompositeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single nested object that specifies options for the Composite predictor.",
@@ -430,10 +434,13 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 
 	predictorDeviceDetectDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that represents the type of device detection to use.",
-	).DefaultValue(string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE))
+	).AllowedValuesComplex(map[string]string{
+		string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE):        "to configure a model based on new devices",
+		string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_SUSPICIOUS_DEVICE): "to configure a model based on detection of suspicious devices",
+	}).DefaultValue(string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE))
 
 	predictorDeviceActivationAtDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that represents a date on which the learning process for the device predictor should be restarted. This can be used in conjunction with the fallback setting (`default.result.level`) to force strong authentication when moving the predictor to production. The date should be in an RFC3339 format. Note that activation date uses UTC time.",
+		fmt.Sprintf("A string that represents a date on which the learning process for the device predictor should be restarted.  Can only be configured where the `detect` parameter is `%s`. This can be used in conjunction with the fallback setting (`default.result.level`) to force strong authentication when moving the predictor to production. The date should be in an RFC3339 format. Note that activation date uses UTC time.", string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE)),
 	)
 
 	// User location Predictor
@@ -620,6 +627,20 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				Attributes: map[string]schema.Attribute{
 					"allowed_cidr_list": allowedCIDRSchemaAttribute(),
 				},
+
+				Validators: predictorObjectValidators,
+
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.RequiresReplace(),
+				},
+			},
+
+			"predictor_bot_detection": schema.SingleNestedAttribute{
+				Description:         predictorBotDetectionDescription.Description,
+				MarkdownDescription: predictorBotDetectionDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{},
 
 				Validators: predictorObjectValidators,
 
@@ -815,6 +836,10 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						Validators: []validator.String{
 							stringvalidator.OneOf(utils.EnumSliceToStringSlice(risk.AllowedEnumPredictorNewDeviceDetectTypeEnumValues)...),
 						},
+
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.RequiresReplace(),
+						},
 					},
 
 					"activation_at": schema.StringAttribute{
@@ -823,6 +848,10 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						Optional:            true,
 						Validators: []validator.String{
 							stringvalidator.RegexMatches(verify.RFC3339Regexp, "Attribute must be a valid RFC3339 date/time string."),
+							stringvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_SUSPICIOUS_DEVICE)),
+								path.MatchRelative().AtParent().AtName("detect"),
+							),
 						},
 					},
 				},
@@ -1159,6 +1188,7 @@ var (
 	predictorObjectValidators = []validator.Object{
 		objectvalidator.ExactlyOneOf(
 			path.MatchRelative().AtParent().AtName("predictor_anonymous_network"),
+			path.MatchRelative().AtParent().AtName("predictor_bot_detection"),
 			path.MatchRelative().AtParent().AtName("predictor_composite"),
 			path.MatchRelative().AtParent().AtName("predictor_custom_map"),
 			path.MatchRelative().AtParent().AtName("predictor_geovelocity"),
@@ -1172,11 +1202,12 @@ var (
 
 	descriptionPredictorObjectPaths = []string{
 		"predictor_anonymous_network",
+		"predictor_bot_detection",
 		"predictor_composite",
 		"predictor_custom_map",
+		"predictor_device",
 		"predictor_geovelocity",
 		"predictor_ip_reputation",
-		"predictor_device",
 		"predictor_user_location_anomaly",
 		"predictor_user_risk_behavior",
 		"predictor_velocity",
@@ -1212,17 +1243,14 @@ func customMapBetweenRangesBoundSchema(riskResult string) schema.SingleNestedAtt
 
 func customMapIpRangesBoundSchema(riskResult string) schema.SingleNestedAttribute {
 
-	attributeDescription := fmt.Sprintf("A single nested object that describes the IP CIDR ranges that map to a %s risk result.", riskResult)
+	attributeDescription := framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single nested object that describes the IP CIDR ranges that map to a %s risk result.", riskResult))
 
 	predictorCustomMapIPRangeValuesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A set of strings, in CIDR format, that describe the CIDR ranges that should evaluate against the value of the attribute named in `predictor_custom_map.contains` for this risk result.",
 	)
 
 	return customMapGenericValuesSchema(
-		framework.SchemaAttributeDescription{
-			Description:         attributeDescription,
-			MarkdownDescription: attributeDescription,
-		},
+		attributeDescription,
 		predictorCustomMapIPRangeValuesDescription,
 		hmlValidators,
 		[]validator.String{
@@ -1233,17 +1261,14 @@ func customMapIpRangesBoundSchema(riskResult string) schema.SingleNestedAttribut
 
 func customMapStringValuesSchema(riskResult string) schema.SingleNestedAttribute {
 
-	attributeDescription := fmt.Sprintf("A single nested object that describes the string values that map to a %s risk result.", riskResult)
+	attributeDescription := framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single nested object that describes the string values that map to a %s risk result.", riskResult))
 
 	predictorCustomMapStringValuesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A set of strings that should evaluate against the value of the attribute named in `predictor_custom_map.contains` for this risk result.",
 	)
 
 	return customMapGenericValuesSchema(
-		framework.SchemaAttributeDescription{
-			Description:         attributeDescription,
-			MarkdownDescription: attributeDescription,
-		},
+		attributeDescription,
 		predictorCustomMapStringValuesDescription,
 		hmlValidators,
 		[]validator.String{},
@@ -1276,20 +1301,6 @@ func customMapGenericValuesSchema(attributeDescription framework.SchemaAttribute
 func (r *RiskPredictorResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	// Destruction plan
 	if req.Plan.Raw.IsNull() {
-
-		// var deletable *bool
-		// resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("deletable"), deletable)...)
-		// if resp.Diagnostics.HasError() {
-		// 	return
-		// }
-
-		// if deletable != nil && !*deletable {
-		// 	resp.Diagnostics.AddWarning(
-		// 		"Risk Predictor plan destruction considerations",
-		// 		fmt.Sprintf("The risk predictor cannot be deleted due to API limitations.  The risk predictor will been left in place but will no longer be managed by the provider."),
-		// 	)
-		// }
-
 		return
 	}
 
@@ -1337,24 +1348,20 @@ func (r *RiskPredictorResource) Configure(ctx context.Context, req resource.Conf
 		return
 	}
 
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
 		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
-
 		return
 	}
-
-	r.client = preparedClient
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *RiskPredictorResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state riskPredictorResourceModel
 
-	if r.client == nil {
+	if r.Client.RiskAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1368,7 +1375,7 @@ func (r *RiskPredictorResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	// Build the model for the API
-	riskPredictor, predefinedPredictorId, d := plan.expand(ctx, r.client)
+	riskPredictor, predefinedPredictorId, d := plan.expand(ctx, r.Client.RiskAPIClient, r.Client.ManagementAPIClient)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -1381,7 +1388,8 @@ func (r *RiskPredictorResource) Create(ctx context.Context, req resource.CreateR
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.RiskAdvancedPredictorsApi.CreateRiskPredictor(ctx, plan.EnvironmentId.ValueString()).RiskPredictor(*riskPredictor).Execute()
+				fO, fR, fErr := r.Client.RiskAPIClient.RiskAdvancedPredictorsApi.CreateRiskPredictor(ctx, plan.EnvironmentId.ValueString()).RiskPredictor(*riskPredictor).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"CreateRiskPredictor",
 			riskPredictorCreateUpdateCustomErrorHandler,
@@ -1393,7 +1401,8 @@ func (r *RiskPredictorResource) Create(ctx context.Context, req resource.CreateR
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.client.RiskAdvancedPredictorsApi.UpdateRiskPredictor(ctx, plan.EnvironmentId.ValueString(), *predefinedPredictorId).RiskPredictor(*riskPredictor).Execute()
+				fO, fR, fErr := r.Client.RiskAPIClient.RiskAdvancedPredictorsApi.UpdateRiskPredictor(ctx, plan.EnvironmentId.ValueString(), *predefinedPredictorId).RiskPredictor(*riskPredictor).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdateRiskPredictor",
 			riskPredictorCreateUpdateCustomErrorHandler,
@@ -1416,7 +1425,7 @@ func (r *RiskPredictorResource) Create(ctx context.Context, req resource.CreateR
 func (r *RiskPredictorResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *riskPredictorResourceModel
 
-	if r.client == nil {
+	if r.Client.RiskAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1435,7 +1444,8 @@ func (r *RiskPredictorResource) Read(ctx context.Context, req resource.ReadReque
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.RiskAdvancedPredictorsApi.ReadOneRiskPredictor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.RiskAPIClient.RiskAdvancedPredictorsApi.ReadOneRiskPredictor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneRiskPredictor",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -1460,7 +1470,7 @@ func (r *RiskPredictorResource) Read(ctx context.Context, req resource.ReadReque
 func (r *RiskPredictorResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state riskPredictorResourceModel
 
-	if r.client == nil {
+	if r.Client.RiskAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1474,7 +1484,7 @@ func (r *RiskPredictorResource) Update(ctx context.Context, req resource.UpdateR
 	}
 
 	// Build the model for the API
-	riskPredictor, _, d := plan.expand(ctx, r.client)
+	riskPredictor, _, d := plan.expand(ctx, r.Client.RiskAPIClient, r.Client.ManagementAPIClient)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -1486,7 +1496,8 @@ func (r *RiskPredictorResource) Update(ctx context.Context, req resource.UpdateR
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.client.RiskAdvancedPredictorsApi.UpdateRiskPredictor(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).RiskPredictor(*riskPredictor).Execute()
+			fO, fR, fErr := r.Client.RiskAPIClient.RiskAdvancedPredictorsApi.UpdateRiskPredictor(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).RiskPredictor(*riskPredictor).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateRiskPredictor",
 		riskPredictorCreateUpdateCustomErrorHandler,
@@ -1508,7 +1519,7 @@ func (r *RiskPredictorResource) Update(ctx context.Context, req resource.UpdateR
 func (r *RiskPredictorResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *riskPredictorResourceModel
 
-	if r.client == nil {
+	if r.Client.RiskAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1527,8 +1538,8 @@ func (r *RiskPredictorResource) Delete(ctx context.Context, req resource.DeleteR
 			ctx,
 
 			func() (any, *http.Response, error) {
-				r, err := r.client.RiskAdvancedPredictorsApi.DeleteRiskAdvancedPredictor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-				return nil, r, err
+				fR, fErr := r.Client.RiskAPIClient.RiskAdvancedPredictorsApi.DeleteRiskAdvancedPredictor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 			},
 			"DeleteRiskAdvancedPredictor",
 			framework.CustomErrorResourceNotFoundWarning,
@@ -1547,7 +1558,7 @@ func (r *RiskPredictorResource) Delete(ctx context.Context, req resource.DeleteR
 				ctx,
 
 				func() (any, *http.Response, error) {
-					_, r, err := r.client.RiskAdvancedPredictorsApi.UpdateRiskPredictor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).RiskPredictor(v).Execute()
+					_, r, err := r.Client.RiskAPIClient.RiskAdvancedPredictorsApi.UpdateRiskPredictor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).RiskPredictor(v).Execute()
 					return nil, r, err
 				},
 				"UpdateRiskPredictor",
@@ -1565,19 +1576,37 @@ func (r *RiskPredictorResource) Delete(ctx context.Context, req resource.DeleteR
 }
 
 func (r *RiskPredictorResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitLength := 2
-	attributes := strings.SplitN(req.ID, "/", splitLength)
 
-	if len(attributes) != splitLength {
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:     "risk_predictor_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("invalid id (\"%s\") specified, should be in format \"environment_id/risk_predictor_id\"", req.ID),
+			err.Error(),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes[1])...)
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
+
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
 func riskPredictorCreateUpdateCustomErrorHandler(error model.P1Error) diag.Diagnostics {
@@ -1598,7 +1627,7 @@ func riskPredictorCreateUpdateCustomErrorHandler(error model.P1Error) diag.Diagn
 	return nil
 }
 
-func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk.APIClient) (*risk.RiskPredictor, *string, diag.Diagnostics) {
+func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk.APIClient, managementApiClient *management.APIClient) (*risk.RiskPredictor, *string, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	riskPredictor := &risk.RiskPredictor{}
@@ -1612,7 +1641,8 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return apiClient.RiskAdvancedPredictorsApi.ReadAllRiskPredictors(ctx, p.EnvironmentId.ValueString()).Execute()
+			fO, fR, fErr := apiClient.RiskAdvancedPredictorsApi.ReadAllRiskPredictors(ctx, p.EnvironmentId.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, managementApiClient, p.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadAllRiskPredictors",
 		framework.DefaultCustomError,
@@ -1634,6 +1664,10 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 
 			switch t := predictorObject.(type) {
 			case *risk.RiskPredictorAnonymousNetwork:
+				predictorId = t.GetId()
+				predictorCompactName = t.GetCompactName()
+				predictorDeletable = t.GetDeletable()
+			case *risk.RiskPredictorBotDetection:
 				predictorId = t.GetId()
 				predictorCompactName = t.GetCompactName()
 				predictorDeletable = t.GetDeletable()
@@ -1723,6 +1757,10 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 		riskPredictor.RiskPredictorAnonymousNetwork, d = p.expandPredictorAnonymousNetwork(ctx, riskPredictorCommonData)
 	}
 
+	if !p.PredictorBotDetection.IsNull() && !p.PredictorBotDetection.IsUnknown() {
+		riskPredictor.RiskPredictorBotDetection = p.expandPredictorBotDetection(riskPredictorCommonData)
+	}
+
 	if !p.PredictorComposite.IsNull() && !p.PredictorComposite.IsUnknown() {
 		riskPredictor.RiskPredictorComposite, d = p.expandPredictorComposite(ctx, riskPredictorCommonData)
 	}
@@ -1804,6 +1842,18 @@ func (p *riskPredictorResourceModel) expandPredictorAnonymousNetwork(ctx context
 	return &data, diags
 }
 
+func (p *riskPredictorResourceModel) expandPredictorBotDetection(riskPredictorCommon *risk.RiskPredictorCommon) *risk.RiskPredictorBotDetection {
+	data := risk.RiskPredictorBotDetection{
+		Name:        riskPredictorCommon.Name,
+		CompactName: riskPredictorCommon.CompactName,
+		Description: riskPredictorCommon.Description,
+		Type:        risk.ENUMPREDICTORTYPE_BOT,
+		Default:     riskPredictorCommon.Default,
+	}
+
+	return &data
+}
+
 func (p *riskPredictorResourceModel) expandPredictorComposite(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorComposite, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -1857,11 +1907,14 @@ func (p *riskPredictorResourceModel) expandPredictorComposite(ctx context.Contex
 
 		}
 
-		dataComposition := risk.NewRiskPredictorCompositeAllOfComposition(
+		dataCompositons := make([]risk.RiskPredictorCompositeAllOfCompositionsInner, 0)
+
+		dataComposition := risk.NewRiskPredictorCompositeAllOfCompositionsInner(
 			condition,
 			level,
 		)
-		data.SetComposition(*dataComposition)
+
+		data.SetCompositions(append(dataCompositons, *dataComposition))
 	}
 
 	return &data, diags
@@ -2345,7 +2398,7 @@ func (p *riskPredictorResourceModel) expandPredictorDevice(ctx context.Context, 
 	}
 
 	if predictorPlan.Detect.IsNull() || predictorPlan.Detect.IsUnknown() {
-		predictorPlan.Detect = types.StringValue(string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE))
+		predictorPlan.Detect = framework.EnumToTF(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE)
 	}
 
 	data.SetDetect(risk.EnumPredictorNewDeviceDetectType(predictorPlan.Detect.ValueString()))
@@ -2702,6 +2755,19 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 		}
 	}
 
+	if apiObject.RiskPredictorBotDetection != nil {
+		apiObjectCommon = risk.RiskPredictorCommon{
+			Id:          apiObject.RiskPredictorBotDetection.Id,
+			Name:        apiObject.RiskPredictorBotDetection.Name,
+			CompactName: apiObject.RiskPredictorBotDetection.CompactName,
+			Description: apiObject.RiskPredictorBotDetection.Description,
+			Type:        apiObject.RiskPredictorBotDetection.Type,
+			Default:     apiObject.RiskPredictorBotDetection.Default,
+			Licensed:    apiObject.RiskPredictorBotDetection.Licensed,
+			Deletable:   apiObject.RiskPredictorBotDetection.Deletable,
+		}
+	}
+
 	if apiObject.RiskPredictorComposite != nil {
 		apiObjectCommon = risk.RiskPredictorCommon{
 			Id:          apiObject.RiskPredictorComposite.Id,
@@ -2873,6 +2939,9 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 	p.PredictorAnonymousNetwork, d = p.toStateRiskPredictorAnonymousNetwork(apiObject.RiskPredictorAnonymousNetwork)
 	diags.Append(d...)
 
+	p.PredictorBotDetection, d = p.toStateRiskPredictorBotDetection(apiObject.RiskPredictorBotDetection)
+	diags.Append(d...)
+
 	p.PredictorComposite, d = p.toStateRiskPredictorComposite(apiObject.RiskPredictorComposite, compositeConditionJSON)
 	diags.Append(d...)
 
@@ -2915,6 +2984,19 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorAnonymousNetwork(apiObj
 	return objValue, diags
 }
 
+func (p *riskPredictorResourceModel) toStateRiskPredictorBotDetection(apiObject *risk.RiskPredictorBotDetection) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if apiObject == nil || apiObject.GetId() == "" {
+		return types.ObjectNull(map[string]attr.Type{}), diags
+	}
+
+	objValue, d := types.ObjectValue(map[string]attr.Type{}, map[string]attr.Value{})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
 func (p *riskPredictorResourceModel) toStateRiskPredictorComposite(apiObject *risk.RiskPredictorComposite, compositeConditionJSON basetypes.StringValue) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -2924,14 +3006,14 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorComposite(apiObject *ri
 
 	compositionObject := types.ObjectNull(predictorCompositionTFObjectTypes)
 
-	if v, ok := apiObject.GetCompositionOk(); ok {
+	if v, ok := apiObject.GetCompositionsOk(); ok && len(v) > 0 {
 
 		o := map[string]attr.Value{
-			"level":          framework.EnumOkToTF(v.GetLevelOk()),
+			"level":          framework.EnumOkToTF(v[0].GetLevelOk()),
 			"condition_json": compositeConditionJSON,
 		}
 
-		if v1, ok := v.GetConditionOk(); ok {
+		if v1, ok := v[0].GetConditionOk(); ok {
 			jsonString, err := json.Marshal(v1)
 			if err != nil {
 				diags.AddError(
@@ -2942,7 +3024,11 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorComposite(apiObject *ri
 				return types.ObjectNull(predictorCompositeTFObjectTypes), diags
 			}
 
-			o["condition"] = types.StringValue(string(jsonString))
+			o["condition"] = framework.StringToTF(string(jsonString))
+
+			if compositeConditionJSON.IsNull() || compositeConditionJSON.IsUnknown() {
+				o["condition_json"] = o["condition"]
+			}
 		}
 
 		objValue, d := types.ObjectValue(predictorCompositionTFObjectTypes, o)
