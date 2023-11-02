@@ -29,6 +29,8 @@ func TestAccApplicationPushCredential_RemovalDrift(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
+	firebaseCredentials := os.Getenv("PINGONE_GOOGLE_FIREBASE_CREDENTIALS")
+
 	var applicationPushCredentialID, applicationID, environmentID string
 
 	var p1Client *client.Client
@@ -48,7 +50,7 @@ func TestAccApplicationPushCredential_RemovalDrift(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Test removal of the resource
 			{
-				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, fmt.Sprintf("%s1", name)),
+				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, firebaseCredentials),
 				Check:  mfa.ApplicationPushCredential_GetIDs(resourceFullName, &environmentID, &applicationID, &applicationPushCredentialID),
 			},
 			{
@@ -60,7 +62,7 @@ func TestAccApplicationPushCredential_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the application
 			{
-				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, fmt.Sprintf("%s1", name)),
+				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, firebaseCredentials),
 				Check:  mfa.ApplicationPushCredential_GetIDs(resourceFullName, &environmentID, &applicationID, &applicationPushCredentialID),
 			},
 			{
@@ -72,7 +74,7 @@ func TestAccApplicationPushCredential_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the environment
 			{
-				Config: testAccApplicationPushCredentialConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationPushCredentialConfig_NewEnv(environmentName, licenseID, resourceName, name, firebaseCredentials),
 				Check:  mfa.ApplicationPushCredential_GetIDs(resourceFullName, &environmentID, &applicationID, &applicationPushCredentialID),
 			},
 			{
@@ -115,30 +117,9 @@ func TestAccApplicationPushCredential_FCM(t *testing.T) {
 		CheckDestroy:             mfa.ApplicationPushCredential_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			// FCM (deprecated)
-			{
-				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, fmt.Sprintf("%s1", name)),
-				Check:  fullFCMCheck,
-			},
-			{
-				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, fmt.Sprintf("%s2", name)),
-				Check:  fullFCMCheck,
-			},
-			{
-				Config:  testAccApplicationPushCredentialConfig_FCM(resourceName, name, fmt.Sprintf("%s2", name)),
-				Destroy: true,
-			},
 			// FCM new
 			{
-				Config: testAccApplicationPushCredentialConfig_FCMHTTPV1(resourceName, name, firebaseCredentials),
-				Check:  fullFCMCheck,
-			},
-			{
-				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, fmt.Sprintf("%s1", name)),
-				Check:  fullFCMCheck,
-			},
-			{
-				Config: testAccApplicationPushCredentialConfig_FCMHTTPV1(resourceName, name, firebaseCredentials),
+				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, firebaseCredentials),
 				Check:  fullFCMCheck,
 			},
 			// Test importing the resource
@@ -305,17 +286,20 @@ func TestAccApplicationPushCredential_Change(t *testing.T) {
 
 	name := resourceName
 
+	firebaseCredentials := os.Getenv("PINGONE_GOOGLE_FIREBASE_CREDENTIALS")
+
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckGoogleFirebaseCredentials(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             mfa.ApplicationPushCredential_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, name),
+				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, firebaseCredentials),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -359,10 +343,13 @@ func TestAccApplicationPushCredential_BadParameters(t *testing.T) {
 
 	name := resourceName
 
+	firebaseCredentials := os.Getenv("PINGONE_GOOGLE_FIREBASE_CREDENTIALS")
+
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckGoogleFirebaseCredentials(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             mfa.ApplicationPushCredential_CheckDestroy,
@@ -370,7 +357,7 @@ func TestAccApplicationPushCredential_BadParameters(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, fmt.Sprintf("%s1", name)),
+				Config: testAccApplicationPushCredentialConfig_FCM(resourceName, name, firebaseCredentials),
 			},
 			// Errors
 			{
@@ -394,7 +381,7 @@ func TestAccApplicationPushCredential_BadParameters(t *testing.T) {
 	})
 }
 
-func testAccApplicationPushCredentialConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
+func testAccApplicationPushCredentialConfig_NewEnv(environmentName, licenseID, resourceName, name, key string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -440,63 +427,12 @@ resource "pingone_mfa_application_push_credential" "%[3]s" {
   application_id = pingone_application.%[3]s.id
 
   fcm {
-    key = "%[4]s"
+    google_service_account_credentials = jsonencode(%[5]s)
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, key)
 }
 
 func testAccApplicationPushCredentialConfig_FCM(resourceName, name, key string) string {
-	return fmt.Sprintf(`
-		%[1]s
-
-resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
-  description    = "My test OIDC app for MFA Policy"
-  tags           = []
-  login_page_url = "https://www.pingidentity.com"
-
-  enabled = true
-
-  oidc_options {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-
-    mobile_app {
-      package_name = "com.%[2]s.package"
-
-      passcode_refresh_seconds = 45
-
-      integrity_detection {
-        enabled = true
-        cache_duration {
-          amount = 30
-          units  = "HOURS"
-        }
-        google_play {
-          verification_type = "INTERNAL"
-          decryption_key    = "dummykeydoesnotexist"
-          verification_key  = "dummykeydoesnotexist"
-        }
-      }
-    }
-
-    package_name = "com.%[2]s.package"
-  }
-}
-
-resource "pingone_mfa_application_push_credential" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  application_id = pingone_application.%[2]s.id
-
-  fcm {
-    key = "%[4]s"
-  }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name, key)
-}
-
-func testAccApplicationPushCredentialConfig_FCMHTTPV1(resourceName, name, key string) string {
 	return fmt.Sprintf(`
 		%[1]s
 

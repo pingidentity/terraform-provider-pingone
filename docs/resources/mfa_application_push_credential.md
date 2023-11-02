@@ -9,7 +9,7 @@ description: |-
 
 Resource to create and manage push credentials for a mobile MFA application configured in PingOne.
 
-~> If the type of credential is changed (e.g., FCM to APNS, or `fcm.key` to `fcm.google_service_account_credentials`), this will trigger a replacement plan.
+~> If the type of credential is changed (e.g., FCM to APNS), this will trigger a replacement plan.
 
 ## Example Usage
 
@@ -111,10 +111,9 @@ Required:
 <a id="nestedblock--fcm"></a>
 ### Nested Schema for `fcm`
 
-Optional:
+Required:
 
-- `google_service_account_credentials` (String, Sensitive) A string in JSON format that represents the service account credentials of Firebase cloud messaging service.  At least one of the following must be defined: `key`, `google_service_account_credentials`.
-- `key` (String, Sensitive, Deprecated) A string that represents the server key of the Firebase cloud messaging service.  At least one of the following must be defined: `key`, `google_service_account_credentials`.
+- `google_service_account_credentials` (String, Sensitive) A string in JSON format that represents the service account credentials of Firebase cloud messaging service.
 
 
 <a id="nestedblock--hms"></a>
