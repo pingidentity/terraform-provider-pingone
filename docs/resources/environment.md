@@ -47,7 +47,6 @@ resource "pingone_environment" "my_environment" {
 
 ### Optional
 
-- `default_population` (Block List, Deprecated) **Deprecation Message** The `default_population` block has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.  To preserve user data, removal of this block from HCL will not delete the population from the service.  The default population configuration cannot be added after the environment has already been created, but will not trigger a replacement of the resource.  The environment's default population.  The values for this block will not be populated when importing the resource using `terraform import`. (see [below for nested schema](#nestedblock--default_population))
 - `description` (String) A description of the environment.
 - `region` (String) The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.  Default can be set with the `PINGONE_REGION` environment variable.
 - `service` (Block Set) The services to enable in the environment.  Defaults to `SSO`. (see [below for nested schema](#nestedblock--service))
@@ -57,18 +56,8 @@ resource "pingone_environment" "my_environment" {
 
 ### Read-Only
 
-- `default_population_id` (String, Deprecated) **Deprecation Message** The `default_population_id` attribute has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.  The ID of the environment's default population.  This attribute is only populated when also using the `default_population` block to define a default population, but will not be populated when importing the resource using `terraform import`.
 - `id` (String) The ID of this resource.
 - `organization_id` (String) The ID of the PingOne organization tenant to which the environment belongs.
-
-<a id="nestedblock--default_population"></a>
-### Nested Schema for `default_population`
-
-Optional:
-
-- `description` (String) A description to apply to the environment's default population.
-- `name` (String) The name of the environment's default population.  Defaults to `Default`.
-
 
 <a id="nestedblock--service"></a>
 ### Nested Schema for `service`

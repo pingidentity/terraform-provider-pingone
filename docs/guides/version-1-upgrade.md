@@ -12,6 +12,16 @@ Version 1.0.0 of the PingOne Terraform provider is a major release that introduc
 ## Provider Configuration
 
 
+## Resource: pingone_environment
+
+### `default_population` optional parameter removed
+
+This parameter was previously deprecated and has been removed.  Default populations are managed with the `pingone_population_default` resource.
+
+### `default_population_id` computed attribute removed
+
+This attribute was previously deprecated and has been removed.  Default populations are managed with the `pingone_population_default` resource.
+
 ## Resource: pingone_image
 
 ### `uploaded_image` computed attribute data type change

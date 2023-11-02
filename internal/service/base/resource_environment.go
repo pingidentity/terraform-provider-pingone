@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -34,7 +33,6 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	stringdefaultinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringdefaultinternal"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -47,23 +45,16 @@ type EnvironmentResource struct {
 }
 
 type environmentResourceModel struct {
-	Id                  types.String   `tfsdk:"id"`
-	Name                types.String   `tfsdk:"name"`
-	Description         types.String   `tfsdk:"description"`
-	Type                types.String   `tfsdk:"type"`
-	Region              types.String   `tfsdk:"region"`
-	LicenseId           types.String   `tfsdk:"license_id"`
-	OrganizationId      types.String   `tfsdk:"organization_id"`
-	Solution            types.String   `tfsdk:"solution"`
-	DefaultPopulationId types.String   `tfsdk:"default_population_id"` // Deprecated
-	DefaultPopulation   types.List     `tfsdk:"default_population"`    // Deprecated
-	Services            types.Set      `tfsdk:"service"`
-	Timeouts            timeouts.Value `tfsdk:"timeouts"`
-}
-
-type environmentDefaultPopulationModel struct {
-	Name        types.String `tfsdk:"name"`
-	Description types.String `tfsdk:"description"`
+	Id             types.String   `tfsdk:"id"`
+	Name           types.String   `tfsdk:"name"`
+	Description    types.String   `tfsdk:"description"`
+	Type           types.String   `tfsdk:"type"`
+	Region         types.String   `tfsdk:"region"`
+	LicenseId      types.String   `tfsdk:"license_id"`
+	OrganizationId types.String   `tfsdk:"organization_id"`
+	Solution       types.String   `tfsdk:"solution"`
+	Services       types.Set      `tfsdk:"service"`
+	Timeouts       timeouts.Value `tfsdk:"timeouts"`
 }
 
 type environmentServiceModel struct {
@@ -79,16 +70,6 @@ type environmentServiceBookmarkModel struct {
 }
 
 var (
-
-	///////////////////
-	// Deprecated start
-	environmentDefaultPopulationTFObjectTypes = map[string]attr.Type{
-		"name":        types.StringType,
-		"description": types.StringType,
-	}
-	// Deprecated end
-	///////////////////
-
 	environmentServiceTFObjectTypes = map[string]attr.Type{
 		"type":        types.StringType,
 		"console_url": types.StringType,
@@ -141,18 +122,6 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 	solutionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("The solution context of the environment.  Leave blank for a custom, non-workforce solution context.  Valid options are `%s`, or no value for custom solution context.  Workforce solution environments are not yet supported in this provider resource, but can be fetched using the `pingone_environment` datasource.", string(management.ENUMSOLUTIONTYPE_CUSTOMER)),
 	)
-
-	defaultPopulationIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"**Deprecation Message** The `default_population_id` attribute has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.  The ID of the environment's default population.  This attribute is only populated when also using the `default_population` block to define a default population, but will not be populated when importing the resource using `terraform import`.",
-	)
-
-	defaultPopulationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"**Deprecation Message** The `default_population` block has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.  To preserve user data, removal of this block from HCL will not delete the population from the service.  The default population configuration cannot be added after the environment has already been created, but will not trigger a replacement of the resource.  The environment's default population.  The values for this block will not be populated when importing the resource using `terraform import`.",
-	)
-
-	defaultPopulationNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The name of the environment's default population.",
-	).DefaultValue("Default")
 
 	serviceDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The services to enable in the environment.",
@@ -286,59 +255,9 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
-
-			///////////////////
-			// Deprecated start
-			"default_population_id": schema.StringAttribute{
-				Description:         defaultPopulationIdDescription.Description,
-				MarkdownDescription: defaultPopulationIdDescription.MarkdownDescription,
-				DeprecationMessage:  "The `default_population_id` block has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.",
-
-				Computed: true,
-
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			// Deprecated end
-			///////////////////
 		},
 
 		Blocks: map[string]schema.Block{
-			///////////////////
-			// Deprecated start
-			"default_population": schema.ListNestedBlock{
-				Description:         defaultPopulationDescription.Description,
-				MarkdownDescription: defaultPopulationDescription.MarkdownDescription,
-				DeprecationMessage:  "The `default_population` block has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This block will be removed in the next major version of the provider.  To preserve user data, removal of this block from HCL will not delete the population from the service.",
-
-				NestedObject: schema.NestedBlockObject{
-
-					Attributes: map[string]schema.Attribute{
-						"name": schema.StringAttribute{
-							Description:         defaultPopulationNameDescription.Description,
-							MarkdownDescription: defaultPopulationNameDescription.MarkdownDescription,
-
-							Optional: true,
-							Computed: true,
-							Default:  stringdefault.StaticString("Default"),
-						},
-
-						"description": schema.StringAttribute{
-							Description: "A description to apply to the environment's default population.",
-
-							Optional: true,
-						},
-					},
-				},
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-					listvalidator.SizeAtLeast(1),
-				},
-			},
-			// Deprecated end
-			///////////////////
-
 			"service": schema.SetNestedBlock{
 				Description:         serviceDescription.Description,
 				MarkdownDescription: serviceDescription.MarkdownDescription,
@@ -441,55 +360,6 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 	if req.Plan.Raw.IsNull() {
 		return
 	}
-
-	///////////////////
-	// Deprecated start
-	var environmentID types.String
-	resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root("id"), &environmentID)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	var plan []environmentDefaultPopulationModel
-	resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root("default_population"), &plan)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	var state []environmentDefaultPopulationModel
-	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("default_population"), &state)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	if len(state) > 0 && len(plan) == 0 {
-		resp.Diagnostics.AddAttributeWarning(
-			path.Root("default_population"),
-			"State change warning",
-			"The default population in the \"default_population\" block will be removed from state, but will not be removed from the platform to preserve user data.  Please use the `pingone_population_default` resource to manage the default population going forward.",
-		)
-
-		resp.Diagnostics.AddAttributeWarning(
-			path.Root("default_population_id"),
-			"State change warning",
-			"The default population in the \"default_population_id\" attribute will be removed from state, the \"default_population_id\" will no longer carry the default population's ID value.  Please use the `pingone_population_default` resource to manage the default population going forward.",
-		)
-	}
-
-	if len(plan) > 0 && len(state) == 0 && !environmentID.IsNull() && !environmentID.IsUnknown() {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("default_population"),
-			"Invalid configuration",
-			"The default population configuration (the \"default_population\" block) cannot be added after the environment has already been created.  Please use the \"pingone_population_default\" resource to manage the default population.",
-		)
-		return
-	}
-
-	if len(plan) == 0 {
-		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("default_population_id"), types.StringNull())...)
-	}
-	// Deprecated end
-	///////////////////
 
 	var regionPlan types.String
 	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("region"), &regionPlan)...)
@@ -639,7 +509,7 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	// Build the model for the API
-	environment, population, d := plan.expand(ctx)
+	environment, d := plan.expand(ctx)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -667,67 +537,11 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 		billOfMaterials = v
 	}
 
-	///////////////////
-	// Deprecated start
-	//if population != nil {
-	// Seed a default population.  The platform does this implicitly but we see latencies.  This ensures we have a quick environment provision.
-	defaultPopulationObj := *management.NewPopulation("Default")
-	defaultPopulationObj.SetDescription("Automatically created population.")
-	defaultPopulationObj.SetDefault(true)
-
-	defaultPopulationResponse, _ := sso.PingOnePopulationCreate(ctx, r.Client.ManagementAPIClient, environmentResponse.GetId(), defaultPopulationObj)
-	if defaultPopulationResponse == nil {
-		resp.Diagnostics.AddWarning(
-			"Cannot seed the default population",
-			"The default population cannot be seeded explicitly by the provider.  Relying on the implicit environment bootstrapping service for creation.",
-		)
-	}
-
-	///////////////////
-	// Deprecated start
-	// Population
-
-	var defaultPopulation *management.Population
-
-	// Save some processing if we already seeded our population
-	if defaultPopulationResponse != nil {
-		defaultPopulation = defaultPopulationResponse
-	} else {
-		defaultPopulation, d = sso.FetchDefaultPopulationWithTimeout(ctx, r.Client.ManagementAPIClient, environmentResponse.GetId(), createTimeout)
-		resp.Diagnostics.Append(d...)
-	}
-
-	var populationResponse *management.Population = nil
-
-	if population != nil {
-
-		if defaultPopulation == nil {
-			resp.Diagnostics.AddError(
-				"Default population not found.",
-				"A default population was expected to be found in the environment after creation, but none was found.  Please report this issue to the provider maintainers.")
-		}
-
-		resp.Diagnostics.Append(framework.ParseResponse(
-			ctx,
-
-			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.UpdatePopulation(ctx, environmentResponse.GetId(), defaultPopulation.GetId()).Population(*population).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentResponse.GetId(), fO, fR, fErr)
-			},
-			"UpdatePopulation",
-			framework.DefaultCustomError,
-			sdk.DefaultCreateReadRetryable,
-			&populationResponse,
-		)...)
-	}
-	// Deprecated end
-	///////////////////
-
 	// Create the state to save
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(environmentResponse, billOfMaterials, populationResponse)...)
+	resp.Diagnostics.Append(state.toState(environmentResponse, billOfMaterials)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -789,32 +603,8 @@ func (r *EnvironmentResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	///////////////////
-	// Deprecated start
-	// The default population
-	var populationResponse *management.Population = nil
-	if !data.DefaultPopulation.IsNull() {
-		resp.Diagnostics.Append(framework.ParseResponse(
-			ctx,
-
-			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.ReadOnePopulation(ctx, data.Id.ValueString(), data.DefaultPopulationId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.Id.ValueString(), fO, fR, fErr)
-			},
-			"ReadOnePopulation",
-			framework.CustomErrorResourceNotFoundWarning,
-			sdk.DefaultCreateReadRetryable,
-			&populationResponse,
-		)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-	}
-	// Deprecated end
-	///////////////////
-
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(environmentResponse, billOfMaterialsResponse, populationResponse)...)
+	resp.Diagnostics.Append(data.toState(environmentResponse, billOfMaterialsResponse)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -836,7 +626,7 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	// Build the model for the API
-	environment, population, d := plan.expand(ctx)
+	environment, d := plan.expand(ctx)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -937,75 +727,8 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	///////////////////
-	// Deprecated start
-	var populationResponse *management.Population = nil
-
-	if plan.DefaultPopulation.IsNull() && !state.DefaultPopulation.IsNull() && population == nil {
-		resp.Diagnostics.AddWarning(
-			"Default population removed from state",
-			"The default population has been removed from state, but has not been removed from the platform to preserve user data.  Please use the `pingone_population_default` resource to manage the default population going forward.",
-		)
-	}
-
-	if !plan.DefaultPopulation.Equal(state.DefaultPopulation) && population != nil {
-
-		var populationId string
-		if state.DefaultPopulationId.IsNull() {
-			defaultPopulation, d := sso.FetchDefaultPopulation(ctx, r.Client.ManagementAPIClient, plan.Id.ValueString())
-			resp.Diagnostics.Append(d...)
-
-			if defaultPopulation == nil {
-				resp.Diagnostics.AddError(
-					"Default population not found.",
-					"A default population was expected to be found in the environment after update, but none was found.  Please report this issue to the provider maintainers.")
-				return
-			}
-
-			populationId = defaultPopulation.GetId()
-		} else {
-			populationId = state.DefaultPopulationId.ValueString()
-		}
-
-		resp.Diagnostics.Append(framework.ParseResponse(
-			ctx,
-
-			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.UpdatePopulation(ctx, plan.Id.ValueString(), populationId).Population(*population).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.Id.ValueString(), fO, fR, fErr)
-			},
-			"UpdatePopulation",
-			framework.DefaultCustomError,
-			sdk.DefaultCreateReadRetryable,
-			&populationResponse,
-		)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-	}
-
-	if populationResponse == nil && population != nil && !state.DefaultPopulationId.IsNull() {
-		resp.Diagnostics.Append(framework.ParseResponse(
-			ctx,
-
-			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.ReadOnePopulation(ctx, state.Id.ValueString(), state.DefaultPopulationId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.Id.ValueString(), fO, fR, fErr)
-			},
-			"ReadOnePopulation",
-			framework.CustomErrorResourceNotFoundWarning,
-			sdk.DefaultCreateReadRetryable,
-			&populationResponse,
-		)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-	}
-	// Deprecated end
-	///////////////////
-
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(environmentResponse, billOfMaterialsResponse, populationResponse)...)
+	resp.Diagnostics.Append(state.toState(environmentResponse, billOfMaterialsResponse)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -1150,7 +873,7 @@ func deleteEnvironment(ctx context.Context, apiClient *management.APIClient, env
 	return diags
 }
 
-func (p *environmentResourceModel) expand(ctx context.Context) (*management.Environment, *management.Population, diag.Diagnostics) {
+func (p *environmentResourceModel) expand(ctx context.Context) (*management.Environment, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var environmentLicense management.EnvironmentLicense
@@ -1169,7 +892,7 @@ func (p *environmentResourceModel) expand(ctx context.Context) (*management.Envi
 		var servicesPlan []environmentServiceModel
 		diags.Append(p.Services.ElementsAs(ctx, &servicesPlan, false)...)
 		if diags.HasError() {
-			return nil, nil, diags
+			return nil, diags
 		}
 
 		bomServices := make([]management.BillOfMaterialsProductsInner, 0)
@@ -1178,7 +901,7 @@ func (p *environmentResourceModel) expand(ctx context.Context) (*management.Envi
 			service, d := v.expand(ctx)
 			diags.Append(d...)
 			if diags.HasError() {
-				return nil, nil, diags
+				return nil, diags
 			}
 
 			bomServices = append(bomServices, *service)
@@ -1193,29 +916,7 @@ func (p *environmentResourceModel) expand(ctx context.Context) (*management.Envi
 		environment.SetBillOfMaterials(billOfMaterials)
 	}
 
-	///////////////////
-	// Deprecated start
-	var population *management.Population = nil
-
-	if !p.DefaultPopulation.IsNull() {
-
-		var populationPlan []environmentDefaultPopulationModel
-		diags.Append(p.DefaultPopulation.ElementsAs(ctx, &populationPlan, false)...)
-		if diags.HasError() {
-			return nil, nil, diags
-		}
-
-		var d diag.Diagnostics
-		population, d = populationPlan[0].expand()
-		diags.Append(d...)
-		if diags.HasError() {
-			return nil, nil, diags
-		}
-	}
-	// Deprecated end
-	///////////////////
-
-	return environment, population, diags
+	return environment, diags
 }
 
 func (p *environmentServiceModel) expand(ctx context.Context) (*management.BillOfMaterialsProductsInner, diag.Diagnostics) {
@@ -1295,33 +996,7 @@ func (p *environmentServiceBookmarkModel) expand() (*management.BillOfMaterialsP
 	return management.NewBillOfMaterialsProductsInnerBookmarksInner(p.Name.ValueString(), p.Url.ValueString()), diags
 }
 
-// expand extends the environmentDefaultPopulationModel, which returns a *management.Population pointer object of the model.
-//
-// Deprecated: default population configuration is replaced by a separate TF resource, `pingone_population_default`
-func (p *environmentDefaultPopulationModel) expand() (*management.Population, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if p.Name.IsNull() {
-		diags.AddError(
-			"Required parameter missing",
-			"The \"name\" parameters is required for a default population.",
-		)
-
-		return nil, diags
-	}
-
-	population := management.NewPopulation(p.Name.ValueString())
-
-	if !p.Description.IsNull() {
-		population.SetDescription(p.Description.ValueString())
-	}
-
-	population.SetDefault(true)
-
-	return population, diags
-}
-
-func (p *environmentResourceModel) toState(environmentApiObject *management.Environment, servicesApiObject *management.BillOfMaterials, populationApiObject *management.Population) diag.Diagnostics {
+func (p *environmentResourceModel) toState(environmentApiObject *management.Environment, servicesApiObject *management.BillOfMaterials) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if environmentApiObject == nil || servicesApiObject == nil {
@@ -1355,49 +1030,7 @@ func (p *environmentResourceModel) toState(environmentApiObject *management.Envi
 	diags.Append(d...)
 	p.Services = services
 
-	///////////////////
-	// Deprecated start
-	if populationApiObject != nil {
-		p.DefaultPopulationId = framework.StringOkToTF(populationApiObject.GetIdOk())
-
-		defaultPopulation, d := toStateEnvironmentDefaultPopulation(populationApiObject)
-		diags.Append(d...)
-		p.DefaultPopulation = defaultPopulation
-
-	} else {
-		p.DefaultPopulationId = types.StringNull()
-		p.DefaultPopulation = types.ListNull(types.ObjectType{AttrTypes: environmentDefaultPopulationTFObjectTypes})
-	}
-	// Deprecated end
-	///////////////////
-
 	return diags
-}
-
-// toStateEnvironmentDefaultPopulation takes a population object and converts it to a TF state object
-//
-// Deprecated: default population configuration is replaced by a separate TF resource, `pingone_population_default`
-func toStateEnvironmentDefaultPopulation(population *management.Population) (types.List, diag.Diagnostics) {
-	var diags diag.Diagnostics
-	tfObjType := types.ObjectType{AttrTypes: environmentDefaultPopulationTFObjectTypes}
-
-	if population == nil {
-		return types.ListNull(types.ObjectType{AttrTypes: environmentDefaultPopulationTFObjectTypes}), diags
-	}
-
-	defaultPopulation := map[string]attr.Value{
-		"name":        framework.StringOkToTF(population.GetNameOk()),
-		"description": framework.StringOkToTF(population.GetDescriptionOk()),
-	}
-
-	flattenedObj, d := types.ObjectValue(environmentDefaultPopulationTFObjectTypes, defaultPopulation)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
-	diags.Append(d...)
-
-	return returnVar, diags
-
 }
 
 func toStateEnvironmentServices(services []management.BillOfMaterialsProductsInner) (types.Set, diag.Diagnostics) {
