@@ -89,3 +89,11 @@ This resource was previously deprecated and has been removed.  Review the [Upgra
 ## Resource: pingone_mfa_policy
 
 Review the [Upgrade MFA Policies to use FIDO2 with Passkeys](./upgrade-mfa-policy-for-fido2) to ensure all MFA Policies are upgraded in the PingOne tenant prior to upgrading the PingOne provider version to `v1.0.0`.
+
+### `platform` parameter removed
+
+This parameter was previously deprecated and has been removed.  Use the `fido2` parameter going forward.
+
+### `security_key` parameter removed
+
+This parameter was previously deprecated and has been removed.  Use the `fido2` parameter going forward.
