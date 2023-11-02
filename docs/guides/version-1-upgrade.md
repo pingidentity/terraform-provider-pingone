@@ -81,3 +81,11 @@ resource "pingone_branding_theme" "my_awesome_theme" {
 ## Resource: pingone_mfa_fido_policy
 
 This resource was previously deprecated and has been removed.  Use the `pingone_mfa_fido2_policy` resource going forward.
+
+## Resource: pingone_mfa_policies
+
+This resource was previously deprecated and has been removed.  Review the [Upgrade MFA Policies to use FIDO2 with Passkeys](./upgrade-mfa-policy-for-fido2) to ensure all MFA Policies are upgraded in the PingOne tenant prior to upgrading the PingOne provider version to `v1.0.0`.
+
+## Resource: pingone_mfa_policy
+
+Review the [Upgrade MFA Policies to use FIDO2 with Passkeys](./upgrade-mfa-policy-for-fido2) to ensure all MFA Policies are upgraded in the PingOne tenant prior to upgrading the PingOne provider version to `v1.0.0`.
