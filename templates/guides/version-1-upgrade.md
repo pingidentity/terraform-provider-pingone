@@ -77,3 +77,7 @@ resource "pingone_branding_theme" "my_awesome_theme" {
   }
 }
 ```
+
+## Resource: pingone_mfa_fido_policy
+
+This resource was previously deprecated and has been removed.  Use the `pingone_mfa_fido2_policy` resource going forward.
