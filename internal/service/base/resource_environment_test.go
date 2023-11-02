@@ -82,9 +82,6 @@ func TestAccEnvironment_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
 			resource.TestMatchResourceAttr(resourceFullName, "organization_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "solution", "CUSTOMER"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "default_population_id"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.name"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.description"),
 			resource.TestCheckResourceAttr(resourceFullName, "service.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
 				"type":        "SSO",
@@ -115,9 +112,6 @@ func TestAccEnvironment_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
 			resource.TestMatchResourceAttr(resourceFullName, "organization_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "solution", "CUSTOMER"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "default_population_id"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.name"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.description"),
 			resource.TestCheckResourceAttr(resourceFullName, "service.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
 				"type":        "SSO",
@@ -191,9 +185,6 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 			resource.TestCheckNoResourceAttr(resourceFullName, "solution"),
 			resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
 			resource.TestMatchResourceAttr(resourceFullName, "organization_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckNoResourceAttr(resourceFullName, "default_population_id"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.name"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.description"),
 			resource.TestCheckResourceAttr(resourceFullName, "service.#", "1"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
 				"type":        "SSO",
@@ -303,43 +294,6 @@ func TestAccEnvironment_DeleteProductionEnvironment(t *testing.T) {
 		},
 	})
 }
-
-///////////////////
-// Deprecated start
-
-func TestAccEnvironment_MinimalWithPopulation(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGenEnvironment()
-	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
-
-	name := resourceName
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
-		},
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.Environment_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccEnvironmentConfig_MinimalWithPopulation(resourceName, name, licenseID),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "default_population_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.description", fmt.Sprintf("%s description", name)),
-				),
-			},
-		},
-	})
-}
-
-// Deprecated end
-///////////////////
 
 func TestAccEnvironment_EnvironmentTypeSwitching(t *testing.T) {
 	t.Parallel()
@@ -620,19 +574,6 @@ resource "pingone_environment" "%[1]s" {
   service {
     type = "DaVinci"
     tags = ["DAVINCI_MINIMAL"]
-  }
-}`, resourceName, name, licenseID)
-}
-
-func testAccEnvironmentConfig_MinimalWithPopulation(resourceName, name, licenseID string) string {
-	return fmt.Sprintf(`
-resource "pingone_environment" "%[1]s" {
-  name       = "%[2]s"
-  license_id = "%[3]s"
-
-  default_population {
-    name        = "%[2]s"
-    description = "%[2]s description"
   }
 }`, resourceName, name, licenseID)
 }
