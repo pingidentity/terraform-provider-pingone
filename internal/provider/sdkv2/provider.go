@@ -119,7 +119,6 @@ func New(version string) func() *schema.Provider {
 				"pingone_gateway":                       base.ResourceGateway(),
 				"pingone_gateway_credential":            base.ResourceGatewayCredential(),
 				"pingone_gateway_role_assignment":       base.ResourceGatewayRoleAssignment(),
-				"pingone_image":                         base.ResourceImage(),
 				"pingone_language":                      base.ResourceLanguage(),
 				"pingone_language_update":               base.ResourceLanguageUpdate(),
 				"pingone_notification_template_content": base.ResourceNotificationTemplateContent(),
