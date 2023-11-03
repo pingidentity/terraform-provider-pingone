@@ -17,6 +17,7 @@ func Resources() []func() resource.Resource {
 		NewApplicationResourceGrantResource,
 		NewGroupResource,
 		NewGroupNestingResource,
+		NewGroupRoleAssignmentResource,
 		NewIdentityProviderAttributeResource,
 		NewPopulationResource,
 		NewPopulationDefaultResource,
@@ -40,5 +41,6 @@ func DataSources() []func() datasource.DataSource {
 		NewSchemaDataSource,
 		NewUserDataSource,
 		NewUsersDataSource,
+		NewApplicationDataSource,
 	}
 }

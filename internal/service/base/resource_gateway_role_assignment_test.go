@@ -281,6 +281,11 @@ resource "pingone_gateway" "%[2]s" {
   type = "PING_FEDERATE"
 }
 
+resource "pingone_population" "%[2]s" {
+  environment_id = pingone_environment.%[6]s.id
+  name           = "%[3]s"
+}
+
 data "pingone_role" "%[2]s" {
   name = "%[4]s"
 }
@@ -290,7 +295,7 @@ resource "pingone_gateway_role_assignment" "%[2]s" {
   gateway_id     = pingone_gateway.%[2]s.id
   role_id        = data.pingone_role.%[2]s.id
 
-  scope_population_id = pingone_environment.%[6]s.default_population_id
+  scope_population_id = pingone_population.%[2]s.id
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, roleName, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName)
 }
 

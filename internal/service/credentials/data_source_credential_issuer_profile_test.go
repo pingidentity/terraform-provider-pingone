@@ -103,8 +103,7 @@ resource "pingone_environment" "%[3]s" {
   name       = "%[1]s"
   type       = "SANDBOX"
   license_id = "%[2]s"
-  default_population {
-  }
+
   service {
     type = "SSO"
   }

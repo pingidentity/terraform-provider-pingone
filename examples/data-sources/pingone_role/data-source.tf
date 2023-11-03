@@ -25,3 +25,7 @@ data "pingone_role" "identity_data_admin_ro" {
 data "pingone_role" "davinci_admin_ro" {
   name = "DaVinci Admin Read Only"
 }
+
+data "pingone_role" "role_by_id" {
+  role_id = var.role_id
+}

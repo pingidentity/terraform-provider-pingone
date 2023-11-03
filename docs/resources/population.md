@@ -21,8 +21,8 @@ resource "pingone_environment" "my_environment" {
 resource "pingone_population" "my_population" {
   environment_id = pingone_environment.my_environment.id
 
-  name        = "My second population"
-  description = "My new population"
+  name        = "My awesome population"
+  description = "My new population for awesome people"
 }
 ```
 
