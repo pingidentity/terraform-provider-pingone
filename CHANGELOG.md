@@ -19,6 +19,7 @@ FEATURES:
 * **New Data Source:** `pingone_gateway` ([#613](https://github.com/pingidentity/terraform-provider-pingone/issues/613))
 * **New Data Source:** `pingone_roles` ([#599](https://github.com/pingidentity/terraform-provider-pingone/issues/599))
 * **New Resource:** `pingone_group_role_assignment` ([#602](https://github.com/pingidentity/terraform-provider-pingone/issues/602))
+* **New Resource:** `pingone_population_default` ([#600](https://github.com/pingidentity/terraform-provider-pingone/issues/600))
 
 ENHANCEMENTS:
 
@@ -26,6 +27,10 @@ ENHANCEMENTS:
 * `data-source/pingone_role`: Now supports read-only attributes `applicable_to` and `permissions`. ([#599](https://github.com/pingidentity/terraform-provider-pingone/issues/599))
 * `data-source/pingone_role`: Now supports the ability to look up role data by ID. ([#599](https://github.com/pingidentity/terraform-provider-pingone/issues/599))
 * `resource/pingone_environment`: Added `service.tags` parameter allows for a creation of an environment without example/demo configuration in the DaVinci service. ([#620](https://github.com/pingidentity/terraform-provider-pingone/issues/620))
+
+BUG FIXES:
+
+* `resource/pingone_environment`: Fixed situations where configuring a default population conflicts with the platform bootstrap, resulting in the created population not becoming the default for the environment. ([#600](https://github.com/pingidentity/terraform-provider-pingone/issues/600))
 
 ## 0.22.0 (17 October 2023)
 
