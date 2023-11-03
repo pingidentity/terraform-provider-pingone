@@ -1,5 +1,5 @@
 ```release-note:new-resource
-`pingone_population_default`
+pingone_population_default
 ```
 
 ```release-note:bug
