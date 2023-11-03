@@ -47,7 +47,7 @@ func TestAccPopulationDefault_RemovalDrift(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Test removal of the environment
 			{
-				Config: testAccPopulationDefaultConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Config: testAccPopulationDefaultConfig_Full(environmentName, licenseID, resourceName, name),
 				Check:  sso.Population_GetIDs(resourceFullName, &environmentID, &populationID),
 			},
 			{
@@ -61,7 +61,7 @@ func TestAccPopulationDefault_RemovalDrift(t *testing.T) {
 	})
 }
 
-func TestAccPopulationDefault_NewEnv(t *testing.T) {
+func TestAccPopulationDefault_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -84,34 +84,7 @@ func TestAccPopulationDefault_NewEnv(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPopulationDefaultConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-				),
-			},
-		},
-	})
-}
-
-func TestAccPopulationDefault_Full(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_population_default.%s", resourceName)
-
-	name := resourceName
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
-		},
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.PopulationDefault_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccPopulationDefaultConfig_Full(resourceName, name),
+				Config: testAccPopulationDefaultConfig_Full(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -130,7 +103,7 @@ func TestAccPopulationDefault_Full(t *testing.T) {
 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
 						}
 
-						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+						return rs.Primary.Attributes["environment_id"], nil
 					}
 				}(),
 				ImportState:       true,
@@ -146,11 +119,16 @@ func TestAccPopulationDefault_Minimal(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_population_default.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
 	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -158,7 +136,7 @@ func TestAccPopulationDefault_Minimal(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPopulationDefaultConfig_Minimal(resourceName, name),
+				Config: testAccPopulationDefaultConfig_Minimal(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -177,11 +155,16 @@ func TestAccPopulationDefault_BadParameters(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_population_default.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
 	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -190,7 +173,7 @@ func TestAccPopulationDefault_BadParameters(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: testAccPopulationDefaultConfig_Minimal(resourceName, name),
+				Config: testAccPopulationDefaultConfig_Minimal(environmentName, licenseID, resourceName, name),
 			},
 			// Errors
 			{
@@ -201,7 +184,7 @@ func TestAccPopulationDefault_BadParameters(t *testing.T) {
 			},
 			{
 				ResourceName:  resourceFullName,
-				ImportStateId: "badformat/badformat",
+				ImportStateId: "badformat",
 				ImportState:   true,
 				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
@@ -209,7 +192,24 @@ func TestAccPopulationDefault_BadParameters(t *testing.T) {
 	})
 }
 
-func testAccPopulationDefaultConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
+func testAccPopulationDefaultConfig_Full(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_password_policy" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+}
+
+resource "pingone_population_default" "%[3]s" {
+  environment_id     = pingone_environment.%[2]s.id
+  name               = "%[4]s"
+  description        = "Test description"
+  password_policy_id = pingone_password_policy.%[3]s.id
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}
+
+func testAccPopulationDefaultConfig_Minimal(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -217,31 +217,4 @@ resource "pingone_population_default" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
-}
-
-func testAccPopulationDefaultConfig_Full(resourceName, name string) string {
-	return fmt.Sprintf(`
-		%[1]s
-
-resource "pingone_password_policy" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
-}
-
-resource "pingone_population_default" "%[2]s" {
-  environment_id     = data.pingone_environment.general_test.id
-  name               = "%[3]s"
-  description        = "Test description"
-  password_policy_id = pingone_password_policy.%[2]s.id
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
-}
-
-func testAccPopulationDefaultConfig_Minimal(resourceName, name string) string {
-	return fmt.Sprintf(`
-		%[1]s
-
-resource "pingone_population_default" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

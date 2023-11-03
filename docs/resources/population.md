@@ -9,6 +9,8 @@ description: |-
 
 Resource to create and manage PingOne populations.
 
+~> This resource cannot manage the default population of an environment.  The `pingone_population_default` resource can be used instead.
+
 ## Example Usage
 
 ```terraform

@@ -9,6 +9,10 @@ description: |-
 
 {{ .Description | trimspace }}
 
+~> There may be a short delay in provisioning this resource when creating the parent PingOne environment at the same time (referenced by the `environment_id` parameter).  The creation timeout can be increased or decreased using the `timeout` parameter.
+
+~> When destroying the resource, the default population will be reset to it's original configuration, and then removed from Terraform's state.  The population itself (and any user data contained in the population) will not be removed from the PingOne service.
+
 {{ if .HasExample -}}
 ## Example Usage
 

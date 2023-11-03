@@ -4,7 +4,11 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -12,6 +16,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -22,17 +28,19 @@ import (
 type PopulationDefaultResource serviceClientType
 
 type PopulationDefaultResourceModel struct {
-	Id               types.String `tfsdk:"id"`
-	EnvironmentId    types.String `tfsdk:"environment_id"`
-	Name             types.String `tfsdk:"name"`
-	Description      types.String `tfsdk:"description"`
-	PasswordPolicyId types.String `tfsdk:"password_policy_id"`
+	Id               types.String   `tfsdk:"id"`
+	EnvironmentId    types.String   `tfsdk:"environment_id"`
+	Name             types.String   `tfsdk:"name"`
+	Description      types.String   `tfsdk:"description"`
+	PasswordPolicyId types.String   `tfsdk:"password_policy_id"`
+	Timeouts         timeouts.Value `tfsdk:"timeouts"`
 }
 
 // Framework interfaces
 var (
 	_ resource.Resource                = &PopulationDefaultResource{}
 	_ resource.ResourceWithConfigure   = &PopulationDefaultResource{}
+	_ resource.ResourceWithModifyPlan  = &PopulationDefaultResource{}
 	_ resource.ResourceWithImportState = &PopulationDefaultResource{}
 )
 
@@ -53,7 +61,7 @@ func (r *PopulationDefaultResource) Schema(ctx context.Context, req resource.Sch
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage the default PingOne population.",
+		Description: "Resource to overwrite the default PingOne population, or create it if it doesn't already exist.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -63,7 +71,7 @@ func (r *PopulationDefaultResource) Schema(ctx context.Context, req resource.Sch
 			),
 
 			"name": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("The name of the default population.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The name to apply to the default population.").Description,
 				Required:    true,
 
 				Validators: []validator.String{
@@ -84,7 +92,22 @@ func (r *PopulationDefaultResource) Schema(ctx context.Context, req resource.Sch
 					verify.P1ResourceIDValidator(),
 				},
 			},
+
+			"timeouts": timeouts.Attributes(ctx, timeouts.Opts{
+				Create:            true,
+				CreateDescription: "A timeout to apply to creation of the resource.  A timeout can be set in cases where there are delays in the platform seeding a default population in newly created environments.  The default value is 20 minutes.",
+			}),
 		},
+	}
+}
+
+func (p *PopulationDefaultResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	// Destruction plan
+	if req.Plan.Raw.IsNull() {
+		resp.Diagnostics.AddWarning(
+			"State change warning",
+			"A destroy plan has been detected for the \"pingone_population_default\" resource.  The default population will be reset to it's original configuration, and then removed from Terraform's state.  The population itself (and any user data contained in the population) will not be removed from the PingOne service.",
+		)
 	}
 }
 
@@ -124,6 +147,16 @@ func (r *PopulationDefaultResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
+	defaultTimeout := 20 * time.Minute
+	timeout, d := plan.Timeouts.Create(ctx, defaultTimeout)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -134,9 +167,40 @@ func (r *PopulationDefaultResource) Create(ctx context.Context, req resource.Cre
 	population := plan.expand()
 
 	// Run the API call
-	response, d := PingOnePopulationDefaultCreate(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), *population)
-
+	readResponse, d := FetchDefaultPopulationWithTimeout(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), false, timeout)
 	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var response *management.Population
+	if readResponse == nil {
+		resp.Diagnostics.Append(framework.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.CreatePopulation(ctx, plan.EnvironmentId.ValueString()).Population(*population).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			},
+			"CreatePopulation-Default",
+			framework.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+			&response,
+		)...)
+	} else {
+		resp.Diagnostics.Append(framework.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.UpdatePopulation(ctx, plan.EnvironmentId.ValueString(), readResponse.GetId()).Population(*population).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			},
+			"UpdatePopulation-Default",
+			framework.DefaultCustomError,
+			nil,
+			&response,
+		)...)
+	}
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -166,19 +230,8 @@ func (r *PopulationDefaultResource) Read(ctx context.Context, req resource.ReadR
 	}
 
 	// Run the API call
-	var response *management.Population
-	resp.Diagnostics.Append(framework.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.ReadOnePopulation(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
-		},
-		"ReadOnePopulation-Default",
-		framework.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultCreateReadRetryable,
-		&response,
-	)...)
+	response, d := FetchDefaultPopulation(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), true)
+	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -214,12 +267,18 @@ func (r *PopulationDefaultResource) Update(ctx context.Context, req resource.Upd
 	population := plan.expand()
 
 	// Run the API call
+	readResponse, d := FetchDefaultPopulation(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), false)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	var response *management.Population
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.UpdatePopulation(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Population(*population).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.UpdatePopulation(ctx, plan.EnvironmentId.ValueString(), readResponse.GetId()).Population(*population).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdatePopulation-Default",
@@ -240,7 +299,7 @@ func (r *PopulationDefaultResource) Update(ctx context.Context, req resource.Upd
 }
 
 func (r *PopulationDefaultResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *PopulationDefaultResourceModel
+	var data PopulationDefaultResourceModel
 
 	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -249,28 +308,48 @@ func (r *PopulationDefaultResource) Delete(ctx context.Context, req resource.Del
 		return
 	}
 
-	// Read Terraform prior state data into the model
+	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	// Build the model for the API
+	population := management.NewPopulation("Default")
+	population.SetDescription("Automatically created population.")
+	population.SetDefault(true)
+
 	// Run the API call
-	resp.Diagnostics.Append(framework.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.DeletePopulation(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
-		},
-		"DeletePopulation-Default",
-		framework.CustomErrorResourceNotFoundWarning,
-		nil,
-		nil,
-	)...)
-
+	readResponse, d := FetchDefaultPopulation(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), true)
+	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	var response *management.Population
+	if readResponse != nil {
+		resp.Diagnostics.Append(framework.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.UpdatePopulation(ctx, data.EnvironmentId.ValueString(), readResponse.GetId()).Population(*population).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			},
+			"DeletePopulation-Default",
+			framework.CustomErrorResourceNotFoundWarning,
+			nil,
+			&response,
+		)...)
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if response != nil {
+		resp.Diagnostics.AddWarning(
+			"State change warning",
+			"The \"pingone_population_default\" resource has been destroyed.  The default population has been reset to it's original configuration, and removed from Terraform's state.  The population itself (and any user data contained in the population) has not been removed from the PingOne service.",
+		)
 	}
 }
 
@@ -280,11 +359,6 @@ func (r *PopulationDefaultResource) ImportState(ctx context.Context, req resourc
 		{
 			Label:  "environment_id",
 			Regexp: verify.P1ResourceIDRegexp,
-		},
-		{
-			Label:     "population_id",
-			Regexp:    verify.P1ResourceIDRegexp,
-			PrimaryID: true,
 		},
 	}
 
@@ -311,6 +385,8 @@ func (r *PopulationDefaultResource) ImportState(ctx context.Context, req resourc
 func (p *PopulationDefaultResourceModel) expand() *management.Population {
 
 	data := management.NewPopulation(p.Name.ValueString())
+
+	data.SetDefault(true)
 
 	if !p.Description.IsNull() && !p.Description.IsUnknown() {
 		data.SetDescription(p.Description.ValueString())
@@ -351,26 +427,92 @@ func (p *PopulationDefaultResourceModel) toState(apiObject *management.Populatio
 	return diags
 }
 
-func PingOnePopulationDefaultCreate(ctx context.Context, apiClient *management.APIClient, environmentID string, population management.Population) (*management.Population, diag.Diagnostics) {
+func FetchDefaultPopulation(ctx context.Context, apiClient *management.APIClient, environmentID string, warnOnNotFound bool) (*management.Population, diag.Diagnostics) {
+	defaultTimeout := 30 * time.Second
+	return FetchDefaultPopulationWithTimeout(ctx, apiClient, environmentID, warnOnNotFound, defaultTimeout)
+}
+
+func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *management.APIClient, environmentID string, warnOnNotFound bool, timeout time.Duration) (*management.Population, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var returnVar *management.Population
-	diags.Append(framework.ParseResponse(
-		ctx,
+	errorFunction := framework.DefaultCustomError
+	if warnOnNotFound {
+		errorFunction = framework.CustomErrorResourceNotFoundWarning
+	}
 
-		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.PopulationsApi.CreatePopulation(ctx, environmentID).Population(population).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
+	stateConf := &retry.StateChangeConf{
+		Pending: []string{
+			"false",
 		},
-		"CreatePopulation-Default",
-		framework.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
-		&returnVar,
-	)...)
+		Target: []string{
+			"true",
+			"err",
+		},
+		Refresh: func() (interface{}, string, error) {
 
-	if diags.HasError() {
+			// Run the API call
+			var entityArray *management.EntityArray
+			diags.Append(framework.ParseResponse(
+				ctx,
+
+				func() (any, *http.Response, error) {
+					fO, fR, fErr := apiClient.PopulationsApi.ReadAllPopulations(ctx, environmentID).Execute()
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
+				},
+				"ReadAllPopulations-FetchDefaultPopulation",
+				errorFunction,
+				sdk.DefaultCreateReadRetryable,
+				&entityArray,
+			)...)
+			if diags.HasError() {
+				return nil, "err", fmt.Errorf("Error reading populations")
+			}
+
+			if entityArray == nil {
+				return nil, "err", fmt.Errorf("Environment not found")
+			}
+
+			found := false
+
+			var population management.Population
+
+			if populations, ok := entityArray.Embedded.GetPopulationsOk(); ok {
+
+				for _, populationItem := range populations {
+
+					if populationItem.GetDefault() {
+						population = populationItem
+						found = true
+						break
+					}
+				}
+			}
+
+			tflog.Debug(ctx, "Find default population attempt", map[string]interface{}{
+				"population": population,
+				"result":     strings.ToLower(strconv.FormatBool(found)),
+			})
+
+			return population, strings.ToLower(strconv.FormatBool(found)), nil
+		},
+		Timeout:                   timeout,
+		Delay:                     1 * time.Second,
+		MinTimeout:                1 * time.Second,
+		ContinuousTargetOccurence: 2,
+	}
+	population, err := stateConf.WaitForStateContext(ctx)
+
+	if err != nil {
+		diags.AddWarning(
+			"Cannot find default population",
+			fmt.Sprintf("The default population for environment %s cannot be found: %s", environmentID, err),
+		)
+
 		return nil, diags
 	}
 
-	return returnVar, diags
+	returnVar := population.(management.Population)
+
+	return &returnVar, diags
+
 }
