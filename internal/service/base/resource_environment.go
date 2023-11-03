@@ -466,13 +466,13 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 		resp.Diagnostics.AddAttributeWarning(
 			path.Root("default_population"),
 			"State change warning",
-			"The default population in the \"default_population\" block will be removed from state, but will not be removed from the platform to preserve user data.  Please use the `pingone_population_default` resource to manage the default population going forward.",
+			"The default population in the \"default_population\" block will be removed from the state of the \"pingone_environment\" resource, but will not be removed from the platform to preserve user data.  Please use the \"pingone_population_default\" resource to manage the default population going forward.",
 		)
 
 		resp.Diagnostics.AddAttributeWarning(
 			path.Root("default_population_id"),
 			"State change warning",
-			"The default population in the \"default_population_id\" attribute will be removed from state, the \"default_population_id\" will no longer carry the default population's ID value.  Please use the `pingone_population_default` resource to manage the default population going forward.",
+			"The default population ID in the \"default_population_id\" attribute of the \"pingone_environment\" resource will be removed from state, the attribute will no longer carry the default population's ID value.  Please use the \"pingone_population_default\" resource to manage the default population going forward.",
 		)
 	}
 
@@ -669,56 +669,32 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 
 	///////////////////
 	// Deprecated start
-	//if population != nil {
-	// Seed a default population.  The platform does this implicitly but we see latencies.  This ensures we have a quick environment provision.
-	defaultPopulationObj := *management.NewPopulation("Default")
-	defaultPopulationObj.SetDescription("Automatically created population.")
-	defaultPopulationObj.SetDefault(true)
-
-	defaultPopulationResponse, _ := sso.PingOnePopulationCreate(ctx, r.Client.ManagementAPIClient, environmentResponse.GetId(), defaultPopulationObj)
-	if defaultPopulationResponse == nil {
-		resp.Diagnostics.AddWarning(
-			"Cannot seed the default population",
-			"The default population cannot be seeded explicitly by the provider.  Relying on the implicit environment bootstrapping service for creation.",
-		)
-	}
-
-	///////////////////
-	// Deprecated start
-	// Population
-
-	var defaultPopulation *management.Population
-
-	// Save some processing if we already seeded our population
-	if defaultPopulationResponse != nil {
-		defaultPopulation = defaultPopulationResponse
-	} else {
-		defaultPopulation, d = sso.FetchDefaultPopulationWithTimeout(ctx, r.Client.ManagementAPIClient, environmentResponse.GetId(), createTimeout)
-		resp.Diagnostics.Append(d...)
-	}
-
 	var populationResponse *management.Population = nil
-
 	if population != nil {
+		defaultPopulation, d := sso.FetchDefaultPopulationWithTimeout(ctx, r.Client.ManagementAPIClient, environmentResponse.GetId(), false, createTimeout)
+		resp.Diagnostics.Append(d...)
 
-		if defaultPopulation == nil {
-			resp.Diagnostics.AddError(
-				"Default population not found.",
-				"A default population was expected to be found in the environment after creation, but none was found.  Please report this issue to the provider maintainers.")
+		if population != nil {
+
+			if defaultPopulation == nil {
+				resp.Diagnostics.AddError(
+					"Default population not found.",
+					"A default population was expected to be found in the environment after creation, but none was found.  Please report this issue to the provider maintainers.")
+			}
+
+			resp.Diagnostics.Append(framework.ParseResponse(
+				ctx,
+
+				func() (any, *http.Response, error) {
+					fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.UpdatePopulation(ctx, environmentResponse.GetId(), defaultPopulation.GetId()).Population(*population).Execute()
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentResponse.GetId(), fO, fR, fErr)
+				},
+				"UpdatePopulation",
+				framework.DefaultCustomError,
+				sdk.DefaultCreateReadRetryable,
+				&populationResponse,
+			)...)
 		}
-
-		resp.Diagnostics.Append(framework.ParseResponse(
-			ctx,
-
-			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.UpdatePopulation(ctx, environmentResponse.GetId(), defaultPopulation.GetId()).Population(*population).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentResponse.GetId(), fO, fR, fErr)
-			},
-			"UpdatePopulation",
-			framework.DefaultCustomError,
-			sdk.DefaultCreateReadRetryable,
-			&populationResponse,
-		)...)
 	}
 	// Deprecated end
 	///////////////////
@@ -944,7 +920,7 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 	if plan.DefaultPopulation.IsNull() && !state.DefaultPopulation.IsNull() && population == nil {
 		resp.Diagnostics.AddWarning(
 			"Default population removed from state",
-			"The default population has been removed from state, but has not been removed from the platform to preserve user data.  Please use the `pingone_population_default` resource to manage the default population going forward.",
+			"The default population has been removed from the state of the \"pingone_environment\" resource, but has not been removed from the platform to preserve user data.  Please use the \"pingone_population_default\" resource to manage the default population going forward.",
 		)
 	}
 
@@ -952,7 +928,7 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 
 		var populationId string
 		if state.DefaultPopulationId.IsNull() {
-			defaultPopulation, d := sso.FetchDefaultPopulation(ctx, r.Client.ManagementAPIClient, plan.Id.ValueString())
+			defaultPopulation, d := sso.FetchDefaultPopulation(ctx, r.Client.ManagementAPIClient, plan.Id.ValueString(), false)
 			resp.Diagnostics.Append(d...)
 
 			if defaultPopulation == nil {

@@ -20,6 +20,7 @@ func Resources() []func() resource.Resource {
 		NewGroupRoleAssignmentResource,
 		NewIdentityProviderAttributeResource,
 		NewPopulationResource,
+		NewPopulationDefaultResource,
 		NewResourceAttributeResource,
 		NewResourceScopeResource,
 		NewResourceScopeOpenIDResource,
