@@ -29,6 +29,7 @@ type PopulationDataSourceModel struct {
 	Name             types.String `tfsdk:"name"`
 	PasswordPolicyId types.String `tfsdk:"password_policy_id"`
 	PopulationId     types.String `tfsdk:"population_id"`
+	Default          types.Bool   `tfsdk:"default"`
 }
 
 // Framework interfaces
@@ -87,6 +88,11 @@ func (r *PopulationDataSource) Schema(ctx context.Context, req datasource.Schema
 
 			"password_policy_id": schema.StringAttribute{
 				Description: "The ID of the password policy applied to the population.",
+				Computed:    true,
+			},
+
+			"default": schema.BoolAttribute{
+				Description: "Indicates whether the population is the default population for the environment.",
 				Computed:    true,
 			},
 		},
@@ -219,6 +225,8 @@ func (p *PopulationDataSourceModel) toState(apiObject *management.Population) di
 	} else {
 		p.PasswordPolicyId = types.StringNull()
 	}
+
+	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())
 
 	return diags
 }
