@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -45,16 +44,15 @@ type EnvironmentResource struct {
 }
 
 type environmentResourceModel struct {
-	Id             types.String   `tfsdk:"id"`
-	Name           types.String   `tfsdk:"name"`
-	Description    types.String   `tfsdk:"description"`
-	Type           types.String   `tfsdk:"type"`
-	Region         types.String   `tfsdk:"region"`
-	LicenseId      types.String   `tfsdk:"license_id"`
-	OrganizationId types.String   `tfsdk:"organization_id"`
-	Solution       types.String   `tfsdk:"solution"`
-	Services       types.Set      `tfsdk:"service"`
-	Timeouts       timeouts.Value `tfsdk:"timeouts"`
+	Id             types.String `tfsdk:"id"`
+	Name           types.String `tfsdk:"name"`
+	Description    types.String `tfsdk:"description"`
+	Type           types.String `tfsdk:"type"`
+	Region         types.String `tfsdk:"region"`
+	LicenseId      types.String `tfsdk:"license_id"`
+	OrganizationId types.String `tfsdk:"organization_id"`
+	Solution       types.String `tfsdk:"solution"`
+	Services       types.Set    `tfsdk:"service"`
 }
 
 type environmentServiceModel struct {
@@ -345,10 +343,6 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 					setvalidator.SizeAtLeast(minimumServices),
 				},
 			},
-
-			"timeouts": timeouts.Block(ctx, timeouts.Opts{
-				Create: true,
-			}),
 		},
 	}
 }
@@ -497,16 +491,6 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	defaultTimeout := 20 * time.Minute
-	createTimeout, d := plan.Timeouts.Create(ctx, defaultTimeout)
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, createTimeout)
-	defer cancel()
 
 	// Build the model for the API
 	environment, d := plan.expand(ctx)
