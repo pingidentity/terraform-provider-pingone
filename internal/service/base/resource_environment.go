@@ -428,7 +428,8 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 
 			"timeouts": timeouts.Block(ctx, timeouts.Opts{
-				Create: true,
+				Create:            true,
+				CreateDescription: "A timeout to apply to creation of the resource.  Where the `default_population` block is configured, there may be a short delay in provisioning this resource, as the platform will create a default population automatically.  This resource will attempt to find and update the existing default population, and will wait if the default population cannot be found (for example, if it is in the process of being created automatically by the platform).  This timeout value can be used to override the wait time, and force the creation of a default population.  The value is expected to be a string that can be parsed as a duration consisting of numbers and unit suffixes, such as `30s` or `2h45m`. Valid time units are `s` (seconds), `m` (minutes), `h` (hours).  The default value is `20m` (20 minutes).",
 			}),
 		},
 	}
@@ -622,6 +623,12 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	defaultTimeout := 20 * time.Minute
 	createTimeout, d := plan.Timeouts.Create(ctx, defaultTimeout)
 	resp.Diagnostics.Append(d...)
@@ -629,14 +636,10 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, createTimeout)
-	defer cancel()
+	contextTimeout := createTimeout + 5*time.Minute
 
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	ctx, cancel := context.WithTimeout(ctx, contextTimeout)
+	defer cancel()
 
 	// Build the model for the API
 	environment, population, d := plan.expand(ctx)
@@ -671,30 +674,42 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 	// Deprecated start
 	var populationResponse *management.Population = nil
 	if population != nil {
-		defaultPopulation, d := sso.FetchDefaultPopulationWithTimeout(ctx, r.Client.ManagementAPIClient, environmentResponse.GetId(), false, createTimeout)
+		populationReadResponse, d := sso.FetchDefaultPopulationWithTimeout(ctx, r.Client.ManagementAPIClient, environmentResponse.GetId(), false, createTimeout)
 		resp.Diagnostics.Append(d...)
 
-		if population != nil {
-
-			if defaultPopulation == nil {
-				resp.Diagnostics.AddError(
-					"Default population not found.",
-					"A default population was expected to be found in the environment after creation, but none was found.  Please report this issue to the provider maintainers.")
-			}
+		if populationReadResponse == nil {
+			resp.Diagnostics.AddWarning(
+				"Default population creation timeout exceeded",
+				"The `pingone_environment` resource has exceeded the create timeout waiting for the platform to create the default population, the default population has instead been created by the provider.  It is recommended to check the PingOne console to ensure the default population has been created as expected.",
+			)
 
 			resp.Diagnostics.Append(framework.ParseResponse(
 				ctx,
 
 				func() (any, *http.Response, error) {
-					fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.UpdatePopulation(ctx, environmentResponse.GetId(), defaultPopulation.GetId()).Population(*population).Execute()
+					fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.CreatePopulation(ctx, environmentResponse.GetId()).Population(*population).Execute()
 					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentResponse.GetId(), fO, fR, fErr)
 				},
-				"UpdatePopulation",
+				"CreatePopulation-Default",
 				framework.DefaultCustomError,
 				sdk.DefaultCreateReadRetryable,
 				&populationResponse,
 			)...)
+		} else {
+			resp.Diagnostics.Append(framework.ParseResponse(
+				ctx,
+
+				func() (any, *http.Response, error) {
+					fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.UpdatePopulation(ctx, environmentResponse.GetId(), populationReadResponse.GetId()).Population(*population).Execute()
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentResponse.GetId(), fO, fR, fErr)
+				},
+				"UpdatePopulation-Default",
+				framework.DefaultCustomError,
+				nil,
+				&populationResponse,
+			)...)
 		}
+
 	}
 	// Deprecated end
 	///////////////////
