@@ -95,7 +95,7 @@ func (r *PopulationDefaultResource) Schema(ctx context.Context, req resource.Sch
 
 			"timeouts": timeouts.Attributes(ctx, timeouts.Opts{
 				Create:            true,
-				CreateDescription: "A timeout to apply to creation of the resource.  A timeout can be set in cases where there are delays in the platform seeding a default population in newly created environments.  The default value is 20 minutes.",
+				CreateDescription: "A timeout to apply to creation of the resource.  There may be a short delay in provisioning this resource when creating the parent PingOne environment at the same time (referenced by the `environment_id` parameter), as the platform will create a default population automatically.  This resource will attempt to find and update the existing default population, and will wait if the default population cannot be found (for example, if it is in the process of being created automatically by the platform).  This timeout value can be used to override the wait time, and force the creation of a default population.  The default value is 20 minutes.",
 			}),
 		},
 	}
@@ -147,27 +147,29 @@ func (r *PopulationDefaultResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	defaultTimeout := 20 * time.Minute
-	timeout, d := plan.Timeouts.Create(ctx, defaultTimeout)
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	defaultTimeout := 20 * time.Minute
+	createTimeout, d := plan.Timeouts.Create(ctx, defaultTimeout)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	contextTimeout := createTimeout + 5*time.Minute
+
+	ctx, cancel := context.WithTimeout(ctx, contextTimeout)
+	defer cancel()
+
 	// Build the model for the API
 	population := plan.expand()
 
 	// Run the API call
-	readResponse, d := FetchDefaultPopulationWithTimeout(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), false, timeout)
+	readResponse, d := FetchDefaultPopulationWithTimeout(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), false, createTimeout)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -175,6 +177,11 @@ func (r *PopulationDefaultResource) Create(ctx context.Context, req resource.Cre
 
 	var response *management.Population
 	if readResponse == nil {
+		resp.Diagnostics.AddWarning(
+			"Default population creation timeout exceeded",
+			"The `pingone_population_default` resource has exceeded the create timeout waiting for the platform to create the default population, the default population has instead been created by the provider.  It is recommended to check the PingOne console to ensure the default population has been created as expected.",
+		)
+
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
@@ -335,7 +342,7 @@ func (r *PopulationDefaultResource) Delete(ctx context.Context, req resource.Del
 				fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.UpdatePopulation(ctx, data.EnvironmentId.ValueString(), readResponse.GetId()).Population(*population).Execute()
 				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
-			"DeletePopulation-Default",
+			"UpdatePopulation-DeleteDefault",
 			framework.CustomErrorResourceNotFoundWarning,
 			nil,
 			&response,

@@ -293,27 +293,44 @@ func PreCheckTestClient(ctx context.Context, t *testing.T) *client.Client {
 
 func MinimalSandboxEnvironment(resourceName, licenseID string) string {
 	return fmt.Sprintf(`
-		resource "pingone_environment" "%[1]s" {
-			name = "%[1]s"
-			type = "SANDBOX"
-			license_id = "%[2]s"
+	%[1]s
+		
+	resource "pingone_population_default" "%[2]s" {
+		environment_id = pingone_environment.%[2]s.id
 
-			service {
-				type = "SSO"
-			}
-			service {
-				type = "MFA"
-			}
-			service {
-				type = "Risk"
-			}
-			service {
-				type = "Credentials"
-			}
-			service {
-				type = "Verify"
-			}
-		}`, resourceName, licenseID)
+		name = "%[2]s"
+
+		timeouts = {
+			create = "1m"
+		}
+	}
+`, MinimalSandboxEnvironmentNoPopulation(resourceName, licenseID), resourceName)
+}
+
+func MinimalSandboxEnvironmentNoPopulation(resourceName, licenseID string) string {
+	return fmt.Sprintf(`
+	resource "pingone_environment" "%[1]s" {
+		name = "%[1]s"
+		type = "SANDBOX"
+		license_id = "%[2]s"
+
+		service {
+			type = "SSO"
+		}
+		service {
+			type = "MFA"
+		}
+		service {
+			type = "Risk"
+		}
+		service {
+			type = "Credentials"
+		}
+		service {
+			type = "Verify"
+		}
+	}
+`, resourceName, licenseID)
 }
 
 func GenericSandboxEnvironment() string {

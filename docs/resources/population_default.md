@@ -51,7 +51,7 @@ resource "pingone_population_default" "my_default_population" {
 
 Optional:
 
-- `create` (String) A timeout to apply to creation of the resource.  A timeout can be set in cases where there are delays in the platform seeding a default population in newly created environments.  The default value is 20 minutes.
+- `create` (String) A timeout to apply to creation of the resource.  There may be a short delay in provisioning this resource when creating the parent PingOne environment at the same time (referenced by the `environment_id` parameter), as the platform will create a default population automatically.  This resource will attempt to find and update the existing default population, and will wait if the default population cannot be found (for example, if it is in the process of being created automatically by the platform).  This timeout value can be used to override the wait time, and force the creation of a default population.  The default value is 20 minutes.
 
 ## Import
 
