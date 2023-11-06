@@ -1,0 +1,7 @@
+```release-note:note
+`resource/pingone_user`: Removed the deprecated `status` parameter.  Use the `enabled` parameter going forward.
+```
+
+```release-note:note
+`data-source/pingone_user`: Removed the deprecated `status` attribute.  Use the `enabled` parameter going forward.
+```

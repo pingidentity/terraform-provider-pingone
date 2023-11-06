@@ -63,7 +63,6 @@ data "pingone_user" "example_by_id" {
 - `population_id` (String) A PingOne resource identifier of the population resource associated with the user.
 - `preferred_language` (String) A string that specifies the user's preferred written or spoken languages, as a valid language range that is the same as the HTTP `Accept-Language` header field (not including `Accept-Language:` prefix) and is specified in [Section 5.3.5 of RFC 7231](https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.5). For example: `en-US`, `en-gb;q=0.8`, `en;q=0.7`.
 - `primary_phone` (String) A string that specifies the user's primary phone number. This might also match the `mobile_phone` attribute.
-- `status` (String, Deprecated) **Deprecation notice**: This attribute is deprecated and will be removed in a future release. Please use the `enabled` attribute instead.  The enabled status of the user.  Options are `DISABLED`, `ENABLED`.
 - `timezone` (String) A string that specifies the user's time zone, conforming with the IANA Time Zone database format [RFC 6557](https://www.rfc-editor.org/rfc/rfc6557.html), also known as the "Olson" time zone database format [Olson-TZ](https://www.iana.org/time-zones). For example, `America/Los_Angeles`.
 - `title` (String) A string that specifies the user's title, such as `Vice President`.
 - `type` (String) A string that specifies the user's type.

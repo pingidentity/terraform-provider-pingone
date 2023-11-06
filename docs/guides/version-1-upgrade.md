@@ -214,6 +214,12 @@ This parameter was previously deprecated and has been removed.  Use the `fido2` 
 
 This parameter was previously deprecated and has been removed.  Device authentication parameters have moved to the `pingone_mfa_device_policy` resource.
 
+## Resource: pingone_user
+
+### `status` optional parameter removed
+
+This parameter was previously deprecated and has been removed.  Use the `enabled` parameter going forward.
+
 ## Data Source: pingone_organization
 
 ### `base_url_agreement_management` computed attribute removed
@@ -239,3 +245,9 @@ This parameter was previously deprecated and has been removed.  Consider using t
 ### `base_url_orchestrate` computed attribute removed
 
 This parameter was previously deprecated and has been removed.  Consider using the [PingOne Utilities module](https://registry.terraform.io/modules/pingidentity/utils/pingone/latest) going forward.
+
+## Data Source: pingone_user
+
+### `status` computed attribute removed
+
+This attribute was previously deprecated and has been removed.  Use the `enabled` attribute going forward.
