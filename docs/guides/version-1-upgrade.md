@@ -208,6 +208,12 @@ This parameter was previously deprecated and has been removed.  Use the `fido2` 
 
 This parameter was previously deprecated and has been removed.  Use the `fido2` parameter going forward.
 
+## Resource: pingone_mfa_settings
+
+### `authentication` optional parameter removed
+
+This parameter was previously deprecated and has been removed.  Device authentication parameters have moved to the `pingone_mfa_device_policy` resource.
+
 ## Resource: pingone_user
 
 ### `status` optional parameter removed
