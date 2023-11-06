@@ -15,6 +15,7 @@ func Resources() []func() resource.Resource {
 		NewApplicationAttributeMappingResource,
 		NewApplicationFlowPolicyAssignmentResource,
 		NewApplicationResourceGrantResource,
+		NewApplicationRoleAssignmentResource,
 		NewGroupResource,
 		NewGroupNestingResource,
 		NewGroupRoleAssignmentResource,

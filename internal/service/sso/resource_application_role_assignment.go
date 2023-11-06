@@ -5,294 +5,300 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
-	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func ResourceApplicationRoleAssignment() *schema.Resource {
-	return &schema.Resource{
+// Types
+type ApplicationRoleAssignmentResource serviceClientType
 
+type ApplicationRoleAssignmentResourceModel struct {
+	Id                  types.String `tfsdk:"id"`
+	EnvironmentId       types.String `tfsdk:"environment_id"`
+	ApplicationId       types.String `tfsdk:"application_id"`
+	RoleId              types.String `tfsdk:"role_id"`
+	ScopeEnvironmentId  types.String `tfsdk:"scope_environment_id"`
+	ScopeOrganizationId types.String `tfsdk:"scope_organization_id"`
+	ScopePopulationId   types.String `tfsdk:"scope_population_id"`
+	ReadOnly            types.Bool   `tfsdk:"read_only"`
+}
+
+// Framework interfaces
+var (
+	_ resource.Resource                = &ApplicationRoleAssignmentResource{}
+	_ resource.ResourceWithConfigure   = &ApplicationRoleAssignmentResource{}
+	_ resource.ResourceWithImportState = &ApplicationRoleAssignmentResource{}
+)
+
+// New Object
+func NewApplicationRoleAssignmentResource() resource.Resource {
+	return &ApplicationRoleAssignmentResource{}
+}
+
+// Metadata
+func (r *ApplicationRoleAssignmentResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_application_role_assignment"
+}
+
+// Schema.
+func (r *ApplicationRoleAssignmentResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+
+	const attrMinLength = 1
+
+	attributes := map[string]schema.Attribute{
+		"id": framework.Attr_ID(),
+
+		"environment_id": framework.Attr_LinkID(
+			framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment that contains the application to assign the admin role to."),
+		),
+
+		"application_id": framework.Attr_LinkID(
+			framework.SchemaAttributeDescriptionFromMarkdown("The ID of an application to assign an admin role to."),
+		),
+
+		"role_id": framework.Attr_LinkID(
+			framework.SchemaAttributeDescriptionFromMarkdown("The ID of an admin role to assign to the application."),
+		),
+
+		"read_only": schema.BoolAttribute{
+			Description: framework.SchemaAttributeDescriptionFromMarkdown("A flag to show whether the admin role assignment is read only or can be changed.").Description,
+			Computed:    true,
+		},
+	}
+
+	utils.MergeSchemaAttributeMaps(attributes, service.RoleAssignmentScopeSchema(), true)
+
+	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage PingOne admin role assignments to administrator defined applications.",
 
-		CreateContext: resourcePingOneApplicationRoleAssignmentCreate,
-		ReadContext:   resourcePingOneApplicationRoleAssignmentRead,
-		DeleteContext: resourcePingOneApplicationRoleAssignmentDelete,
-
-		Importer: &schema.ResourceImporter{
-			StateContext: resourcePingOneApplicationRoleAssignmentImport,
-		},
-
-		Schema: map[string]*schema.Schema{
-			"environment_id": {
-				Description:      "The ID of the environment.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ForceNew:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-			},
-			"application_id": {
-				Description:      "The ID of an application to assign an admin role to.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ForceNew:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-			},
-			"role_id": {
-				Description:      "The ID of an admin role to assign to the application.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ForceNew:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-			},
-			"scope_organization_id": {
-				Description:      "Limit the scope of the admin role assignment to the specified organisation ID.",
-				Type:             schema.TypeString,
-				Optional:         true,
-				ForceNew:         true,
-				ExactlyOneOf:     []string{"scope_organization_id", "scope_environment_id", "scope_population_id"},
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-			},
-			"scope_environment_id": {
-				Description:      "Limit the scope of the admin role assignment to the specified environment ID.",
-				Type:             schema.TypeString,
-				Optional:         true,
-				ForceNew:         true,
-				ExactlyOneOf:     []string{"scope_organization_id", "scope_environment_id", "scope_population_id"},
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-			},
-			"scope_population_id": {
-				Description:      "Limit the scope of the admin role assignment to the specified population ID.",
-				Type:             schema.TypeString,
-				Optional:         true,
-				ForceNew:         true,
-				ExactlyOneOf:     []string{"scope_organization_id", "scope_environment_id", "scope_population_id"},
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-			},
-			"read_only": {
-				Description: "A flag to show whether the admin role assignment is read only or can be changed.",
-				Type:        schema.TypeBool,
-				Computed:    true,
-			},
-		},
+		Attributes: attributes,
 	}
 }
 
-func resourcePingOneApplicationRoleAssignmentCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
-
-	var diags diag.Diagnostics
-
-	//d.Get("scope_id").(string)
-
-	scopeID := ""
-	scopeType := ""
-	if organisationID, ok := d.GetOk("scope_organization_id"); ok {
-		scopeID = organisationID.(string)
-		scopeType = "ORGANIZATION"
-
-	} else if environmentID, ok := d.GetOk("scope_environment_id"); ok {
-		scopeID = environmentID.(string)
-		scopeType = "ENVIRONMENT"
-
-	} else if populationID, ok := d.GetOk("scope_population_id"); ok {
-		scopeID = populationID.(string)
-		scopeType = "POPULATION"
-
-	} else {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "One of scope_organization_id, scope_environment_id or scope_population_id must be set",
-			Detail:   "One of scope_organization_id, scope_environment_id or scope_population_id must be set",
-		})
-
-		return diags
+func (r *ApplicationRoleAssignmentResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
 	}
 
-	applicationRoleAssignmentRole := *management.NewRoleAssignmentRole(d.Get("role_id").(string))
-	applicationRoleAssignmentScope := *management.NewRoleAssignmentScope(scopeID, management.EnumRoleAssignmentScopeType(scopeType))
-	applicationRoleAssignment := *management.NewRoleAssignment(applicationRoleAssignmentRole, applicationRoleAssignmentScope) // ApplicationRoleAssignment |  (optional)
+	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected the provider client, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
+		)
 
-	application, diags := fetchApplication(ctx, apiClient, d.Get("environment_id").(string), d.Get("application_id").(string), false)
-	if diags.HasError() {
-		return diags
+		return
+	}
+
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
+		)
+		return
+	}
+}
+
+func (r *ApplicationRoleAssignmentResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan, state ApplicationRoleAssignmentResourceModel
+
+	if r.Client.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the API
+	applicationRoleAssignment, d := plan.expand()
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Check the application can have roles assigned
+	application, d := fetchApplication(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), false)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	if application == nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "Invalid parameter value - Application not found",
-			Detail:   fmt.Sprintf("The application ID provided (%s) does not exist in the environment.", d.Get("application_id").(string)),
-		})
+		resp.Diagnostics.AddError(
+			"Invalid parameter value - Application not found",
+			fmt.Sprintf("The application ID provided (%s) does not exist in the environment.", plan.ApplicationId.ValueString()),
+		)
 
-		return diags
+		return
 	}
 
 	if !checkApplicationTypeForRoleAssignment(*application) {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "Invalid parameter value - Unmappable application type",
-			Detail:   fmt.Sprintf("The application ID provided (%s) relates to an application that is neither `OPENID_CONNECT` or `SAML` type.  Roles cannot be mapped to this application.", d.Get("application_id").(string)),
-		})
+		resp.Diagnostics.AddError(
+			"Invalid parameter value - Unmappable application type",
+			fmt.Sprintf("The application ID provided (%s) relates to an application that is neither `OPENID_CONNECT` or `SAML` type.  Roles cannot be mapped to this application.", plan.ApplicationId.ValueString()),
+		)
 
-		return diags
+		return
 	}
 
-	resp, diags := sdk.ParseResponse(
+	// Run the API call
+	var response *management.RoleAssignment
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.ApplicationRoleAssignmentsApi.CreateApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string)).RoleAssignment(applicationRoleAssignment).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationRoleAssignmentsApi.CreateApplicationRoleAssignment(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).RoleAssignment(*applicationRoleAssignment).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateApplicationRoleAssignment",
-		func(error model.P1Error) diag.Diagnostics {
-
-			// Invalid role/scope combination
-			if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
-				if target, ok := details[0].GetTargetOk(); ok && *target == "scope" {
-					diags = diag.FromErr(fmt.Errorf("Incompatible role and scope combination. Role: %s / Scope: %s", applicationRoleAssignmentRole.GetId(), applicationRoleAssignmentScope.GetType()))
-
-					return diags
-				}
-			}
-
-			return nil
-		},
-		sdk.RoleAssignmentRetryable,
-	)
-	if diags.HasError() {
-		return diags
+		service.CreateRoleAssignmentErrorFunc,
+		service.RoleAssignmentRetryable,
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	respObject := resp.(*management.RoleAssignment)
+	// Create the state to save
+	state = plan
 
-	d.SetId(respObject.GetId())
-
-	return resourcePingOneApplicationRoleAssignmentRead(ctx, d, meta)
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourcePingOneApplicationRoleAssignmentRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *ApplicationRoleAssignmentResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *ApplicationRoleAssignmentResourceModel
 
-	var diags diag.Diagnostics
+	if r.Client.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
 
-	application, diags := fetchApplication(ctx, apiClient, d.Get("environment_id").(string), d.Get("application_id").(string), true)
-	if diags.HasError() {
-		return diags
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Check the application can have roles assigned
+	application, d := fetchApplication(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), true)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	if application == nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Warning,
-			Summary:  "Invalid parameter value - Application not found",
-			Detail:   fmt.Sprintf("The application ID provided (%s) does not exist in the environment.", d.Get("application_id").(string)),
-		})
-
-		d.SetId("")
-
-		return diags
+		resp.State.RemoveResource(ctx)
+		return
 	}
 
 	if !checkApplicationTypeForRoleAssignment(*application) {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Warning,
-			Summary:  "Invalid parameter value - Unmappable application type",
-			Detail:   fmt.Sprintf("The application ID provided (%s) relates to an application that is neither `OPENID_CONNECT` or `SAML` type.  Roles cannot be mapped to this application.", d.Get("application_id").(string)),
-		})
+		resp.Diagnostics.AddError(
+			"Invalid parameter value - Unmappable application type",
+			fmt.Sprintf("The application ID provided (%s) relates to an application that is neither `OPENID_CONNECT` or `SAML` type.  Roles cannot be mapped to this application.", data.ApplicationId.ValueString()),
+		)
 
-		d.SetId("")
-
-		return diags
+		return
 	}
 
-	resp, diags := sdk.ParseResponse(
+	// Run the API call
+	var response *management.RoleAssignment
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.ApplicationRoleAssignmentsApi.ReadOneApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationRoleAssignmentsApi.ReadOneApplicationRoleAssignment(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneApplicationRoleAssignment",
-		sdk.CustomErrorResourceNotFoundWarning,
-		nil,
-	)
-	if diags.HasError() {
-		return diags
+		framework.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if resp == nil {
-		d.SetId("")
-		return nil
+	// Remove from state if resource is not found
+	if response == nil {
+		resp.State.RemoveResource(ctx)
+		return
 	}
 
-	respObject := resp.(*management.RoleAssignment)
-
-	d.Set("role_id", respObject.GetRole().Id)
-	d.Set("read_only", respObject.GetReadOnly())
-
-	if respObject.GetScope().Type == "ORGANIZATION" {
-		d.Set("scope_organization_id", respObject.GetScope().Id)
-		d.Set("scope_environment_id", nil)
-		d.Set("scope_population_id", nil)
-
-	} else if respObject.GetScope().Type == "ENVIRONMENT" {
-		d.Set("scope_organization_id", nil)
-		d.Set("scope_environment_id", respObject.GetScope().Id)
-		d.Set("scope_population_id", nil)
-
-	} else if respObject.GetScope().Type == "POPULATION" {
-		d.Set("scope_organization_id", nil)
-		d.Set("scope_environment_id", nil)
-		d.Set("scope_population_id", respObject.GetScope().Id)
-	}
-
-	return diags
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(data.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourcePingOneApplicationRoleAssignmentDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *ApplicationRoleAssignmentResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+}
 
-	var diags diag.Diagnostics
+func (r *ApplicationRoleAssignmentResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *ApplicationRoleAssignmentResourceModel
 
-	if d.Get("read_only").(bool) {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Role assignment %s cannot be deleted as it is read only", d.Id()),
-		})
-
-		return diags
+	if r.Client.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
 	}
 
-	_, diags = sdk.ParseResponse(
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if data.ReadOnly.Equal(types.BoolValue(true)) {
+		resp.Diagnostics.AddError(
+			"Cannot destroy read only role assignment",
+			fmt.Sprintf("Role assignment %s cannot be deleted as it is read only", data.Id.ValueString()),
+		)
+
+		return
+	}
+
+	// Run the API call
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := apiClient.ApplicationRoleAssignmentsApi.DeleteApplicationRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("application_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
+			fR, fErr := r.Client.ManagementAPIClient.ApplicationRoleAssignmentsApi.DeleteApplicationRoleAssignment(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteApplicationRoleAssignment",
-		sdk.DefaultCustomError,
+		framework.CustomErrorResourceNotFoundWarning,
 		nil,
-	)
-	if diags.HasError() {
-		return diags
-	}
+		nil,
+	)...)
 
-	return diags
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
-func resourcePingOneApplicationRoleAssignmentImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func (r *ApplicationRoleAssignmentResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 
 	idComponents := []framework.ImportComponent{
 		{
@@ -304,34 +310,80 @@ func resourcePingOneApplicationRoleAssignmentImport(ctx context.Context, d *sche
 			Regexp: verify.P1ResourceIDRegexp,
 		},
 		{
-			Label:  "role_assignment_id",
-			Regexp: verify.P1ResourceIDRegexp,
+			Label:     "role_assignment_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
 		},
 	}
 
-	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
 	if err != nil {
-		return nil, err
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			err.Error(),
+		)
+		return
 	}
 
-	d.Set("environment_id", attributes["environment_id"])
-	d.Set("application_id", attributes["application_id"])
-	d.SetId(attributes["role_assignment_id"])
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
 
-	resourcePingOneApplicationRoleAssignmentRead(ctx, d, meta)
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
 
-	return []*schema.ResourceData{d}, nil
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
+}
+
+func (p *ApplicationRoleAssignmentResourceModel) expand() (*management.RoleAssignment, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	scopeID, scopeType, d := service.ExpandRoleAssignmentScope(p.ScopeEnvironmentId, p.ScopeOrganizationId, p.ScopePopulationId)
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	applicationRoleAssignmentRole := *management.NewRoleAssignmentRole(p.RoleId.ValueString())
+	applicationRoleAssignmentScope := *management.NewRoleAssignmentScope(scopeID, management.EnumRoleAssignmentScopeType(scopeType))
+	data := management.NewRoleAssignment(applicationRoleAssignmentRole, applicationRoleAssignmentScope)
+
+	return data, diags
+}
+
+func (p *ApplicationRoleAssignmentResourceModel) toState(apiObject *management.RoleAssignment) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if apiObject == nil {
+		diags.AddError(
+			"Data object missing",
+			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
+		)
+
+		return diags
+	}
+
+	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.StringOkToTF(apiObject.Environment.GetIdOk())
+	p.RoleId = framework.StringOkToTF(apiObject.Role.GetIdOk())
+	p.ReadOnly = framework.BoolOkToTF(apiObject.GetReadOnlyOk())
+
+	p.ScopeEnvironmentId, p.ScopeOrganizationId, p.ScopePopulationId = service.RoleAssignmentScopeOkToTF(apiObject.GetScopeOk())
+
+	return diags
 }
 
 func fetchApplication(ctx context.Context, apiClient *management.APIClient, environmentId, applicationId string, warnIfNotFound bool) (*management.ReadOneApplication200Response, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	errorFunction := sdk.DefaultCustomError
+	errorFunction := framework.DefaultCustomError
 	if warnIfNotFound {
-		errorFunction = sdk.CustomErrorResourceNotFoundWarning
+		errorFunction = framework.CustomErrorResourceNotFoundWarning
 	}
 
-	resp, d := sdk.ParseResponse(
+	var response *management.ReadOneApplication200Response
+	diags.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -341,19 +393,17 @@ func fetchApplication(ctx context.Context, apiClient *management.APIClient, envi
 		"ReadOneApplication",
 		errorFunction,
 		sdk.DefaultCreateReadRetryable,
-	)
-	diags = append(diags, d...)
+		&response,
+	)...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
-	if resp == nil {
+	if response == nil {
 		return nil, diags
 	}
 
-	respObject := resp.(*management.ReadOneApplication200Response)
-
-	return respObject, diags
+	return response, diags
 }
 
 func checkApplicationTypeForRoleAssignment(application management.ReadOneApplication200Response) bool {
