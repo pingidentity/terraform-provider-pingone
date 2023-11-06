@@ -123,7 +123,6 @@ func New(version string) func() *schema.Provider {
 				"pingone_language":                      base.ResourceLanguage(),
 				"pingone_language_update":               base.ResourceLanguageUpdate(),
 				"pingone_notification_template_content": base.ResourceNotificationTemplateContent(),
-				"pingone_role_assignment_user":          base.ResourceRoleAssignmentUser(),
 
 				"pingone_application":                           sso.ResourceApplication(),
 				"pingone_application_sign_on_policy_assignment": sso.ResourceApplicationSignOnPolicyAssignment(),
