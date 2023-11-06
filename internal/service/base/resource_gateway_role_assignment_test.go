@@ -114,8 +114,8 @@ func TestAccRoleAssignmentGateway_Population(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "gateway_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "role_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "scope_population_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_organization_id", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_environment_id", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "scope_organization_id"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "scope_environment_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
 				),
 			},
@@ -137,11 +137,11 @@ func TestAccRoleAssignmentGateway_Population(t *testing.T) {
 			},
 			{
 				Config:      testAccRoleAssignmentGatewayConfig_Population(environmentName, licenseID, resourceName, name, "Environment Admin"),
-				ExpectError: regexp.MustCompile(`Incompatible role and scope combination. Role: [a-z0-9\-]* \/ Scope: POPULATION`),
+				ExpectError: regexp.MustCompile(`Incompatible role and scope combination`),
 			},
 			{
 				Config:      testAccRoleAssignmentGatewayConfig_Population(environmentName, licenseID, resourceName, name, "Organization Admin"),
-				ExpectError: regexp.MustCompile(`Incompatible role and scope combination. Role: [a-z0-9\-]* \/ Scope: POPULATION`),
+				ExpectError: regexp.MustCompile(`Incompatible role and scope combination`),
 			},
 		},
 	})
@@ -176,8 +176,8 @@ func TestAccRoleAssignmentGateway_Environment(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "gateway_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "role_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_population_id", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_organization_id", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "scope_population_id"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "scope_organization_id"),
 					resource.TestMatchResourceAttr(resourceFullName, "scope_environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
 				),
@@ -189,8 +189,8 @@ func TestAccRoleAssignmentGateway_Environment(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "gateway_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "role_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_population_id", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_organization_id", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "scope_population_id"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "scope_organization_id"),
 					resource.TestMatchResourceAttr(resourceFullName, "scope_environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
 				),
@@ -213,7 +213,7 @@ func TestAccRoleAssignmentGateway_Environment(t *testing.T) {
 			},
 			{
 				Config:      testAccRoleAssignmentGatewayConfig_Environment(environmentName, licenseID, resourceName, name, "Organization Admin"),
-				ExpectError: regexp.MustCompile(`Incompatible role and scope combination. Role: [a-z0-9\-]* \/ Scope: ENVIRONMENT`),
+				ExpectError: regexp.MustCompile(`Incompatible role and scope combination`),
 			},
 		},
 	})
@@ -249,19 +249,19 @@ func TestAccRoleAssignmentGateway_BadParameters(t *testing.T) {
 			{
 				ResourceName: resourceFullName,
 				ImportState:  true,
-				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/gateway_id/role_assignment_id" and must match regex: .*`),
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "/",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/gateway_id/role_assignment_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "badformat/badformat/badformat",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/gateway_id/role_assignment_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})

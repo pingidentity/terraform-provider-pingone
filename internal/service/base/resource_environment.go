@@ -492,6 +492,12 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	defaultTimeout := 20 * time.Minute
 	createTimeout, d := plan.Timeouts.Create(ctx, defaultTimeout)
 	resp.Diagnostics.Append(d...)
@@ -501,12 +507,6 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 
 	ctx, cancel := context.WithTimeout(ctx, createTimeout)
 	defer cancel()
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
 
 	// Build the model for the API
 	environment, d := plan.expand(ctx)

@@ -4,9 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
-	"strings"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -15,8 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -34,6 +29,7 @@ type PopulationDataSourceModel struct {
 	Name             types.String `tfsdk:"name"`
 	PasswordPolicyId types.String `tfsdk:"password_policy_id"`
 	PopulationId     types.String `tfsdk:"population_id"`
+	Default          types.Bool   `tfsdk:"default"`
 }
 
 // Framework interfaces
@@ -92,6 +88,11 @@ func (r *PopulationDataSource) Schema(ctx context.Context, req datasource.Schema
 
 			"password_policy_id": schema.StringAttribute{
 				Description: "The ID of the password policy applied to the population.",
+				Computed:    true,
+			},
+
+			"default": schema.BoolAttribute{
+				Description: "Indicates whether the population is the default population for the environment.",
 				Computed:    true,
 			},
 		},
@@ -225,86 +226,7 @@ func (p *PopulationDataSourceModel) toState(apiObject *management.Population) di
 		p.PasswordPolicyId = types.StringNull()
 	}
 
+	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())
+
 	return diags
-}
-
-func FetchDefaultPopulation(ctx context.Context, apiClient *management.APIClient, environmentID string) (*management.Population, diag.Diagnostics) {
-	defaultTimeout := 30 * time.Second
-	return FetchDefaultPopulationWithTimeout(ctx, apiClient, environmentID, defaultTimeout)
-}
-
-func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *management.APIClient, environmentID string, timeout time.Duration) (*management.Population, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	stateConf := &retry.StateChangeConf{
-		Pending: []string{
-			"false",
-		},
-		Target: []string{
-			"true",
-			"err",
-		},
-		Refresh: func() (interface{}, string, error) {
-
-			// Run the API call
-			var entityArray *management.EntityArray
-			diags.Append(framework.ParseResponse(
-				ctx,
-
-				func() (any, *http.Response, error) {
-					fO, fR, fErr := apiClient.PopulationsApi.ReadAllPopulations(ctx, environmentID).Execute()
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
-				},
-				"ReadAllPopulations-FetchDefaultPopulation",
-				framework.DefaultCustomError,
-				sdk.DefaultCreateReadRetryable,
-				&entityArray,
-			)...)
-			if diags.HasError() {
-				return nil, "err", fmt.Errorf("Error reading populations")
-			}
-
-			found := false
-
-			var population management.Population
-
-			if populations, ok := entityArray.Embedded.GetPopulationsOk(); ok {
-
-				for _, populationItem := range populations {
-
-					if populationItem.GetDefault() {
-						population = populationItem
-						found = true
-						break
-					}
-				}
-			}
-
-			tflog.Debug(ctx, "Find default population attempt", map[string]interface{}{
-				"population": population,
-				"result":     strings.ToLower(strconv.FormatBool(found)),
-			})
-
-			return population, strings.ToLower(strconv.FormatBool(found)), nil
-		},
-		Timeout:                   timeout,
-		Delay:                     1 * time.Second,
-		MinTimeout:                5 * time.Second,
-		ContinuousTargetOccurence: 2,
-	}
-	population, err := stateConf.WaitForStateContext(ctx)
-
-	if err != nil {
-		diags.AddWarning(
-			"Cannot find default population",
-			fmt.Sprintf("The default population for environment %s cannot be found: %s", environmentID, err),
-		)
-
-		return nil, diags
-	}
-
-	returnVar := population.(management.Population)
-
-	return &returnVar, diags
-
 }
