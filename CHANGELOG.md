@@ -9,8 +9,11 @@ NOTES:
 * Updated documentation examples to remove reference to deprecated parameters/attributes. ([#603](https://github.com/pingidentity/terraform-provider-pingone/issues/603))
 * `data-source/pingone_role`: Migrated to plugin framework. ([#592](https://github.com/pingidentity/terraform-provider-pingone/issues/592))
 * `data-source/pingone_trusted_email_domain`: Corrected documentation descriptions. ([#593](https://github.com/pingidentity/terraform-provider-pingone/issues/593))
+* `resource/pingone_application_role_assignment`: Migrated to plugin framework. ([#634](https://github.com/pingidentity/terraform-provider-pingone/issues/634))
 * `resource/pingone_environment`: Deprecated the `default_population` block and `default_population_id` attribute in favour of the new `pingone_population_default` resource. ([#485](https://github.com/pingidentity/terraform-provider-pingone/issues/485))
 * `resource/pingone_environment`: Removed the ability to import the resource including a default population.  Default populations are now managed with the `pingone_population_default` resource. ([#485](https://github.com/pingidentity/terraform-provider-pingone/issues/485))
+* `resource/pingone_gateway_role_assignment`: Migrated to plugin framework. ([#636](https://github.com/pingidentity/terraform-provider-pingone/issues/636))
+* `resource/pingone_role_assignment_user`: Migrated to plugin framework. ([#637](https://github.com/pingidentity/terraform-provider-pingone/issues/637))
 * bump `github.com/google/uuid` v1.3.1 => v1.4.0 ([#623](https://github.com/pingidentity/terraform-provider-pingone/issues/623))
 * bump `github.com/hashicorp/terraform-plugin-framework` v1.4.1 => v1.4.2 ([#623](https://github.com/pingidentity/terraform-provider-pingone/issues/623))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.4.1 => v0.5.0 ([#623](https://github.com/pingidentity/terraform-provider-pingone/issues/623))
@@ -28,6 +31,7 @@ FEATURES:
 ENHANCEMENTS:
 
 * `data-source/pingone_environment`: Added `service.tags` computed attribute that signifies whether the selected PingOne environment was created without example/demo configuration in the DaVinci service. ([#620](https://github.com/pingidentity/terraform-provider-pingone/issues/620))
+* `data-source/pingone_population`: Add `default` computed attribute, to show whether the population is the default for the environment. ([#639](https://github.com/pingidentity/terraform-provider-pingone/issues/639))
 * `data-source/pingone_role`: Now supports read-only attributes `applicable_to` and `permissions`. ([#599](https://github.com/pingidentity/terraform-provider-pingone/issues/599))
 * `data-source/pingone_role`: Now supports the ability to look up role data by ID. ([#599](https://github.com/pingidentity/terraform-provider-pingone/issues/599))
 * `resource/pingone_environment`: Added `service.tags` parameter allows for a creation of an environment without example/demo configuration in the DaVinci service. ([#620](https://github.com/pingidentity/terraform-provider-pingone/issues/620))
