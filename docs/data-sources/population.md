@@ -39,6 +39,7 @@ data "pingone_population" "example_by_id" {
 
 ### Read-Only
 
+- `default` (Boolean) Indicates whether the population is the default population for the environment.
 - `description` (String) The description applied to the population.
 - `id` (String) The ID of this resource.
 - `password_policy_id` (String) The ID of the password policy applied to the population.
