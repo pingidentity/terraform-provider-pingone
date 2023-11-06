@@ -34,6 +34,7 @@ func Resources() []func() resource.Resource {
 		NewSystemApplicationResource,
 		NewTrustedEmailAddressResource,
 		NewTrustedEmailDomainResource,
+		NewUserRoleAssignmentResource,
 		NewWebhookResource,
 	}
 }

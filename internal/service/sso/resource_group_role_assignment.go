@@ -224,6 +224,15 @@ func (r *GroupRoleAssignmentResource) Delete(ctx context.Context, req resource.D
 		return
 	}
 
+	if data.ReadOnly.Equal(types.BoolValue(true)) {
+		resp.Diagnostics.AddError(
+			"Cannot destroy read only role assignment",
+			fmt.Sprintf("Role assignment %s cannot be deleted as it is read only", data.Id.ValueString()),
+		)
+
+		return
+	}
+
 	// Run the API call
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,

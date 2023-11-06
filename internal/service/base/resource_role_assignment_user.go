@@ -5,240 +5,254 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
-	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func ResourceRoleAssignmentUser() *schema.Resource {
-	return &schema.Resource{
+// Types
+type UserRoleAssignmentResource serviceClientType
 
+type UserRoleAssignmentResourceModel struct {
+	Id                  types.String `tfsdk:"id"`
+	EnvironmentId       types.String `tfsdk:"environment_id"`
+	UserId              types.String `tfsdk:"user_id"`
+	RoleId              types.String `tfsdk:"role_id"`
+	ScopeEnvironmentId  types.String `tfsdk:"scope_environment_id"`
+	ScopeOrganizationId types.String `tfsdk:"scope_organization_id"`
+	ScopePopulationId   types.String `tfsdk:"scope_population_id"`
+	ReadOnly            types.Bool   `tfsdk:"read_only"`
+}
+
+// Framework interfaces
+var (
+	_ resource.Resource                = &UserRoleAssignmentResource{}
+	_ resource.ResourceWithConfigure   = &UserRoleAssignmentResource{}
+	_ resource.ResourceWithImportState = &UserRoleAssignmentResource{}
+)
+
+// New Object
+func NewUserRoleAssignmentResource() resource.Resource {
+	return &UserRoleAssignmentResource{}
+}
+
+// Metadata
+func (r *UserRoleAssignmentResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_role_assignment_user"
+}
+
+// Schema.
+func (r *UserRoleAssignmentResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+
+	const attrMinLength = 1
+
+	attributes := map[string]schema.Attribute{
+		"id": framework.Attr_ID(),
+
+		"environment_id": framework.Attr_LinkID(
+			framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment that contains the user to assign the admin role to."),
+		),
+
+		"user_id": framework.Attr_LinkID(
+			framework.SchemaAttributeDescriptionFromMarkdown("The ID of an user to assign an admin role to."),
+		),
+
+		"role_id": framework.Attr_LinkID(
+			framework.SchemaAttributeDescriptionFromMarkdown("The ID of an admin role to assign to the user."),
+		),
+
+		"read_only": schema.BoolAttribute{
+			Description: framework.SchemaAttributeDescriptionFromMarkdown("A flag to show whether the admin role assignment is read only or can be changed.").Description,
+			Computed:    true,
+		},
+	}
+
+	utils.MergeSchemaAttributeMaps(attributes, service.RoleAssignmentScopeSchema(), true)
+
+	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage PingOne admin role assignments to users.",
+		Description: "Resource to create and manage PingOne admin role assignments to administrator defined users.",
 
-		CreateContext: resourcePingOneRoleAssignmentUserCreate,
-		ReadContext:   resourcePingOneRoleAssignmentUserRead,
-		DeleteContext: resourcePingOneRoleAssignmentUserDelete,
-
-		Importer: &schema.ResourceImporter{
-			StateContext: resourcePingOneRoleAssignmentUserImport,
-		},
-
-		Schema: map[string]*schema.Schema{
-			"environment_id": {
-				Description:      "The ID of the environment.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ForceNew:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-			},
-			"user_id": {
-				Description:      "The ID of a user to assign an admin role to.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ForceNew:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-			},
-			"role_id": {
-				Description:      "The ID of an admin role to assign to the user.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ForceNew:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-			},
-			"scope_organization_id": {
-				Description:      "Limit the scope of the admin role assignment to the specified organisation ID.",
-				Type:             schema.TypeString,
-				Optional:         true,
-				ForceNew:         true,
-				ConflictsWith:    []string{"scope_environment_id", "scope_population_id"},
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-			},
-			"scope_environment_id": {
-				Description:      "Limit the scope of the admin role assignment to the specified environment ID.",
-				Type:             schema.TypeString,
-				Optional:         true,
-				ForceNew:         true,
-				ConflictsWith:    []string{"scope_organization_id", "scope_population_id"},
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-			},
-			"scope_population_id": {
-				Description:      "Limit the scope of the admin role assignment to the specified population ID.",
-				Type:             schema.TypeString,
-				Optional:         true,
-				ForceNew:         true,
-				ConflictsWith:    []string{"scope_organization_id", "scope_environment_id"},
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-			},
-			"read_only": {
-				Description: "A flag to show whether the admin role assignment is read only or can be changed.",
-				Type:        schema.TypeBool,
-				Computed:    true,
-			},
-		},
+		Attributes: attributes,
 	}
 }
 
-func resourcePingOneRoleAssignmentUserCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
-
-	var diags diag.Diagnostics
-
-	//d.Get("scope_id").(string)
-
-	scopeID := ""
-	scopeType := ""
-	if organisationID, ok := d.GetOk("scope_organization_id"); ok {
-		scopeID = organisationID.(string)
-		scopeType = "ORGANIZATION"
-
-	} else if environmentID, ok := d.GetOk("scope_environment_id"); ok {
-		scopeID = environmentID.(string)
-		scopeType = "ENVIRONMENT"
-
-	} else if populationID, ok := d.GetOk("scope_population_id"); ok {
-		scopeID = populationID.(string)
-		scopeType = "POPULATION"
-
-	} else {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "One of scope_organization_id, scope_environment_id or scope_population_id must be set",
-			Detail:   "One of scope_organization_id, scope_environment_id or scope_population_id must be set",
-		})
-
-		return diags
+func (r *UserRoleAssignmentResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
 	}
 
-	userRoleAssignmentRole := *management.NewRoleAssignmentRole(d.Get("role_id").(string))
-	userRoleAssignmentScope := *management.NewRoleAssignmentScope(scopeID, management.EnumRoleAssignmentScopeType(scopeType))
-	userRoleAssignment := *management.NewRoleAssignment(userRoleAssignmentRole, userRoleAssignmentScope) // UserRoleAssignment |  (optional)
+	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected the provider client, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
+		)
 
-	resp, diags := sdk.ParseResponse(
+		return
+	}
+
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
+		)
+		return
+	}
+}
+
+func (r *UserRoleAssignmentResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan, state UserRoleAssignmentResourceModel
+
+	if r.Client.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the API
+	userRoleAssignment, d := plan.expand()
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	var response *management.RoleAssignment
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.UserRoleAssignmentsApi.CreateUserRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("user_id").(string)).RoleAssignment(userRoleAssignment).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.UserRoleAssignmentsApi.CreateUserRoleAssignment(ctx, plan.EnvironmentId.ValueString(), plan.UserId.ValueString()).RoleAssignment(*userRoleAssignment).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateUserRoleAssignment",
-		func(error model.P1Error) diag.Diagnostics {
-
-			// Invalid role/scope combination
-			if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
-				if target, ok := details[0].GetTargetOk(); ok && *target == "scope" {
-					diags = diag.FromErr(fmt.Errorf("Incompatible role and scope combination. Role: %s / Scope: %s", userRoleAssignmentRole.GetId(), userRoleAssignmentScope.GetType()))
-
-					return diags
-				}
-			}
-
-			return nil
-		},
-		sdk.RoleAssignmentRetryable,
-	)
-	if diags.HasError() {
-		return diags
+		service.CreateRoleAssignmentErrorFunc,
+		service.RoleAssignmentRetryable,
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	respObject := resp.(*management.RoleAssignment)
+	// Create the state to save
+	state = plan
 
-	d.SetId(respObject.GetId())
-
-	return resourcePingOneRoleAssignmentUserRead(ctx, d, meta)
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourcePingOneRoleAssignmentUserRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *UserRoleAssignmentResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *UserRoleAssignmentResourceModel
 
-	var diags diag.Diagnostics
+	if r.Client.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
 
-	resp, diags := sdk.ParseResponse(
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	var response *management.RoleAssignment
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.UserRoleAssignmentsApi.ReadOneUserRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("user_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.UserRoleAssignmentsApi.ReadOneUserRoleAssignment(ctx, data.EnvironmentId.ValueString(), data.UserId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneUserRoleAssignment",
-		sdk.CustomErrorResourceNotFoundWarning,
-		nil,
-	)
-	if diags.HasError() {
-		return diags
+		framework.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if resp == nil {
-		d.SetId("")
-		return nil
+	// Remove from state if resource is not found
+	if response == nil {
+		resp.State.RemoveResource(ctx)
+		return
 	}
 
-	respObject := resp.(*management.RoleAssignment)
-
-	d.Set("role_id", respObject.GetRole().Id)
-	d.Set("read_only", respObject.GetReadOnly())
-
-	if respObject.GetScope().Type == "ORGANIZATION" {
-		d.Set("scope_organization_id", respObject.GetScope().Id)
-		d.Set("scope_environment_id", nil)
-		d.Set("scope_population_id", nil)
-
-	} else if respObject.GetScope().Type == "ENVIRONMENT" {
-		d.Set("scope_organization_id", nil)
-		d.Set("scope_environment_id", respObject.GetScope().Id)
-		d.Set("scope_population_id", nil)
-
-	} else if respObject.GetScope().Type == "POPULATION" {
-		d.Set("scope_organization_id", nil)
-		d.Set("scope_environment_id", nil)
-		d.Set("scope_population_id", respObject.GetScope().Id)
-	}
-
-	return diags
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(data.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourcePingOneRoleAssignmentUserDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *UserRoleAssignmentResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+}
 
-	var diags diag.Diagnostics
+func (r *UserRoleAssignmentResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *UserRoleAssignmentResourceModel
 
-	if d.Get("read_only").(bool) {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Role assignment %s cannot be deleted as it is read only", d.Id()),
-		})
-
-		return diags
+	if r.Client.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
 	}
 
-	_, diags = sdk.ParseResponse(
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if data.ReadOnly.Equal(types.BoolValue(true)) {
+		resp.Diagnostics.AddError(
+			"Cannot destroy read only role assignment",
+			fmt.Sprintf("Role assignment %s cannot be deleted as it is read only", data.Id.ValueString()),
+		)
+
+		return
+	}
+
+	// Run the API call
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := apiClient.UserRoleAssignmentsApi.DeleteUserRoleAssignment(ctx, d.Get("environment_id").(string), d.Get("user_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
+			fR, fErr := r.Client.ManagementAPIClient.UserRoleAssignmentsApi.DeleteUserRoleAssignment(ctx, data.EnvironmentId.ValueString(), data.UserId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteUserRoleAssignment",
-		sdk.DefaultCustomError,
+		framework.CustomErrorResourceNotFoundWarning,
 		nil,
-	)
-	if diags.HasError() {
-		return diags
-	}
+		nil,
+	)...)
 
-	return diags
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
-func resourcePingOneRoleAssignmentUserImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func (r *UserRoleAssignmentResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 
 	idComponents := []framework.ImportComponent{
 		{
@@ -250,21 +264,66 @@ func resourcePingOneRoleAssignmentUserImport(ctx context.Context, d *schema.Reso
 			Regexp: verify.P1ResourceIDRegexp,
 		},
 		{
-			Label:  "role_assignment_id",
-			Regexp: verify.P1ResourceIDRegexp,
+			Label:     "role_assignment_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
 		},
 	}
 
-	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
 	if err != nil {
-		return nil, err
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			err.Error(),
+		)
+		return
 	}
 
-	d.Set("environment_id", attributes["environment_id"])
-	d.Set("user_id", attributes["user_id"])
-	d.SetId(attributes["role_assignment_id"])
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
 
-	resourcePingOneRoleAssignmentUserRead(ctx, d, meta)
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
 
-	return []*schema.ResourceData{d}, nil
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
+}
+
+func (p *UserRoleAssignmentResourceModel) expand() (*management.RoleAssignment, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	scopeID, scopeType, d := service.ExpandRoleAssignmentScope(p.ScopeEnvironmentId, p.ScopeOrganizationId, p.ScopePopulationId)
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	userRoleAssignmentRole := *management.NewRoleAssignmentRole(p.RoleId.ValueString())
+	userRoleAssignmentScope := *management.NewRoleAssignmentScope(scopeID, management.EnumRoleAssignmentScopeType(scopeType))
+	data := management.NewRoleAssignment(userRoleAssignmentRole, userRoleAssignmentScope)
+
+	return data, diags
+}
+
+func (p *UserRoleAssignmentResourceModel) toState(apiObject *management.RoleAssignment) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if apiObject == nil {
+		diags.AddError(
+			"Data object missing",
+			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
+		)
+
+		return diags
+	}
+
+	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.StringOkToTF(apiObject.Environment.GetIdOk())
+	p.RoleId = framework.StringOkToTF(apiObject.Role.GetIdOk())
+	p.ReadOnly = framework.BoolOkToTF(apiObject.GetReadOnlyOk())
+
+	p.ScopeEnvironmentId, p.ScopeOrganizationId, p.ScopePopulationId = service.RoleAssignmentScopeOkToTF(apiObject.GetScopeOk())
+
+	return diags
 }
