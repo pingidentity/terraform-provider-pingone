@@ -1,0 +1,4 @@
+```release-note:bug
+`resource/pingone_group_role_assignment`: Added error check if a read-only role assignment is being destroyed.
+```
+
