@@ -208,8 +208,8 @@ resource "pingone_population_default" "%[3]s" {
   password_policy_id = pingone_password_policy.%[3]s.id
 
   timeouts = {
-	create = "5m"
-}
+    create = "5m"
+  }
 }`, acctest.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -222,7 +222,7 @@ resource "pingone_population_default" "%[3]s" {
   name           = "%[4]s"
 
   timeouts = {
-	create = "5m"
-}
+    create = "5m"
+  }
 }`, acctest.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName, resourceName, name)
 }
