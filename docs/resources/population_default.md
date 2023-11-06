@@ -40,18 +40,10 @@ resource "pingone_population_default" "my_default_population" {
 
 - `description` (String) A description to apply to the default population.
 - `password_policy_id` (String) The ID of a password policy to assign to the default population.
-- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-
-<a id="nestedatt--timeouts"></a>
-### Nested Schema for `timeouts`
-
-Optional:
-
-- `create` (String) A timeout to apply to creation of the resource.  There may be a short delay in provisioning this resource when creating the parent PingOne environment at the same time (referenced by the `environment_id` parameter), as the platform will create a default population automatically.  This resource will attempt to find and update the existing default population, and will wait if the default population cannot be found (for example, if it is in the process of being created automatically by the platform).  This timeout value can be used to override the wait time, and force the creation of a default population.  The value is expected to be a string that can be parsed as a duration consisting of numbers and unit suffixes, such as `30s` or `2h45m`. Valid time units are `s` (seconds), `m` (minutes), `h` (hours).  The default value is `20m` (20 minutes).
 
 ## Import
 

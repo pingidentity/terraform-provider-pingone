@@ -299,10 +299,6 @@ func MinimalSandboxEnvironment(resourceName, licenseID string) string {
 		environment_id = pingone_environment.%[2]s.id
 
 		name = "%[2]s"
-
-		timeouts = {
-			create = "1m"
-		}
 	}
 `, MinimalSandboxEnvironmentNoPopulation(resourceName, licenseID), resourceName)
 }
