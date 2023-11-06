@@ -22,6 +22,10 @@ This parameter was previously deprecated and has been removed.  Default populati
 
 This attribute was previously deprecated and has been removed.  Default populations are managed with the `pingone_population_default` resource.
 
+### `timeouts` block removed
+
+This parameter block is no longer needed and has been removed.
+
 ## Resource: pingone_image
 
 ### `uploaded_image` computed attribute data type change
