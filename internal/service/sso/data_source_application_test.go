@@ -378,7 +378,6 @@ func TestAccApplicationDataSource_SAMLAppByName(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "saml_options.0.acs_urls.*", "https://pingidentity.com"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.assertion_duration", "3600"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.assertion_signed_enabled", "true"),
-					resource.TestMatchResourceAttr(dataSourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.idp_signing_key.#", "1"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.idp_signing_key.0.algorithm", ""),
 					resource.TestMatchResourceAttr(dataSourceFullName, "saml_options.0.idp_signing_key.0.key_id", verify.P1ResourceIDRegexpFullString),
@@ -742,8 +741,8 @@ resource "pingone_application" "%[2]s" {
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:%[2]s"
 
-    assertion_signed_enabled       = false
-    idp_signing_key_id             = pingone_key.%[2]s.id
+    assertion_signed_enabled = false
+
     enable_requested_authn_context = true
     nameid_format                  = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
     response_is_signed             = true
@@ -787,7 +786,9 @@ resource "pingone_application" "%[2]s" {
     acs_urls           = ["https://pingidentity.com"]
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:%[2]s"
-    idp_signing_key_id = pingone_key.%[2]s.id
+    idp_signing_key {
+      key_id = pingone_key.%[2]s.id
+    }
   }
 }
 data "pingone_application" "%[2]s" {
