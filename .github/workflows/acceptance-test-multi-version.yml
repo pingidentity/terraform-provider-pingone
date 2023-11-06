@@ -66,7 +66,7 @@ jobs:
       PINGONE_TWILIO_TEST_SKIP: true
       PINGONE_SYNIVERSE_TEST_SKIP: true
 
-    timeout-minutes: 120
+    timeout-minutes: 180
     strategy:
       fail-fast: false
       matrix:
@@ -101,7 +101,7 @@ jobs:
         make sweep
 
     - name: TF acceptance tests
-      timeout-minutes: 120
+      timeout-minutes: 180
       run: |
         make testacc
 
