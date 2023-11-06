@@ -51,7 +51,7 @@ resource "pingone_mfa_application_push_credential" "example_fcm" {
   environment_id = pingone_environment.my_environment.id
   application_id = pingone_application.my_awesome_mobile_application.id
 
-  fcm {
+  fcm = {
     google_service_account_credentials = var.google_service_account_credentials_json
   }
 }
@@ -61,7 +61,7 @@ resource "pingone_mfa_application_push_credential" "example_apns" {
   environment_id = pingone_environment.my_environment.id
   application_id = pingone_application.my_awesome_mobile_application.id
 
-  apns {
+  apns = {
     key               = var.apns_key
     team_id           = var.apns_team_id
     token_signing_key = var.apns_token_signing_key
@@ -73,7 +73,7 @@ resource "pingone_mfa_application_push_credential" "example_hms" {
   environment_id = pingone_environment.my_environment.id
   application_id = pingone_application.my_awesome_mobile_application.id
 
-  hms {
+  hms = {
     client_id     = var.hms_client_id
     client_secret = var.hms_client_secret
   }
@@ -90,15 +90,15 @@ resource "pingone_mfa_application_push_credential" "example_hms" {
 
 ### Optional
 
-- `apns` (Block List) A single block that specifies the credential settings for the Apple Push Notification Service. (see [below for nested schema](#nestedblock--apns))
-- `fcm` (Block List) A single block that specifies the credential settings for the Firebase Cloud Messaging service. (see [below for nested schema](#nestedblock--fcm))
-- `hms` (Block List) A single block that specifies the credential settings for Huawei Moble Service push messaging. (see [below for nested schema](#nestedblock--hms))
+- `apns` (Attributes) A single object that specifies the credential settings for the Apple Push Notification Service. (see [below for nested schema](#nestedatt--apns))
+- `fcm` (Attributes) A single object that specifies the credential settings for the Firebase Cloud Messaging service. (see [below for nested schema](#nestedatt--fcm))
+- `hms` (Attributes) A single object that specifies the credential settings for Huawei Moble Service push messaging. (see [below for nested schema](#nestedatt--hms))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 
-<a id="nestedblock--apns"></a>
+<a id="nestedatt--apns"></a>
 ### Nested Schema for `apns`
 
 Required:
@@ -108,7 +108,7 @@ Required:
 - `token_signing_key` (String, Sensitive) A string that Apple uses as the authentication token signing key to securely connect to APNS. This is the contents of a p8 file with a private key format.
 
 
-<a id="nestedblock--fcm"></a>
+<a id="nestedatt--fcm"></a>
 ### Nested Schema for `fcm`
 
 Required:
@@ -116,7 +116,7 @@ Required:
 - `google_service_account_credentials` (String, Sensitive) A string in JSON format that represents the service account credentials of Firebase cloud messaging service.
 
 
-<a id="nestedblock--hms"></a>
+<a id="nestedatt--hms"></a>
 ### Nested Schema for `hms`
 
 Required:
