@@ -94,9 +94,99 @@ resource "pingone_branding_theme" "my_awesome_theme" {
 
 ## Resource: pingone_mfa_application_push_credential
 
+### `apns` schema type change
+
+This parameter `apns` was previously a block data type, and is now a single nested object type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_application_push_credential" "example_apns" {
+  # ... other configuration parameters
+
+  apns {
+    key               = var.apns_key
+    team_id           = var.apns_team_id
+    token_signing_key = var.apns_token_signing_key
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_application_push_credential" "example_apns" {
+  # ... other configuration parameters
+
+  apns = {
+    key               = var.apns_key
+    team_id           = var.apns_team_id
+    token_signing_key = var.apns_token_signing_key
+  }
+}
+```
+
+### `fcm` schema type change
+
+This parameter `fcm` was previously a block data type, and is now a single nested object type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_application_push_credential" "example_fcm" {
+  # ... other configuration parameters
+
+  fcm {
+    google_service_account_credentials = var.google_service_account_credentials_json
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_application_push_credential" "example_fcm" {
+  # ... other configuration parameters
+
+  fcm = {
+    google_service_account_credentials = var.google_service_account_credentials_json
+  }
+}
+```
+
 ### `fcm.key` optional parameter removed
 
 This parameter was previously deprecated and has been removed.  Use the `fcm.google_service_account_credentials` parameter going forward.
+
+### `hms` schema type change
+
+This parameter `hms` was previously a block data type, and is now a single nested object type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_application_push_credential" "example_hms" {
+  # ... other configuration parameters
+
+  hms {
+    client_id     = var.hms_client_id
+    client_secret = var.hms_client_secret
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_application_push_credential" "example_hms" {
+  # ... other configuration parameters
+
+  hms = {
+    client_id     = var.hms_client_id
+    client_secret = var.hms_client_secret
+  }
+}
+```
 
 ## Resource: pingone_mfa_fido_policy
 

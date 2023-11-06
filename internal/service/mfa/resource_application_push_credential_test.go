@@ -102,9 +102,9 @@ func TestAccApplicationPushCredential_FCM(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
-		resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "1"),
-		resource.TestCheckResourceAttr(resourceFullName, "apns.#", "0"),
-		resource.TestCheckResourceAttr(resourceFullName, "hms.#", "0"),
+		resource.TestCheckResourceAttrSet(resourceFullName, "fcm.google_service_account_credentials"),
+		resource.TestCheckResourceAttr(resourceFullName, "apns.%", "0"),
+		resource.TestCheckResourceAttr(resourceFullName, "hms.%", "0"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -138,9 +138,8 @@ func TestAccApplicationPushCredential_FCM(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateVerifyIgnore: []string{
-					"fcm.#",
-					"fcm.0.%",
-					"fcm.0.google_service_account_credentials",
+					"fcm",
+					"fcm.google_service_account_credentials",
 				},
 			},
 		},
@@ -170,9 +169,11 @@ func TestAccApplicationPushCredential_APNS(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "fcm.%", "0"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "apns.key"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "apns.team_id"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "apns.token_signing_key"),
+					resource.TestCheckResourceAttr(resourceFullName, "hms.%", "0"),
 				),
 			},
 			{
@@ -181,9 +182,11 @@ func TestAccApplicationPushCredential_APNS(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "fcm.%", "0"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "apns.key"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "apns.team_id"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "apns.token_signing_key"),
+					resource.TestCheckResourceAttr(resourceFullName, "hms.%", "0"),
 				),
 			},
 			// Test importing the resource
@@ -202,11 +205,10 @@ func TestAccApplicationPushCredential_APNS(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateVerifyIgnore: []string{
-					"apns.#",
-					"apns.0.%",
-					"apns.0.key",
-					"apns.0.team_id",
-					"apns.0.token_signing_key",
+					"apns",
+					"apns.key",
+					"apns.team_id",
+					"apns.token_signing_key",
 				},
 			},
 		},
@@ -236,9 +238,10 @@ func TestAccApplicationPushCredential_HMS(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "fcm.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apns.%", "0"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "hms.client_id"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "hms.client_secret"),
 				),
 			},
 			{
@@ -247,9 +250,10 @@ func TestAccApplicationPushCredential_HMS(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "fcm.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apns.%", "0"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "hms.client_id"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "hms.client_secret"),
 				),
 			},
 			// Test importing the resource
@@ -268,10 +272,9 @@ func TestAccApplicationPushCredential_HMS(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateVerifyIgnore: []string{
-					"hms.#",
-					"hms.0.%",
-					"hms.0.client_id",
-					"hms.0.client_secret",
+					"hms",
+					"hms.client_id",
+					"hms.client_secret",
 				},
 			},
 		},
@@ -304,9 +307,9 @@ func TestAccApplicationPushCredential_Change(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "0"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "fcm.google_service_account_credentials"),
+					resource.TestCheckResourceAttr(resourceFullName, "apns.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "hms.%", "0"),
 				),
 			},
 			{
@@ -315,9 +318,11 @@ func TestAccApplicationPushCredential_Change(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "fcm.%", "0"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "apns.key"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "apns.team_id"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "apns.token_signing_key"),
+					resource.TestCheckResourceAttr(resourceFullName, "hms.%", "0"),
 				),
 			},
 			{
@@ -326,9 +331,10 @@ func TestAccApplicationPushCredential_Change(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "fcm.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apns.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "hms.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "fcm.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apns.%", "0"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "hms.client_id"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "hms.client_secret"),
 				),
 			},
 		},
@@ -426,7 +432,7 @@ resource "pingone_mfa_application_push_credential" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   application_id = pingone_application.%[3]s.id
 
-  fcm {
+  fcm = {
     google_service_account_credentials = jsonencode(%[5]s)
   }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, key)
@@ -477,7 +483,7 @@ resource "pingone_mfa_application_push_credential" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
 
-  fcm {
+  fcm = {
     google_service_account_credentials = jsonencode(%[4]s)
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, key)
@@ -526,7 +532,7 @@ resource "pingone_mfa_application_push_credential" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
 
-  apns {
+  apns = {
     key               = "%[4]s"
     team_id           = "team.id.updated"
     token_signing_key = "-----BEGIN PRIVATE KEY-----%[4]s-----END PRIVATE KEY-----"
@@ -578,7 +584,7 @@ resource "pingone_mfa_application_push_credential" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
 
-  hms {
+  hms = {
     client_id     = "%[3]s"
     client_secret = "%[4]s"
   }

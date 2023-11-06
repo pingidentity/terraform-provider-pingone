@@ -1754,7 +1754,7 @@ resource "pingone_mfa_application_push_credential" "%[2]s-1" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s-1.id
 
-  fcm {
+  fcm = {
     google_service_account_credentials = jsonencode(%[4]s)
   }
 }
@@ -1835,7 +1835,7 @@ resource "pingone_mfa_application_push_credential" "%[2]s-3" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s-3.id
 
-  fcm {
+  fcm = {
     google_service_account_credentials = jsonencode(%[4]s)
   }
 }
@@ -1880,7 +1880,7 @@ resource "pingone_mfa_application_push_credential" "%[2]s-4" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s-4.id
 
-  fcm {
+  fcm = {
     key = "dummykey"
   }
 }

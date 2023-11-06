@@ -5,20 +5,21 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
-	listplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/listplanmodifier"
+	objectplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectplanmodifier"
 	stringplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringplanmodifier"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -32,9 +33,9 @@ type applicationPushCredentialResourceModel struct {
 	Id            types.String `tfsdk:"id"`
 	EnvironmentId types.String `tfsdk:"environment_id"`
 	ApplicationId types.String `tfsdk:"application_id"`
-	Fcm           types.List   `tfsdk:"fcm"`
-	Apns          types.List   `tfsdk:"apns"`
-	Hms           types.List   `tfsdk:"hms"`
+	Fcm           types.Object `tfsdk:"fcm"`
+	Apns          types.Object `tfsdk:"apns"`
+	Hms           types.Object `tfsdk:"hms"`
 }
 
 type applicationPushCredentialFcmResourceModel struct {
@@ -92,48 +93,43 @@ func (r *ApplicationPushCredentialResource) Schema(ctx context.Context, req reso
 			"application_id": framework.Attr_LinkID(
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the application to create the push notification credential for."),
 			),
-		},
 
-		Blocks: map[string]schema.Block{
+			"fcm": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the credential settings for the Firebase Cloud Messaging service.").Description,
 
-			"fcm": schema.ListNestedBlock{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies the credential settings for the Firebase Cloud Messaging service.").Description,
+				Optional: true,
 
-				NestedObject: schema.NestedBlockObject{
+				Attributes: map[string]schema.Attribute{
+					"google_service_account_credentials": schema.StringAttribute{
+						Description:         fcmGoogleServiceAccountCredentialsDescription.Description,
+						MarkdownDescription: fcmGoogleServiceAccountCredentialsDescription.MarkdownDescription,
+						Required:            true,
+						Sensitive:           true,
 
-					Attributes: map[string]schema.Attribute{
-						"google_service_account_credentials": schema.StringAttribute{
-							Description:         fcmGoogleServiceAccountCredentialsDescription.Description,
-							MarkdownDescription: fcmGoogleServiceAccountCredentialsDescription.MarkdownDescription,
-							Required:            true,
-							Sensitive:           true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.RequiresReplaceIf(
+								stringplanmodifierinternal.RequiresReplaceIfNowNull(),
+								"The attribute has been previously defined.  To nullify the attribute, it must be replaced.",
+								"The attribute has been previously defined.  To nullify the attribute, it must be replaced.",
+							),
+						},
 
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.RequiresReplaceIf(
-									stringplanmodifierinternal.RequiresReplaceIfNowNull(),
-									"The attribute has been previously defined.  To nullify the attribute, it must be replaced.",
-									"The attribute has been previously defined.  To nullify the attribute, it must be replaced.",
-								),
-							},
-
-							Validators: []validator.String{
-								stringvalidatorinternal.IsParseableJSON(),
-							},
+						Validators: []validator.String{
+							stringvalidatorinternal.IsParseableJSON(),
 						},
 					},
 				},
 
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.RequiresReplaceIf(
-						listplanmodifierinternal.RequiresReplaceIfNowNull(),
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.RequiresReplaceIf(
+						objectplanmodifierinternal.RequiresReplaceIfNowNull(),
 						"The attribute has been previously defined.  To nullify the attribute, this will change the credential type and it must be replaced.",
 						"The attribute has been previously defined.  To nullify the attribute, this will change the credential type and it must be replaced.",
 					),
 				},
 
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(attrMinLength),
-					listvalidator.ExactlyOneOf(
+				Validators: []validator.Object{
+					objectvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("fcm"),
 						path.MatchRelative().AtParent().AtName("apns"),
 						path.MatchRelative().AtParent().AtName("hms"),
@@ -141,54 +137,52 @@ func (r *ApplicationPushCredentialResource) Schema(ctx context.Context, req reso
 				},
 			},
 
-			"apns": schema.ListNestedBlock{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies the credential settings for the Apple Push Notification Service.").Description,
+			"apns": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the credential settings for the Apple Push Notification Service.").Description,
 
-				NestedObject: schema.NestedBlockObject{
+				Optional: true,
 
-					Attributes: map[string]schema.Attribute{
-						"key": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that Apple uses as an identifier to identify an authentication key.").Description,
-							Required:    true,
-							Sensitive:   true,
+				Attributes: map[string]schema.Attribute{
+					"key": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that Apple uses as an identifier to identify an authentication key.").Description,
+						Required:    true,
+						Sensitive:   true,
 
-							Validators: []validator.String{
-								stringvalidator.LengthAtLeast(attrMinLength),
-							},
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
 						},
+					},
 
-						"team_id": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that Apple uses as an identifier to identify teams.").Description,
-							Required:    true,
+					"team_id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that Apple uses as an identifier to identify teams.").Description,
+						Required:    true,
 
-							Validators: []validator.String{
-								stringvalidator.LengthAtLeast(attrMinLength),
-							},
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
 						},
+					},
 
-						"token_signing_key": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that Apple uses as the authentication token signing key to securely connect to APNS. This is the contents of a p8 file with a private key format.").Description,
-							Required:    true,
-							Sensitive:   true,
+					"token_signing_key": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that Apple uses as the authentication token signing key to securely connect to APNS. This is the contents of a p8 file with a private key format.").Description,
+						Required:    true,
+						Sensitive:   true,
 
-							Validators: []validator.String{
-								stringvalidator.LengthAtLeast(attrMinLength),
-							},
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
 						},
 					},
 				},
 
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.RequiresReplaceIf(
-						listplanmodifierinternal.RequiresReplaceIfNowNull(),
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.RequiresReplaceIf(
+						objectplanmodifierinternal.RequiresReplaceIfNowNull(),
 						"The attribute has been previously defined.  To nullify the attribute, this will change the credential type and it must be replaced.",
 						"The attribute has been previously defined.  To nullify the attribute, this will change the credential type and it must be replaced.",
 					),
 				},
 
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(attrMinLength),
-					listvalidator.ExactlyOneOf(
+				Validators: []validator.Object{
+					objectvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("fcm"),
 						path.MatchRelative().AtParent().AtName("apns"),
 						path.MatchRelative().AtParent().AtName("hms"),
@@ -196,45 +190,43 @@ func (r *ApplicationPushCredentialResource) Schema(ctx context.Context, req reso
 				},
 			},
 
-			"hms": schema.ListNestedBlock{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies the credential settings for Huawei Moble Service push messaging.").Description,
+			"hms": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the credential settings for Huawei Moble Service push messaging.").Description,
 
-				NestedObject: schema.NestedBlockObject{
+				Optional: true,
 
-					Attributes: map[string]schema.Attribute{
-						"client_id": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that represents the OAuth 2.0 Client ID from the Huawei Developers API console.").Description,
-							Required:    true,
-							Sensitive:   true,
+				Attributes: map[string]schema.Attribute{
+					"client_id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that represents the OAuth 2.0 Client ID from the Huawei Developers API console.").Description,
+						Required:    true,
+						Sensitive:   true,
 
-							Validators: []validator.String{
-								stringvalidator.LengthAtLeast(attrMinLength),
-							},
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
 						},
+					},
 
-						"client_secret": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that represents the client secret associated with the OAuth 2.0 Client ID.").Description,
-							Required:    true,
-							Sensitive:   true,
+					"client_secret": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that represents the client secret associated with the OAuth 2.0 Client ID.").Description,
+						Required:    true,
+						Sensitive:   true,
 
-							Validators: []validator.String{
-								stringvalidator.LengthAtLeast(attrMinLength),
-							},
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
 						},
 					},
 				},
 
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.RequiresReplaceIf(
-						listplanmodifierinternal.RequiresReplaceIfNowNull(),
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.RequiresReplaceIf(
+						objectplanmodifierinternal.RequiresReplaceIfNowNull(),
 						"The attribute has been previously defined.  To nullify the attribute, this will change the credential type and it must be replaced.",
 						"The attribute has been previously defined.  To nullify the attribute, this will change the credential type and it must be replaced.",
 					),
 				},
 
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(attrMinLength),
-					listvalidator.ExactlyOneOf(
+				Validators: []validator.Object{
+					objectvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("fcm"),
 						path.MatchRelative().AtParent().AtName("apns"),
 						path.MatchRelative().AtParent().AtName("hms"),
@@ -492,51 +484,55 @@ func (p *applicationPushCredentialResourceModel) expand(ctx context.Context) (*m
 	data := &mfa.MFAPushCredentialRequest{}
 
 	if !p.Fcm.IsNull() && !p.Fcm.IsUnknown() {
-		var plan []applicationPushCredentialFcmResourceModel
-		diags.Append(p.Fcm.ElementsAs(ctx, &plan, false)...)
+		var plan applicationPushCredentialFcmResourceModel
+		diags.Append(p.Fcm.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		fcmPlan := plan[0]
-		if !fcmPlan.GoogleServiceAccountCredentials.IsNull() && !fcmPlan.GoogleServiceAccountCredentials.IsUnknown() {
+		if !plan.GoogleServiceAccountCredentials.IsNull() && !plan.GoogleServiceAccountCredentials.IsUnknown() {
 			data.MFAPushCredentialFCMHTTPV1 = mfa.NewMFAPushCredentialFCMHTTPV1(
 				mfa.ENUMMFAPUSHCREDENTIALATTRTYPE_FCM_HTTP_V1,
-				fcmPlan.GoogleServiceAccountCredentials.ValueString(),
+				plan.GoogleServiceAccountCredentials.ValueString(),
 			)
 		}
 	}
 
 	if !p.Apns.IsNull() && !p.Apns.IsUnknown() {
-		var plan []applicationPushCredentialApnsResourceModel
-		diags.Append(p.Apns.ElementsAs(ctx, &plan, false)...)
+		var plan applicationPushCredentialApnsResourceModel
+		diags.Append(p.Apns.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		apnsPlan := plan[0]
-
 		data.MFAPushCredentialAPNS = mfa.NewMFAPushCredentialAPNS(
 			mfa.ENUMMFAPUSHCREDENTIALATTRTYPE_APNS,
-			apnsPlan.Key.ValueString(),
-			apnsPlan.TeamId.ValueString(),
-			apnsPlan.TokenSigningKey.ValueString(),
+			plan.Key.ValueString(),
+			plan.TeamId.ValueString(),
+			plan.TokenSigningKey.ValueString(),
 		)
 	}
 
 	if !p.Hms.IsNull() && !p.Hms.IsUnknown() {
-		var plan []applicationPushCredentialHmsResourceModel
-		diags.Append(p.Hms.ElementsAs(ctx, &plan, false)...)
+		var plan applicationPushCredentialHmsResourceModel
+		diags.Append(p.Hms.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		hmsPlan := plan[0]
-
 		data.MFAPushCredentialHMS = mfa.NewMFAPushCredentialHMS(
 			mfa.ENUMMFAPUSHCREDENTIALATTRTYPE_HMS,
-			hmsPlan.ClientId.ValueString(),
-			hmsPlan.ClientSecret.ValueString(),
+			plan.ClientId.ValueString(),
+			plan.ClientSecret.ValueString(),
 		)
 	}
 
