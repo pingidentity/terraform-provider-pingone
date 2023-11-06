@@ -38,6 +38,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 
+* `resource/pingone_environment`: Fixed ineffectual `timeouts` block configuration. ([#640](https://github.com/pingidentity/terraform-provider-pingone/issues/640))
 * `resource/pingone_environment`: Fixed situations where configuring a default population conflicts with the platform bootstrap, resulting in the created population not becoming the default for the environment. ([#600](https://github.com/pingidentity/terraform-provider-pingone/issues/600))
 
 ## 0.22.0 (17 October 2023)
