@@ -428,8 +428,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 
 			"timeouts": timeouts.Block(ctx, timeouts.Opts{
-				Create:            true,
-				CreateDescription: "A timeout to apply to creation of the resource.  Where the `default_population` block is configured, there may be a short delay in provisioning this resource, as the platform will create a default population automatically.  This resource will attempt to find and update the existing default population, and will wait if the default population cannot be found (for example, if it is in the process of being created automatically by the platform).  This timeout value can be used to override the wait time, and force the creation of a default population.  The value is expected to be a string that can be parsed as a duration consisting of numbers and unit suffixes, such as `30s` or `2h45m`. Valid time units are `s` (seconds), `m` (minutes), `h` (hours).  The default value is `20m` (20 minutes).",
+				Create: true,
 			}),
 		},
 	}
