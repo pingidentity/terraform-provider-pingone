@@ -2,12 +2,12 @@
 page_title: "pingone_gateway_role_assignment Resource - terraform-provider-pingone"
 subcategory: "Platform"
 description: |-
-  Resource to create and manage PingOne admin role assignments to gateways.
+  Resource to create and manage PingOne admin role assignments to administrator defined gateways.
 ---
 
 # pingone_gateway_role_assignment (Resource)
 
-Resource to create and manage PingOne admin role assignments to gateways.
+Resource to create and manage PingOne admin role assignments to administrator defined gateways.
 
 ## Example Usage - Assign Population Scope
 
@@ -105,15 +105,15 @@ resource "pingone_gateway_role_assignment" "organization_environment_admin_to_ga
 
 ### Required
 
-- `environment_id` (String) The ID of the environment.
-- `gateway_id` (String) The ID of an gateway to assign an admin role to.
-- `role_id` (String) The ID of an admin role to assign to the gateway.
+- `environment_id` (String) The ID of the environment that contains the gateway to assign the admin role to.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `gateway_id` (String) The ID of an gateway to assign an admin role to.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `role_id` (String) The ID of an admin role to assign to the gateway.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Optional
 
-- `scope_environment_id` (String) Limit the scope of the admin role assignment to the specified environment ID.
-- `scope_organization_id` (String) Limit the scope of the admin role assignment to the specified organisation ID.
-- `scope_population_id` (String) Limit the scope of the admin role assignment to the specified population ID.
+- `scope_environment_id` (String) Limit the scope of the admin role assignment to the specified environment ID.  Must be a valid PingOne resource ID.  Some roles cannot be scoped to the environment.  This field is immutable and will trigger a replace plan if changed.  At least one of the following must be defined: `scope_organization_id`, `scope_environment_id`, `scope_population_id`.
+- `scope_organization_id` (String) Limit the scope of the admin role assignment to the specified organization ID.  Must be a valid PingOne resource ID.  Some roles cannot be scoped to the organization.  This field is immutable and will trigger a replace plan if changed.  At least one of the following must be defined: `scope_organization_id`, `scope_environment_id`, `scope_population_id`.
+- `scope_population_id` (String) Limit the scope of the admin role assignment to the specified population ID.  Must be a valid PingOne resource ID.  Some roles cannot be scoped to the population.  This field is immutable and will trigger a replace plan if changed.  At least one of the following must be defined: `scope_organization_id`, `scope_environment_id`, `scope_population_id`.
 
 ### Read-Only
 
