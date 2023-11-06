@@ -636,9 +636,7 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	contextTimeout := createTimeout + 5*time.Minute
-
-	ctx, cancel := context.WithTimeout(ctx, contextTimeout)
+	ctx, cancel := context.WithTimeout(ctx, createTimeout)
 	defer cancel()
 
 	// Build the model for the API
@@ -672,17 +670,24 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 
 	///////////////////
 	// Deprecated start
+	defaultPopulationObj := *management.NewPopulation("Default")
+	defaultPopulationObj.SetDescription("Automatically created population.")
+	defaultPopulationObj.SetDefault(true)
+
+	defaultPopulationResponse, _ := sso.PingOnePopulationCreate(ctx, r.Client.ManagementAPIClient, environmentResponse.GetId(), defaultPopulationObj)
+	if defaultPopulationResponse == nil {
+		resp.Diagnostics.AddWarning(
+			"Cannot seed the default population",
+			"The default population cannot be seeded explicitly by the provider.",
+		)
+	}
+
 	var populationResponse *management.Population = nil
 	if population != nil {
-		populationReadResponse, d := sso.FetchDefaultPopulationWithTimeout(ctx, r.Client.ManagementAPIClient, environmentResponse.GetId(), false, createTimeout)
+		populationReadResponse, d := sso.FetchDefaultPopulation(ctx, r.Client.ManagementAPIClient, environmentResponse.GetId(), false)
 		resp.Diagnostics.Append(d...)
 
 		if populationReadResponse == nil {
-			resp.Diagnostics.AddWarning(
-				"Default population creation timeout exceeded",
-				"The `pingone_environment` resource has exceeded the create timeout waiting for the platform to create the default population, the default population has instead been created by the provider.  It is recommended to check the PingOne console to ensure the default population has been created as expected.",
-			)
-
 			resp.Diagnostics.Append(framework.ParseResponse(
 				ctx,
 

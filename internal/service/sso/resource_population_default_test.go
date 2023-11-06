@@ -206,10 +206,6 @@ resource "pingone_population_default" "%[3]s" {
   name               = "%[4]s"
   description        = "Test description"
   password_policy_id = pingone_password_policy.%[3]s.id
-
-  timeouts = {
-    create = "5m"
-  }
 }`, acctest.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -220,9 +216,5 @@ func testAccPopulationDefaultConfig_Minimal(environmentName, licenseID, resource
 resource "pingone_population_default" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
-
-  timeouts = {
-    create = "5m"
-  }
 }`, acctest.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName, resourceName, name)
 }

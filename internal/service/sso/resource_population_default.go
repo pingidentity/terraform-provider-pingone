@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -28,12 +27,11 @@ import (
 type PopulationDefaultResource serviceClientType
 
 type PopulationDefaultResourceModel struct {
-	Id               types.String   `tfsdk:"id"`
-	EnvironmentId    types.String   `tfsdk:"environment_id"`
-	Name             types.String   `tfsdk:"name"`
-	Description      types.String   `tfsdk:"description"`
-	PasswordPolicyId types.String   `tfsdk:"password_policy_id"`
-	Timeouts         timeouts.Value `tfsdk:"timeouts"`
+	Id               types.String `tfsdk:"id"`
+	EnvironmentId    types.String `tfsdk:"environment_id"`
+	Name             types.String `tfsdk:"name"`
+	Description      types.String `tfsdk:"description"`
+	PasswordPolicyId types.String `tfsdk:"password_policy_id"`
 }
 
 // Framework interfaces
@@ -92,11 +90,6 @@ func (r *PopulationDefaultResource) Schema(ctx context.Context, req resource.Sch
 					verify.P1ResourceIDValidator(),
 				},
 			},
-
-			"timeouts": timeouts.Attributes(ctx, timeouts.Opts{
-				Create:            true,
-				CreateDescription: "A timeout to apply to creation of the resource.  There may be a short delay in provisioning this resource when creating the parent PingOne environment at the same time (referenced by the `environment_id` parameter), as the platform will create a default population automatically.  This resource will attempt to find and update the existing default population, and will wait if the default population cannot be found (for example, if it is in the process of being created automatically by the platform).  This timeout value can be used to override the wait time, and force the creation of a default population.  The value is expected to be a string that can be parsed as a duration consisting of numbers and unit suffixes, such as `30s` or `2h45m`. Valid time units are `s` (seconds), `m` (minutes), `h` (hours).  The default value is `20m` (20 minutes).",
-			}),
 		},
 	}
 }
@@ -153,23 +146,11 @@ func (r *PopulationDefaultResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	defaultTimeout := 20 * time.Minute
-	createTimeout, d := plan.Timeouts.Create(ctx, defaultTimeout)
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	contextTimeout := createTimeout + 5*time.Minute
-
-	ctx, cancel := context.WithTimeout(ctx, contextTimeout)
-	defer cancel()
-
 	// Build the model for the API
 	population := plan.expand()
 
 	// Run the API call
-	readResponse, d := FetchDefaultPopulationWithTimeout(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), false, createTimeout)
+	readResponse, d := FetchDefaultPopulation(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -177,11 +158,6 @@ func (r *PopulationDefaultResource) Create(ctx context.Context, req resource.Cre
 
 	var response *management.Population
 	if readResponse == nil {
-		resp.Diagnostics.AddWarning(
-			"Default population creation timeout exceeded",
-			"The `pingone_population_default` resource has exceeded the create timeout waiting for the platform to create the default population, the default population has instead been created by the provider.  It is recommended to check the PingOne console to ensure the default population has been created as expected.",
-		)
-
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 

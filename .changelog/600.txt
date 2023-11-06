@@ -1,11 +1,3 @@
 ```release-note:new-resource
 pingone_population_default
 ```
-
-```release-note:bug
-`resource/pingone_environment`: Fixed situations where configuring a default population conflicts with the platform bootstrap, resulting in the created population not becoming the default for the environment.
-```
-
-```release-note:breaking-change
-`resource/pingone_environment`: The default population is no longer seeded automatically on environment creation.  Default population creation should be managed by the `pingone_population_default` resource going forward.
-```
