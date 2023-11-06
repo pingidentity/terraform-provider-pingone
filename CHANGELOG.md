@@ -2,7 +2,7 @@
 
 BREAKING CHANGES:
 
-* `resource/pingone_environment`: The default population is no longer seeded automatically on environment creation.  Default population creation should be managed by the `pingone_population_default` resource going forward. ([#600-2](https://github.com/pingidentity/terraform-provider-pingone/issues/600-2))
+* `resource/pingone_environment`: The default population is no longer seeded automatically on environment creation.  Default population creation should be managed by the `pingone_population_default` resource going forward. ([#600](https://github.com/pingidentity/terraform-provider-pingone/issues/600))
 
 NOTES:
 
