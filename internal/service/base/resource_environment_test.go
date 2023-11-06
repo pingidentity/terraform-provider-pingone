@@ -634,6 +634,10 @@ resource "pingone_environment" "%[1]s" {
     name        = "%[2]s"
     description = "%[2]s description"
   }
+
+  timeouts {
+	create = "5m"
+  }
 }`, resourceName, name, licenseID)
 }
 
