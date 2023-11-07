@@ -1,5 +1,9 @@
 ## 0.24.0 (Unreleased)
 
+NOTES:
+
+* `resource/pingone_population_default`: Corrected documentation notes. ([#648](https://github.com/pingidentity/terraform-provider-pingone/issues/648))
+
 ## 0.23.0 (07 November 2023)
 
 NOTES:
