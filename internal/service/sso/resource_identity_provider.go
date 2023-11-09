@@ -149,6 +149,8 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 	const attrMinLength = 1
 	const appleKeyIdLength = 10
 	const appleTeamIdLength = 10
+	const samlSloWindowMin = 1
+	const samlSloWindowMax = 24
 
 	providerAttributeList := []string{"facebook", "google", "linkedin", "yahoo", "amazon", "twitter", "apple", "paypal", "microsoft", "github", "openid_connect", "saml"}
 
@@ -205,7 +207,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 	)
 
 	samlSLOWindowDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request. The minimum value is `1` hour and the maximum is `24` hours.",
+		fmt.Sprintf("An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request. The minimum value is `%d` hour and the maximum is `%d` hours.", samlSloWindowMin, samlSloWindowMax),
 	)
 
 	resp.Schema = schema.Schema{
@@ -706,7 +708,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 						Optional:            true,
 
 						Validators: []validator.Int64{
-							int64validator.Between(1, 24),
+							int64validator.Between(samlSloWindowMin, samlSloWindowMax),
 						},
 					},
 				},
