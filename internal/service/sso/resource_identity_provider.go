@@ -718,7 +718,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 }
 
 func identityProviderSchemaBlock(description framework.SchemaAttributeDescription, attributes map[string]schema.Attribute, exactlyOneOfBlockNames []string) schema.ListNestedBlock {
-	description = description.ExactlyOneOf(exactlyOneOfBlockNames).RequiresReplace()
+	description = description.ExactlyOneOf(exactlyOneOfBlockNames).RequiresReplaceBlock()
 
 	exactlyOneOfPaths := make([]path.Expression, len(exactlyOneOfBlockNames))
 	for i, blockName := range exactlyOneOfBlockNames {
