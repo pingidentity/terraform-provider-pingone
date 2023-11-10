@@ -3236,19 +3236,19 @@ resource "pingone_mfa_policy" "%[2]s" {
   }
 
   fido2 {
-	enabled = false
+    enabled = false
   }
 
 }
 
 resource "pingone_sign_on_policy_action" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
-	sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
 
-	priority           = "1"
+  priority = "1"
 
-	mfa {
-		device_sign_on_policy_id = pingone_mfa_policy.%[2]s.id
-	  }
-  }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  mfa {
+    device_sign_on_policy_id = pingone_mfa_policy.%[2]s.id
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
