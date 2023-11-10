@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -569,7 +571,8 @@ func resourceMFAPolicyDelete(ctx context.Context, d *schema.ResourceData, meta i
 
 	var diags diag.Diagnostics
 
-	_, diags = sdk.ParseResponse(
+	timeout := 30 * time.Second
+	_, diags = sdk.ParseResponseWithCustomTimeout(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -577,8 +580,22 @@ func resourceMFAPolicyDelete(ctx context.Context, d *schema.ResourceData, meta i
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteDeviceAuthenticationPolicy",
-		sdk.DefaultCustomError,
-		nil,
+		sdk.CustomErrorResourceNotFoundWarning,
+		func(ctx context.Context, r *http.Response, p1Error *model.P1Error) bool {
+
+			if p1Error != nil && r.StatusCode == http.StatusConflict {
+				if details, ok := p1Error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+					if target, ok := details[0].GetTargetOk(); ok && details[0].GetCode() == "INVALID_VALUE" && *target == "signOnPolicies" {
+						tflog.Warn(ctx, "Conflict detected when deleting MFA policy.  This is likely due to the policy being referenced by a sign-on policy.  Retrying..")
+
+						return true
+					}
+				}
+			}
+
+			return false
+		},
+		timeout,
 	)
 	if diags.HasError() {
 		return diags
