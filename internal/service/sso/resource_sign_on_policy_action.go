@@ -343,41 +343,57 @@ func resourceSignOnPolicyActionDelete(ctx context.Context, d *schema.ResourceDat
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteSignOnPolicyAction",
-		func(error model.P1Error) diag.Diagnostics {
-			var diags diag.Diagnostics
+		sdk.CustomErrorResourceNotFoundWarning,
+		func(ctx context.Context, r *http.Response, p1Error *model.P1Error) bool {
 
-			// Deleted outside of TF
-			if error.GetCode() == "NOT_FOUND" {
-				diags = append(diags, diag.Diagnostic{
-					Severity: diag.Warning,
-					Summary:  error.GetMessage(),
-				})
+			if p1Error != nil {
+				// Last action in the policy
+				if v, ok := p1Error.GetDetailsOk(); ok && v != nil && len(v) > 0 {
+					if v[0].GetCode() == "CONSTRAINT_VIOLATION" {
+						if match, _ := regexp.MatchString("Cannot delete last action from the policy", v[0].GetMessage()); match {
 
-				return diags
-			}
+							// create a generic SOP action
+							sopPriority := 1
 
-			// Last action in the policy
-			if v, ok := error.GetDetailsOk(); ok && v != nil && len(v) > 0 {
-				if v[0].GetCode() == "CONSTRAINT_VIOLATION" {
-					if match, _ := regexp.MatchString("Cannot delete last action from the policy", v[0].GetMessage()); match {
-						diags = append(diags, diag.Diagnostic{
-							Severity: diag.Warning,
-							Summary:  fmt.Sprintf("Cannot delete last action from the sign-on policy %s.  The last remaining policy action is left in place but no longer managed by the provider. This warning can be safely ignored if the sign-on policy %s was also destroyed.", d.Get("sign_on_policy_id").(string), d.Get("sign_on_policy_id").(string)),
-							Detail:   "For more details about this warning, please see https://github.com/pingidentity/terraform-provider-pingone/issues/68",
-						})
+							signOnPolicyAction := &management.SignOnPolicyAction{}
+							signOnPolicyAction.SignOnPolicyActionLogin = management.NewSignOnPolicyActionLogin(
+								int32(sopPriority),
+								management.ENUMSIGNONPOLICYTYPE_LOGIN,
+							)
 
-						return diags
+							_, innerDiags := sdk.ParseResponse(
+								ctx,
+
+								func() (any, *http.Response, error) {
+									fO, fR, fErr := apiClient.SignOnPolicyActionsApi.CreateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string)).SignOnPolicyAction(*signOnPolicyAction).Execute()
+									return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+								},
+								"CreateSignOnPolicyAction-Delete",
+								customErrorSignOnPolicyActionCreateUpdate,
+								sdk.DefaultCreateReadRetryable,
+							)
+
+							diags = append(diags, innerDiags...)
+							diags = append(diags, diag.Diagnostic{
+								Severity: diag.Warning,
+								Summary:  fmt.Sprintf("Cannot delete last action from the sign-on policy %s.  A generic policy action will be left in place but is not managed by the provider. This warning can be safely ignored if the sign-on policy %s was also destroyed.", d.Get("sign_on_policy_id").(string), d.Get("sign_on_policy_id").(string)),
+								Detail:   "For more details about this warning, please see https://github.com/pingidentity/terraform-provider-pingone/issues/68",
+							})
+
+							if diags.HasError() {
+								return false
+							}
+
+							return true
+						}
 					}
 				}
+
 			}
 
-			return nil
+			return false
 		},
-		nil,
 	)
-	if diags.HasError() {
-		return diags
-	}
 
 	return diags
 }
