@@ -571,7 +571,7 @@ func resourceMFAPolicyDelete(ctx context.Context, d *schema.ResourceData, meta i
 
 	var diags diag.Diagnostics
 
-	timeout := time.Duration(30) * time.Second
+	timeout := 30 * time.Second
 	_, diags = sdk.ParseResponseWithCustomTimeout(
 		ctx,
 

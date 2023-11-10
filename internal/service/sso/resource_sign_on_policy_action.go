@@ -380,11 +380,7 @@ func resourceSignOnPolicyActionDelete(ctx context.Context, d *schema.ResourceDat
 								Detail:   "For more details about this warning, please see https://github.com/pingidentity/terraform-provider-pingone/issues/68",
 							})
 
-							if diags.HasError() {
-								return false
-							}
-
-							return true
+							return !diags.HasError()
 						}
 					}
 				}
