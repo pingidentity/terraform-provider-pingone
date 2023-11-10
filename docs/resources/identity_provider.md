@@ -208,7 +208,6 @@ Required:
 - `idp_entity_id` (String) A string that specifies the entity ID URI that is checked against the `issuerId` tag in the incoming response.
 - `idp_verification_certificate_ids` (Set of String) An unordered list that specifies the identity provider's certificate IDs used to verify the signature on the signed assertion from the identity provider. Signing is done with a private key and verified with a public key.  Items must be valid PingOne resource IDs.
 - `sp_entity_id` (String) A string that specifies the service provider's entity ID, used to look up the application.
-- `sp_signing_key_id` (String) A string that specifies the service provider's signing key ID.  Must be a valid PingOne resource ID.
 - `sso_binding` (String) A string that specifies the binding for the authentication request.  Options are `HTTP_POST`, `HTTP_REDIRECT`.
 - `sso_endpoint` (String) A string that specifies the SSO endpoint for the authentication request.  This value must be a URL that uses http or https.
 
@@ -219,6 +218,7 @@ Optional:
 - `slo_endpoint` (String) A string that specifies the logout endpoint URL. This is an optional property. However, if a logout endpoint URL is not defined, logout actions result in an error.  This value must be a URL that uses http or https.
 - `slo_response_endpoint` (String) A string that specifies the endpoint URL to submit the logout response.  If a value is not provided, the `slo_endpoint` property value is used to submit SLO response.  This value must be a URL that uses http or https.
 - `slo_window` (Number) An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request. The minimum value is `1` hour and the maximum is `24` hours.
+- `sp_signing_key_id` (String) A string that specifies the service provider's signing key ID.  Must be a valid PingOne resource ID.
 
 
 <a id="nestedblock--twitter"></a>

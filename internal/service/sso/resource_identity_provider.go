@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -23,6 +24,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -58,14 +60,9 @@ type IdentityProviderClientIdClientSecretResourceModel struct {
 	ClientSecret types.String `tfsdk:"client_secret"`
 }
 
-type IdentityProviderImageResourceModel struct {
-	Id   types.String `tfsdk:"id"`
-	Href types.String `tfsdk:"href"`
-}
+type IdentityProviderLoginButtonIcon service.ImageResourceModel
 
-type IdentityProviderLoginButtonIcon IdentityProviderImageResourceModel
-
-type IdentityProviderIcon IdentityProviderImageResourceModel
+type IdentityProviderIcon service.ImageResourceModel
 
 type IdentityProviderFacebookResourceModel struct {
 	AppId     types.String `tfsdk:"app_id"`
@@ -125,6 +122,58 @@ type IdentityProviderSAMLResourceModel struct {
 	SloResponseEndpoint           types.String `tfsdk:"slo_response_endpoint"`
 	SloWindow                     types.Int64  `tfsdk:"slo_window"`
 }
+
+var (
+	identityProviderFacebookTFObjectTypes = map[string]attr.Type{
+		"app_id":     types.StringType,
+		"app_secret": types.StringType,
+	}
+
+	identityProviderClientIDClientSecretTFObjectTypes = map[string]attr.Type{
+		"client_id":     types.StringType,
+		"client_secret": types.StringType,
+	}
+
+	identityProviderAppleTFObjectTypes = map[string]attr.Type{
+		"team_id":                   types.StringType,
+		"key_id":                    types.StringType,
+		"client_id":                 types.StringType,
+		"client_secret_signing_key": types.StringType,
+	}
+
+	identityProviderPaypalTFObjectTypes = map[string]attr.Type{
+		"client_id":          types.StringType,
+		"client_secret":      types.StringType,
+		"client_environment": types.StringType,
+	}
+
+	identityProviderOIDCTFObjectTypes = map[string]attr.Type{
+		"authorization_endpoint":     types.StringType,
+		"client_id":                  types.StringType,
+		"client_secret":              types.StringType,
+		"discovery_endpoint":         types.StringType,
+		"issuer":                     types.StringType,
+		"jwks_endpoint":              types.StringType,
+		"scopes":                     types.SetType{ElemType: types.StringType},
+		"token_endpoint":             types.StringType,
+		"token_endpoint_auth_method": types.StringType,
+		"userinfo_endpoint":          types.StringType,
+	}
+
+	identityProviderSAMLTFObjectTypes = map[string]attr.Type{
+		"authentication_request_signed":    types.BoolType,
+		"idp_entity_id":                    types.StringType,
+		"sp_entity_id":                     types.StringType,
+		"idp_verification_certificate_ids": types.SetType{ElemType: types.StringType},
+		"sp_signing_key_id":                types.StringType,
+		"sso_binding":                      types.StringType,
+		"sso_endpoint":                     types.StringType,
+		"slo_binding":                      types.StringType,
+		"slo_endpoint":                     types.StringType,
+		"slo_response_endpoint":            types.StringType,
+		"slo_window":                       types.Int64Type,
+	}
+)
 
 // Framework interfaces
 var (
@@ -644,7 +693,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 
 					"sp_signing_key_id": schema.StringAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the service provider's signing key ID.  Must be a valid PingOne resource ID.").Description,
-						Required:    true,
+						Optional:    true,
 
 						Validators: []validator.String{
 							verify.P1ResourceIDValidator(),
@@ -1650,5 +1699,224 @@ func (p *IdentityProviderResourceModel) toState(apiObject *management.IdentityPr
 		}
 	}
 
+	var d diag.Diagnostics
+	p.LoginButtonIcon, d = service.ImageOkToTF(common.GetLoginButtonIconOk())
+	diags.Append(d...)
+
+	p.Icon, d = service.ImageOkToTF(common.GetIconOk())
+	diags.Append(d...)
+
+	// The providers
+	p.Facebook, d = identityProviderFacebookToTF(apiObject.IdentityProviderFacebook)
+	diags.Append(d...)
+
+	p.Google, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_GOOGLE)
+	diags.Append(d...)
+
+	p.LinkedIn, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_LINKEDIN)
+	diags.Append(d...)
+
+	p.Yahoo, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_YAHOO)
+	diags.Append(d...)
+
+	p.Amazon, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_AMAZON)
+	diags.Append(d...)
+
+	p.Twitter, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_TWITTER)
+	diags.Append(d...)
+
+	p.Apple, d = identityProviderAppleToTF(apiObject.IdentityProviderApple)
+	diags.Append(d...)
+
+	p.Paypal, d = identityProviderPaypalToTF(apiObject.IdentityProviderPaypal)
+	diags.Append(d...)
+
+	p.Microsoft, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_MICROSOFT)
+	diags.Append(d...)
+
+	p.Github, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_GITHUB)
+	diags.Append(d...)
+
+	p.OpenIDConnect, d = identityProviderOIDCToTF(apiObject.IdentityProviderOIDC)
+	diags.Append(d...)
+
+	p.Saml, d = identityProviderSAMLToTF(apiObject.IdentityProviderSAML)
+	diags.Append(d...)
+
 	return diags
+}
+
+func identityProviderFacebookToTF(idpApiObject *management.IdentityProviderFacebook) (types.List, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	tfObjType := types.ObjectType{AttrTypes: identityProviderFacebookTFObjectTypes}
+
+	if idpApiObject == nil || idpApiObject.GetType() != management.ENUMIDENTITYPROVIDEREXT_FACEBOOK {
+		return types.ListNull(tfObjType), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"app_id":     framework.StringOkToTF(idpApiObject.GetAppIdOk()),
+		"app_secret": framework.StringOkToTF(idpApiObject.GetAppSecretOk()),
+	}
+
+	flattenedObj, d := types.ObjectValue(identityProviderFacebookTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func identityProviderClientIDClientSecretToTF(idpApiObject *management.IdentityProviderClientIDClientSecret, idpType management.EnumIdentityProviderExt) (types.List, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	tfObjType := types.ObjectType{AttrTypes: identityProviderClientIDClientSecretTFObjectTypes}
+
+	if idpApiObject == nil || idpApiObject.GetType() != idpType {
+		return types.ListNull(tfObjType), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"client_id":     framework.StringOkToTF(idpApiObject.GetClientIdOk()),
+		"client_secret": framework.StringOkToTF(idpApiObject.GetClientSecretOk()),
+	}
+
+	flattenedObj, d := types.ObjectValue(identityProviderClientIDClientSecretTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func identityProviderAppleToTF(idpApiObject *management.IdentityProviderApple) (types.List, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	tfObjType := types.ObjectType{AttrTypes: identityProviderAppleTFObjectTypes}
+
+	if idpApiObject == nil || idpApiObject.GetType() != management.ENUMIDENTITYPROVIDEREXT_APPLE {
+		return types.ListNull(tfObjType), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"team_id":                   framework.StringOkToTF(idpApiObject.GetTeamIdOk()),
+		"key_id":                    framework.StringOkToTF(idpApiObject.GetKeyIdOk()),
+		"client_id":                 framework.StringOkToTF(idpApiObject.GetClientIdOk()),
+		"client_secret_signing_key": framework.StringOkToTF(idpApiObject.GetClientSecretSigningKeyOk()),
+	}
+
+	flattenedObj, d := types.ObjectValue(identityProviderAppleTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func identityProviderPaypalToTF(idpApiObject *management.IdentityProviderPaypal) (types.List, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	tfObjType := types.ObjectType{AttrTypes: identityProviderPaypalTFObjectTypes}
+
+	if idpApiObject == nil || idpApiObject.GetType() != management.ENUMIDENTITYPROVIDEREXT_PAYPAL {
+		return types.ListNull(tfObjType), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"client_id":          framework.StringOkToTF(idpApiObject.GetClientIdOk()),
+		"client_secret":      framework.StringOkToTF(idpApiObject.GetClientSecretOk()),
+		"client_environment": framework.StringOkToTF(idpApiObject.GetClientEnvironmentOk()),
+	}
+
+	flattenedObj, d := types.ObjectValue(identityProviderPaypalTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func identityProviderOIDCToTF(idpApiObject *management.IdentityProviderOIDC) (types.List, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	tfObjType := types.ObjectType{AttrTypes: identityProviderOIDCTFObjectTypes}
+
+	if idpApiObject == nil || idpApiObject.GetType() != management.ENUMIDENTITYPROVIDEREXT_OPENID_CONNECT {
+		return types.ListNull(tfObjType), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"authorization_endpoint":     framework.StringOkToTF(idpApiObject.GetAuthorizationEndpointOk()),
+		"client_id":                  framework.StringOkToTF(idpApiObject.GetClientIdOk()),
+		"client_secret":              framework.StringOkToTF(idpApiObject.GetClientSecretOk()),
+		"discovery_endpoint":         framework.StringOkToTF(idpApiObject.GetDiscoveryEndpointOk()),
+		"issuer":                     framework.StringOkToTF(idpApiObject.GetIssuerOk()),
+		"jwks_endpoint":              framework.StringOkToTF(idpApiObject.GetJwksEndpointOk()),
+		"scopes":                     framework.StringSetOkToTF(idpApiObject.GetScopesOk()),
+		"token_endpoint":             framework.StringOkToTF(idpApiObject.GetTokenEndpointOk()),
+		"token_endpoint_auth_method": framework.EnumOkToTF(idpApiObject.GetTokenEndpointAuthMethodOk()),
+		"userinfo_endpoint":          framework.StringOkToTF(idpApiObject.GetUserInfoEndpointOk()),
+	}
+
+	flattenedObj, d := types.ObjectValue(identityProviderOIDCTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func identityProviderSAMLToTF(idpApiObject *management.IdentityProviderSAML) (types.List, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	tfObjType := types.ObjectType{AttrTypes: identityProviderSAMLTFObjectTypes}
+
+	if idpApiObject == nil || idpApiObject.GetType() != management.ENUMIDENTITYPROVIDEREXT_SAML {
+		return types.ListNull(tfObjType), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"authentication_request_signed": framework.BoolOkToTF(idpApiObject.GetAuthnRequestSignedOk()),
+		"idp_entity_id":                 framework.StringOkToTF(idpApiObject.GetIdpEntityIdOk()),
+		"sp_entity_id":                  framework.StringOkToTF(idpApiObject.GetSpEntityIdOk()),
+		"sso_binding":                   framework.EnumOkToTF(idpApiObject.GetSsoBindingOk()),
+		"sso_endpoint":                  framework.StringOkToTF(idpApiObject.GetSsoEndpointOk()),
+		"slo_binding":                   framework.EnumOkToTF(idpApiObject.GetSloBindingOk()),
+		"slo_endpoint":                  framework.StringOkToTF(idpApiObject.GetSloEndpointOk()),
+		"slo_response_endpoint":         framework.StringOkToTF(idpApiObject.GetSloResponseEndpointOk()),
+		"slo_window":                    framework.Int32OkToTF(idpApiObject.GetSloWindowOk()),
+	}
+
+	attributesMap["idp_verification_certificate_ids"] = types.SetNull(types.StringType)
+	if v, ok := idpApiObject.GetIdpVerificationOk(); ok {
+		if c, ok := v.GetCertificatesOk(); ok {
+			ids := make([]string, 0)
+			for _, certificate := range c {
+				ids = append(ids, certificate.GetId())
+			}
+
+			attributesMap["idp_verification_certificate_ids"] = framework.StringSetToTF(ids)
+		}
+	}
+
+	attributesMap["sp_signing_key_id"] = types.StringNull()
+	if v, ok := idpApiObject.GetSpSigningOk(); ok {
+		if c, ok := v.GetKeyOk(); ok {
+			attributesMap["sp_signing_key_id"] = framework.StringOkToTF(c.GetIdOk())
+		}
+	}
+
+	flattenedObj, d := types.ObjectValue(identityProviderSAMLTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	diags.Append(d...)
+
+	return returnVar, diags
 }

@@ -1178,14 +1178,20 @@ func TestAccIdentityProvider_SAML(t *testing.T) {
 
 	name := resourceName
 
+	pem_cert := os.Getenv("PINGONE_KEY_PEM_CERT")
+
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { t.Skipf("Test to be re-defined") }, // Needs redefinition
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckPEMCert(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderConfig_SAMLFull(resourceName, name),
+				Config: testAccIdentityProviderConfig_SAMLFull(resourceName, name, pem_cert),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -1200,9 +1206,10 @@ func TestAccIdentityProvider_SAML(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.authentication_request_signed", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_entity_id", "idp:entity"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sp_entity_id", "sp:entity"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_verification_certificate_ids", "https://www.pingidentity.com/discovery"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_entity_id", fmt.Sprintf("idp:%s", name)),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sp_entity_id", fmt.Sprintf("sp:%s", name)),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_verification_certificate_ids.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "saml.0.idp_verification_certificate_ids.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "saml.0.sp_signing_key_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_binding", "HTTP_POST"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_endpoint", "https://www.pingidentity.com/sso"),
@@ -1213,7 +1220,7 @@ func TestAccIdentityProvider_SAML(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccIdentityProviderConfig_SAMLMinimal(resourceName, name),
+				Config: testAccIdentityProviderConfig_SAMLMinimal(resourceName, name, pem_cert),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -1227,21 +1234,21 @@ func TestAccIdentityProvider_SAML(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "1"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "saml.0.authentication_request_signed"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_entity_id", "idp:entity"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "saml.0.sp_entity_id"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_verification_certificate_ids.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.authentication_request_signed", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_entity_id", fmt.Sprintf("idp:%s-1", name)),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sp_entity_id", fmt.Sprintf("sp:%s-1", name)),
+					resource.TestMatchResourceAttr(resourceFullName, "saml.0.idp_verification_certificate_ids.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml.0.sp_signing_key_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_binding", "HTTP_REDIRECT"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_endpoint", "https://www.pingidentity.com/sso"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "saml.0.slo_binding"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_endpoint", "https://www.pingidentity.com/sso1"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.slo_binding", "HTTP_POST"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml.0.slo_endpoint"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml.0.slo_response_endpoint"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.0.slo_window", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "saml.0.slo_window"),
 				),
 			},
 			{
-				Config: testAccIdentityProviderConfig_SAMLFull(resourceName, name),
+				Config: testAccIdentityProviderConfig_SAMLFull(resourceName, name, pem_cert),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
@@ -1256,9 +1263,10 @@ func TestAccIdentityProvider_SAML(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.authentication_request_signed", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_entity_id", "idp:entity"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sp_entity_id", "sp:entity"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_verification_certificate_ids", "https://www.pingidentity.com/discovery"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_entity_id", fmt.Sprintf("idp:%s", name)),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sp_entity_id", fmt.Sprintf("sp:%s", name)),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_verification_certificate_ids.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "saml.0.idp_verification_certificate_ids.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "saml.0.sp_signing_key_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_binding", "HTTP_POST"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_endpoint", "https://www.pingidentity.com/sso"),
@@ -1831,9 +1839,31 @@ resource "pingone_identity_provider" "%[2]s" {
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_SAMLFull(resourceName, name string) string {
+func testAccIdentityProviderConfig_SAMLFull(resourceName, name, pem string) string {
 	return fmt.Sprintf(`
 		%[1]s
+
+resource "pingone_key" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                = "%[3]s"
+  algorithm           = "EC"
+  key_length          = 256
+  signature_algorithm = "SHA384withECDSA"
+  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}
+
+resource "pingone_certificate" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  pem_file = <<EOT
+%[4]s
+EOT
+
+  usage_type = "SIGNING"
+}
 
 resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -1841,33 +1871,46 @@ resource "pingone_identity_provider" "%[2]s" {
 
   saml {
     authentication_request_signed    = true
-    idp_entity_id                    = "idp:entity"
-    sp_entity_id                     = "sp:entity"
-    idp_verification_certificate_ids = []
-    // sp_signing_key_id = 
-    sso_binding           = "HTTP_POST"
-    sso_endpoint          = "https://www.pingidentity.com/sso"
-    slo_binding           = "HTTP_REDIRECT"
-    slo_endpoint          = "https://dummy-slo-endpoint.pingidentity.com"
-    slo_response_endpoint = "https://dummy-slo-response-endpoint.pingidentity.com"
-    slo_window            = 1
+    idp_entity_id                    = "idp:%[3]s"
+    sp_entity_id                     = "sp:%[3]s"
+    idp_verification_certificate_ids = [pingone_certificate.%[2]s.id]
+    sp_signing_key_id                = pingone_key.%[2]s.id
+    sso_binding                      = "HTTP_POST"
+    sso_endpoint                     = "https://www.pingidentity.com/sso"
+    slo_binding                      = "HTTP_REDIRECT"
+    slo_endpoint                     = "https://dummy-slo-endpoint.pingidentity.com"
+    slo_response_endpoint            = "https://dummy-slo-response-endpoint.pingidentity.com"
+    slo_window                       = 1
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name, pem)
 }
 
-func testAccIdentityProviderConfig_SAMLMinimal(resourceName, name string) string {
+func testAccIdentityProviderConfig_SAMLMinimal(resourceName, name, pem string) string {
 	return fmt.Sprintf(`
 		%[1]s
+
+resource "pingone_certificate" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  pem_file = <<EOT
+%[4]s
+EOT
+
+  usage_type = "SIGNING"
+}
+
 resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
+  name           = "%[3]s1"
 
   saml {
-    idp_entity_id = "idp:entity"
-    sso_binding   = "HTTP_REDIRECT"
-    sso_endpoint  = "https://www.pingidentity.com/sso"
+    idp_entity_id                    = "idp:%[3]s-1"
+    sp_entity_id                     = "sp:%[3]s-1"
+    idp_verification_certificate_ids = [pingone_certificate.%[2]s.id]
+    sso_binding                      = "HTTP_REDIRECT"
+    sso_endpoint                     = "https://www.pingidentity.com/sso1"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name, pem)
 }
