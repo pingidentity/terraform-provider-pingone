@@ -4,6 +4,10 @@ NOTES:
 
 * `resource/pingone_population_default`: Corrected documentation notes. ([#648](https://github.com/pingidentity/terraform-provider-pingone/issues/648))
 
+BUG FIXES:
+
+* `resource/pingone_environment`: Fixed `Value Conversion Error` when attempting to create an environment using calculated (unknown) `service` blocks. ([#652](https://github.com/pingidentity/terraform-provider-pingone/issues/652))
+
 ## 0.23.0 (07 November 2023)
 
 NOTES:
