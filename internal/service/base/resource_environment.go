@@ -839,7 +839,7 @@ func (p *environmentResourceModel) expand(ctx context.Context) (*management.Envi
 
 	diags.Append(environmentServicesValidateTags(ctx, p.Services)...)
 	if diags.HasError() {
-		return nil, nil, diags
+		return nil, diags
 	}
 
 	if !p.Services.IsNull() {
