@@ -16,6 +16,7 @@ NOTES:
 BUG FIXES:
 
 * `resource/pingone_environment`: Fixed `Value Conversion Error` when attempting to create an environment using calculated (unknown) `service` blocks. ([#652](https://github.com/pingidentity/terraform-provider-pingone/issues/652))
+* `resource/pingone_mfa_policy`: Fixed `409 Conflict` error when attempting to destroy an MFA sign-on policy action and MFA device policy, where the MFA policy is assigned to the sign-on policy action. ([#650](https://github.com/pingidentity/terraform-provider-pingone/issues/650))
 
 ## 0.23.0 (07 November 2023)
 
