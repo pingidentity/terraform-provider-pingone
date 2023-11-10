@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_mfa_policy`: Fixed `409 Conflict` error when attempting to destroy an MFA sign-on policy action and MFA device policy, where the MFA policy is assigned to the sign-on policy action.
+```
