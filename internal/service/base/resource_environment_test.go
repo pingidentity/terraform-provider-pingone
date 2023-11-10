@@ -549,16 +549,25 @@ resource "pingone_environment" "%[1]s" {
 }
 
 func testAccEnvironmentConfig_DynamicServices(resourceName, name, licenseID string, services []string) string {
-
-	composedServices := composeServices(services)
-
 	return fmt.Sprintf(`
+
+variable "services_%[1]s" {
+  type    = list(string)
+  default = ["%[4]s"]
+}
+
 resource "pingone_environment" "%[1]s" {
   name       = "%[2]s"
   license_id = "%[3]s"
 
-  %[4]s
-}`, resourceName, name, licenseID, composedServices)
+  dynamic "service" {
+    for_each = toset(var.services_%[1]s)
+
+    content {
+      type = service.key
+    }
+  }
+}`, resourceName, name, licenseID, strings.Join(services, "\",\""))
 }
 
 func testAccEnvironmentConfig_DVTags(resourceName, name, licenseID string) string {
@@ -602,12 +611,4 @@ resource "pingone_environment" "%[1]s" {
   region     = "%[3]s"
   license_id = "%[4]s"
 }`, resourceName, name, region, licenseID)
-}
-
-func composeServices(services []string) string {
-
-	var composedServices = fmt.Sprintf("service {\n  type = \"%s\"\n}", strings.Join(services, "\"\n}\nservice {\n  type = \""))
-
-	return composedServices
-
 }

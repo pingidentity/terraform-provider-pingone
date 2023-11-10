@@ -1441,6 +1441,37 @@ func TestAccMFAPolicy_BadParameters(t *testing.T) {
 	})
 }
 
+func TestAccMFAPolicy_DeleteDependentSOPFinalAction(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMFAPolicyConfig_DeleteDependentSOPFinalAction(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+				),
+			},
+			{
+				Config:  testAccMFAPolicyConfig_DeleteDependentSOPFinalAction(resourceName, name),
+				Destroy: true,
+			},
+		},
+	})
+}
+
 func testAccMFAPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -2665,5 +2696,107 @@ resource "pingone_mfa_policy" "%[2]s" {
     enabled = true
   }
 
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccMFAPolicyConfig_DeleteDependentSOPFinalAction(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+}
+
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms {
+    enabled = false
+  }
+
+  voice {
+    enabled = false
+  }
+
+  email {
+    enabled = false
+  }
+
+  mobile {
+    enabled = false
+  }
+
+  totp {
+    enabled = false
+  }
+
+  fido2 {
+    enabled = false
+  }
+
+}
+
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+
+  priority = "1"
+
+  mfa {
+    device_sign_on_policy_id = pingone_mfa_policy.%[2]s.id
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccMFAPolicyConfig_DeleteDependentSOPFinalAction(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+}
+
+resource "pingone_mfa_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms {
+    enabled = false
+  }
+
+  voice {
+    enabled = false
+  }
+
+  email {
+    enabled = false
+  }
+
+  mobile {
+    enabled = false
+  }
+
+  totp {
+    enabled = false
+  }
+
+  fido2 {
+    enabled = false
+  }
+
+}
+
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+
+  priority = "1"
+
+  mfa {
+    device_sign_on_policy_id = pingone_mfa_policy.%[2]s.id
+  }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

@@ -412,41 +412,7 @@ func (r *EnvironmentResource) ValidateConfig(ctx context.Context, req resource.V
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
-	if !data.Services.IsNull() {
-
-		var servicesPlan []environmentServiceModel
-		resp.Diagnostics.Append(data.Services.ElementsAs(ctx, &servicesPlan, false)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		if len(servicesPlan) > 0 {
-
-			daVinciService, err := model.FindProductByAPICode(management.ENUMPRODUCTTYPE_ONE_DAVINCI)
-			if err != nil {
-				resp.Diagnostics.AddAttributeError(
-					path.Root("service").AtName("tags"),
-					"Cannot find DaVinci product",
-					"In validating the configuration, the DaVinci product could not be found.  This is always a bug in the provider.  Please report this issue to the provider maintainers.",
-				)
-
-				return
-			}
-
-			for _, service := range servicesPlan {
-				if !service.Type.Equal(types.StringValue(daVinciService.ProductCode)) {
-					if !service.Tags.IsNull() {
-						resp.Diagnostics.AddAttributeError(
-							path.Root("service").AtName("tags"),
-							"Invalid configuration",
-							fmt.Sprintf("The `tags` parameter is only configurable where the `type` is set to `%s`.  Please unset the `tags` to an empty set or remove the `tags` parameter for the service.", daVinciService.ProductCode),
-						)
-					}
-				}
-			}
-		}
-	}
-
+	resp.Diagnostics.Append(environmentServicesValidateTags(ctx, data.Services)...)
 }
 
 func (r *EnvironmentResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -871,6 +837,11 @@ func (p *environmentResourceModel) expand(ctx context.Context) (*management.Envi
 		environment.SetDescription(p.Description.ValueString())
 	}
 
+	diags.Append(environmentServicesValidateTags(ctx, p.Services)...)
+	if diags.HasError() {
+		return nil, nil, diags
+	}
+
 	if !p.Services.IsNull() {
 
 		var servicesPlan []environmentServiceModel
@@ -1161,4 +1132,44 @@ var retryEnvironmentDefault = func(ctx context.Context, r *http.Response, p1erro
 	}
 
 	return false
+}
+
+func environmentServicesValidateTags(ctx context.Context, services basetypes.SetValue) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if !services.IsNull() && !services.IsUnknown() {
+
+		var servicesPlan []environmentServiceModel
+		diags.Append(services.ElementsAs(ctx, &servicesPlan, false)...)
+		if diags.HasError() {
+			return diags
+		}
+
+		if len(servicesPlan) > 0 {
+			daVinciService, err := model.FindProductByAPICode(management.ENUMPRODUCTTYPE_ONE_DAVINCI)
+			if err != nil {
+				diags.AddAttributeError(
+					path.Root("service").AtName("tags"),
+					"Cannot find DaVinci product",
+					"In validating the configuration, the DaVinci product could not be found.  This is always a bug in the provider.  Please report this issue to the provider maintainers.",
+				)
+
+				return diags
+			}
+
+			for _, service := range servicesPlan {
+				if !service.Type.Equal(types.StringValue(daVinciService.ProductCode)) {
+					if !service.Tags.IsNull() {
+						diags.AddAttributeError(
+							path.Root("service").AtName("tags"),
+							"Invalid configuration",
+							fmt.Sprintf("The `tags` parameter is only configurable where the `type` is set to `%s`.  Please unset the `tags` to an empty set or remove the `tags` parameter for the service.", daVinciService.ProductCode),
+						)
+					}
+				}
+			}
+		}
+	}
+
+	return diags
 }

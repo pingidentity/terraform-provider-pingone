@@ -1,4 +1,24 @@
-## 0.23.0 (Unreleased)
+## 0.23.1 (Unreleased)
+
+NOTES:
+
+* `resource/pingone_population_default`: Corrected documentation notes. ([#648](https://github.com/pingidentity/terraform-provider-pingone/issues/648))
+* bump `github.com/hashicorp/terraform-plugin-sdk/v2` v2.29.0 => v2.30.0 ([#653](https://github.com/pingidentity/terraform-provider-pingone/issues/653))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement` v0.2.2 => v0.3.0 ([#653](https://github.com/pingidentity/terraform-provider-pingone/issues/653))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.3.1 => v0.4.0 ([#653](https://github.com/pingidentity/terraform-provider-pingone/issues/653))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.5.0 => v0.6.0 ([#653](https://github.com/pingidentity/terraform-provider-pingone/issues/653))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.31.0 => v0.32.0 ([#653](https://github.com/pingidentity/terraform-provider-pingone/issues/653))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.17.0 => v0.18.0 ([#653](https://github.com/pingidentity/terraform-provider-pingone/issues/653))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` v0.11.0 => v0.12.0 ([#653](https://github.com/pingidentity/terraform-provider-pingone/issues/653))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/verify` v0.3.1 => v0.4.0 ([#653](https://github.com/pingidentity/terraform-provider-pingone/issues/653))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.10.9 => v0.11.0 ([#653](https://github.com/pingidentity/terraform-provider-pingone/issues/653))
+
+BUG FIXES:
+
+* `resource/pingone_environment`: Fixed `Value Conversion Error` when attempting to create an environment using calculated (unknown) `service` blocks. ([#652](https://github.com/pingidentity/terraform-provider-pingone/issues/652))
+* `resource/pingone_mfa_policy`: Fixed `409 Conflict` error when attempting to destroy an MFA sign-on policy action and MFA device policy, where the MFA policy is assigned to the sign-on policy action. ([#650](https://github.com/pingidentity/terraform-provider-pingone/issues/650))
+
+## 0.23.0 (07 November 2023)
 
 NOTES:
 
