@@ -2,808 +2,1031 @@ package sso
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func ResourceIdentityProvider() *schema.Resource {
+// Types
+type IdentityProviderResource serviceClientType
+
+type IdentityProviderResourceModel struct {
+	Id                       types.String `tfsdk:"id"`
+	EnvironmentId            types.String `tfsdk:"environment_id"`
+	Name                     types.String `tfsdk:"name"`
+	Description              types.String `tfsdk:"description"`
+	Enabled                  types.Bool   `tfsdk:"enabled"`
+	RegistrationPopulationId types.String `tfsdk:"registration_population_id"`
+	LoginButtonIcon          types.List   `tfsdk:"login_button_icon"`
+	Icon                     types.List   `tfsdk:"icon"`
+	Facebook                 types.List   `tfsdk:"facebook"`
+	Google                   types.List   `tfsdk:"google"`
+	LinkedIn                 types.List   `tfsdk:"linkedin"`
+	Yahoo                    types.List   `tfsdk:"yahoo"`
+	Amazon                   types.List   `tfsdk:"amazon"`
+	Twitter                  types.List   `tfsdk:"twitter"`
+	Apple                    types.List   `tfsdk:"apple"`
+	Paypal                   types.List   `tfsdk:"paypal"`
+	Microsoft                types.List   `tfsdk:"microsoft"`
+	Github                   types.List   `tfsdk:"github"`
+	OpenIDConnect            types.List   `tfsdk:"openid_connect"`
+	Saml                     types.List   `tfsdk:"saml"`
+}
+
+type IdentityProviderClientIdClientSecretResourceModel struct {
+	ClientId     types.String `tfsdk:"client_id"`
+	ClientSecret types.String `tfsdk:"client_secret"`
+}
+
+type IdentityProviderLoginButtonIcon service.ImageResourceModel
+
+type IdentityProviderIcon service.ImageResourceModel
+
+type IdentityProviderFacebookResourceModel struct {
+	AppId     types.String `tfsdk:"app_id"`
+	AppSecret types.String `tfsdk:"app_secret"`
+}
+
+type IdentityProviderGoogleResourceModel IdentityProviderClientIdClientSecretResourceModel
+
+type IdentityProviderLinkedInResourceModel IdentityProviderClientIdClientSecretResourceModel
+
+type IdentityProviderYahooResourceModel IdentityProviderClientIdClientSecretResourceModel
+
+type IdentityProviderAmazonResourceModel IdentityProviderClientIdClientSecretResourceModel
+
+type IdentityProviderTwitterResourceModel IdentityProviderClientIdClientSecretResourceModel
+
+type IdentityProviderAppleResourceModel struct {
+	TeamId                 types.String `tfsdk:"team_id"`
+	KeyId                  types.String `tfsdk:"key_id"`
+	ClientId               types.String `tfsdk:"client_id"`
+	ClientSecretSigningKey types.String `tfsdk:"client_secret_signing_key"`
+}
+
+type IdentityProviderPaypalResourceModel struct {
+	ClientId          types.String `tfsdk:"client_id"`
+	ClientSecret      types.String `tfsdk:"client_secret"`
+	ClientEnvironment types.String `tfsdk:"client_environment"`
+}
+
+type IdentityProviderMicrosoftResourceModel IdentityProviderClientIdClientSecretResourceModel
+
+type IdentityProviderGithubResourceModel IdentityProviderClientIdClientSecretResourceModel
+
+type IdentityProviderOIDCResourceModel struct {
+	AuthorizationEndpoint   types.String `tfsdk:"authorization_endpoint"`
+	ClientId                types.String `tfsdk:"client_id"`
+	ClientSecret            types.String `tfsdk:"client_secret"`
+	DiscoveryEndpoint       types.String `tfsdk:"discovery_endpoint"`
+	Issuer                  types.String `tfsdk:"issuer"`
+	JwksEndpoint            types.String `tfsdk:"jwks_endpoint"`
+	Scopes                  types.Set    `tfsdk:"scopes"`
+	TokenEndpoint           types.String `tfsdk:"token_endpoint"`
+	TokenEndpointAuthMethod types.String `tfsdk:"token_endpoint_auth_method"`
+	UserinfoEndpoint        types.String `tfsdk:"userinfo_endpoint"`
+}
+
+type IdentityProviderSAMLResourceModel struct {
+	AuthenticationRequestSigned   types.Bool   `tfsdk:"authentication_request_signed"`
+	IdpEntityId                   types.String `tfsdk:"idp_entity_id"`
+	SpEntityId                    types.String `tfsdk:"sp_entity_id"`
+	IdpVerificationCertificateIds types.Set    `tfsdk:"idp_verification_certificate_ids"`
+	SpSigningKeyId                types.String `tfsdk:"sp_signing_key_id"`
+	SsoBinding                    types.String `tfsdk:"sso_binding"`
+	SsoEndpoint                   types.String `tfsdk:"sso_endpoint"`
+	SloBinding                    types.String `tfsdk:"slo_binding"`
+	SloEndpoint                   types.String `tfsdk:"slo_endpoint"`
+	SloResponseEndpoint           types.String `tfsdk:"slo_response_endpoint"`
+	SloWindow                     types.Int64  `tfsdk:"slo_window"`
+}
+
+var (
+	identityProviderFacebookTFObjectTypes = map[string]attr.Type{
+		"app_id":     types.StringType,
+		"app_secret": types.StringType,
+	}
+
+	identityProviderClientIDClientSecretTFObjectTypes = map[string]attr.Type{
+		"client_id":     types.StringType,
+		"client_secret": types.StringType,
+	}
+
+	identityProviderAppleTFObjectTypes = map[string]attr.Type{
+		"team_id":                   types.StringType,
+		"key_id":                    types.StringType,
+		"client_id":                 types.StringType,
+		"client_secret_signing_key": types.StringType,
+	}
+
+	identityProviderPaypalTFObjectTypes = map[string]attr.Type{
+		"client_id":          types.StringType,
+		"client_secret":      types.StringType,
+		"client_environment": types.StringType,
+	}
+
+	identityProviderOIDCTFObjectTypes = map[string]attr.Type{
+		"authorization_endpoint":     types.StringType,
+		"client_id":                  types.StringType,
+		"client_secret":              types.StringType,
+		"discovery_endpoint":         types.StringType,
+		"issuer":                     types.StringType,
+		"jwks_endpoint":              types.StringType,
+		"scopes":                     types.SetType{ElemType: types.StringType},
+		"token_endpoint":             types.StringType,
+		"token_endpoint_auth_method": types.StringType,
+		"userinfo_endpoint":          types.StringType,
+	}
+
+	identityProviderSAMLTFObjectTypes = map[string]attr.Type{
+		"authentication_request_signed":    types.BoolType,
+		"idp_entity_id":                    types.StringType,
+		"sp_entity_id":                     types.StringType,
+		"idp_verification_certificate_ids": types.SetType{ElemType: types.StringType},
+		"sp_signing_key_id":                types.StringType,
+		"sso_binding":                      types.StringType,
+		"sso_endpoint":                     types.StringType,
+		"slo_binding":                      types.StringType,
+		"slo_endpoint":                     types.StringType,
+		"slo_response_endpoint":            types.StringType,
+		"slo_window":                       types.Int64Type,
+	}
+)
+
+// Framework interfaces
+var (
+	_ resource.Resource                = &IdentityProviderResource{}
+	_ resource.ResourceWithConfigure   = &IdentityProviderResource{}
+	_ resource.ResourceWithImportState = &IdentityProviderResource{}
+)
+
+// New Object
+func NewIdentityProviderResource() resource.Resource {
+	return &IdentityProviderResource{}
+}
+
+// Metadata
+func (r *IdentityProviderResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_identity_provider"
+}
+
+// Schema.
+func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+
+	const attrMinLength = 1
+	const appleKeyIdLength = 10
+	const appleTeamIdLength = 10
+	const samlSloWindowMin = 1
+	const samlSloWindowMax = 24
 
 	providerAttributeList := []string{"facebook", "google", "linkedin", "yahoo", "amazon", "twitter", "apple", "paypal", "microsoft", "github", "openid_connect", "saml"}
 
-	return &schema.Resource{
+	enabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the identity provider is enabled in the environment.",
+	).DefaultValue(false)
 
+	registrationPopulationIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the population ID to create users in, when using just-in-time provisioning. Setting this attribute gives management of linked users to the IdP and also triggers just-in-time provisioning of new users to the population ID provided.",
+	).AppendMarkdownString("Must be a valid PingOne resource ID.")
+
+	loginButtonIconIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The ID for the identity provider icon to use as the login button.  This can be retrieved from the `id` parameter of the `pingone_image` resource.  Must be a valid PingOne resource ID.",
+	)
+
+	loginButtonIconHrefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The URL or fully qualified path to the identity provider icon to use as the login button.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.",
+	)
+
+	iconIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The ID for the identity provider icon to use as the login button.  This can be retrieved from the `id` parameter of the `pingone_image` resource.  Must be a valid PingOne resource ID.",
+	)
+
+	iconHrefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The URL or fully qualified path to the identity provider icon to use as the login button.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.",
+	)
+
+	paypalClientEnvironmentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the PayPal environment.",
+	).AllowedValues("sandbox", "live")
+
+	oidcTokenEndpointAuthMethodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the OIDC identity provider's token endpoint authentication method.",
+	).AllowedValuesEnum(management.AllowedEnumIdentityProviderOIDCTokenAuthMethodEnumValues).DefaultValue(string(management.ENUMIDENTITYPROVIDEROIDCTOKENAUTHMETHOD_CLIENT_SECRET_BASIC))
+
+	samlAuthenticationRequestSignedDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the SAML authentication request will be signed when sending to the identity provider. Set this to `true` if the external IDP is included in an authentication policy to be used by applications that are accessed using a mix of default URLS and custom Domains URLs.",
+	).DefaultValue(false)
+
+	samlIdpEntityIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the entity ID URI that is checked against the `issuerId` tag in the incoming response.",
+	)
+
+	samlSSOBindingDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the binding for the authentication request.",
+	).AllowedValuesEnum(management.AllowedEnumIdentityProviderSAMLSSOBindingEnumValues)
+
+	samlSLOBindingDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the binding protocol to be used for the logout response.",
+	).AllowedValuesEnum(management.AllowedEnumIdentityProviderSAMLSLOBindingEnumValues).DefaultValue(string(management.ENUMIDENTITYPROVIDERSAMLSLOBINDING_POST))
+
+	samlSLOResponseEndpointDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the endpoint URL to submit the logout response.  If a value is not provided, the `slo_endpoint` property value is used to submit SLO response.  This value must be a URL that uses http or https.",
+	)
+
+	samlSLOWindowDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request. The minimum value is `%d` hour and the maximum is `%d` hours.", samlSloWindowMin, samlSloWindowMax),
+	)
+
+	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage PingOne Identity Providers.",
+		Description: "Resource to create and manage Identity Providers in a PingOne environment.",
 
-		CreateContext: resourceIdentityProviderCreate,
-		ReadContext:   resourceIdentityProviderRead,
-		UpdateContext: resourceIdentityProviderUpdate,
-		DeleteContext: resourceIdentityProviderDelete,
+		Attributes: map[string]schema.Attribute{
+			"id": framework.Attr_ID(),
 
-		Importer: &schema.ResourceImporter{
-			StateContext: resourceIdentityProviderImport,
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create the identity provider in."),
+			),
+
+			"name": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the name of the identity provider.").Description,
+				Required:    true,
+
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+				},
+			},
+
+			"description": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the description of the identity provider.").Description,
+				Optional:    true,
+			},
+
+			"enabled": schema.BoolAttribute{
+				Description:         enabledDescription.Description,
+				MarkdownDescription: enabledDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: booldefault.StaticBool(false),
+			},
+
+			"registration_population_id": schema.StringAttribute{
+				Description:         registrationPopulationIdDescription.Description,
+				MarkdownDescription: registrationPopulationIdDescription.MarkdownDescription,
+				Optional:            true,
+
+				Validators: []validator.String{
+					verify.P1ResourceIDValidator(),
+				},
+			},
 		},
 
-		Schema: map[string]*schema.Schema{
-			"environment_id": {
-				Description:      "The ID of the environment to create the identity provider in.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-				ForceNew:         true,
-			},
-			"name": {
-				Description:      "A string that specifies the name of the identity provider.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
-			},
-			"description": {
-				Description: "A string that specifies the description of the identity provider.",
-				Type:        schema.TypeString,
-				Optional:    true,
-			},
-			"enabled": {
-				Description: "A boolean that specifies whether the identity provider is enabled in the environment.",
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     false,
-			},
-			"registration_population_id": {
-				Description:      "Setting this attribute gives management of linked users to the IdP and also triggers just-in-time provisioning of new users to the population ID provided.",
-				Type:             schema.TypeString,
-				Optional:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-			},
-			"login_button_icon": {
-				Description: "The HREF and the ID for the identity provider icon to use as the login button.",
-				Type:        schema.TypeList,
-				MaxItems:    1,
-				Optional:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"id": {
-							Description:      "The ID for the identity provider icon to use as the login button.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+		Blocks: map[string]schema.Block{
+			"login_button_icon": schema.ListNestedBlock{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies the HREF and ID for the identity provider icon to use in the login button.").Description,
+
+				NestedObject: schema.NestedBlockObject{
+
+					Attributes: map[string]schema.Attribute{
+						"id": schema.StringAttribute{
+							Description:         loginButtonIconIdDescription.Description,
+							MarkdownDescription: loginButtonIconIdDescription.MarkdownDescription,
+							Required:            true,
+
+							Validators: []validator.String{
+								verify.P1ResourceIDValidator(),
+							},
 						},
-						"href": {
-							Description:      "The HREF for the identity provider icon to use as the login button.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPS),
+
+						"href": schema.StringAttribute{
+							Description:         loginButtonIconHrefDescription.Description,
+							MarkdownDescription: loginButtonIconHrefDescription.MarkdownDescription,
+							Required:            true,
+
+							Validators: []validator.String{
+								stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+							},
 						},
 					},
 				},
+
+				Validators: []validator.List{
+					listvalidator.SizeAtMost(1),
+				},
 			},
-			"icon": {
-				Description: "The HREF and the ID for the identity provider icon.",
-				Type:        schema.TypeList,
-				MaxItems:    1,
-				Optional:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"id": {
-							Description:      "The ID for the identity provider icon.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+
+			"icon": schema.ListNestedBlock{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies the HREF and ID for the identity provider icon.").Description,
+
+				NestedObject: schema.NestedBlockObject{
+
+					Attributes: map[string]schema.Attribute{
+						"id": schema.StringAttribute{
+							Description:         iconIdDescription.Description,
+							MarkdownDescription: iconIdDescription.MarkdownDescription,
+							Required:            true,
+
+							Validators: []validator.String{
+								verify.P1ResourceIDValidator(),
+							},
 						},
-						"href": {
-							Description:      "The HREF for the identity provider icon.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPS),
+
+						"href": schema.StringAttribute{
+							Description:         iconHrefDescription.Description,
+							MarkdownDescription: iconHrefDescription.MarkdownDescription,
+							Required:            true,
+
+							Validators: []validator.String{
+								stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+							},
 						},
 					},
+				},
+
+				Validators: []validator.List{
+					listvalidator.SizeAtMost(1),
 				},
 			},
 
 			// The providers
-			"facebook": {
-				Description:  "Options for Identity provider connectivity to Facebook.",
-				Type:         schema.TypeList,
-				MaxItems:     1,
-				Optional:     true,
-				ExactlyOneOf: providerAttributeList,
-				ForceNew:     true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"app_id": {
-							Description:      "A string that specifies the application ID from Facebook.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+			"facebook": identityProviderSchemaBlock(
+				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the Facebook social identity provider."),
+
+				map[string]schema.Attribute{
+					"app_id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application ID from Facebook.").Description,
+						Required:    true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
 						},
-						"app_secret": {
-							Description:      "A string that specifies the application secret from Facebook.",
-							Type:             schema.TypeString,
-							Required:         true,
-							Sensitive:        true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+					},
+
+					"app_secret": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application secret from Facebook.").Description,
+						Required:    true,
+						Sensitive:   true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
 						},
 					},
 				},
-			},
-			"google": {
-				Description:  "Options for Identity provider connectivity to Google.",
-				Type:         schema.TypeList,
-				MaxItems:     1,
-				Optional:     true,
-				ForceNew:     true,
-				ExactlyOneOf: providerAttributeList,
-				Elem:         clientIdClientSecretSchema("Google"),
-			},
-			"linkedin": {
-				Description:  "Options for Identity provider connectivity to LinkedIn.",
-				Type:         schema.TypeList,
-				MaxItems:     1,
-				Optional:     true,
-				ForceNew:     true,
-				ExactlyOneOf: providerAttributeList,
-				Elem:         clientIdClientSecretSchema("LinkedIn"),
-			},
-			"yahoo": {
-				Description:  "Options for Identity provider connectivity to Yahoo.",
-				Type:         schema.TypeList,
-				MaxItems:     1,
-				Optional:     true,
-				ForceNew:     true,
-				ExactlyOneOf: providerAttributeList,
-				Elem:         clientIdClientSecretSchema("Yahoo"),
-			},
-			"amazon": {
-				Description:  "Options for Identity provider connectivity to Amazon.",
-				Type:         schema.TypeList,
-				MaxItems:     1,
-				Optional:     true,
-				ForceNew:     true,
-				ExactlyOneOf: providerAttributeList,
-				Elem:         clientIdClientSecretSchema("Amazon"),
-			},
-			"twitter": {
-				Description:  "Options for Identity provider connectivity to Twitter.",
-				Type:         schema.TypeList,
-				MaxItems:     1,
-				Optional:     true,
-				ForceNew:     true,
-				ExactlyOneOf: providerAttributeList,
-				Elem:         clientIdClientSecretSchema("Twitter"),
-			},
-			"apple": {
-				Description:  "Options for Identity provider connectivity to Apple.",
-				Type:         schema.TypeList,
-				MaxItems:     1,
-				Optional:     true,
-				ForceNew:     true,
-				ExactlyOneOf: providerAttributeList,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"client_id": {
-							Description:      "A string that specifies the application ID from Apple. This is the identifier obtained after registering a services ID in the Apple developer portal.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+
+				providerAttributeList,
+			),
+
+			"google": identityProviderSchemaBlock(
+				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the Google social identity provider."),
+
+				identityProviderClientIdClientSecretAttributes("Google"),
+
+				providerAttributeList,
+			),
+
+			"linkedin": identityProviderSchemaBlock(
+				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the LinkedIn social identity provider."),
+
+				identityProviderClientIdClientSecretAttributes("LinkedIn"),
+
+				providerAttributeList,
+			),
+
+			"yahoo": identityProviderSchemaBlock(
+				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the Yahoo social identity provider."),
+
+				identityProviderClientIdClientSecretAttributes("Yahoo"),
+
+				providerAttributeList,
+			),
+
+			"amazon": identityProviderSchemaBlock(
+				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the Amazon social identity provider."),
+
+				identityProviderClientIdClientSecretAttributes("Amazon"),
+
+				providerAttributeList,
+			),
+
+			"twitter": identityProviderSchemaBlock(
+				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the Twitter social identity provider."),
+
+				identityProviderClientIdClientSecretAttributes("Twitter"),
+
+				providerAttributeList,
+			),
+
+			"apple": identityProviderSchemaBlock(
+				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the Apple social identity provider."),
+
+				map[string]schema.Attribute{
+					"client_id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application ID from Apple. This is the identifier obtained after registering a services ID in the Apple developer portal.").Description,
+						Required:    true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
 						},
-						"client_secret_signing_key": {
-							Description:      "A string that specifies the private key that is used to generate a client secret.",
-							Type:             schema.TypeString,
-							Required:         true,
-							Sensitive:        true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+					},
+
+					"client_secret_signing_key": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the private key that is used to generate a client secret.").Description,
+						Required:    true,
+						Sensitive:   true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
 						},
-						"key_id": {
-							Description:      "A 10-character string that Apple uses to identify an authentication key.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(10, 10)),
+					},
+
+					"key_id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A 10-character string that Apple uses to identify an authentication key.").Description,
+						Required:    true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthBetween(appleKeyIdLength, appleKeyIdLength),
 						},
-						"team_id": {
-							Description:      "A 10-character string that Apple uses to identify teams.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(10, 10)),
+					},
+
+					"team_id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A 10-character string that Apple uses to identify teams.").Description,
+						Required:    true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthBetween(appleTeamIdLength, appleTeamIdLength),
 						},
 					},
 				},
-			},
-			"paypal": {
-				Description:  "Options for Identity provider connectivity to Paypal.",
-				Type:         schema.TypeList,
-				MaxItems:     1,
-				Optional:     true,
-				ForceNew:     true,
-				ExactlyOneOf: providerAttributeList,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"client_id": {
-							Description:      "A string that specifies the application ID from PayPal.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+
+				providerAttributeList,
+			),
+
+			"paypal": identityProviderSchemaBlock(
+				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the Paypal social identity provider."),
+
+				map[string]schema.Attribute{
+					"client_id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application ID from Paypal.").Description,
+						Required:    true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
 						},
-						"client_secret": {
-							Description:      "A string that specifies the application secret from PayPal.",
-							Type:             schema.TypeString,
-							Required:         true,
-							Sensitive:        true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+					},
+
+					"client_secret": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application secret from PayPal.").Description,
+						Required:    true,
+						Sensitive:   true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
 						},
-						"client_environment": {
-							Description:      "A string that specifies the PayPal environment. Options are `sandbox`, and `live`.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"sandbox", "live"}, false)),
+					},
+
+					"client_environment": schema.StringAttribute{
+						Description:         paypalClientEnvironmentDescription.Description,
+						MarkdownDescription: paypalClientEnvironmentDescription.MarkdownDescription,
+						Required:            true,
+
+						Validators: []validator.String{
+							stringvalidator.OneOf("sandbox", "live"),
 						},
 					},
 				},
-			},
-			"microsoft": {
-				Description:  "Options for Identity provider connectivity to Microsoft.",
-				Type:         schema.TypeList,
-				MaxItems:     1,
-				Optional:     true,
-				ForceNew:     true,
-				ExactlyOneOf: providerAttributeList,
-				Elem:         clientIdClientSecretSchema("Microsoft"),
-			},
-			"github": {
-				Description:  "Options for Identity provider connectivity to Github.",
-				Type:         schema.TypeList,
-				MaxItems:     1,
-				Optional:     true,
-				ForceNew:     true,
-				ExactlyOneOf: providerAttributeList,
-				Elem:         clientIdClientSecretSchema("Github"),
-			},
-			"openid_connect": {
-				Description:  "Options for Identity provider connectivity to a generic OpenID Connect service.",
-				Type:         schema.TypeList,
-				MaxItems:     1,
-				Optional:     true,
-				ForceNew:     true,
-				ExactlyOneOf: providerAttributeList,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"authorization_endpoint": {
-							Description:      "A string that specifies the the OIDC identity provider's authorization endpoint. This value must be a URL that uses https.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPS),
+
+				providerAttributeList,
+			),
+
+			"microsoft": identityProviderSchemaBlock(
+				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the Microsoft social identity provider."),
+
+				identityProviderClientIdClientSecretAttributes("Microsoft"),
+
+				providerAttributeList,
+			),
+
+			"github": identityProviderSchemaBlock(
+				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the Github social identity provider."),
+
+				identityProviderClientIdClientSecretAttributes("Github"),
+
+				providerAttributeList,
+			),
+
+			"openid_connect": identityProviderSchemaBlock(
+				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to an OpenID Connect compliant identity provider."),
+
+				map[string]schema.Attribute{
+					"authorization_endpoint": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the the OIDC identity provider's authorization endpoint. This value must be a URL that uses https.").Description,
+						Required:    true,
+
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
 						},
-						"client_id": {
-							Description:      "A string that specifies the application ID from the OIDC identity provider.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+					},
+
+					"client_id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application client ID from the OIDC identity provider.").Description,
+						Required:    true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
 						},
-						"client_secret": {
-							Description:      "A string that specifies the application secret from the OIDC identity provider.",
-							Type:             schema.TypeString,
-							Required:         true,
-							Sensitive:        true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+					},
+
+					"client_secret": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application client secret from the OIDC identity provider.").Description,
+						Required:    true,
+						Sensitive:   true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
 						},
-						"discovery_endpoint": {
-							Description:      "A string that specifies the OIDC identity provider's discovery endpoint. This value must be a URL that uses https.",
-							Type:             schema.TypeString,
-							Optional:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPS),
+					},
+
+					"discovery_endpoint": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the OIDC identity provider's discovery endpoint. This value must be a URL that uses https.").Description,
+						Optional:    true,
+
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
 						},
-						"issuer": {
-							Description:      "A string that specifies the issuer to which the authentication is sent for the OIDC identity provider. This value must be a URL that uses https.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPS),
+					},
+
+					"issuer": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the issuer to which the authentication is sent for the OIDC identity provider. This value must be a URL that uses https.").Description,
+						Required:    true,
+
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
 						},
-						"jwks_endpoint": {
-							Description:      "A string that specifies the OIDC identity provider's jwks endpoint. This value must be a URL that uses https.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+					},
+
+					"jwks_endpoint": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the OIDC identity provider's jwks endpoint. This value must be a URL that uses https.").Description,
+						Required:    true,
+
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
 						},
-						"scopes": {
-							Description: "An array that specifies the scopes to include in the authentication request to the OIDC identity provider.",
-							Type:        schema.TypeSet,
-							Required:    true,
-							Elem: &schema.Schema{
-								Type:             schema.TypeString,
-								ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
-							},
+					},
+
+					"scopes": schema.SetAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("An array that specifies the scopes to include in the authentication request to the OIDC identity provider.").Description,
+						Required:    true,
+
+						ElementType: types.StringType,
+
+						Validators: []validator.Set{
+							setvalidator.SizeAtLeast(attrMinLength),
+							setvalidator.ValueStringsAre(
+								stringvalidator.LengthAtLeast(attrMinLength),
+							),
 						},
-						"token_endpoint": {
-							Description:      "A string that specifies the OIDC identity provider's token endpoint.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPS),
+					},
+
+					"token_endpoint": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the OIDC identity provider's token endpoint. This value must be a URL that uses https.").Description,
+						Required:    true,
+
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
 						},
-						"token_endpoint_auth_method": {
-							Description:      fmt.Sprintf("A string that specifies the OIDC identity provider's token endpoint authentication method. Options are `%s` (default), `%s`, and `%s`.", string(management.ENUMIDENTITYPROVIDEROIDCTOKENAUTHMETHOD_CLIENT_SECRET_BASIC), string(management.ENUMIDENTITYPROVIDEROIDCTOKENAUTHMETHOD_CLIENT_SECRET_POST), string(management.ENUMIDENTITYPROVIDEROIDCTOKENAUTHMETHOD_NONE)),
-							Type:             schema.TypeString,
-							Optional:         true,
-							Default:          string(management.ENUMIDENTITYPROVIDEROIDCTOKENAUTHMETHOD_CLIENT_SECRET_BASIC),
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMIDENTITYPROVIDEROIDCTOKENAUTHMETHOD_CLIENT_SECRET_BASIC), string(management.ENUMIDENTITYPROVIDEROIDCTOKENAUTHMETHOD_CLIENT_SECRET_POST), string(management.ENUMIDENTITYPROVIDEROIDCTOKENAUTHMETHOD_NONE)}, false)),
+					},
+
+					"token_endpoint_auth_method": schema.StringAttribute{
+						Description:         oidcTokenEndpointAuthMethodDescription.Description,
+						MarkdownDescription: oidcTokenEndpointAuthMethodDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: stringdefault.StaticString(string(management.ENUMIDENTITYPROVIDEROIDCTOKENAUTHMETHOD_CLIENT_SECRET_BASIC)),
+
+						Validators: []validator.String{
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumIdentityProviderOIDCTokenAuthMethodEnumValues)...),
 						},
-						"userinfo_endpoint": {
-							Description:      "A string that specifies the OIDC identity provider's userInfo endpoint.",
-							Type:             schema.TypeString,
-							Optional:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPS),
+					},
+
+					"userinfo_endpoint": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the OIDC identity provider's userInfo endpoint. This value must be a URL that uses https.").Description,
+						Optional:    true,
+
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
 						},
 					},
 				},
-			},
-			"saml": {
-				Description:  "Options for Identity provider connectivity to a generic SAML service.",
-				Type:         schema.TypeList,
-				MaxItems:     1,
-				Optional:     true,
-				ForceNew:     true,
-				ExactlyOneOf: providerAttributeList,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"authentication_request_signed": {
-							Description: "A boolean that specifies whether the SAML authentication request will be signed when sending to the identity provider. Set this to true if the external IDP is included in an authentication policy to be used by applications that are accessed using a mix of default URLS and custom Domains URLs.",
-							Type:        schema.TypeBool,
-							Optional:    true,
-							Default:     false,
+
+				providerAttributeList,
+			),
+
+			"saml": identityProviderSchemaBlock(
+				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to a SAML 2.0 compliant identity provider."),
+
+				map[string]schema.Attribute{
+					"authentication_request_signed": schema.BoolAttribute{
+						Description:         samlAuthenticationRequestSignedDescription.Description,
+						MarkdownDescription: samlAuthenticationRequestSignedDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: booldefault.StaticBool(false),
+					},
+
+					"idp_entity_id": schema.StringAttribute{
+						Description:         samlIdpEntityIdDescription.Description,
+						MarkdownDescription: samlIdpEntityIdDescription.MarkdownDescription,
+						Required:            true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
 						},
-						"idp_entity_id": {
-							Description: "A string that specifies the entity ID URI that is checked against the issuerId tag in the incoming response.",
-							Type:        schema.TypeString,
-							Required:    true,
+					},
+
+					"sp_entity_id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the service provider's entity ID, used to look up the application.").Description,
+						Required:    true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
 						},
-						"sp_entity_id": {
-							Description: "A string that specifies the service provider's entity ID, used to look up the application.",
-							Type:        schema.TypeString,
-							Required:    true,
+					},
+
+					"idp_verification_certificate_ids": schema.SetAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("An unordered list that specifies the identity provider's certificate IDs used to verify the signature on the signed assertion from the identity provider. Signing is done with a private key and verified with a public key.  Items must be valid PingOne resource IDs.").Description,
+						Required:    true,
+
+						ElementType: types.StringType,
+
+						Validators: []validator.Set{
+							setvalidator.SizeAtLeast(attrMinLength),
+							setvalidator.ValueStringsAre(
+								verify.P1ResourceIDValidator(),
+							),
 						},
-						"idp_verification_certificate_ids": {
-							Description: "A list that specifies the identity provider's certificate IDs used to verify the signature on the signed assertion from the identity provider. Signing is done with a private key and verified with a public key.",
-							Type:        schema.TypeSet,
-							Required:    true,
-							Elem: &schema.Schema{
-								Type:             schema.TypeString,
-								ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-							},
+					},
+
+					"sp_signing_key_id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the service provider's signing key ID.  Must be a valid PingOne resource ID.").Description,
+						Optional:    true,
+
+						Validators: []validator.String{
+							verify.P1ResourceIDValidator(),
 						},
-						"sp_signing_key_id": {
-							Description:      "A string that specifies the service provider's signing key ID.",
-							Type:             schema.TypeString,
-							Optional:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+					},
+
+					"sso_binding": schema.StringAttribute{
+						Description:         samlSSOBindingDescription.Description,
+						MarkdownDescription: samlSSOBindingDescription.MarkdownDescription,
+						Required:            true,
+
+						Validators: []validator.String{
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumIdentityProviderSAMLSSOBindingEnumValues)...),
 						},
-						"sso_binding": {
-							Description:      fmt.Sprintf("A string that specifies the binding for the authentication request. Options are `%s` and `%s`.", string(management.ENUMIDENTITYPROVIDERSAMLSSOBINDING_POST), string(management.ENUMIDENTITYPROVIDERSAMLSSOBINDING_REDIRECT)),
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMIDENTITYPROVIDERSAMLSSOBINDING_POST), string(management.ENUMIDENTITYPROVIDERSAMLSSOBINDING_REDIRECT)}, false)),
+					},
+
+					"sso_endpoint": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the SSO endpoint for the authentication request.  This value must be a URL that uses http or https.").Description,
+						Required:    true,
+
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Value must be a valid URL with `http://` or `https://` prefix."),
 						},
-						"sso_endpoint": {
-							Description:      "A string that specifies the SSO endpoint for the authentication request.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPorHTTPS),
+					},
+
+					"slo_binding": schema.StringAttribute{
+						Description:         samlSLOBindingDescription.Description,
+						MarkdownDescription: samlSLOBindingDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: stringdefault.StaticString(string(management.ENUMIDENTITYPROVIDERSAMLSLOBINDING_POST)),
+
+						Validators: []validator.String{
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumIdentityProviderSAMLSSOBindingEnumValues)...),
 						},
-						"slo_binding": {
-							Description:      fmt.Sprintf("A string that specifies the binding protocol to be used for the logout response. Options are `%s` and `%s`.  Existing configurations with no data default to `%s`.", string(management.ENUMIDENTITYPROVIDERSAMLSLOBINDING_REDIRECT), string(management.ENUMIDENTITYPROVIDERSAMLSLOBINDING_POST), string(management.ENUMIDENTITYPROVIDERSAMLSLOBINDING_POST)),
-							Type:             schema.TypeString,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMIDENTITYPROVIDERSAMLSLOBINDING_REDIRECT), string(management.ENUMIDENTITYPROVIDERSAMLSLOBINDING_POST)}, false)),
-							Optional:         true,
-							Default:          string(management.ENUMIDENTITYPROVIDERSAMLSLOBINDING_POST),
+					},
+
+					"slo_endpoint": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the logout endpoint URL. This is an optional property. However, if a logout endpoint URL is not defined, logout actions result in an error.  This value must be a URL that uses http or https.").Description,
+						Optional:    true,
+
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Value must be a valid URL with `http://` or `https://` prefix."),
 						},
-						"slo_endpoint": {
-							Description:      "A string that specifies the logout endpoint URL. This is an optional property. However, if a logout endpoint URL is not defined, logout actions result in an error.",
-							Type:             schema.TypeString,
-							Optional:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPorHTTPS),
+					},
+
+					"slo_response_endpoint": schema.StringAttribute{
+						Description:         samlSLOResponseEndpointDescription.Description,
+						MarkdownDescription: samlSLOResponseEndpointDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Value must be a valid URL with `http://` or `https://` prefix."),
 						},
-						"slo_response_endpoint": {
-							Description:      "A string that specifies the endpoint URL to submit the logout response. If a value is not provided, the `slo_endpoint` property value is used to submit SLO response.",
-							Type:             schema.TypeString,
-							Optional:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.IsURLWithHTTPorHTTPS),
-						},
-						"slo_window": {
-							Description:      "An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request. The minimum value is `1` hour and the maximum is `24` hours.",
-							Type:             schema.TypeInt,
-							Optional:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(1, 24)),
+					},
+
+					"slo_window": schema.Int64Attribute{
+						Description:         samlSLOWindowDescription.Description,
+						MarkdownDescription: samlSLOWindowDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.Int64{
+							int64validator.Between(samlSloWindowMin, samlSloWindowMax),
 						},
 					},
 				},
+
+				providerAttributeList,
+			),
+		},
+	}
+}
+
+func identityProviderSchemaBlock(description framework.SchemaAttributeDescription, attributes map[string]schema.Attribute, exactlyOneOfBlockNames []string) schema.ListNestedBlock {
+	description = description.ExactlyOneOf(exactlyOneOfBlockNames).RequiresReplaceBlock()
+
+	exactlyOneOfPaths := make([]path.Expression, len(exactlyOneOfBlockNames))
+	for i, blockName := range exactlyOneOfBlockNames {
+		exactlyOneOfPaths[i] = path.MatchRelative().AtParent().AtName(blockName)
+	}
+
+	return schema.ListNestedBlock{
+		Description:         description.Description,
+		MarkdownDescription: description.MarkdownDescription,
+
+		NestedObject: schema.NestedBlockObject{
+			Attributes: attributes,
+		},
+
+		Validators: []validator.List{
+			listvalidator.SizeAtMost(1),
+			listvalidator.ExactlyOneOf(
+				exactlyOneOfPaths...,
+			),
+		},
+
+		PlanModifiers: []planmodifier.List{
+			listplanmodifier.RequiresReplace(),
+		},
+	}
+}
+
+func identityProviderClientIdClientSecretAttributes(idpName string) map[string]schema.Attribute {
+	const attrMinLength = 1
+
+	return map[string]schema.Attribute{
+		"client_id": schema.StringAttribute{
+			Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A string that specifies the application client ID from %s.", idpName)).Description,
+			Required:    true,
+
+			Validators: []validator.String{
+				stringvalidator.LengthAtLeast(attrMinLength),
+			},
+		},
+
+		"client_secret": schema.StringAttribute{
+			Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A string that specifies the application client secret from %s.", idpName)).Description,
+			Required:    true,
+			Sensitive:   true,
+
+			Validators: []validator.String{
+				stringvalidator.LengthAtLeast(attrMinLength),
 			},
 		},
 	}
 }
 
-func clientIdClientSecretSchema(providerName string) *schema.Resource {
-	return &schema.Resource{
-		Schema: map[string]*schema.Schema{
-			"client_id": {
-				Description:      fmt.Sprintf("A string that specifies the application ID from %s.", providerName),
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
-			},
-			"client_secret": {
-				Description:      fmt.Sprintf("A string that specifies the application secret from %s.", providerName),
-				Type:             schema.TypeString,
-				Required:         true,
-				Sensitive:        true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
-			},
-		},
+func (r *IdentityProviderResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
+	}
+
+	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected the provider client, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
+		)
+
+		return
+	}
+
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
+		)
+		return
 	}
 }
 
-func resourceIdentityProviderCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *IdentityProviderResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan, state IdentityProviderResourceModel
 
-	var diags diag.Diagnostics
-
-	idpRequest, diags := expandIdentityProvider(d)
-	if diags.HasError() {
-		return diags
+	if r.Client.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
 	}
 
-	resp, diags := sdk.ParseResponse(
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the API
+	identityProvider, d := plan.expand(ctx)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	var response *management.IdentityProvider
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.IdentityProvidersApi.CreateIdentityProvider(ctx, d.Get("environment_id").(string)).IdentityProvider(*idpRequest).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.IdentityProvidersApi.CreateIdentityProvider(ctx, plan.EnvironmentId.ValueString()).IdentityProvider(*identityProvider).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateIdentityProvider",
-		sdk.DefaultCustomError,
+		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
-		return diags
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	respObject := resp.(*management.IdentityProvider)
+	// Create the state to save
+	state = plan
 
-	if respObject.IdentityProviderApple != nil && respObject.IdentityProviderApple.GetId() != "" {
-		d.SetId(respObject.IdentityProviderApple.GetId())
-	} else if respObject.IdentityProviderClientIDClientSecret != nil && respObject.IdentityProviderClientIDClientSecret.GetId() != "" {
-		d.SetId(respObject.IdentityProviderClientIDClientSecret.GetId())
-	} else if respObject.IdentityProviderFacebook != nil && respObject.IdentityProviderFacebook.GetId() != "" {
-		d.SetId(respObject.IdentityProviderFacebook.GetId())
-	} else if respObject.IdentityProviderOIDC != nil && respObject.IdentityProviderOIDC.GetId() != "" {
-		d.SetId(respObject.IdentityProviderOIDC.GetId())
-	} else if respObject.IdentityProviderPaypal != nil && respObject.IdentityProviderPaypal.GetId() != "" {
-		d.SetId(respObject.IdentityProviderPaypal.GetId())
-	} else if respObject.IdentityProviderSAML != nil && respObject.IdentityProviderSAML.GetId() != "" {
-		d.SetId(respObject.IdentityProviderSAML.GetId())
-	} else {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Cannot determine ID from API response for identity provider: %s", d.Get("name")),
-			Detail:   fmt.Sprintf("Full response object: %v\n", resp),
-		})
-
-		return diags
-	}
-
-	return resourceIdentityProviderRead(ctx, d, meta)
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourceIdentityProviderRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *IdentityProviderResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *IdentityProviderResourceModel
 
-	var diags diag.Diagnostics
+	if r.Client.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
 
-	resp, diags := sdk.ParseResponse(
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	var response *management.IdentityProvider
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.IdentityProvidersApi.ReadOneIdentityProvider(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.IdentityProvidersApi.ReadOneIdentityProvider(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneIdentityProvider",
-		sdk.CustomErrorResourceNotFoundWarning,
+		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
-		return diags
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if resp == nil {
-		d.SetId("")
-		return nil
+	// Remove from state if resource is not found
+	if response == nil {
+		resp.State.RemoveResource(ctx)
+		return
 	}
 
-	respObject := resp.(*management.IdentityProvider)
-
-	// flatten
-	values := map[string]interface{}{
-		"name":                       nil,
-		"description":                nil,
-		"enabled":                    nil,
-		"registration_population_id": nil,
-		"login_button_icon":          nil,
-		"icon":                       nil,
-		"facebook":                   nil,
-		"google":                     nil,
-		"linkedin":                   nil,
-		"yahoo":                      nil,
-		"amazon":                     nil,
-		"twitter":                    nil,
-		"apple":                      nil,
-		"paypal":                     nil,
-		"microsoft":                  nil,
-		"github":                     nil,
-		"openid_connect":             nil,
-		"saml":                       nil,
-	}
-
-	switch respObject.GetActualInstance().(type) {
-	case *management.IdentityProviderClientIDClientSecret:
-		idpObject := respObject.IdentityProviderClientIDClientSecret
-
-		var schemaAttribute string
-		switch idpObject.GetType() {
-		case management.ENUMIDENTITYPROVIDEREXT_AMAZON:
-			schemaAttribute = "amazon"
-		case management.ENUMIDENTITYPROVIDEREXT_GITHUB:
-			schemaAttribute = "github"
-		case management.ENUMIDENTITYPROVIDEREXT_GOOGLE:
-			schemaAttribute = "google"
-		case management.ENUMIDENTITYPROVIDEREXT_LINKEDIN:
-			schemaAttribute = "linkedin"
-		case management.ENUMIDENTITYPROVIDEREXT_MICROSOFT:
-			schemaAttribute = "microsoft"
-		case management.ENUMIDENTITYPROVIDEREXT_TWITTER:
-			schemaAttribute = "twitter"
-		case management.ENUMIDENTITYPROVIDEREXT_YAHOO:
-			schemaAttribute = "yahoo"
-		}
-
-		values["name"] = idpObject.GetName()
-
-		values["enabled"] = idpObject.GetEnabled()
-
-		if v, ok := idpObject.GetDescriptionOk(); ok {
-			values["description"] = v
-		}
-
-		if v, ok := idpObject.GetRegistrationOk(); ok {
-			values["registration_population_id"] = v.GetPopulation().Id
-		}
-
-		if v, ok := idpObject.GetLoginButtonIconOk(); ok {
-			values["login_button_icon"] = flattenLoginButtonIcon(v)
-		}
-
-		if v, ok := idpObject.GetIconOk(); ok {
-			values["icon"] = flattenIdPIcon(v)
-		}
-
-		values[schemaAttribute] = flattenClientIdClientSecret(idpObject.GetClientId(), idpObject.GetClientSecret())
-
-	case *management.IdentityProviderApple:
-		idpObject := respObject.IdentityProviderApple
-		schemaAttribute := "apple"
-
-		values["name"] = idpObject.GetName()
-
-		values["enabled"] = idpObject.GetEnabled()
-
-		if v, ok := idpObject.GetDescriptionOk(); ok {
-			values["description"] = v
-		}
-
-		if v, ok := idpObject.GetRegistrationOk(); ok {
-			values["registration_population_id"] = v.GetPopulation().Id
-		}
-
-		if v, ok := idpObject.GetLoginButtonIconOk(); ok {
-			values["login_button_icon"] = flattenLoginButtonIcon(v)
-		}
-
-		if v, ok := idpObject.GetIconOk(); ok {
-			values["icon"] = flattenIdPIcon(v)
-		}
-
-		values[schemaAttribute] = flattenApple(idpObject.GetClientId(), idpObject.GetClientSecretSigningKey(), idpObject.GetKeyId(), idpObject.GetTeamId())
-
-	case *management.IdentityProviderFacebook:
-		idpObject := respObject.IdentityProviderFacebook
-		schemaAttribute := "facebook"
-
-		values["name"] = idpObject.GetName()
-
-		values["enabled"] = idpObject.GetEnabled()
-
-		if v, ok := idpObject.GetDescriptionOk(); ok {
-			values["description"] = v
-		}
-
-		if v, ok := idpObject.GetRegistrationOk(); ok {
-			values["registration_population_id"] = v.GetPopulation().Id
-		}
-
-		if v, ok := idpObject.GetLoginButtonIconOk(); ok {
-			values["login_button_icon"] = flattenLoginButtonIcon(v)
-		}
-
-		if v, ok := idpObject.GetIconOk(); ok {
-			values["icon"] = flattenIdPIcon(v)
-		}
-
-		values[schemaAttribute] = flattenFacebook(idpObject.GetAppId(), idpObject.GetAppSecret())
-
-	case *management.IdentityProviderOIDC:
-		idpObject := respObject.IdentityProviderOIDC
-		schemaAttribute := "openid_connect"
-
-		values["name"] = idpObject.GetName()
-
-		values["enabled"] = idpObject.GetEnabled()
-
-		if v, ok := idpObject.GetDescriptionOk(); ok {
-			values["description"] = v
-		}
-
-		if v, ok := idpObject.GetRegistrationOk(); ok {
-			values["registration_population_id"] = v.GetPopulation().Id
-		}
-
-		if v, ok := idpObject.GetLoginButtonIconOk(); ok {
-			values["login_button_icon"] = flattenLoginButtonIcon(v)
-		}
-
-		if v, ok := idpObject.GetIconOk(); ok {
-			values["icon"] = flattenIdPIcon(v)
-		}
-
-		values[schemaAttribute] = flattenOIDC(idpObject)
-
-	case *management.IdentityProviderPaypal:
-		idpObject := respObject.IdentityProviderPaypal
-		schemaAttribute := "paypal"
-
-		values["name"] = idpObject.GetName()
-
-		values["enabled"] = idpObject.GetEnabled()
-
-		if v, ok := idpObject.GetDescriptionOk(); ok {
-			values["description"] = v
-		}
-
-		if v, ok := idpObject.GetRegistrationOk(); ok {
-			values["registration_population_id"] = v.GetPopulation().Id
-		}
-
-		if v, ok := idpObject.GetLoginButtonIconOk(); ok {
-			values["login_button_icon"] = flattenLoginButtonIcon(v)
-		}
-
-		if v, ok := idpObject.GetIconOk(); ok {
-			values["icon"] = flattenIdPIcon(v)
-		}
-
-		values[schemaAttribute] = flattenPaypal(idpObject.GetClientId(), idpObject.GetClientSecret(), idpObject.GetClientEnvironment())
-
-	case *management.IdentityProviderSAML:
-		idpObject := respObject.IdentityProviderSAML
-		schemaAttribute := "saml"
-
-		values["name"] = idpObject.GetName()
-
-		values["enabled"] = idpObject.GetEnabled()
-
-		if v, ok := idpObject.GetDescriptionOk(); ok {
-			values["description"] = v
-		}
-
-		if v, ok := idpObject.GetRegistrationOk(); ok {
-			values["registration_population_id"] = v.GetPopulation().Id
-		}
-
-		if v, ok := idpObject.GetLoginButtonIconOk(); ok {
-			values["login_button_icon"] = flattenLoginButtonIcon(v)
-		}
-
-		if v, ok := idpObject.GetIconOk(); ok {
-			values["icon"] = flattenIdPIcon(v)
-		}
-
-		values[schemaAttribute] = flattenSAML(idpObject)
-	}
-
-	d.Set("name", values["name"])
-	d.Set("description", values["description"])
-	d.Set("enabled", values["enabled"])
-
-	d.Set("registration_population_id", values["registration_population_id"])
-
-	d.Set("login_button_icon", values["login_button_icon"])
-	d.Set("icon", values["icon"])
-
-	d.Set("facebook", values["facebook"])
-	d.Set("google", values["google"])
-	d.Set("linkedin", values["linkedin"])
-	d.Set("yahoo", values["yahoo"])
-	d.Set("amazon", values["amazon"])
-	d.Set("twitter", values["twitter"])
-	d.Set("apple", values["apple"])
-	d.Set("paypal", values["paypal"])
-	d.Set("microsoft", values["microsoft"])
-	d.Set("github", values["github"])
-	d.Set("openid_connect", values["openid_connect"])
-	d.Set("saml", values["saml"])
-
-	return diags
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(data.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceIdentityProviderUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *IdentityProviderResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan, state IdentityProviderResourceModel
 
-	var diags diag.Diagnostics
-
-	idpRequest, diags := expandIdentityProvider(d)
-	if diags.HasError() {
-		return diags
+	if r.Client.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
 	}
 
-	_, diags = sdk.ParseResponse(
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the API
+	identityProvider, d := plan.expand(ctx)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	var response *management.IdentityProvider
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.IdentityProvidersApi.UpdateIdentityProvider(ctx, d.Get("environment_id").(string), d.Id()).IdentityProvider(*idpRequest).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.IdentityProvidersApi.UpdateIdentityProvider(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).IdentityProvider(*identityProvider).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateIdentityProvider",
-		sdk.DefaultCustomError,
+		framework.DefaultCustomError,
 		nil,
-	)
-	if diags.HasError() {
-		return diags
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	return resourceIdentityProviderRead(ctx, d, meta)
+	// Create the state to save
+	state = plan
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourceIdentityProviderDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *IdentityProviderResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *IdentityProviderResourceModel
 
-	var diags diag.Diagnostics
+	if r.Client.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
 
-	_, diags = sdk.ParseResponse(
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := apiClient.IdentityProvidersApi.DeleteIdentityProvider(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
+			fR, fErr := r.Client.ManagementAPIClient.IdentityProvidersApi.DeleteIdentityProvider(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteIdentityProvider",
-		sdk.CustomErrorResourceNotFoundWarning,
+		framework.CustomErrorResourceNotFoundWarning,
 		nil,
-	)
-	if diags.HasError() {
-		return diags
-	}
+		nil,
+	)...)
 
-	return diags
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
-func resourceIdentityProviderImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func (r *IdentityProviderResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 
 	idComponents := []framework.ImportComponent{
 		{
@@ -811,632 +1034,889 @@ func resourceIdentityProviderImport(ctx context.Context, d *schema.ResourceData,
 			Regexp: verify.P1ResourceIDRegexp,
 		},
 		{
-			Label:  "identity_provider_id",
-			Regexp: verify.P1ResourceIDRegexp,
+			Label:     "identity_provider_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
 		},
 	}
 
-	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
 	if err != nil {
-		return nil, err
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			err.Error(),
+		)
+		return
 	}
 
-	d.Set("environment_id", attributes["environment_id"])
-	d.SetId(attributes["identity_provider_id"])
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
 
-	resourceIdentityProviderRead(ctx, d, meta)
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
 
-	return []*schema.ResourceData{d}, nil
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
-func expandIdentityProvider(d *schema.ResourceData) (*management.IdentityProvider, diag.Diagnostics) {
+func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management.IdentityProvider, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	common := *management.NewIdentityProviderCommon(d.Get("enabled").(bool), d.Get("name").(string), management.ENUMIDENTITYPROVIDEREXT_OPENID_CONNECT)
+	common := *management.NewIdentityProviderCommon(p.Enabled.ValueBool(), p.Name.ValueString(), management.ENUMIDENTITYPROVIDEREXT_OPENID_CONNECT)
 
-	if v, ok := d.GetOk("description"); ok {
-		common.SetDescription(v.(string))
+	if !p.Description.IsNull() && !p.Description.IsUnknown() {
+		common.SetDescription(p.Description.ValueString())
 	}
 
-	if v, ok := d.GetOk("registration_population_id"); ok {
+	if !p.RegistrationPopulationId.IsNull() && !p.RegistrationPopulationId.IsUnknown() {
 		registrationPopulation := *management.NewIdentityProviderCommonRegistrationPopulation()
-		registrationPopulation.SetId(v.(string))
+		registrationPopulation.SetId(p.RegistrationPopulationId.ValueString())
 		registration := *management.NewIdentityProviderCommonRegistration()
 		registration.SetPopulation(registrationPopulation)
 		common.SetRegistration(registration)
 	}
 
-	if v, ok := d.GetOk("login_button_icon"); ok {
-		if j, okJ := v.([]interface{}); okJ && j != nil && len(j) > 0 {
-			attrs := j[0].(map[string]interface{})
-			icon := *management.NewIdentityProviderCommonLoginButtonIcon()
-			icon.SetId(attrs["id"].(string))
-			icon.SetHref(attrs["href"].(string))
-			common.SetLoginButtonIcon(icon)
+	if !p.LoginButtonIcon.IsNull() && !p.LoginButtonIcon.IsUnknown() {
+		var plan []IdentityProviderLoginButtonIcon
+		d := p.LoginButtonIcon.ElementsAs(ctx, &plan, false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
 		}
+
+		if len(plan) == 0 {
+			diags.AddError(
+				"Invalid configuration",
+				"The `login_button_icon` block is declared but has no configuration.  Please report this to the provider maintainers.",
+			)
+		}
+
+		planItem := plan[0]
+		icon := *management.NewIdentityProviderCommonLoginButtonIcon()
+		icon.SetId(planItem.Id.ValueString())
+		icon.SetHref(planItem.Href.ValueString())
+		common.SetLoginButtonIcon(icon)
+
 	}
 
-	if v, ok := d.GetOk("icon"); ok {
-		if j, okJ := v.([]interface{}); okJ && j != nil && len(j) > 0 {
-			attrs := j[0].(map[string]interface{})
-			icon := *management.NewIdentityProviderCommonIcon()
-			icon.SetId(attrs["id"].(string))
-			icon.SetHref(attrs["href"].(string))
-			common.SetIcon(icon)
+	if !p.Icon.IsNull() && !p.Icon.IsUnknown() {
+		var plan []IdentityProviderIcon
+		d := p.Icon.ElementsAs(ctx, &plan, false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
 		}
+
+		if len(plan) == 0 {
+			diags.AddError(
+				"Invalid configuration",
+				"The `icon` block is declared but has no configuration.  Please report this to the provider maintainers.",
+			)
+		}
+
+		planItem := plan[0]
+		icon := *management.NewIdentityProviderCommonIcon()
+		icon.SetId(planItem.Id.ValueString())
+		icon.SetHref(planItem.Href.ValueString())
+		common.SetIcon(icon)
 	}
 
-	requestObject := &management.IdentityProvider{}
+	data := &management.IdentityProvider{}
 
 	processedCount := 0
 
-	if v, ok := d.GetOk("facebook"); ok {
-		requestObject.IdentityProviderFacebook, diags = expandIdPFacebook(v.([]interface{}), common)
+	if !p.Facebook.IsNull() && !p.Facebook.IsUnknown() {
+		var plan []IdentityProviderFacebookResourceModel
+		d := p.Facebook.ElementsAs(ctx, &plan, false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if len(plan) == 0 {
+			diags.AddError(
+				"Invalid configuration",
+				"The `facebook` block is declared but has no configuration.  Please report this to the provider maintainers.",
+			)
+		}
+
+		planItem := plan[0]
+
+		idpData := management.IdentityProviderFacebook{
+			Enabled:         common.Enabled,
+			Name:            common.Name,
+			Type:            management.ENUMIDENTITYPROVIDEREXT_FACEBOOK,
+			Description:     common.Description,
+			Registration:    common.Registration,
+			LoginButtonIcon: common.LoginButtonIcon,
+			Icon:            common.Icon,
+		}
+
+		idpData.SetAppId(planItem.AppId.ValueString())
+		idpData.SetAppSecret(planItem.AppSecret.ValueString())
+
+		data.IdentityProviderFacebook = &idpData
 		processedCount += 1
 	}
 
-	if v, ok := d.GetOk("google"); ok {
-		requestObject.IdentityProviderClientIDClientSecret, diags = expandIdPGoogle(v.([]interface{}), common)
+	if !p.Google.IsNull() && !p.Google.IsUnknown() {
+		var plan []IdentityProviderGoogleResourceModel
+		d := p.Google.ElementsAs(ctx, &plan, false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if len(plan) == 0 {
+			diags.AddError(
+				"Invalid configuration",
+				"The `google` block is declared but has no configuration.  Please report this to the provider maintainers.",
+			)
+		}
+
+		planItem := plan[0]
+
+		idpData := management.IdentityProviderClientIDClientSecret{
+			Enabled:         common.Enabled,
+			Name:            common.Name,
+			Type:            management.ENUMIDENTITYPROVIDEREXT_GOOGLE,
+			Description:     common.Description,
+			Registration:    common.Registration,
+			LoginButtonIcon: common.LoginButtonIcon,
+			Icon:            common.Icon,
+		}
+
+		idpData.SetClientId(planItem.ClientId.ValueString())
+		idpData.SetClientSecret(planItem.ClientSecret.ValueString())
+
+		data.IdentityProviderClientIDClientSecret = &idpData
 		processedCount += 1
 	}
 
-	if v, ok := d.GetOk("linkedin"); ok {
-		requestObject.IdentityProviderClientIDClientSecret, diags = expandIdPLinkedIn(v.([]interface{}), common)
+	if !p.LinkedIn.IsNull() && !p.LinkedIn.IsUnknown() {
+		var plan []IdentityProviderLinkedInResourceModel
+		d := p.LinkedIn.ElementsAs(ctx, &plan, false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if len(plan) == 0 {
+			diags.AddError(
+				"Invalid configuration",
+				"The `linkedin` block is declared but has no configuration.  Please report this to the provider maintainers.",
+			)
+		}
+
+		planItem := plan[0]
+
+		idpData := management.IdentityProviderClientIDClientSecret{
+			Enabled:         common.Enabled,
+			Name:            common.Name,
+			Type:            management.ENUMIDENTITYPROVIDEREXT_LINKEDIN,
+			Description:     common.Description,
+			Registration:    common.Registration,
+			LoginButtonIcon: common.LoginButtonIcon,
+			Icon:            common.Icon,
+		}
+
+		idpData.SetClientId(planItem.ClientId.ValueString())
+		idpData.SetClientSecret(planItem.ClientSecret.ValueString())
+
+		data.IdentityProviderClientIDClientSecret = &idpData
 		processedCount += 1
 	}
 
-	if v, ok := d.GetOk("yahoo"); ok {
-		requestObject.IdentityProviderClientIDClientSecret, diags = expandIdPYahoo(v.([]interface{}), common)
+	if !p.Yahoo.IsNull() && !p.Yahoo.IsUnknown() {
+		var plan []IdentityProviderYahooResourceModel
+		d := p.Yahoo.ElementsAs(ctx, &plan, false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if len(plan) == 0 {
+			diags.AddError(
+				"Invalid configuration",
+				"The `yahoo` block is declared but has no configuration.  Please report this to the provider maintainers.",
+			)
+		}
+
+		planItem := plan[0]
+
+		idpData := management.IdentityProviderClientIDClientSecret{
+			Enabled:         common.Enabled,
+			Name:            common.Name,
+			Type:            management.ENUMIDENTITYPROVIDEREXT_YAHOO,
+			Description:     common.Description,
+			Registration:    common.Registration,
+			LoginButtonIcon: common.LoginButtonIcon,
+			Icon:            common.Icon,
+		}
+
+		idpData.SetClientId(planItem.ClientId.ValueString())
+		idpData.SetClientSecret(planItem.ClientSecret.ValueString())
+
+		data.IdentityProviderClientIDClientSecret = &idpData
 		processedCount += 1
 	}
 
-	if v, ok := d.GetOk("amazon"); ok {
-		requestObject.IdentityProviderClientIDClientSecret, diags = expandIdPAmazon(v.([]interface{}), common)
+	if !p.Amazon.IsNull() && !p.Amazon.IsUnknown() {
+		var plan []IdentityProviderAmazonResourceModel
+		d := p.Amazon.ElementsAs(ctx, &plan, false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if len(plan) == 0 {
+			diags.AddError(
+				"Invalid configuration",
+				"The `amazon` block is declared but has no configuration.  Please report this to the provider maintainers.",
+			)
+		}
+
+		planItem := plan[0]
+
+		idpData := management.IdentityProviderClientIDClientSecret{
+			Enabled:         common.Enabled,
+			Name:            common.Name,
+			Type:            management.ENUMIDENTITYPROVIDEREXT_AMAZON,
+			Description:     common.Description,
+			Registration:    common.Registration,
+			LoginButtonIcon: common.LoginButtonIcon,
+			Icon:            common.Icon,
+		}
+
+		idpData.SetClientId(planItem.ClientId.ValueString())
+		idpData.SetClientSecret(planItem.ClientSecret.ValueString())
+
+		data.IdentityProviderClientIDClientSecret = &idpData
 		processedCount += 1
 	}
 
-	if v, ok := d.GetOk("twitter"); ok {
-		requestObject.IdentityProviderClientIDClientSecret, diags = expandIdPTwitter(v.([]interface{}), common)
+	if !p.Twitter.IsNull() && !p.Twitter.IsUnknown() {
+		var plan []IdentityProviderTwitterResourceModel
+		d := p.Twitter.ElementsAs(ctx, &plan, false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if len(plan) == 0 {
+			diags.AddError(
+				"Invalid configuration",
+				"The `twitter` block is declared but has no configuration.  Please report this to the provider maintainers.",
+			)
+		}
+
+		planItem := plan[0]
+
+		idpData := management.IdentityProviderClientIDClientSecret{
+			Enabled:         common.Enabled,
+			Name:            common.Name,
+			Type:            management.ENUMIDENTITYPROVIDEREXT_TWITTER,
+			Description:     common.Description,
+			Registration:    common.Registration,
+			LoginButtonIcon: common.LoginButtonIcon,
+			Icon:            common.Icon,
+		}
+
+		idpData.SetClientId(planItem.ClientId.ValueString())
+		idpData.SetClientSecret(planItem.ClientSecret.ValueString())
+
+		data.IdentityProviderClientIDClientSecret = &idpData
 		processedCount += 1
 	}
 
-	if v, ok := d.GetOk("apple"); ok {
-		requestObject.IdentityProviderApple, diags = expandIdPApple(v.([]interface{}), common)
+	if !p.Apple.IsNull() && !p.Apple.IsUnknown() {
+		var plan []IdentityProviderAppleResourceModel
+		d := p.Apple.ElementsAs(ctx, &plan, false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if len(plan) == 0 {
+			diags.AddError(
+				"Invalid configuration",
+				"The `apple` block is declared but has no configuration.  Please report this to the provider maintainers.",
+			)
+		}
+
+		planItem := plan[0]
+
+		idpData := management.IdentityProviderApple{
+			Enabled:         common.Enabled,
+			Name:            common.Name,
+			Type:            management.ENUMIDENTITYPROVIDEREXT_APPLE,
+			Description:     common.Description,
+			Registration:    common.Registration,
+			LoginButtonIcon: common.LoginButtonIcon,
+			Icon:            common.Icon,
+		}
+
+		idpData.SetClientId(planItem.ClientId.ValueString())
+		idpData.SetClientSecretSigningKey(planItem.ClientSecretSigningKey.ValueString())
+		idpData.SetKeyId(planItem.KeyId.ValueString())
+		idpData.SetTeamId(planItem.TeamId.ValueString())
+
+		data.IdentityProviderApple = &idpData
 		processedCount += 1
 	}
 
-	if v, ok := d.GetOk("paypal"); ok {
-		requestObject.IdentityProviderPaypal, diags = expandIdPPaypal(v.([]interface{}), common)
+	if !p.Paypal.IsNull() && !p.Paypal.IsUnknown() {
+		var plan []IdentityProviderPaypalResourceModel
+		d := p.Paypal.ElementsAs(ctx, &plan, false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if len(plan) == 0 {
+			diags.AddError(
+				"Invalid configuration",
+				"The `paypal` block is declared but has no configuration.  Please report this to the provider maintainers.",
+			)
+		}
+
+		planItem := plan[0]
+
+		idpData := management.IdentityProviderPaypal{
+			Enabled:         common.Enabled,
+			Name:            common.Name,
+			Type:            management.ENUMIDENTITYPROVIDEREXT_PAYPAL,
+			Description:     common.Description,
+			Registration:    common.Registration,
+			LoginButtonIcon: common.LoginButtonIcon,
+			Icon:            common.Icon,
+		}
+
+		idpData.SetClientId(planItem.ClientId.ValueString())
+		idpData.SetClientSecret(planItem.ClientSecret.ValueString())
+		idpData.SetClientEnvironment(planItem.ClientEnvironment.ValueString())
+
+		data.IdentityProviderPaypal = &idpData
 		processedCount += 1
 	}
 
-	if v, ok := d.GetOk("microsoft"); ok {
-		requestObject.IdentityProviderClientIDClientSecret, diags = expandIdPMicrosoft(v.([]interface{}), common)
+	if !p.Microsoft.IsNull() && !p.Microsoft.IsUnknown() {
+		var plan []IdentityProviderMicrosoftResourceModel
+		d := p.Microsoft.ElementsAs(ctx, &plan, false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if len(plan) == 0 {
+			diags.AddError(
+				"Invalid configuration",
+				"The `microsoft` block is declared but has no configuration.  Please report this to the provider maintainers.",
+			)
+		}
+
+		planItem := plan[0]
+
+		idpData := management.IdentityProviderClientIDClientSecret{
+			Enabled:         common.Enabled,
+			Name:            common.Name,
+			Type:            management.ENUMIDENTITYPROVIDEREXT_MICROSOFT,
+			Description:     common.Description,
+			Registration:    common.Registration,
+			LoginButtonIcon: common.LoginButtonIcon,
+			Icon:            common.Icon,
+		}
+
+		idpData.SetClientId(planItem.ClientId.ValueString())
+		idpData.SetClientSecret(planItem.ClientSecret.ValueString())
+
+		data.IdentityProviderClientIDClientSecret = &idpData
 		processedCount += 1
 	}
 
-	if v, ok := d.GetOk("github"); ok {
-		requestObject.IdentityProviderClientIDClientSecret, diags = expandIdPGithub(v.([]interface{}), common)
+	if !p.Github.IsNull() && !p.Github.IsUnknown() {
+		var plan []IdentityProviderGithubResourceModel
+		d := p.Github.ElementsAs(ctx, &plan, false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if len(plan) == 0 {
+			diags.AddError(
+				"Invalid configuration",
+				"The `github` block is declared but has no configuration.  Please report this to the provider maintainers.",
+			)
+		}
+
+		planItem := plan[0]
+
+		idpData := management.IdentityProviderClientIDClientSecret{
+			Enabled:         common.Enabled,
+			Name:            common.Name,
+			Type:            management.ENUMIDENTITYPROVIDEREXT_GITHUB,
+			Description:     common.Description,
+			Registration:    common.Registration,
+			LoginButtonIcon: common.LoginButtonIcon,
+			Icon:            common.Icon,
+		}
+
+		idpData.SetClientId(planItem.ClientId.ValueString())
+		idpData.SetClientSecret(planItem.ClientSecret.ValueString())
+
+		data.IdentityProviderClientIDClientSecret = &idpData
 		processedCount += 1
 	}
 
-	if v, ok := d.GetOk("openid_connect"); ok {
-		requestObject.IdentityProviderOIDC, diags = expandIdPOIDC(v.([]interface{}), common)
+	if !p.OpenIDConnect.IsNull() && !p.OpenIDConnect.IsUnknown() {
+		var plan []IdentityProviderOIDCResourceModel
+		d := p.OpenIDConnect.ElementsAs(ctx, &plan, false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if len(plan) == 0 {
+			diags.AddError(
+				"Invalid configuration",
+				"The `openid_connect` block is declared but has no configuration.  Please report this to the provider maintainers.",
+			)
+		}
+
+		planItem := plan[0]
+
+		idpData := management.IdentityProviderOIDC{
+			Enabled:         common.Enabled,
+			Name:            common.Name,
+			Type:            management.ENUMIDENTITYPROVIDEREXT_OPENID_CONNECT,
+			Description:     common.Description,
+			Registration:    common.Registration,
+			LoginButtonIcon: common.LoginButtonIcon,
+			Icon:            common.Icon,
+		}
+
+		if !planItem.AuthorizationEndpoint.IsNull() && !planItem.AuthorizationEndpoint.IsUnknown() {
+			idpData.SetAuthorizationEndpoint(planItem.AuthorizationEndpoint.ValueString())
+		}
+
+		if !planItem.ClientId.IsNull() && !planItem.ClientId.IsUnknown() {
+			idpData.SetClientId(planItem.ClientId.ValueString())
+		}
+
+		if !planItem.ClientSecret.IsNull() && !planItem.ClientSecret.IsUnknown() {
+			idpData.SetClientSecret(planItem.ClientSecret.ValueString())
+		}
+
+		if !planItem.DiscoveryEndpoint.IsNull() && !planItem.DiscoveryEndpoint.IsUnknown() {
+			idpData.SetDiscoveryEndpoint(planItem.DiscoveryEndpoint.ValueString())
+		}
+
+		if !planItem.Issuer.IsNull() && !planItem.Issuer.IsUnknown() {
+			idpData.SetIssuer(planItem.Issuer.ValueString())
+		}
+
+		if !planItem.JwksEndpoint.IsNull() && !planItem.JwksEndpoint.IsUnknown() {
+			idpData.SetJwksEndpoint(planItem.JwksEndpoint.ValueString())
+		}
+
+		if !planItem.Scopes.IsNull() && !planItem.Scopes.IsUnknown() {
+			var scopesPlan []string
+			diags.Append(planItem.Scopes.ElementsAs(ctx, &scopesPlan, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			idpData.SetScopes(scopesPlan)
+		}
+
+		if !planItem.TokenEndpoint.IsNull() && !planItem.TokenEndpoint.IsUnknown() {
+			idpData.SetTokenEndpoint(planItem.TokenEndpoint.ValueString())
+		}
+
+		if !planItem.TokenEndpointAuthMethod.IsNull() && !planItem.TokenEndpointAuthMethod.IsUnknown() {
+			idpData.SetTokenEndpointAuthMethod(management.EnumIdentityProviderOIDCTokenAuthMethod(planItem.TokenEndpointAuthMethod.ValueString()))
+		}
+
+		if !planItem.UserinfoEndpoint.IsNull() && !planItem.UserinfoEndpoint.IsUnknown() {
+			idpData.SetUserInfoEndpoint(planItem.UserinfoEndpoint.ValueString())
+		}
+
+		data.IdentityProviderOIDC = &idpData
 		processedCount += 1
 	}
 
-	if v, ok := d.GetOk("saml"); ok {
-		requestObject.IdentityProviderSAML, diags = expandIdPSAML(v.([]interface{}), common)
+	if !p.Saml.IsNull() && !p.Saml.IsUnknown() {
+		var plan []IdentityProviderSAMLResourceModel
+		d := p.Saml.ElementsAs(ctx, &plan, false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if len(plan) == 0 {
+			diags.AddError(
+				"Invalid configuration",
+				"The `saml` block is declared but has no configuration.  Please report this to the provider maintainers.",
+			)
+		}
+
+		planItem := plan[0]
+
+		idpData := management.IdentityProviderSAML{
+			Enabled:         common.Enabled,
+			Name:            common.Name,
+			Type:            management.ENUMIDENTITYPROVIDEREXT_SAML,
+			Description:     common.Description,
+			Registration:    common.Registration,
+			LoginButtonIcon: common.LoginButtonIcon,
+			Icon:            common.Icon,
+		}
+
+		if !planItem.AuthenticationRequestSigned.IsNull() && !planItem.AuthenticationRequestSigned.IsUnknown() {
+			idpData.SetAuthnRequestSigned(planItem.AuthenticationRequestSigned.ValueBool())
+		}
+
+		if !planItem.IdpEntityId.IsNull() && !planItem.IdpEntityId.IsUnknown() {
+			idpData.SetIdpEntityId(planItem.IdpEntityId.ValueString())
+		}
+
+		if !planItem.SpEntityId.IsNull() && !planItem.SpEntityId.IsUnknown() {
+			idpData.SetSpEntityId(planItem.SpEntityId.ValueString())
+		}
+
+		if !planItem.IdpVerificationCertificateIds.IsNull() && !planItem.IdpVerificationCertificateIds.IsUnknown() {
+			var certificateIdsPlan []string
+			diags.Append(planItem.IdpVerificationCertificateIds.ElementsAs(ctx, &certificateIdsPlan, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			idpVerificationCertificates := make([]management.IdentityProviderSAMLAllOfIdpVerificationCertificates, 0)
+			for _, v := range certificateIdsPlan {
+				idpVerificationCertificates = append(idpVerificationCertificates, *management.NewIdentityProviderSAMLAllOfIdpVerificationCertificates(v))
+			}
+
+			idpVerifcation := management.NewIdentityProviderSAMLAllOfIdpVerification(idpVerificationCertificates)
+			idpData.SetIdpVerification(*idpVerifcation)
+		}
+
+		if !planItem.SpSigningKeyId.IsNull() && !planItem.SpSigningKeyId.IsUnknown() {
+			spSigningKey := management.NewIdentityProviderSAMLAllOfSpSigningKey(planItem.SpSigningKeyId.ValueString())
+			spSigning := management.NewIdentityProviderSAMLAllOfSpSigning(*spSigningKey)
+			idpData.SetSpSigning(*spSigning)
+		}
+
+		if !planItem.SsoBinding.IsNull() && !planItem.SsoBinding.IsUnknown() {
+			idpData.SetSsoBinding(management.EnumIdentityProviderSAMLSSOBinding(planItem.SsoBinding.ValueString()))
+		}
+
+		if !planItem.SsoEndpoint.IsNull() && !planItem.SsoEndpoint.IsUnknown() {
+			idpData.SetSsoEndpoint(planItem.SsoEndpoint.ValueString())
+		}
+
+		if !planItem.SloBinding.IsNull() && !planItem.SloBinding.IsUnknown() {
+			idpData.SetSloBinding(management.EnumIdentityProviderSAMLSLOBinding(planItem.SloBinding.ValueString()))
+		}
+
+		if !planItem.SloEndpoint.IsNull() && !planItem.SloEndpoint.IsUnknown() {
+			idpData.SetSloEndpoint(planItem.SloEndpoint.ValueString())
+		}
+
+		if !planItem.SloResponseEndpoint.IsNull() && !planItem.SloResponseEndpoint.IsUnknown() {
+			idpData.SetSloResponseEndpoint(planItem.SloResponseEndpoint.ValueString())
+		}
+
+		if !planItem.SloWindow.IsNull() && !planItem.SloWindow.IsUnknown() {
+			idpData.SetSloWindow(int32(planItem.SloWindow.ValueInt64()))
+		}
+
+		data.IdentityProviderSAML = &idpData
 		processedCount += 1
 	}
 
 	if processedCount > 1 {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "More than one identity provider type configured.  This is not supported.",
-		})
+		diags.AddError(
+			"Invalid configuration",
+			"More than one identity provider type configured.  This is not supported.  Please raise an issue with the provider maintainers.",
+		)
+
 		return nil, diags
 	} else if processedCount == 0 {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "No identity provider types configured.  This is not supported.",
-		})
+		diags.AddError(
+			"Invalid configuration",
+			"No identity provider types configured.  This is not supported.  Please raise an issue with the provider maintainers.",
+		)
+
 		return nil, diags
 	}
 
-	return requestObject, diags
-
+	return data, diags
 }
 
-func expandIdPFacebook(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderFacebook, diag.Diagnostics) {
+func (p *IdentityProviderResourceModel) toState(apiObject *management.IdentityProvider) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if len(v) > 0 && v[0] != nil {
+	if apiObject == nil {
+		diags.AddError(
+			"Data object missing",
+			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
+		)
 
-		idp := v[0].(map[string]interface{})
-
-		appId := idp["app_id"].(string)
-		appSecret := idp["app_secret"].(string)
-
-		idpObj := management.NewIdentityProviderFacebook(common.GetEnabled(), common.GetName(), management.ENUMIDENTITYPROVIDEREXT_FACEBOOK, appId, appSecret)
-
-		if v, ok := common.GetDescriptionOk(); ok {
-			idpObj.SetDescription(*v)
-		}
-
-		if v, ok := common.GetRegistrationOk(); ok {
-			idpObj.SetRegistration(*v)
-		}
-
-		if v, ok := common.GetLoginButtonIconOk(); ok {
-			idpObj.SetLoginButtonIcon(*v)
-		}
-
-		if v, ok := common.GetIconOk(); ok {
-			idpObj.SetIcon(*v)
-		}
-
-		return idpObj, diags
+		return diags
 	}
-	diags = append(diags, diag.Diagnostic{
-		Severity: diag.Error,
-		Summary:  "Block `facebook` must be defined when using the facebook identity provider type",
-	})
 
-	return nil, diags
+	byteData, err := apiObject.MarshalJSON()
+	if err != nil {
+		diags.AddError(
+			"Data object invalid",
+			"Cannot convert the data object to state as the data object is not a valid type.  Please report this to the provider maintainers.",
+		)
 
+		return diags
+	}
+
+	var common management.IdentityProviderCommon
+	if err := json.Unmarshal(byteData, &common); err != nil {
+		diags.AddError(
+			"Data object invalid",
+			"Cannot convert the data object to state as the data object cannot be converted.  Please report this to the provider maintainers.",
+		)
+
+		return diags
+	}
+
+	p.Id = framework.StringOkToTF(common.GetIdOk())
+	p.EnvironmentId = framework.StringOkToTF(common.Environment.GetIdOk())
+	p.Name = framework.StringOkToTF(common.GetNameOk())
+	p.Description = framework.StringOkToTF(common.GetDescriptionOk())
+	p.Enabled = framework.BoolOkToTF(common.GetEnabledOk())
+
+	p.RegistrationPopulationId = types.StringNull()
+	if v, ok := common.GetRegistrationOk(); ok {
+		if q, ok := v.GetPopulationOk(); ok {
+			p.RegistrationPopulationId = framework.StringOkToTF(q.GetIdOk())
+		}
+	}
+
+	var d diag.Diagnostics
+	p.LoginButtonIcon, d = service.ImageOkToTF(common.GetLoginButtonIconOk())
+	diags.Append(d...)
+
+	p.Icon, d = service.ImageOkToTF(common.GetIconOk())
+	diags.Append(d...)
+
+	// The providers
+	p.Facebook, d = identityProviderFacebookToTF(apiObject.IdentityProviderFacebook)
+	diags.Append(d...)
+
+	p.Google, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_GOOGLE)
+	diags.Append(d...)
+
+	p.LinkedIn, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_LINKEDIN)
+	diags.Append(d...)
+
+	p.Yahoo, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_YAHOO)
+	diags.Append(d...)
+
+	p.Amazon, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_AMAZON)
+	diags.Append(d...)
+
+	p.Twitter, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_TWITTER)
+	diags.Append(d...)
+
+	p.Apple, d = identityProviderAppleToTF(apiObject.IdentityProviderApple)
+	diags.Append(d...)
+
+	p.Paypal, d = identityProviderPaypalToTF(apiObject.IdentityProviderPaypal)
+	diags.Append(d...)
+
+	p.Microsoft, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_MICROSOFT)
+	diags.Append(d...)
+
+	p.Github, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_GITHUB)
+	diags.Append(d...)
+
+	p.OpenIDConnect, d = identityProviderOIDCToTF(apiObject.IdentityProviderOIDC)
+	diags.Append(d...)
+
+	p.Saml, d = identityProviderSAMLToTF(apiObject.IdentityProviderSAML)
+	diags.Append(d...)
+
+	return diags
 }
 
-func expandIdPClientIdClientSecret(v []interface{}, common management.IdentityProviderCommon, idpType management.EnumIdentityProviderExt) (*management.IdentityProviderClientIDClientSecret, diag.Diagnostics) {
+func identityProviderFacebookToTF(idpApiObject *management.IdentityProviderFacebook) (types.List, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if len(v) > 0 && v[0] != nil {
+	tfObjType := types.ObjectType{AttrTypes: identityProviderFacebookTFObjectTypes}
 
-		idp := v[0].(map[string]interface{})
-
-		clientId := idp["client_id"].(string)
-		clientSecret := idp["client_secret"].(string)
-
-		idpObj := management.NewIdentityProviderClientIDClientSecret(common.GetEnabled(), common.GetName(), idpType, clientId, clientSecret)
-
-		if v, ok := common.GetDescriptionOk(); ok {
-			idpObj.SetDescription(*v)
-		}
-
-		if v, ok := common.GetRegistrationOk(); ok {
-			idpObj.SetRegistration(*v)
-		}
-
-		if v, ok := common.GetLoginButtonIconOk(); ok {
-			idpObj.SetLoginButtonIcon(*v)
-		}
-
-		if v, ok := common.GetIconOk(); ok {
-			idpObj.SetIcon(*v)
-		}
-
-		return idpObj, diags
+	if idpApiObject == nil || idpApiObject.GetType() != management.ENUMIDENTITYPROVIDEREXT_FACEBOOK {
+		return types.ListNull(tfObjType), diags
 	}
-	diags = append(diags, diag.Diagnostic{
-		Severity: diag.Error,
-		Summary:  "Identity provider block not defined correctly.  Please raise an issue.",
-	})
 
-	return nil, diags
+	attributesMap := map[string]attr.Value{
+		"app_id":     framework.StringOkToTF(idpApiObject.GetAppIdOk()),
+		"app_secret": framework.StringOkToTF(idpApiObject.GetAppSecretOk()),
+	}
 
+	flattenedObj, d := types.ObjectValue(identityProviderFacebookTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	diags.Append(d...)
+
+	return returnVar, diags
 }
 
-func expandIdPGoogle(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderClientIDClientSecret, diag.Diagnostics) {
-	return expandIdPClientIdClientSecret(v, common, management.ENUMIDENTITYPROVIDEREXT_GOOGLE)
-}
-
-func expandIdPLinkedIn(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderClientIDClientSecret, diag.Diagnostics) {
-	return expandIdPClientIdClientSecret(v, common, management.ENUMIDENTITYPROVIDEREXT_LINKEDIN)
-}
-
-func expandIdPYahoo(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderClientIDClientSecret, diag.Diagnostics) {
-	return expandIdPClientIdClientSecret(v, common, management.ENUMIDENTITYPROVIDEREXT_YAHOO)
-}
-
-func expandIdPAmazon(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderClientIDClientSecret, diag.Diagnostics) {
-	return expandIdPClientIdClientSecret(v, common, management.ENUMIDENTITYPROVIDEREXT_AMAZON)
-}
-
-func expandIdPTwitter(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderClientIDClientSecret, diag.Diagnostics) {
-	return expandIdPClientIdClientSecret(v, common, management.ENUMIDENTITYPROVIDEREXT_TWITTER)
-}
-
-func expandIdPApple(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderApple, diag.Diagnostics) {
+func identityProviderClientIDClientSecretToTF(idpApiObject *management.IdentityProviderClientIDClientSecret, idpType management.EnumIdentityProviderExt) (types.List, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if len(v) > 0 && v[0] != nil {
+	tfObjType := types.ObjectType{AttrTypes: identityProviderClientIDClientSecretTFObjectTypes}
 
-		idp := v[0].(map[string]interface{})
-
-		clientId := idp["client_id"].(string)
-		clientSecretSigningKey := idp["client_secret_signing_key"].(string)
-		keyId := idp["key_id"].(string)
-		teamId := idp["team_id"].(string)
-
-		idpObj := management.NewIdentityProviderApple(common.GetEnabled(), common.GetName(), management.ENUMIDENTITYPROVIDEREXT_APPLE, clientId, clientSecretSigningKey, keyId, teamId)
-
-		if v, ok := common.GetDescriptionOk(); ok {
-			idpObj.SetDescription(*v)
-		}
-
-		if v, ok := common.GetRegistrationOk(); ok {
-			idpObj.SetRegistration(*v)
-		}
-
-		if v, ok := common.GetLoginButtonIconOk(); ok {
-			idpObj.SetLoginButtonIcon(*v)
-		}
-
-		if v, ok := common.GetIconOk(); ok {
-			idpObj.SetIcon(*v)
-		}
-
-		return idpObj, diags
+	if idpApiObject == nil || idpApiObject.GetType() != idpType {
+		return types.ListNull(tfObjType), diags
 	}
-	diags = append(diags, diag.Diagnostic{
-		Severity: diag.Error,
-		Summary:  "Block `apple` must be defined when using the Apple identity provider type",
-	})
 
-	return nil, diags
+	attributesMap := map[string]attr.Value{
+		"client_id":     framework.StringOkToTF(idpApiObject.GetClientIdOk()),
+		"client_secret": framework.StringOkToTF(idpApiObject.GetClientSecretOk()),
+	}
 
+	flattenedObj, d := types.ObjectValue(identityProviderClientIDClientSecretTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	diags.Append(d...)
+
+	return returnVar, diags
 }
 
-func expandIdPPaypal(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderPaypal, diag.Diagnostics) {
+func identityProviderAppleToTF(idpApiObject *management.IdentityProviderApple) (types.List, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if len(v) > 0 && v[0] != nil {
+	tfObjType := types.ObjectType{AttrTypes: identityProviderAppleTFObjectTypes}
 
-		idp := v[0].(map[string]interface{})
-
-		clientId := idp["client_id"].(string)
-		clientSecret := idp["client_secret"].(string)
-		clientEnvironment := idp["client_environment"].(string)
-
-		idpObj := management.NewIdentityProviderPaypal(common.GetEnabled(), common.GetName(), management.ENUMIDENTITYPROVIDEREXT_PAYPAL, clientId, clientSecret, clientEnvironment)
-
-		if v, ok := common.GetDescriptionOk(); ok {
-			idpObj.SetDescription(*v)
-		}
-
-		if v, ok := common.GetRegistrationOk(); ok {
-			idpObj.SetRegistration(*v)
-		}
-
-		if v, ok := common.GetLoginButtonIconOk(); ok {
-			idpObj.SetLoginButtonIcon(*v)
-		}
-
-		if v, ok := common.GetIconOk(); ok {
-			idpObj.SetIcon(*v)
-		}
-
-		return idpObj, diags
+	if idpApiObject == nil || idpApiObject.GetType() != management.ENUMIDENTITYPROVIDEREXT_APPLE {
+		return types.ListNull(tfObjType), diags
 	}
-	diags = append(diags, diag.Diagnostic{
-		Severity: diag.Error,
-		Summary:  "Block `paypal` must be defined when using the Paypal identity provider type",
-	})
 
-	return nil, diags
+	attributesMap := map[string]attr.Value{
+		"team_id":                   framework.StringOkToTF(idpApiObject.GetTeamIdOk()),
+		"key_id":                    framework.StringOkToTF(idpApiObject.GetKeyIdOk()),
+		"client_id":                 framework.StringOkToTF(idpApiObject.GetClientIdOk()),
+		"client_secret_signing_key": framework.StringOkToTF(idpApiObject.GetClientSecretSigningKeyOk()),
+	}
 
+	flattenedObj, d := types.ObjectValue(identityProviderAppleTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	diags.Append(d...)
+
+	return returnVar, diags
 }
 
-func expandIdPMicrosoft(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderClientIDClientSecret, diag.Diagnostics) {
-	return expandIdPClientIdClientSecret(v, common, management.ENUMIDENTITYPROVIDEREXT_MICROSOFT)
-}
-
-func expandIdPGithub(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderClientIDClientSecret, diag.Diagnostics) {
-	return expandIdPClientIdClientSecret(v, common, management.ENUMIDENTITYPROVIDEREXT_GITHUB)
-}
-
-func expandIdPOIDC(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderOIDC, diag.Diagnostics) {
+func identityProviderPaypalToTF(idpApiObject *management.IdentityProviderPaypal) (types.List, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if len(v) > 0 && v[0] != nil {
+	tfObjType := types.ObjectType{AttrTypes: identityProviderPaypalTFObjectTypes}
 
-		idp := v[0].(map[string]interface{})
-
-		authorizationEndpoint := idp["authorization_endpoint"].(string)
-		clientId := idp["client_id"].(string)
-		clientSecret := idp["client_secret"].(string)
-		issuer := idp["issuer"].(string)
-		jwksEndpoint := idp["jwks_endpoint"].(string)
-
-		scopes := make([]string, 0)
-		for _, scope := range idp["scopes"].(*schema.Set).List() {
-			scopes = append(scopes, scope.(string))
-		}
-
-		tokenEndpoint := idp["token_endpoint"].(string)
-		tokenEndpointAuthMethod := management.EnumIdentityProviderOIDCTokenAuthMethod(idp["token_endpoint_auth_method"].(string))
-
-		idpObj := management.NewIdentityProviderOIDC(common.GetEnabled(), common.GetName(), management.ENUMIDENTITYPROVIDEREXT_OPENID_CONNECT, authorizationEndpoint, clientId, clientSecret, issuer, jwksEndpoint, scopes, tokenEndpoint, tokenEndpointAuthMethod)
-
-		if v, ok := idp["discovery_endpoint"].(string); ok && v != "" {
-			idpObj.SetDiscoveryEndpoint(v)
-		}
-
-		if v, ok := idp["userinfo_endpoint"].(string); ok && v != "" {
-			idpObj.SetUserInfoEndpoint(v)
-		}
-
-		if v, ok := common.GetDescriptionOk(); ok {
-			idpObj.SetDescription(*v)
-		}
-
-		if v, ok := common.GetRegistrationOk(); ok {
-			idpObj.SetRegistration(*v)
-		}
-
-		if v, ok := common.GetLoginButtonIconOk(); ok {
-			idpObj.SetLoginButtonIcon(*v)
-		}
-
-		if v, ok := common.GetIconOk(); ok {
-			idpObj.SetIcon(*v)
-		}
-
-		return idpObj, diags
+	if idpApiObject == nil || idpApiObject.GetType() != management.ENUMIDENTITYPROVIDEREXT_PAYPAL {
+		return types.ListNull(tfObjType), diags
 	}
-	diags = append(diags, diag.Diagnostic{
-		Severity: diag.Error,
-		Summary:  "Block `openid_connect` must be defined when using the OpenID Connect identity provider type",
-	})
 
-	return nil, diags
+	attributesMap := map[string]attr.Value{
+		"client_id":          framework.StringOkToTF(idpApiObject.GetClientIdOk()),
+		"client_secret":      framework.StringOkToTF(idpApiObject.GetClientSecretOk()),
+		"client_environment": framework.StringOkToTF(idpApiObject.GetClientEnvironmentOk()),
+	}
 
+	flattenedObj, d := types.ObjectValue(identityProviderPaypalTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	diags.Append(d...)
+
+	return returnVar, diags
 }
 
-func expandIdPSAML(v []interface{}, common management.IdentityProviderCommon) (*management.IdentityProviderSAML, diag.Diagnostics) {
+func identityProviderOIDCToTF(idpApiObject *management.IdentityProviderOIDC) (types.List, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if len(v) > 0 && v[0] != nil {
+	tfObjType := types.ObjectType{AttrTypes: identityProviderOIDCTFObjectTypes}
 
-		idp := v[0].(map[string]interface{})
-
-		var idpVerification management.IdentityProviderSAMLAllOfIdpVerification
-
-		if v, ok := idp["idp_verification_certificate_ids"].(*schema.Set); ok {
-
-			planCertificates := v.List()
-
-			if len(planCertificates) > 0 && planCertificates[0] != nil {
-				certificates := make([]management.IdentityProviderSAMLAllOfIdpVerificationCertificates, 0)
-
-				for _, certificate := range planCertificates {
-					certificates = append(certificates, *management.NewIdentityProviderSAMLAllOfIdpVerificationCertificates(certificate.(string)))
-				}
-
-				idpVerification = *management.NewIdentityProviderSAMLAllOfIdpVerification(certificates)
-			}
-		}
-
-		idpObj := management.NewIdentityProviderSAML(common.GetEnabled(), common.GetName(), management.ENUMIDENTITYPROVIDEREXT_SAML, idp["idp_entity_id"].(string), idpVerification, idp["sp_entity_id"].(string), management.EnumIdentityProviderSAMLSSOBinding(idp["sso_binding"].(string)), idp["sso_endpoint"].(string))
-
-		if v, ok := idp["authentication_request_signed"].(bool); ok {
-			idpObj.SetAuthnRequestSigned(v)
-		}
-
-		if v, ok := idp["sp_signing_key_id"].(string); ok && v != "" {
-			idpObj.SetSpSigning(*management.NewIdentityProviderSAMLAllOfSpSigning(*management.NewIdentityProviderSAMLAllOfSpSigningKey(v)))
-		}
-
-		if v1, ok := idp["slo_binding"].(string); ok && v1 != "" {
-			idpObj.SetSloBinding(management.EnumIdentityProviderSAMLSLOBinding(v1))
-		}
-
-		if v1, ok := idp["slo_endpoint"].(string); ok && v1 != "" {
-			idpObj.SetSloEndpoint(v1)
-		}
-
-		if v1, ok := idp["slo_response_endpoint"].(string); ok && v1 != "" {
-			idpObj.SetSloResponseEndpoint(v1)
-		}
-
-		if v1, ok := idp["slo_window"].(int); ok && v1 > 0 {
-			idpObj.SetSloWindow(int32(v1))
-		}
-
-		if v, ok := common.GetDescriptionOk(); ok {
-			idpObj.SetDescription(*v)
-		}
-
-		if v, ok := common.GetRegistrationOk(); ok {
-			idpObj.SetRegistration(*v)
-		}
-
-		if v, ok := common.GetLoginButtonIconOk(); ok {
-			idpObj.SetLoginButtonIcon(*v)
-		}
-
-		if v, ok := common.GetIconOk(); ok {
-			idpObj.SetIcon(*v)
-		}
-
-		return idpObj, diags
+	if idpApiObject == nil || idpApiObject.GetType() != management.ENUMIDENTITYPROVIDEREXT_OPENID_CONNECT {
+		return types.ListNull(tfObjType), diags
 	}
-	diags = append(diags, diag.Diagnostic{
-		Severity: diag.Error,
-		Summary:  "Block `saml` must be defined when using the SAML identity provider type",
-	})
 
-	return nil, diags
+	attributesMap := map[string]attr.Value{
+		"authorization_endpoint":     framework.StringOkToTF(idpApiObject.GetAuthorizationEndpointOk()),
+		"client_id":                  framework.StringOkToTF(idpApiObject.GetClientIdOk()),
+		"client_secret":              framework.StringOkToTF(idpApiObject.GetClientSecretOk()),
+		"discovery_endpoint":         framework.StringOkToTF(idpApiObject.GetDiscoveryEndpointOk()),
+		"issuer":                     framework.StringOkToTF(idpApiObject.GetIssuerOk()),
+		"jwks_endpoint":              framework.StringOkToTF(idpApiObject.GetJwksEndpointOk()),
+		"scopes":                     framework.StringSetOkToTF(idpApiObject.GetScopesOk()),
+		"token_endpoint":             framework.StringOkToTF(idpApiObject.GetTokenEndpointOk()),
+		"token_endpoint_auth_method": framework.EnumOkToTF(idpApiObject.GetTokenEndpointAuthMethodOk()),
+		"userinfo_endpoint":          framework.StringOkToTF(idpApiObject.GetUserInfoEndpointOk()),
+	}
 
+	flattenedObj, d := types.ObjectValue(identityProviderOIDCTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	diags.Append(d...)
+
+	return returnVar, diags
 }
 
-func flattenLoginButtonIcon(s *management.IdentityProviderCommonLoginButtonIcon) []interface{} {
+func identityProviderSAMLToTF(idpApiObject *management.IdentityProviderSAML) (types.List, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
-	item := map[string]interface{}{
-		"id":   s.GetId(),
-		"href": s.GetHref(),
+	tfObjType := types.ObjectType{AttrTypes: identityProviderSAMLTFObjectTypes}
+
+	if idpApiObject == nil || idpApiObject.GetType() != management.ENUMIDENTITYPROVIDEREXT_SAML {
+		return types.ListNull(tfObjType), diags
 	}
 
-	items := make([]interface{}, 0)
-	return append(items, item)
-}
-
-func flattenIdPIcon(s *management.IdentityProviderCommonIcon) []interface{} {
-
-	item := map[string]interface{}{
-		"id":   s.GetId(),
-		"href": s.GetHref(),
+	attributesMap := map[string]attr.Value{
+		"authentication_request_signed": framework.BoolOkToTF(idpApiObject.GetAuthnRequestSignedOk()),
+		"idp_entity_id":                 framework.StringOkToTF(idpApiObject.GetIdpEntityIdOk()),
+		"sp_entity_id":                  framework.StringOkToTF(idpApiObject.GetSpEntityIdOk()),
+		"sso_binding":                   framework.EnumOkToTF(idpApiObject.GetSsoBindingOk()),
+		"sso_endpoint":                  framework.StringOkToTF(idpApiObject.GetSsoEndpointOk()),
+		"slo_binding":                   framework.EnumOkToTF(idpApiObject.GetSloBindingOk()),
+		"slo_endpoint":                  framework.StringOkToTF(idpApiObject.GetSloEndpointOk()),
+		"slo_response_endpoint":         framework.StringOkToTF(idpApiObject.GetSloResponseEndpointOk()),
+		"slo_window":                    framework.Int32OkToTF(idpApiObject.GetSloWindowOk()),
 	}
 
-	items := make([]interface{}, 0)
-	return append(items, item)
-}
-
-func flattenClientIdClientSecret(clientId, clientSecret string) []interface{} {
-
-	item := map[string]interface{}{
-		"client_id":     clientId,
-		"client_secret": clientSecret,
-	}
-
-	items := make([]interface{}, 0)
-	return append(items, item)
-}
-
-func flattenSAML(idpObject *management.IdentityProviderSAML) []interface{} {
-
-	item := map[string]interface{}{
-		"idp_entity_id": idpObject.GetIdpEntityId(),
-		"sso_binding":   string(idpObject.GetSsoBinding()),
-		"sso_endpoint":  idpObject.GetSsoEndpoint(),
-	}
-
-	if v, ok := idpObject.GetAuthnRequestSignedOk(); ok {
-		item["authentication_request_signed"] = v
-	} else {
-		item["authentication_request_signed"] = nil
-	}
-
-	if v, ok := idpObject.GetSpEntityIdOk(); ok {
-		item["sp_entity_id"] = *v
-	} else {
-		item["sp_entity_id"] = nil
-	}
-
-	if v, ok := idpObject.GetIdpVerificationOk(); ok {
-		if v1, ok := v.GetCertificatesOk(); ok {
+	attributesMap["idp_verification_certificate_ids"] = types.SetNull(types.StringType)
+	if v, ok := idpApiObject.GetIdpVerificationOk(); ok {
+		if c, ok := v.GetCertificatesOk(); ok {
 			ids := make([]string, 0)
-			for _, certificate := range v1 {
+			for _, certificate := range c {
 				ids = append(ids, certificate.GetId())
 			}
-			item["idp_verification_certificate_ids"] = ids
-		} else {
-			item["idp_verification_certificate_ids"] = nil
+
+			attributesMap["idp_verification_certificate_ids"] = framework.StringSetToTF(ids)
 		}
-	} else {
-		item["idp_verification_certificate_ids"] = nil
 	}
 
-	if v, ok := idpObject.GetSpSigningOk(); ok {
-		item["sp_signing_key_id"] = v.GetKey().Id
-	} else {
-		item["sp_signing_key_id"] = nil
+	attributesMap["sp_signing_key_id"] = types.StringNull()
+	if v, ok := idpApiObject.GetSpSigningOk(); ok {
+		if c, ok := v.GetKeyOk(); ok {
+			attributesMap["sp_signing_key_id"] = framework.StringOkToTF(c.GetIdOk())
+		}
 	}
 
-	if v, ok := idpObject.GetSloBindingOk(); ok {
-		item["slo_binding"] = v
-	} else {
-		item["slo_binding"] = nil
-	}
+	flattenedObj, d := types.ObjectValue(identityProviderSAMLTFObjectTypes, attributesMap)
+	diags.Append(d...)
 
-	if v, ok := idpObject.GetSloEndpointOk(); ok {
-		item["slo_endpoint"] = v
-	} else {
-		item["slo_endpoint"] = nil
-	}
+	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	diags.Append(d...)
 
-	if v, ok := idpObject.GetSloResponseEndpointOk(); ok {
-		item["slo_response_endpoint"] = v
-	} else {
-		item["slo_response_endpoint"] = nil
-	}
-
-	if v, ok := idpObject.GetSloWindowOk(); ok {
-		item["slo_window"] = v
-	} else {
-		item["slo_window"] = nil
-	}
-
-	items := make([]interface{}, 0)
-	return append(items, item)
-}
-
-func flattenOIDC(idpObject *management.IdentityProviderOIDC) []interface{} {
-
-	item := map[string]interface{}{
-		"authorization_endpoint": idpObject.GetAuthorizationEndpoint(),
-		"client_id":              idpObject.GetClientId(),
-		"client_secret":          idpObject.GetClientSecret(),
-		"issuer":                 idpObject.GetIssuer(),
-		"jwks_endpoint":          idpObject.GetJwksEndpoint(),
-		"scopes":                 idpObject.GetScopes(),
-		"token_endpoint":         idpObject.GetTokenEndpoint(),
-	}
-
-	if v, ok := idpObject.GetDiscoveryEndpointOk(); ok {
-		item["discovery_endpoint"] = v
-	} else {
-		item["discovery_endpoint"] = nil
-	}
-
-	if v, ok := idpObject.GetTokenEndpointAuthMethodOk(); ok {
-		item["token_endpoint_auth_method"] = string(*v)
-	} else {
-		item["token_endpoint_auth_method"] = nil
-	}
-
-	if v, ok := idpObject.GetUserInfoEndpointOk(); ok {
-		item["userinfo_endpoint"] = v
-	} else {
-		item["userinfo_endpoint"] = nil
-	}
-
-	items := make([]interface{}, 0)
-	return append(items, item)
-}
-
-func flattenPaypal(clientId, clientSecret, clientEnvironment string) []interface{} {
-
-	item := map[string]interface{}{
-		"client_id":          clientId,
-		"client_secret":      clientSecret,
-		"client_environment": clientEnvironment,
-	}
-
-	items := make([]interface{}, 0)
-	return append(items, item)
-}
-
-func flattenFacebook(appId, appSecret string) []interface{} {
-
-	item := map[string]interface{}{
-		"app_id":     appId,
-		"app_secret": appSecret,
-	}
-
-	items := make([]interface{}, 0)
-	return append(items, item)
-}
-
-func flattenApple(clientId, clientSecretSigningKey, keyId, teamId string) []interface{} {
-
-	item := map[string]interface{}{
-		"client_id":                 clientId,
-		"client_secret_signing_key": clientSecretSigningKey,
-		"key_id":                    keyId,
-		"team_id":                   teamId,
-	}
-
-	items := make([]interface{}, 0)
-	return append(items, item)
+	return returnVar, diags
 }
