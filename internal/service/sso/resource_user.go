@@ -1079,7 +1079,7 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	//User account lock
-	if updateUserEnabledResponse.GetEnabled() == true {
+	if updateUserEnabledResponse.GetEnabled() {
 		accountStatus := management.ENUMUSERACCOUNTCONTENTTYPEHEADER_UNLOCKJSON
 		if account, ok := user.GetAccountOk(); ok {
 			if status, ok := account.GetStatusOk(); ok && *status == management.ENUMUSERSTATUS_LOCKED {
@@ -1270,7 +1270,7 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 
 	//User account lock
-	if updateUserEnabledResponse.GetEnabled() == true {
+	if updateUserEnabledResponse.GetEnabled() {
 		accountStatus := management.ENUMUSERACCOUNTCONTENTTYPEHEADER_UNLOCKJSON
 		if account, ok := user.GetAccountOk(); ok {
 			if status, ok := account.GetStatusOk(); ok && *status == management.ENUMUSERSTATUS_LOCKED {

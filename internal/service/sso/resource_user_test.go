@@ -847,13 +847,13 @@ resource "pingone_user" "%[2]s" {
 
   enabled = true
   name = {
-	family = "Test User F"
-	given = "Test User G"
+    family = "Test User F"
+    given  = "Test User G"
   }
 
   account = {
-	status = "LOCKED"
-	can_authenticate = false
+    status           = "LOCKED"
+    can_authenticate = false
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
