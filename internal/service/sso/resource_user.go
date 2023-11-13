@@ -1078,6 +1078,32 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
+	//User account lock
+	if updateUserEnabledResponse.GetEnabled() == true {
+		accountStatus := management.ENUMUSERACCOUNTCONTENTTYPEHEADER_UNLOCKJSON
+		if account, ok := user.GetAccountOk(); ok {
+			if status, ok := account.GetStatusOk(); ok && *status == management.ENUMUSERSTATUS_LOCKED {
+				accountStatus = management.ENUMUSERACCOUNTCONTENTTYPEHEADER_LOCKJSON
+			}
+		}
+
+		resp.Diagnostics.Append(framework.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				fO, fR, fErr := r.Client.ManagementAPIClient.UserAccountsApi.UserAccount(ctx, plan.EnvironmentId.ValueString(), createUserResponse.GetId()).ContentType(accountStatus).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			},
+			"UserAccount",
+			framework.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+			nil,
+		)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+
 	// Read the user object again, as other attributes may have changed following the update API calls
 	var finalUserResponse *management.User
 	resp.Diagnostics.Append(framework.ParseResponse(
@@ -1241,6 +1267,32 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	//User account lock
+	if updateUserEnabledResponse.GetEnabled() == true {
+		accountStatus := management.ENUMUSERACCOUNTCONTENTTYPEHEADER_UNLOCKJSON
+		if account, ok := user.GetAccountOk(); ok {
+			if status, ok := account.GetStatusOk(); ok && *status == management.ENUMUSERSTATUS_LOCKED {
+				accountStatus = management.ENUMUSERACCOUNTCONTENTTYPEHEADER_LOCKJSON
+			}
+		}
+
+		resp.Diagnostics.Append(framework.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				fO, fR, fErr := r.Client.ManagementAPIClient.UserAccountsApi.UserAccount(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).ContentType(accountStatus).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			},
+			"UserAccount",
+			framework.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+			nil,
+		)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 	}
 
 	var finalUserResponse *management.User

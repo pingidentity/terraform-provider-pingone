@@ -387,6 +387,15 @@ func TestAccUser_AccountLocked(t *testing.T) {
 
 	name := resourceName
 
+	lockedStep := resource.TestStep{
+		Config: testAccUserConfig_AccountLocked(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "account.status", "LOCKED"),
+			resource.TestCheckResourceAttr(resourceFullName, "account.can_authenticate", "false"),
+		),
+	}
+
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
@@ -396,14 +405,16 @@ func TestAccUser_AccountLocked(t *testing.T) {
 		CheckDestroy:             sso.User_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			lockedStep,
 			{
-				Config: testAccUserConfig_AccountLocked(resourceName, name),
+				Config: testAccUserConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "account.status", "LOCKED"),
-					resource.TestCheckResourceAttr(resourceFullName, "account.can_authenticate", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "account.status", "OK"),
+					resource.TestCheckResourceAttr(resourceFullName, "account.can_authenticate", "true"),
 				),
 			},
+			lockedStep,
 		},
 	})
 }
