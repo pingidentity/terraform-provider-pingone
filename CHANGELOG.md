@@ -1,4 +1,10 @@
-## 0.23.1 (Unreleased)
+## 0.24.0 (Unreleased)
+
+NOTES:
+
+* `resource/pingone_identity_provider`: Migrated to plugin framework. ([#649](https://github.com/pingidentity/terraform-provider-pingone/issues/649))
+
+## 0.23.1 (11 November 2023)
 
 NOTES:
 
