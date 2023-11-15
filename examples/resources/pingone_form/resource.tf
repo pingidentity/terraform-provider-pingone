@@ -22,6 +22,58 @@ resource "pingone_form" "my_awesome_form" {
   }
 
   components = {
-    fields = [{}]
+    fields = [
+      {
+        position = {
+          row = 0,
+          col = 0,
+
+          field_slate_textblob = {
+            content = jsonencode(
+              [
+                {
+                  "children" : [
+                    {
+                      "text" : "My awesome form!"
+                    }
+                  ],
+                  "type" : "heading-1"
+                },
+                {
+                  "children" : [
+                    {
+                      "text" : "Enter the required information below"
+                    }
+                  ]
+                },
+                {
+                  "type" : "divider",
+                  "children" : [
+                    {
+                      "text" : ""
+                    }
+                  ]
+                },
+                {
+                  "type" : "paragraph",
+                  "children" : [
+                    {
+                      "text" : ""
+                    }
+                  ]
+                }
+            ])
+          }
+        }
+      },
+      {
+        position = {
+          row = 1,
+          col = 0,
+
+          field_error_display = {}
+        }
+      }
+    ]
   }
 }
