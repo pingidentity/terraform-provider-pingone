@@ -12,6 +12,51 @@ Version 1.0.0 of the PingOne Terraform provider is a major release that introduc
 ## Provider Configuration
 
 
+## Resource: pingone_application
+
+### `oidc_options.bundle_id` optional parameter removed
+
+This parameter was previously deprecated and has been removed.  Use the `oidc_options.mobile_app.bundle_id` parameter going forward.
+
+### `oidc_options.package_name` optional parameter removed
+
+This parameter was previously deprecated and has been removed.  Use the `oidc_options.mobile_app.package_name` parameter going forward.
+
+### `saml_options.idp_signing_key_id` optional parameter removed
+
+This parameter was previously deprecated and has been removed.  Use the `saml_options.idp_signing_key` parameter going forward.  When using the `saml_options.idp_signing_key` object parameter, the `saml_options.idp_signing_key.algorithm` now also needs to be defined.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_saml_app" {
+  # ... other configuration parameters
+
+  saml_options {
+    # ... other configuration parameters
+
+    idp_signing_key_id = pingone_key.my_awesome_key.id
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_saml_app" {
+  # ... other configuration parameters
+
+  saml_options = {
+    # ... other configuration parameters
+
+    idp_signing_key = {
+      key_id    = pingone_key.my_awesome_key.id
+      algorithm = pingone_key.my_awesome_key.signature_algorithm
+    }
+  }
+}
+```
+
 ## Resource: pingone_environment
 
 ### `default_population` optional parameter removed
