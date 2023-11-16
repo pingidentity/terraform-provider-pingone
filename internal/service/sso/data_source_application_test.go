@@ -323,7 +323,7 @@ func TestAccApplicationDataSource_SAMLAppByID(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.assertion_duration", "3600"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.assertion_signed_enabled", "false"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.idp_signing_key.#", "1"),
-					resource.TestCheckNoResourceAttr(dataSourceFullName, "saml_options.0.idp_signing_key.0.algorithm"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "saml_options.0.idp_signing_key.0.algorithm"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "saml_options.0.idp_signing_key.0.key_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.enable_requested_authn_context", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.nameid_format", "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"),
@@ -379,7 +379,7 @@ func TestAccApplicationDataSource_SAMLAppByName(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.assertion_duration", "3600"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.assertion_signed_enabled", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.idp_signing_key.#", "1"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.idp_signing_key.0.algorithm", ""),
+					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.idp_signing_key.0.algorithm", "SHA384withECDSA"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "saml_options.0.idp_signing_key.0.key_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.enable_requested_authn_context", "false"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.nameid_format", ""),
@@ -448,7 +448,7 @@ resource "pingone_application" "%[2]s" {
 
   icon {
     id   = pingone_image.%[2]s.id
-    href = pingone_image.%[2]s.uploaded_image[0].href
+    href = pingone_image.%[2]s.uploaded_image.href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
@@ -518,7 +518,7 @@ resource "pingone_application" "%[2]s" {
 
   icon {
     id   = pingone_image.%[2]s.id
-    href = pingone_image.%[2]s.uploaded_image[0].href
+    href = pingone_image.%[2]s.uploaded_image.href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
@@ -606,7 +606,7 @@ resource "pingone_application" "%[2]s" {
 
   icon {
     id   = pingone_image.%[2]s.id
-    href = pingone_image.%[2]s.uploaded_image[0].href
+    href = pingone_image.%[2]s.uploaded_image.href
   }
 
   access_control_group_options {
@@ -716,7 +716,7 @@ resource "pingone_application" "%[2]s" {
 
   icon {
     id   = pingone_image.%[2]s.id
-    href = pingone_image.%[2]s.uploaded_image[0].href
+    href = pingone_image.%[2]s.uploaded_image.href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
@@ -787,7 +787,8 @@ resource "pingone_application" "%[2]s" {
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:%[2]s"
     idp_signing_key {
-      key_id = pingone_key.%[2]s.id
+      key_id    = pingone_key.%[2]s.id
+      algorithm = pingone_key.%[2]s.signature_algorithm
     }
   }
 }
