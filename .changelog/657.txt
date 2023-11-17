@@ -1,0 +1,3 @@
+```release-note:note
+`resource/pingone_resource_grant`: Changed parameters `resource_id` and `scopes` to be read-only.  Use the `resource_name` and `scope_names` parameters going forward.
+```
