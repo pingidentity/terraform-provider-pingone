@@ -111,8 +111,8 @@ func (r SchemaAttributeDescription) RequiresReplace() SchemaAttributeDescription
 	return r.AppendMarkdownString("This field is immutable and will trigger a replace plan if changed.")
 }
 
-func (r SchemaAttributeDescription) RequiresReplaceBlock() SchemaAttributeDescription {
-	return r.AppendMarkdownString("This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules.")
+func (r SchemaAttributeDescription) RequiresReplaceNestedAttributes() SchemaAttributeDescription {
+	return r.AppendMarkdownString("This object is immutable.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules.")
 }
 
 func (r SchemaAttributeDescription) AppendSliceValues(pretext string, values []string) SchemaAttributeDescription {

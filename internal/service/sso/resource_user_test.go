@@ -569,7 +569,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  linkedin {
+  linkedin = {
     client_id     = "dummyclientid1"
     client_secret = "dummyclientsecret1"
   }
@@ -656,7 +656,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  linkedin {
+  linkedin = {
     client_id     = "dummyclientid1"
     client_secret = "dummyclientsecret1"
   }
@@ -732,7 +732,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  linkedin {
+  linkedin = {
     client_id     = "dummyclientid1"
     client_secret = "dummyclientsecret1"
   }
@@ -761,7 +761,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  linkedin {
+  linkedin = {
     client_id     = "dummyclientid1"
     client_secret = "dummyclientsecret1"
   }

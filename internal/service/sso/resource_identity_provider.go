@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -16,7 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -42,18 +42,18 @@ type IdentityProviderResourceModel struct {
 	RegistrationPopulationId types.String `tfsdk:"registration_population_id"`
 	LoginButtonIcon          types.Object `tfsdk:"login_button_icon"`
 	Icon                     types.Object `tfsdk:"icon"`
-	Facebook                 types.List   `tfsdk:"facebook"`
-	Google                   types.List   `tfsdk:"google"`
-	LinkedIn                 types.List   `tfsdk:"linkedin"`
-	Yahoo                    types.List   `tfsdk:"yahoo"`
-	Amazon                   types.List   `tfsdk:"amazon"`
-	Twitter                  types.List   `tfsdk:"twitter"`
-	Apple                    types.List   `tfsdk:"apple"`
-	Paypal                   types.List   `tfsdk:"paypal"`
-	Microsoft                types.List   `tfsdk:"microsoft"`
-	Github                   types.List   `tfsdk:"github"`
-	OpenIDConnect            types.List   `tfsdk:"openid_connect"`
-	Saml                     types.List   `tfsdk:"saml"`
+	Facebook                 types.Object `tfsdk:"facebook"`
+	Google                   types.Object `tfsdk:"google"`
+	LinkedIn                 types.Object `tfsdk:"linkedin"`
+	Yahoo                    types.Object `tfsdk:"yahoo"`
+	Amazon                   types.Object `tfsdk:"amazon"`
+	Twitter                  types.Object `tfsdk:"twitter"`
+	Apple                    types.Object `tfsdk:"apple"`
+	Paypal                   types.Object `tfsdk:"paypal"`
+	Microsoft                types.Object `tfsdk:"microsoft"`
+	Github                   types.Object `tfsdk:"github"`
+	OpenIDConnect            types.Object `tfsdk:"openid_connect"`
+	Saml                     types.Object `tfsdk:"saml"`
 }
 
 type IdentityProviderClientIdClientSecretResourceModel struct {
@@ -357,12 +357,9 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 					},
 				},
 			},
-		},
-
-		Blocks: map[string]schema.Block{
 
 			// The providers
-			"facebook": identityProviderSchemaBlock(
+			"facebook": identityProviderSchemaAttribute(
 				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the Facebook social identity provider."),
 
 				map[string]schema.Attribute{
@@ -389,7 +386,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 				providerAttributeList,
 			),
 
-			"google": identityProviderSchemaBlock(
+			"google": identityProviderSchemaAttribute(
 				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the Google social identity provider."),
 
 				identityProviderClientIdClientSecretAttributes("Google"),
@@ -397,7 +394,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 				providerAttributeList,
 			),
 
-			"linkedin": identityProviderSchemaBlock(
+			"linkedin": identityProviderSchemaAttribute(
 				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the LinkedIn social identity provider."),
 
 				identityProviderClientIdClientSecretAttributes("LinkedIn"),
@@ -405,7 +402,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 				providerAttributeList,
 			),
 
-			"yahoo": identityProviderSchemaBlock(
+			"yahoo": identityProviderSchemaAttribute(
 				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the Yahoo social identity provider."),
 
 				identityProviderClientIdClientSecretAttributes("Yahoo"),
@@ -413,7 +410,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 				providerAttributeList,
 			),
 
-			"amazon": identityProviderSchemaBlock(
+			"amazon": identityProviderSchemaAttribute(
 				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the Amazon social identity provider."),
 
 				identityProviderClientIdClientSecretAttributes("Amazon"),
@@ -421,7 +418,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 				providerAttributeList,
 			),
 
-			"twitter": identityProviderSchemaBlock(
+			"twitter": identityProviderSchemaAttribute(
 				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the Twitter social identity provider."),
 
 				identityProviderClientIdClientSecretAttributes("Twitter"),
@@ -429,7 +426,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 				providerAttributeList,
 			),
 
-			"apple": identityProviderSchemaBlock(
+			"apple": identityProviderSchemaAttribute(
 				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the Apple social identity provider."),
 
 				map[string]schema.Attribute{
@@ -474,7 +471,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 				providerAttributeList,
 			),
 
-			"paypal": identityProviderSchemaBlock(
+			"paypal": identityProviderSchemaAttribute(
 				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the Paypal social identity provider."),
 
 				map[string]schema.Attribute{
@@ -511,7 +508,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 				providerAttributeList,
 			),
 
-			"microsoft": identityProviderSchemaBlock(
+			"microsoft": identityProviderSchemaAttribute(
 				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the Microsoft social identity provider."),
 
 				identityProviderClientIdClientSecretAttributes("Microsoft"),
@@ -519,7 +516,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 				providerAttributeList,
 			),
 
-			"github": identityProviderSchemaBlock(
+			"github": identityProviderSchemaAttribute(
 				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the Github social identity provider."),
 
 				identityProviderClientIdClientSecretAttributes("Github"),
@@ -527,7 +524,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 				providerAttributeList,
 			),
 
-			"openid_connect": identityProviderSchemaBlock(
+			"openid_connect": identityProviderSchemaAttribute(
 				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to an OpenID Connect compliant identity provider."),
 
 				map[string]schema.Attribute{
@@ -635,7 +632,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 				providerAttributeList,
 			),
 
-			"saml": identityProviderSchemaBlock(
+			"saml": identityProviderSchemaAttribute(
 				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to a SAML 2.0 compliant identity provider."),
 
 				map[string]schema.Attribute{
@@ -758,31 +755,29 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 	}
 }
 
-func identityProviderSchemaBlock(description framework.SchemaAttributeDescription, attributes map[string]schema.Attribute, exactlyOneOfBlockNames []string) schema.ListNestedBlock {
-	description = description.ExactlyOneOf(exactlyOneOfBlockNames).RequiresReplaceBlock()
+func identityProviderSchemaAttribute(description framework.SchemaAttributeDescription, attributes map[string]schema.Attribute, exactlyOneOfBlockNames []string) schema.SingleNestedAttribute {
+	description = description.ExactlyOneOf(exactlyOneOfBlockNames).RequiresReplaceNestedAttributes()
 
 	exactlyOneOfPaths := make([]path.Expression, len(exactlyOneOfBlockNames))
 	for i, blockName := range exactlyOneOfBlockNames {
 		exactlyOneOfPaths[i] = path.MatchRelative().AtParent().AtName(blockName)
 	}
 
-	return schema.ListNestedBlock{
+	return schema.SingleNestedAttribute{
 		Description:         description.Description,
 		MarkdownDescription: description.MarkdownDescription,
+		Optional:            true,
 
-		NestedObject: schema.NestedBlockObject{
-			Attributes: attributes,
-		},
+		Attributes: attributes,
 
-		Validators: []validator.List{
-			listvalidator.SizeAtMost(1),
-			listvalidator.ExactlyOneOf(
+		Validators: []validator.Object{
+			objectvalidator.ExactlyOneOf(
 				exactlyOneOfPaths...,
 			),
 		},
 
-		PlanModifiers: []planmodifier.List{
-			listplanmodifier.RequiresReplace(),
+		PlanModifiers: []planmodifier.Object{
+			objectplanmodifier.RequiresReplace(),
 		},
 	}
 }
@@ -1107,21 +1102,15 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 	processedCount := 0
 
 	if !p.Facebook.IsNull() && !p.Facebook.IsUnknown() {
-		var plan []IdentityProviderFacebookResourceModel
-		d := p.Facebook.ElementsAs(ctx, &plan, false)
+		var plan IdentityProviderFacebookResourceModel
+		d := p.Facebook.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
-
-		if len(plan) == 0 {
-			diags.AddError(
-				"Invalid configuration",
-				"The `facebook` block is declared but has no configuration.  Please report this to the provider maintainers.",
-			)
-		}
-
-		planItem := plan[0]
 
 		idpData := management.IdentityProviderFacebook{
 			Enabled:         common.Enabled,
@@ -1133,29 +1122,23 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 			Icon:            common.Icon,
 		}
 
-		idpData.SetAppId(planItem.AppId.ValueString())
-		idpData.SetAppSecret(planItem.AppSecret.ValueString())
+		idpData.SetAppId(plan.AppId.ValueString())
+		idpData.SetAppSecret(plan.AppSecret.ValueString())
 
 		data.IdentityProviderFacebook = &idpData
 		processedCount += 1
 	}
 
 	if !p.Google.IsNull() && !p.Google.IsUnknown() {
-		var plan []IdentityProviderGoogleResourceModel
-		d := p.Google.ElementsAs(ctx, &plan, false)
+		var plan IdentityProviderGoogleResourceModel
+		d := p.Google.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
-
-		if len(plan) == 0 {
-			diags.AddError(
-				"Invalid configuration",
-				"The `google` block is declared but has no configuration.  Please report this to the provider maintainers.",
-			)
-		}
-
-		planItem := plan[0]
 
 		idpData := management.IdentityProviderClientIDClientSecret{
 			Enabled:         common.Enabled,
@@ -1167,29 +1150,23 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 			Icon:            common.Icon,
 		}
 
-		idpData.SetClientId(planItem.ClientId.ValueString())
-		idpData.SetClientSecret(planItem.ClientSecret.ValueString())
+		idpData.SetClientId(plan.ClientId.ValueString())
+		idpData.SetClientSecret(plan.ClientSecret.ValueString())
 
 		data.IdentityProviderClientIDClientSecret = &idpData
 		processedCount += 1
 	}
 
 	if !p.LinkedIn.IsNull() && !p.LinkedIn.IsUnknown() {
-		var plan []IdentityProviderLinkedInResourceModel
-		d := p.LinkedIn.ElementsAs(ctx, &plan, false)
+		var plan IdentityProviderLinkedInResourceModel
+		d := p.LinkedIn.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
-
-		if len(plan) == 0 {
-			diags.AddError(
-				"Invalid configuration",
-				"The `linkedin` block is declared but has no configuration.  Please report this to the provider maintainers.",
-			)
-		}
-
-		planItem := plan[0]
 
 		idpData := management.IdentityProviderClientIDClientSecret{
 			Enabled:         common.Enabled,
@@ -1201,29 +1178,23 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 			Icon:            common.Icon,
 		}
 
-		idpData.SetClientId(planItem.ClientId.ValueString())
-		idpData.SetClientSecret(planItem.ClientSecret.ValueString())
+		idpData.SetClientId(plan.ClientId.ValueString())
+		idpData.SetClientSecret(plan.ClientSecret.ValueString())
 
 		data.IdentityProviderClientIDClientSecret = &idpData
 		processedCount += 1
 	}
 
 	if !p.Yahoo.IsNull() && !p.Yahoo.IsUnknown() {
-		var plan []IdentityProviderYahooResourceModel
-		d := p.Yahoo.ElementsAs(ctx, &plan, false)
+		var plan IdentityProviderYahooResourceModel
+		d := p.Yahoo.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
-
-		if len(plan) == 0 {
-			diags.AddError(
-				"Invalid configuration",
-				"The `yahoo` block is declared but has no configuration.  Please report this to the provider maintainers.",
-			)
-		}
-
-		planItem := plan[0]
 
 		idpData := management.IdentityProviderClientIDClientSecret{
 			Enabled:         common.Enabled,
@@ -1235,29 +1206,23 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 			Icon:            common.Icon,
 		}
 
-		idpData.SetClientId(planItem.ClientId.ValueString())
-		idpData.SetClientSecret(planItem.ClientSecret.ValueString())
+		idpData.SetClientId(plan.ClientId.ValueString())
+		idpData.SetClientSecret(plan.ClientSecret.ValueString())
 
 		data.IdentityProviderClientIDClientSecret = &idpData
 		processedCount += 1
 	}
 
 	if !p.Amazon.IsNull() && !p.Amazon.IsUnknown() {
-		var plan []IdentityProviderAmazonResourceModel
-		d := p.Amazon.ElementsAs(ctx, &plan, false)
+		var plan IdentityProviderAmazonResourceModel
+		d := p.Amazon.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
-
-		if len(plan) == 0 {
-			diags.AddError(
-				"Invalid configuration",
-				"The `amazon` block is declared but has no configuration.  Please report this to the provider maintainers.",
-			)
-		}
-
-		planItem := plan[0]
 
 		idpData := management.IdentityProviderClientIDClientSecret{
 			Enabled:         common.Enabled,
@@ -1269,29 +1234,23 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 			Icon:            common.Icon,
 		}
 
-		idpData.SetClientId(planItem.ClientId.ValueString())
-		idpData.SetClientSecret(planItem.ClientSecret.ValueString())
+		idpData.SetClientId(plan.ClientId.ValueString())
+		idpData.SetClientSecret(plan.ClientSecret.ValueString())
 
 		data.IdentityProviderClientIDClientSecret = &idpData
 		processedCount += 1
 	}
 
 	if !p.Twitter.IsNull() && !p.Twitter.IsUnknown() {
-		var plan []IdentityProviderTwitterResourceModel
-		d := p.Twitter.ElementsAs(ctx, &plan, false)
+		var plan IdentityProviderTwitterResourceModel
+		d := p.Twitter.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
-
-		if len(plan) == 0 {
-			diags.AddError(
-				"Invalid configuration",
-				"The `twitter` block is declared but has no configuration.  Please report this to the provider maintainers.",
-			)
-		}
-
-		planItem := plan[0]
 
 		idpData := management.IdentityProviderClientIDClientSecret{
 			Enabled:         common.Enabled,
@@ -1303,29 +1262,23 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 			Icon:            common.Icon,
 		}
 
-		idpData.SetClientId(planItem.ClientId.ValueString())
-		idpData.SetClientSecret(planItem.ClientSecret.ValueString())
+		idpData.SetClientId(plan.ClientId.ValueString())
+		idpData.SetClientSecret(plan.ClientSecret.ValueString())
 
 		data.IdentityProviderClientIDClientSecret = &idpData
 		processedCount += 1
 	}
 
 	if !p.Apple.IsNull() && !p.Apple.IsUnknown() {
-		var plan []IdentityProviderAppleResourceModel
-		d := p.Apple.ElementsAs(ctx, &plan, false)
+		var plan IdentityProviderAppleResourceModel
+		d := p.Apple.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
-
-		if len(plan) == 0 {
-			diags.AddError(
-				"Invalid configuration",
-				"The `apple` block is declared but has no configuration.  Please report this to the provider maintainers.",
-			)
-		}
-
-		planItem := plan[0]
 
 		idpData := management.IdentityProviderApple{
 			Enabled:         common.Enabled,
@@ -1337,31 +1290,25 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 			Icon:            common.Icon,
 		}
 
-		idpData.SetClientId(planItem.ClientId.ValueString())
-		idpData.SetClientSecretSigningKey(planItem.ClientSecretSigningKey.ValueString())
-		idpData.SetKeyId(planItem.KeyId.ValueString())
-		idpData.SetTeamId(planItem.TeamId.ValueString())
+		idpData.SetClientId(plan.ClientId.ValueString())
+		idpData.SetClientSecretSigningKey(plan.ClientSecretSigningKey.ValueString())
+		idpData.SetKeyId(plan.KeyId.ValueString())
+		idpData.SetTeamId(plan.TeamId.ValueString())
 
 		data.IdentityProviderApple = &idpData
 		processedCount += 1
 	}
 
 	if !p.Paypal.IsNull() && !p.Paypal.IsUnknown() {
-		var plan []IdentityProviderPaypalResourceModel
-		d := p.Paypal.ElementsAs(ctx, &plan, false)
+		var plan IdentityProviderPaypalResourceModel
+		d := p.Paypal.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
-
-		if len(plan) == 0 {
-			diags.AddError(
-				"Invalid configuration",
-				"The `paypal` block is declared but has no configuration.  Please report this to the provider maintainers.",
-			)
-		}
-
-		planItem := plan[0]
 
 		idpData := management.IdentityProviderPaypal{
 			Enabled:         common.Enabled,
@@ -1373,30 +1320,24 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 			Icon:            common.Icon,
 		}
 
-		idpData.SetClientId(planItem.ClientId.ValueString())
-		idpData.SetClientSecret(planItem.ClientSecret.ValueString())
-		idpData.SetClientEnvironment(planItem.ClientEnvironment.ValueString())
+		idpData.SetClientId(plan.ClientId.ValueString())
+		idpData.SetClientSecret(plan.ClientSecret.ValueString())
+		idpData.SetClientEnvironment(plan.ClientEnvironment.ValueString())
 
 		data.IdentityProviderPaypal = &idpData
 		processedCount += 1
 	}
 
 	if !p.Microsoft.IsNull() && !p.Microsoft.IsUnknown() {
-		var plan []IdentityProviderMicrosoftResourceModel
-		d := p.Microsoft.ElementsAs(ctx, &plan, false)
+		var plan IdentityProviderMicrosoftResourceModel
+		d := p.Microsoft.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
-
-		if len(plan) == 0 {
-			diags.AddError(
-				"Invalid configuration",
-				"The `microsoft` block is declared but has no configuration.  Please report this to the provider maintainers.",
-			)
-		}
-
-		planItem := plan[0]
 
 		idpData := management.IdentityProviderClientIDClientSecret{
 			Enabled:         common.Enabled,
@@ -1408,29 +1349,23 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 			Icon:            common.Icon,
 		}
 
-		idpData.SetClientId(planItem.ClientId.ValueString())
-		idpData.SetClientSecret(planItem.ClientSecret.ValueString())
+		idpData.SetClientId(plan.ClientId.ValueString())
+		idpData.SetClientSecret(plan.ClientSecret.ValueString())
 
 		data.IdentityProviderClientIDClientSecret = &idpData
 		processedCount += 1
 	}
 
 	if !p.Github.IsNull() && !p.Github.IsUnknown() {
-		var plan []IdentityProviderGithubResourceModel
-		d := p.Github.ElementsAs(ctx, &plan, false)
+		var plan IdentityProviderGithubResourceModel
+		d := p.Github.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
-
-		if len(plan) == 0 {
-			diags.AddError(
-				"Invalid configuration",
-				"The `github` block is declared but has no configuration.  Please report this to the provider maintainers.",
-			)
-		}
-
-		planItem := plan[0]
 
 		idpData := management.IdentityProviderClientIDClientSecret{
 			Enabled:         common.Enabled,
@@ -1442,29 +1377,23 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 			Icon:            common.Icon,
 		}
 
-		idpData.SetClientId(planItem.ClientId.ValueString())
-		idpData.SetClientSecret(planItem.ClientSecret.ValueString())
+		idpData.SetClientId(plan.ClientId.ValueString())
+		idpData.SetClientSecret(plan.ClientSecret.ValueString())
 
 		data.IdentityProviderClientIDClientSecret = &idpData
 		processedCount += 1
 	}
 
 	if !p.OpenIDConnect.IsNull() && !p.OpenIDConnect.IsUnknown() {
-		var plan []IdentityProviderOIDCResourceModel
-		d := p.OpenIDConnect.ElementsAs(ctx, &plan, false)
+		var plan IdentityProviderOIDCResourceModel
+		d := p.OpenIDConnect.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
-
-		if len(plan) == 0 {
-			diags.AddError(
-				"Invalid configuration",
-				"The `openid_connect` block is declared but has no configuration.  Please report this to the provider maintainers.",
-			)
-		}
-
-		planItem := plan[0]
 
 		idpData := management.IdentityProviderOIDC{
 			Enabled:         common.Enabled,
@@ -1476,33 +1405,33 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 			Icon:            common.Icon,
 		}
 
-		if !planItem.AuthorizationEndpoint.IsNull() && !planItem.AuthorizationEndpoint.IsUnknown() {
-			idpData.SetAuthorizationEndpoint(planItem.AuthorizationEndpoint.ValueString())
+		if !plan.AuthorizationEndpoint.IsNull() && !plan.AuthorizationEndpoint.IsUnknown() {
+			idpData.SetAuthorizationEndpoint(plan.AuthorizationEndpoint.ValueString())
 		}
 
-		if !planItem.ClientId.IsNull() && !planItem.ClientId.IsUnknown() {
-			idpData.SetClientId(planItem.ClientId.ValueString())
+		if !plan.ClientId.IsNull() && !plan.ClientId.IsUnknown() {
+			idpData.SetClientId(plan.ClientId.ValueString())
 		}
 
-		if !planItem.ClientSecret.IsNull() && !planItem.ClientSecret.IsUnknown() {
-			idpData.SetClientSecret(planItem.ClientSecret.ValueString())
+		if !plan.ClientSecret.IsNull() && !plan.ClientSecret.IsUnknown() {
+			idpData.SetClientSecret(plan.ClientSecret.ValueString())
 		}
 
-		if !planItem.DiscoveryEndpoint.IsNull() && !planItem.DiscoveryEndpoint.IsUnknown() {
-			idpData.SetDiscoveryEndpoint(planItem.DiscoveryEndpoint.ValueString())
+		if !plan.DiscoveryEndpoint.IsNull() && !plan.DiscoveryEndpoint.IsUnknown() {
+			idpData.SetDiscoveryEndpoint(plan.DiscoveryEndpoint.ValueString())
 		}
 
-		if !planItem.Issuer.IsNull() && !planItem.Issuer.IsUnknown() {
-			idpData.SetIssuer(planItem.Issuer.ValueString())
+		if !plan.Issuer.IsNull() && !plan.Issuer.IsUnknown() {
+			idpData.SetIssuer(plan.Issuer.ValueString())
 		}
 
-		if !planItem.JwksEndpoint.IsNull() && !planItem.JwksEndpoint.IsUnknown() {
-			idpData.SetJwksEndpoint(planItem.JwksEndpoint.ValueString())
+		if !plan.JwksEndpoint.IsNull() && !plan.JwksEndpoint.IsUnknown() {
+			idpData.SetJwksEndpoint(plan.JwksEndpoint.ValueString())
 		}
 
-		if !planItem.Scopes.IsNull() && !planItem.Scopes.IsUnknown() {
+		if !plan.Scopes.IsNull() && !plan.Scopes.IsUnknown() {
 			var scopesPlan []string
-			diags.Append(planItem.Scopes.ElementsAs(ctx, &scopesPlan, false)...)
+			diags.Append(plan.Scopes.ElementsAs(ctx, &scopesPlan, false)...)
 			if diags.HasError() {
 				return nil, diags
 			}
@@ -1510,16 +1439,16 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 			idpData.SetScopes(scopesPlan)
 		}
 
-		if !planItem.TokenEndpoint.IsNull() && !planItem.TokenEndpoint.IsUnknown() {
-			idpData.SetTokenEndpoint(planItem.TokenEndpoint.ValueString())
+		if !plan.TokenEndpoint.IsNull() && !plan.TokenEndpoint.IsUnknown() {
+			idpData.SetTokenEndpoint(plan.TokenEndpoint.ValueString())
 		}
 
-		if !planItem.TokenEndpointAuthMethod.IsNull() && !planItem.TokenEndpointAuthMethod.IsUnknown() {
-			idpData.SetTokenEndpointAuthMethod(management.EnumIdentityProviderOIDCTokenAuthMethod(planItem.TokenEndpointAuthMethod.ValueString()))
+		if !plan.TokenEndpointAuthMethod.IsNull() && !plan.TokenEndpointAuthMethod.IsUnknown() {
+			idpData.SetTokenEndpointAuthMethod(management.EnumIdentityProviderOIDCTokenAuthMethod(plan.TokenEndpointAuthMethod.ValueString()))
 		}
 
-		if !planItem.UserinfoEndpoint.IsNull() && !planItem.UserinfoEndpoint.IsUnknown() {
-			idpData.SetUserInfoEndpoint(planItem.UserinfoEndpoint.ValueString())
+		if !plan.UserinfoEndpoint.IsNull() && !plan.UserinfoEndpoint.IsUnknown() {
+			idpData.SetUserInfoEndpoint(plan.UserinfoEndpoint.ValueString())
 		}
 
 		data.IdentityProviderOIDC = &idpData
@@ -1527,21 +1456,15 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 	}
 
 	if !p.Saml.IsNull() && !p.Saml.IsUnknown() {
-		var plan []IdentityProviderSAMLResourceModel
-		d := p.Saml.ElementsAs(ctx, &plan, false)
+		var plan IdentityProviderSAMLResourceModel
+		d := p.Saml.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
-
-		if len(plan) == 0 {
-			diags.AddError(
-				"Invalid configuration",
-				"The `saml` block is declared but has no configuration.  Please report this to the provider maintainers.",
-			)
-		}
-
-		planItem := plan[0]
 
 		idpData := management.IdentityProviderSAML{
 			Enabled:         common.Enabled,
@@ -1553,21 +1476,21 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 			Icon:            common.Icon,
 		}
 
-		if !planItem.AuthenticationRequestSigned.IsNull() && !planItem.AuthenticationRequestSigned.IsUnknown() {
-			idpData.SetAuthnRequestSigned(planItem.AuthenticationRequestSigned.ValueBool())
+		if !plan.AuthenticationRequestSigned.IsNull() && !plan.AuthenticationRequestSigned.IsUnknown() {
+			idpData.SetAuthnRequestSigned(plan.AuthenticationRequestSigned.ValueBool())
 		}
 
-		if !planItem.IdpEntityId.IsNull() && !planItem.IdpEntityId.IsUnknown() {
-			idpData.SetIdpEntityId(planItem.IdpEntityId.ValueString())
+		if !plan.IdpEntityId.IsNull() && !plan.IdpEntityId.IsUnknown() {
+			idpData.SetIdpEntityId(plan.IdpEntityId.ValueString())
 		}
 
-		if !planItem.SpEntityId.IsNull() && !planItem.SpEntityId.IsUnknown() {
-			idpData.SetSpEntityId(planItem.SpEntityId.ValueString())
+		if !plan.SpEntityId.IsNull() && !plan.SpEntityId.IsUnknown() {
+			idpData.SetSpEntityId(plan.SpEntityId.ValueString())
 		}
 
-		if !planItem.IdpVerificationCertificateIds.IsNull() && !planItem.IdpVerificationCertificateIds.IsUnknown() {
+		if !plan.IdpVerificationCertificateIds.IsNull() && !plan.IdpVerificationCertificateIds.IsUnknown() {
 			var certificateIdsPlan []string
-			diags.Append(planItem.IdpVerificationCertificateIds.ElementsAs(ctx, &certificateIdsPlan, false)...)
+			diags.Append(plan.IdpVerificationCertificateIds.ElementsAs(ctx, &certificateIdsPlan, false)...)
 			if diags.HasError() {
 				return nil, diags
 			}
@@ -1581,34 +1504,34 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 			idpData.SetIdpVerification(*idpVerifcation)
 		}
 
-		if !planItem.SpSigningKeyId.IsNull() && !planItem.SpSigningKeyId.IsUnknown() {
-			spSigningKey := management.NewIdentityProviderSAMLAllOfSpSigningKey(planItem.SpSigningKeyId.ValueString())
+		if !plan.SpSigningKeyId.IsNull() && !plan.SpSigningKeyId.IsUnknown() {
+			spSigningKey := management.NewIdentityProviderSAMLAllOfSpSigningKey(plan.SpSigningKeyId.ValueString())
 			spSigning := management.NewIdentityProviderSAMLAllOfSpSigning(*spSigningKey)
 			idpData.SetSpSigning(*spSigning)
 		}
 
-		if !planItem.SsoBinding.IsNull() && !planItem.SsoBinding.IsUnknown() {
-			idpData.SetSsoBinding(management.EnumIdentityProviderSAMLSSOBinding(planItem.SsoBinding.ValueString()))
+		if !plan.SsoBinding.IsNull() && !plan.SsoBinding.IsUnknown() {
+			idpData.SetSsoBinding(management.EnumIdentityProviderSAMLSSOBinding(plan.SsoBinding.ValueString()))
 		}
 
-		if !planItem.SsoEndpoint.IsNull() && !planItem.SsoEndpoint.IsUnknown() {
-			idpData.SetSsoEndpoint(planItem.SsoEndpoint.ValueString())
+		if !plan.SsoEndpoint.IsNull() && !plan.SsoEndpoint.IsUnknown() {
+			idpData.SetSsoEndpoint(plan.SsoEndpoint.ValueString())
 		}
 
-		if !planItem.SloBinding.IsNull() && !planItem.SloBinding.IsUnknown() {
-			idpData.SetSloBinding(management.EnumIdentityProviderSAMLSLOBinding(planItem.SloBinding.ValueString()))
+		if !plan.SloBinding.IsNull() && !plan.SloBinding.IsUnknown() {
+			idpData.SetSloBinding(management.EnumIdentityProviderSAMLSLOBinding(plan.SloBinding.ValueString()))
 		}
 
-		if !planItem.SloEndpoint.IsNull() && !planItem.SloEndpoint.IsUnknown() {
-			idpData.SetSloEndpoint(planItem.SloEndpoint.ValueString())
+		if !plan.SloEndpoint.IsNull() && !plan.SloEndpoint.IsUnknown() {
+			idpData.SetSloEndpoint(plan.SloEndpoint.ValueString())
 		}
 
-		if !planItem.SloResponseEndpoint.IsNull() && !planItem.SloResponseEndpoint.IsUnknown() {
-			idpData.SetSloResponseEndpoint(planItem.SloResponseEndpoint.ValueString())
+		if !plan.SloResponseEndpoint.IsNull() && !plan.SloResponseEndpoint.IsUnknown() {
+			idpData.SetSloResponseEndpoint(plan.SloResponseEndpoint.ValueString())
 		}
 
-		if !planItem.SloWindow.IsNull() && !planItem.SloWindow.IsUnknown() {
-			idpData.SetSloWindow(int32(planItem.SloWindow.ValueInt64()))
+		if !plan.SloWindow.IsNull() && !plan.SloWindow.IsUnknown() {
+			idpData.SetSloWindow(int32(plan.SloWindow.ValueInt64()))
 		}
 
 		data.IdentityProviderSAML = &idpData
@@ -1726,13 +1649,11 @@ func (p *IdentityProviderResourceModel) toState(apiObject *management.IdentityPr
 	return diags
 }
 
-func identityProviderFacebookToTF(idpApiObject *management.IdentityProviderFacebook) (types.List, diag.Diagnostics) {
+func identityProviderFacebookToTF(idpApiObject *management.IdentityProviderFacebook) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	tfObjType := types.ObjectType{AttrTypes: identityProviderFacebookTFObjectTypes}
-
 	if idpApiObject == nil || idpApiObject.GetType() != management.ENUMIDENTITYPROVIDEREXT_FACEBOOK {
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(identityProviderFacebookTFObjectTypes), diags
 	}
 
 	attributesMap := map[string]attr.Value{
@@ -1740,22 +1661,17 @@ func identityProviderFacebookToTF(idpApiObject *management.IdentityProviderFaceb
 		"app_secret": framework.StringOkToTF(idpApiObject.GetAppSecretOk()),
 	}
 
-	flattenedObj, d := types.ObjectValue(identityProviderFacebookTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(identityProviderFacebookTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags
 }
 
-func identityProviderClientIDClientSecretToTF(idpApiObject *management.IdentityProviderClientIDClientSecret, idpType management.EnumIdentityProviderExt) (types.List, diag.Diagnostics) {
+func identityProviderClientIDClientSecretToTF(idpApiObject *management.IdentityProviderClientIDClientSecret, idpType management.EnumIdentityProviderExt) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	tfObjType := types.ObjectType{AttrTypes: identityProviderClientIDClientSecretTFObjectTypes}
-
 	if idpApiObject == nil || idpApiObject.GetType() != idpType {
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(identityProviderClientIDClientSecretTFObjectTypes), diags
 	}
 
 	attributesMap := map[string]attr.Value{
@@ -1763,22 +1679,17 @@ func identityProviderClientIDClientSecretToTF(idpApiObject *management.IdentityP
 		"client_secret": framework.StringOkToTF(idpApiObject.GetClientSecretOk()),
 	}
 
-	flattenedObj, d := types.ObjectValue(identityProviderClientIDClientSecretTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(identityProviderClientIDClientSecretTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags
 }
 
-func identityProviderAppleToTF(idpApiObject *management.IdentityProviderApple) (types.List, diag.Diagnostics) {
+func identityProviderAppleToTF(idpApiObject *management.IdentityProviderApple) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	tfObjType := types.ObjectType{AttrTypes: identityProviderAppleTFObjectTypes}
-
 	if idpApiObject == nil || idpApiObject.GetType() != management.ENUMIDENTITYPROVIDEREXT_APPLE {
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(identityProviderAppleTFObjectTypes), diags
 	}
 
 	attributesMap := map[string]attr.Value{
@@ -1788,22 +1699,17 @@ func identityProviderAppleToTF(idpApiObject *management.IdentityProviderApple) (
 		"client_secret_signing_key": framework.StringOkToTF(idpApiObject.GetClientSecretSigningKeyOk()),
 	}
 
-	flattenedObj, d := types.ObjectValue(identityProviderAppleTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(identityProviderAppleTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags
 }
 
-func identityProviderPaypalToTF(idpApiObject *management.IdentityProviderPaypal) (types.List, diag.Diagnostics) {
+func identityProviderPaypalToTF(idpApiObject *management.IdentityProviderPaypal) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	tfObjType := types.ObjectType{AttrTypes: identityProviderPaypalTFObjectTypes}
-
 	if idpApiObject == nil || idpApiObject.GetType() != management.ENUMIDENTITYPROVIDEREXT_PAYPAL {
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(identityProviderPaypalTFObjectTypes), diags
 	}
 
 	attributesMap := map[string]attr.Value{
@@ -1812,22 +1718,17 @@ func identityProviderPaypalToTF(idpApiObject *management.IdentityProviderPaypal)
 		"client_environment": framework.StringOkToTF(idpApiObject.GetClientEnvironmentOk()),
 	}
 
-	flattenedObj, d := types.ObjectValue(identityProviderPaypalTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(identityProviderPaypalTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags
 }
 
-func identityProviderOIDCToTF(idpApiObject *management.IdentityProviderOIDC) (types.List, diag.Diagnostics) {
+func identityProviderOIDCToTF(idpApiObject *management.IdentityProviderOIDC) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	tfObjType := types.ObjectType{AttrTypes: identityProviderOIDCTFObjectTypes}
-
 	if idpApiObject == nil || idpApiObject.GetType() != management.ENUMIDENTITYPROVIDEREXT_OPENID_CONNECT {
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(identityProviderOIDCTFObjectTypes), diags
 	}
 
 	attributesMap := map[string]attr.Value{
@@ -1843,22 +1744,17 @@ func identityProviderOIDCToTF(idpApiObject *management.IdentityProviderOIDC) (ty
 		"userinfo_endpoint":          framework.StringOkToTF(idpApiObject.GetUserInfoEndpointOk()),
 	}
 
-	flattenedObj, d := types.ObjectValue(identityProviderOIDCTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(identityProviderOIDCTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags
 }
 
-func identityProviderSAMLToTF(idpApiObject *management.IdentityProviderSAML) (types.List, diag.Diagnostics) {
+func identityProviderSAMLToTF(idpApiObject *management.IdentityProviderSAML) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	tfObjType := types.ObjectType{AttrTypes: identityProviderSAMLTFObjectTypes}
-
 	if idpApiObject == nil || idpApiObject.GetType() != management.ENUMIDENTITYPROVIDEREXT_SAML {
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(identityProviderSAMLTFObjectTypes), diags
 	}
 
 	attributesMap := map[string]attr.Value{
@@ -1892,10 +1788,7 @@ func identityProviderSAMLToTF(idpApiObject *management.IdentityProviderSAML) (ty
 		}
 	}
 
-	flattenedObj, d := types.ObjectValue(identityProviderSAMLTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(identityProviderSAMLTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags
