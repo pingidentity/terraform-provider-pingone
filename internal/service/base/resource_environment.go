@@ -1013,7 +1013,7 @@ func toStateEnvironmentServicesBookmark(bookmarks []management.BillOfMaterialsPr
 	tfObjType := types.ObjectType{AttrTypes: environmentServiceBookmarkTFObjectTypes}
 
 	if len(bookmarks) == 0 {
-		return types.SetValueMust(tfObjType, []attr.Value{}), diags
+		return types.SetNull(tfObjType), diags
 	}
 
 	flattenedList := []attr.Value{}

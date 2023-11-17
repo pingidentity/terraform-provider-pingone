@@ -84,9 +84,7 @@ func TestAccEnvironment_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "solution", "CUSTOMER"),
 			resource.TestCheckResourceAttr(resourceFullName, "services.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
-				"type":        "SSO",
-				"console_url": "",
-				"bookmarks.#": "0",
+				"type": "SSO",
 			}),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
 				"type":             "PingFederate",
@@ -114,9 +112,7 @@ func TestAccEnvironment_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "solution", "CUSTOMER"),
 			resource.TestCheckResourceAttr(resourceFullName, "services.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
-				"type":        "SSO",
-				"console_url": "",
-				"bookmarks.#": "0",
+				"type": "SSO",
 			}),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
 				"type":             "PingFederate",
@@ -187,9 +183,7 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "organization_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "services.#", "1"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
-				"type":        "SSO",
-				"console_url": "",
-				"bookmarks.#": "0",
+				"type": "SSO",
 			}),
 		),
 	}
@@ -361,9 +355,7 @@ func TestAccEnvironment_ServiceSwitching(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "services.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
-						"type":        "SSO",
-						"console_url": "",
-						"bookmarks.#": "0",
+						"type": "SSO",
 					}),
 				),
 			},
@@ -372,9 +364,7 @@ func TestAccEnvironment_ServiceSwitching(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "services.#", "2"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
-						"type":        "SSO",
-						"console_url": "",
-						"bookmarks.#": "0",
+						"type": "SSO",
 					}),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
 						"type":             "PingFederate",
@@ -472,11 +462,9 @@ func TestAccEnvironment_ServicesTags(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "services.#", "2"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
-						"type":        "DaVinci",
-						"console_url": "",
-						"bookmarks.#": "0",
-						"tags.#":      "1",
-						"tags.0":      "DAVINCI_MINIMAL",
+						"type":   "DaVinci",
+						"tags.#": "1",
+						"tags.0": "DAVINCI_MINIMAL",
 					}),
 				),
 			},
@@ -554,6 +542,7 @@ resource "pingone_environment" "%[1]s" {
 func testAccEnvironmentConfig_DynamicServices(resourceName, name, licenseID string, services []string) string {
 	return fmt.Sprintf(`
 
+
 variable "services_%[1]s" {
   type    = list(string)
   default = ["%[4]s"]
@@ -563,13 +552,11 @@ resource "pingone_environment" "%[1]s" {
   name       = "%[2]s"
   license_id = "%[3]s"
 
-  dynamic "service" {
-    for_each = toset(var.services_%[1]s)
-
-    content {
-      type = services.key
+  services = [
+    for serviceType in var.services_%[1]s : {
+      type = serviceType
     }
-  }
+  ]
 }`, resourceName, name, licenseID, strings.Join(services, "\",\""))
 }
 
