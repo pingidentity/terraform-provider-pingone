@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -37,10 +36,10 @@ type WebhookResourceModel struct {
 	HttpEndpointHeaders   types.Map    `tfsdk:"http_endpoint_headers"`
 	VerifyTLSCertificates types.Bool   `tfsdk:"verify_tls_certificates"`
 	Format                types.String `tfsdk:"format"`
-	FilterOptions         types.List   `tfsdk:"filter_options"`
+	FilterOptions         types.Object `tfsdk:"filter_options"`
 }
 
-type WebookFilterOptionsModel struct {
+type WebhookFilterOptionsResourceModel struct {
 	IncludedActionTypes    types.Set  `tfsdk:"included_action_types"`
 	IncludedApplicationIds types.Set  `tfsdk:"included_application_ids"`
 	IncludedPopulationIds  types.Set  `tfsdk:"included_population_ids"`
@@ -124,7 +123,6 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 
 	const attrMinLength = 1
 	const attrFilterOptionsIncludedIDsMaxLength = 10
-	const attrFilterOptionsLimit = 1
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -190,99 +188,88 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumSubscriptionFormatEnumValues)...),
 				},
 			},
-		},
 
-		Blocks: map[string]schema.Block{
+			"filter_options": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the PingOne platform event filters to be included to trigger this webhook.").Description,
+				Required:    true,
 
-			"filter_options": schema.ListNestedBlock{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A block that specifies the PingOne platform event filters to be included to trigger this webhook.").Description,
+				Attributes: map[string]schema.Attribute{
+					"included_action_types": schema.SetAttribute{
+						Description:         filterOptionsIncludedActionTypesDescription.Description,
+						MarkdownDescription: filterOptionsIncludedActionTypesDescription.MarkdownDescription,
+						Required:            true,
 
-				NestedObject: schema.NestedBlockObject{
+						ElementType: types.StringType,
 
-					Attributes: map[string]schema.Attribute{
-						"included_action_types": schema.SetAttribute{
-							Description:         filterOptionsIncludedActionTypesDescription.Description,
-							MarkdownDescription: filterOptionsIncludedActionTypesDescription.MarkdownDescription,
-							Required:            true,
-
-							ElementType: types.StringType,
-
-							Validators: []validator.Set{
-								setvalidator.SizeAtLeast(attrMinLength),
-								setvalidator.ValueStringsAre(
-									stringvalidator.LengthAtLeast(attrMinLength),
-								),
-							},
-						},
-
-						"included_application_ids": schema.SetAttribute{
-							Description:         filterOptionsIncludedApplicationIDsDescription.Description,
-							MarkdownDescription: filterOptionsIncludedApplicationIDsDescription.MarkdownDescription,
-							Optional:            true,
-
-							ElementType: types.StringType,
-
-							Validators: []validator.Set{
-								setvalidator.SizeAtMost(attrFilterOptionsIncludedIDsMaxLength),
-								setvalidator.ValueStringsAre(
-									verify.P1ResourceIDValidator(),
-								),
-							},
-						},
-
-						"included_population_ids": schema.SetAttribute{
-							Description:         filterOptionsIncludedPopulationIDsDescription.Description,
-							MarkdownDescription: filterOptionsIncludedPopulationIDsDescription.MarkdownDescription,
-							Optional:            true,
-
-							ElementType: types.StringType,
-
-							Validators: []validator.Set{
-								setvalidator.SizeAtMost(attrFilterOptionsIncludedIDsMaxLength),
-								setvalidator.ValueStringsAre(
-									verify.P1ResourceIDValidator(),
-								),
-							},
-						},
-
-						"included_tags": schema.SetAttribute{
-							Description:         filterOptionsIncludedTagsDescription.Description,
-							MarkdownDescription: filterOptionsIncludedTagsDescription.MarkdownDescription,
-							Optional:            true,
-
-							ElementType: types.StringType,
-
-							Validators: []validator.Set{
-								setvalidator.ValueStringsAre(
-									stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumSubscriptionFilterIncludedTagsEnumValues)...),
-								),
-							},
-						},
-
-						"ip_address_exposed": schema.BoolAttribute{
-							Description:         filterOptionsIPAddressExposedDescription.Description,
-							MarkdownDescription: filterOptionsIPAddressExposedDescription.MarkdownDescription,
-							Optional:            true,
-							Computed:            true,
-
-							Default: booldefault.StaticBool(false),
-						},
-
-						"useragent_exposed": schema.BoolAttribute{
-							Description:         filterOptionsUseragentExposedDescription.Description,
-							MarkdownDescription: filterOptionsUseragentExposedDescription.MarkdownDescription,
-							Optional:            true,
-							Computed:            true,
-
-							Default: booldefault.StaticBool(false),
+						Validators: []validator.Set{
+							setvalidator.SizeAtLeast(attrMinLength),
+							setvalidator.ValueStringsAre(
+								stringvalidator.LengthAtLeast(attrMinLength),
+							),
 						},
 					},
-				},
 
-				Validators: []validator.List{
-					listvalidator.SizeAtLeast(attrFilterOptionsLimit),
-					listvalidator.SizeAtMost(attrFilterOptionsLimit),
-					listvalidator.IsRequired(),
+					"included_application_ids": schema.SetAttribute{
+						Description:         filterOptionsIncludedApplicationIDsDescription.Description,
+						MarkdownDescription: filterOptionsIncludedApplicationIDsDescription.MarkdownDescription,
+						Optional:            true,
+
+						ElementType: types.StringType,
+
+						Validators: []validator.Set{
+							setvalidator.SizeAtMost(attrFilterOptionsIncludedIDsMaxLength),
+							setvalidator.ValueStringsAre(
+								verify.P1ResourceIDValidator(),
+							),
+						},
+					},
+
+					"included_population_ids": schema.SetAttribute{
+						Description:         filterOptionsIncludedPopulationIDsDescription.Description,
+						MarkdownDescription: filterOptionsIncludedPopulationIDsDescription.MarkdownDescription,
+						Optional:            true,
+
+						ElementType: types.StringType,
+
+						Validators: []validator.Set{
+							setvalidator.SizeAtMost(attrFilterOptionsIncludedIDsMaxLength),
+							setvalidator.ValueStringsAre(
+								verify.P1ResourceIDValidator(),
+							),
+						},
+					},
+
+					"included_tags": schema.SetAttribute{
+						Description:         filterOptionsIncludedTagsDescription.Description,
+						MarkdownDescription: filterOptionsIncludedTagsDescription.MarkdownDescription,
+						Optional:            true,
+
+						ElementType: types.StringType,
+
+						Validators: []validator.Set{
+							setvalidator.ValueStringsAre(
+								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumSubscriptionFilterIncludedTagsEnumValues)...),
+							),
+						},
+					},
+
+					"ip_address_exposed": schema.BoolAttribute{
+						Description:         filterOptionsIPAddressExposedDescription.Description,
+						MarkdownDescription: filterOptionsIPAddressExposedDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: booldefault.StaticBool(false),
+					},
+
+					"useragent_exposed": schema.BoolAttribute{
+						Description:         filterOptionsUseragentExposedDescription.Description,
+						MarkdownDescription: filterOptionsUseragentExposedDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: booldefault.StaticBool(false),
+					},
 				},
 			},
 		},
@@ -541,20 +528,20 @@ func (p *WebhookResourceModel) expand(ctx context.Context) (*management.Subscrip
 		httpEndpoint.SetHeaders(headersPlan)
 	}
 
-	var filterOptionsPlan []WebookFilterOptionsModel
-	diags.Append(p.FilterOptions.ElementsAs(ctx, &filterOptionsPlan, false)...)
+	var filterOptionsPlan WebhookFilterOptionsResourceModel
+	diags.Append(p.FilterOptions.As(ctx, &filterOptionsPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    true,
+		UnhandledUnknownAsEmpty: true,
+	})...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
 	var filterOptions *management.SubscriptionFilterOptions
 	var d diag.Diagnostics
-	if len(filterOptionsPlan) == 1 {
-		filterOptions, d = filterOptionsPlan[0].expand(ctx)
-		diags.Append(d...)
-	} else {
-		d.AddError("Invalid webhook filter options", "Exactly one filter options block must be specified")
-	}
+
+	filterOptions, d = filterOptionsPlan.expand(ctx)
+	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
 	}
@@ -571,7 +558,7 @@ func (p *WebhookResourceModel) expand(ctx context.Context) (*management.Subscrip
 	return data, diags
 }
 
-func (p *WebookFilterOptionsModel) expand(ctx context.Context) (*management.SubscriptionFilterOptions, diag.Diagnostics) {
+func (p *WebhookFilterOptionsResourceModel) expand(ctx context.Context) (*management.SubscriptionFilterOptions, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var includedActionTypes []string
@@ -673,12 +660,11 @@ func (p *WebhookResourceModel) toState(apiObject *management.Subscription) diag.
 	return diags
 }
 
-func toStateWebhookFilterOptions(v *management.SubscriptionFilterOptions, ok bool) (types.List, diag.Diagnostics) {
+func toStateWebhookFilterOptions(v *management.SubscriptionFilterOptions, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	tfObjType := types.ObjectType{AttrTypes: webhookFilterOptionsTFObjectTypes}
 
 	if !ok || v == nil {
-		return types.ListNull(types.ObjectType{AttrTypes: webhookFilterOptionsTFObjectTypes}), diags
+		return types.ObjectNull(webhookFilterOptionsTFObjectTypes), diags
 	}
 
 	var applicationIDSet, populationIDSet basetypes.SetValue
@@ -714,10 +700,7 @@ func toStateWebhookFilterOptions(v *management.SubscriptionFilterOptions, ok boo
 		"useragent_exposed":        framework.BoolOkToTF(v.GetUserAgentExposedOk()),
 	}
 
-	flattenedObj, d := types.ObjectValue(webhookFilterOptionsTFObjectTypes, objMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(webhookFilterOptionsTFObjectTypes, objMap)
 	diags.Append(d...)
 
 	return returnVar, diags
