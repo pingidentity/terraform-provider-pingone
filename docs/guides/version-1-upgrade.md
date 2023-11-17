@@ -185,6 +185,160 @@ This parameter block is no longer needed and has been removed.
 
 ## Resource: pingone_identity_provider
 
+### `amazon` parameter data type change
+
+The `amazon` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  amazon {
+    client_id     = var.amazon_client_id
+    client_secret = var.amazon_client_secret
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  amazon = {
+    client_id     = var.amazon_client_id
+    client_secret = var.amazon_client_secret
+  }
+}
+```
+
+### `apple` parameter data type change
+
+The `apple` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  apple {
+    client_id                 = var.apple_client_id
+    client_secret_signing_key = var.apple_client_secret_signing_key
+    key_id                    = var.apple_key_id
+    team_id                   = var.apple_team_id
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  apple = {
+    client_id                 = var.apple_client_id
+    client_secret_signing_key = var.apple_client_secret_signing_key
+    key_id                    = var.apple_key_id
+    team_id                   = var.apple_team_id
+  }
+}
+```
+
+### `facebook` parameter data type change
+
+The `facebook` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  facebook {
+    app_id     = var.facebook_app_id
+    app_secret = var.facebook_app_secret
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  facebook = {
+    app_id     = var.facebook_app_id
+    app_secret = var.facebook_app_secret
+  }
+}
+```
+
+### `github` parameter data type change
+
+The `github` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  github {
+    client_id     = var.github_client_id
+    client_secret = var.github_client_secret
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  github = {
+    client_id     = var.github_client_id
+    client_secret = var.github_client_secret
+  }
+}
+```
+
+### `google` parameter data type change
+
+The `google` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  google {
+    client_id     = var.google_client_id
+    client_secret = var.google_client_secret
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  google = {
+    client_id     = var.google_client_id
+    client_secret = var.google_client_secret
+  }
+}
+```
+
 ### `icon` parameter data type change
 
 The `icon` parameter is now a nested object type and no longer a block type.
@@ -215,6 +369,36 @@ resource "pingone_identity_provider" "my_awesome_identity_provider" {
 }
 ```
 
+### `linkedin` parameter data type change
+
+The `linkedin` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  linkedin {
+    client_id     = var.linkedin_client_id
+    client_secret = var.linkedin_client_secret
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  linkedin = {
+    client_id     = var.linkedin_client_id
+    client_secret = var.linkedin_client_secret
+  }
+}
+```
+
 ### `login_button_icon` parameter data type change
 
 The `login_button_icon` parameter is now a nested object type and no longer a block type.
@@ -241,6 +425,204 @@ resource "pingone_identity_provider" "my_awesome_identity_provider" {
   login_button_icon = {
     id   = pingone_image.identity_provider_login_button_icon.id
     href = pingone_image.identity_provider_login_button_icon.uploaded_image.href
+  }
+}
+```
+
+### `microsoft` parameter data type change
+
+The `microsoft` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  microsoft {
+    client_id     = var.microsoft_client_id
+    client_secret = var.microsoft_client_secret
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  microsoft = {
+    client_id     = var.microsoft_client_id
+    client_secret = var.microsoft_client_secret
+  }
+}
+```
+
+### `openid_connect` parameter data type change
+
+The `openid_connect` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  openid_connect {
+    authorization_endpoint = var.openid_connect_idp_authorization_endpoint
+    client_id              = var.openid_connect_idp_client_id
+    client_secret          = var.openid_connect_idp_client_secret
+    issuer                 = var.openid_connect_idp_issuer
+    jwks_endpoint          = var.openid_connect_idp_jwks_endpoint
+    scopes                 = var.openid_connect_idp_scopes
+    token_endpoint         = var.openid_connect_idp_token_endpoint
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  openid_connect = {
+    authorization_endpoint = var.openid_connect_idp_authorization_endpoint
+    client_id              = var.openid_connect_idp_client_id
+    client_secret          = var.openid_connect_idp_client_secret
+    issuer                 = var.openid_connect_idp_issuer
+    jwks_endpoint          = var.openid_connect_idp_jwks_endpoint
+    scopes                 = var.openid_connect_idp_scopes
+    token_endpoint         = var.openid_connect_idp_token_endpoint
+  }
+}
+```
+
+### `paypal` parameter data type change
+
+The `paypal` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  paypal {
+    client_environment     = var.paypal_client_environment
+    client_id              = var.paypal_client_id
+    client_secret          = var.paypal_client_secret
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  paypal = {
+    client_environment     = var.paypal_client_environment
+    client_id              = var.paypal_client_id
+    client_secret          = var.paypal_client_secret
+  }
+}
+```
+
+### `saml` parameter data type change
+
+The `saml` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  saml {
+    idp_entity_id                    = var.saml_idp_entity_id
+    idp_verification_certificate_ids = var.saml_idp_verification_certificate_ids 
+    sp_entity_id                     = var.saml_idp_sp_entity_id
+    sso_binding                      = var.saml_idp_sso_binding
+    sso_endpoint                     = var.saml_idp_sso_endpoint
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  saml = {
+    idp_entity_id                    = var.saml_idp_entity_id
+    idp_verification_certificate_ids = var.saml_idp_verification_certificate_ids 
+    sp_entity_id                     = var.saml_idp_sp_entity_id
+    sso_binding                      = var.saml_idp_sso_binding
+    sso_endpoint                     = var.saml_idp_sso_endpoint
+  }
+}
+```
+
+### `twitter` parameter data type change
+
+The `twitter` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  twitter {
+    client_id     = var.twitter_client_id
+    client_secret = var.twitter_client_secret
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  twitter = {
+    client_id     = var.twitter_client_id
+    client_secret = var.twitter_client_secret
+  }
+}
+```
+
+### `yahoo` parameter data type change
+
+The `yahoo` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  yahoo {
+    client_id     = var.yahoo_client_id
+    client_secret = var.yahoo_client_secret
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  yahoo = {
+    client_id     = var.yahoo_client_id
+    client_secret = var.yahoo_client_secret
   }
 }
 ```
