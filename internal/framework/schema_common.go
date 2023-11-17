@@ -66,17 +66,20 @@ func Attr_SCIMFilter(description SchemaAttributeDescription, acceptableAttribute
 
 	description = description.ExactlyOneOf(mutuallyExclusiveAttributes)
 
-	stringValidators := make([]validator.String, 0)
-	stringValidators = append(stringValidators, stringvalidator.LengthAtLeast(filterMinLength))
+	validators := make([]validator.String, 0)
+	validators = append(validators, stringvalidator.LengthAtLeast(filterMinLength))
+
+	paths := make([]path.Expression, 0)
 	for _, v := range mutuallyExclusiveAttributes {
-		stringValidators = append(stringValidators, stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName(v)))
+		paths = append(paths, path.MatchRelative().AtParent().AtName(v))
 	}
+	validators = append(validators, stringvalidator.ExactlyOneOf(paths...))
 
 	return schema.StringAttribute{
 		Description:         description.Description,
 		MarkdownDescription: description.MarkdownDescription,
 		Optional:            true,
-		Validators:          stringValidators,
+		Validators:          validators,
 	}
 }
 
@@ -103,10 +106,13 @@ func Attr_DataFilter(description SchemaAttributeDescription, acceptableAttribute
 	}
 
 	// The parent attribute validators
-	listValidators := make([]validator.List, 0)
+	validators := make([]validator.List, 0)
+
+	paths := make([]path.Expression, 0)
 	for _, v := range mutuallyExclusiveAttributes {
-		listValidators = append(listValidators, listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName(v)))
+		paths = append(paths, path.MatchRelative().AtParent().AtName(v))
 	}
+	validators = append(validators, listvalidator.ExactlyOneOf(paths...))
 
 	return schema.ListNestedAttribute{
 		Description:         description.Description,
@@ -140,7 +146,7 @@ func Attr_DataFilter(description SchemaAttributeDescription, acceptableAttribute
 				},
 			},
 		},
-		Validators: listValidators,
+		Validators: validators,
 	}
 }
 
