@@ -21,6 +21,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -39,8 +40,8 @@ type IdentityProviderResourceModel struct {
 	Description              types.String `tfsdk:"description"`
 	Enabled                  types.Bool   `tfsdk:"enabled"`
 	RegistrationPopulationId types.String `tfsdk:"registration_population_id"`
-	LoginButtonIcon          types.List   `tfsdk:"login_button_icon"`
-	Icon                     types.List   `tfsdk:"icon"`
+	LoginButtonIcon          types.Object `tfsdk:"login_button_icon"`
+	Icon                     types.Object `tfsdk:"icon"`
 	Facebook                 types.List   `tfsdk:"facebook"`
 	Google                   types.List   `tfsdk:"google"`
 	LinkedIn                 types.List   `tfsdk:"linkedin"`
@@ -302,74 +303,63 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 					verify.P1ResourceIDValidator(),
 				},
 			},
+
+			"login_button_icon": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the HREF and ID for the identity provider icon to use in the login button.").Description,
+				Optional:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description:         loginButtonIconIdDescription.Description,
+						MarkdownDescription: loginButtonIconIdDescription.MarkdownDescription,
+						Required:            true,
+
+						Validators: []validator.String{
+							verify.P1ResourceIDValidator(),
+						},
+					},
+
+					"href": schema.StringAttribute{
+						Description:         loginButtonIconHrefDescription.Description,
+						MarkdownDescription: loginButtonIconHrefDescription.MarkdownDescription,
+						Required:            true,
+
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+						},
+					},
+				},
+			},
+
+			"icon": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the HREF and ID for the identity provider icon.").Description,
+				Optional:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description:         iconIdDescription.Description,
+						MarkdownDescription: iconIdDescription.MarkdownDescription,
+						Required:            true,
+
+						Validators: []validator.String{
+							verify.P1ResourceIDValidator(),
+						},
+					},
+
+					"href": schema.StringAttribute{
+						Description:         iconHrefDescription.Description,
+						MarkdownDescription: iconHrefDescription.MarkdownDescription,
+						Required:            true,
+
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+						},
+					},
+				},
+			},
 		},
 
 		Blocks: map[string]schema.Block{
-			"login_button_icon": schema.ListNestedBlock{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies the HREF and ID for the identity provider icon to use in the login button.").Description,
-
-				NestedObject: schema.NestedBlockObject{
-
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Description:         loginButtonIconIdDescription.Description,
-							MarkdownDescription: loginButtonIconIdDescription.MarkdownDescription,
-							Required:            true,
-
-							Validators: []validator.String{
-								verify.P1ResourceIDValidator(),
-							},
-						},
-
-						"href": schema.StringAttribute{
-							Description:         loginButtonIconHrefDescription.Description,
-							MarkdownDescription: loginButtonIconHrefDescription.MarkdownDescription,
-							Required:            true,
-
-							Validators: []validator.String{
-								stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
-							},
-						},
-					},
-				},
-
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-				},
-			},
-
-			"icon": schema.ListNestedBlock{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies the HREF and ID for the identity provider icon.").Description,
-
-				NestedObject: schema.NestedBlockObject{
-
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Description:         iconIdDescription.Description,
-							MarkdownDescription: iconIdDescription.MarkdownDescription,
-							Required:            true,
-
-							Validators: []validator.String{
-								verify.P1ResourceIDValidator(),
-							},
-						},
-
-						"href": schema.StringAttribute{
-							Description:         iconHrefDescription.Description,
-							MarkdownDescription: iconHrefDescription.MarkdownDescription,
-							Required:            true,
-
-							Validators: []validator.String{
-								stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
-							},
-						},
-					},
-				},
-
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-				},
-			},
 
 			// The providers
 			"facebook": identityProviderSchemaBlock(
@@ -1078,47 +1068,37 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 	}
 
 	if !p.LoginButtonIcon.IsNull() && !p.LoginButtonIcon.IsUnknown() {
-		var plan []IdentityProviderLoginButtonIcon
-		d := p.LoginButtonIcon.ElementsAs(ctx, &plan, false)
+		var plan IdentityProviderLoginButtonIcon
+		d := p.LoginButtonIcon.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		if len(plan) == 0 {
-			diags.AddError(
-				"Invalid configuration",
-				"The `login_button_icon` block is declared but has no configuration.  Please report this to the provider maintainers.",
-			)
-		}
-
-		planItem := plan[0]
 		icon := *management.NewIdentityProviderCommonLoginButtonIcon()
-		icon.SetId(planItem.Id.ValueString())
-		icon.SetHref(planItem.Href.ValueString())
+		icon.SetId(plan.Id.ValueString())
+		icon.SetHref(plan.Href.ValueString())
 		common.SetLoginButtonIcon(icon)
 
 	}
 
 	if !p.Icon.IsNull() && !p.Icon.IsUnknown() {
-		var plan []IdentityProviderIcon
-		d := p.Icon.ElementsAs(ctx, &plan, false)
+		var plan IdentityProviderIcon
+		d := p.Icon.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		if len(plan) == 0 {
-			diags.AddError(
-				"Invalid configuration",
-				"The `icon` block is declared but has no configuration.  Please report this to the provider maintainers.",
-			)
-		}
-
-		planItem := plan[0]
 		icon := *management.NewIdentityProviderCommonIcon()
-		icon.SetId(planItem.Id.ValueString())
-		icon.SetHref(planItem.Href.ValueString())
+		icon.SetId(plan.Id.ValueString())
+		icon.SetHref(plan.Href.ValueString())
 		common.SetIcon(icon)
 	}
 

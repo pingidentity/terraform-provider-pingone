@@ -22,13 +22,11 @@ var (
 	}
 )
 
-func ImageOkToTF(logo interface{}, ok bool) (types.List, diag.Diagnostics) {
+func ImageOkToTF(logo interface{}, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	tfObjType := types.ObjectType{AttrTypes: ImageTFObjectTypes}
-
 	if !ok || logo == nil {
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(ImageTFObjectTypes), diags
 	}
 
 	b, e := json.Marshal(logo)
@@ -37,7 +35,7 @@ func ImageOkToTF(logo interface{}, ok bool) (types.List, diag.Diagnostics) {
 			"Invalid data object",
 			fmt.Sprintf("Cannot remap the data object to JSON: %s.  Please report this to the provider maintainers.", e),
 		)
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(ImageTFObjectTypes), diags
 	}
 
 	var s map[string]string
@@ -47,7 +45,7 @@ func ImageOkToTF(logo interface{}, ok bool) (types.List, diag.Diagnostics) {
 			"Invalid data object",
 			fmt.Sprintf("Cannot remap the data object to map: %s.  Please report this to the provider maintainers.", e),
 		)
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(ImageTFObjectTypes), diags
 	}
 
 	attributesMap := map[string]attr.Value{}
@@ -64,10 +62,7 @@ func ImageOkToTF(logo interface{}, ok bool) (types.List, diag.Diagnostics) {
 		attributesMap["id"] = types.StringNull()
 	}
 
-	flattenedObj, d := types.ObjectValue(ImageTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(ImageTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags

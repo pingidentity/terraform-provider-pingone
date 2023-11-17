@@ -89,6 +89,68 @@ This attribute was previously deprecated and has been removed.  Default populati
 
 This parameter block is no longer needed and has been removed.
 
+## Resource: pingone_identity_provider
+
+### `icon` parameter data type change
+
+The `icon` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  icon {
+    id   = pingone_image.identity_provider_icon.id
+    href = pingone_image.identity_provider_icon.uploaded_image[0].href
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  icon = {
+    id   = pingone_image.identity_provider_icon.id
+    href = pingone_image.identity_provider_icon.uploaded_image.href
+  }
+}
+```
+
+### `login_button_icon` parameter data type change
+
+The `login_button_icon` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  login_button_icon {
+    id   = pingone_image.identity_provider_login_button_icon.id
+    href = pingone_image.identity_provider_login_button_icon.uploaded_image[0].href
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  login_button_icon = {
+    id   = pingone_image.identity_provider_login_button_icon.id
+    href = pingone_image.identity_provider_login_button_icon.uploaded_image.href
+  }
+}
+```
+
 ## Resource: pingone_image
 
 ### `uploaded_image` computed attribute data type change
