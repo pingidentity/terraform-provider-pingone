@@ -63,9 +63,17 @@ resource "pingone_application" "my_awesome_saml_app" {
 
 This parameter was previously deprecated and has now been made read only.  Use the `resource_name` parameter going forward.
 
+### `resource_name` parameter changed
+
+This parameter was previously optional and has now been made a required parameter.
+
 ### `scopes` parameter changed
 
 This parameter was previously deprecated and has now been made read only.  Use the `scope_names` parameter going forward.
+
+### `scope_names` parameter changed
+
+This parameter was previously optional and has now been made a required parameter.
 
 ## Resource: pingone_environment
 
