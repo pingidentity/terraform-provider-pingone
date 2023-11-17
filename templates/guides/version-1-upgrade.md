@@ -269,6 +269,16 @@ This parameter was previously deprecated and has been removed.  Use the `fido2` 
 
 This parameter was previously deprecated and has been removed.  Device authentication parameters have moved to the `pingone_mfa_device_policy` resource.
 
+## Resource: pingone_resource_attribute
+
+### `resource_id` parameter changed
+
+This parameter was previously deprecated and has now been made read only.  Use the `resource_name` parameter going forward.
+
+### `resource_name` parameter changed
+
+This parameter was previously optional and has now been made a required field.
+
 ## Resource: pingone_user
 
 ### `status` optional parameter removed
