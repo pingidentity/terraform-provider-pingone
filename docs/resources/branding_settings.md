@@ -27,7 +27,7 @@ resource "pingone_branding_settings" "branding" {
 
   company_name = "BXRetail"
 
-  logo_image {
+  logo_image = {
     id   = pingone_image.company_logo.id
     href = pingone_image.company_logo.uploaded_image[0].href
   }
@@ -44,13 +44,13 @@ resource "pingone_branding_settings" "branding" {
 ### Optional
 
 - `company_name` (String) The company name associated with the specified environment.
-- `logo_image` (Block List) A single block that specifies the HREF and ID for the company logo. (see [below for nested schema](#nestedblock--logo_image))
+- `logo_image` (Attributes) A single object that specifies the HREF and ID for the company logo. (see [below for nested schema](#nestedatt--logo_image))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 
-<a id="nestedblock--logo_image"></a>
+<a id="nestedatt--logo_image"></a>
 ### Nested Schema for `logo_image`
 
 Required:

@@ -13,7 +13,7 @@ resource "pingone_branding_settings" "branding" {
 
   company_name = "BXRetail"
 
-  logo_image {
+  logo_image = {
     id   = pingone_image.company_logo.id
     href = pingone_image.company_logo.uploaded_image[0].href
   }

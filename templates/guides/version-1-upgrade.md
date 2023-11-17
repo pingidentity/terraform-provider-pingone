@@ -75,6 +75,38 @@ This parameter was previously deprecated and has now been made read only.  Use t
 
 This parameter was previously optional and has now been made a required parameter.
 
+## Resource: pingone_branding_settings
+
+### `logo_image` parameter data type change
+
+The `logo_image` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_branding_settings" "branding" {
+  # ... other configuration parameters
+
+  logo_image {
+    id   = pingone_image.company_logo.id
+    href = pingone_image.company_logo.uploaded_image[0].href
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_branding_settings" "branding" {
+  # ... other configuration parameters
+
+  logo_image = {
+    id   = pingone_image.company_logo.id
+    href = pingone_image.company_logo.uploaded_image.href
+  }
+}
+```
+
 ## Resource: pingone_environment
 
 ### `default_population` optional parameter removed
