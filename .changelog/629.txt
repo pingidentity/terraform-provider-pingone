@@ -1,3 +1,3 @@
-```release-note:note
+```release-note:breaking-change
 `resource/pingone_environment`: Removal of deprecated parameter `default_population` and computed attribute `default_population_id`.
 ```

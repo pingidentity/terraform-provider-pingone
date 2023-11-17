@@ -1,7 +1,7 @@
-```release-note:note
+```release-note:breaking-change
 `resource/pingone_application`: Removal of deprecated parameters `oidc_options.bundle_id`, `oidc_options.package_name`.  Use the `oidc_options.mobile_app.bundle_id` and `oidc_options.mobile_app.package_name` parameters going forward.
 ```
 
-```release-note:note
+```release-note:breaking-change
 `resource/pingone_application`: Removal of deprecated parameter `saml_options.idp_signing_key_id`.  Use the `saml_options.idp_signing_key` parameter going forward.
 ```
