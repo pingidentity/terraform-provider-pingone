@@ -179,6 +179,131 @@ This parameter was previously deprecated and has been removed.  Default populati
 
 This attribute was previously deprecated and has been removed.  Default populations are managed with the `pingone_population_default` resource.
 
+### `service` block parameter renamed, data type changed and made a required parameter
+
+The `service` parameter has been renamed to `services` and is now a required parameter.  The data type is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_environment" "my_environment" {
+  # ... other configuration parameters
+  
+  service {
+    type = "SSO"
+  }
+
+  service {
+    type = "MFA"
+  }
+
+  service {
+    type        = "PingFederate"
+    console_url = "https://my-pingfederate-console.example.com/pingfederate"
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_environment" "my_environment" {
+  # ... other configuration parameters
+  
+  services = [
+    {
+      type = "SSO"
+    },
+    {
+      type = "MFA"
+    },
+    {
+      type        = "PingFederate"
+      console_url = "https://my-pingfederate-console.example.com/pingfederate"
+    }
+  ]
+}
+```
+
+### `service.bookmark` block parameter renamed and data type changed
+
+The `service.bookmark` parameter has been renamed to `services.bookmarks`.  The data type is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_environment" "my_environment" {
+  # ... other configuration parameters
+  
+  service {
+    type = "SSO"
+    
+    bookmark {
+      name = "My awesome bookmark"
+      url = "https://www.bxretail.org"
+    }
+
+    bookmark {
+      name = "My second awesome bookmark"
+      url = "https://www.bxretail.org/awesome"
+    }
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_environment" "my_environment" {
+  # ... other configuration parameters
+  
+  services = [
+    {
+      type = "SSO"
+    
+      bookmarks = [
+        {
+          name = "My awesome bookmark"
+          url = "https://www.bxretail.org"
+        },
+        {
+          name = "My second awesome bookmark"
+          url = "https://www.bxretail.org/awesome"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### `service.type` now made a required parameter
+
+The `service.type` parameter has moved to `services.type` and is now a required parameter.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_environment" "my_environment" {
+  # ... other configuration parameters
+  
+  service {}
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_environment" "my_environment" {
+  # ... other configuration parameters
+  
+  services = [
+    {
+      type = "SSO"
+    }
+  ]
+}
+```
+
 ### `timeouts` block removed
 
 This parameter block is no longer needed and has been removed.
@@ -866,6 +991,16 @@ resource "pingone_webhook" "my_webhook" {
   }
 }
 ```
+
+## Data Source: pingone_environment
+
+### `service` computed attribute rename and data type change
+
+The `service` computed attribute has been renamed to `services` and is now a nested object type and no longer a block type.
+
+### `service.bookmark` computed attribute rename and data type change
+
+The `service.bookmark` computed attribute has been renamed to `services.bookmarks` and is now a nested object type and no longer a block type.
 
 ## Data Source: pingone_flow_policies
 

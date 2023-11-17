@@ -75,14 +75,16 @@ func TestAccEnvironmentsDataSource_NotFound(t *testing.T) {
 func testAccEnvironmentsDataSourceConfig_BySCIMFilter(resourceName, name, licenseID, filter string) string {
 	return fmt.Sprintf(`
 
-
 resource "pingone_environment" "%[1]s-1" {
   name       = "%[2]s-1"
   type       = "SANDBOX"
   license_id = "%[3]s"
 
-  service {
-  }
+  services = [
+    {
+      type = "SSO"
+    }
+  ]
 }
 
 resource "pingone_environment" "%[1]s-2" {
@@ -90,8 +92,11 @@ resource "pingone_environment" "%[1]s-2" {
   type       = "SANDBOX"
   license_id = "%[3]s"
 
-  service {
-  }
+  services = [
+    {
+      type = "SSO"
+    }
+  ]
 }
 
 resource "pingone_environment" "%[1]s-3" {
@@ -99,8 +104,11 @@ resource "pingone_environment" "%[1]s-3" {
   type       = "SANDBOX"
   license_id = "%[3]s"
 
-  service {
-  }
+  services = [
+    {
+      type = "SSO"
+    }
+  ]
 }
 
 data "pingone_environments" "%[1]s" {

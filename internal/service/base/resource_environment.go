@@ -7,7 +7,6 @@ import (
 	"os"
 	"regexp"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
@@ -52,13 +51,13 @@ type environmentResourceModel struct {
 	LicenseId      types.String `tfsdk:"license_id"`
 	OrganizationId types.String `tfsdk:"organization_id"`
 	Solution       types.String `tfsdk:"solution"`
-	Services       types.Set    `tfsdk:"service"`
+	Services       types.Set    `tfsdk:"services"`
 }
 
 type environmentServiceModel struct {
 	Type       types.String `tfsdk:"type"`
 	ConsoleUrl types.String `tfsdk:"console_url"`
-	Bookmarks  types.Set    `tfsdk:"bookmark"`
+	Bookmarks  types.Set    `tfsdk:"bookmarks"`
 	Tags       types.Set    `tfsdk:"tags"`
 }
 
@@ -71,7 +70,7 @@ var (
 	environmentServiceTFObjectTypes = map[string]attr.Type{
 		"type":        types.StringType,
 		"console_url": types.StringType,
-		"bookmark":    types.SetType{ElemType: types.ObjectType{AttrTypes: environmentServiceBookmarkTFObjectTypes}},
+		"bookmarks":   types.SetType{ElemType: types.ObjectType{AttrTypes: environmentServiceBookmarkTFObjectTypes}},
 		"tags":        types.SetType{ElemType: types.StringType},
 	}
 
@@ -110,27 +109,30 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 	const minimumServices = 1
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("The type of the environment to create.  Options are `%s` for a development/testing environment and `%s` for environments that require protection from deletion. Defaults to `%s`.", management.ENUMENVIRONMENTTYPE_SANDBOX, management.ENUMENVIRONMENTTYPE_PRODUCTION, management.ENUMENVIRONMENTTYPE_SANDBOX),
-	)
+		"A string that specifies the type of the environment to create.",
+	).AllowedValuesComplex(map[string]string{
+		string(management.ENUMENVIRONMENTTYPE_SANDBOX):    "for a development/testing environment",
+		string(management.ENUMENVIRONMENTTYPE_PRODUCTION): "for environments that require protection from deletion",
+	}).DefaultValue(string(management.ENUMENVIRONMENTTYPE_SANDBOX))
 
 	regionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.  Default can be set with the `PINGONE_REGION` environment variable.",
-	)
+		"A string that specifies the region to create the environment in.  Should be consistent with the PingOne organisation region.",
+	).AllowedValues(`AsiaPacific`, `Canada`, `Europe`, `NorthAmerica`).AppendMarkdownString("Will default to the region specified in the provider configuration if not specified, or can be set with the `PINGONE_REGION` environment variable.")
 
 	solutionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("The solution context of the environment.  Leave blank for a custom, non-workforce solution context.  Valid options are `%s`, or no value for custom solution context.  Workforce solution environments are not yet supported in this provider resource, but can be fetched using the `pingone_environment` datasource.", string(management.ENUMSOLUTIONTYPE_CUSTOMER)),
-	)
+		fmt.Sprintf("A string that specifies the solution context of the environment.  Leave blank for a custom, non-workforce solution context.  Valid options are `%s`, or no value for custom solution context.  Workforce solution environments are not yet supported in this provider resource, but can be fetched using the `pingone_environment` datasource.", string(management.ENUMSOLUTIONTYPE_CUSTOMER)),
+	).RequiresReplace()
 
-	serviceDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The services to enable in the environment.",
-	).DefaultValue("SSO")
+	servicesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A set of objects that specify the services to enable in the environment.",
+	)
 
 	serviceTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("The service type to enable in the environment.  Valid options are `%s`.  Defaults to `SSO`.", strings.Join(model.ProductsSelectableList(), "`, `")),
-	)
+		"A string that specifies the service type to enable in the environment.",
+	).AllowedValuesEnum(model.ProductsSelectableList())
 
 	serviceConsoleUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A custom console URL to set.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`.",
+		"A string that specifies the custom console URL to set.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`.",
 	)
 
 	daVinciService, err := model.FindProductByAPICode(management.ENUMPRODUCTTYPE_ONE_DAVINCI)
@@ -144,7 +146,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 	}
 
 	serviceTagsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A set of tags to apply upon environment creation.  Only configurable when the service `type` is `%s`.", daVinciService.ProductCode),
+		fmt.Sprintf("A set of string tags to apply upon environment creation.  Only configurable when the service `type` is `%s`.", daVinciService.ProductCode),
 	).AllowedValuesComplex(
 		map[string]string{
 			string(management.ENUMBILLOFMATERIALSPRODUCTTAGS_DAVINCI_MINIMAL): "allows for a creation of an environment without example/demo configuration in the DaVinci service",
@@ -159,7 +161,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 			"id": framework.Attr_ID(),
 
 			"name": schema.StringAttribute{
-				Description: "The name of the environment.",
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the name of the environment.").Description,
 
 				Required: true,
 
@@ -169,7 +171,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 
 			"description": schema.StringAttribute{
-				Description: "A description of the environment.",
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the description to apply to the environment.").Description,
 
 				Optional: true,
 			},
@@ -224,7 +226,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 
 			"license_id": schema.StringAttribute{
-				Description: "An ID of a valid license to apply to the environment.  Must be a valid PingOne resource ID.",
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of a valid license to apply to the environment.  Must be a valid PingOne resource ID.").Description,
 
 				Required: true,
 
@@ -234,7 +236,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 
 			"organization_id": schema.StringAttribute{
-				Description: "The ID of the PingOne organization tenant to which the environment belongs.",
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that represents the ID of the PingOne organization tenant to which the environment belongs.").Description,
 
 				Computed: true,
 
@@ -253,23 +255,20 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
-		},
 
-		Blocks: map[string]schema.Block{
-			"service": schema.SetNestedBlock{
-				Description:         serviceDescription.Description,
-				MarkdownDescription: serviceDescription.MarkdownDescription,
+			"services": schema.SetNestedAttribute{
+				Description:         servicesDescription.Description,
+				MarkdownDescription: servicesDescription.MarkdownDescription,
+				Required:            true,
 
-				NestedObject: schema.NestedBlockObject{
+				NestedObject: schema.NestedAttributeObject{
 
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
 							Description:         serviceTypeDescription.Description,
 							MarkdownDescription: serviceTypeDescription.MarkdownDescription,
 
-							Optional: true,
-							Computed: true,
-							Default:  stringdefault.StaticString("SSO"),
+							Required: true,
 
 							Validators: []validator.String{
 								stringvalidator.OneOf(model.ProductsSelectableList()...),
@@ -301,17 +300,16 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 								),
 							},
 						},
-					},
 
-					Blocks: map[string]schema.Block{
-						"bookmark": schema.SetNestedBlock{
-							Description: "Custom bookmark links for the service.",
+						"bookmarks": schema.SetNestedAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A set of objects that specify custom bookmark links for the service.").Description,
+							Optional:    true,
 
-							NestedObject: schema.NestedBlockObject{
+							NestedObject: schema.NestedAttributeObject{
 
 								Attributes: map[string]schema.Attribute{
 									"name": schema.StringAttribute{
-										Description: "Bookmark name.",
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the bookmark name.").Description,
 
 										Required: true,
 
@@ -321,7 +319,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 									},
 
 									"url": schema.StringAttribute{
-										Description: "Bookmark URL.",
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that represents the bookmark URL.").Description,
 
 										Required: true,
 
@@ -338,6 +336,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 						},
 					},
 				},
+
 				Validators: []validator.Set{
 					setvalidator.SizeAtMost(maximumServices),
 					setvalidator.SizeAtLeast(minimumServices),
@@ -373,38 +372,6 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("region"), types.StringValue(r.region.Region))...)
 	}
-
-	var servicePlan []environmentServiceModel
-	resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root("service"), &servicePlan)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	if len(servicePlan) == 0 {
-
-		serviceDefaultMap := map[string]attr.Value{
-			"type":        framework.StringToTF("SSO"),
-			"console_url": types.StringNull(),
-			"bookmark":    types.SetNull(types.ObjectType{AttrTypes: environmentServiceBookmarkTFObjectTypes}),
-			"tags":        types.SetNull(types.StringType),
-		}
-
-		serviceDefault, d := types.SetValue(
-			types.ObjectType{AttrTypes: environmentServiceTFObjectTypes},
-			append(
-				make([]attr.Value, 0),
-				types.ObjectValueMust(environmentServiceTFObjectTypes, serviceDefaultMap),
-			),
-		)
-
-		resp.Diagnostics.Append(d...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("service"), serviceDefault)...)
-	}
-
 }
 
 func (r *EnvironmentResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
@@ -1026,7 +993,7 @@ func toStateEnvironmentServices(services []management.BillOfMaterialsProductsInn
 
 		bookmarks, d := toStateEnvironmentServicesBookmark(v.GetBookmarks())
 		diags.Append(d...)
-		service["bookmark"] = bookmarks
+		service["bookmarks"] = bookmarks
 
 		flattenedObj, d := types.ObjectValue(environmentServiceTFObjectTypes, service)
 		diags.Append(d...)
@@ -1046,7 +1013,7 @@ func toStateEnvironmentServicesBookmark(bookmarks []management.BillOfMaterialsPr
 	tfObjType := types.ObjectType{AttrTypes: environmentServiceBookmarkTFObjectTypes}
 
 	if len(bookmarks) == 0 {
-		return types.SetValueMust(tfObjType, []attr.Value{}), diags
+		return types.SetNull(tfObjType), diags
 	}
 
 	flattenedList := []attr.Value{}

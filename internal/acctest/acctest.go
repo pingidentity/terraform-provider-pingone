@@ -305,27 +305,29 @@ func MinimalSandboxEnvironment(resourceName, licenseID string) string {
 
 func MinimalSandboxEnvironmentNoPopulation(resourceName, licenseID string) string {
 	return fmt.Sprintf(`
-	resource "pingone_environment" "%[1]s" {
-		name = "%[1]s"
-		type = "SANDBOX"
-		license_id = "%[2]s"
+resource "pingone_environment" "%[1]s" {
+	name = "%[1]s"
+	type = "SANDBOX"
+	license_id = "%[2]s"
 
-		service {
+	services = [
+		{
 			type = "SSO"
-		}
-		service {
+		},
+		{
 			type = "MFA"
-		}
-		service {
+		},
+		{
 			type = "Risk"
-		}
-		service {
+		},
+		{
 			type = "Credentials"
-		}
-		service {
+		},
+		{
 			type = "Verify"
 		}
-	}
+	]
+}
 `, resourceName, licenseID)
 }
 
