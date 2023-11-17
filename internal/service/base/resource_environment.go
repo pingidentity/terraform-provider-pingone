@@ -128,7 +128,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 	)
 
 	serviceTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A string that specifies the service type to enable in the environment."),
+		"A string that specifies the service type to enable in the environment.",
 	).AllowedValuesEnum(model.ProductsSelectableList())
 
 	serviceConsoleUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
