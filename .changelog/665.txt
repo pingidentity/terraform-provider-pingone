@@ -7,7 +7,7 @@
 ```
 
 ```release-note:breaking-change
-`resource/pingone_environment`: Changed the `service` parameter data type, renamed to `services` and made a required parameters.
+`resource/pingone_environment`: Changed the `service` parameter data type, renamed to `services` and made a required parameter.
 ```
 
 ```release-note:breaking-change
