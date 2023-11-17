@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -57,20 +58,20 @@ func (r *ApplicationResourceGrantResource) Schema(ctx context.Context, req resou
 	const attrMinLength = 1
 
 	resourceIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"**Deprecation Notice**: This parameter is deprecated and will be made read-only in a future release.  This attribute should be replaced with the `resource_name` parameter instead.  The ID of the resource to assign the resource attribute to.",
-	).ExactlyOneOf([]string{"resource_id", "resource_name"}).AppendMarkdownString("Must be a valid PingOne resource ID.").RequiresReplace()
+		"The ID of the resource granted to the application.",
+	)
 
 	resourceNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The name of the resource to assign to the application.  The built-in OpenID Connect resource name is `openid` and the built-in PingOne API resource anem is `PingOne API`.",
-	).ExactlyOneOf([]string{"resource_id", "resource_name"}).RequiresReplace()
+	).RequiresReplace()
 
 	scopesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"**Deprecation Notice**: This parameter is deprecated and will be made read-only in a future release.  This attribute should be replaced with the `scope_names` parameter instead.  A list of IDs of the scopes associated with this grant.  When using the `openid` resource, the `openid` scope should not be included.",
-	).ExactlyOneOf([]string{"scopes", "scope_names"})
+		"A list of IDs of the scopes associated with this grant.",
+	)
 
 	scopeNamesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A list of scopes by name that should be associated with this grant.  For example, `profile`, `email` etc.  When using the `openid` resource, the `openid` scope should not be included.",
-	).ExactlyOneOf([]string{"scopes", "scope_names"})
+	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -90,67 +91,39 @@ func (r *ApplicationResourceGrantResource) Schema(ctx context.Context, req resou
 			"resource_id": schema.StringAttribute{
 				Description:         resourceIdDescription.Description,
 				MarkdownDescription: resourceIdDescription.MarkdownDescription,
-				DeprecationMessage:  "This parameter is deprecated and will be made read-only in a future release.  This attribute should be replaced with the `resource_name` parameter instead.",
-				Optional:            true,
 				Computed:            true,
 
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-
-				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
-					stringvalidator.ExactlyOneOf(
-						path.MatchRoot("resource_id"),
-						path.MatchRoot("resource_name"),
-					),
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 
 			"resource_name": schema.StringAttribute{
 				Description:         resourceNameDescription.Description,
 				MarkdownDescription: resourceNameDescription.MarkdownDescription,
-				Optional:            true,
-				Computed:            true,
+				Required:            true,
 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
-				},
-
-				Validators: []validator.String{
-					stringvalidator.ExactlyOneOf(
-						path.MatchRoot("resource_id"),
-						path.MatchRoot("resource_name"),
-					),
 				},
 			},
 
 			"scopes": schema.SetAttribute{
 				Description:         scopesDescription.Description,
 				MarkdownDescription: scopesDescription.MarkdownDescription,
-				DeprecationMessage:  "This parameter is deprecated and will be made read-only in a future release.  This attribute should be replaced with the `scope_names` parameter instead.",
-				Optional:            true,
 				Computed:            true,
 
 				ElementType: types.StringType,
 
-				Validators: []validator.Set{
-					setvalidator.SizeAtLeast(attrMinLength),
-					setvalidator.ValueStringsAre(
-						verify.P1ResourceIDValidator(),
-					),
-					setvalidator.ExactlyOneOf(
-						path.MatchRoot("scopes"),
-						path.MatchRoot("scope_names"),
-					),
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
 				},
 			},
 
 			"scope_names": schema.SetAttribute{
 				Description:         scopeNamesDescription.Description,
 				MarkdownDescription: scopeNamesDescription.MarkdownDescription,
-				Optional:            true,
-				Computed:            true,
+				Required:            true,
 
 				ElementType: types.StringType,
 
@@ -158,10 +131,6 @@ func (r *ApplicationResourceGrantResource) Schema(ctx context.Context, req resou
 					setvalidator.SizeAtLeast(attrMinLength),
 					setvalidator.ValueStringsAre(
 						stringvalidator.LengthAtLeast(attrMinLength),
-					),
-					setvalidator.ExactlyOneOf(
-						path.MatchRoot("scopes"),
-						path.MatchRoot("scope_names"),
 					),
 				},
 			},
@@ -565,16 +534,7 @@ func (r *ApplicationResourceGrantResource) ImportState(ctx context.Context, req 
 func (p *ApplicationResourceGrantResourceModel) getResourceWithScopes(ctx context.Context, apiClient *management.APIClient, warnIfNotFound bool) (*management.Resource, []management.ResourceScope, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var d diag.Diagnostics
-
-	var resource *management.Resource
-	if !p.ResourceId.IsNull() && !p.ResourceId.IsUnknown() {
-		resource, d = fetchResourceFromID(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceId.ValueString(), warnIfNotFound)
-	}
-
-	if !p.ResourceName.IsNull() && !p.ResourceName.IsUnknown() {
-		resource, d = fetchResourceFromName(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceName.ValueString(), warnIfNotFound)
-	}
+	resource, d := fetchResourceFromName(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceName.ValueString(), warnIfNotFound)
 
 	diags.Append(d...)
 	if diags.HasError() {
@@ -586,17 +546,6 @@ func (p *ApplicationResourceGrantResourceModel) getResourceWithScopes(ctx contex
 	}
 
 	resourceScopes := make([]management.ResourceScope, 0)
-	if resource != nil && !p.Scopes.IsNull() && !p.Scopes.IsUnknown() {
-
-		var scopeIds []string
-		diags.Append(p.Scopes.ElementsAs(ctx, &scopeIds, false)...)
-		if diags.HasError() {
-			return nil, nil, diags
-		}
-
-		resourceScopes, d = fetchResourceScopesFromIDs(ctx, apiClient, p.EnvironmentId.ValueString(), resource.GetId(), scopeIds)
-	}
-
 	if resource != nil && !p.ScopeNames.IsNull() && !p.ScopeNames.IsUnknown() {
 
 		var scopeNames []string
