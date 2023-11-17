@@ -867,6 +867,40 @@ resource "pingone_webhook" "my_webhook" {
 }
 ```
 
+## Data Source: pingone_flow_policies
+
+### `data_filter` optional parameter renamed and data type changed
+
+This parameter has been renamed to `data_filters` and the data type changed.  The `data_filters` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+data "pingone_flow_policies" "example_by_data_filter" {
+  # ... other configuration parameters
+  
+  data_filter {
+    name   = "trigger.type"
+    values = ["AUTHENTICATION"]
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+data "pingone_flow_policies" "example_by_data_filter" {
+  # ... other configuration parameters
+  
+  data_filters = [
+    {
+      name   = "trigger.type"
+      values = ["AUTHENTICATION"]
+    }
+  ]
+}
+```
+
 ## Data Source: pingone_organization
 
 ### `base_url_agreement_management` computed attribute removed
@@ -893,8 +927,95 @@ This parameter was previously deprecated and has been removed.  Consider using t
 
 This parameter was previously deprecated and has been removed.  Consider using the [PingOne Utilities module](https://registry.terraform.io/modules/pingidentity/utils/pingone/latest) going forward.
 
+## Data Source: pingone_populations
+
+### `data_filter` optional parameter renamed and data type changed
+
+This parameter has been renamed to `data_filters` and the data type changed.  The `data_filters` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+data "pingone_populations" "example_by_data_filter" {
+  # ... other configuration parameters
+  
+  data_filter {
+    name   = "name"
+    values = ["My first population", "My second population"]
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+data "pingone_populations" "example_by_data_filter" {
+  # ... other configuration parameters
+  
+  data_filters = [
+    {
+      name   = "name"
+      values = ["My first population", "My second population"]
+    }
+  ]
+}
+```
+
 ## Data Source: pingone_user
 
 ### `status` computed attribute removed
 
 This attribute was previously deprecated and has been removed.  Use the `enabled` attribute going forward.
+
+## Data Source: pingone_users
+
+### `data_filter` optional parameter renamed and data type changed
+
+This parameter has been renamed to `data_filters` and the data type changed.  The `data_filters` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+data "pingone_users" "example_by_data_filter" {
+  # ... other configuration parameters
+  
+  data_filter {
+    name = "memberOfGroups.id"
+    values = [
+      pingone_group.my_first_group.id,
+      pingone_group.my_second_group.id
+    ]
+  }
+
+  data_filter {
+    name = "population.id"
+    values = [
+      pingone_population.my_population.id
+    ]
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+data "pingone_users" "example_by_data_filter" {
+  # ... other configuration parameters
+  
+  data_filters = [
+    {
+      name = "memberOfGroups.id"
+      values = [
+        pingone_group.my_first_group.id,
+        pingone_group.my_second_group.id
+      ]
+    },
+    {
+      name = "population.id"
+      values = [
+        pingone_population.my_population.id
+      ]
+    }
+  ]
+}
+```
