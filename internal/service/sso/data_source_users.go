@@ -24,7 +24,7 @@ type UsersDataSourceModel struct {
 	EnvironmentId types.String `tfsdk:"environment_id"`
 	Id            types.String `tfsdk:"id"`
 	ScimFilter    types.String `tfsdk:"scim_filter"`
-	DataFilter    types.List   `tfsdk:"data_filter"`
+	DataFilters   types.List   `tfsdk:"data_filters"`
 	Ids           types.List   `tfsdk:"ids"`
 }
 
@@ -93,21 +93,19 @@ func (r *UsersDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 				"A SCIM filter to apply to the user selection.  A SCIM filter offers the greatest flexibility in filtering users.",
 			),
 				filterableAttributes,
-				[]string{"data_filter"},
+				[]string{"scim_filter", "data_filters"},
+			),
+
+			"data_filters": framework.Attr_DataFilter(framework.SchemaAttributeDescriptionFromMarkdown(
+				"Individual data filters to apply to the user selection.",
+			),
+				filterableAttributes,
+				[]string{"scim_filter", "data_filters"},
 			),
 
 			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescriptionFromMarkdown(
 				"The list of resulting IDs of users that have been successfully retrieved and filtered.",
 			)),
-		},
-
-		Blocks: map[string]schema.Block{
-			"data_filter": framework.Attr_DataFilter(framework.SchemaAttributeDescriptionFromMarkdown(
-				"Individual data filters to apply to the user selection.",
-			),
-				filterableAttributes,
-				[]string{"scim_filter"},
-			),
 		},
 	}
 }
@@ -162,10 +160,10 @@ func (r *UsersDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 			return r.Client.ManagementAPIClient.UsersApi.ReadAllUsers(ctx, data.EnvironmentId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute()
 		}
 
-	} else if !data.DataFilter.IsNull() {
+	} else if !data.DataFilters.IsNull() {
 
 		var dataFilterIn []framework.DataFilterModel
-		resp.Diagnostics.Append(data.DataFilter.ElementsAs(ctx, &dataFilterIn, false)...)
+		resp.Diagnostics.Append(data.DataFilters.ElementsAs(ctx, &dataFilterIn, false)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}

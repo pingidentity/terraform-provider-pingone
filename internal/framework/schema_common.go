@@ -64,6 +64,8 @@ func Attr_SCIMFilter(description SchemaAttributeDescription, acceptableAttribute
 	description.MarkdownDescription = fmt.Sprintf("%s.  The SCIM filter can use the following attributes: `%s`.", description.MarkdownDescription, strings.Join(acceptableAttributes, "`, `"))
 	description.Description = fmt.Sprintf("%s.  The SCIM filter can use the following attributes: \"%s\".", description.Description, strings.Join(acceptableAttributes, "\", \""))
 
+	description = description.ExactlyOneOf(mutuallyExclusiveAttributes)
+
 	stringValidators := make([]validator.String, 0)
 	stringValidators = append(stringValidators, stringvalidator.LengthAtLeast(filterMinLength))
 	for _, v := range mutuallyExclusiveAttributes {
@@ -78,13 +80,15 @@ func Attr_SCIMFilter(description SchemaAttributeDescription, acceptableAttribute
 	}
 }
 
-func Attr_DataFilter(description SchemaAttributeDescription, acceptableAttributes []string, mutuallyExclusiveAttributes []string) schema.ListNestedBlock {
+func Attr_DataFilter(description SchemaAttributeDescription, acceptableAttributes []string, mutuallyExclusiveAttributes []string) schema.ListNestedAttribute {
 	attrMinLength := 1
 
 	description = description.Clean(true)
 
 	description.MarkdownDescription = fmt.Sprintf("%s.  Allowed attributes to filter: `%s`", description.MarkdownDescription, strings.Join(acceptableAttributes, "`, `"))
 	description.Description = fmt.Sprintf("%s.  Allowed attributes to filter: \"%s\"", description.Description, strings.Join(acceptableAttributes, "\", \""))
+
+	description = description.ExactlyOneOf(mutuallyExclusiveAttributes)
 
 	childNameAttrDescriptionFmt := fmt.Sprintf("The attribute name to filter on.  Must be one of the following values: `%s`.", strings.Join(acceptableAttributes, "`, `"))
 	childNameDescription := SchemaAttributeDescription{
@@ -104,11 +108,12 @@ func Attr_DataFilter(description SchemaAttributeDescription, acceptableAttribute
 		listValidators = append(listValidators, listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName(v)))
 	}
 
-	return schema.ListNestedBlock{
+	return schema.ListNestedAttribute{
 		Description:         description.Description,
 		MarkdownDescription: description.MarkdownDescription,
+		Optional:            true,
 
-		NestedObject: schema.NestedBlockObject{
+		NestedObject: schema.NestedAttributeObject{
 
 			Attributes: map[string]schema.Attribute{
 				"name": schema.StringAttribute{
