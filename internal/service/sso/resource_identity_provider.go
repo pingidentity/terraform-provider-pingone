@@ -217,7 +217,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 	)
 
 	loginButtonIconHrefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The URL or fully qualified path to the identity provider icon to use as the login button.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.",
+		"The URL or fully qualified path to the identity provider icon to use as the login button.  This can be retrieved from the `uploaded_image.href` parameter of the `pingone_image` resource.",
 	)
 
 	iconIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -225,7 +225,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 	)
 
 	iconHrefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The URL or fully qualified path to the identity provider icon to use as the login button.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.",
+		"The URL or fully qualified path to the identity provider icon to use as the login button.  This can be retrieved from the `uploaded_image.href` parameter of the `pingone_image` resource.",
 	)
 
 	paypalClientEnvironmentDescription := framework.SchemaAttributeDescriptionFromMarkdown(

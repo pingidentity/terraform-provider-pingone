@@ -15,6 +15,6 @@ resource "pingone_branding_settings" "branding" {
 
   logo_image = {
     id   = pingone_image.company_logo.id
-    href = pingone_image.company_logo.uploaded_image[0].href
+    href = pingone_image.company_logo.uploaded_image.href
   }
 }

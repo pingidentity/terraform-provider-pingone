@@ -63,7 +63,7 @@ func (r *BrandingSettingsResource) Schema(ctx context.Context, req resource.Sche
 	)
 
 	logoHrefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The URL or fully qualified path to the logo file used for branding.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.",
+		"The URL or fully qualified path to the logo file used for branding.  This can be retrieved from the `uploaded_image.href` parameter of the `pingone_image` resource.",
 	)
 
 	resp.Schema = schema.Schema{
