@@ -142,8 +142,8 @@ func TestAccIdentityProvider_Change(t *testing.T) {
 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "registration_population_id"),
-			resource.TestCheckResourceAttr(resourceFullName, "login_button_icon.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "icon.#", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "login_button_icon.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "icon.%", "0"),
 		),
 	}
 
@@ -196,41 +196,39 @@ func TestAccIdentityProvider_Facebook(t *testing.T) {
 			{
 				Config: testAccIdentityProviderConfig_Facebook1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.0.app_id", "dummyappid1"),
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.0.app_secret", "dummyappsecret1"),
-					// resource.TestMatchResourceAttr(resourceFullName, "facebook.0.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/facebook$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.app_id", "dummyappid1"),
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.app_secret", "dummyappsecret1"),
+					// resource.TestMatchResourceAttr(resourceFullName, "facebook.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/facebook$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
 				),
 			},
 			{
 				Config: testAccIdentityProviderConfig_Facebook2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.0.app_id", "dummyappid2"),
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.0.app_secret", "dummyappsecret2"),
-					// resource.TestMatchResourceAttr(resourceFullName, "facebook.0.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/facebook$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.app_id", "dummyappid2"),
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.app_secret", "dummyappsecret2"),
+					// resource.TestMatchResourceAttr(resourceFullName, "facebook.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/facebook$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
 				),
 			},
 			// Test importing the resource
@@ -273,41 +271,39 @@ func TestAccIdentityProvider_Google(t *testing.T) {
 			{
 				Config: testAccIdentityProviderConfig_Google1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "google.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "google.0.client_id", "dummyclientid1"),
-					resource.TestCheckResourceAttr(resourceFullName, "google.0.client_secret", "dummyclientsecret1"),
-					// resource.TestMatchResourceAttr(resourceFullName, "google.0.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/google$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.client_id", "dummyclientid1"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.client_secret", "dummyclientsecret1"),
+					// resource.TestMatchResourceAttr(resourceFullName, "google.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/google$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
 				),
 			},
 			{
 				Config: testAccIdentityProviderConfig_Google2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "google.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "google.0.client_id", "dummyclientid2"),
-					resource.TestCheckResourceAttr(resourceFullName, "google.0.client_secret", "dummyclientsecret2"),
-					// resource.TestMatchResourceAttr(resourceFullName, "google.0.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/google$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.client_id", "dummyclientid2"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.client_secret", "dummyclientsecret2"),
+					// resource.TestMatchResourceAttr(resourceFullName, "google.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/google$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
 				),
 			},
 			// Test importing the resource
@@ -350,41 +346,39 @@ func TestAccIdentityProvider_LinkedIn(t *testing.T) {
 			{
 				Config: testAccIdentityProviderConfig_LinkedIn1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.0.client_id", "dummyclientid1"),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.0.client_secret", "dummyclientsecret1"),
-					// resource.TestMatchResourceAttr(resourceFullName, "linkedin.0.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/linkedin$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.client_id", "dummyclientid1"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.client_secret", "dummyclientsecret1"),
+					// resource.TestMatchResourceAttr(resourceFullName, "linkedin.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/linkedin$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
 				),
 			},
 			{
 				Config: testAccIdentityProviderConfig_LinkedIn2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.0.client_id", "dummyclientid2"),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.0.client_secret", "dummyclientsecret2"),
-					// resource.TestMatchResourceAttr(resourceFullName, "linkedin.0.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/linkedin$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.client_id", "dummyclientid2"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.client_secret", "dummyclientsecret2"),
+					// resource.TestMatchResourceAttr(resourceFullName, "linkedin.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/linkedin$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
 				),
 			},
 			// Test importing the resource
@@ -427,41 +421,39 @@ func TestAccIdentityProvider_Yahoo(t *testing.T) {
 			{
 				Config: testAccIdentityProviderConfig_Yahoo1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.0.client_id", "dummyclientid1"),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.0.client_secret", "dummyclientsecret1"),
-					// resource.TestMatchResourceAttr(resourceFullName, "yahoo.0.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/yahoo$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.client_id", "dummyclientid1"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.client_secret", "dummyclientsecret1"),
+					// resource.TestMatchResourceAttr(resourceFullName, "yahoo.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/yahoo$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
 				),
 			},
 			{
 				Config: testAccIdentityProviderConfig_Yahoo2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.0.client_id", "dummyclientid2"),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.0.client_secret", "dummyclientsecret2"),
-					// resource.TestMatchResourceAttr(resourceFullName, "yahoo.0.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/yahoo$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.client_id", "dummyclientid2"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.client_secret", "dummyclientsecret2"),
+					// resource.TestMatchResourceAttr(resourceFullName, "yahoo.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/yahoo$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
 				),
 			},
 			// Test importing the resource
@@ -504,41 +496,39 @@ func TestAccIdentityProvider_Amazon(t *testing.T) {
 			{
 				Config: testAccIdentityProviderConfig_Amazon1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.0.client_id", "dummyclientid1"),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.0.client_secret", "dummyclientsecret1"),
-					// resource.TestMatchResourceAttr(resourceFullName, "amazon.0.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/amazon$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.client_id", "dummyclientid1"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.client_secret", "dummyclientsecret1"),
+					// resource.TestMatchResourceAttr(resourceFullName, "amazon.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/amazon$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
 				),
 			},
 			{
 				Config: testAccIdentityProviderConfig_Amazon2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.0.client_id", "dummyclientid2"),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.0.client_secret", "dummyclientsecret2"),
-					// resource.TestMatchResourceAttr(resourceFullName, "amazon.0.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/amazon$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.client_id", "dummyclientid2"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.client_secret", "dummyclientsecret2"),
+					// resource.TestMatchResourceAttr(resourceFullName, "amazon.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/amazon$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
 				),
 			},
 			// Test importing the resource
@@ -581,41 +571,39 @@ func TestAccIdentityProvider_Twitter(t *testing.T) {
 			{
 				Config: testAccIdentityProviderConfig_Twitter1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.0.client_id", "dummyclientid1"),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.0.client_secret", "dummyclientsecret1"),
-					// resource.TestMatchResourceAttr(resourceFullName, "twitter.0.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/twitter$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.client_id", "dummyclientid1"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.client_secret", "dummyclientsecret1"),
+					// resource.TestMatchResourceAttr(resourceFullName, "twitter.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/twitter$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
 				),
 			},
 			{
 				Config: testAccIdentityProviderConfig_Twitter2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.0.client_id", "dummyclientid2"),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.0.client_secret", "dummyclientsecret2"),
-					// resource.TestMatchResourceAttr(resourceFullName, "twitter.0.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/twitter$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.client_id", "dummyclientid2"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.client_secret", "dummyclientsecret2"),
+					// resource.TestMatchResourceAttr(resourceFullName, "twitter.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/twitter$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
 				),
 			},
 			// Test importing the resource
@@ -658,45 +646,43 @@ func TestAccIdentityProvider_Apple(t *testing.T) {
 			{
 				Config: testAccIdentityProviderConfig_Apple1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.0.client_id", "dummyclientid1"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.0.client_secret_signing_key", "-----BEGIN PRIVATE KEY-----dummyclientsecretsigningkey1-----END PRIVATE KEY-----"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.0.key_id", "dummykeyi1"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.0.team_id", "dummyteam1"),
-					// resource.TestMatchResourceAttr(resourceFullName, "apple.0.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/apple$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.client_id", "dummyclientid1"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.client_secret_signing_key", "-----BEGIN PRIVATE KEY-----dummyclientsecretsigningkey1-----END PRIVATE KEY-----"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.key_id", "dummykeyi1"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.team_id", "dummyteam1"),
+					// resource.TestMatchResourceAttr(resourceFullName, "apple.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/apple$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
 				),
 			},
 			{
 				Config: testAccIdentityProviderConfig_Apple2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.0.client_id", "dummyclientid2"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.0.client_secret_signing_key", "-----BEGIN PRIVATE KEY-----dummyclientsecretsigningkey2-----END PRIVATE KEY-----"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.0.key_id", "dummykeyi2"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.0.team_id", "dummyteam2"),
-					// resource.TestMatchResourceAttr(resourceFullName, "apple.0.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/apple$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.client_id", "dummyclientid2"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.client_secret_signing_key", "-----BEGIN PRIVATE KEY-----dummyclientsecretsigningkey2-----END PRIVATE KEY-----"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.key_id", "dummykeyi2"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.team_id", "dummyteam2"),
+					// resource.TestMatchResourceAttr(resourceFullName, "apple.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/apple$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
 				),
 			},
 			// Test importing the resource
@@ -739,43 +725,41 @@ func TestAccIdentityProvider_Paypal(t *testing.T) {
 			{
 				Config: testAccIdentityProviderConfig_Paypal1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.0.client_id", "dummyclientid1"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.0.client_secret", "dummyclientsecret1"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.0.client_environment", "sandbox"),
-					// resource.TestMatchResourceAttr(resourceFullName, "paypal.0.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/paypal$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.client_id", "dummyclientid1"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.client_secret", "dummyclientsecret1"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.client_environment", "sandbox"),
+					// resource.TestMatchResourceAttr(resourceFullName, "paypal.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/paypal$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
 				),
 			},
 			{
 				Config: testAccIdentityProviderConfig_Paypal2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.0.client_id", "dummyclientid2"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.0.client_secret", "dummyclientsecret2"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.0.client_environment", "live"),
-					// resource.TestMatchResourceAttr(resourceFullName, "paypal.0.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/paypal$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.client_id", "dummyclientid2"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.client_secret", "dummyclientsecret2"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.client_environment", "live"),
+					// resource.TestMatchResourceAttr(resourceFullName, "paypal.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/paypal$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
 				),
 			},
 			// Test importing the resource
@@ -818,41 +802,39 @@ func TestAccIdentityProvider_Microsoft(t *testing.T) {
 			{
 				Config: testAccIdentityProviderConfig_Microsoft1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.0.client_id", "dummyclientid1"),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.0.client_secret", "dummyclientsecret1"),
-					// resource.TestMatchResourceAttr(resourceFullName, "microsoft.0.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/microsoft$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.client_id", "dummyclientid1"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.client_secret", "dummyclientsecret1"),
+					// resource.TestMatchResourceAttr(resourceFullName, "microsoft.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/microsoft$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
 				),
 			},
 			{
 				Config: testAccIdentityProviderConfig_Microsoft2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.0.client_id", "dummyclientid2"),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.0.client_secret", "dummyclientsecret2"),
-					// resource.TestMatchResourceAttr(resourceFullName, "microsoft.0.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/microsoft$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.client_id", "dummyclientid2"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.client_secret", "dummyclientsecret2"),
+					// resource.TestMatchResourceAttr(resourceFullName, "microsoft.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/microsoft$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
 				),
 			},
 			// Test importing the resource
@@ -895,41 +877,39 @@ func TestAccIdentityProvider_Github(t *testing.T) {
 			{
 				Config: testAccIdentityProviderConfig_Github1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.0.client_id", "dummyclientid1"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.0.client_secret", "dummyclientsecret1"),
-					// resource.TestMatchResourceAttr(resourceFullName, "github.0.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/github$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.client_id", "dummyclientid1"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.client_secret", "dummyclientsecret1"),
+					// resource.TestMatchResourceAttr(resourceFullName, "github.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/github$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
 				),
 			},
 			{
 				Config: testAccIdentityProviderConfig_Github2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.0.client_id", "dummyclientid2"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.0.client_secret", "dummyclientsecret2"),
-					// resource.TestMatchResourceAttr(resourceFullName, "github.0.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/github$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.client_id", "dummyclientid2"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.client_secret", "dummyclientsecret2"),
+					// resource.TestMatchResourceAttr(resourceFullName, "github.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/github$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
 				),
 			},
 			// Test importing the resource
@@ -970,62 +950,60 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 			resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
-			resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "1"),
-			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.0.authorization_endpoint", "https://www.pingidentity.com/authz"),
-			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.0.client_id", "dummyclientid1"),
-			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.0.client_secret", "dummyclientsecret1"),
-			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.0.discovery_endpoint", "https://www.pingidentity.com/discovery"),
-			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.0.issuer", "https://www.pingidentity.com/issuer"),
-			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.0.jwks_endpoint", "https://www.pingidentity.com/jwks"),
-			resource.TestCheckTypeSetElemAttr(resourceFullName, "openid_connect.0.scopes.*", "openid"),
-			resource.TestCheckTypeSetElemAttr(resourceFullName, "openid_connect.0.scopes.*", "scope1"),
-			resource.TestCheckTypeSetElemAttr(resourceFullName, "openid_connect.0.scopes.*", "scope2"),
-			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.0.token_endpoint", "https://www.pingidentity.com/token"),
-			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.0.token_endpoint_auth_method", "CLIENT_SECRET_POST"),
-			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.0.userinfo_endpoint", "https://www.pingidentity.com/userinfo"),
-			// resource.TestMatchResourceAttr(resourceFullName, "openid_connect.0.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/openid_connect$`)),
-			resource.TestCheckResourceAttr(resourceFullName, "saml.#", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.authorization_endpoint", "https://www.pingidentity.com/authz"),
+			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.client_id", "dummyclientid1"),
+			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.client_secret", "dummyclientsecret1"),
+			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.discovery_endpoint", "https://www.pingidentity.com/discovery"),
+			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.issuer", "https://www.pingidentity.com/issuer"),
+			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.jwks_endpoint", "https://www.pingidentity.com/jwks"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "openid_connect.scopes.*", "openid"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "openid_connect.scopes.*", "scope1"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "openid_connect.scopes.*", "scope2"),
+			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.token_endpoint", "https://www.pingidentity.com/token"),
+			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.token_endpoint_auth_method", "CLIENT_SECRET_POST"),
+			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.userinfo_endpoint", "https://www.pingidentity.com/userinfo"),
+			// resource.TestMatchResourceAttr(resourceFullName, "openid_connect.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/openid_connect$`)),
+			resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
 		),
 	}
 
 	minimalStep := resource.TestStep{
 		Config: testAccIdentityProviderConfig_OIDCMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "1"),
-			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.0.authorization_endpoint", "https://www.pingidentity.com/authz2"),
-			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.0.client_id", "dummyclientid2"),
-			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.0.client_secret", "dummyclientsecret2"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "openid_connect.0.discovery_endpoint"),
-			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.0.issuer", "https://www.pingidentity.com/issuer2"),
-			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.0.jwks_endpoint", "https://www.pingidentity.com/jwks2"),
-			resource.TestCheckTypeSetElemAttr(resourceFullName, "openid_connect.0.scopes.*", "openid"),
-			resource.TestCheckTypeSetElemAttr(resourceFullName, "openid_connect.0.scopes.*", "scope3"),
-			resource.TestCheckTypeSetElemAttr(resourceFullName, "openid_connect.0.scopes.*", "scope4"),
-			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.0.token_endpoint", "https://www.pingidentity.com/token2"),
-			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.0.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "openid_connect.0.userinfo_endpoint"),
-			// resource.TestMatchResourceAttr(resourceFullName, "openid_connect.0.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/openid_connect$`)),
-			resource.TestCheckResourceAttr(resourceFullName, "saml.#", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.authorization_endpoint", "https://www.pingidentity.com/authz2"),
+			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.client_id", "dummyclientid2"),
+			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.client_secret", "dummyclientsecret2"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "openid_connect.discovery_endpoint"),
+			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.issuer", "https://www.pingidentity.com/issuer2"),
+			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.jwks_endpoint", "https://www.pingidentity.com/jwks2"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "openid_connect.scopes.*", "openid"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "openid_connect.scopes.*", "scope3"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "openid_connect.scopes.*", "scope4"),
+			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.token_endpoint", "https://www.pingidentity.com/token2"),
+			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "openid_connect.userinfo_endpoint"),
+			// resource.TestMatchResourceAttr(resourceFullName, "openid_connect.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/openid_connect$`)),
+			resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
 		),
 	}
 
@@ -1087,59 +1065,57 @@ func TestAccIdentityProvider_SAML(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccIdentityProviderConfig_SAMLFull(resourceName, name, pem_cert),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "saml.#", "1"),
-			resource.TestCheckResourceAttr(resourceFullName, "saml.0.authentication_request_signed", "true"),
-			resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_entity_id", fmt.Sprintf("idp:%s", name)),
-			resource.TestCheckResourceAttr(resourceFullName, "saml.0.sp_entity_id", fmt.Sprintf("sp:%s", name)),
-			resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_verification_certificate_ids.#", "1"),
-			resource.TestMatchResourceAttr(resourceFullName, "saml.0.idp_verification_certificate_ids.0", verify.P1ResourceIDRegexpFullString),
-			resource.TestMatchResourceAttr(resourceFullName, "saml.0.sp_signing_key_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_binding", "HTTP_POST"),
-			resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_endpoint", "https://www.pingidentity.com/sso"),
-			resource.TestCheckResourceAttr(resourceFullName, "saml.0.slo_binding", "HTTP_REDIRECT"),
-			resource.TestCheckResourceAttr(resourceFullName, "saml.0.slo_endpoint", "https://dummy-slo-endpoint.pingidentity.com"),
-			resource.TestCheckResourceAttr(resourceFullName, "saml.0.slo_response_endpoint", "https://dummy-slo-response-endpoint.pingidentity.com"),
-			resource.TestCheckResourceAttr(resourceFullName, "saml.0.slo_window", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "saml.authentication_request_signed", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "saml.idp_entity_id", fmt.Sprintf("idp:%s", name)),
+			resource.TestCheckResourceAttr(resourceFullName, "saml.sp_entity_id", fmt.Sprintf("sp:%s", name)),
+			resource.TestCheckResourceAttr(resourceFullName, "saml.idp_verification_certificate_ids.#", "1"),
+			resource.TestMatchResourceAttr(resourceFullName, "saml.idp_verification_certificate_ids.0", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "saml.sp_signing_key_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "saml.sso_binding", "HTTP_POST"),
+			resource.TestCheckResourceAttr(resourceFullName, "saml.sso_endpoint", "https://www.pingidentity.com/sso"),
+			resource.TestCheckResourceAttr(resourceFullName, "saml.slo_binding", "HTTP_REDIRECT"),
+			resource.TestCheckResourceAttr(resourceFullName, "saml.slo_endpoint", "https://dummy-slo-endpoint.pingidentity.com"),
+			resource.TestCheckResourceAttr(resourceFullName, "saml.slo_response_endpoint", "https://dummy-slo-response-endpoint.pingidentity.com"),
+			resource.TestCheckResourceAttr(resourceFullName, "saml.slo_window", "1"),
 		),
 	}
 
 	minimalStep := resource.TestStep{
 		Config: testAccIdentityProviderConfig_SAMLMinimal(resourceName, name, pem_cert),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "saml.#", "1"),
-			resource.TestCheckResourceAttr(resourceFullName, "saml.0.authentication_request_signed", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "saml.0.idp_entity_id", fmt.Sprintf("idp:%s-1", name)),
-			resource.TestCheckResourceAttr(resourceFullName, "saml.0.sp_entity_id", fmt.Sprintf("sp:%s-1", name)),
-			resource.TestMatchResourceAttr(resourceFullName, "saml.0.idp_verification_certificate_ids.0", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckNoResourceAttr(resourceFullName, "saml.0.sp_signing_key_id"),
-			resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_binding", "HTTP_REDIRECT"),
-			resource.TestCheckResourceAttr(resourceFullName, "saml.0.sso_endpoint", "https://www.pingidentity.com/sso1"),
-			resource.TestCheckResourceAttr(resourceFullName, "saml.0.slo_binding", "HTTP_POST"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "saml.0.slo_endpoint"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "saml.0.slo_response_endpoint"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "saml.0.slo_window"),
+			resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "saml.authentication_request_signed", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "saml.idp_entity_id", fmt.Sprintf("idp:%s-1", name)),
+			resource.TestCheckResourceAttr(resourceFullName, "saml.sp_entity_id", fmt.Sprintf("sp:%s-1", name)),
+			resource.TestMatchResourceAttr(resourceFullName, "saml.idp_verification_certificate_ids.0", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckNoResourceAttr(resourceFullName, "saml.sp_signing_key_id"),
+			resource.TestCheckResourceAttr(resourceFullName, "saml.sso_binding", "HTTP_REDIRECT"),
+			resource.TestCheckResourceAttr(resourceFullName, "saml.sso_endpoint", "https://www.pingidentity.com/sso1"),
+			resource.TestCheckResourceAttr(resourceFullName, "saml.slo_binding", "HTTP_POST"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "saml.slo_endpoint"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "saml.slo_response_endpoint"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "saml.slo_window"),
 		),
 	}
 
@@ -1209,43 +1185,41 @@ func TestAccIdentityProvider_ChangeProvider(t *testing.T) {
 			{
 				Config: testAccIdentityProviderConfig_Apple1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.0.client_id", "dummyclientid1"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.0.client_secret_signing_key", "-----BEGIN PRIVATE KEY-----dummyclientsecretsigningkey1-----END PRIVATE KEY-----"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.0.key_id", "dummykeyi1"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.0.team_id", "dummyteam1"),
-					// resource.TestMatchResourceAttr(resourceFullName, "apple.0.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/apple$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.client_id", "dummyclientid1"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.client_secret_signing_key", "-----BEGIN PRIVATE KEY-----dummyclientsecretsigningkey1-----END PRIVATE KEY-----"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.key_id", "dummykeyi1"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.team_id", "dummyteam1"),
+					// resource.TestMatchResourceAttr(resourceFullName, "apple.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/apple$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
 				),
 			},
 			{
 				Config: testAccIdentityProviderConfig_Github2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "yahoo.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "amazon.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "twitter.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "apple.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "paypal.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "microsoft.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.0.client_id", "dummyclientid2"),
-					resource.TestCheckResourceAttr(resourceFullName, "github.0.client_secret", "dummyclientsecret2"),
-					// resource.TestMatchResourceAttr(resourceFullName, "github.0.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/github$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.client_id", "dummyclientid2"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.client_secret", "dummyclientsecret2"),
+					// resource.TestMatchResourceAttr(resourceFullName, "github.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/github$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
 				),
 			},
 		},
@@ -1302,7 +1276,7 @@ resource "pingone_identity_provider" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
 
-  google {
+  google = {
     client_id     = "testclientid"
     client_secret = "testclientsecret"
   }
@@ -1343,7 +1317,7 @@ resource "pingone_identity_provider" "%[2]s" {
     href = pingone_image.%[2]s.uploaded_image.href
   }
 
-  google {
+  google = {
     client_id     = "testclientid"
     client_secret = "testclientsecret"
   }
@@ -1358,7 +1332,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  google {
+  google = {
     client_id     = "testclientid"
     client_secret = "testclientsecret"
   }
@@ -1373,7 +1347,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  facebook {
+  facebook = {
     app_id     = "dummyappid1"
     app_secret = "dummyappsecret1"
   }
@@ -1388,7 +1362,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  facebook {
+  facebook = {
     app_id     = "dummyappid2"
     app_secret = "dummyappsecret2"
   }
@@ -1403,7 +1377,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  google {
+  google = {
     client_id     = "dummyclientid1"
     client_secret = "dummyclientsecret1"
   }
@@ -1418,7 +1392,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  google {
+  google = {
     client_id     = "dummyclientid2"
     client_secret = "dummyclientsecret2"
   }
@@ -1433,7 +1407,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  linkedin {
+  linkedin = {
     client_id     = "dummyclientid1"
     client_secret = "dummyclientsecret1"
   }
@@ -1448,7 +1422,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  linkedin {
+  linkedin = {
     client_id     = "dummyclientid2"
     client_secret = "dummyclientsecret2"
   }
@@ -1463,7 +1437,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  yahoo {
+  yahoo = {
     client_id     = "dummyclientid1"
     client_secret = "dummyclientsecret1"
   }
@@ -1478,7 +1452,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  yahoo {
+  yahoo = {
     client_id     = "dummyclientid2"
     client_secret = "dummyclientsecret2"
   }
@@ -1493,7 +1467,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  amazon {
+  amazon = {
     client_id     = "dummyclientid1"
     client_secret = "dummyclientsecret1"
   }
@@ -1508,7 +1482,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  amazon {
+  amazon = {
     client_id     = "dummyclientid2"
     client_secret = "dummyclientsecret2"
   }
@@ -1523,7 +1497,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  twitter {
+  twitter = {
     client_id     = "dummyclientid1"
     client_secret = "dummyclientsecret1"
   }
@@ -1538,7 +1512,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  twitter {
+  twitter = {
     client_id     = "dummyclientid2"
     client_secret = "dummyclientsecret2"
   }
@@ -1553,7 +1527,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  apple {
+  apple = {
     client_id                 = "dummyclientid1"
     client_secret_signing_key = "-----BEGIN PRIVATE KEY-----dummyclientsecretsigningkey1-----END PRIVATE KEY-----"
     key_id                    = "dummykeyi1"
@@ -1570,7 +1544,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  apple {
+  apple = {
     client_id                 = "dummyclientid2"
     client_secret_signing_key = "-----BEGIN PRIVATE KEY-----dummyclientsecretsigningkey2-----END PRIVATE KEY-----"
     key_id                    = "dummykeyi2"
@@ -1587,7 +1561,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  paypal {
+  paypal = {
     client_id          = "dummyclientid1"
     client_secret      = "dummyclientsecret1"
     client_environment = "sandbox"
@@ -1603,7 +1577,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  paypal {
+  paypal = {
     client_id          = "dummyclientid2"
     client_secret      = "dummyclientsecret2"
     client_environment = "live"
@@ -1619,7 +1593,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  microsoft {
+  microsoft = {
     client_id     = "dummyclientid1"
     client_secret = "dummyclientsecret1"
   }
@@ -1634,7 +1608,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  microsoft {
+  microsoft = {
     client_id     = "dummyclientid2"
     client_secret = "dummyclientsecret2"
   }
@@ -1649,7 +1623,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  github {
+  github = {
     client_id     = "dummyclientid1"
     client_secret = "dummyclientsecret1"
   }
@@ -1664,7 +1638,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  github {
+  github = {
     client_id     = "dummyclientid2"
     client_secret = "dummyclientsecret2"
   }
@@ -1696,7 +1670,7 @@ resource "pingone_identity_provider" "%[2]s" {
     href = pingone_image.%[2]s.uploaded_image.href
   }
 
-  openid_connect {
+  openid_connect = {
     authorization_endpoint     = "https://www.pingidentity.com/authz"
     client_id                  = "dummyclientid1"
     client_secret              = "dummyclientsecret1"
@@ -1719,7 +1693,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  openid_connect {
+  openid_connect = {
     authorization_endpoint = "https://www.pingidentity.com/authz2"
     client_id              = "dummyclientid2"
     client_secret          = "dummyclientsecret2"
@@ -1762,7 +1736,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  saml {
+  saml = {
     authentication_request_signed    = true
     idp_entity_id                    = "idp:%[3]s"
     sp_entity_id                     = "sp:%[3]s"
@@ -1797,7 +1771,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s1"
 
-  saml {
+  saml = {
     idp_entity_id                    = "idp:%[3]s-1"
     sp_entity_id                     = "sp:%[3]s-1"
     idp_verification_certificate_ids = [pingone_certificate.%[2]s.id]

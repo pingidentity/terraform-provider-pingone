@@ -22,7 +22,7 @@ resource "pingone_identity_provider" "facebook" {
   name    = "Facebook"
   enabled = true
 
-  facebook {
+  facebook = {
     app_id     = var.facebook_app_id
     app_secret = var.facebook_app_secret
   }
@@ -34,7 +34,7 @@ resource "pingone_identity_provider" "google" {
   name    = "Google"
   enabled = true
 
-  google {
+  google = {
     client_id     = var.google_client_id
     client_secret = var.google_client_secret
   }
@@ -46,7 +46,7 @@ resource "pingone_identity_provider" "apple" {
   name    = "Apple"
   enabled = true
 
-  apple {
+  apple = {
     client_id                 = var.apple_client_id
     client_secret_signing_key = var.apple_client_secret_signing_key
     key_id                    = var.apple_key_id
@@ -65,29 +65,29 @@ resource "pingone_identity_provider" "apple" {
 
 ### Optional
 
-- `amazon` (Block List) A single block that specifies options for connectivity to the Amazon social identity provider.  At least one of the following must be defined: `facebook`, `google`, `linkedin`, `yahoo`, `amazon`, `twitter`, `apple`, `paypal`, `microsoft`, `github`, `openid_connect`, `saml`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedblock--amazon))
-- `apple` (Block List) A single block that specifies options for connectivity to the Apple social identity provider.  At least one of the following must be defined: `facebook`, `google`, `linkedin`, `yahoo`, `amazon`, `twitter`, `apple`, `paypal`, `microsoft`, `github`, `openid_connect`, `saml`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedblock--apple))
+- `amazon` (Attributes) A single block that specifies options for connectivity to the Amazon social identity provider.  At least one of the following must be defined: `facebook`, `google`, `linkedin`, `yahoo`, `amazon`, `twitter`, `apple`, `paypal`, `microsoft`, `github`, `openid_connect`, `saml`.  This object is immutable.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules. (see [below for nested schema](#nestedatt--amazon))
+- `apple` (Attributes) A single block that specifies options for connectivity to the Apple social identity provider.  At least one of the following must be defined: `facebook`, `google`, `linkedin`, `yahoo`, `amazon`, `twitter`, `apple`, `paypal`, `microsoft`, `github`, `openid_connect`, `saml`.  This object is immutable.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules. (see [below for nested schema](#nestedatt--apple))
 - `description` (String) A string that specifies the description of the identity provider.
 - `enabled` (Boolean) A boolean that specifies whether the identity provider is enabled in the environment.  Defaults to `false`.
-- `facebook` (Block List) A single block that specifies options for connectivity to the Facebook social identity provider.  At least one of the following must be defined: `facebook`, `google`, `linkedin`, `yahoo`, `amazon`, `twitter`, `apple`, `paypal`, `microsoft`, `github`, `openid_connect`, `saml`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedblock--facebook))
-- `github` (Block List) A single block that specifies options for connectivity to the Github social identity provider.  At least one of the following must be defined: `facebook`, `google`, `linkedin`, `yahoo`, `amazon`, `twitter`, `apple`, `paypal`, `microsoft`, `github`, `openid_connect`, `saml`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedblock--github))
-- `google` (Block List) A single block that specifies options for connectivity to the Google social identity provider.  At least one of the following must be defined: `facebook`, `google`, `linkedin`, `yahoo`, `amazon`, `twitter`, `apple`, `paypal`, `microsoft`, `github`, `openid_connect`, `saml`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedblock--google))
+- `facebook` (Attributes) A single block that specifies options for connectivity to the Facebook social identity provider.  At least one of the following must be defined: `facebook`, `google`, `linkedin`, `yahoo`, `amazon`, `twitter`, `apple`, `paypal`, `microsoft`, `github`, `openid_connect`, `saml`.  This object is immutable.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules. (see [below for nested schema](#nestedatt--facebook))
+- `github` (Attributes) A single block that specifies options for connectivity to the Github social identity provider.  At least one of the following must be defined: `facebook`, `google`, `linkedin`, `yahoo`, `amazon`, `twitter`, `apple`, `paypal`, `microsoft`, `github`, `openid_connect`, `saml`.  This object is immutable.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules. (see [below for nested schema](#nestedatt--github))
+- `google` (Attributes) A single block that specifies options for connectivity to the Google social identity provider.  At least one of the following must be defined: `facebook`, `google`, `linkedin`, `yahoo`, `amazon`, `twitter`, `apple`, `paypal`, `microsoft`, `github`, `openid_connect`, `saml`.  This object is immutable.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules. (see [below for nested schema](#nestedatt--google))
 - `icon` (Attributes) A single object that specifies the HREF and ID for the identity provider icon. (see [below for nested schema](#nestedatt--icon))
-- `linkedin` (Block List) A single block that specifies options for connectivity to the LinkedIn social identity provider.  At least one of the following must be defined: `facebook`, `google`, `linkedin`, `yahoo`, `amazon`, `twitter`, `apple`, `paypal`, `microsoft`, `github`, `openid_connect`, `saml`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedblock--linkedin))
+- `linkedin` (Attributes) A single block that specifies options for connectivity to the LinkedIn social identity provider.  At least one of the following must be defined: `facebook`, `google`, `linkedin`, `yahoo`, `amazon`, `twitter`, `apple`, `paypal`, `microsoft`, `github`, `openid_connect`, `saml`.  This object is immutable.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules. (see [below for nested schema](#nestedatt--linkedin))
 - `login_button_icon` (Attributes) A single object that specifies the HREF and ID for the identity provider icon to use in the login button. (see [below for nested schema](#nestedatt--login_button_icon))
-- `microsoft` (Block List) A single block that specifies options for connectivity to the Microsoft social identity provider.  At least one of the following must be defined: `facebook`, `google`, `linkedin`, `yahoo`, `amazon`, `twitter`, `apple`, `paypal`, `microsoft`, `github`, `openid_connect`, `saml`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedblock--microsoft))
-- `openid_connect` (Block List) A single block that specifies options for connectivity to an OpenID Connect compliant identity provider.  At least one of the following must be defined: `facebook`, `google`, `linkedin`, `yahoo`, `amazon`, `twitter`, `apple`, `paypal`, `microsoft`, `github`, `openid_connect`, `saml`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedblock--openid_connect))
-- `paypal` (Block List) A single block that specifies options for connectivity to the Paypal social identity provider.  At least one of the following must be defined: `facebook`, `google`, `linkedin`, `yahoo`, `amazon`, `twitter`, `apple`, `paypal`, `microsoft`, `github`, `openid_connect`, `saml`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedblock--paypal))
+- `microsoft` (Attributes) A single block that specifies options for connectivity to the Microsoft social identity provider.  At least one of the following must be defined: `facebook`, `google`, `linkedin`, `yahoo`, `amazon`, `twitter`, `apple`, `paypal`, `microsoft`, `github`, `openid_connect`, `saml`.  This object is immutable.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules. (see [below for nested schema](#nestedatt--microsoft))
+- `openid_connect` (Attributes) A single block that specifies options for connectivity to an OpenID Connect compliant identity provider.  At least one of the following must be defined: `facebook`, `google`, `linkedin`, `yahoo`, `amazon`, `twitter`, `apple`, `paypal`, `microsoft`, `github`, `openid_connect`, `saml`.  This object is immutable.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules. (see [below for nested schema](#nestedatt--openid_connect))
+- `paypal` (Attributes) A single block that specifies options for connectivity to the Paypal social identity provider.  At least one of the following must be defined: `facebook`, `google`, `linkedin`, `yahoo`, `amazon`, `twitter`, `apple`, `paypal`, `microsoft`, `github`, `openid_connect`, `saml`.  This object is immutable.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules. (see [below for nested schema](#nestedatt--paypal))
 - `registration_population_id` (String) A string that specifies the population ID to create users in, when using just-in-time provisioning. Setting this attribute gives management of linked users to the IdP and also triggers just-in-time provisioning of new users to the population ID provided.  Must be a valid PingOne resource ID.
-- `saml` (Block List) A single block that specifies options for connectivity to a SAML 2.0 compliant identity provider.  At least one of the following must be defined: `facebook`, `google`, `linkedin`, `yahoo`, `amazon`, `twitter`, `apple`, `paypal`, `microsoft`, `github`, `openid_connect`, `saml`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedblock--saml))
-- `twitter` (Block List) A single block that specifies options for connectivity to the Twitter social identity provider.  At least one of the following must be defined: `facebook`, `google`, `linkedin`, `yahoo`, `amazon`, `twitter`, `apple`, `paypal`, `microsoft`, `github`, `openid_connect`, `saml`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedblock--twitter))
-- `yahoo` (Block List) A single block that specifies options for connectivity to the Yahoo social identity provider.  At least one of the following must be defined: `facebook`, `google`, `linkedin`, `yahoo`, `amazon`, `twitter`, `apple`, `paypal`, `microsoft`, `github`, `openid_connect`, `saml`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedblock--yahoo))
+- `saml` (Attributes) A single block that specifies options for connectivity to a SAML 2.0 compliant identity provider.  At least one of the following must be defined: `facebook`, `google`, `linkedin`, `yahoo`, `amazon`, `twitter`, `apple`, `paypal`, `microsoft`, `github`, `openid_connect`, `saml`.  This object is immutable.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules. (see [below for nested schema](#nestedatt--saml))
+- `twitter` (Attributes) A single block that specifies options for connectivity to the Twitter social identity provider.  At least one of the following must be defined: `facebook`, `google`, `linkedin`, `yahoo`, `amazon`, `twitter`, `apple`, `paypal`, `microsoft`, `github`, `openid_connect`, `saml`.  This object is immutable.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules. (see [below for nested schema](#nestedatt--twitter))
+- `yahoo` (Attributes) A single block that specifies options for connectivity to the Yahoo social identity provider.  At least one of the following must be defined: `facebook`, `google`, `linkedin`, `yahoo`, `amazon`, `twitter`, `apple`, `paypal`, `microsoft`, `github`, `openid_connect`, `saml`.  This object is immutable.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules. (see [below for nested schema](#nestedatt--yahoo))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 
-<a id="nestedblock--amazon"></a>
+<a id="nestedatt--amazon"></a>
 ### Nested Schema for `amazon`
 
 Required:
@@ -96,7 +96,7 @@ Required:
 - `client_secret` (String, Sensitive) A string that specifies the application client secret from Amazon.
 
 
-<a id="nestedblock--apple"></a>
+<a id="nestedatt--apple"></a>
 ### Nested Schema for `apple`
 
 Required:
@@ -107,7 +107,7 @@ Required:
 - `team_id` (String) A 10-character string that Apple uses to identify teams.
 
 
-<a id="nestedblock--facebook"></a>
+<a id="nestedatt--facebook"></a>
 ### Nested Schema for `facebook`
 
 Required:
@@ -116,7 +116,7 @@ Required:
 - `app_secret` (String, Sensitive) A string that specifies the application secret from Facebook.
 
 
-<a id="nestedblock--github"></a>
+<a id="nestedatt--github"></a>
 ### Nested Schema for `github`
 
 Required:
@@ -125,7 +125,7 @@ Required:
 - `client_secret` (String, Sensitive) A string that specifies the application client secret from Github.
 
 
-<a id="nestedblock--google"></a>
+<a id="nestedatt--google"></a>
 ### Nested Schema for `google`
 
 Required:
@@ -143,7 +143,7 @@ Required:
 - `id` (String) The ID for the identity provider icon to use as the login button.  This can be retrieved from the `id` parameter of the `pingone_image` resource.  Must be a valid PingOne resource ID.
 
 
-<a id="nestedblock--linkedin"></a>
+<a id="nestedatt--linkedin"></a>
 ### Nested Schema for `linkedin`
 
 Required:
@@ -161,7 +161,7 @@ Required:
 - `id` (String) The ID for the identity provider icon to use as the login button.  This can be retrieved from the `id` parameter of the `pingone_image` resource.  Must be a valid PingOne resource ID.
 
 
-<a id="nestedblock--microsoft"></a>
+<a id="nestedatt--microsoft"></a>
 ### Nested Schema for `microsoft`
 
 Required:
@@ -170,7 +170,7 @@ Required:
 - `client_secret` (String, Sensitive) A string that specifies the application client secret from Microsoft.
 
 
-<a id="nestedblock--openid_connect"></a>
+<a id="nestedatt--openid_connect"></a>
 ### Nested Schema for `openid_connect`
 
 Required:
@@ -190,7 +190,7 @@ Optional:
 - `userinfo_endpoint` (String) A string that specifies the OIDC identity provider's userInfo endpoint. This value must be a URL that uses https.
 
 
-<a id="nestedblock--paypal"></a>
+<a id="nestedatt--paypal"></a>
 ### Nested Schema for `paypal`
 
 Required:
@@ -200,7 +200,7 @@ Required:
 - `client_secret` (String, Sensitive) A string that specifies the application secret from PayPal.
 
 
-<a id="nestedblock--saml"></a>
+<a id="nestedatt--saml"></a>
 ### Nested Schema for `saml`
 
 Required:
@@ -221,7 +221,7 @@ Optional:
 - `sp_signing_key_id` (String) A string that specifies the service provider's signing key ID.  Must be a valid PingOne resource ID.
 
 
-<a id="nestedblock--twitter"></a>
+<a id="nestedatt--twitter"></a>
 ### Nested Schema for `twitter`
 
 Required:
@@ -230,7 +230,7 @@ Required:
 - `client_secret` (String, Sensitive) A string that specifies the application client secret from Twitter.
 
 
-<a id="nestedblock--yahoo"></a>
+<a id="nestedatt--yahoo"></a>
 ### Nested Schema for `yahoo`
 
 Required:
