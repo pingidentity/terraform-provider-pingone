@@ -126,12 +126,10 @@ func TestAccIdentityProvider_Change(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "description", "My test identity provider"),
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 			resource.TestMatchResourceAttr(resourceFullName, "registration_population_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "login_button_icon.#", "1"),
-			resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.0.id", verify.P1ResourceIDRegexpFullString),
-			resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
-			resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
-			resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexpFullString),
-			resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+			resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+			resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 		),
 	}
 
@@ -968,12 +966,10 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccIdentityProviderConfig_OIDCFull(resourceName, name, image),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttr(resourceFullName, "login_button_icon.#", "1"),
-			resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.0.id", verify.P1ResourceIDRegexpFullString),
-			resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
-			resource.TestCheckResourceAttr(resourceFullName, "icon.#", "1"),
-			resource.TestMatchResourceAttr(resourceFullName, "icon.0.id", verify.P1ResourceIDRegexpFullString),
-			resource.TestMatchResourceAttr(resourceFullName, "icon.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+			resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+			resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 			resource.TestCheckResourceAttr(resourceFullName, "facebook.#", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "google.#", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "linkedin.#", "0"),
@@ -1337,14 +1333,14 @@ resource "pingone_identity_provider" "%[2]s" {
   enabled                    = true
   registration_population_id = pingone_population.%[2]s.id
 
-  icon {
+  icon = {
     id   = pingone_image.%[2]s.id
-    href = pingone_image.%[2]s.uploaded_image[0].href
+    href = pingone_image.%[2]s.uploaded_image.href
   }
 
-  login_button_icon {
+  login_button_icon = {
     id   = pingone_image.%[2]s.id
-    href = pingone_image.%[2]s.uploaded_image[0].href
+    href = pingone_image.%[2]s.uploaded_image.href
   }
 
   google {
@@ -1690,14 +1686,14 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  icon {
+  icon = {
     id   = pingone_image.%[2]s.id
-    href = pingone_image.%[2]s.uploaded_image[0].href
+    href = pingone_image.%[2]s.uploaded_image.href
   }
 
-  login_button_icon {
+  login_button_icon = {
     id   = pingone_image.%[2]s.id
-    href = pingone_image.%[2]s.uploaded_image[0].href
+    href = pingone_image.%[2]s.uploaded_image.href
   }
 
   openid_connect {

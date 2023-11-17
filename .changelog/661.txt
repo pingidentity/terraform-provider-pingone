@@ -1,0 +1,11 @@
+```release-note:breaking-change
+`resource/pingone_branding_settings`: Changed the `logo_image` parameter data type.
+```
+
+```release-note:breaking-change
+`resource/pingone_branding_theme`: Changed the `logo` and `background_image` parameters data type.
+```
+
+```release-note:breaking-change
+`resource/pingone_identity_provider`: Changed the `icon` and `login_button_icon` parameters data type.
+```

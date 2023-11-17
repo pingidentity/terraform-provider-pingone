@@ -75,6 +75,100 @@ This parameter was previously deprecated and has now been made read only.  Use t
 
 This parameter was previously optional and has now been made a required parameter.
 
+## Resource: pingone_branding_settings
+
+### `logo_image` parameter data type change
+
+The `logo_image` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_branding_settings" "branding" {
+  # ... other configuration parameters
+
+  logo_image {
+    id   = pingone_image.company_logo.id
+    href = pingone_image.company_logo.uploaded_image[0].href
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_branding_settings" "branding" {
+  # ... other configuration parameters
+
+  logo_image = {
+    id   = pingone_image.company_logo.id
+    href = pingone_image.company_logo.uploaded_image.href
+  }
+}
+```
+
+## Resource: pingone_branding_theme
+
+### `background_image` parameter data type change
+
+The `background_image` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_branding_theme" "my_awesome_theme" {
+  # ... other configuration parameters
+
+  background_image {
+    id   = pingone_image.company_image.id
+    href = pingone_image.company_image.uploaded_image[0].href
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_branding_theme" "my_awesome_theme" {
+  # ... other configuration parameters
+
+  background_image = {
+    id   = pingone_image.company_image.id
+    href = pingone_image.company_image.uploaded_image.href
+  }
+}
+```
+
+### `logo` parameter data type change
+
+The `logo` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_branding_theme" "my_awesome_theme" {
+  # ... other configuration parameters
+
+  logo {
+    id   = pingone_image.company_logo.id
+    href = pingone_image.company_logo.uploaded_image[0].href
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_branding_theme" "my_awesome_theme" {
+  # ... other configuration parameters
+
+  logo = {
+    id   = pingone_image.company_logo.id
+    href = pingone_image.company_logo.uploaded_image.href
+  }
+}
+```
+
 ## Resource: pingone_environment
 
 ### `default_population` optional parameter removed
@@ -88,6 +182,68 @@ This attribute was previously deprecated and has been removed.  Default populati
 ### `timeouts` block removed
 
 This parameter block is no longer needed and has been removed.
+
+## Resource: pingone_identity_provider
+
+### `icon` parameter data type change
+
+The `icon` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  icon {
+    id   = pingone_image.identity_provider_icon.id
+    href = pingone_image.identity_provider_icon.uploaded_image[0].href
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  icon = {
+    id   = pingone_image.identity_provider_icon.id
+    href = pingone_image.identity_provider_icon.uploaded_image.href
+  }
+}
+```
+
+### `login_button_icon` parameter data type change
+
+The `login_button_icon` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  login_button_icon {
+    id   = pingone_image.identity_provider_login_button_icon.id
+    href = pingone_image.identity_provider_login_button_icon.uploaded_image[0].href
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  login_button_icon = {
+    id   = pingone_image.identity_provider_login_button_icon.id
+    href = pingone_image.identity_provider_login_button_icon.uploaded_image.href
+  }
+}
+```
 
 ## Resource: pingone_image
 
@@ -143,12 +299,12 @@ resource "pingone_image" "theme_background" {
 resource "pingone_branding_theme" "my_awesome_theme" {
   # ...
 
-  logo {
+  logo = {
     id   = pingone_image.company_logo.id
     href = pingone_image.company_logo.uploaded_image.href
   }
 
-  background_image {
+  background_image = {
     id   = pingone_image.theme_background.id
     href = pingone_image.theme_background.uploaded_image.href
   }
