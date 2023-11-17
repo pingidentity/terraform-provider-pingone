@@ -837,6 +837,36 @@ This parameter was previously deprecated and has now been made read only.  Use t
 
 This parameter was previously deprecated and has been removed.  Use the `enabled` parameter going forward.
 
+## Resource: pingone_webhook
+
+### `filter_options` parameter data type change
+
+The `filter_options` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_webhook" "my_webhook" {
+  # ... other configuration parameters
+  
+  filter_options {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_webhook" "my_webhook" {
+  # ... other configuration parameters
+  
+  filter_options = {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
+}
+```
+
 ## Data Source: pingone_organization
 
 ### `base_url_agreement_management` computed attribute removed

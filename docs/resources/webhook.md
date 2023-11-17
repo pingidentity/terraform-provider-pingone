@@ -29,7 +29,7 @@ resource "pingone_webhook" "my_webhook" {
 
   format = "ACTIVITY"
 
-  filter_options {
+  filter_options = {
     included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
   }
 }
@@ -41,6 +41,7 @@ resource "pingone_webhook" "my_webhook" {
 ### Required
 
 - `environment_id` (String) The ID of the environment to create the webhook in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `filter_options` (Attributes) A single object that specifies the PingOne platform event filters to be included to trigger this webhook. (see [below for nested schema](#nestedatt--filter_options))
 - `format` (String) A string that specifies one of the supported webhook formats.  Options are `ACTIVITY`, `NEWRELIC`, `SPLUNK`.
 - `http_endpoint_url` (String) A string that specifies a valid HTTPS URL to which event messages are sent.
 - `name` (String) A string that specifies the webhook name.
@@ -48,7 +49,6 @@ resource "pingone_webhook" "my_webhook" {
 ### Optional
 
 - `enabled` (Boolean) A boolean that specifies whether a created or updated webhook should be active or suspended. A suspended state (`"enabled":false`) accumulates all matched events, but these events are not delivered until the webhook becomes active again (`"enabled":true`). For suspended webhooks, events accumulate for a maximum of two weeks. Events older than two weeks are deleted. Restarted webhooks receive the saved events (up to two weeks from the restart date).  Defaults to `false`.
-- `filter_options` (Block List) A block that specifies the PingOne platform event filters to be included to trigger this webhook. (see [below for nested schema](#nestedblock--filter_options))
 - `http_endpoint_headers` (Map of String) A map that specifies the headers applied to the outbound request (for example, `Authorization` `Basic usernamepassword`. The purpose of these headers is for the HTTPS endpoint to authenticate the PingOne service, ensuring that the information from PingOne is from a trusted source.
 - `verify_tls_certificates` (Boolean) A boolean that specifies whether a certificates should be verified. If this property's value is set to `false`, then all certificates are trusted. (Setting this property's value to false introduces a security risk.).  Defaults to `true`.
 
@@ -56,7 +56,7 @@ resource "pingone_webhook" "my_webhook" {
 
 - `id` (String) The ID of this resource.
 
-<a id="nestedblock--filter_options"></a>
+<a id="nestedatt--filter_options"></a>
 ### Nested Schema for `filter_options`
 
 Required:
