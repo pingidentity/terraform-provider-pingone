@@ -82,20 +82,20 @@ func TestAccEnvironment_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
 			resource.TestMatchResourceAttr(resourceFullName, "organization_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "solution", "CUSTOMER"),
-			resource.TestCheckResourceAttr(resourceFullName, "service.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
+			resource.TestCheckResourceAttr(resourceFullName, "services.#", "2"),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
 				"type":        "SSO",
 				"console_url": "",
-				"bookmark.#":  "0",
+				"bookmarks.#": "0",
 			}),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
-				"type":            "PingFederate",
-				"console_url":     "https://my-console-url",
-				"bookmark.#":      "2",
-				"bookmark.0.name": "Bookmark 1",
-				"bookmark.0.url":  "https://my-bookmark-1",
-				"bookmark.1.name": "Bookmark 2",
-				"bookmark.1.url":  "https://my-bookmark-2",
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
+				"type":             "PingFederate",
+				"console_url":      "https://my-console-url",
+				"bookmarks.#":      "2",
+				"bookmarks.0.name": "Bookmark 1",
+				"bookmarks.0.url":  "https://my-bookmark-1",
+				"bookmarks.1.name": "Bookmark 2",
+				"bookmarks.1.url":  "https://my-bookmark-2",
 			}),
 		),
 	}
@@ -112,20 +112,20 @@ func TestAccEnvironment_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
 			resource.TestMatchResourceAttr(resourceFullName, "organization_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "solution", "CUSTOMER"),
-			resource.TestCheckResourceAttr(resourceFullName, "service.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
+			resource.TestCheckResourceAttr(resourceFullName, "services.#", "2"),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
 				"type":        "SSO",
 				"console_url": "",
-				"bookmark.#":  "0",
+				"bookmarks.#": "0",
 			}),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
-				"type":            "PingFederate",
-				"console_url":     "https://my-console-url",
-				"bookmark.#":      "2",
-				"bookmark.0.name": "Bookmark 1",
-				"bookmark.0.url":  "https://my-bookmark-1",
-				"bookmark.1.name": "Bookmark 2",
-				"bookmark.1.url":  "https://my-bookmark-2",
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
+				"type":             "PingFederate",
+				"console_url":      "https://my-console-url",
+				"bookmarks.#":      "2",
+				"bookmarks.0.name": "Bookmark 1",
+				"bookmarks.0.url":  "https://my-bookmark-1",
+				"bookmarks.1.name": "Bookmark 2",
+				"bookmarks.1.url":  "https://my-bookmark-2",
 			}),
 		),
 	}
@@ -185,11 +185,11 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 			resource.TestCheckNoResourceAttr(resourceFullName, "solution"),
 			resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
 			resource.TestMatchResourceAttr(resourceFullName, "organization_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "service.#", "1"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
+			resource.TestCheckResourceAttr(resourceFullName, "services.#", "1"),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
 				"type":        "SSO",
 				"console_url": "",
-				"bookmark.#":  "0",
+				"bookmarks.#": "0",
 			}),
 		),
 	}
@@ -359,31 +359,31 @@ func TestAccEnvironment_ServiceSwitching(t *testing.T) {
 			{
 				Config: testAccEnvironmentConfig_Minimal(resourceName, name, licenseID),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "service.#", "1"),
-					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
+					resource.TestCheckResourceAttr(resourceFullName, "services.#", "1"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
 						"type":        "SSO",
 						"console_url": "",
-						"bookmark.#":  "0",
+						"bookmarks.#": "0",
 					}),
 				),
 			},
 			{
 				Config: testAccEnvironmentConfig_Full(resourceName, name, region, licenseID),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "service.#", "2"),
-					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
+					resource.TestCheckResourceAttr(resourceFullName, "services.#", "2"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
 						"type":        "SSO",
 						"console_url": "",
-						"bookmark.#":  "0",
+						"bookmarks.#": "0",
 					}),
-					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
-						"type":            "PingFederate",
-						"console_url":     "https://my-console-url",
-						"bookmark.#":      "2",
-						"bookmark.0.name": "Bookmark 1",
-						"bookmark.0.url":  "https://my-bookmark-1",
-						"bookmark.1.name": "Bookmark 2",
-						"bookmark.1.url":  "https://my-bookmark-2",
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
+						"type":             "PingFederate",
+						"console_url":      "https://my-console-url",
+						"bookmarks.#":      "2",
+						"bookmarks.0.name": "Bookmark 1",
+						"bookmarks.0.url":  "https://my-bookmark-1",
+						"bookmarks.1.name": "Bookmark 2",
+						"bookmarks.1.url":  "https://my-bookmark-2",
 					}),
 				),
 			},
@@ -417,31 +417,31 @@ func TestAccEnvironment_Services(t *testing.T) {
 			{
 				Config: testAccEnvironmentConfig_DynamicServices(resourceName, name, licenseID, services1),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "service.#", "12"), // check all the custom services provision, except the WORKFORCE services
+					resource.TestCheckResourceAttr(resourceFullName, "services.#", "12"), // check all the custom services provision, except the WORKFORCE services
 				),
 			},
 			{
 				Config: testAccEnvironmentConfig_DynamicServices(resourceName, name, licenseID, services2),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "service.#", "4"), // check they can be modified downward
+					resource.TestCheckResourceAttr(resourceFullName, "services.#", "4"), // check they can be modified downward
 				),
 			},
 			{
 				Config: testAccEnvironmentConfig_DynamicServices(resourceName, name, licenseID, services3),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "service.#", "9"), // check they can be modified upward
+					resource.TestCheckResourceAttr(resourceFullName, "services.#", "9"), // check they can be modified upward
 				),
 			},
 			{
 				Config: testAccEnvironmentConfig_Minimal(resourceName, name, licenseID),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "service.#", "1"), // check they can be defaulted
+					resource.TestCheckResourceAttr(resourceFullName, "services.#", "1"), // check they can be defaulted
 				),
 			},
 			{
 				Config: testAccEnvironmentConfig_DynamicServices(resourceName, name, licenseID, services3),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "service.#", "9"), // check they can be un-defaulted
+					resource.TestCheckResourceAttr(resourceFullName, "services.#", "9"), // check they can be un-defaulted
 				),
 			},
 		},
@@ -470,11 +470,11 @@ func TestAccEnvironment_ServicesTags(t *testing.T) {
 			{
 				Config: testAccEnvironmentConfig_DVTags(resourceName, name, licenseID),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "service.#", "2"),
-					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
+					resource.TestCheckResourceAttr(resourceFullName, "services.#", "2"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
 						"type":        "DaVinci",
 						"console_url": "",
-						"bookmark.#":  "0",
+						"bookmarks.#": "0",
 						"tags.#":      "1",
 						"tags.0":      "DAVINCI_MINIMAL",
 					}),
@@ -529,22 +529,25 @@ resource "pingone_environment" "%[1]s" {
   license_id  = "%[4]s"
   solution    = "CUSTOMER"
 
-  service {
-    type = "SSO"
-  }
-
-  service {
-    type        = "PingFederate"
-    console_url = "https://my-console-url"
-    bookmark {
-      name = "Bookmark 1"
-      url  = "https://my-bookmark-1"
+  services = [
+    {
+      type = "SSO"
+    },
+    {
+      type        = "PingFederate"
+      console_url = "https://my-console-url"
+      bookmarks = [
+        {
+          name = "Bookmark 1"
+          url  = "https://my-bookmark-1"
+        },
+        {
+          name = "Bookmark 2"
+          url  = "https://my-bookmark-2"
+        }
+      ]
     }
-    bookmark {
-      name = "Bookmark 2"
-      url  = "https://my-bookmark-2"
-    }
-  }
+  ]
 }`, resourceName, name, region, licenseID)
 }
 
@@ -564,7 +567,7 @@ resource "pingone_environment" "%[1]s" {
     for_each = toset(var.services_%[1]s)
 
     content {
-      type = service.key
+      type = services.key
     }
   }
 }`, resourceName, name, licenseID, strings.Join(services, "\",\""))
@@ -576,14 +579,15 @@ resource "pingone_environment" "%[1]s" {
   name       = "%[2]s"
   license_id = "%[3]s"
 
-  service {
-    type = "SSO"
-  }
-
-  service {
-    type = "DaVinci"
-    tags = ["DAVINCI_MINIMAL"]
-  }
+  services = [
+    {
+      type = "SSO"
+    },
+    {
+      type = "DaVinci"
+      tags = ["DAVINCI_MINIMAL"]
+    }
+  ]
 }`, resourceName, name, licenseID)
 }
 
@@ -592,6 +596,12 @@ func testAccEnvironmentConfig_Minimal(resourceName, name, licenseID string) stri
 resource "pingone_environment" "%[1]s" {
   name       = "%[2]s"
   license_id = "%[3]s"
+
+  services = [
+    {
+      type = "SSO"
+    }
+  ]
 }`, resourceName, name, licenseID)
 }
 
@@ -601,6 +611,12 @@ resource "pingone_environment" "%[1]s" {
   name       = "%[2]s"
   type       = "%[3]s"
   license_id = "%[4]s"
+
+  services = [
+    {
+      type = "SSO"
+    }
+  ]
 }`, resourceName, name, environmentType, licenseID)
 }
 
@@ -610,5 +626,11 @@ resource "pingone_environment" "%[1]s" {
   name       = "%[2]s"
   region     = "%[3]s"
   license_id = "%[4]s"
+
+  services = [
+    {
+      type = "SSO"
+    }
+  ]
 }`, resourceName, name, region, licenseID)
 }

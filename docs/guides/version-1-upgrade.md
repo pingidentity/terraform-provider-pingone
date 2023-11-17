@@ -171,6 +171,57 @@ resource "pingone_branding_theme" "my_awesome_theme" {
 
 ## Resource: pingone_environment
 
+### `service.bookmark` block parameter renamed and data type changed
+
+The `service.bookmark` parameter has been renamed to `services.bookmarks`.  The data type is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_environment" "my_environment" {
+  # ... other configuration parameters
+  
+  service {
+    type = "SSO"
+    
+    bookmark {
+      name = "My awesome bookmark"
+      url = "https://www.bxretail.org"
+    }
+
+    bookmark {
+      name = "My second awesome bookmark"
+      url = "https://www.bxretail.org/awesome"
+    }
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_environment" "my_environment" {
+  # ... other configuration parameters
+  
+  services = [
+    {
+      type = "SSO"
+    
+      bookmarks = [
+        {
+          name = "My awesome bookmark"
+          url = "https://www.bxretail.org"
+        },
+        {
+          name = "My second awesome bookmark"
+          url = "https://www.bxretail.org/awesome"
+        }
+      ]
+    }
+  ]
+}
+```
+
 ### `default_population` optional parameter removed
 
 This parameter was previously deprecated and has been removed.  Default populations are managed with the `pingone_population_default` resource.
@@ -178,6 +229,80 @@ This parameter was previously deprecated and has been removed.  Default populati
 ### `default_population_id` computed attribute removed
 
 This attribute was previously deprecated and has been removed.  Default populations are managed with the `pingone_population_default` resource.
+
+### `service` block parameter renamed, data type changed and made a required parameter
+
+The `service` parameter has been renamed to `services` and is now a required parameter.  The data type is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_environment" "my_environment" {
+  # ... other configuration parameters
+  
+  service {
+    type = "SSO"
+  }
+
+  service {
+    type = "MFA"
+  }
+
+  service {
+    type        = "PingFederate"
+    console_url = "https://my-pingfederate-console.example.com/pingfederate"
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_environment" "my_environment" {
+  # ... other configuration parameters
+  
+  services = [
+    {
+      type = "SSO"
+    },
+    {
+      type = "MFA"
+    },
+    {
+      type        = "PingFederate"
+      console_url = "https://my-pingfederate-console.example.com/pingfederate"
+    }
+  ]
+}
+```
+
+### `service.type` now made a required parameter
+
+The `service.type` parameter has moved to `services.type` and is now a required parameter.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_environment" "my_environment" {
+  # ... other configuration parameters
+  
+  service {}
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_environment" "my_environment" {
+  # ... other configuration parameters
+  
+  services = [
+    {
+      type = "SSO"
+    }
+  ]
+}
+```
 
 ### `timeouts` block removed
 

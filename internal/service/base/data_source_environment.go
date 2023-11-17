@@ -32,7 +32,7 @@ type EnvironmentDataSourceModel struct {
 	LicenseId      types.String `tfsdk:"license_id"`
 	OrganizationId types.String `tfsdk:"organization_id"`
 	Solution       types.String `tfsdk:"solution"`
-	Services       types.Set    `tfsdk:"service"`
+	Services       types.Set    `tfsdk:"services"`
 }
 
 // Framework interfaces
@@ -54,6 +54,10 @@ func (r *EnvironmentDataSource) Metadata(ctx context.Context, req datasource.Met
 func (r *EnvironmentDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 
 	nameLength := 1
+
+	nameDescription := framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the name of the environment to retrieve. Either `environment_id`, or `name` can be used to retrieve the environment, but cannot be set together.")
+
+	environmentIdDescription := framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to retrieve. Either `environment_id`, or `name` can be used to retrieve the environment, but cannot be set together.")
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("The type of the environment.  Options are `%s` for a development/testing environment and `%s` for environments that require protection from deletion.", management.ENUMENVIRONMENTTYPE_SANDBOX, management.ENUMENVIRONMENTTYPE_PRODUCTION),
@@ -97,8 +101,9 @@ func (r *EnvironmentDataSource) Schema(ctx context.Context, req datasource.Schem
 			"id": framework.Attr_ID(),
 
 			"environment_id": schema.StringAttribute{
-				Description: "The ID of the environment to retrieve. Either `environment_id`, or `name` can be used to retrieve the environment, but cannot be set together.",
-				Optional:    true,
+				Description:         environmentIdDescription.Description,
+				MarkdownDescription: environmentIdDescription.MarkdownDescription,
+				Optional:            true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
 					verify.P1ResourceIDValidator(),
@@ -106,8 +111,9 @@ func (r *EnvironmentDataSource) Schema(ctx context.Context, req datasource.Schem
 			},
 
 			"name": schema.StringAttribute{
-				Description: "A string that specifies the name of the environment to retrieve. Either `environment_id`, or `name` can be used to retrieve the environment, but cannot be set together.",
-				Optional:    true,
+				Description:         nameDescription.Description,
+				MarkdownDescription: nameDescription.MarkdownDescription,
+				Optional:            true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("environment_id")),
 					stringvalidator.LengthAtLeast(nameLength),
@@ -115,7 +121,7 @@ func (r *EnvironmentDataSource) Schema(ctx context.Context, req datasource.Schem
 			},
 
 			"description": schema.StringAttribute{
-				Description: "A string that specifies the description of the environment.",
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the description of the environment.").Description,
 				Computed:    true,
 			},
 
@@ -132,12 +138,12 @@ func (r *EnvironmentDataSource) Schema(ctx context.Context, req datasource.Schem
 			},
 
 			"license_id": schema.StringAttribute{
-				Description: "An ID of a valid license applied to the environment.",
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of a valid license applied to the environment.").Description,
 				Computed:    true,
 			},
 
 			"organization_id": schema.StringAttribute{
-				Description: "The ID of the PingOne organization tenant to which the environment belongs.",
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the PingOne organization tenant to which the environment belongs.").Description,
 				Computed:    true,
 			},
 
@@ -146,13 +152,12 @@ func (r *EnvironmentDataSource) Schema(ctx context.Context, req datasource.Schem
 				MarkdownDescription: solutionDescription.MarkdownDescription,
 				Computed:            true,
 			},
-		},
 
-		Blocks: map[string]schema.Block{
-			"service": schema.SetNestedBlock{
-				Description: "The services that are enabled in the environment.",
+			"services": schema.SetNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A set of objects that specify the services that are enabled in the environment.").Description,
+				Computed:    true,
 
-				NestedObject: schema.NestedBlockObject{
+				NestedObject: schema.NestedAttributeObject{
 
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
@@ -175,22 +180,21 @@ func (r *EnvironmentDataSource) Schema(ctx context.Context, req datasource.Schem
 
 							Computed: true,
 						},
-					},
 
-					Blocks: map[string]schema.Block{
-						"bookmark": schema.SetNestedBlock{
-							Description: "Custom bookmark links for the service.",
+						"bookmarks": schema.SetNestedAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A set of objects that specify custom bookmark links for the service.").Description,
+							Computed:    true,
 
-							NestedObject: schema.NestedBlockObject{
+							NestedObject: schema.NestedAttributeObject{
 
 								Attributes: map[string]schema.Attribute{
 									"name": schema.StringAttribute{
-										Description: "Bookmark name.",
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the bookmark name.").Description,
 										Computed:    true,
 									},
 
 									"url": schema.StringAttribute{
-										Description: "Bookmark URL.",
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the bookmark URL.").Description,
 										Computed:    true,
 									},
 								},
