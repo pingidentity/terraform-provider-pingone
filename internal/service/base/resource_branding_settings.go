@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -36,13 +35,6 @@ type imageResourceModel struct {
 	Id   types.String `tfsdk:"id"`
 	Href types.String `tfsdk:"href"`
 }
-
-var (
-	logoTFObjectTypes = map[string]attr.Type{
-		"id":   types.StringType,
-		"href": types.StringType,
-	}
-)
 
 // Framework interfaces
 var (
