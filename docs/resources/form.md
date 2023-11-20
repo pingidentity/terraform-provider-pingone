@@ -176,13 +176,13 @@ Required:
 
 - `key` (String) A string that specifies an identifier for the field component.
 - `layout` (String) A string that specifies layout attributes for radio button and checkbox fields.  Options are `HORIZONTAL`, `VERTICAL`.
+- `options` (Set of String) An array of strings that specifies the unique list of options.
 - `required` (Boolean) A boolean that specifies whether the field is required.
 
 Optional:
 
 - `attribute_disabled` (Boolean) A boolean that specifies whether the linked directory attribute is disabled.  This field is immutable and will trigger a replace plan if changed.
 - `label_mode` (String) A string that specifies how the field is rendered.  Options are `DEFAULT`, `FLOAT`.
-- `options` (Set of String) An array of strings that specifies the unique list of options.
 - `other_option_attribute_disabled` (Boolean) A boolean that specifies whether the directory attribute option is disabled. Set to `true` if it references a PingOne directory attribute.
 - `other_option_enabled` (Boolean) A boolean that specifies whether the end user can type an entry that is not in a predefined list.
 - `other_option_input_label` (String) A string that specifies the label for the other option in drop-down controls.
@@ -219,6 +219,7 @@ Optional:
 Required:
 
 - `key` (String) A string that specifies an identifier for the field component.
+- `options` (Set of String) An array of strings that specifies the unique list of options.
 - `required` (Boolean) A boolean that specifies whether the field is required.
 
 Optional:
@@ -226,7 +227,6 @@ Optional:
 - `attribute_disabled` (Boolean) A boolean that specifies whether the linked directory attribute is disabled.  This field is immutable and will trigger a replace plan if changed.
 - `label_mode` (String) A string that specifies how the field is rendered.  Options are `DEFAULT`, `FLOAT`.
 - `layout` (String) A string that specifies layout attributes for radio button and checkbox fields.  Options are `HORIZONTAL`, `VERTICAL`.
-- `options` (Set of String) An array of strings that specifies the unique list of options.
 - `other_option_attribute_disabled` (Boolean) A boolean that specifies whether the directory attribute option is disabled. Set to `true` if it references a PingOne directory attribute.
 - `other_option_enabled` (Boolean) A boolean that specifies whether the end user can type an entry that is not in a predefined list.
 - `other_option_input_label` (String) A string that specifies the label for the other option in drop-down controls.
@@ -353,6 +353,12 @@ Optional:
 <a id="nestedatt--components--fields--field_qr_code"></a>
 ### Nested Schema for `components.fields.field_qr_code`
 
+Required:
+
+- `alignment` (String) A string that specifies the QR Code alignment.  Options are `CENTER`, `LEFT`, `RIGHT`.
+- `qr_code_type` (String) A string that specifies the QR Code type.
+- `show_border` (Boolean) A boolean that specifies the border visibility.
+
 
 <a id="nestedatt--components--fields--field_radio"></a>
 ### Nested Schema for `components.fields.field_radio`
@@ -361,13 +367,13 @@ Required:
 
 - `key` (String) A string that specifies an identifier for the field component.
 - `layout` (String) A string that specifies layout attributes for radio button and checkbox fields.  Options are `HORIZONTAL`, `VERTICAL`.
+- `options` (Set of String) An array of strings that specifies the unique list of options.
 - `required` (Boolean) A boolean that specifies whether the field is required.
 
 Optional:
 
 - `attribute_disabled` (Boolean) A boolean that specifies whether the linked directory attribute is disabled.  This field is immutable and will trigger a replace plan if changed.
 - `label_mode` (String) A string that specifies how the field is rendered.  Options are `DEFAULT`, `FLOAT`.
-- `options` (Set of String) An array of strings that specifies the unique list of options.
 - `other_option_attribute_disabled` (Boolean) A boolean that specifies whether the directory attribute option is disabled. Set to `true` if it references a PingOne directory attribute.
 - `other_option_enabled` (Boolean) A boolean that specifies whether the end user can type an entry that is not in a predefined list.
 - `other_option_input_label` (String) A string that specifies the label for the other option in drop-down controls.
@@ -389,6 +395,13 @@ Optional:
 <a id="nestedatt--components--fields--field_recaptcha_v2"></a>
 ### Nested Schema for `components.fields.field_recaptcha_v2`
 
+Required:
+
+- `alignment` (String) A string that specifies the reCAPTCHA alignment.  Options are `CENTER`, `LEFT`, `RIGHT`.
+- `key` (String) A string that specifies an identifier for the field component.
+- `size` (String) A string that specifies the reCAPTCHA size.  Options are `COMPACT`, `NORMAL`.
+- `theme` (String) A string that specifies the reCAPTCHA theme.  Options are `DARK`, `LIGHT`.
+
 
 <a id="nestedatt--components--fields--field_slate_textblob"></a>
 ### Nested Schema for `components.fields.field_slate_textblob`
@@ -400,6 +413,30 @@ Optional:
 
 <a id="nestedatt--components--fields--field_social_login_button"></a>
 ### Nested Schema for `components.fields.field_social_login_button`
+
+Required:
+
+- `icon_src` (Boolean) A string that specifies the HTTP link (URL format) for the external identity provider's icon.
+- `idp_enabled` (Boolean) A boolean that specifies whether the external identity provider is enabled.
+- `idp_id` (String) A string that specifies the external identity provider's ID.
+- `idp_name` (String) A string that specifies the external identity provider name.
+- `idp_type` (String) A string that specifies the external identity provider type.  Options are `AMAZON`, `APPLE`, `FACEBOOK`, `GITHUB`, `GOOGLE`, `LDAP`, `LINKEDIN`, `MICROSOFT`, `OPENID_CONNECT`, `PAYPAL`, `SAML`, `TWITTER`, `YAHOO`.
+- `label` (String) A string that specifies the social login button label.
+
+Optional:
+
+- `styles` (Attributes) A single object that describes style settings for the social login button. (see [below for nested schema](#nestedatt--components--fields--field_social_login_button--styles))
+- `width` (Number) An integer that specifies the button width. Set as a percentage.
+
+<a id="nestedatt--components--fields--field_social_login_button--styles"></a>
+### Nested Schema for `components.fields.field_social_login_button.width`
+
+Optional:
+
+- `enabled` (String) A boolean that specifies whether the social login button is enabled.
+- `horizontal_alignment` (String) A string that specifies the social login button alignment.  Options are `CENTER`, `LEFT`, `RIGHT`.
+- `text_color` (String) A string that specifies the social login button text color.
+
 
 
 <a id="nestedatt--components--fields--field_submit_button"></a>
