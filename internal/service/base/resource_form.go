@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -94,6 +95,12 @@ type formComponentsFieldElementResourceModel struct {
 	OtherOptionAttributeDisabled types.Bool   `tfsdk:"other_option_attribute_disabled"`
 }
 
+type formComponentsFieldTextResourceModel formComponentsFieldElementResourceModel
+type formComponentsFieldPasswordResourceModel formComponentsFieldElementResourceModel
+type formComponentsFieldRadioResourceModel formComponentsFieldElementResourceModel
+type formComponentsFieldCheckboxResourceModel formComponentsFieldElementResourceModel
+type formComponentsFieldDropdownResourceModel formComponentsFieldElementResourceModel
+
 type formComponentsFieldElementOptionResourceModel struct {
 	Label types.String `tfsdk:"label"`
 	Value types.String `tfsdk:"value"`
@@ -110,6 +117,13 @@ type formComponentsFieldItemResourceModel struct {
 	Content types.String `tfsdk:"content"`
 }
 
+type formComponentsFieldDividerResourceModel formComponentsFieldItemResourceModel
+type formComponentsFieldParagraphResourceModel formComponentsFieldItemResourceModel
+type formComponentsFieldEmptyFieldResourceModel formComponentsFieldItemResourceModel
+type formComponentsFieldErrorDisplayResourceModel formComponentsFieldItemResourceModel
+type formComponentsFieldTextblobResourceModel formComponentsFieldItemResourceModel
+type formComponentsFieldSlateTextblobResourceModel formComponentsFieldItemResourceModel
+
 // PASSWORD_VERIFY
 type formComponentsFieldPasswordVerifyResourceModel struct {
 	LabelPasswordVerify types.String `tfsdk:"label_password_verify"`
@@ -121,6 +135,9 @@ type formComponentsFieldButtonResourceModel struct {
 	Label  types.String `tfsdk:"label"`
 	Styles types.Object `tfsdk:"styles"`
 }
+
+type formComponentsFieldSubmitButtonResourceModel formComponentsFieldButtonResourceModel
+type formComponentsFieldFlowButtonResourceModel formComponentsFieldButtonResourceModel
 
 type formComponentsFieldButtonStylesResourceModel struct {
 	Width           types.Int64  `tfsdk:"width"`
@@ -165,6 +182,7 @@ type formComponentsFieldSocialLoginButtonResourceModel struct {
 	Styles     types.Object `tfsdk:"styles"`
 	IdpType    types.String `tfsdk:"idp_type"`
 	IdpName    types.String `tfsdk:"idp_name"`
+	IdpId      types.String `tfsdk:"idp_id"`
 	IdpEnabled types.Bool   `tfsdk:"idp_enabled"`
 	IconSrc    types.String `tfsdk:"icon_src"`
 	Width      types.Int64  `tfsdk:"width"`
@@ -512,7 +530,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 								"field_recaptcha_v2": formFieldSchema(
 									framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies options for the `RECAPTCHA_V2` form field type."),
 
-									map[string]schema.Attribute{},
+									formFieldRecaptchaV2SchemaAttributes(),
 
 									formFieldNames,
 								),
@@ -520,7 +538,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 								"field_qr_code": formFieldSchema(
 									framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies options for the `QR_CODE` form field type."),
 
-									map[string]schema.Attribute{},
+									formFieldQrCodeSchemaAttributes(),
 
 									formFieldNames,
 								),
@@ -528,7 +546,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 								"field_social_login_button": formFieldSchema(
 									framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies options for the `SOCIAL_LOGIN_BUTTON` form field type."),
 
-									map[string]schema.Attribute{},
+									formFieldSocialLoginButtonSchemaAttributes(),
 
 									formFieldNames,
 								),
@@ -620,10 +638,14 @@ func formFieldElementSchemaAttributes(fieldType management.EnumFormFieldType) ma
 
 	layoutRequired := false
 	validationRequired := false
+	optionsRequired := false
 
 	switch fieldType {
 	case management.ENUMFORMFIELDTYPE_CHECKBOX, management.ENUMFORMFIELDTYPE_RADIO:
 		layoutRequired = true
+		optionsRequired = true
+	case management.ENUMFORMFIELDTYPE_DROPDOWN:
+		optionsRequired = true
 	case management.ENUMFORMFIELDTYPE_TEXT:
 		validationRequired = true
 	}
@@ -729,7 +751,8 @@ func formFieldElementSchemaAttributes(fieldType management.EnumFormFieldType) ma
 		"options": schema.SetAttribute{
 			Description:         optionsDescription.Description,
 			MarkdownDescription: optionsDescription.MarkdownDescription,
-			Optional:            true,
+			Required:            optionsRequired,
+			Optional:            !optionsRequired,
 
 			ElementType: types.StringType,
 		},
@@ -1002,6 +1025,204 @@ func formFieldFlowLinkSchemaAttributes() map[string]schema.Attribute {
 	}
 }
 
+func formFieldRecaptchaV2SchemaAttributes() map[string]schema.Attribute {
+	keyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies an identifier for the field component.",
+	)
+
+	sizeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the reCAPTCHA size.",
+	).AllowedValuesEnum(management.AllowedEnumFormRecaptchaV2SizeEnumValues)
+
+	themeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the reCAPTCHA theme.",
+	).AllowedValuesEnum(management.AllowedEnumFormRecaptchaV2ThemeEnumValues)
+
+	alignmentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the reCAPTCHA alignment.",
+	).AllowedValuesEnum(management.AllowedEnumFormItemAlignmentEnumValues)
+
+	return map[string]schema.Attribute{
+		"key": schema.StringAttribute{
+			Description:         keyDescription.Description,
+			MarkdownDescription: keyDescription.MarkdownDescription,
+			Required:            true,
+		},
+
+		"size": schema.StringAttribute{
+			Description:         sizeDescription.Description,
+			MarkdownDescription: sizeDescription.MarkdownDescription,
+			Required:            true,
+		},
+
+		"theme": schema.StringAttribute{
+			Description:         themeDescription.Description,
+			MarkdownDescription: themeDescription.MarkdownDescription,
+			Required:            true,
+		},
+
+		"alignment": schema.StringAttribute{
+			Description:         alignmentDescription.Description,
+			MarkdownDescription: alignmentDescription.MarkdownDescription,
+			Required:            true,
+		},
+	}
+}
+
+func formFieldQrCodeSchemaAttributes() map[string]schema.Attribute {
+	qrCodeTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the QR Code type.",
+	)
+
+	alignmentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the QR Code alignment.",
+	).AllowedValuesEnum(management.AllowedEnumFormItemAlignmentEnumValues)
+
+	showBorderDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies the border visibility.",
+	)
+
+	return map[string]schema.Attribute{
+		"qr_code_type": schema.StringAttribute{
+			Description:         qrCodeTypeDescription.Description,
+			MarkdownDescription: qrCodeTypeDescription.MarkdownDescription,
+			Required:            true,
+		},
+
+		"alignment": schema.StringAttribute{
+			Description:         alignmentDescription.Description,
+			MarkdownDescription: alignmentDescription.MarkdownDescription,
+			Required:            true,
+		},
+
+		"show_border": schema.BoolAttribute{
+			Description:         showBorderDescription.Description,
+			MarkdownDescription: showBorderDescription.MarkdownDescription,
+			Required:            true,
+		},
+	}
+}
+
+func formFieldSocialLoginButtonSchemaAttributes() map[string]schema.Attribute {
+	labelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the social login button label.",
+	)
+
+	stylesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that describes style settings for the social login button.",
+	)
+
+	stylesHorizontalAlignmentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the social login button alignment.",
+	).AllowedValuesEnum(management.AllowedEnumFormItemAlignmentEnumValues)
+
+	stylesTextColorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the social login button text color.",
+	)
+
+	stylesEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the social login button is enabled.",
+	)
+
+	idpTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the external identity provider type.",
+	).AllowedValuesEnum(management.AllowedEnumFormSocialLoginIdpTypeEnumValues)
+
+	idpNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the external identity provider name.",
+	)
+
+	idpIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the external identity provider's ID.",
+	)
+
+	idpEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the external identity provider is enabled.",
+	)
+
+	iconSrcDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the HTTP link (URL format) for the external identity provider's icon.",
+	)
+
+	widthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the button width. Set as a percentage.",
+	)
+
+	return map[string]schema.Attribute{
+		"label": schema.StringAttribute{
+			Description:         labelDescription.Description,
+			MarkdownDescription: labelDescription.MarkdownDescription,
+			Required:            true,
+		},
+
+		"styles": schema.SingleNestedAttribute{
+			Description:         stylesDescription.Description,
+			MarkdownDescription: stylesDescription.MarkdownDescription,
+			Optional:            true,
+
+			Attributes: map[string]schema.Attribute{
+				"horizontal_alignment": schema.StringAttribute{
+					Description:         stylesHorizontalAlignmentDescription.Description,
+					MarkdownDescription: stylesHorizontalAlignmentDescription.MarkdownDescription,
+					Optional:            true,
+
+					Validators: []validator.String{
+						stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumFormItemAlignmentEnumValues)...),
+					},
+				},
+
+				"text_color": schema.StringAttribute{
+					Description:         stylesTextColorDescription.Description,
+					MarkdownDescription: stylesTextColorDescription.MarkdownDescription,
+					Optional:            true,
+				},
+
+				"enabled": schema.StringAttribute{
+					Description:         stylesEnabledDescription.Description,
+					MarkdownDescription: stylesEnabledDescription.MarkdownDescription,
+					Optional:            true,
+				},
+			},
+		},
+
+		"idp_type": schema.StringAttribute{
+			Description:         idpTypeDescription.Description,
+			MarkdownDescription: idpTypeDescription.MarkdownDescription,
+			Required:            true,
+		},
+
+		"idp_name": schema.StringAttribute{
+			Description:         idpNameDescription.Description,
+			MarkdownDescription: idpNameDescription.MarkdownDescription,
+			Required:            true,
+		},
+
+		"idp_id": schema.StringAttribute{
+			Description:         idpIdDescription.Description,
+			MarkdownDescription: idpIdDescription.MarkdownDescription,
+			Required:            true,
+		},
+
+		"idp_enabled": schema.BoolAttribute{
+			Description:         idpEnabledDescription.Description,
+			MarkdownDescription: idpEnabledDescription.MarkdownDescription,
+			Required:            true,
+		},
+
+		"icon_src": schema.BoolAttribute{
+			Description:         iconSrcDescription.Description,
+			MarkdownDescription: iconSrcDescription.MarkdownDescription,
+			Required:            true,
+		},
+
+		"width": schema.Int64Attribute{
+			Description:         widthDescription.Description,
+			MarkdownDescription: widthDescription.MarkdownDescription,
+			Optional:            true,
+		},
+	}
+}
+
 func (r *FormResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
@@ -1242,8 +1463,30 @@ func (r *FormResource) ImportState(ctx context.Context, req resource.ImportState
 func (p *formResourceModel) expand(ctx context.Context) (*management.Form, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var componentsPlan formComponentsResourceModel
+	diags.Append(p.Components.As(ctx, componentsPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	var componentsFieldsPlan []formComponentsFieldResourceModel
+	diags.Append(componentsPlan.Fields.ElementsAs(ctx, componentsFieldsPlan, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
 	componentFields := make([]management.FormField, 0)
-	// TODO
+	for _, v := range componentsFieldsPlan {
+		componentField, d := v.expand(ctx)
+		diags.Append(d...)
+
+		if componentField != nil {
+			componentFields = append(componentFields, *componentField)
+		}
+	}
 
 	data := management.NewForm(
 		p.Name.ValueString(),
@@ -1288,6 +1531,982 @@ func (p *formResourceModel) expand(ctx context.Context) (*management.Form, diag.
 
 	if !p.TranslationMethod.IsNull() && !p.TranslationMethod.IsUnknown() {
 		data.SetTranslationMethod(management.EnumFormTranslationMethod(p.TranslationMethod.ValueString()))
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*management.FormField, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := &management.FormField{}
+
+	var positionPlan formComponentsFieldPositionResourceModel
+	diags.Append(p.Position.As(ctx, positionPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	positionData, d := positionPlan.expand(ctx)
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	if !p.FieldText.IsNull() && !p.FieldText.IsUnknown() {
+		var plan formComponentsFieldTextResourceModel
+		diags.Append(p.FieldText.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.FormFieldText, d = plan.expand(ctx, positionData)
+		diags.Append(d...)
+	}
+
+	if !p.FieldPassword.IsNull() && !p.FieldPassword.IsUnknown() {
+		var plan formComponentsFieldPasswordResourceModel
+		diags.Append(p.FieldPassword.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.FormFieldPassword, d = plan.expand(ctx, positionData)
+		diags.Append(d...)
+	}
+
+	if !p.FieldPasswordVerify.IsNull() && !p.FieldPasswordVerify.IsUnknown() {
+		var plan formComponentsFieldPasswordVerifyResourceModel
+		diags.Append(p.FieldPasswordVerify.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.FormFieldPasswordVerify, d = plan.expand(ctx, positionData)
+		diags.Append(d...)
+	}
+
+	if !p.FieldRadio.IsNull() && !p.FieldRadio.IsUnknown() {
+		var plan formComponentsFieldRadioResourceModel
+		diags.Append(p.FieldRadio.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.FormFieldRadio, d = plan.expand(ctx, positionData)
+		diags.Append(d...)
+	}
+
+	if !p.FieldCheckbox.IsNull() && !p.FieldCheckbox.IsUnknown() {
+		var plan formComponentsFieldCheckboxResourceModel
+		diags.Append(p.FieldCheckbox.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.FormFieldCheckbox, d = plan.expand(ctx, positionData)
+		diags.Append(d...)
+	}
+
+	if !p.FieldDropdown.IsNull() && !p.FieldDropdown.IsUnknown() {
+		var plan formComponentsFieldDropdownResourceModel
+		diags.Append(p.FieldDropdown.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.FormFieldDropdown, d = plan.expand(ctx, positionData)
+		diags.Append(d...)
+	}
+
+	if !p.FieldCombobox.IsNull() && !p.FieldCombobox.IsUnknown() {
+		var plan formComponentsFieldElementResourceModel
+		diags.Append(p.FieldCombobox.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.FormFieldCombobox, d = plan.expand(ctx, positionData)
+		diags.Append(d...)
+	}
+
+	if !p.FieldDivider.IsNull() && !p.FieldDivider.IsUnknown() {
+		var plan formComponentsFieldDividerResourceModel
+		diags.Append(p.FieldDivider.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.FormFieldDivider, d = plan.expand(ctx, positionData)
+		diags.Append(d...)
+	}
+
+	if !p.FieldEmptyField.IsNull() && !p.FieldEmptyField.IsUnknown() {
+		var plan formComponentsFieldEmptyFieldResourceModel
+		diags.Append(p.FieldEmptyField.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.FormFieldEmptyField, d = plan.expand(ctx, positionData)
+		diags.Append(d...)
+	}
+
+	if !p.FieldTextblob.IsNull() && !p.FieldTextblob.IsUnknown() {
+		var plan formComponentsFieldTextblobResourceModel
+		diags.Append(p.FieldTextblob.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.FormFieldTextblob, d = plan.expand(ctx, positionData)
+		diags.Append(d...)
+	}
+
+	if !p.FieldSlateTextblob.IsNull() && !p.FieldSlateTextblob.IsUnknown() {
+		var plan formComponentsFieldSlateTextblobResourceModel
+		diags.Append(p.FieldSlateTextblob.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.FormFieldSlateTextblob, d = plan.expand(ctx, positionData)
+		diags.Append(d...)
+	}
+
+	if !p.FieldSubmitButton.IsNull() && !p.FieldSubmitButton.IsUnknown() {
+		var plan formComponentsFieldSubmitButtonResourceModel
+		diags.Append(p.FieldSubmitButton.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.FormFieldSubmitButton, d = plan.expand(ctx, positionData)
+		diags.Append(d...)
+	}
+
+	if !p.FieldErrorDisplay.IsNull() && !p.FieldErrorDisplay.IsUnknown() {
+		var plan formComponentsFieldErrorDisplayResourceModel
+		diags.Append(p.FieldErrorDisplay.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.FormFieldErrorDisplay, d = plan.expand(ctx, positionData)
+		diags.Append(d...)
+	}
+
+	if !p.FieldFlowLink.IsNull() && !p.FieldFlowLink.IsUnknown() {
+		var plan formComponentsFieldFlowLinkResourceModel
+		diags.Append(p.FieldFlowLink.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.FormFieldFlowLink, d = plan.expand(ctx, positionData)
+		diags.Append(d...)
+	}
+
+	if !p.FieldFlowButton.IsNull() && !p.FieldFlowButton.IsUnknown() {
+		var plan formComponentsFieldFlowButtonResourceModel
+		diags.Append(p.FieldFlowButton.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.FormFieldFlowButton, d = plan.expand(ctx, positionData)
+		diags.Append(d...)
+	}
+
+	if !p.FieldRecaptchaV2.IsNull() && !p.FieldRecaptchaV2.IsUnknown() {
+		var plan formComponentsFieldRecaptchaV2ResourceModel
+		diags.Append(p.FieldRecaptchaV2.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.FormFieldRecaptchaV2, d = plan.expand(ctx, positionData)
+		diags.Append(d...)
+	}
+
+	if !p.FieldQrCode.IsNull() && !p.FieldQrCode.IsUnknown() {
+		var plan formComponentsFieldQrCodeResourceModel
+		diags.Append(p.FieldQrCode.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.FormFieldQrCode, d = plan.expand(ctx, positionData)
+		diags.Append(d...)
+	}
+
+	if !p.FieldSocialLoginButton.IsNull() && !p.FieldSocialLoginButton.IsUnknown() {
+		var plan formComponentsFieldSocialLoginButtonResourceModel
+		diags.Append(p.FieldSocialLoginButton.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.FormFieldSocialLoginButton, d = plan.expand(ctx, positionData)
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldPositionResourceModel) expand(ctx context.Context) (*management.FormFieldCommonPosition, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldCommonPosition(
+		int32(p.Row.ValueInt64()),
+		int32(p.Col.ValueInt64()),
+	)
+
+	if !p.Width.IsNull() && !p.Width.IsUnknown() {
+		data.SetWidth(int32(p.Width.ValueInt64()))
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldElementValidationResourceModel) expand(ctx context.Context) (*management.FormElementValidation, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormElementValidation()
+
+	if !p.Regex.IsNull() && !p.Regex.IsUnknown() {
+		data.SetRegex(p.Regex.ValueString())
+	}
+
+	if !p.Type.IsNull() && !p.Type.IsUnknown() {
+		data.SetType(management.EnumFormElementValidationType(p.Type.ValueString()))
+	}
+
+	if !p.ErrorMessage.IsNull() && !p.ErrorMessage.IsUnknown() {
+		data.SetErrorMessage(p.ErrorMessage.ValueString())
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldTextResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldText, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var plan formComponentsFieldElementValidationResourceModel
+	p.Validation.As(ctx, plan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})
+
+	validationData, d := plan.expand(ctx)
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	data := management.NewFormFieldText(
+		management.ENUMFORMFIELDTYPE_TEXT,
+		*positionData,
+		p.Key.ValueString(),
+		p.Required.ValueBool(),
+		*validationData,
+	)
+
+	if !p.AttributeDisabled.IsNull() && !p.AttributeDisabled.IsUnknown() {
+		data.SetAttributeDisabled(p.AttributeDisabled.ValueBool())
+	}
+
+	if !p.LabelMode.IsNull() && !p.LabelMode.IsUnknown() {
+		data.SetLabelMode(management.EnumFormElementLabelMode(p.LabelMode.ValueString()))
+	}
+
+	if !p.Layout.IsNull() && !p.Layout.IsUnknown() {
+		data.SetLayout(management.EnumFormElementLayout(p.Layout.ValueString()))
+	}
+
+	if !p.Options.IsNull() && !p.Options.IsUnknown() {
+		var options []string
+		diags.Append(p.Options.ElementsAs(ctx, options, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetOptions(options)
+	}
+
+	if !p.OtherOptionEnabled.IsNull() && !p.OtherOptionEnabled.IsUnknown() {
+		data.SetOtherOptionEnabled(p.OtherOptionEnabled.ValueBool())
+	}
+
+	if !p.OtherOptionKey.IsNull() && !p.OtherOptionKey.IsUnknown() {
+		data.SetOtherOptionKey(p.OtherOptionKey.ValueString())
+	}
+
+	if !p.OtherOptionLabel.IsNull() && !p.OtherOptionLabel.IsUnknown() {
+		data.SetOtherOptionlabel(p.OtherOptionLabel.ValueString())
+	}
+
+	if !p.OtherOptionInputLabel.IsNull() && !p.OtherOptionInputLabel.IsUnknown() {
+		data.SetOtherOptionInputlabel(p.OtherOptionInputLabel.ValueString())
+	}
+
+	if !p.OtherOptionAttributeDisabled.IsNull() && !p.OtherOptionAttributeDisabled.IsUnknown() {
+		data.SetOtherOptionAttributeDisabled(p.OtherOptionAttributeDisabled.ValueBool())
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldPasswordResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldPassword, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldPassword(
+		management.ENUMFORMFIELDTYPE_PASSWORD,
+		*positionData,
+		p.Key.ValueString(),
+		p.Required.ValueBool(),
+	)
+
+	if !p.AttributeDisabled.IsNull() && !p.AttributeDisabled.IsUnknown() {
+		data.SetAttributeDisabled(p.AttributeDisabled.ValueBool())
+	}
+
+	if !p.LabelMode.IsNull() && !p.LabelMode.IsUnknown() {
+		data.SetLabelMode(management.EnumFormElementLabelMode(p.LabelMode.ValueString()))
+	}
+
+	if !p.Layout.IsNull() && !p.Layout.IsUnknown() {
+		data.SetLayout(management.EnumFormElementLayout(p.Layout.ValueString()))
+	}
+
+	if !p.Options.IsNull() && !p.Options.IsUnknown() {
+		var options []string
+		diags.Append(p.Options.ElementsAs(ctx, options, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetOptions(options)
+	}
+
+	if !p.OtherOptionEnabled.IsNull() && !p.OtherOptionEnabled.IsUnknown() {
+		data.SetOtherOptionEnabled(p.OtherOptionEnabled.ValueBool())
+	}
+
+	if !p.OtherOptionKey.IsNull() && !p.OtherOptionKey.IsUnknown() {
+		data.SetOtherOptionKey(p.OtherOptionKey.ValueString())
+	}
+
+	if !p.OtherOptionLabel.IsNull() && !p.OtherOptionLabel.IsUnknown() {
+		data.SetOtherOptionlabel(p.OtherOptionLabel.ValueString())
+	}
+
+	if !p.OtherOptionInputLabel.IsNull() && !p.OtherOptionInputLabel.IsUnknown() {
+		data.SetOtherOptionInputlabel(p.OtherOptionInputLabel.ValueString())
+	}
+
+	if !p.OtherOptionAttributeDisabled.IsNull() && !p.OtherOptionAttributeDisabled.IsUnknown() {
+		data.SetOtherOptionAttributeDisabled(p.OtherOptionAttributeDisabled.ValueBool())
+	}
+
+	if !p.Validation.IsNull() && !p.Validation.IsUnknown() {
+		var plan formComponentsFieldElementValidationResourceModel
+		p.Validation.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+
+		validationData, d := plan.expand(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.Validation = validationData
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldPasswordVerifyResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldPasswordVerify, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldPasswordVerify(
+		management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY,
+		*positionData,
+	)
+
+	if !p.LabelPasswordVerify.IsNull() && !p.LabelPasswordVerify.IsUnknown() {
+		data.SetLabelPasswordVerify(p.LabelPasswordVerify.ValueString())
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldRadioResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldRadio, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var options []string
+	diags.Append(p.Options.ElementsAs(ctx, options, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	data := management.NewFormFieldRadio(
+		management.ENUMFORMFIELDTYPE_RADIO,
+		*positionData,
+		p.Key.ValueString(),
+		p.Required.ValueBool(),
+		management.EnumFormElementLayout(p.Layout.ValueString()),
+		options,
+	)
+
+	if !p.AttributeDisabled.IsNull() && !p.AttributeDisabled.IsUnknown() {
+		data.SetAttributeDisabled(p.AttributeDisabled.ValueBool())
+	}
+
+	if !p.LabelMode.IsNull() && !p.LabelMode.IsUnknown() {
+		data.SetLabelMode(management.EnumFormElementLabelMode(p.LabelMode.ValueString()))
+	}
+
+	if !p.OtherOptionEnabled.IsNull() && !p.OtherOptionEnabled.IsUnknown() {
+		data.SetOtherOptionEnabled(p.OtherOptionEnabled.ValueBool())
+	}
+
+	if !p.OtherOptionKey.IsNull() && !p.OtherOptionKey.IsUnknown() {
+		data.SetOtherOptionKey(p.OtherOptionKey.ValueString())
+	}
+
+	if !p.OtherOptionLabel.IsNull() && !p.OtherOptionLabel.IsUnknown() {
+		data.SetOtherOptionlabel(p.OtherOptionLabel.ValueString())
+	}
+
+	if !p.OtherOptionInputLabel.IsNull() && !p.OtherOptionInputLabel.IsUnknown() {
+		data.SetOtherOptionInputlabel(p.OtherOptionInputLabel.ValueString())
+	}
+
+	if !p.OtherOptionAttributeDisabled.IsNull() && !p.OtherOptionAttributeDisabled.IsUnknown() {
+		data.SetOtherOptionAttributeDisabled(p.OtherOptionAttributeDisabled.ValueBool())
+	}
+
+	if !p.Validation.IsNull() && !p.Validation.IsUnknown() {
+		var plan formComponentsFieldElementValidationResourceModel
+		p.Validation.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+
+		validationData, d := plan.expand(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.Validation = validationData
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldCheckboxResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldCheckbox, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var options []string
+	diags.Append(p.Options.ElementsAs(ctx, options, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	data := management.NewFormFieldCheckbox(
+		management.ENUMFORMFIELDTYPE_RADIO,
+		*positionData,
+		p.Key.ValueString(),
+		p.Required.ValueBool(),
+		management.EnumFormElementLayout(p.Layout.ValueString()),
+		options,
+	)
+
+	if !p.AttributeDisabled.IsNull() && !p.AttributeDisabled.IsUnknown() {
+		data.SetAttributeDisabled(p.AttributeDisabled.ValueBool())
+	}
+
+	if !p.LabelMode.IsNull() && !p.LabelMode.IsUnknown() {
+		data.SetLabelMode(management.EnumFormElementLabelMode(p.LabelMode.ValueString()))
+	}
+
+	if !p.Layout.IsNull() && !p.Layout.IsUnknown() {
+		data.SetLayout(management.EnumFormElementLayout(p.Layout.ValueString()))
+	}
+
+	if !p.OtherOptionEnabled.IsNull() && !p.OtherOptionEnabled.IsUnknown() {
+		data.SetOtherOptionEnabled(p.OtherOptionEnabled.ValueBool())
+	}
+
+	if !p.OtherOptionKey.IsNull() && !p.OtherOptionKey.IsUnknown() {
+		data.SetOtherOptionKey(p.OtherOptionKey.ValueString())
+	}
+
+	if !p.OtherOptionLabel.IsNull() && !p.OtherOptionLabel.IsUnknown() {
+		data.SetOtherOptionlabel(p.OtherOptionLabel.ValueString())
+	}
+
+	if !p.OtherOptionInputLabel.IsNull() && !p.OtherOptionInputLabel.IsUnknown() {
+		data.SetOtherOptionInputlabel(p.OtherOptionInputLabel.ValueString())
+	}
+
+	if !p.OtherOptionAttributeDisabled.IsNull() && !p.OtherOptionAttributeDisabled.IsUnknown() {
+		data.SetOtherOptionAttributeDisabled(p.OtherOptionAttributeDisabled.ValueBool())
+	}
+
+	if !p.Validation.IsNull() && !p.Validation.IsUnknown() {
+		var plan formComponentsFieldElementValidationResourceModel
+		p.Validation.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+
+		validationData, d := plan.expand(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.Validation = validationData
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldDropdownResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldDropdown, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var options []string
+	diags.Append(p.Options.ElementsAs(ctx, options, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	data := management.NewFormFieldDropdown(
+		management.ENUMFORMFIELDTYPE_RADIO,
+		*positionData,
+		p.Key.ValueString(),
+		p.Required.ValueBool(),
+		options,
+	)
+
+	if !p.AttributeDisabled.IsNull() && !p.AttributeDisabled.IsUnknown() {
+		data.SetAttributeDisabled(p.AttributeDisabled.ValueBool())
+	}
+
+	if !p.LabelMode.IsNull() && !p.LabelMode.IsUnknown() {
+		data.SetLabelMode(management.EnumFormElementLabelMode(p.LabelMode.ValueString()))
+	}
+
+	if !p.Layout.IsNull() && !p.Layout.IsUnknown() {
+		data.SetLayout(management.EnumFormElementLayout(p.Layout.ValueString()))
+	}
+
+	if !p.OtherOptionEnabled.IsNull() && !p.OtherOptionEnabled.IsUnknown() {
+		data.SetOtherOptionEnabled(p.OtherOptionEnabled.ValueBool())
+	}
+
+	if !p.OtherOptionKey.IsNull() && !p.OtherOptionKey.IsUnknown() {
+		data.SetOtherOptionKey(p.OtherOptionKey.ValueString())
+	}
+
+	if !p.OtherOptionLabel.IsNull() && !p.OtherOptionLabel.IsUnknown() {
+		data.SetOtherOptionlabel(p.OtherOptionLabel.ValueString())
+	}
+
+	if !p.OtherOptionInputLabel.IsNull() && !p.OtherOptionInputLabel.IsUnknown() {
+		data.SetOtherOptionInputlabel(p.OtherOptionInputLabel.ValueString())
+	}
+
+	if !p.OtherOptionAttributeDisabled.IsNull() && !p.OtherOptionAttributeDisabled.IsUnknown() {
+		data.SetOtherOptionAttributeDisabled(p.OtherOptionAttributeDisabled.ValueBool())
+	}
+
+	if !p.Validation.IsNull() && !p.Validation.IsUnknown() {
+		var plan formComponentsFieldElementValidationResourceModel
+		p.Validation.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+
+		validationData, d := plan.expand(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.Validation = validationData
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldElementResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldCombobox, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	return nil, diags
+}
+
+func (p *formComponentsFieldDividerResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldDivider, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldDivider(
+		management.ENUMFORMFIELDTYPE_DIVIDER,
+		*positionData,
+	)
+
+	if !p.Content.IsNull() && !p.Content.IsUnknown() {
+		data.SetContent(p.Content.ValueString())
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldEmptyFieldResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldEmptyField, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldEmptyField(
+		management.ENUMFORMFIELDTYPE_EMPTY_FIELD,
+		*positionData,
+	)
+
+	if !p.Content.IsNull() && !p.Content.IsUnknown() {
+		data.SetContent(p.Content.ValueString())
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldTextblobResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldTextblob, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldTextblob(
+		management.ENUMFORMFIELDTYPE_TEXTBLOB,
+		*positionData,
+	)
+
+	if !p.Content.IsNull() && !p.Content.IsUnknown() {
+		data.SetContent(p.Content.ValueString())
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldSlateTextblobResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldSlateTextblob, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldSlateTextblob(
+		management.ENUMFORMFIELDTYPE_SLATE_TEXTBLOB,
+		*positionData,
+	)
+
+	if !p.Content.IsNull() && !p.Content.IsUnknown() {
+		data.SetContent(p.Content.ValueString())
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldSubmitButtonResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldSubmitButton, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldSubmitButton(
+		management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON,
+		*positionData,
+		p.Key.ValueString(),
+		p.Label.ValueString(),
+	)
+
+	if !p.Styles.IsNull() && !p.Styles.IsUnknown() {
+		var plan formComponentsFieldButtonStylesResourceModel
+		diags.Append(p.Styles.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		stylesData, d := plan.expand(ctx)
+		diags.Append(d...)
+
+		data.SetStyles(*stylesData)
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldButtonStylesResourceModel) expand(ctx context.Context) (*management.FormFlowButtonStyles, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFlowButtonStyles()
+
+	if !p.Alignment.IsNull() && !p.Alignment.IsUnknown() {
+		data.SetAlignment(management.EnumFormItemAlignment(p.Alignment.ValueString()))
+	}
+
+	if !p.BackgroundColor.IsNull() && !p.BackgroundColor.IsUnknown() {
+		data.SetBackgroundColor(p.BackgroundColor.ValueString())
+	}
+
+	if !p.BorderColor.IsNull() && !p.BorderColor.IsUnknown() {
+		data.SetBorderColor(p.BorderColor.ValueString())
+	}
+
+	if !p.Enabled.IsNull() && !p.Enabled.IsUnknown() {
+		data.SetEnabled(p.Enabled.ValueBool())
+	}
+
+	if !p.TextColor.IsNull() && !p.TextColor.IsUnknown() {
+		data.SetTextColor(p.TextColor.ValueString())
+	}
+
+	if !p.Width.IsNull() && !p.Width.IsUnknown() {
+		data.SetWidth(int32(p.Width.ValueInt64()))
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldErrorDisplayResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldErrorDisplay, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldErrorDisplay(
+		management.ENUMFORMFIELDTYPE_ERROR_DISPLAY,
+		*positionData,
+	)
+
+	if !p.Content.IsNull() && !p.Content.IsUnknown() {
+		data.SetContent(p.Content.ValueString())
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldFlowLinkResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldFlowLink, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldFlowLink(
+		management.ENUMFORMFIELDTYPE_FLOW_LINK,
+		*positionData,
+		p.Key.ValueString(),
+		p.Label.ValueString(),
+	)
+
+	if !p.Styles.IsNull() && !p.Styles.IsUnknown() {
+		var plan formComponentsFieldFlowLinkStylesResourceModel
+		diags.Append(p.Styles.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		stylesData, d := plan.expand(ctx)
+		diags.Append(d...)
+
+		data.SetStyles(*stylesData)
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldFlowLinkStylesResourceModel) expand(ctx context.Context) (*management.FormFlowLinkStyles, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFlowLinkStyles()
+
+	if !p.HorizontalAlignment.IsNull() && !p.HorizontalAlignment.IsUnknown() {
+		data.SetHorizontalAlignment(management.EnumFormItemAlignment(p.HorizontalAlignment.ValueString()))
+	}
+
+	if !p.Enabled.IsNull() && !p.Enabled.IsUnknown() {
+		data.SetEnabled(p.Enabled.ValueBool())
+	}
+
+	if !p.TextColor.IsNull() && !p.TextColor.IsUnknown() {
+		data.SetTextColor(p.TextColor.ValueString())
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldFlowButtonResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldFlowButton, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldFlowButton(
+		management.ENUMFORMFIELDTYPE_FLOW_BUTTON,
+		*positionData,
+		p.Key.ValueString(),
+		p.Label.ValueString(),
+	)
+
+	if !p.Styles.IsNull() && !p.Styles.IsUnknown() {
+		var plan formComponentsFieldButtonStylesResourceModel
+		diags.Append(p.Styles.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		stylesData, d := plan.expand(ctx)
+		diags.Append(d...)
+
+		data.SetStyles(*stylesData)
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldRecaptchaV2ResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldRecaptchaV2, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldRecaptchaV2(
+		management.ENUMFORMFIELDTYPE_RECAPTCHA_V2,
+		*positionData,
+		p.Key.ValueString(),
+		management.EnumFormRecaptchaV2Size(p.Size.ValueString()),
+		management.EnumFormRecaptchaV2Theme(p.Theme.ValueString()),
+		management.EnumFormItemAlignment(p.Alignment.ValueString()),
+	)
+
+	return data, diags
+}
+
+func (p *formComponentsFieldQrCodeResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldQrCode, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldQrCode(
+		management.ENUMFORMFIELDTYPE_QR_CODE,
+		*positionData,
+		management.EnumFormQrCodeType(p.QrCodeType.ValueString()),
+		management.EnumFormItemAlignment(p.Alignment.ValueString()),
+		p.ShowBorder.ValueBool(),
+	)
+
+	return data, diags
+}
+
+func (p *formComponentsFieldSocialLoginButtonResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldSocialLoginButton, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldSocialLoginButton(
+		management.ENUMFORMFIELDTYPE_SOCIAL_LOGIN_BUTTON,
+		*positionData,
+		p.Label.ValueString(),
+		management.EnumFormSocialLoginIdpType(p.IdpType.ValueString()),
+		p.IdpType.ValueString(),
+		p.IdpId.ValueString(),
+		p.IdpEnabled.ValueBool(),
+		p.IconSrc.ValueString(),
+	)
+
+	if !p.Styles.IsNull() && !p.Styles.IsUnknown() {
+		var plan formComponentsFieldSocialLoginButtonStylesResourceModel
+		diags.Append(p.Styles.As(ctx, plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		stylesData, d := plan.expand(ctx)
+		diags.Append(d...)
+
+		data.SetStyles(*stylesData)
+	}
+
+	if !p.Width.IsNull() && !p.Width.IsUnknown() {
+		data.SetWidth(int32(p.Width.ValueInt64()))
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldSocialLoginButtonStylesResourceModel) expand(ctx context.Context) (*management.FormSocialLoginButtonStyles, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormSocialLoginButtonStyles()
+
+	if !p.HorizontalAlignment.IsNull() && !p.HorizontalAlignment.IsUnknown() {
+		data.SetHorizontalAlignment(management.EnumFormItemAlignment(p.HorizontalAlignment.ValueString()))
+	}
+
+	if !p.Enabled.IsNull() && !p.Enabled.IsUnknown() {
+		data.SetEnabled(p.Enabled.ValueBool())
+	}
+
+	if !p.TextColor.IsNull() && !p.TextColor.IsUnknown() {
+		data.SetTextColor(p.TextColor.ValueString())
 	}
 
 	return data, diags
