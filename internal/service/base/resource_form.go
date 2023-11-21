@@ -215,7 +215,7 @@ func (r *FormResource) Metadata(ctx context.Context, req resource.MetadataReques
 func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 
 	const attrMinLength = 1
-	const colsMinValue = 1
+	const colsMinValue = 0
 	const colsMaxValue = 4
 	const rowMaxValue = 50
 
@@ -1463,7 +1463,7 @@ func (r *FormResource) ImportState(ctx context.Context, req resource.ImportState
 func (p *formResourceModel) expand(ctx context.Context) (*management.Form, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var componentsPlan formComponentsResourceModel
+	var componentsPlan *formComponentsResourceModel
 	diags.Append(p.Components.As(ctx, componentsPlan, basetypes.ObjectAsOptions{
 		UnhandledNullAsEmpty:    false,
 		UnhandledUnknownAsEmpty: false,
