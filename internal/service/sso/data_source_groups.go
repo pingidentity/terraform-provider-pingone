@@ -47,7 +47,7 @@ func (r *GroupsDataSource) Metadata(ctx context.Context, req datasource.Metadata
 // Schema
 func (r *GroupsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 
-	filterableAttributes := []string{"id", "name"}
+	filterableAttributes := []string{"id", "name", "population.id", "externalId"}
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.

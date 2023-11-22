@@ -37,8 +37,8 @@ data "pingone_groups" "by_data_filter" {
 
 ### Optional
 
-- `data_filter` (Block List) Individual data filters to apply to the group selection.  Allowed attributes to filter: `id`, `name` (see [below for nested schema](#nestedblock--data_filter))
-- `scim_filter` (String) A SCIM filter to apply to the group selection.  A SCIM filter offers the greatest flexibility in filtering groups.  The SCIM filter can use the following attributes: `id`, `name`.
+- `data_filter` (Block List) Individual data filters to apply to the group selection.  Allowed attributes to filter: `id`, `name`, `population.id`, `externalId` (see [below for nested schema](#nestedblock--data_filter))
+- `scim_filter` (String) A SCIM filter to apply to the group selection.  A SCIM filter offers the greatest flexibility in filtering groups.  The SCIM filter can use the following attributes: `id`, `name`, `population.id`, `externalId`.
 
 ### Read-Only
 
@@ -50,5 +50,5 @@ data "pingone_groups" "by_data_filter" {
 
 Required:
 
-- `name` (String) The attribute name to filter on.  Must be one of the following values: `id`, `name`.
+- `name` (String) The attribute name to filter on.  Must be one of the following values: `id`, `name`, `population.id`, `externalId`.
 - `values` (List of String) The possible values (case sensitive) of the attribute defined in the `name` parameter to filter.
