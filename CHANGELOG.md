@@ -2,7 +2,10 @@
 
 NOTES:
 
+* `data-source/pingone_population`: Update schema documentation. ([#670](https://github.com/pingidentity/terraform-provider-pingone/issues/670))
 * `resource/pingone_identity_provider`: Migrated to plugin framework. ([#649](https://github.com/pingidentity/terraform-provider-pingone/issues/649))
+* `resource/pingone_population`: Update schema documentation. ([#670](https://github.com/pingidentity/terraform-provider-pingone/issues/670))
+* `resource/pingone_user`: Corrected documentation HCL example. ([#669](https://github.com/pingidentity/terraform-provider-pingone/issues/669))
 
 FEATURES:
 
