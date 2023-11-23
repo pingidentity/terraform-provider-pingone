@@ -2,12 +2,12 @@
 page_title: "pingone_population Resource - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Resource to create and manage PingOne populations.
+  Resource to create and manage a PingOne population in an environment.
 ---
 
 # pingone_population (Resource)
 
-Resource to create and manage PingOne populations.
+Resource to create and manage a PingOne population in an environment.
 
 ~> This resource cannot manage the default population of an environment.  The `pingone_population_default` resource can be used instead.
 
@@ -32,12 +32,12 @@ resource "pingone_population" "my_population" {
 ### Required
 
 - `environment_id` (String) The ID of the environment to create the population in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
-- `name` (String) The name of the population.
+- `name` (String) A string that specifies the name of the population.
 
 ### Optional
 
-- `description` (String) A description to apply to the population.
-- `password_policy_id` (String) The ID of a password policy to assign to the population.
+- `description` (String) A string that specifies a description to apply to the population.
+- `password_policy_id` (String) A string that specifies the ID of a password policy to assign to the population.  Must be a valid PingOne resource ID.
 
 ### Read-Only
 
