@@ -2,12 +2,12 @@
 page_title: "pingone_population Data Source - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Datasource to retrieve a PingOne population.
+  Datasource to retrieve a PingOne population in a PingOne environment, by ID or by name.
 ---
 
 # pingone_population (Data Source)
 
-Datasource to retrieve a PingOne population.
+Datasource to retrieve a PingOne population in a PingOne environment, by ID or by name.
 
 ## Example Usage
 
@@ -34,12 +34,12 @@ data "pingone_population" "example_by_id" {
 
 ### Optional
 
-- `name` (String) The name of the population.
-- `population_id` (String) The ID of the population.
+- `name` (String) A string that specifies the name of the population to retrieve configuration for.  At least one of the following must be defined: `population_id`, `name`.
+- `population_id` (String) A string that specifies the ID of the population to retrieve configuration for.  Must be a valid PingOne resource ID.  At least one of the following must be defined: `population_id`, `name`.
 
 ### Read-Only
 
-- `default` (Boolean) Indicates whether the population is the default population for the environment.
-- `description` (String) The description applied to the population.
+- `default` (Boolean) A boolean that indicates whether the population is the default population for the environment.
+- `description` (String) A string that specifies the description applied to the population.
 - `id` (String) The ID of this resource.
-- `password_policy_id` (String) The ID of the password policy applied to the population.
+- `password_policy_id` (String) A string that specifies the ID of the password policy applied to the population.
