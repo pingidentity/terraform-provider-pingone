@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_application`: Added `oidc_options.cors_settings` and `saml_options.cors_settings` parameters.
+```
+
+```release-note:enhancement
+`data-source/pingone_application`: Added `oidc_options.cors_settings` and `saml_options.cors_settings` parameters.
+```
