@@ -50,11 +50,11 @@ func ResourceMFAPolicy() *schema.Resource {
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 			},
 			"device_selection": {
-				Description:      fmt.Sprintf("A string that defines the device selection method. Options are `%s` (this is the default setting for new environments), `%s` and `%s`.", string(mfa.ENUMMFADEVICEPOLICYSELECTION_DEFAULT_TO_FIRST), string(mfa.ENUMMFADEVICEPOLICYSELECTION_PROMPT_TO_SELECT), string(mfa.ENUMMFADEVICEPOLICYSELECTION_ALWAYS_PROMPT_TO_SELECT)),
+				Description:      fmt.Sprintf("A string that defines the device selection method. Options are `%s` (this is the default setting for new environments), `%s` and `%s`.", string(mfa.ENUMMFADEVICEPOLICYSELECTION_DEFAULT_TO_FIRST), string(mfa.ENUMMFADEVICEPOLICYSELECTION_PROMPT_TO_SELECT), string(mfa.ENUMMFADEVICEPOLICYSELECTION_ALWAYS_DISPLAY_DEVICES)),
 				Type:             schema.TypeString,
 				Optional:         true,
 				Default:          string(mfa.ENUMMFADEVICEPOLICYSELECTION_DEFAULT_TO_FIRST),
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMMFADEVICEPOLICYSELECTION_DEFAULT_TO_FIRST), string(mfa.ENUMMFASETTINGSDEVICESELECTION_PROMPT_TO_SELECT), string(mfa.ENUMMFADEVICEPOLICYSELECTION_ALWAYS_PROMPT_TO_SELECT)}, false)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMMFADEVICEPOLICYSELECTION_DEFAULT_TO_FIRST), string(mfa.ENUMMFASETTINGSDEVICESELECTION_PROMPT_TO_SELECT), string(mfa.ENUMMFADEVICEPOLICYSELECTION_ALWAYS_DISPLAY_DEVICES)}, false)),
 			},
 			"new_device_notification": {
 				Description:      fmt.Sprintf("A string that defines whether a user should be notified if a new authentication method has been added to their account. Options are `%s` (the default), `%s` and `%s`.", string(mfa.ENUMMFADEVICEPOLICYNEWDEVICENOTIFICATION_NONE), string(mfa.ENUMMFADEVICEPOLICYNEWDEVICENOTIFICATION_EMAIL_THEN_SMS), string(mfa.ENUMMFADEVICEPOLICYNEWDEVICENOTIFICATION_SMS_THEN_EMAIL)),
