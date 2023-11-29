@@ -8,7 +8,9 @@ NOTES:
 * `resource/pingone_user`: Corrected documentation HCL example. ([#669](https://github.com/pingidentity/terraform-provider-pingone/issues/669))
 * bump `github.com/hashicorp/terraform-plugin-go` v0.19.0 => v0.19.1 ([#674](https://github.com/pingidentity/terraform-provider-pingone/issues/674))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.32.0 => v0.33.0 ([#674](https://github.com/pingidentity/terraform-provider-pingone/issues/674))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.18.0 => v0.18.1 ([#675](https://github.com/pingidentity/terraform-provider-pingone/issues/675))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` v0.11.0 => v0.11.1 ([#674](https://github.com/pingidentity/terraform-provider-pingone/issues/674))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.11.1 => v0.11.2 ([#675](https://github.com/pingidentity/terraform-provider-pingone/issues/675))
 
 FEATURES:
 
@@ -23,6 +25,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 
+* `resource/pingone_mfa_policy`: Fixed error when creating MFA device policy with Always Display Devices method selection. ([#675](https://github.com/pingidentity/terraform-provider-pingone/issues/675))
 * `resource/pingone_user`: Fixed inconsistent result when attempting to create a user in where `account.status` is `LOCKED`. ([#654](https://github.com/pingidentity/terraform-provider-pingone/issues/654))
 
 ## 0.23.1 (11 November 2023)
