@@ -666,7 +666,7 @@ func resourceApplicationSchemaCorsSettings() *schema.Schema {
 					MaxItems:    20,
 					Elem: &schema.Schema{
 						Type:             schema.TypeString,
-						ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(\S+:\/\/).+)`), "Expected value to have a url with schema of \"https\" or a custom mobile native schema (e.g., `org.bxretail.app://callback`).  \"http\" urls are permitted when using localhost hosts \"localhost\" and \"127.0.0.1\".")),
+						ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(regexp.MustCompile(`^(https?:\/\/)?(localhost|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|([\*a-zA-Z0-9-]+\.)+[a-zA-Z]{2,})(:\d{1,5})?$`), "Expected value to be a URL (with schema of \"http\" or \"https\") without a path.  Subdomains may use a wildcard to match any string")),
 					},
 					Optional: true,
 				},
@@ -1193,7 +1193,11 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 		// Set the OIDC specific optional options
 
 		if v1, ok := oidcOptions["cors_settings"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
-			corsSettings := expandCorsSettings(v1[0].(map[string]interface{}))
+			corsSettings, d := expandCorsSettings(v1[0].(map[string]interface{}))
+			diags = append(diags, d...)
+			if diags.HasError() {
+				return nil, diags
+			}
 			application.SetCorsSettings(*corsSettings)
 		}
 
@@ -1500,7 +1504,9 @@ func expandMobileIntegrityGooglePlay(s map[string]interface{}) (*management.Appl
 	return obj, diags
 }
 
-func expandCorsSettings(s map[string]interface{}) *management.ApplicationCorsSettings {
+func expandCorsSettings(s map[string]interface{}) (*management.ApplicationCorsSettings, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
 	cors := management.NewApplicationCorsSettings(management.EnumApplicationCorsSettingsBehavior(s["behavior"].(string)))
 
 	if v2, ok := s["origins"].(*schema.Set); ok && v2 != nil && len(v2.List()) > 0 && v2.List()[0] != nil {
@@ -1509,9 +1515,19 @@ func expandCorsSettings(s map[string]interface{}) *management.ApplicationCorsSet
 			obj = append(obj, j.(string))
 		}
 		cors.SetOrigins(obj)
+	} else {
+		if cors.GetBehavior() == management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_SPECIFIC_ORIGINS {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Invalid configuration",
+				Detail:   fmt.Sprintf("CORS origins (`cors_settings.origins`) are required when the behavior is set to %s", management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_SPECIFIC_ORIGINS),
+			})
+
+			return nil, diags
+		}
 	}
 
-	return cors
+	return cors, diags
 }
 
 // SAML
@@ -1568,7 +1584,11 @@ func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML,
 		// Set the SAML specific optional options
 
 		if v1, ok := samlOptions["cors_settings"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
-			corsSettings := expandCorsSettings(v1[0].(map[string]interface{}))
+			corsSettings, d := expandCorsSettings(v1[0].(map[string]interface{}))
+			diags = append(diags, d...)
+			if diags.HasError() {
+				return nil, diags
+			}
 			application.SetCorsSettings(*corsSettings)
 		}
 
