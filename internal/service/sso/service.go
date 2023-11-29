@@ -28,6 +28,7 @@ func Resources() []func() resource.Resource {
 		NewResourceScopePingOneAPIResource,
 		NewResourceScopeResource,
 		NewSchemaAttributeResource,
+		NewUserGroupAssignmentResource,
 		NewUserResource,
 	}
 }
