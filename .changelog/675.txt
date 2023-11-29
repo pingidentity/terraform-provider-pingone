@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_mfa_policy`: Fixed error when creating MFA device policy with Always Display Devices method selection.
+```
