@@ -1836,7 +1836,7 @@ resource "pingone_mfa_policy" "%[2]s" {
   name           = "%[3]s"
 
   new_device_notification = "SMS_THEN_EMAIL"
-  device_selection = "DEFAULT_TO_FIRST"
+  device_selection        = "DEFAULT_TO_FIRST"
 
   sms {
     enabled          = true
@@ -1918,7 +1918,7 @@ resource "pingone_mfa_policy" "%[2]s" {
   name           = "%[3]s"
 
   new_device_notification = "SMS_THEN_EMAIL"
-  device_selection = "PROMPT_TO_SELECT"
+  device_selection        = "PROMPT_TO_SELECT"
 
   sms {
     enabled = false
@@ -2000,7 +2000,7 @@ resource "pingone_mfa_policy" "%[2]s" {
   name           = "%[3]s"
 
   new_device_notification = "SMS_THEN_EMAIL"
-  device_selection = "ALWAYS_DISPLAY_DEVICES"
+  device_selection        = "ALWAYS_DISPLAY_DEVICES"
 
   sms {
     enabled = false
