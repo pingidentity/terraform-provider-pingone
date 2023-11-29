@@ -82,6 +82,17 @@ func TestAccApplicationDataSource_OIDCAppByID(t *testing.T) {
 					resource.TestMatchResourceAttr(dataSourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.support_unsigned_request_object", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.cors_settings.#", "1"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.cors_settings.0.behavior", "ALLOW_SPECIFIC_ORIGINS"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.cors_settings.0.origins.#", "8"),
+					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://localhost"),
+					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://localhost"),
+					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
+					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "external_link_options.#", "0"),
@@ -155,6 +166,7 @@ func TestAccApplicationDataSource_OIDCAppByName(t *testing.T) {
 					resource.TestMatchResourceAttr(dataSourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.mobile_app.#", "1"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.mobile_app.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.mobile_app.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
@@ -334,6 +346,17 @@ func TestAccApplicationDataSource_SAMLAppByID(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.slo_window", "3"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.sp_entity_id", fmt.Sprintf("sp:entity:%s", resourceName)),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.sp_verification_certificate_ids.#", "0"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.cors_settings.#", "1"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.cors_settings.0.behavior", "ALLOW_SPECIFIC_ORIGINS"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.cors_settings.0.origins.#", "8"),
+					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "saml_options.0.cors_settings.0.origins.*", "http://localhost"),
+					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "saml_options.0.cors_settings.0.origins.*", "https://localhost"),
+					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "saml_options.0.cors_settings.0.origins.*", "http://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "saml_options.0.cors_settings.0.origins.*", "https://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "saml_options.0.cors_settings.0.origins.*", "http://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "saml_options.0.cors_settings.0.origins.*", "https://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "saml_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
+					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "saml_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "hidden_from_app_portal", "true"),
 				),
@@ -391,6 +414,7 @@ func TestAccApplicationDataSource_SAMLAppByName(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.slo_window", "0"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.sp_entity_id", fmt.Sprintf("sp:entity:%s", resourceName)),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.sp_verification_certificate_ids.#", "0"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "hidden_from_app_portal", "false"),
 				),
 			},
@@ -487,6 +511,20 @@ resource "pingone_application" "%[2]s" {
     pkce_enforcement   = "OPTIONAL"
 
     support_unsigned_request_object = true
+
+    cors_settings {
+      behavior = "ALLOW_SPECIFIC_ORIGINS"
+      origins = [
+        "http://localhost",
+        "https://localhost",
+        "http://auth.pingidentity.com",
+        "https://auth.pingidentity.com",
+        "http://*.pingidentity.com",
+        "https://*.pingidentity.com",
+        "http://192.168.1.1",
+        "https://192.168.1.1",
+      ]
+    }
   }
 }
 data "pingone_application" "%[2]s" {
@@ -754,6 +792,19 @@ resource "pingone_application" "%[2]s" {
 
     // sp_verification_certificate_ids = []
 
+    cors_settings {
+      behavior = "ALLOW_SPECIFIC_ORIGINS"
+      origins = [
+        "http://localhost",
+        "https://localhost",
+        "http://auth.pingidentity.com",
+        "https://auth.pingidentity.com",
+        "http://*.pingidentity.com",
+        "https://*.pingidentity.com",
+        "http://192.168.1.1",
+        "https://192.168.1.1",
+      ]
+    }
   }
 }
 data "pingone_application" "%[2]s" {
