@@ -7,19 +7,19 @@ require (
 	github.com/hashicorp/terraform-plugin-framework v1.4.2
 	github.com/hashicorp/terraform-plugin-framework-timeouts v0.4.1
 	github.com/hashicorp/terraform-plugin-framework-validators v0.12.0
-	github.com/hashicorp/terraform-plugin-go v0.19.0
+	github.com/hashicorp/terraform-plugin-go v0.19.1
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-mux v0.12.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.30.0
-	github.com/patrickcping/pingone-go-sdk-v2 v0.11.0
+	github.com/patrickcping/pingone-go-sdk-v2 v0.11.1
 	github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement v0.3.0
 	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.4.0
 	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.6.0
-	github.com/patrickcping/pingone-go-sdk-v2/management v0.32.0
+	github.com/patrickcping/pingone-go-sdk-v2/management v0.33.0
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.18.0
 	github.com/patrickcping/pingone-go-sdk-v2/risk v0.12.0
 	github.com/patrickcping/pingone-go-sdk-v2/verify v0.4.0
-	golang.org/x/exp v0.0.0-20231108232855-2478ac86f678
+	golang.org/x/exp v0.0.0-20231127185646-65229373498e
 )
 
 require (
