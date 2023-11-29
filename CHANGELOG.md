@@ -6,11 +6,24 @@ NOTES:
 * `resource/pingone_identity_provider`: Migrated to plugin framework. ([#649](https://github.com/pingidentity/terraform-provider-pingone/issues/649))
 * `resource/pingone_population`: Update schema documentation. ([#670](https://github.com/pingidentity/terraform-provider-pingone/issues/670))
 * `resource/pingone_user`: Corrected documentation HCL example. ([#669](https://github.com/pingidentity/terraform-provider-pingone/issues/669))
+* bump `github.com/hashicorp/terraform-plugin-go` v0.19.0 => v0.19.1 ([#674](https://github.com/pingidentity/terraform-provider-pingone/issues/674))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.32.0 => v0.33.0 ([#674](https://github.com/pingidentity/terraform-provider-pingone/issues/674))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.11.0 => v0.11.1 ([#674](https://github.com/pingidentity/terraform-provider-pingone/issues/674))
 
 FEATURES:
 
 * **New Data Source:** `pingone_group` ([#667](https://github.com/pingidentity/terraform-provider-pingone/issues/667))
 * **New Data Source:** `pingone_groups` ([#667](https://github.com/pingidentity/terraform-provider-pingone/issues/667))
+* **New Resource:** `pingone_user_group_assignment` ([#688](https://github.com/pingidentity/terraform-provider-pingone/issues/688))
+
+ENHANCEMENTS:
+
+* `data-source/pingone_application`: Added `oidc_options.cors_settings` and `saml_options.cors_settings` parameters. ([#673](https://github.com/pingidentity/terraform-provider-pingone/issues/673))
+* `resource/pingone_application`: Added `oidc_options.cors_settings` and `saml_options.cors_settings` parameters. ([#673](https://github.com/pingidentity/terraform-provider-pingone/issues/673))
+
+BUG FIXES:
+
+* `resource/pingone_user`: Fixed inconsistent result when attempting to create a user in where `account.status` is `LOCKED`. ([#654](https://github.com/pingidentity/terraform-provider-pingone/issues/654))
 
 ## 0.23.1 (11 November 2023)
 
