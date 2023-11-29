@@ -16,7 +16,7 @@ FEATURES:
 
 * **New Data Source:** `pingone_group` ([#667](https://github.com/pingidentity/terraform-provider-pingone/issues/667))
 * **New Data Source:** `pingone_groups` ([#667](https://github.com/pingidentity/terraform-provider-pingone/issues/667))
-* **New Resource:** `pingone_user_group_assignment` ([#688](https://github.com/pingidentity/terraform-provider-pingone/issues/688))
+* **New Resource:** `pingone_user_group_assignment` ([#668](https://github.com/pingidentity/terraform-provider-pingone/issues/668))
 
 ENHANCEMENTS:
 
