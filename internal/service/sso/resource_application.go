@@ -319,7 +319,7 @@ func ResourceApplication() *schema.Resource {
 							Optional:    true,
 							Default:     false,
 						},
-						"cors_settings": resourceApplicationSchemaCors(),
+						"cors_settings": resourceApplicationSchemaCorsSettings(),
 						"mobile_app": {
 							Description: fmt.Sprintf("Mobile application integration settings for `%s` type applications.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
 							Type:        schema.TypeList,
@@ -638,7 +638,7 @@ func ResourceApplication() *schema.Resource {
 								ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 							},
 						},
-						"cors_settings": resourceApplicationSchemaCors(),
+						"cors_settings": resourceApplicationSchemaCorsSettings(),
 					},
 				},
 			},
@@ -646,7 +646,7 @@ func ResourceApplication() *schema.Resource {
 	}
 }
 
-func resourceApplicationSchemaCors() *schema.Schema {
+func resourceApplicationSchemaCorsSettings() *schema.Schema {
 	return &schema.Schema{
 		Description: "A single block that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings.",
 		Type:        schema.TypeList,
@@ -661,7 +661,7 @@ func resourceApplicationSchemaCors() *schema.Schema {
 					ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_SPECIFIC_ORIGINS), string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_NO_ORIGINS)}, false)),
 				},
 				"origins": {
-					Description: "A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value must be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 or IPv6 address.  Subdomains may use the wildcard (`*`) to match any string.  Must be non-empty when `behavior` is `ALLOW_SPECIFIC_ORIGINS` and must be omitted or empty when `behavior` is `ALLOW_NO_ORIGINS`.  Limited to 20 values.",
+					Description: fmt.Sprintf("A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value must be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 or IPv6 address.  Subdomains may use the wildcard (`*`) to match any string.  Must be non-empty when `behavior` is `%s` and must be omitted or empty when `behavior` is `%s`.  Limited to 20 values.", string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_SPECIFIC_ORIGINS), string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_NO_ORIGINS)),
 					Type:        schema.TypeSet,
 					MaxItems:    20,
 					Elem: &schema.Schema{
