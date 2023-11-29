@@ -93,8 +93,6 @@ func TestAccApplicationDataSource_OIDCAppByID(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://*.pingidentity.com"),
 					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
 					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
-					// resource.TestCheckTypeSetElemAttr(dataSourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
-					// resource.TestCheckTypeSetElemAttr(dataSourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "external_link_options.#", "0"),
@@ -359,8 +357,6 @@ func TestAccApplicationDataSource_SAMLAppByID(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "saml_options.0.cors_settings.0.origins.*", "https://*.pingidentity.com"),
 					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "saml_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
 					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "saml_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
-					// resource.TestCheckTypeSetElemAttr(dataSourceFullName, "saml_options.0.cors_settings.0.origins.*", "http://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
-					// resource.TestCheckTypeSetElemAttr(dataSourceFullName, "saml_options.0.cors_settings.0.origins.*", "https://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "hidden_from_app_portal", "true"),
 				),
@@ -527,8 +523,6 @@ resource "pingone_application" "%[2]s" {
         "https://*.pingidentity.com",
         "http://192.168.1.1",
         "https://192.168.1.1",
-        // "http://2001:0db8:85a3:0000:0000:8a2e:0370:7334",
-        // "https://2001:0db8:85a3:0000:0000:8a2e:0370:7334",
       ]
     }
   }
@@ -809,8 +803,6 @@ resource "pingone_application" "%[2]s" {
         "https://*.pingidentity.com",
         "http://192.168.1.1",
         "https://192.168.1.1",
-        // "http://2001:0db8:85a3:0000:0000:8a2e:0370:7334",
-        // "https://2001:0db8:85a3:0000:0000:8a2e:0370:7334",
       ]
     }
   }
