@@ -16,16 +16,17 @@ func Resources() []func() resource.Resource {
 		NewApplicationFlowPolicyAssignmentResource,
 		NewApplicationResourceGrantResource,
 		NewApplicationRoleAssignmentResource,
-		NewGroupResource,
 		NewGroupNestingResource,
+		NewGroupResource,
 		NewGroupRoleAssignmentResource,
 		NewIdentityProviderAttributeResource,
-		NewPopulationResource,
+		NewIdentityProviderResource,
 		NewPopulationDefaultResource,
+		NewPopulationResource,
 		NewResourceAttributeResource,
-		NewResourceScopeResource,
 		NewResourceScopeOpenIDResource,
 		NewResourceScopePingOneAPIResource,
+		NewResourceScopeResource,
 		NewSchemaAttributeResource,
 		NewUserResource,
 	}
@@ -33,8 +34,11 @@ func Resources() []func() resource.Resource {
 
 func DataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
+		NewApplicationDataSource,
 		NewFlowPoliciesDataSource,
 		NewFlowPolicyDataSource,
+		NewGroupDataSource,
+		NewGroupsDataSource,
 		NewPopulationDataSource,
 		NewPopulationsDataSource,
 		NewResourceDataSource,
@@ -42,6 +46,5 @@ func DataSources() []func() datasource.DataSource {
 		NewSchemaDataSource,
 		NewUserDataSource,
 		NewUsersDataSource,
-		NewApplicationDataSource,
 	}
 }
