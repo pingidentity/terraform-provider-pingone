@@ -319,6 +319,7 @@ func ResourceApplication() *schema.Resource {
 							Optional:    true,
 							Default:     false,
 						},
+						"cors_settings": resourceApplicationSchemaCors(),
 						"mobile_app": {
 							Description: fmt.Sprintf("Mobile application integration settings for `%s` type applications.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
 							Type:        schema.TypeList,
@@ -637,7 +638,37 @@ func ResourceApplication() *schema.Resource {
 								ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 							},
 						},
+						"cors_settings": resourceApplicationSchemaCors(),
 					},
+				},
+			},
+		},
+	}
+}
+
+func resourceApplicationSchemaCors() *schema.Schema {
+	return &schema.Schema{
+		Description: "A single block that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings.",
+		Type:        schema.TypeList,
+		MaxItems:    1,
+		Optional:    true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"behavior": {
+					Description:      fmt.Sprintf("A string that specifies the behavior of how Authorization and Authentication APIs interact with CORS requests that reference the application.  Options are `%s` (rejects all CORS requests) and `%s` (rejects all CORS requests except those listed in `origins`).", string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_NO_ORIGINS), string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_SPECIFIC_ORIGINS)),
+					Type:             schema.TypeString,
+					Required:         true,
+					ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_SPECIFIC_ORIGINS), string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_NO_ORIGINS)}, false)),
+				},
+				"origins": {
+					Description: "A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value must be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 or IPv6 address.  Subdomains may use the wildcard (`*`) to match any string.  Must be non-empty when `behavior` is `ALLOW_SPECIFIC_ORIGINS` and must be omitted or empty when `behavior` is `ALLOW_NO_ORIGINS`.  Limited to 20 values.",
+					Type:        schema.TypeSet,
+					MaxItems:    20,
+					Elem: &schema.Schema{
+						Type:             schema.TypeString,
+						ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(\S+:\/\/).+)`), "Expected value to have a url with schema of \"https\" or a custom mobile native schema (e.g., `org.bxretail.app://callback`).  \"http\" urls are permitted when using localhost hosts \"localhost\" and \"127.0.0.1\".")),
+					},
+					Optional: true,
 				},
 			},
 		},
@@ -1161,6 +1192,11 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 
 		// Set the OIDC specific optional options
 
+		if v1, ok := oidcOptions["cors_settings"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
+			corsSettings := expandCorsSettings(v1[0].(map[string]interface{}))
+			application.SetCorsSettings(*corsSettings)
+		}
+
 		if v1, ok := oidcOptions["home_page_url"].(string); ok && v1 != "" {
 			application.SetHomePageUrl(v1)
 		}
@@ -1464,6 +1500,20 @@ func expandMobileIntegrityGooglePlay(s map[string]interface{}) (*management.Appl
 	return obj, diags
 }
 
+func expandCorsSettings(s map[string]interface{}) *management.ApplicationCorsSettings {
+	cors := management.NewApplicationCorsSettings(management.EnumApplicationCorsSettingsBehavior(s["behavior"].(string)))
+
+	if v2, ok := s["origins"].(*schema.Set); ok && v2 != nil && len(v2.List()) > 0 && v2.List()[0] != nil {
+		obj := make([]string, 0)
+		for _, j := range v2.List() {
+			obj = append(obj, j.(string))
+		}
+		cors.SetOrigins(obj)
+	}
+
+	return cors
+}
+
 // SAML
 func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML, diag.Diagnostics) {
 	var diags diag.Diagnostics
@@ -1516,6 +1566,11 @@ func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML,
 		}
 
 		// Set the SAML specific optional options
+
+		if v1, ok := samlOptions["cors_settings"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
+			corsSettings := expandCorsSettings(v1[0].(map[string]interface{}))
+			application.SetCorsSettings(*corsSettings)
+		}
 
 		if v1, ok := samlOptions["home_page_url"].(string); ok && v1 != "" {
 			application.SetHomePageUrl(v1)
@@ -1839,6 +1894,12 @@ func flattenOIDCOptions(application *management.ApplicationOIDC, secret *managem
 		item["require_signed_request_object"] = nil
 	}
 
+	if v, ok := application.GetCorsSettingsOk(); ok {
+		item["cors_settings"] = flattenCorsSettings(v)
+	} else {
+		item["cors_settings"] = nil
+	}
+
 	if v, ok := application.GetMobileOk(); ok {
 		j, diags := flattenMobile(v)
 		if diags.HasError() {
@@ -1885,6 +1946,26 @@ func flattenKerberos(kerberos *management.ApplicationOIDCAllOfKerberos) interfac
 		item["key_id"] = v.GetId()
 	} else {
 		item["key_id"] = nil
+	}
+
+	items := make([]interface{}, 0)
+	return append(items, item)
+}
+
+func flattenCorsSettings(s *management.ApplicationCorsSettings) interface{} {
+
+	item := map[string]interface{}{}
+
+	if v, ok := s.GetBehaviorOk(); ok {
+		item["behavior"] = v
+	} else {
+		item["behavior"] = nil
+	}
+
+	if v, ok := s.GetOriginsOk(); ok {
+		item["origins"] = v
+	} else {
+		item["origins"] = nil
 	}
 
 	items := make([]interface{}, 0)
@@ -2094,6 +2175,12 @@ func flattenSAMLOptions(application *management.ApplicationSAML) interface{} {
 		item["sp_verification_certificate_ids"] = idList
 	} else {
 		item["sp_verification_certificate_ids"] = nil
+	}
+
+	if v, ok := application.GetCorsSettingsOk(); ok {
+		item["cors_settings"] = flattenCorsSettings(v)
+	} else {
+		item["cors_settings"] = nil
 	}
 
 	items := make([]interface{}, 0)

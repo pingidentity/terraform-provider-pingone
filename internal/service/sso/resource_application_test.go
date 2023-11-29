@@ -177,6 +177,19 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.behavior", "ALLOW_SPECIFIC_ORIGINS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.#", "8"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
@@ -259,6 +272,7 @@ func TestAccApplication_OIDCMinimalWeb(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
@@ -328,6 +342,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
@@ -390,6 +405,19 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.behavior", "ALLOW_SPECIFIC_ORIGINS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.#", "8"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
@@ -432,6 +460,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
@@ -509,6 +538,9 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.behavior", "ALLOW_NO_ORIGINS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
@@ -605,6 +637,7 @@ func TestAccApplication_OIDCMinimalNative(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.package_name", ""),
@@ -691,6 +724,9 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.behavior", "ALLOW_NO_ORIGINS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
@@ -750,6 +786,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.package_name", ""),
@@ -812,6 +849,9 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.behavior", "ALLOW_NO_ORIGINS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
@@ -1248,6 +1288,19 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.behavior", "ALLOW_SPECIFIC_ORIGINS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.#", "8"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
@@ -1327,6 +1380,7 @@ func TestAccApplication_OIDCMinimalCustom(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
@@ -1414,6 +1468,19 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.behavior", "ALLOW_SPECIFIC_ORIGINS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.#", "8"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
@@ -1456,6 +1523,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
@@ -1519,6 +1587,19 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.behavior", "ALLOW_SPECIFIC_ORIGINS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.#", "8"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
@@ -1606,6 +1687,19 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.behavior", "ALLOW_SPECIFIC_ORIGINS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.#", "8"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
@@ -1688,6 +1782,7 @@ func TestAccApplication_OIDCMinimalService(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
@@ -1775,6 +1870,19 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.behavior", "ALLOW_SPECIFIC_ORIGINS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.#", "8"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
@@ -1820,6 +1928,7 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
@@ -1883,6 +1992,19 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.behavior", "ALLOW_SPECIFIC_ORIGINS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.#", "8"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
@@ -1965,6 +2087,19 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.behavior", "ALLOW_SPECIFIC_ORIGINS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.#", "8"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
@@ -2046,6 +2181,7 @@ func TestAccApplication_OIDCMinimalSPA(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
@@ -2114,6 +2250,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
@@ -2172,6 +2309,19 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.behavior", "ALLOW_SPECIFIC_ORIGINS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.#", "8"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
@@ -2216,6 +2366,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
@@ -2294,6 +2445,19 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.behavior", "ALLOW_SPECIFIC_ORIGINS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.#", "8"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
@@ -2375,6 +2539,7 @@ func TestAccApplication_OIDCMinimalWorker(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
@@ -2443,6 +2608,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
@@ -2497,6 +2663,19 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.behavior", "ALLOW_SPECIFIC_ORIGINS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.#", "8"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
@@ -2541,6 +2720,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", ""),
@@ -2744,6 +2924,19 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_window", "3"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_entity_id", fmt.Sprintf("sp:entity:%s", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification_certificate_ids.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.cors_settings.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.cors_settings.0.behavior", "ALLOW_SPECIFIC_ORIGINS"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.cors_settings.0.origins.#", "8"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.0.cors_settings.0.origins.*", "http://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.0.cors_settings.0.origins.*", "https://localhost"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.0.cors_settings.0.origins.*", "http://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.0.cors_settings.0.origins.*", "https://auth.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.0.cors_settings.0.origins.*", "http://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.0.cors_settings.0.origins.*", "https://*.pingidentity.com"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.0.cors_settings.0.origins.*", "http://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
+					// resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.0.cors_settings.0.origins.*", "https://2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
@@ -2815,6 +3008,7 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_window", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_entity_id", fmt.Sprintf("sp:entity:%s", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification_certificate_ids.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
 				),
 			},
@@ -3162,6 +3356,22 @@ resource "pingone_application" "%[2]s" {
     par_timeout     = 60
 
     support_unsigned_request_object = true
+
+    cors_settings {
+      behavior = "ALLOW_SPECIFIC_ORIGINS"
+      origins = [
+        "http://localhost",
+        "https://localhost",
+        "http://auth.pingidentity.com",
+        "https://auth.pingidentity.com",
+        "http://*.pingidentity.com",
+        "https://*.pingidentity.com",
+        "http://192.168.1.1",
+        "https://192.168.1.1",
+        // "http://2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+        // "https://2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+      ]
+    }
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name, image)
@@ -3234,6 +3444,10 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
     allow_wildcards_in_redirect_uris = true
+
+    cors_settings {
+      behavior = "ALLOW_NO_ORIGINS"
+    }
 
     mobile_app {
       bundle_id           = "com.%[2]s.bundle"
@@ -3698,6 +3912,22 @@ resource "pingone_application" "%[2]s" {
     par_timeout     = 180
 
     require_signed_request_object = true
+
+    cors_settings {
+      behavior = "ALLOW_SPECIFIC_ORIGINS"
+      origins = [
+        "http://localhost",
+        "https://localhost",
+        "http://auth.pingidentity.com",
+        "https://auth.pingidentity.com",
+        "http://*.pingidentity.com",
+        "https://*.pingidentity.com",
+        "http://192.168.1.1",
+        "https://192.168.1.1",
+        // "http://2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+        // "https://2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+      ]
+    }
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name, image)
@@ -3789,6 +4019,22 @@ resource "pingone_application" "%[2]s" {
     initiate_login_uri = "https://www.pingidentity.com/initiate"
     target_link_uri    = "https://www.pingidentity.com/target"
     pkce_enforcement   = "REQUIRED"
+
+    cors_settings {
+      behavior = "ALLOW_SPECIFIC_ORIGINS"
+      origins = [
+        "http://localhost",
+        "https://localhost",
+        "http://auth.pingidentity.com",
+        "https://auth.pingidentity.com",
+        "http://*.pingidentity.com",
+        "https://*.pingidentity.com",
+        "http://192.168.1.1",
+        "https://192.168.1.1",
+        // "http://2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+        // "https://2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+      ]
+    }
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name, image)
@@ -3870,6 +4116,21 @@ resource "pingone_application" "%[2]s" {
 
     support_unsigned_request_object = true
 
+    cors_settings {
+      behavior = "ALLOW_SPECIFIC_ORIGINS"
+      origins = [
+        "http://localhost",
+        "https://localhost",
+        "http://auth.pingidentity.com",
+        "https://auth.pingidentity.com",
+        "http://*.pingidentity.com",
+        "https://*.pingidentity.com",
+        "http://192.168.1.1",
+        "https://192.168.1.1",
+        // "http://2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+        // "https://2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+      ]
+    }
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name, image)
@@ -3947,6 +4208,22 @@ resource "pingone_application" "%[2]s" {
     type                        = "WORKER"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+
+    cors_settings {
+      behavior = "ALLOW_SPECIFIC_ORIGINS"
+      origins = [
+        "http://localhost",
+        "https://localhost",
+        "http://auth.pingidentity.com",
+        "https://auth.pingidentity.com",
+        "http://*.pingidentity.com",
+        "https://*.pingidentity.com",
+        "http://192.168.1.1",
+        "https://192.168.1.1",
+        // "http://2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+        // "https://2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+      ]
+    }
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name, image)
@@ -4120,6 +4397,21 @@ resource "pingone_application" "%[2]s" {
 
     // sp_verification_certificate_ids = []
 
+    cors_settings {
+      behavior = "ALLOW_SPECIFIC_ORIGINS"
+      origins = [
+        "http://localhost",
+        "https://localhost",
+        "http://auth.pingidentity.com",
+        "https://auth.pingidentity.com",
+        "http://*.pingidentity.com",
+        "https://*.pingidentity.com",
+        "http://192.168.1.1",
+        "https://192.168.1.1",
+        // "http://2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+        // "https://2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+      ]
+    }
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
 }

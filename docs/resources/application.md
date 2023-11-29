@@ -226,6 +226,7 @@ Optional:
 - `allow_wildcards_in_redirect_uris` (Boolean) A boolean to specify whether wildcards are allowed in redirect URIs. For more information, see [Wildcards in Redirect URIs](https://docs.pingidentity.com/csh?context=p1_c_wildcard_redirect_uri). Defaults to `false`.
 - `bundle_id` (String, Deprecated) **Deprecation Notice** This field is deprecated and will be removed in a future release. Use `oidc_options.mobile_app.bundle_id` instead. A string that specifies the bundle associated with the application, for push notifications in native apps. The value of the `bundle_id` property is unique per environment, and once defined, is immutable; any change will force recreation of the application resource.
 - `certificate_based_authentication` (Block List, Max: 1) Certificate based authentication settings. This parameter block can only be set where the application's `type` parameter is set to `NATIVE_APP`. (see [below for nested schema](#nestedblock--oidc_options--certificate_based_authentication))
+- `cors_settings` (Block List, Max: 1) A single block that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings. (see [below for nested schema](#nestedblock--oidc_options--cors_settings))
 - `home_page_url` (String) A string that specifies the custom home page URL for the application.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.
 - `initiate_login_uri` (String) A string that specifies the URI to use for third-parties to begin the sign-on process for the application. If specified, PingOne redirects users to this URI to initiate SSO to PingOne. The application is responsible for implementing the relevant OIDC flow when the initiate login URI is requested. This property is required if you want the application to appear in the PingOne Application Portal. See the OIDC specification section of [Initiating Login from a Third Party](https://openid.net/specs/openid-connect-core-1_0.html#ThirdPartyInitiatedLogin) for more information.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.
 - `mobile_app` (Block List, Max: 1) Mobile application integration settings for `NATIVE_APP` type applications. (see [below for nested schema](#nestedblock--oidc_options--mobile_app))
@@ -254,6 +255,18 @@ Read-Only:
 Required:
 
 - `key_id` (String) A string that represents a PingOne ID for the issuance certificate key.  The key must be of type `ISSUANCE`.
+
+
+<a id="nestedblock--oidc_options--cors_settings"></a>
+### Nested Schema for `oidc_options.cors_settings`
+
+Required:
+
+- `behavior` (String) A string that specifies the behavior of how Authorization and Authentication APIs interact with CORS requests that reference the application.  Options are `ALLOW_NO_ORIGINS` (rejects all CORS requests) and `ALLOW_SPECIFIC_ORIGINS` (rejects all CORS requests except those listed in `origins`).
+
+Optional:
+
+- `origins` (Set of String) A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value must be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 or IPv6 address.  Subdomains may use the wildcard (`*`) to match any string.  Must be non-empty when `behavior` is `ALLOW_SPECIFIC_ORIGINS` and must be omitted or empty when `behavior` is `ALLOW_NO_ORIGINS`.  Limited to 20 values.
 
 
 <a id="nestedblock--oidc_options--mobile_app"></a>
@@ -320,6 +333,7 @@ Required:
 Optional:
 
 - `assertion_signed_enabled` (Boolean) A boolean that specifies whether the SAML assertion itself should be signed. Defaults to `true`.
+- `cors_settings` (Block List, Max: 1) A single block that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings. (see [below for nested schema](#nestedblock--saml_options--cors_settings))
 - `enable_requested_authn_context` (Boolean) A boolean that specifies whether `requestedAuthnContext` is taken into account in policy decision-making.
 - `home_page_url` (String) A string that specifies the custom home page URL for the application.
 - `idp_signing_key` (Block List, Max: 1) SAML application assertion/response signing key settings.  Use with `assertion_signed_enabled` to enable assertion signing and/or `response_is_signed` to enable response signing.  It's highly recommended, and best practice, to define signing key settings for the configured SAML application.  However if this property is omitted, the default signing certificate for the environment is used.  This parameter will become a required field in the next major release of the provider. (see [below for nested schema](#nestedblock--saml_options--idp_signing_key))
@@ -332,6 +346,18 @@ Optional:
 - `slo_window` (Number) An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request. The minimum value is `1` hour and the maximum is `24` hours.
 - `sp_verification_certificate_ids` (Set of String) A list that specifies the certificate IDs used to verify the service provider signature.
 - `type` (String) A string that specifies the type associated with the application.  Options are `WEB_APP` and `CUSTOM_APP`. Defaults to `WEB_APP`.
+
+<a id="nestedblock--saml_options--cors_settings"></a>
+### Nested Schema for `saml_options.cors_settings`
+
+Required:
+
+- `behavior` (String) A string that specifies the behavior of how Authorization and Authentication APIs interact with CORS requests that reference the application.  Options are `ALLOW_NO_ORIGINS` (rejects all CORS requests) and `ALLOW_SPECIFIC_ORIGINS` (rejects all CORS requests except those listed in `origins`).
+
+Optional:
+
+- `origins` (Set of String) A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value must be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 or IPv6 address.  Subdomains may use the wildcard (`*`) to match any string.  Must be non-empty when `behavior` is `ALLOW_SPECIFIC_ORIGINS` and must be omitted or empty when `behavior` is `ALLOW_NO_ORIGINS`.  Limited to 20 values.
+
 
 <a id="nestedblock--saml_options--idp_signing_key"></a>
 ### Nested Schema for `saml_options.idp_signing_key`
