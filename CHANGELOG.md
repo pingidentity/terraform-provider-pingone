@@ -2,7 +2,15 @@
 
 NOTES:
 
+* `data-source/pingone_population`: Update schema documentation. ([#670](https://github.com/pingidentity/terraform-provider-pingone/issues/670))
 * `resource/pingone_identity_provider`: Migrated to plugin framework. ([#649](https://github.com/pingidentity/terraform-provider-pingone/issues/649))
+* `resource/pingone_population`: Update schema documentation. ([#670](https://github.com/pingidentity/terraform-provider-pingone/issues/670))
+* `resource/pingone_user`: Corrected documentation HCL example. ([#669](https://github.com/pingidentity/terraform-provider-pingone/issues/669))
+
+FEATURES:
+
+* **New Data Source:** `pingone_group` ([#667](https://github.com/pingidentity/terraform-provider-pingone/issues/667))
+* **New Data Source:** `pingone_groups` ([#667](https://github.com/pingidentity/terraform-provider-pingone/issues/667))
 
 ## 0.23.1 (11 November 2023)
 

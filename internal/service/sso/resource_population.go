@@ -53,7 +53,7 @@ func (r *PopulationResource) Schema(ctx context.Context, req resource.SchemaRequ
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage PingOne populations.",
+		Description: "Resource to create and manage a PingOne population in an environment.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -63,7 +63,7 @@ func (r *PopulationResource) Schema(ctx context.Context, req resource.SchemaRequ
 			),
 
 			"name": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("The name of the population.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the name of the population.").Description,
 				Required:    true,
 
 				Validators: []validator.String{
@@ -72,12 +72,12 @@ func (r *PopulationResource) Schema(ctx context.Context, req resource.SchemaRequ
 			},
 
 			"description": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A description to apply to the population.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a description to apply to the population.").Description,
 				Optional:    true,
 			},
 
 			"password_policy_id": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("The ID of a password policy to assign to the population.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of a password policy to assign to the population.  Must be a valid PingOne resource ID.").Description,
 				Optional:    true,
 
 				Validators: []validator.String{

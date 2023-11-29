@@ -1,0 +1,7 @@
+```release-note:note
+`resource/pingone_population`: Update schema documentation.
+```
+
+```release-note:note
+`data-source/pingone_population`: Update schema documentation.
+```

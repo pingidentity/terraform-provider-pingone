@@ -52,9 +52,19 @@ func (r *PopulationDataSource) Schema(ctx context.Context, req datasource.Schema
 
 	nameLength := 1
 
+	exactlyOneOfParams := []string{"population_id", "name"}
+
+	populationIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the ID of the population to retrieve configuration for.  Must be a valid PingOne resource ID.",
+	).ExactlyOneOf(exactlyOneOfParams)
+
+	populationNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the name of the population to retrieve configuration for.",
+	).ExactlyOneOf(exactlyOneOfParams)
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Datasource to retrieve a PingOne population.",
+		Description: "Datasource to retrieve a PingOne population in a PingOne environment, by ID or by name.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -64,8 +74,9 @@ func (r *PopulationDataSource) Schema(ctx context.Context, req datasource.Schema
 			),
 
 			"population_id": schema.StringAttribute{
-				Description: "The ID of the population.",
-				Optional:    true,
+				Description:         populationIdDescription.Description,
+				MarkdownDescription: populationIdDescription.MarkdownDescription,
+				Optional:            true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
 					verify.P1ResourceIDValidator(),
@@ -73,8 +84,9 @@ func (r *PopulationDataSource) Schema(ctx context.Context, req datasource.Schema
 			},
 
 			"name": schema.StringAttribute{
-				Description: "The name of the population.",
-				Optional:    true,
+				Description:         populationNameDescription.Description,
+				MarkdownDescription: populationNameDescription.MarkdownDescription,
+				Optional:            true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("population_id")),
 					stringvalidator.LengthAtLeast(nameLength),
@@ -82,17 +94,17 @@ func (r *PopulationDataSource) Schema(ctx context.Context, req datasource.Schema
 			},
 
 			"description": schema.StringAttribute{
-				Description: "The description applied to the population.",
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the description applied to the population.").Description,
 				Computed:    true,
 			},
 
 			"password_policy_id": schema.StringAttribute{
-				Description: "The ID of the password policy applied to the population.",
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the password policy applied to the population.").Description,
 				Computed:    true,
 			},
 
 			"default": schema.BoolAttribute{
-				Description: "Indicates whether the population is the default population for the environment.",
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that indicates whether the population is the default population for the environment.").Description,
 				Computed:    true,
 			},
 		},
