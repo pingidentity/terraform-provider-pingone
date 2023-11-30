@@ -22,8 +22,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -1045,6 +1047,31 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
+	//User account lock
+	if updateUserEnabledResponse.GetEnabled() {
+		if account, ok := user.GetAccountOk(); ok {
+			if status, ok := account.GetStatusOk(); ok && *status == management.ENUMUSERSTATUS_LOCKED {
+				accountStatus := management.ENUMUSERACCOUNTCONTENTTYPEHEADER_LOCKJSON
+
+				resp.Diagnostics.Append(framework.ParseResponse(
+					ctx,
+
+					func() (any, *http.Response, error) {
+						fO, fR, fErr := r.Client.ManagementAPIClient.UserAccountsApi.UserAccount(ctx, plan.EnvironmentId.ValueString(), createUserResponse.GetId()).ContentType(accountStatus).Execute()
+						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+					},
+					"UserAccount",
+					framework.DefaultCustomError,
+					userAccountEnabledRetryable,
+					nil,
+				)...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+			}
+		}
+	}
+
 	// Read the user object again, as other attributes may have changed following the update API calls
 	var finalUserResponse *management.User
 	resp.Diagnostics.Append(framework.ParseResponse(
@@ -1210,6 +1237,32 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
+	//User account lock
+	if updateUserEnabledResponse.GetEnabled() {
+		accountStatus := management.ENUMUSERACCOUNTCONTENTTYPEHEADER_UNLOCKJSON
+		if account, ok := user.GetAccountOk(); ok {
+			if status, ok := account.GetStatusOk(); ok && *status == management.ENUMUSERSTATUS_LOCKED {
+				accountStatus = management.ENUMUSERACCOUNTCONTENTTYPEHEADER_LOCKJSON
+			}
+		}
+
+		resp.Diagnostics.Append(framework.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				fO, fR, fErr := r.Client.ManagementAPIClient.UserAccountsApi.UserAccount(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).ContentType(accountStatus).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			},
+			"UserAccount",
+			framework.DefaultCustomError,
+			userAccountEnabledRetryable,
+			nil,
+		)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+
 	var finalUserResponse *management.User
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
@@ -1303,6 +1356,19 @@ func (r *UserResource) ImportState(ctx context.Context, req resource.ImportState
 		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
 	}
 }
+
+var (
+	userAccountEnabledRetryable = func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
+
+		// Catch observed race condition
+		if r.StatusCode == http.StatusUnsupportedMediaType {
+			tflog.Warn(ctx, "Unexpected 415 Error detected. Available for retry..")
+			return true
+		}
+
+		return sdk.DefaultCreateReadRetryable(ctx, r, p1error)
+	}
+)
 
 func (p *UserResourceModel) expand(ctx context.Context, isUpdate bool) (*management.User, *management.UserEnabled, *mfa.UserMFAEnabled, diag.Diagnostics) {
 	var diags diag.Diagnostics
