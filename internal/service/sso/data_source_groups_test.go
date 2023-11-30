@@ -167,10 +167,12 @@ resource "pingone_group" "%[2]s-3" {
 data "pingone_groups" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
-  data_filter {
-    name   = "name"
-    values = ["%[3]s-1", "%[3]s-2"]
-  }
+  data_filters = [
+    {
+      name   = "name"
+      values = ["%[3]s-1", "%[3]s-2"]
+    }
+  ]
 
   depends_on = [
     pingone_group.%[2]s-1,
@@ -202,10 +204,12 @@ resource "pingone_group" "%[2]s-3" {
 data "pingone_groups" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
-  data_filter {
-    name   = "name"
-    values = ["%[3]s-1", "%[3]s-2", "%[3]s-3", ]
-  }
+  data_filters = [
+    {
+      name   = "name"
+      values = ["%[3]s-1", "%[3]s-2", "%[3]s-3", ]
+    }
+  ]
 
   depends_on = [
     pingone_group.%[2]s-1,
