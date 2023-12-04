@@ -3,6 +3,7 @@
 ENHANCEMENTS:
 
 * `resource/pingone_key`: Added the `pkcs12_file_password` parameter to allow import of encrypted PKCS12 keys. ([#678](https://github.com/pingidentity/terraform-provider-pingone/issues/678))
+* `resource/pingone_webhook`: Added the `tls_client_auth_key_pair_id` parameter to support outbound mTLS authentication to the endpoint used to post subscription messages to. ([#679](https://github.com/pingidentity/terraform-provider-pingone/issues/679))
 
 ## 0.24.0 (30 November 2023)
 
