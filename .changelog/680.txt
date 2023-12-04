@@ -3,7 +3,7 @@
 ```
 
 ```release-note:enhancement
-`resource/pingone_application`: Added the `saml_options.sp_verification.authn_request_signed` parameter to support "Enforce Signed AuthnRequest" option for SAML applications.
+`resource/pingone_application`: Added the `saml_options.sp_verification.authn_request_signed` parameter to support the "Enforce Signed AuthnRequest" option for SAML applications.
 ```
 
 ```release-note:note
@@ -11,5 +11,5 @@
 ```
 
 ```release-note:enhancement
-`data-source/pingone_application`: Added the `saml_options.sp_verification.authn_request_signed` attribute to support "Enforce Signed AuthnRequest" option for SAML applications.
+`data-source/pingone_application`: Added the `saml_options.sp_verification.authn_request_signed` attribute to support the "Enforce Signed AuthnRequest" option for SAML applications.
 ```
