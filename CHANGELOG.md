@@ -1,5 +1,9 @@
 ## 0.25.0 (Unreleased)
 
+ENHANCEMENTS:
+
+* `resource/pingone_key`: Added the `pkcs12_file_password` parameter to allow import of encrypted PKCS12 keys. ([#678](https://github.com/pingidentity/terraform-provider-pingone/issues/678))
+
 ## 0.24.0 (30 November 2023)
 
 NOTES:
