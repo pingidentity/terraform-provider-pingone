@@ -1,3 +1,5 @@
+## 0.25.0 (Unreleased)
+
 ## 0.24.0 (30 November 2023)
 
 NOTES:
