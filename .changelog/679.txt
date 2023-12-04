@@ -1,0 +1,3 @@
+```release-note:enhancement
+`resource/pingone_webhook`: Added the `tls_client_auth_key_pair_id` parameter to support outbound mTLS authentication to the endpoint used to post subscription messages to.
+```
