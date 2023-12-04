@@ -126,12 +126,18 @@ var (
 		"slo_window":                      types.Int64Type,
 		"sp_entity_id":                    types.StringType,
 		"sp_verification_certificate_ids": types.SetType{ElemType: types.StringType},
+		"sp_verification":                 types.ListType{ElemType: types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes}},
 		"cors_settings":                   types.ListType{ElemType: types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes}},
 	}
 
 	applicationSamlOptionsIdpSigningKeyTFObjectTypes = map[string]attr.Type{
 		"algorithm": types.StringType,
 		"key_id":    types.StringType,
+	}
+
+	applicationSamlOptionsSpVerificationTFObjectTypes = map[string]attr.Type{
+		"certificate_ids":      types.SetType{ElemType: types.StringType},
+		"authn_request_signed": types.BoolType,
 	}
 
 	applicationExternalLinkOptionsTFObjectTypes = map[string]attr.Type{
@@ -214,6 +220,10 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 
 	samlEnableRequestedAuthnContextDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether `requestedAuthnContext` is taken into account in policy decision-making.",
+	)
+
+	samlSpVerificationCertificateIds := framework.SchemaAttributeDescriptionFromMarkdown(
+		"**Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `sp_verification.certificate_ids` attribute going forward.  A list that specifies the certificate IDs used to verify the service provider signature.",
 	)
 
 	resp.Schema = schema.Schema{
@@ -604,9 +614,28 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 							Computed:    true,
 						},
 						"sp_verification_certificate_ids": schema.SetAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A list that specifies the certificate IDs used to verify the service provider signature.").Description,
-							ElementType: types.StringType,
+							Description:         samlSpVerificationCertificateIds.Description,
+							MarkdownDescription: samlSpVerificationCertificateIds.MarkdownDescription,
+							ElementType:         types.StringType,
+							DeprecationMessage:  "The `sp_verification_certificate_ids` attribute is deprecated and will be removed in the next major release.  Please use the `sp_verification.certificate_ids` attribute going forward.",
+							Computed:            true,
+						},
+						"sp_verification": schema.ListNestedAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A single list item that specifies SP signature verification settings.").Description,
 							Computed:    true,
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"authn_request_signed": schema.BoolAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the Authn Request signing should be enforced.").Description,
+										Computed:    true,
+									},
+									"certificate_ids": schema.SetAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("A list that specifies the certificate IDs used to verify the service provider signature.").Description,
+										ElementType: types.StringType,
+										Computed:    true,
+									},
+								},
+							},
 						},
 						"cors_settings": datasourceApplicationSchemaCorsSettings(),
 					},
@@ -1210,15 +1239,30 @@ func (p *applicationDataSourceModel) toStateSAMLOptions(apiObject *management.Ap
 	idpSigningKeyObj, d := types.ListValue(types.ObjectType{AttrTypes: applicationSamlOptionsIdpSigningKeyTFObjectTypes}, append([]attr.Value{}, flattenedObj))
 	diags.Append(d...)
 
-	// SP Verification Certificate Ids
+	// SP Verification
 	var idList []string
-	if v, ok := apiObject.SpVerification.GetCertificatesOk(); ok {
+	spVerification := map[string]attr.Value{}
+	if v, ok := apiObject.GetSpVerificationOk(); ok {
+		spVerification["authn_request_signed"] = framework.BoolOkToTF(v.GetAuthnRequestSignedOk())
 
-		idList = make([]string, 0)
-		for _, j := range v {
-			idList = append(idList, j.GetId())
+		if v1, ok := v.GetCertificatesOk(); ok {
+
+			idList = make([]string, 0)
+			for _, j := range v1 {
+				idList = append(idList, j.GetId())
+			}
 		}
+
+		spVerification["certificate_ids"] = framework.StringSetToTF(idList)
+	} else {
+		spVerification["authn_request_signed"] = types.BoolNull()
+		spVerification["certificate_ids"] = types.SetNull(types.StringType)
 	}
+	spVerificationFlattenedObj, d := types.ObjectValue(applicationSamlOptionsSpVerificationTFObjectTypes, spVerification)
+	diags.Append(d...)
+
+	spVerificationObj, d := types.ListValue(types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes}, append([]attr.Value{}, spVerificationFlattenedObj))
+	diags.Append(d...)
 
 	// CORS Settings
 	corsSettingsObj := types.ListNull(types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes})
@@ -1252,6 +1296,7 @@ func (p *applicationDataSourceModel) toStateSAMLOptions(apiObject *management.Ap
 		"slo_response_endpoint":           framework.StringOkToTF(apiObject.GetSloResponseEndpointOk()),
 		"slo_window":                      framework.Int32OkToTF(apiObject.GetSloWindowOk()),
 		"sp_verification_certificate_ids": framework.StringSetToTF(idList),
+		"sp_verification":                 spVerificationObj,
 		"cors_settings":                   corsSettingsObj,
 	}
 
