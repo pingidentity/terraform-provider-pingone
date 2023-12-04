@@ -134,6 +134,7 @@ func TestAccWebhook_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.Authorization", "Basic usernamepassword"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.Content-Type", "application/json"),
 					resource.TestCheckResourceAttr(resourceFullName, "verify_tls_certificates", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "tls_client_auth_key_pair_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "format", "ACTIVITY"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_action_types.#", "2"),
@@ -199,6 +200,7 @@ func TestAccWebhook_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://localhost/"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "verify_tls_certificates", "true"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "tls_client_auth_key_pair_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "format", "SPLUNK"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_action_types.#", "2"),
@@ -244,6 +246,7 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.Authorization", "Basic usernamepassword"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.Content-Type", "application/json"),
 					resource.TestCheckResourceAttr(resourceFullName, "verify_tls_certificates", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "tls_client_auth_key_pair_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "format", "ACTIVITY"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_action_types.#", "2"),
@@ -273,6 +276,7 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://localhost/"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "verify_tls_certificates", "true"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "tls_client_auth_key_pair_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "format", "SPLUNK"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_action_types.#", "2"),
@@ -297,6 +301,7 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.Authorization", "Basic usernamepassword"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.Content-Type", "application/json"),
 					resource.TestCheckResourceAttr(resourceFullName, "verify_tls_certificates", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "tls_client_auth_key_pair_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "format", "ACTIVITY"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_action_types.#", "2"),
@@ -320,7 +325,69 @@ func TestAccWebhook_Change(t *testing.T) {
 	})
 }
 
-func TestAccWebhook_Webhooks(t *testing.T) {
+func TestAccWebhook_MTLS(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_webhook.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	pkcs12 := os.Getenv("PINGONE_KEY_PKCS12")
+	keystorePassword := os.Getenv("PINGONE_KEY_PKCS12_PASSWORD")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckPKCS12Key(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.Webhook_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccWebhookConfig_MTLS(environmentName, licenseID, resourceName, name, pkcs12, keystorePassword),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "tls_client_auth_key_pair_id", verify.P1ResourceIDRegexpFullString),
+				),
+			},
+			{
+				Config: testAccWebhookConfig_NoMTLS(environmentName, licenseID, resourceName, name, pkcs12, keystorePassword),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckNoResourceAttr(resourceFullName, "tls_client_auth_key_pair_id"),
+				),
+			},
+			{
+				Config: testAccWebhookConfig_MTLS(environmentName, licenseID, resourceName, name, pkcs12, keystorePassword),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "tls_client_auth_key_pair_id", verify.P1ResourceIDRegexpFullString),
+				),
+			},
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccWebhook_Applications(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -568,6 +635,70 @@ resource "pingone_webhook" "%[2]s" {
     included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccWebhookConfig_MTLS(environmentName, licenseID, resourceName, name, pkcs12, keystorePassword string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_key" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  pkcs12_file_base64 = <<EOT
+%[5]s
+EOT
+
+  pkcs12_file_password = "%[6]s"
+
+  usage_type = "SIGNING"
+}
+
+resource "pingone_webhook" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  name              = "%[4]s"
+  enabled           = "true"
+  http_endpoint_url = "https://localhost/"
+
+  tls_client_auth_key_pair_id = pingone_key.%[3]s.id
+
+  format = "ACTIVITY"
+
+  filter_options {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, pkcs12, keystorePassword)
+}
+
+func testAccWebhookConfig_NoMTLS(environmentName, licenseID, resourceName, name, pkcs12, keystorePassword string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_key" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  pkcs12_file_base64 = <<EOT
+%[5]s
+EOT
+
+  pkcs12_file_password = "%[6]s"
+
+  usage_type = "SIGNING"
+}
+
+resource "pingone_webhook" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  name              = "%[4]s"
+  enabled           = "true"
+  http_endpoint_url = "https://localhost/"
+
+  format = "ACTIVITY"
+
+  filter_options {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, pkcs12, keystorePassword)
 }
 
 func testAccWebhookConfig_Profile1(resourceName, name string) string {
