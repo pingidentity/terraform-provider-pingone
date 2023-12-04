@@ -22,6 +22,7 @@ func TestAccCertificateExportDataSource_ByIDFull(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	pkcs12 := os.Getenv("PINGONE_KEY_PKCS12")
+	keystorePassword := os.Getenv("PINGONE_KEY_PKCS12_PASSWORD")
 	pkcs7_cert := os.Getenv("PINGONE_KEY_PKCS7_CERT")
 	pem_cert := os.Getenv("PINGONE_KEY_PEM_CERT")
 
@@ -38,7 +39,7 @@ func TestAccCertificateExportDataSource_ByIDFull(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCertificateExportDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName, pkcs12),
+				Config: testAccCertificateExportDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName, pkcs12, keystorePassword),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(dataSourceFullName, "pkcs7_file_base64", pkcs7_cert),
 					resource.TestCheckResourceAttr(dataSourceFullName, "pem_file", pem_cert),
@@ -73,7 +74,7 @@ func TestAccCertificateExportDataSource_NotFound(t *testing.T) {
 	})
 }
 
-func testAccCertificateExportDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName, pkcs12 string) string {
+func testAccCertificateExportDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName, pkcs12, keystorePassword string) string {
 	return fmt.Sprintf(`
 %[1]s
 
@@ -84,6 +85,8 @@ resource "pingone_key" "%[3]s" {
 %[4]s
 EOT
 
+  pkcs12_file_password = "%[5]s"
+
   usage_type = "SIGNING"
 }
 
@@ -91,7 +94,7 @@ data "pingone_certificate_export" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
   key_id = pingone_key.%[3]s.id
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pkcs12)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pkcs12, keystorePassword)
 }
 
 func testAccCertificateExportDataSourceConfig_NotFoundByID(resourceName string) string {
