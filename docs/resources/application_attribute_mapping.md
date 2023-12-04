@@ -203,7 +203,9 @@ resource "pingone_application" "my_awesome_saml_app" {
       algorithm = pingone_key.my_awesome_key.signature_algorithm
     }
 
-    sp_verification_certificate_ids = [var.sp_verification_certificate_id]
+    sp_verification {
+      certificate_ids = [var.sp_verification_certificate_id]
+    }
   }
 }
 

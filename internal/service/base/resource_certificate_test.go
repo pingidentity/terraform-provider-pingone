@@ -256,7 +256,7 @@ func TestAccCertificate_BadParameters(t *testing.T) {
 	})
 }
 
-func testAccCertificateConfig_PKCS7(environmentName, licenseID, resourceName, pkcs12 string) string {
+func testAccCertificateConfig_PKCS7(environmentName, licenseID, resourceName, pkcs7_cert string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -268,10 +268,10 @@ resource "pingone_certificate" "%[3]s" {
 EOT
 
   usage_type = "SSL/TLS"
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pkcs12)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pkcs7_cert)
 }
 
-func testAccCertificateConfig_PEM(environmentName, licenseID, resourceName, pem string) string {
+func testAccCertificateConfig_PEM(environmentName, licenseID, resourceName, pem_cert string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -283,5 +283,5 @@ resource "pingone_certificate" "%[3]s" {
 EOT
 
   usage_type = "SSL/TLS"
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pem)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pem_cert)
 }

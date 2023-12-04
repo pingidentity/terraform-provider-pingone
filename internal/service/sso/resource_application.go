@@ -551,7 +551,7 @@ func ResourceApplication() *schema.Resource {
 							Default:     true,
 						},
 						"idp_signing_key_id": {
-							Description:      "An ID for the certificate key pair to be used by the identity provider to sign assertions and responses. If this property is omitted, the default signing certificate for the environment is used.",
+							Description:      "**Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `idp_signing_key` block going forward.  An ID for the certificate key pair to be used by the identity provider to sign assertions and responses. If this property is omitted, the default signing certificate for the environment is used.",
 							Type:             schema.TypeString,
 							Optional:         true,
 							Computed:         true,
@@ -630,12 +630,42 @@ func ResourceApplication() *schema.Resource {
 							Required:    true,
 						},
 						"sp_verification_certificate_ids": {
-							Description: "A list that specifies the certificate IDs used to verify the service provider signature.",
-							Type:        schema.TypeSet,
-							Optional:    true,
+							Description:   "**Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `sp_verification.certificate_ids` parameter going forward.  A list that specifies the certificate IDs used to verify the service provider signature.",
+							Type:          schema.TypeSet,
+							Optional:      true,
+							Computed:      true,
+							ConflictsWith: []string{"saml_options.0.sp_verification"},
+							Deprecated:    "The `sp_verification_certificate_ids` parameter is deprecated and will be removed in the next major release.  Please use the `sp_verification.certificate_ids` parameter going forward.",
 							Elem: &schema.Schema{
 								Type:             schema.TypeString,
 								ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+							},
+						},
+						"sp_verification": {
+							Description:   "A single block item that specifies SP signature verification settings.",
+							Type:          schema.TypeList,
+							MaxItems:      1,
+							Optional:      true,
+							Computed:      true,
+							ConflictsWith: []string{"saml_options.0.sp_verification_certificate_ids"},
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"authn_request_signed": {
+										Description: "A boolean that specifies whether the Authn Request signing should be enforced.",
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Default:     false,
+									},
+									"certificate_ids": {
+										Description: "A list that specifies the certificate IDs used to verify the service provider signature.  Must be valid PingOne resource IDs.",
+										Type:        schema.TypeSet,
+										Required:    true,
+										Elem: &schema.Schema{
+											Type:             schema.TypeString,
+											ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+										},
+									},
+								},
 							},
 						},
 						"cors_settings": resourceApplicationSchemaCorsSettings(),
@@ -1656,6 +1686,26 @@ func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML,
 			application.SetSpVerification(*management.NewApplicationSAMLAllOfSpVerification(certificates))
 		}
 
+		if v1, ok := samlOptions["sp_verification"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
+			spVerificationOptions := v1[0].(map[string]interface{})
+
+			certificates := make([]management.ApplicationSAMLAllOfSpVerificationCertificates, 0)
+			if v2, ok := spVerificationOptions["certificate_ids"].(*schema.Set); ok && v2 != nil && len(v2.List()) > 0 && v2.List()[0] != nil {
+				for _, j := range v2.List() {
+					certificate := *management.NewApplicationSAMLAllOfSpVerificationCertificates(j.(string))
+					certificates = append(certificates, certificate)
+				}
+			}
+
+			spVerification := management.NewApplicationSAMLAllOfSpVerification(certificates)
+
+			if v2, ok := spVerificationOptions["authn_request_signed"].(bool); ok {
+				spVerification.SetAuthnRequestSigned(v2)
+			}
+
+			application.SetSpVerification(*spVerification)
+		}
+
 	} else {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -2185,15 +2235,10 @@ func flattenSAMLOptions(application *management.ApplicationSAML) interface{} {
 		item["slo_window"] = nil
 	}
 
-	if v, ok := application.SpVerification.GetCertificatesOk(); ok {
-
-		idList := make([]string, 0)
-		for _, j := range v {
-			idList = append(idList, j.GetId())
-		}
-
-		item["sp_verification_certificate_ids"] = idList
+	if v, ok := application.GetSpVerificationOk(); ok {
+		item["sp_verification"], item["sp_verification_certificate_ids"] = flattenSpVerificationOptions(v)
 	} else {
+		item["sp_verification"] = nil
 		item["sp_verification_certificate_ids"] = nil
 	}
 
@@ -2230,4 +2275,30 @@ func flattenIdpSigningOptions(idpSigning *management.ApplicationSAMLAllOfIdpSign
 
 	items := make([]interface{}, 0)
 	return append(items, item), signingKeyID
+}
+
+func flattenSpVerificationOptions(spVerification *management.ApplicationSAMLAllOfSpVerification) (interface{}, []string) {
+
+	item := map[string]interface{}{}
+
+	certficateIds := make([]string, 0)
+
+	if v, ok := spVerification.GetAuthnRequestSignedOk(); ok {
+		item["authn_request_signed"] = bool(*v)
+	} else {
+		item["authn_request_signed"] = nil
+	}
+
+	if v, ok := spVerification.GetCertificatesOk(); ok {
+		for _, j := range v {
+			certficateIds = append(certficateIds, j.GetId())
+		}
+
+		item["certificate_ids"] = certficateIds
+	} else {
+		item["certificate_ids"] = nil
+	}
+
+	items := make([]interface{}, 0)
+	return append(items, item), certficateIds
 }
