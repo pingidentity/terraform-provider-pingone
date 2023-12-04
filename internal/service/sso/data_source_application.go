@@ -111,23 +111,22 @@ var (
 	}
 
 	applicationSamlOptionsTFObjectTypes = map[string]attr.Type{
-		"home_page_url":                   types.StringType,
-		"type":                            types.StringType,
-		"acs_urls":                        types.SetType{ElemType: types.StringType},
-		"assertion_duration":              types.Int64Type,
-		"assertion_signed_enabled":        types.BoolType,
-		"idp_signing_key":                 types.ListType{ElemType: types.ObjectType{AttrTypes: applicationSamlOptionsIdpSigningKeyTFObjectTypes}},
-		"enable_requested_authn_context":  types.BoolType,
-		"nameid_format":                   types.StringType,
-		"response_is_signed":              types.BoolType,
-		"slo_binding":                     types.StringType,
-		"slo_endpoint":                    types.StringType,
-		"slo_response_endpoint":           types.StringType,
-		"slo_window":                      types.Int64Type,
-		"sp_entity_id":                    types.StringType,
-		"sp_verification_certificate_ids": types.SetType{ElemType: types.StringType},
-		"sp_verification":                 types.ListType{ElemType: types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes}},
-		"cors_settings":                   types.ListType{ElemType: types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes}},
+		"home_page_url":                  types.StringType,
+		"type":                           types.StringType,
+		"acs_urls":                       types.SetType{ElemType: types.StringType},
+		"assertion_duration":             types.Int64Type,
+		"assertion_signed_enabled":       types.BoolType,
+		"idp_signing_key":                types.ListType{ElemType: types.ObjectType{AttrTypes: applicationSamlOptionsIdpSigningKeyTFObjectTypes}},
+		"enable_requested_authn_context": types.BoolType,
+		"nameid_format":                  types.StringType,
+		"response_is_signed":             types.BoolType,
+		"slo_binding":                    types.StringType,
+		"slo_endpoint":                   types.StringType,
+		"slo_response_endpoint":          types.StringType,
+		"slo_window":                     types.Int64Type,
+		"sp_entity_id":                   types.StringType,
+		"sp_verification":                types.ListType{ElemType: types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes}},
+		"cors_settings":                  types.ListType{ElemType: types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes}},
 	}
 
 	applicationSamlOptionsIdpSigningKeyTFObjectTypes = map[string]attr.Type{
@@ -220,10 +219,6 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 
 	samlEnableRequestedAuthnContextDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether `requestedAuthnContext` is taken into account in policy decision-making.",
-	)
-
-	samlSpVerificationCertificateIds := framework.SchemaAttributeDescriptionFromMarkdown(
-		"**Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `sp_verification.certificate_ids` attribute going forward.  A list that specifies the certificate IDs used to verify the service provider signature.",
 	)
 
 	resp.Schema = schema.Schema{
@@ -612,13 +607,6 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						"sp_entity_id": schema.StringAttribute{
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the service provider entity ID used to lookup the application. This is a required property and is unique within the environment.").Description,
 							Computed:    true,
-						},
-						"sp_verification_certificate_ids": schema.SetAttribute{
-							Description:         samlSpVerificationCertificateIds.Description,
-							MarkdownDescription: samlSpVerificationCertificateIds.MarkdownDescription,
-							ElementType:         types.StringType,
-							DeprecationMessage:  "The `sp_verification_certificate_ids` attribute is deprecated and will be removed in the next major release.  Please use the `sp_verification.certificate_ids` attribute going forward.",
-							Computed:            true,
 						},
 						"sp_verification": schema.ListNestedAttribute{
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("A single list item that specifies SP signature verification settings.").Description,
@@ -1240,20 +1228,20 @@ func (p *applicationDataSourceModel) toStateSAMLOptions(apiObject *management.Ap
 	diags.Append(d...)
 
 	// SP Verification
-	var idList []string
 	spVerification := map[string]attr.Value{}
 	if v, ok := apiObject.GetSpVerificationOk(); ok {
 		spVerification["authn_request_signed"] = framework.BoolOkToTF(v.GetAuthnRequestSignedOk())
 
 		if v1, ok := v.GetCertificatesOk(); ok {
+			var idList []string
 
 			idList = make([]string, 0)
 			for _, j := range v1 {
 				idList = append(idList, j.GetId())
 			}
+			spVerification["certificate_ids"] = framework.StringSetToTF(idList)
 		}
 
-		spVerification["certificate_ids"] = framework.StringSetToTF(idList)
 	} else {
 		spVerification["authn_request_signed"] = types.BoolNull()
 		spVerification["certificate_ids"] = types.SetNull(types.StringType)
@@ -1281,23 +1269,22 @@ func (p *applicationDataSourceModel) toStateSAMLOptions(apiObject *management.Ap
 
 	// Build Main Object
 	samlOptions := map[string]attr.Value{
-		"type":                            framework.EnumOkToTF(apiObject.GetTypeOk()),
-		"acs_urls":                        framework.EnumSetOkToTF(apiObject.GetAcsUrlsOk()),
-		"assertion_duration":              framework.Int32OkToTF(apiObject.GetAssertionDurationOk()),
-		"sp_entity_id":                    framework.StringOkToTF(apiObject.GetSpEntityIdOk()),
-		"home_page_url":                   framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
-		"assertion_signed_enabled":        framework.BoolOkToTF(apiObject.GetAssertionSignedOk()),
-		"idp_signing_key":                 idpSigningKeyObj,
-		"enable_requested_authn_context":  framework.BoolOkToTF(apiObject.GetEnableRequestedAuthnContextOk()),
-		"nameid_format":                   framework.StringOkToTF(apiObject.GetNameIdFormatOk()),
-		"response_is_signed":              framework.BoolOkToTF(apiObject.GetResponseSignedOk()),
-		"slo_binding":                     framework.EnumOkToTF(apiObject.GetSloBindingOk()),
-		"slo_endpoint":                    framework.StringOkToTF(apiObject.GetSloEndpointOk()),
-		"slo_response_endpoint":           framework.StringOkToTF(apiObject.GetSloResponseEndpointOk()),
-		"slo_window":                      framework.Int32OkToTF(apiObject.GetSloWindowOk()),
-		"sp_verification_certificate_ids": framework.StringSetToTF(idList),
-		"sp_verification":                 spVerificationObj,
-		"cors_settings":                   corsSettingsObj,
+		"type":                           framework.EnumOkToTF(apiObject.GetTypeOk()),
+		"acs_urls":                       framework.EnumSetOkToTF(apiObject.GetAcsUrlsOk()),
+		"assertion_duration":             framework.Int32OkToTF(apiObject.GetAssertionDurationOk()),
+		"sp_entity_id":                   framework.StringOkToTF(apiObject.GetSpEntityIdOk()),
+		"home_page_url":                  framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
+		"assertion_signed_enabled":       framework.BoolOkToTF(apiObject.GetAssertionSignedOk()),
+		"idp_signing_key":                idpSigningKeyObj,
+		"enable_requested_authn_context": framework.BoolOkToTF(apiObject.GetEnableRequestedAuthnContextOk()),
+		"nameid_format":                  framework.StringOkToTF(apiObject.GetNameIdFormatOk()),
+		"response_is_signed":             framework.BoolOkToTF(apiObject.GetResponseSignedOk()),
+		"slo_binding":                    framework.EnumOkToTF(apiObject.GetSloBindingOk()),
+		"slo_endpoint":                   framework.StringOkToTF(apiObject.GetSloEndpointOk()),
+		"slo_response_endpoint":          framework.StringOkToTF(apiObject.GetSloResponseEndpointOk()),
+		"slo_window":                     framework.Int32OkToTF(apiObject.GetSloWindowOk()),
+		"sp_verification":                spVerificationObj,
+		"cors_settings":                  corsSettingsObj,
 	}
 
 	samlObject, d := types.ObjectValue(applicationSamlOptionsTFObjectTypes, samlOptions)

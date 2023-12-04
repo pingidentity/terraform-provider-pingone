@@ -345,7 +345,6 @@ Optional:
 - `slo_response_endpoint` (String) A string that specifies the endpoint URL to submit the logout response. If a value is not provided, the `slo_endpoint` property value is used to submit SLO response.
 - `slo_window` (Number) An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request. The minimum value is `1` hour and the maximum is `24` hours.
 - `sp_verification` (Block List, Max: 1) A single block item that specifies SP signature verification settings. (see [below for nested schema](#nestedblock--saml_options--sp_verification))
-- `sp_verification_certificate_ids` (Set of String, Deprecated) **Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `sp_verification.certificate_ids` parameter going forward.  A list that specifies the certificate IDs used to verify the service provider signature.
 - `type` (String) A string that specifies the type associated with the application.  Options are `WEB_APP` and `CUSTOM_APP`. Defaults to `WEB_APP`.
 
 <a id="nestedblock--saml_options--cors_settings"></a>
