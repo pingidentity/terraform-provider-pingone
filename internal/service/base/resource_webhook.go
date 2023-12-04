@@ -28,15 +28,16 @@ import (
 type WebhookResource serviceClientType
 
 type WebhookResourceModel struct {
-	Id                    types.String `tfsdk:"id"`
-	EnvironmentId         types.String `tfsdk:"environment_id"`
-	Name                  types.String `tfsdk:"name"`
-	Enabled               types.Bool   `tfsdk:"enabled"`
-	HttpEndpointUrl       types.String `tfsdk:"http_endpoint_url"`
-	HttpEndpointHeaders   types.Map    `tfsdk:"http_endpoint_headers"`
-	VerifyTLSCertificates types.Bool   `tfsdk:"verify_tls_certificates"`
-	Format                types.String `tfsdk:"format"`
-	FilterOptions         types.Object `tfsdk:"filter_options"`
+	Id                     types.String `tfsdk:"id"`
+	EnvironmentId          types.String `tfsdk:"environment_id"`
+	Name                   types.String `tfsdk:"name"`
+	Enabled                types.Bool   `tfsdk:"enabled"`
+	HttpEndpointUrl        types.String `tfsdk:"http_endpoint_url"`
+	HttpEndpointHeaders    types.Map    `tfsdk:"http_endpoint_headers"`
+	VerifyTLSCertificates  types.Bool   `tfsdk:"verify_tls_certificates"`
+	TLSClientAuthKeyPairId types.String `tfsdk:"tls_client_auth_key_pair_id"`
+	Format                 types.String `tfsdk:"format"`
+	FilterOptions          types.Object `tfsdk:"filter_options"`
 }
 
 type WebhookFilterOptionsResourceModel struct {
@@ -90,6 +91,10 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 	verifyTlsCertificatesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether a certificates should be verified. If this property's value is set to `false`, then all certificates are trusted. (Setting this property's value to false introduces a security risk.)",
 	).DefaultValue("true")
+
+	tlsClientAuthKeyPairIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the PingOne resource ID of a key to be used for outbound mutual TLS (mTLS) authentication.  This key is used as a client credential to authenticate the webhook.  When using the `pingone_key` resource, the key must have a `usage_type` of `OUTBOUND_MTLS`.  If this property is set, `verify_tls_certificates` must be set to `true`.",
+	).AppendMarkdownString("Value must be a valid PingOne resource ID.")
 
 	formatDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies one of the supported webhook formats.",
@@ -177,6 +182,16 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Computed:            true,
 
 				Default: booldefault.StaticBool(true),
+			},
+
+			"tls_client_auth_key_pair_id": schema.StringAttribute{
+				Description:         tlsClientAuthKeyPairIdDescription.Description,
+				MarkdownDescription: tlsClientAuthKeyPairIdDescription.MarkdownDescription,
+				Optional:            true,
+
+				Validators: []validator.String{
+					verify.P1ResourceIDValidator(),
+				},
 			},
 
 			"format": schema.StringAttribute{
@@ -555,6 +570,13 @@ func (p *WebhookResourceModel) expand(ctx context.Context) (*management.Subscrip
 		p.VerifyTLSCertificates.ValueBool(),
 	)
 
+	if !p.TLSClientAuthKeyPairId.IsNull() && !p.TLSClientAuthKeyPairId.IsUnknown() {
+		keyPair := management.NewSubscriptionTlsClientAuthKeyPair()
+		keyPair.SetId(p.TLSClientAuthKeyPairId.ValueString())
+
+		data.SetTlsClientAuthKeyPair(*keyPair)
+	}
+
 	return data, diags
 }
 
@@ -651,6 +673,12 @@ func (p *WebhookResourceModel) toState(apiObject *management.Subscription) diag.
 	}
 
 	p.VerifyTLSCertificates = framework.BoolOkToTF(apiObject.GetVerifyTlsCertificatesOk())
+
+	p.TLSClientAuthKeyPairId = types.StringNull()
+	if v, ok := apiObject.GetTlsClientAuthKeyPairOk(); ok {
+		p.TLSClientAuthKeyPairId = framework.StringOkToTF(v.GetIdOk())
+	}
+
 	p.Format = framework.EnumOkToTF(apiObject.GetFormatOk())
 
 	var d diag.Diagnostics

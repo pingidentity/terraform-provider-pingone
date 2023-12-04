@@ -273,6 +273,9 @@ func TestAccKey_PKCS12(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	pkcs12 := os.Getenv("PINGONE_KEY_PKCS12")
+	keystorePassword := os.Getenv("PINGONE_KEY_PKCS12_PASSWORD")
+
+	pkcs12Unencrypted := os.Getenv("PINGONE_KEY_PKCS12_UNENCRYPTED")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -280,13 +283,14 @@ func TestAccKey_PKCS12(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckPKCS12Key(t)
+			acctest.PreCheckPKCS12UnencryptedKey(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Key_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccKeyConfig_PKCS12(environmentName, licenseID, resourceName, pkcs12),
+				Config: testAccKeyConfig_PKCS12(environmentName, licenseID, resourceName, pkcs12, keystorePassword),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -306,7 +310,7 @@ func TestAccKey_PKCS12(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccKeyConfig_PKCS12(environmentName, licenseID, resourceName, pkcs12),
+				Config: testAccKeyConfig_PKCS12Unencrypted(environmentName, licenseID, resourceName, pkcs12Unencrypted),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -342,6 +346,7 @@ func TestAccKey_Change(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	pkcs12 := os.Getenv("PINGONE_KEY_PKCS12")
+	keystorePassword := os.Getenv("PINGONE_KEY_PKCS12_PASSWORD")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -401,7 +406,7 @@ func TestAccKey_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccKeyConfig_PKCS12(environmentName, licenseID, resourceName, pkcs12),
+				Config: testAccKeyConfig_PKCS12(environmentName, licenseID, resourceName, pkcs12, keystorePassword),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -610,7 +615,24 @@ resource "pingone_key" "%[3]s" {
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccKeyConfig_PKCS12(environmentName, licenseID, resourceName, pkcs12 string) string {
+func testAccKeyConfig_PKCS12(environmentName, licenseID, resourceName, pkcs12, keystorePassword string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_key" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  pkcs12_file_base64 = <<EOT
+%[4]s
+EOT
+
+  pkcs12_file_password = "%[5]s"
+
+  usage_type = "SIGNING"
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pkcs12, keystorePassword)
+}
+
+func testAccKeyConfig_PKCS12Unencrypted(environmentName, licenseID, resourceName, pkcs12 string) string {
 	return fmt.Sprintf(`
 	%[1]s
 

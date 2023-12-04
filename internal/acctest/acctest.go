@@ -159,6 +159,16 @@ func PreCheckPKCS12Key(t *testing.T) {
 	if v := os.Getenv("PINGONE_KEY_PKCS12"); v == "" {
 		t.Fatal("PINGONE_KEY_PKCS12 is missing and must be set")
 	}
+
+	if v := os.Getenv("PINGONE_KEY_PKCS12_PASSWORD"); v == "" {
+		t.Fatal("PINGONE_KEY_PKCS12_PASSWORD is missing and must be set")
+	}
+}
+
+func PreCheckPKCS12UnencryptedKey(t *testing.T) {
+	if v := os.Getenv("PINGONE_KEY_PKCS12_UNENCRYPTED"); v == "" {
+		t.Fatal("PINGONE_KEY_PKCS12_UNENCRYPTED is missing and must be set")
+	}
 }
 
 func PreCheckPKCS12WithCSR(t *testing.T) {

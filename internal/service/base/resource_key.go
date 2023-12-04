@@ -53,6 +53,7 @@ type keyResourceModel struct {
 	ValidityPeriod     types.Int64  `tfsdk:"validity_period"`
 	CustomCrl          types.String `tfsdk:"custom_crl"`
 	PKCS12FileBase64   types.String `tfsdk:"pkcs12_file_base64"`
+	PKCS12FilePassword types.String `tfsdk:"pkcs12_file_password"`
 }
 
 // Framework interfaces
@@ -88,7 +89,7 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 
 	nameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the system name of the key.",
-	).ConflictsWith([]string{"pkcs12_file_base64"}).RequiresReplace()
+	).ConflictsWith([]string{"pkcs12_file_base64", "pkcs12_file_password"}).RequiresReplace()
 
 	algorithmDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the key algorithm.",
@@ -100,19 +101,19 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 
 	issuerDnDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the distinguished name of the certificate issuer.",
-	).ConflictsWith([]string{"pkcs12_file_base64"}).RequiresReplace()
+	).ConflictsWith([]string{"pkcs12_file_base64", "pkcs12_file_password"}).RequiresReplace()
 
 	keyLengthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that specifies the key length. For RSA keys, options are `2048`, `3072`, `4096` and `7680`. For elliptical curve (EC) keys, options are `224`, `256`, `384` and `521`.",
-	).ConflictsWith([]string{"pkcs12_file_base64"}).RequiresReplace()
+	).ConflictsWith([]string{"pkcs12_file_base64", "pkcs12_file_password"}).RequiresReplace()
 
 	serialNumberDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer (in string data type) that specifies the serial number of the key or certificate.",
-	).ConflictsWith([]string{"pkcs12_file_base64"}).RequiresReplace()
+	).ConflictsWith([]string{"pkcs12_file_base64", "pkcs12_file_password"}).RequiresReplace()
 
 	signatureAlgorithmDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A string that specifies the signature algorithm of the key. For RSA keys, options are `%s`, `%s` and `%s`. For elliptical curve (EC) keys, options are `%s`, `%s` and `%s`.", string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_ECDSA)),
-	).ConflictsWith([]string{"pkcs12_file_base64"}).RequiresReplace()
+	).ConflictsWith([]string{"pkcs12_file_base64", "pkcs12_file_password"}).RequiresReplace()
 
 	statusDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the status of the key.",
@@ -120,7 +121,7 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 
 	subjectDnDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the distinguished name of the subject being secured.",
-	).ConflictsWith([]string{"pkcs12_file_base64"}).RequiresReplace()
+	).ConflictsWith([]string{"pkcs12_file_base64", "pkcs12_file_password"}).RequiresReplace()
 
 	usageTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies how the certificate is used.",
@@ -128,7 +129,7 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 
 	validityPeriodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that specifies the number of days the key is valid.",
-	).ConflictsWith([]string{"pkcs12_file_base64"}).RequiresReplace()
+	).ConflictsWith([]string{"pkcs12_file_base64", "pkcs12_file_password"}).RequiresReplace()
 
 	customCrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A URL string of a custom Certificate Revokation List endpoint.  Used for certificates of type `ISSUANCE`.",
@@ -136,6 +137,10 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 
 	pkcs12FileBase64Description := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A base64 encoded PKCS12 file to import.",
+	).ConflictsWith([]string{"name", "algorithm", "issuer_dn", "key_length", "serial_number", "signature_algorithm", "subject_dn", "validity_period", "custom_crl"}).RequiresReplace()
+
+	pkcs12FilePasswordDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the password to decrypt the PKCS12 file, if it is encrypted.  Optional if `pkcs12_file_base64` is defined.",
 	).ConflictsWith([]string{"name", "algorithm", "issuer_dn", "key_length", "serial_number", "signature_algorithm", "subject_dn", "validity_period", "custom_crl"}).RequiresReplace()
 
 	resp.Schema = schema.Schema{
@@ -161,7 +166,10 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
-					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("pkcs12_file_base64")),
+					stringvalidator.ConflictsWith(
+						path.MatchRelative().AtParent().AtName("pkcs12_file_base64"),
+						path.MatchRelative().AtParent().AtName("pkcs12_file_password"),
+					),
 					stringvalidator.AlsoRequires(
 						path.MatchRelative().AtParent().AtName("name"),
 						path.MatchRelative().AtParent().AtName("algorithm"),
@@ -185,7 +193,10 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 
 				Validators: []validator.String{
 					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumCertificateKeyAlgorithmEnumValues)...),
-					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("pkcs12_file_base64")),
+					stringvalidator.ConflictsWith(
+						path.MatchRelative().AtParent().AtName("pkcs12_file_base64"),
+						path.MatchRelative().AtParent().AtName("pkcs12_file_password"),
+					),
 					stringvalidator.AlsoRequires(
 						path.MatchRelative().AtParent().AtName("name"),
 						path.MatchRelative().AtParent().AtName("algorithm"),
@@ -226,7 +237,10 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				},
 
 				Validators: []validator.String{
-					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("pkcs12_file_base64")),
+					stringvalidator.ConflictsWith(
+						path.MatchRelative().AtParent().AtName("pkcs12_file_base64"),
+						path.MatchRelative().AtParent().AtName("pkcs12_file_password"),
+					),
 				},
 			},
 
@@ -249,7 +263,10 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 							allowedKeyLengthsEC...,
 						),
 					),
-					int64validator.ConflictsWith(path.MatchRelative().AtParent().AtName("pkcs12_file_base64")),
+					int64validator.ConflictsWith(
+						path.MatchRelative().AtParent().AtName("pkcs12_file_base64"),
+						path.MatchRelative().AtParent().AtName("pkcs12_file_password"),
+					),
 					int64validator.AlsoRequires(
 						path.MatchRelative().AtParent().AtName("name"),
 						path.MatchRelative().AtParent().AtName("algorithm"),
@@ -272,7 +289,10 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				},
 
 				Validators: []validator.String{
-					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("pkcs12_file_base64")),
+					stringvalidator.ConflictsWith(
+						path.MatchRelative().AtParent().AtName("pkcs12_file_base64"),
+						path.MatchRelative().AtParent().AtName("pkcs12_file_password"),
+					),
 				},
 			},
 
@@ -288,7 +308,10 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 
 				Validators: []validator.String{
 					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumCertificateKeySignagureAlgorithmEnumValues)...),
-					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("pkcs12_file_base64")),
+					stringvalidator.ConflictsWith(
+						path.MatchRelative().AtParent().AtName("pkcs12_file_base64"),
+						path.MatchRelative().AtParent().AtName("pkcs12_file_password"),
+					),
 					stringvalidator.AlsoRequires(
 						path.MatchRelative().AtParent().AtName("name"),
 						path.MatchRelative().AtParent().AtName("algorithm"),
@@ -331,7 +354,10 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
-					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("pkcs12_file_base64")),
+					stringvalidator.ConflictsWith(
+						path.MatchRelative().AtParent().AtName("pkcs12_file_base64"),
+						path.MatchRelative().AtParent().AtName("pkcs12_file_password"),
+					),
 					stringvalidator.AlsoRequires(
 						path.MatchRelative().AtParent().AtName("name"),
 						path.MatchRelative().AtParent().AtName("algorithm"),
@@ -365,7 +391,10 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 
 				Validators: []validator.Int64{
 					int64validator.AtLeast(attrMinLength),
-					int64validator.ConflictsWith(path.MatchRelative().AtParent().AtName("pkcs12_file_base64")),
+					int64validator.ConflictsWith(
+						path.MatchRelative().AtParent().AtName("pkcs12_file_base64"),
+						path.MatchRelative().AtParent().AtName("pkcs12_file_password"),
+					),
 					int64validator.AlsoRequires(
 						path.MatchRelative().AtParent().AtName("name"),
 						path.MatchRelative().AtParent().AtName("algorithm"),
@@ -384,7 +413,10 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(regexp.MustCompile(`^http:\/\/[a-zA-Z0-9.-\/]*$`), "`custom_crl` must be a `http://` URL endpoint."),
-					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("pkcs12_file_base64")),
+					stringvalidator.ConflictsWith(
+						path.MatchRelative().AtParent().AtName("pkcs12_file_base64"),
+						path.MatchRelative().AtParent().AtName("pkcs12_file_password"),
+					),
 				},
 			},
 
@@ -400,6 +432,34 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 
 				Validators: []validator.String{
 					stringvalidatorinternal.IsBase64Encoded(),
+					stringvalidator.ConflictsWith(
+						path.MatchRelative().AtParent().AtName("name"),
+						path.MatchRelative().AtParent().AtName("algorithm"),
+						path.MatchRelative().AtParent().AtName("issuer_dn"),
+						path.MatchRelative().AtParent().AtName("key_length"),
+						path.MatchRelative().AtParent().AtName("serial_number"),
+						path.MatchRelative().AtParent().AtName("signature_algorithm"),
+						path.MatchRelative().AtParent().AtName("subject_dn"),
+						path.MatchRelative().AtParent().AtName("validity_period"),
+						path.MatchRelative().AtParent().AtName("custom_crl"),
+					),
+				},
+			},
+
+			"pkcs12_file_password": schema.StringAttribute{
+				Description:         pkcs12FilePasswordDescription.Description,
+				MarkdownDescription: pkcs12FilePasswordDescription.MarkdownDescription,
+				Optional:            true,
+				Sensitive:           true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+
+				Validators: []validator.String{
+					stringvalidator.AlsoRequires(
+						path.MatchRelative().AtParent().AtName("pkcs12_file_base64"),
+					),
 					stringvalidator.ConflictsWith(
 						path.MatchRelative().AtParent().AtName("name"),
 						path.MatchRelative().AtParent().AtName("algorithm"),
@@ -522,12 +582,24 @@ func (r *KeyResource) Create(ctx context.Context, req resource.CreateRequest, re
 			return
 		}
 
+		var archivePassword *string
+
+		if !plan.PKCS12FilePassword.IsNull() && !plan.PKCS12FilePassword.IsUnknown() {
+			archivePassword = plan.PKCS12FilePassword.ValueStringPointer()
+		}
+
 		// Run the API call
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ManagementAPIClient.CertificateManagementApi.CreateKey(ctx, plan.EnvironmentId.ValueString()).ContentType("multipart/form-data").UsageType(plan.UsageType.ValueString()).File(&archive).Execute()
+				request := r.Client.ManagementAPIClient.CertificateManagementApi.CreateKey(ctx, plan.EnvironmentId.ValueString()).ContentType("multipart/form-data").UsageType(plan.UsageType.ValueString()).File(&archive)
+
+				if archivePassword != nil {
+					request = request.Password(*archivePassword)
+				}
+
+				fO, fR, fErr := request.Execute()
 				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"CreateKey",
