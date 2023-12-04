@@ -189,7 +189,6 @@ Read-Only:
 - `slo_window` (Number) An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request.
 - `sp_entity_id` (String) A string that specifies the service provider entity ID used to lookup the application. This is a required property and is unique within the environment.
 - `sp_verification` (Attributes List) A single list item that specifies SP signature verification settings. (see [below for nested schema](#nestedatt--saml_options--sp_verification))
-- `sp_verification_certificate_ids` (Set of String, Deprecated) **Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `sp_verification.certificate_ids` attribute going forward.  A list that specifies the certificate IDs used to verify the service provider signature.
 - `type` (String) A string that specifies the type associated with the application.
 
 <a id="nestedatt--saml_options--cors_settings"></a>

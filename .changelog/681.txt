@@ -1,0 +1,7 @@
+```release-note:breaking-change
+`resource/pingone_application`: Removal of deprecated parameter `saml_options.sp_verification_certificate_ids`.  Use the `saml_options.sp_verification.certificate_ids` parameter going forward.
+```
+
+```release-note:breaking-change
+`data-source/pingone_application`: Removal of deprecated attribute `saml_options.sp_verification_certificate_ids`.  Use the `saml_options.sp_verification.certificate_ids` attribute going forward.
+```

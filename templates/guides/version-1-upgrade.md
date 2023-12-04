@@ -57,6 +57,40 @@ resource "pingone_application" "my_awesome_saml_app" {
 }
 ```
 
+### `saml_options.sp_verification_certificate_ids` optional parameter removed
+
+This parameter was previously deprecated and has been removed.  Use the `saml_options.sp_verification.certificate_ids` parameter going forward.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_saml_app" {
+  # ... other configuration parameters
+
+  saml_options {
+    # ... other configuration parameters
+
+    sp_verification_certificate_ids = [pingone_certificate.my_awesome_certificate.id]
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_saml_app" {
+  # ... other configuration parameters
+
+  saml_options = {
+    # ... other configuration parameters
+
+    sp_verification = {
+      certificate_ids = [pingone_certificate.my_awesome_certificate.id]
+    }
+  }
+}
+```
+
 ## Resource: pingone_application_resource_grant
 
 ### `resource_id` parameter changed
@@ -991,6 +1025,12 @@ resource "pingone_webhook" "my_webhook" {
   }
 }
 ```
+
+## Data Source: pingone_application
+
+### `saml_options.sp_verification_certificate_ids` computed attribute removed
+
+This parameter was previously deprecated and has been removed.  Use the `saml_options.sp_verification.certificate_ids` attribute going forward.
 
 ## Data Source: pingone_environment
 

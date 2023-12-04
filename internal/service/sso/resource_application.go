@@ -603,25 +603,11 @@ func ResourceApplication() *schema.Resource {
 							Type:        schema.TypeString,
 							Required:    true,
 						},
-						"sp_verification_certificate_ids": {
-							Description:   "**Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `sp_verification.certificate_ids` parameter going forward.  A list that specifies the certificate IDs used to verify the service provider signature.",
-							Type:          schema.TypeSet,
-							Optional:      true,
-							Computed:      true,
-							ConflictsWith: []string{"saml_options.0.sp_verification"},
-							Deprecated:    "The `sp_verification_certificate_ids` parameter is deprecated and will be removed in the next major release.  Please use the `sp_verification.certificate_ids` parameter going forward.",
-							Elem: &schema.Schema{
-								Type:             schema.TypeString,
-								ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-							},
-						},
 						"sp_verification": {
-							Description:   "A single block item that specifies SP signature verification settings.",
-							Type:          schema.TypeList,
-							MaxItems:      1,
-							Optional:      true,
-							Computed:      true,
-							ConflictsWith: []string{"saml_options.0.sp_verification_certificate_ids"},
+							Description: "A single block item that specifies SP signature verification settings.",
+							Type:        schema.TypeList,
+							MaxItems:    1,
+							Optional:    true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"authn_request_signed": {
@@ -1638,16 +1624,6 @@ func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML,
 			application.SetSloWindow(int32(v1))
 		}
 
-		if v1, ok := samlOptions["sp_verification_certificate_ids"].(*schema.Set); ok && v1 != nil && len(v1.List()) > 0 && v1.List()[0] != nil {
-			certificates := make([]management.ApplicationSAMLAllOfSpVerificationCertificates, 0)
-			for _, j := range v1.List() {
-				certificate := *management.NewApplicationSAMLAllOfSpVerificationCertificates(j.(string))
-				certificates = append(certificates, certificate)
-			}
-
-			application.SetSpVerification(*management.NewApplicationSAMLAllOfSpVerification(certificates))
-		}
-
 		if v1, ok := samlOptions["sp_verification"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
 			spVerificationOptions := v1[0].(map[string]interface{})
 
@@ -2185,10 +2161,9 @@ func flattenSAMLOptions(application *management.ApplicationSAML) interface{} {
 	}
 
 	if v, ok := application.GetSpVerificationOk(); ok {
-		item["sp_verification"], item["sp_verification_certificate_ids"] = flattenSpVerificationOptions(v)
+		item["sp_verification"] = flattenSpVerificationOptions(v)
 	} else {
 		item["sp_verification"] = nil
-		item["sp_verification_certificate_ids"] = nil
 	}
 
 	if v, ok := application.GetCorsSettingsOk(); ok {
@@ -2223,7 +2198,7 @@ func flattenIdpSigningOptions(idpSigning *management.ApplicationSAMLAllOfIdpSign
 	return append(items, item)
 }
 
-func flattenSpVerificationOptions(spVerification *management.ApplicationSAMLAllOfSpVerification) (interface{}, []string) {
+func flattenSpVerificationOptions(spVerification *management.ApplicationSAMLAllOfSpVerification) interface{} {
 
 	item := map[string]interface{}{}
 
@@ -2246,5 +2221,5 @@ func flattenSpVerificationOptions(spVerification *management.ApplicationSAMLAllO
 	}
 
 	items := make([]interface{}, 0)
-	return append(items, item), certficateIds
+	return append(items, item)
 }
