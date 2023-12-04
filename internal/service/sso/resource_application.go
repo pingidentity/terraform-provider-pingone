@@ -2284,7 +2284,7 @@ func flattenSpVerificationOptions(spVerification *management.ApplicationSAMLAllO
 	certficateIds := make([]string, 0)
 
 	if v, ok := spVerification.GetAuthnRequestSignedOk(); ok {
-		item["authn_request_signed"] = bool(*v)
+		item["authn_request_signed"] = *v
 	} else {
 		item["authn_request_signed"] = nil
 	}
