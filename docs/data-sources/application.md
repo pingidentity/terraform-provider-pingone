@@ -37,17 +37,17 @@ data "pingone_application" "example_by_id" {
 
 ### Read-Only
 
-- `access_control_group_options` (Attributes List) Group access control settings. (see [below for nested schema](#nestedatt--access_control_group_options))
+- `access_control_group_options` (Attributes) Group access control settings. (see [below for nested schema](#nestedatt--access_control_group_options))
 - `access_control_role_type` (String) The user role required to access the application.  A user is an admin user if the user has one or more of the following roles: `Organization Admin`, `Environment Admin`, `Identity Data Admin`, or `Client Application Developer`.
 - `description` (String) A string that specifies the description of the application.
 - `enabled` (Boolean) A boolean that specifies whether the application is enabled in the environment.
-- `external_link_options` (Attributes List) External link application specific settings. (see [below for nested schema](#nestedatt--external_link_options))
+- `external_link_options` (Attributes) External link application specific settings. (see [below for nested schema](#nestedatt--external_link_options))
 - `hidden_from_app_portal` (Boolean) A boolean to specify whether the application is hidden in the application portal despite the configured group access policy.
-- `icon` (Attributes List) The HREF and the ID for the application icon. (see [below for nested schema](#nestedatt--icon))
+- `icon` (Attributes) The HREF and the ID for the application icon. (see [below for nested schema](#nestedatt--icon))
 - `id` (String) The ID of this resource.
 - `login_page_url` (String) A string that specifies the custom login page URL for the application.
-- `oidc_options` (Attributes List) OIDC/OAuth application specific settings. (see [below for nested schema](#nestedatt--oidc_options))
-- `saml_options` (Attributes List) SAML application specific settings. (see [below for nested schema](#nestedatt--saml_options))
+- `oidc_options` (Attributes) OIDC/OAuth application specific settings. (see [below for nested schema](#nestedatt--oidc_options))
+- `saml_options` (Attributes) SAML application specific settings. (see [below for nested schema](#nestedatt--saml_options))
 - `tags` (Set of String) An array that specifies the list of labels associated with the application.
 
 <a id="nestedatt--access_control_group_options"></a>
@@ -83,14 +83,14 @@ Read-Only:
 
 - `additional_refresh_token_replay_protection_enabled` (Boolean) A boolean that, when set to `true`, if you attempt to reuse the refresh token, the authorization server immediately revokes the reused refresh token, as well as all descendant tokens.  Defaults to `true`.
 - `allow_wildcards_in_redirect_uris` (Boolean) A boolean to specify whether wildcards are allowed in redirect URIs. For more information, see [Wildcards in Redirect URIs](https://docs.pingidentity.com/csh?context=p1_c_wildcard_redirect_uri).
-- `certificate_based_authentication` (Attributes List) Certificate based authentication settings. (see [below for nested schema](#nestedatt--oidc_options--certificate_based_authentication))
+- `certificate_based_authentication` (Attributes) Certificate based authentication settings. (see [below for nested schema](#nestedatt--oidc_options--certificate_based_authentication))
 - `client_id` (String) A string that specifies the application ID used to authenticate to the authorization server.
 - `client_secret` (String, Sensitive) A string that specifies the application secret ID used to authenticate to the authorization server.
-- `cors_settings` (Attributes List) A single block that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings. (see [below for nested schema](#nestedatt--oidc_options--cors_settings))
+- `cors_settings` (Attributes) A single object that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings. (see [below for nested schema](#nestedatt--oidc_options--cors_settings))
 - `grant_types` (Set of String) A list that specifies the grant type for the authorization request.
 - `home_page_url` (String) The custom home page URL for the application.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.
 - `initiate_login_uri` (String) A string that specifies the URI to use for third-parties to begin the sign-on process for the application.
-- `mobile_app` (Attributes List) Mobile application integration settings. (see [below for nested schema](#nestedatt--oidc_options--mobile_app))
+- `mobile_app` (Attributes) Mobile application integration settings. (see [below for nested schema](#nestedatt--oidc_options--mobile_app))
 - `par_requirement` (String) A string that specifies whether pushed authorization requests (PAR) are required.
 - `par_timeout` (Number) An integer that specifies the pushed authorization request (PAR) timeout in seconds.
 - `pkce_enforcement` (String) A string that specifies how `PKCE` request parameters are handled on the authorize request.
@@ -131,7 +131,7 @@ Read-Only:
 - `bundle_id` (String) A string that specifies the bundle associated with the application, for push notifications in native apps.
 - `huawei_app_id` (String) The unique identifier for the app on the device and in the Huawei Mobile Service AppGallery.
 - `huawei_package_name` (String) The package name associated with the application, for push notifications in native apps.
-- `integrity_detection` (Attributes List) Mobile application integrity detection settings. (see [below for nested schema](#nestedatt--oidc_options--mobile_app--integrity_detection))
+- `integrity_detection` (Attributes) Mobile application integrity detection settings. (see [below for nested schema](#nestedatt--oidc_options--mobile_app--integrity_detection))
 - `package_name` (String) A string that specifies the package name associated with the application, for push notifications in native apps.
 - `passcode_refresh_seconds` (Number) The amount of time a passcode should be displayed before being replaced with a new passcode.
 - `universal_app_link` (String) A string that specifies a URI prefix that enables direct triggering of the mobile application when scanning a QR code.
@@ -141,10 +141,10 @@ Read-Only:
 
 Read-Only:
 
-- `cache_duration` (Attributes List) Indicates the caching duration of successful integrity detection calls. (see [below for nested schema](#nestedatt--oidc_options--mobile_app--integrity_detection--cache_duration))
+- `cache_duration` (Attributes) Indicates the caching duration of successful integrity detection calls. (see [below for nested schema](#nestedatt--oidc_options--mobile_app--integrity_detection--cache_duration))
 - `enabled` (Boolean) A boolean that specifies whether device integrity detection takes place on mobile devices.
 - `excluded_platforms` (Set of String) Indicates OS excluded from device integrity checking.
-- `google_play` (Attributes List) A single block that describes Google Play Integrity API credential settings for Android device integrity detection. (see [below for nested schema](#nestedatt--oidc_options--mobile_app--integrity_detection--google_play))
+- `google_play` (Attributes) A single object that describes Google Play Integrity API credential settings for Android device integrity detection. (see [below for nested schema](#nestedatt--oidc_options--mobile_app--integrity_detection--google_play))
 
 <a id="nestedatt--oidc_options--mobile_app--integrity_detection--cache_duration"></a>
 ### Nested Schema for `oidc_options.mobile_app.integrity_detection.google_play`
@@ -177,10 +177,10 @@ Read-Only:
 - `acs_urls` (Set of String) A list of string that specifies the Assertion Consumer Service URLs. The first URL in the list is used as default (there must be at least one URL).
 - `assertion_duration` (Number) An integer that specifies the assertion validity duration in seconds.
 - `assertion_signed_enabled` (Boolean) A boolean that specifies whether the SAML assertion itself should be signed.
-- `cors_settings` (Attributes List) A single block that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings. (see [below for nested schema](#nestedatt--saml_options--cors_settings))
+- `cors_settings` (Attributes) A single object that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings. (see [below for nested schema](#nestedatt--saml_options--cors_settings))
 - `enable_requested_authn_context` (Boolean) A boolean that specifies whether `requestedAuthnContext` is taken into account in policy decision-making.
 - `home_page_url` (String) A string that specifies the custom home page URL for the application.
-- `idp_signing_key` (Attributes List) SAML application assertion/response signing key settings. (see [below for nested schema](#nestedatt--saml_options--idp_signing_key))
+- `idp_signing_key` (Attributes) SAML application assertion/response signing key settings. (see [below for nested schema](#nestedatt--saml_options--idp_signing_key))
 - `nameid_format` (String) A string that specifies the format of the Subject NameID attibute in the SAML assertion.
 - `response_is_signed` (Boolean) A boolean that specifies whether the SAML assertion response itself should be signed.
 - `slo_binding` (String) A string that specifies the binding protocol to be used for the logout response.
@@ -188,7 +188,7 @@ Read-Only:
 - `slo_response_endpoint` (String) A string that specifies the endpoint URL to submit the logout response.
 - `slo_window` (Number) An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request.
 - `sp_entity_id` (String) A string that specifies the service provider entity ID used to lookup the application. This is a required property and is unique within the environment.
-- `sp_verification` (Attributes List) A single list item that specifies SP signature verification settings. (see [below for nested schema](#nestedatt--saml_options--sp_verification))
+- `sp_verification` (Attributes) A single object that specifies SP signature verification settings. (see [below for nested schema](#nestedatt--saml_options--sp_verification))
 - `type` (String) A string that specifies the type associated with the application.
 
 <a id="nestedatt--saml_options--cors_settings"></a>
