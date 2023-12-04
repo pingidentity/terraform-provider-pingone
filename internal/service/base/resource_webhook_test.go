@@ -650,7 +650,7 @@ EOT
 
   pkcs12_file_password = "%[6]s"
 
-  usage_type = "SIGNING"
+  usage_type = "OUTBOUND_MTLS"
 }
 
 resource "pingone_webhook" "%[3]s" {
@@ -683,7 +683,7 @@ EOT
 
   pkcs12_file_password = "%[6]s"
 
-  usage_type = "SIGNING"
+  usage_type = "OUTBOUND_MTLS"
 }
 
 resource "pingone_webhook" "%[3]s" {
