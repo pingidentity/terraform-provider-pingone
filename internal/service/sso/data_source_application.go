@@ -44,117 +44,6 @@ type applicationDataSourceModel struct {
 	SAMLOptions               types.List   `tfsdk:"saml_options"`
 }
 
-var (
-	applicationCorsSettingsTFObjectTypes = map[string]attr.Type{
-		"behavior": types.StringType,
-		"origins":  types.SetType{ElemType: types.StringType},
-	}
-
-	applicationOidcOptionsTFObjectTypes = map[string]attr.Type{
-		"type":                                        types.StringType,
-		"home_page_url":                               types.StringType,
-		"initiate_login_uri":                          types.StringType,
-		"target_link_uri":                             types.StringType,
-		"grant_types":                                 types.SetType{ElemType: types.StringType},
-		"response_types":                              types.SetType{ElemType: types.StringType},
-		"token_endpoint_authn_method":                 types.StringType,
-		"par_requirement":                             types.StringType,
-		"par_timeout":                                 types.Int64Type,
-		"pkce_enforcement":                            types.StringType,
-		"redirect_uris":                               types.SetType{ElemType: types.StringType},
-		"allow_wildcards_in_redirect_uris":            types.BoolType,
-		"post_logout_redirect_uris":                   types.SetType{ElemType: types.StringType},
-		"refresh_token_duration":                      types.Int64Type,
-		"refresh_token_rolling_duration":              types.Int64Type,
-		"refresh_token_rolling_grace_period_duration": types.Int64Type,
-		"additional_refresh_token_replay_protection_enabled": types.BoolType,
-		"client_id":                        types.StringType,
-		"client_secret":                    types.StringType,
-		"certificate_based_authentication": types.ListType{ElemType: types.ObjectType{AttrTypes: applicationOidcOptionsCertificateAuthenticationTFObjectTypes}},
-		"support_unsigned_request_object":  types.BoolType,
-		"require_signed_request_object":    types.BoolType,
-		"cors_settings":                    types.ListType{ElemType: types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes}},
-		"mobile_app":                       types.ListType{ElemType: types.ObjectType{AttrTypes: applicationOidcMobileAppTFObjectTypes}},
-	}
-
-	applicationOidcMobileAppTFObjectTypes = map[string]attr.Type{
-		"bundle_id":                types.StringType,
-		"package_name":             types.StringType,
-		"huawei_app_id":            types.StringType,
-		"huawei_package_name":      types.StringType,
-		"passcode_refresh_seconds": types.Int64Type,
-		"universal_app_link":       types.StringType,
-		"integrity_detection":      types.ListType{ElemType: types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionTFObjectTypes}},
-	}
-
-	applicationOidcMobileAppIntegrityDetectionTFObjectTypes = map[string]attr.Type{
-		"enabled":            types.BoolType,
-		"excluded_platforms": types.SetType{ElemType: types.StringType},
-		"cache_duration":     types.ListType{ElemType: types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionCacheDurationTFObjectTypes}},
-		"google_play":        types.ListType{ElemType: types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionGooglePlayTFObjectTypes}},
-	}
-
-	applicationOidcMobileAppIntegrityDetectionCacheDurationTFObjectTypes = map[string]attr.Type{
-		"amount": types.Int64Type,
-		"units":  types.StringType,
-	}
-
-	applicationOidcMobileAppIntegrityDetectionGooglePlayTFObjectTypes = map[string]attr.Type{
-		"decryption_key":                   types.StringType,
-		"service_account_credentials_json": types.StringType,
-		"verification_key":                 types.StringType,
-		"verification_type":                types.StringType,
-	}
-
-	applicationOidcOptionsCertificateAuthenticationTFObjectTypes = map[string]attr.Type{
-		"key_id": types.StringType,
-	}
-
-	applicationSamlOptionsTFObjectTypes = map[string]attr.Type{
-		"home_page_url":                   types.StringType,
-		"type":                            types.StringType,
-		"acs_urls":                        types.SetType{ElemType: types.StringType},
-		"assertion_duration":              types.Int64Type,
-		"assertion_signed_enabled":        types.BoolType,
-		"idp_signing_key":                 types.ListType{ElemType: types.ObjectType{AttrTypes: applicationSamlOptionsIdpSigningKeyTFObjectTypes}},
-		"enable_requested_authn_context":  types.BoolType,
-		"nameid_format":                   types.StringType,
-		"response_is_signed":              types.BoolType,
-		"slo_binding":                     types.StringType,
-		"slo_endpoint":                    types.StringType,
-		"slo_response_endpoint":           types.StringType,
-		"slo_window":                      types.Int64Type,
-		"sp_entity_id":                    types.StringType,
-		"sp_verification_certificate_ids": types.SetType{ElemType: types.StringType},
-		"sp_verification":                 types.ListType{ElemType: types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes}},
-		"cors_settings":                   types.ListType{ElemType: types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes}},
-	}
-
-	applicationSamlOptionsIdpSigningKeyTFObjectTypes = map[string]attr.Type{
-		"algorithm": types.StringType,
-		"key_id":    types.StringType,
-	}
-
-	applicationSamlOptionsSpVerificationTFObjectTypes = map[string]attr.Type{
-		"certificate_ids":      types.SetType{ElemType: types.StringType},
-		"authn_request_signed": types.BoolType,
-	}
-
-	applicationExternalLinkOptionsTFObjectTypes = map[string]attr.Type{
-		"home_page_url": types.StringType,
-	}
-
-	applicationIconTFObjectTypes = map[string]attr.Type{
-		"id":   types.StringType,
-		"href": types.StringType,
-	}
-
-	applicationAccessControlGroupOptionsTFObjectTypes = map[string]attr.Type{
-		"type":   types.StringType,
-		"groups": types.SetType{ElemType: types.StringType},
-	}
-)
-
 // Framework interfaces
 var (
 	_ datasource.DataSource = &ApplicationDataSource{}
@@ -982,7 +871,7 @@ func (p *applicationDataSourceModel) accessControlOkToTF(apiObject *management.A
 		}
 
 		groupObj := map[string]attr.Value{
-			"type":   framework.StringOkToTF(group.GetTypeOk()),
+			"type":   framework.EnumOkToTF(group.GetTypeOk()),
 			"groups": framework.StringSetToTF(groups),
 		}
 
