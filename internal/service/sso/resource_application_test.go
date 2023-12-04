@@ -2841,22 +2841,32 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
 	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
 
+	pem_cert := os.Getenv("PINGONE_KEY_PEM_CERT")
+	pkcs7_cert := os.Getenv("PINGONE_KEY_PKCS7_CERT")
+
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckPKCS7Cert(t)
+			acctest.PreCheckPEMCert(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_SAML_Full(resourceName, name, image),
+				Config: testAccApplicationConfig_SAML_Full(environmentName, licenseID, resourceName, name, image, pkcs7_cert, pem_cert),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -2899,7 +2909,14 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_response_endpoint", "https://www.pingidentity.com/sloresponseendpoint"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_window", "3"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_entity_id", fmt.Sprintf("sp:entity:%s", resourceName)),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification_certificate_ids.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification_certificate_ids.#", "2"),
+					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.sp_verification_certificate_ids.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.sp_verification_certificate_ids.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification.0.authn_request_signed", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification.0.certificate_ids.#", "2"),
+					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.sp_verification.0.certificate_ids.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.sp_verification.0.certificate_ids.1", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.cors_settings.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.cors_settings.0.behavior", "ALLOW_SPECIFIC_ORIGINS"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.cors_settings.0.origins.#", "8"),
@@ -2941,19 +2958,32 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
 	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	image := base64.StdEncoding.EncodeToString(data)
+
+	pem_cert := os.Getenv("PINGONE_KEY_PEM_CERT")
+	pkcs7_cert := os.Getenv("PINGONE_KEY_PKCS7_CERT")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckPKCS7Cert(t)
+			acctest.PreCheckPEMCert(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_SAML_Minimal(resourceName, name),
+				Config: testAccApplicationConfig_SAML_Minimal(environmentName, licenseID, resourceName, name, image, pkcs7_cert, pem_cert),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -2982,6 +3012,7 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_window", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_entity_id", fmt.Sprintf("sp:entity:%s", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification_certificate_ids.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
 				),
@@ -4284,47 +4315,67 @@ resource "pingone_application" "%[2]s" {
 `, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationConfig_SAML_Full(resourceName, name, image string) string {
+func testAccApplicationConfig_SAML_Full(environmentName, licenseID, resourceName, name, image, pkcs7_cert, pem_cert string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_group" "%[2]s-1" {
-  environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s-1"
+resource "pingone_group" "%[3]s-1" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s-1"
 }
 
-resource "pingone_group" "%[2]s-2" {
-  environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s-2"
+resource "pingone_group" "%[3]s-2" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s-2"
 }
 
-resource "pingone_key" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
+resource "pingone_key" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
 
-  name                = "%[3]s"
+  name                = "%[4]s"
   algorithm           = "EC"
   key_length          = 256
   signature_algorithm = "SHA384withECDSA"
-  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  subject_dn          = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   usage_type          = "SIGNING"
   validity_period     = 365
 }
 
-resource "pingone_image" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
+resource "pingone_image" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
 
-  image_file_base64 = "%[4]s"
+  image_file_base64 = "%[5]s"
 }
 
-resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
+resource "pingone_certificate" "%[3]s-1" {
+  environment_id = pingone_environment.%[2]s.id
+
+  pkcs7_file_base64 = <<EOT
+%[6]s
+EOT
+
+  usage_type = "SIGNING"
+}
+
+resource "pingone_certificate" "%[3]s-2" {
+  environment_id = pingone_environment.%[2]s.id
+
+  pem_file = <<EOT
+%[7]s
+EOT
+
+  usage_type = "SIGNING"
+}
+
+resource "pingone_application" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
   description    = "My test SAML app"
   login_page_url = "https://www.pingidentity.com"
 
   icon {
-    id   = pingone_image.%[2]s.id
-    href = pingone_image.%[2]s.uploaded_image[0].href
+    id   = pingone_image.%[3]s.id
+    href = pingone_image.%[3]s.uploaded_image[0].href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
@@ -4333,8 +4384,8 @@ resource "pingone_application" "%[2]s" {
     type = "ANY_GROUP"
 
     groups = [
-      pingone_group.%[2]s-2.id,
-      pingone_group.%[2]s-1.id
+      pingone_group.%[3]s-2.id,
+      pingone_group.%[3]s-1.id
     ]
   }
 
@@ -4347,10 +4398,10 @@ resource "pingone_application" "%[2]s" {
     home_page_url      = "https://www.pingidentity.com"
     acs_urls           = ["https://www.pingidentity.com", "https://pingidentity.com"]
     assertion_duration = 3600
-    sp_entity_id       = "sp:entity:%[2]s"
+    sp_entity_id       = "sp:entity:%[3]s"
 
     assertion_signed_enabled       = false
-    idp_signing_key_id             = pingone_key.%[2]s.id
+    idp_signing_key_id             = pingone_key.%[3]s.id
     enable_requested_authn_context = true
     nameid_format                  = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
     response_is_signed             = true
@@ -4359,7 +4410,13 @@ resource "pingone_application" "%[2]s" {
     slo_response_endpoint          = "https://www.pingidentity.com/sloresponseendpoint"
     slo_window                     = 3
 
-    // sp_verification_certificate_ids = []
+    sp_verification {
+      authn_request_signed = true
+      certificate_ids = [
+        pingone_certificate.%[3]s-2.id,
+        pingone_certificate.%[3]s-1.id,
+      ]
+    }
 
     cors_settings {
       behavior = "ALLOW_SPECIFIC_ORIGINS"
@@ -4375,24 +4432,74 @@ resource "pingone_application" "%[2]s" {
       ]
     }
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, image, pkcs7_cert, pem_cert)
 }
 
-func testAccApplicationConfig_SAML_Minimal(resourceName, name string) string {
+func testAccApplicationConfig_SAML_Minimal(environmentName, licenseID, resourceName, name, image, pkcs7_cert, pem_cert string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
+
+resource "pingone_group" "%[3]s-1" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s-1"
+}
+
+resource "pingone_group" "%[3]s-2" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s-2"
+}
+
+resource "pingone_key" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  name                = "%[4]s"
+  algorithm           = "EC"
+  key_length          = 256
+  signature_algorithm = "SHA384withECDSA"
+  subject_dn          = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}
+
+resource "pingone_image" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  image_file_base64 = "%[5]s"
+}
+
+resource "pingone_certificate" "%[3]s-1" {
+  environment_id = pingone_environment.%[2]s.id
+
+  pkcs7_file_base64 = <<EOT
+%[6]s
+EOT
+
+  usage_type = "SIGNING"
+}
+
+resource "pingone_certificate" "%[3]s-2" {
+  environment_id = pingone_environment.%[2]s.id
+
+  pem_file = <<EOT
+%[7]s
+EOT
+
+  usage_type = "SIGNING"
+}
+
+
+resource "pingone_application" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
   enabled        = true
 
   saml_options {
     acs_urls           = ["https://pingidentity.com"]
     assertion_duration = 3600
-    sp_entity_id       = "sp:entity:%[2]s"
+    sp_entity_id       = "sp:entity:%[3]s"
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, image, pkcs7_cert, pem_cert)
 }
 
 func testAccApplicationConfig_SAML_SigningKeyNotSet(resourceName, name string) string {
