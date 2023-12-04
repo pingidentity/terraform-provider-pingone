@@ -1,7 +1,14 @@
 ## 0.25.0 (Unreleased)
 
+NOTES:
+
+* `data-source/pingone_application`: Deprecated the `saml_options.sp_verification_certificate_ids` attribute.  This attribute will be removed in the next major release.  Use the `saml_options.sp_verification.certificate_ids` attribute going forward. ([#680](https://github.com/pingidentity/terraform-provider-pingone/issues/680))
+* `resource/pingone_application`: Deprecated the `saml_options.sp_verification_certificate_ids` parameter.  This parameter will be removed in the next major release.  Use the `saml_options.sp_verification.certificate_ids` parameter going forward. ([#680](https://github.com/pingidentity/terraform-provider-pingone/issues/680))
+
 ENHANCEMENTS:
 
+* `data-source/pingone_application`: Added the `saml_options.sp_verification.authn_request_signed` attribute to support the "Enforce Signed AuthnRequest" option for SAML applications. ([#680](https://github.com/pingidentity/terraform-provider-pingone/issues/680))
+* `resource/pingone_application`: Added the `saml_options.sp_verification.authn_request_signed` parameter to support the "Enforce Signed AuthnRequest" option for SAML applications. ([#680](https://github.com/pingidentity/terraform-provider-pingone/issues/680))
 * `resource/pingone_key`: Added the `pkcs12_file_password` parameter to allow import of encrypted PKCS12 keys. ([#678](https://github.com/pingidentity/terraform-provider-pingone/issues/678))
 * `resource/pingone_webhook`: Added the `tls_client_auth_key_pair_id` parameter to support outbound mTLS authentication to the endpoint used to post subscription messages to. ([#679](https://github.com/pingidentity/terraform-provider-pingone/issues/679))
 
