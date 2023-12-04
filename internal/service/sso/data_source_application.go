@@ -144,11 +144,6 @@ var (
 		"home_page_url": types.StringType,
 	}
 
-	applicationIconTFObjectTypes = map[string]attr.Type{
-		"id":   types.StringType,
-		"href": types.StringType,
-	}
-
 	applicationAccessControlGroupOptionsTFObjectTypes = map[string]attr.Type{
 		"type":   types.StringType,
 		"groups": types.SetType{ElemType: types.StringType},
