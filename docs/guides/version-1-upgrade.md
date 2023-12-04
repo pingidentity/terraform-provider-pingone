@@ -1028,6 +1028,62 @@ resource "pingone_webhook" "my_webhook" {
 
 ## Data Source: pingone_application
 
+### `access_control_group_options` computed attribute data type change
+
+The `access_control_group_options` computed attribute is now a nested object type and no longer a list type.
+
+### `external_link_options` computed attribute data type change
+
+The `external_link_options` computed attribute is now a nested object type and no longer a list type.
+
+### `icon` computed attribute data type change
+
+The `icon` computed attribute is now a nested object type and no longer a list type.
+
+### `oidc_options` computed attribute data type change
+
+The `oidc_options` computed attribute is now a nested object type and no longer a list type.
+
+### `oidc_options.certificate_based_authentication` computed attribute data type change
+
+The `oidc_options.certificate_based_authentication` computed attribute is now a nested object type and no longer a list type.
+
+### `oidc_options.cors_settings` computed attribute data type change
+
+The `oidc_options.cors_settings` computed attribute is now a nested object type and no longer a list type.
+
+### `oidc_options.mobile_app` computed attribute data type change
+
+The `oidc_options.mobile_app` computed attribute is now a nested object type and no longer a list type.
+
+### `oidc_options.mobile_app.integrity_detection` computed attribute data type change
+
+The `oidc_options.mobile_app.integrity_detection` computed attribute is now a nested object type and no longer a list type.
+
+### `oidc_options.mobile_app.integrity_detection.cache_duration` computed attribute data type change
+
+The `oidc_options.mobile_app.integrity_detection.cache_duration` computed attribute is now a nested object type and no longer a list type.
+
+### `oidc_options.mobile_app.integrity_detection.google_play` computed attribute data type change
+
+The `oidc_options.mobile_app.integrity_detection.google_play` computed attribute is now a nested object type and no longer a list type.
+
+### `saml_options` computed attribute data type change
+
+The `saml_options` computed attribute is now a nested object type and no longer a list type.
+
+### `saml_options.cors_settings` computed attribute data type change
+
+The `saml_options.cors_settings` computed attribute is now a nested object type and no longer a list type.
+
+### `saml_options.idp_signing_key` computed attribute data type change
+
+The `saml_options.idp_signing_key` computed attribute is now a nested object type and no longer a list type.
+
+### `saml_options.sp_verification` computed attribute data type change
+
+The `saml_options.sp_verification` computed attribute is now a nested object type and no longer a list type.
+
 ### `saml_options.sp_verification_certificate_ids` computed attribute removed
 
 This parameter was previously deprecated and has been removed.  Use the `saml_options.sp_verification.certificate_ids` attribute going forward.
