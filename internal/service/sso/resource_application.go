@@ -360,9 +360,42 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 		"A string that specifies a URI prefix that enables direct triggering of the mobile application when scanning a QR code. The URI prefix can be set to a universal link with a valid value (which can be a URL address that starts with `HTTP://` or `HTTPS://`, such as `https://www.bxretail.org`), or an app schema, which is just a string and requires no special validation.",
 	)
 
+	oidcMobileAppIntegrityDetectionEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether device integrity detection takes place on mobile devices.",
+	).DefaultValue(false)
 
-	googlePlayDecryptionKeyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Play Integrity verdict decryption key from your Google Play Services account. This parameter must be provided if you have set `verification_type` to `INTERNAL`.  Cannot be set with `service_account_credentials_json`.",
+	oidcMobileAppIntegrityDetectionExcludedPlatformsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("You can enable device integrity checking separately for Android and iOS by setting `enabled` to `true` and then using `excluded_platforms` to specify the OS where you do not want to use device integrity checking. The values to use are `%s` and `%s` (all upper case). Note that this is implemented as an array even though currently you can only include a single value.  If `%s` is not included in this list, the `google_play` attribute block must be configured.", string(management.ENUMMOBILEINTEGRITYDETECTIONPLATFORM_GOOGLE), string(management.ENUMMOBILEINTEGRITYDETECTIONPLATFORM_IOS), string(management.ENUMMOBILEINTEGRITYDETECTIONPLATFORM_GOOGLE)),
+	)
+
+	oidcMobileAppIntegrityDetectionCacheDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single block that specifies settings for the caching duration of successful integrity detection calls.  Every attestation request entails a certain time tradeoff. You can choose to cache successful integrity detection calls for a predefined duration, between a minimum of 1 minute and a maximum of 48 hours. If integrity detection is ENABLED, the cache duration must be set.",
+	)
+
+	oidcMobileAppIntegrityDetectionCacheDurationUnitsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the time units of the cache `amount` parameter.",
+	).AllowedValuesEnum(management.AllowedEnumDurationUnitMinsHoursEnumValues).DefaultValue(string(management.ENUMDURATIONUNITMINSHOURS_MINUTES))
+
+	oidcMobileAppIntegrityDetectionGooglePlayDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A single block that describes Google Play Integrity API credential settings for Android device integrity detection.  Required when `excluded_platforms` is unset or does not include `%s`.", management.ENUMMOBILEINTEGRITYDETECTIONPLATFORM_GOOGLE),
+	)
+
+	oidcMobileAppIntegrityDetectionGooglePlayDecryptionKeyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("Play Integrity verdict decryption key from your Google Play Services account. This parameter must be provided if you have set `verification_type` to `%s`.", string(management.ENUMAPPLICATIONNATIVEGOOGLEPLAYVERIFICATIONTYPE_INTERNAL)),
+	).ConflictsWith([]string{"service_account_credentials_json"})
+
+	oidcMobileAppIntegrityDetectionGooglePlayServiceAccountCredentialsJsonDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("Contents of the JSON file that represents your Service Account Credentials. This parameter must be provided if you have set `verification_type` to `%s`.", string(management.ENUMAPPLICATIONNATIVEGOOGLEPLAYVERIFICATIONTYPE_GOOGLE)),
+	).ConflictsWith([]string{"decryption_key", "verification_key"})
+
+	oidcMobileAppIntegrityDetectionGooglePlayVerificationKeyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("Play Integrity verdict signature verification key from your Google Play Services account. This parameter must be provided if you have set `verification_type` to `%s`.", string(management.ENUMAPPLICATIONNATIVEGOOGLEPLAYVERIFICATIONTYPE_INTERNAL)),
+	).ConflictsWith([]string{"service_account_credentials_json"})
+
+	oidcMobileAppIntegrityDetectionGooglePlayVerificationTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The type of verification that should be used.",
+	).AllowedValuesEnum(management.AllowedEnumApplicationNativeGooglePlayVerificationTypeEnumValues).AppendMarkdownString(
+		fmt.Sprintf("Using internal verification will not count against your Google API call quota. The value you select for this attribute determines what other parameters you must provide. When set to `%s`, you must provide `service_account_credentials_json`. When set to `%s`, you must provide both `decryption_key` and `verification_key`.", string(management.ENUMAPPLICATIONNATIVEGOOGLEPLAYVERIFICATIONTYPE_GOOGLE), string(management.ENUMAPPLICATIONNATIVEGOOGLEPLAYVERIFICATIONTYPE_INTERNAL)),
 	)
 
 	samlOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -968,76 +1001,139 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 										NestedObject: schema.NestedBlockObject{
 											Attributes: map[string]schema.Attribute{
 												"enabled": schema.BoolAttribute{
-													Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether device integrity detection takes place on mobile devices.").Description,
-													Computed:    true,
+													Description:         oidcMobileAppIntegrityDetectionEnabledDescription.Description,
+													MarkdownDescription: oidcMobileAppIntegrityDetectionEnabledDescription.MarkdownDescription,
+													Optional:            true,
+													Computed:            true,
+
+													Default: booldefault.StaticBool(false),
 												},
 
 												"excluded_platforms": schema.SetAttribute{
-													Description: framework.SchemaAttributeDescriptionFromMarkdown("Indicates OS excluded from device integrity checking.").Description,
+													Description:         oidcMobileAppIntegrityDetectionExcludedPlatformsDescription.Description,
+													MarkdownDescription: oidcMobileAppIntegrityDetectionExcludedPlatformsDescription.MarkdownDescription,
+													Optional:            true,
+
 													ElementType: types.StringType,
-													Computed:    true,
+
+													Validators: []validator.Set{
+														setvalidator.SizeAtMost(1),
+														setvalidator.ValueStringsAre(
+															stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumMobileIntegrityDetectionPlatformEnumValues)...),
+														),
+													},
 												},
+											},
 
-												"cache_duration": schema.ListNestedAttribute{
-													Description: framework.SchemaAttributeDescriptionFromMarkdown("Indicates the caching duration of successful integrity detection calls.").Description,
-													Computed:    true,
+											Blocks: map[string]schema.Block{
+												"cache_duration": schema.ListNestedBlock{
+													Description:         oidcMobileAppIntegrityDetectionCacheDurationDescription.Description,
+													MarkdownDescription: oidcMobileAppIntegrityDetectionCacheDurationDescription.MarkdownDescription,
 
-													NestedObject: schema.NestedAttributeObject{
+													NestedObject: schema.NestedBlockObject{
 														Attributes: map[string]schema.Attribute{
 															"amount": schema.Int64Attribute{
 																Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of minutes or hours that specify the duration between successful integrity detection calls.").Description,
-																Computed:    true,
+																Required:    true,
 															},
 
 															"units": schema.StringAttribute{
-																Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the cache duration time units.").Description,
-																Computed:    true,
+																Description:         oidcMobileAppIntegrityDetectionCacheDurationUnitsDescription.Description,
+																MarkdownDescription: oidcMobileAppIntegrityDetectionCacheDurationUnitsDescription.MarkdownDescription,
+																Optional:            true,
+																Computed:            true,
+
+																Default: stringdefault.StaticString(string(management.ENUMDURATIONUNITMINSHOURS_MINUTES)),
+
+																Validators: []validator.String{
+																	stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumDurationUnitMinsHoursEnumValues)...),
+																},
 															},
 														},
 													},
+
+													Validators: []validator.List{
+														listvalidator.SizeAtMost(1),
+													},
 												},
 
-												"google_play": schema.ListNestedAttribute{
-													Description: framework.SchemaAttributeDescriptionFromMarkdown("A single block that describes Google Play Integrity API credential settings for Android device integrity detection.").Description,
-													Computed:    true,
+												"google_play": schema.ListNestedBlock{
+													Description:         oidcMobileAppIntegrityDetectionGooglePlayDescription.Description,
+													MarkdownDescription: oidcMobileAppIntegrityDetectionGooglePlayDescription.MarkdownDescription,
 
-													NestedObject: schema.NestedAttributeObject{
+													NestedObject: schema.NestedBlockObject{
 														Attributes: map[string]schema.Attribute{
 															"decryption_key": schema.StringAttribute{
-																Description:         googlePlayDecryptionKeyDescription.Description,
-																MarkdownDescription: googlePlayDecryptionKeyDescription.MarkdownDescription,
-																Computed:            true,
+																Description:         oidcMobileAppIntegrityDetectionGooglePlayDecryptionKeyDescription.Description,
+																MarkdownDescription: oidcMobileAppIntegrityDetectionGooglePlayDecryptionKeyDescription.MarkdownDescription,
+																Optional:            true,
 																Sensitive:           true,
+
+																Validators: []validator.String{
+																	stringvalidator.ConflictsWith(
+																		path.MatchRelative().AtParent().AtName("service_account_credentials_json"),
+																	),
+																},
 															},
 
 															"service_account_credentials_json": schema.StringAttribute{
-																Description: framework.SchemaAttributeDescriptionFromMarkdown("Contents of the JSON file that represents your Service Account Credentials.").Description,
-																Computed:    true,
-																Sensitive:   true,
+																Description:         oidcMobileAppIntegrityDetectionGooglePlayServiceAccountCredentialsJsonDescription.Description,
+																MarkdownDescription: oidcMobileAppIntegrityDetectionGooglePlayServiceAccountCredentialsJsonDescription.MarkdownDescription,
+																Optional:            true,
+																Sensitive:           true,
+
+																Validators: []validator.String{
+																	stringvalidator.ConflictsWith(
+																		path.MatchRelative().AtParent().AtName("decryption_key"),
+																		path.MatchRelative().AtParent().AtName("verification_key"),
+																	),
+																},
 															},
 
 															"verification_key": schema.StringAttribute{
-																Description: framework.SchemaAttributeDescriptionFromMarkdown("Play Integrity verdict signature verification key from your Google Play Services account.").Description,
-																Computed:    true,
-																Sensitive:   true,
+																Description:         oidcMobileAppIntegrityDetectionGooglePlayVerificationKeyDescription.Description,
+																MarkdownDescription: oidcMobileAppIntegrityDetectionGooglePlayVerificationKeyDescription.MarkdownDescription,
+																Optional:            true,
+																Sensitive:           true,
+
+																Validators: []validator.String{
+																	stringvalidator.ConflictsWith(
+																		path.MatchRelative().AtParent().AtName("service_account_credentials_json"),
+																	),
+																},
 															},
 
 															"verification_type": schema.StringAttribute{
-																Description: framework.SchemaAttributeDescriptionFromMarkdown("The type of verification.").Description,
-																Computed:    true,
+																Description:         oidcMobileAppIntegrityDetectionGooglePlayVerificationTypeDescription.Description,
+																MarkdownDescription: oidcMobileAppIntegrityDetectionGooglePlayVerificationTypeDescription.MarkdownDescription,
+																Required:            true,
+
+																Validators: []validator.String{
+																	stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationNativeGooglePlayVerificationTypeEnumValues)...),
+																},
 															},
 														},
+													},
+
+													Validators: []validator.List{
+														listvalidator.SizeAtMost(1),
 													},
 												},
 											},
 										},
+
+										Validators: []validator.List{
+											listvalidator.SizeAtMost(1),
+										},
 									},
 								},
 							},
-						},
-					},
 
-					Blocks: map[string]schema.Block{
+							Validators: []validator.List{
+								listvalidator.SizeAtMost(1),
+							},
+						},
+
 						"cors_settings": resourceApplicationSchemaCorsSettings(),
 					},
 				},
