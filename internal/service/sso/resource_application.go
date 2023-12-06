@@ -1180,24 +1180,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							Computed:    true,
 						},
 
-						"idp_signing_key": schema.ListNestedAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("SAML application assertion/response signing key settings.").Description,
-							Computed:    true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"algorithm": schema.StringAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the signature algorithm of the key.").Description,
-										Computed:    true,
-									},
-
-									"key_id": schema.StringAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.").Description,
-										Computed:    true,
-									},
-								},
-							},
-						},
-
 						"enable_requested_authn_context": schema.BoolAttribute{
 							Description:         samlEnableRequestedAuthnContextDescription.Description,
 							MarkdownDescription: samlEnableRequestedAuthnContextDescription.MarkdownDescription,
@@ -1247,12 +1229,9 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							ElementType:        types.StringType,
 							DeprecationMessage: "The `sp_verification_certificate_ids` attribute is deprecated and will be removed in the next major release.  Please use the `sp_verification.certificate_ids` attribute going forward.",
 						},
+					},
 
-						"sp_verification": schema.ListNestedAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A single list item that specifies SP signature verification settings.").Description,
-							Computed:    true,
-
-							NestedObject: schema.NestedAttributeObject{
+					Blocks: map[string]schema.Block{
 								Attributes: map[string]schema.Attribute{
 									"authn_request_signed": schema.BoolAttribute{
 										Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the Authn Request signing should be enforced.").Description,

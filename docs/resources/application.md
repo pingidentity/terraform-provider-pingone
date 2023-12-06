@@ -327,7 +327,9 @@ Optional:
 <a id="nestedblock--saml_options"></a>
 ### Nested Schema for `saml_options`
 
-Required:
+Optional:
+
+- `cors_settings` (Block List) A single block that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings. (see [below for nested schema](#nestedblock--saml_options--cors_settings))
 
 - `acs_urls` (Set of String) A list of string that specifies the Assertion Consumer Service URLs. The first URL in the list is used as default (there must be at least one URL).
 - `assertion_duration` (Number) An integer that specifies the assertion validity duration in seconds.
