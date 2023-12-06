@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -15,6 +16,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -181,6 +186,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 		"A string that specifies the name of the application.",
 	)
 
+	enabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the application is enabled in the environment.",
+	).DefaultValue(false)
+
 	tagsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An array of strings that specifies the list of labels associated with the application.",
 	).AllowedValuesEnum(management.AllowedEnumApplicationTagsEnumValues).ConflictsWith([]string{"external_link_options", "saml_options"})
@@ -204,6 +213,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 		"A boolean to specify whether the application is hidden in the application portal despite the configured group access policy.",
 	).DefaultValue(false)
 
+	iconHrefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the URL for the application icon.  Both `http://` and `https://` are permitted.",
+	)
+
 	appTypesExactlyOneOf := []string{"external_link_options", "oidc_options", "saml_options"}
 
 	externalLinkOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -211,7 +224,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	).ExactlyOneOf(appTypesExactlyOneOf)
 
 	externalLinkHomePageURLDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The custom home page URL for the application.  Both `http://` and `https://` URLs are permitted.",
+		"A string that specifies the custom home page URL for the application.  Both `http://` and `https://` URLs are permitted.",
 	)
 
 	oidcOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -220,35 +233,141 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 	oidcOptionsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type associated with the application.",
-	).AllowedValuesEnum(management.AllowedEnumApplicationTypeEnumValues)
+	).AllowedValues(
+		string(management.ENUMAPPLICATIONTYPE_WEB_APP),
+		string(management.ENUMAPPLICATIONTYPE_NATIVE_APP),
+		string(management.ENUMAPPLICATIONTYPE_SINGLE_PAGE_APP),
+		string(management.ENUMAPPLICATIONTYPE_WORKER),
+		string(management.ENUMAPPLICATIONTYPE_CUSTOM_APP),
+		string(management.ENUMAPPLICATIONTYPE_SERVICE),
+	).RequiresReplace()
 
 	oidcHomePageURLDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The custom home page URL for the application.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.",
+		"A string that specifies the custom home page URL for the application.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.",
 	)
+
+	oidcInitiateLoginUriDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the URI to use for third-parties to begin the sign-on process for the application. If specified, PingOne redirects users to this URI to initiate SSO to PingOne. The application is responsible for implementing the relevant OIDC flow when the initiate login URI is requested. This property is required if you want the application to appear in the PingOne Application Portal. See the OIDC specification section of [Initiating Login from a Third Party](https://openid.net/specs/openid-connect-core-1_0.html#ThirdPartyInitiatedLogin) for more information.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.",
+	)
+
+	oidcTargetLinkUriDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The URI for the application. If specified, PingOne will redirect application users to this URI after a user is authenticated. In the PingOne admin console, this becomes the value of the `target_link_uri` parameter used for the Initiate Single Sign-On URL field.  Both `http://` and `https://` URLs are permitted as well as custom mobile native schema (e.g., `org.bxretail.app://target`).",
+	)
+
+	oidcGrantTypesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A list that specifies the grant type for the authorization request.",
+	).AllowedValuesEnum(management.AllowedEnumApplicationOIDCGrantTypeEnumValues)
+
+	oidcResponseTypesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A list that specifies the code or token type returned by an authorization request.",
+	).AllowedValuesEnum(management.AllowedEnumApplicationOIDCResponseTypeEnumValues).AppendMarkdownString(
+		fmt.Sprintf("Note that `%s` cannot be used in an authorization request with `%s` or `%s` because PingOne does not currently support OIDC hybrid flows.", string(management.ENUMAPPLICATIONOIDCRESPONSETYPE_CODE), string(management.ENUMAPPLICATIONOIDCRESPONSETYPE_TOKEN), string(management.ENUMAPPLICATIONOIDCRESPONSETYPE_ID_TOKEN)),
+	)
+
+	oidcTokenEndpointAuthnMethod := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the client authentication methods supported by the token endpoint.",
+	).AllowedValuesEnum(management.AllowedEnumApplicationOIDCTokenAuthMethodEnumValues)
+
+	oidcParRequirementDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies whether pushed authorization requests (PAR) are required.",
+	).AllowedValuesEnum(management.AllowedEnumApplicationOIDCPARRequirementEnumValues).DefaultValue(string(management.ENUMAPPLICATIONOIDCPARREQUIREMENT_OPTIONAL))
+
+	oidcParTimeoutDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the pushed authorization request (PAR) timeout in seconds.  If a value is not provided, the default value is `60`.  Valid values are between `1` and `600`.",
+	).DefaultValue(60)
 
 	oidcOptionsPKCEEnforcementDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies how `PKCE` request parameters are handled on the authorize request.",
+	).AllowedValuesEnum(management.AllowedEnumApplicationOIDCPKCEOptionEnumValues).DefaultValue(string(management.ENUMAPPLICATIONOIDCPKCEOPTION_OPTIONAL))
+
+	oidcRedirectUrisDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A list of strings that specifies the allowed callback URIs for the authentication response.    The provided URLs are expected to use the `https://` schema, or a custom mobile native schema (e.g., `org.bxretail.app://callback`).  The `http` schema is only permitted where the host is `localhost` or `127.0.0.1`.",
 	)
 
 	oidcAllowWildcardsInRedirectUrisDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean to specify whether wildcards are allowed in redirect URIs. For more information, see [Wildcards in Redirect URIs](https://docs.pingidentity.com/csh?context=p1_c_wildcard_redirect_uri).",
-	)
+	).DefaultValue(false)
 
 	oidcPostLogoutRedirectUrisDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A list of strings that specifies the URLs that the browser can be redirected to after logout.  The provided URLs are expected to use the `https://`, `http://` schema, or a custom mobile native schema (e.g., `org.bxretail.app://logout`).",
 	)
 
+	oidcRefreshTokenDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the lifetime in seconds of the refresh token. If a value is not provided, the default value is `2592000`, or 30 days. Valid values are between `60` and `2147483647`. If the `refresh_token_rolling_duration` property is specified for the application, then this property value must be less than or equal to the value of `refresh_token_rolling_duration`. After this property is set, the value cannot be nullified - this will force recreation of the resource. This value is used to generate the value for the exp claim when minting a new refresh token.",
+	).DefaultValue(2592000)
+
+	oidcRefreshTokenRollingDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the number of seconds a refresh token can be exchanged before re-authentication is required. If a value is not provided, the default value is `15552000`, or 180 days. Valid values are between `60` and `2147483647`. After this property is set, the value cannot be nullified - this will force recreation of the resource. This value is used to generate the value for the exp claim when minting a new refresh token.",
+	).DefaultValue(15552000)
+
+	oidcRefreshTokenRollingGracePeriodDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The number of seconds that a refresh token may be reused after having been exchanged for a new set of tokens. This is useful in the case of network errors on the client. Valid values are between `0` and `86400` seconds. `Null` is treated the same as `0`.",
+	)
+
 	oidcAdditionalRefreshTokenReplayProtectionEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A boolean that, when set to `true`, if you attempt to reuse the refresh token, the authorization server immediately revokes the reused refresh token, as well as all descendant tokens.",
-	).DefaultValue("true")
+		"A boolean that, when set to `true` (the default), if you attempt to reuse the refresh token, the authorization server immediately revokes the reused refresh token, as well as all descendant tokens. Setting this to null equates to a `false` setting.",
+	).DefaultValue(true)
+
+	oidcSupportUnsignedRequestObjectDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the request query parameter JWT is allowed to be unsigned. If `false` or null, an unsigned request object is not allowed.",
+	).DefaultValue(false)
 
 	oidcRequireSignedRequestObjectDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that indicates that the Java Web Token (JWT) for the [request query](https://openid.net/specs/openid-connect-core-1_0.html#RequestObject) parameter is required to be signed. If `false` or null, a signed request object is not required. Both `support_unsigned_request_object` and this property cannot be set to `true`.",
-	).DefaultValue("false")
+	).DefaultValue(false)
+
+	oidcBundleIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"**Deprecation Notice** This field is deprecated and will be removed in a future release. Use `oidc_options.mobile_app.bundle_id` instead. A string that specifies the bundle associated with the application, for push notifications in native apps. The value of the `bundle_id` property is unique per environment, and once defined, is immutable; any change will force recreation of the application resource.",
+	)
+
+	oidcPackageNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"**Deprecation Notice** This field is deprecated and will be removed in a future release. Use `oidc_options.mobile_app.package_name` instead. A string that specifies the package name associated with the application, for push notifications in native apps. The value of the `package_name` property is unique per environment, and once defined, is immutable; any change will force recreation of the application resource.",
+	)
+
+	oidcCertificateBasedAuthenticationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A single block that specifies Certificate based authentication settings. This parameter block can only be set where the application's `type` parameter is set to `%s`.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
+	)
+
+	oidcCertificateBasedAuthenticationKeyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that represents a PingOne ID for the issuance certificate key.  The key must be of type `ISSUANCE`.  Must be a valid PingOne Resource ID.",
+	)
+
+	oidcMobileAppDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A single block that specifies Mobile application integration settings for `%s` type applications.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
+	)
+
+	oidcMobileAppBundleIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the bundle associated with the application, for push notifications in native apps. The value of the `bundle_id` property is unique per environment, and once defined, is immutable.",
+	).RequiresReplace()
+
+	oidcMobileAppPackageNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the package name associated with the application, for push notifications in native apps. The value of the `package_name` property is unique per environment, and once defined, is immutable.",
+	).RequiresReplace()
+
+	oidcMobileAppHuaweiAppIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The unique identifier for the app on the device and in the Huawei Mobile Service AppGallery. The value of this property is unique per environment, and once defined, is immutable.  Required with `huawei_package_name`.",
+	).RequiresReplace()
+
+	oidcMobileAppHuaweiPackageNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The package name associated with the application, for push notifications in native apps. The value of this property is unique per environment, and once defined, is immutable.  Required with `huawei_app_id`.",
+	).RequiresReplace()
+
+	oidcMobileAppPasscodeRefreshSecondsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The amount of time a passcode should be displayed before being replaced with a new passcode - must be between `30` and `60` seconds.",
+	).DefaultValue(30)
+
+	oidcMobileAppUniversalAppLinkDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies a URI prefix that enables direct triggering of the mobile application when scanning a QR code. The URI prefix can be set to a universal link with a valid value (which can be a URL address that starts with `HTTP://` or `HTTPS://`, such as `https://www.bxretail.org`), or an app schema, which is just a string and requires no special validation.",
+	)
+
 
 	googlePlayDecryptionKeyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Play Integrity verdict decryption key from your Google Play Services account. This parameter must be provided if you have set `verification_type` to `INTERNAL`.  Cannot be set with `service_account_credentials_json`.",
 	)
+
+	samlOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single block that specifies SAML application specific settings.",
+	).ExactlyOneOf(appTypesExactlyOneOf)
 
 	samlEnableRequestedAuthnContextDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether `requestedAuthnContext` is taken into account in policy decision-making.",
@@ -285,8 +404,12 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 
 			"enabled": schema.BoolAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the application is enabled in the environment.").Description,
-				Optional:    true,
+				Description:         enabledDescription.Description,
+				MarkdownDescription: enabledDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: booldefault.StaticBool(false),
 			},
 
 			"tags": schema.SetAttribute{
@@ -363,8 +486,9 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						},
 
 						"href": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the URL for the application icon.  Both `http://` and `https://` are permitted.").Description,
-							Required:    true,
+							Description:         iconHrefDescription.Description,
+							MarkdownDescription: iconHrefDescription.MarkdownDescription,
+							Required:            true,
 
 							Validators: []validator.String{
 								stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Value must be a valid URL with `http://` or `https://` prefix."),
@@ -447,180 +571,401 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
-						// attributes to here
 						"type": schema.StringAttribute{
 							Description:         oidcOptionsTypeDescription.Description,
 							MarkdownDescription: oidcOptionsTypeDescription.MarkdownDescription,
-							Computed:            true,
+							Required:            true,
+
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.RequiresReplace(),
+							},
+
+							Validators: []validator.String{
+								stringvalidator.OneOf(
+									string(management.ENUMAPPLICATIONTYPE_WEB_APP),
+									string(management.ENUMAPPLICATIONTYPE_NATIVE_APP),
+									string(management.ENUMAPPLICATIONTYPE_SINGLE_PAGE_APP),
+									string(management.ENUMAPPLICATIONTYPE_WORKER),
+									string(management.ENUMAPPLICATIONTYPE_CUSTOM_APP),
+									string(management.ENUMAPPLICATIONTYPE_SERVICE),
+								),
+							},
 						},
 
 						"home_page_url": schema.StringAttribute{
 							Description:         oidcHomePageURLDescription.Description,
 							MarkdownDescription: oidcHomePageURLDescription.MarkdownDescription,
-							Computed:            true,
+							Optional:            true,
+
+							Validators: []validator.String{
+								stringvalidator.RegexMatches(regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(https:\/\/).*)`), "Expected value to have a url with schema of \"https\".  \"http\" urls are permitted when using localhost hosts \"localhost\" and \"127.0.0.1\"."),
+							},
 						},
 
-						// descriptions to here
 						"initiate_login_uri": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the URI to use for third-parties to begin the sign-on process for the application.").Description,
-							Computed:    true,
+							Description:         oidcInitiateLoginUriDescription.Description,
+							MarkdownDescription: oidcInitiateLoginUriDescription.MarkdownDescription,
+							Optional:            true,
+
+							Validators: []validator.String{
+								stringvalidator.RegexMatches(regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(https:\/\/).*)`), "Expected value to have a url with schema of \"https\".  \"http\" urls are permitted when using localhost hosts \"localhost\" and \"127.0.0.1\"."),
+							},
 						},
 
 						"target_link_uri": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("The URI for the application.").Description,
-							Computed:    true,
+							Description:         oidcTargetLinkUriDescription.Description,
+							MarkdownDescription: oidcTargetLinkUriDescription.MarkdownDescription,
+							Optional:            true,
+
+							Validators: []validator.String{
+								stringvalidator.RegexMatches(regexp.MustCompile(`^(\S+:\/\/).+`), "Expected value to have a url with schema of \"https\", \"http\" or a custom mobile native schema (e.g., `org.bxretail.app://target`)."),
+							},
 						},
 
 						"grant_types": schema.SetAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A list that specifies the grant type for the authorization request.").Description,
+							Description:         oidcGrantTypesDescription.Description,
+							MarkdownDescription: oidcGrantTypesDescription.MarkdownDescription,
+							Required:            true,
+
 							ElementType: types.StringType,
-							Computed:    true,
+
+							Validators: []validator.Set{
+								setvalidator.ValueStringsAre(
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCGrantTypeEnumValues)...),
+								),
+							},
 						},
 
 						"response_types": schema.SetAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A list that specifies the code or token type returned by an authorization request.").Description,
+							Description:         oidcResponseTypesDescription.Description,
+							MarkdownDescription: oidcResponseTypesDescription.MarkdownDescription,
+							Optional:            true,
+
 							ElementType: types.StringType,
-							Computed:    true,
+
+							Validators: []validator.Set{
+								setvalidator.ValueStringsAre(
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCResponseTypeEnumValues)...),
+								),
+							},
 						},
 
 						"token_endpoint_authn_method": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the client authentication methods supported by the token endpoint.").Description,
-							Computed:    true,
+							Description:         oidcTokenEndpointAuthnMethod.Description,
+							MarkdownDescription: oidcTokenEndpointAuthnMethod.MarkdownDescription,
+							Required:            true,
+
+							Validators: []validator.String{
+								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCTokenAuthMethodEnumValues)...),
+							},
 						},
 
 						"par_requirement": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies whether pushed authorization requests (PAR) are required.").Description,
-							Computed:    true,
+							Description:         oidcParRequirementDescription.Description,
+							MarkdownDescription: oidcParRequirementDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: stringdefault.StaticString(string(management.ENUMAPPLICATIONOIDCPARREQUIREMENT_OPTIONAL)),
+
+							Validators: []validator.String{
+								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCPARRequirementEnumValues)...),
+							},
 						},
 
 						"par_timeout": schema.Int64Attribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the pushed authorization request (PAR) timeout in seconds.").Description,
-							Computed:    true,
+							Description:         oidcParTimeoutDescription.Description,
+							MarkdownDescription: oidcParTimeoutDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: int64default.StaticInt64(60),
+
+							Validators: []validator.Int64{
+								int64validator.Between(0, 600),
+							},
 						},
 
 						"pkce_enforcement": schema.StringAttribute{
 							Description:         oidcOptionsPKCEEnforcementDescription.Description,
 							MarkdownDescription: oidcOptionsPKCEEnforcementDescription.MarkdownDescription,
+							Optional:            true,
 							Computed:            true,
+
+							Default: stringdefault.StaticString(string(management.ENUMAPPLICATIONOIDCPKCEOPTION_OPTIONAL)),
+
+							Validators: []validator.String{
+								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCPKCEOptionEnumValues)...),
+							},
 						},
 
 						"redirect_uris": schema.SetAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A list of strings that specifies the allowed callback URIs for the authentication response.").Description,
+							Description:         oidcRedirectUrisDescription.Description,
+							MarkdownDescription: oidcRedirectUrisDescription.MarkdownDescription,
+							Optional:            true,
+
 							ElementType: types.StringType,
-							Computed:    true,
+
+							Validators: []validator.Set{
+								setvalidator.ValueStringsAre(
+									stringvalidator.RegexMatches(regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(\S+:\/\/).+)`), "Expected value to have a url with schema of \"https\" or a custom mobile native schema (e.g., `org.bxretail.app://callback`).  \"http\" urls are permitted when using localhost hosts \"localhost\" and \"127.0.0.1\"."),
+								),
+							},
 						},
 
 						"allow_wildcards_in_redirect_uris": schema.BoolAttribute{
 							Description:         oidcAllowWildcardsInRedirectUrisDescription.Description,
 							MarkdownDescription: oidcAllowWildcardsInRedirectUrisDescription.MarkdownDescription,
+							Optional:            true,
 							Computed:            true,
+
+							Default: booldefault.StaticBool(false),
 						},
 
 						"post_logout_redirect_uris": schema.SetAttribute{
 							Description:         oidcPostLogoutRedirectUrisDescription.Description,
 							MarkdownDescription: oidcPostLogoutRedirectUrisDescription.MarkdownDescription,
-							ElementType:         types.StringType,
-							Computed:            true,
+							Optional:            true,
+
+							ElementType: types.StringType,
+
+							Validators: []validator.Set{
+								setvalidator.ValueStringsAre(
+									stringvalidator.RegexMatches(regexp.MustCompile(`^(\S+:\/\/).+`), "Expected value to have a url with schema of \"https\", \"http\" or a custom mobile native schema (e.g., `org.bxretail.app://logout`)."),
+								),
+							},
 						},
 
 						"refresh_token_duration": schema.Int64Attribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the lifetime in seconds of the refresh token.").Description,
-							Computed:    true,
+							Description:         oidcRefreshTokenDurationDescription.Description,
+							MarkdownDescription: oidcRefreshTokenDurationDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: int64default.StaticInt64(2592000),
+
+							Validators: []validator.Int64{
+								int64validator.Between(60, 2147483647),
+							},
 						},
 
 						"refresh_token_rolling_duration": schema.Int64Attribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of seconds a refresh token can be exchanged before re-authentication is required.").Description,
-							Computed:    true,
+							Description:         oidcRefreshTokenRollingDurationDescription.Description,
+							MarkdownDescription: oidcRefreshTokenRollingDurationDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: int64default.StaticInt64(15552000),
+
+							Validators: []validator.Int64{
+								int64validator.Between(60, 2147483647),
+							},
 						},
 
 						"refresh_token_rolling_grace_period_duration": schema.Int64Attribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("The number of seconds that a refresh token may be reused after having been exchanged for a new set of tokens.").Description,
-							Computed:    true,
+							Description:         oidcRefreshTokenRollingGracePeriodDurationDescription.Description,
+							MarkdownDescription: oidcRefreshTokenRollingGracePeriodDurationDescription.MarkdownDescription,
+							Optional:            true,
+
+							Validators: []validator.Int64{
+								int64validator.Between(60, 86400),
+							},
 						},
 
 						"additional_refresh_token_replay_protection_enabled": schema.BoolAttribute{
 							Description:         oidcAdditionalRefreshTokenReplayProtectionEnabledDescription.Description,
 							MarkdownDescription: oidcAdditionalRefreshTokenReplayProtectionEnabledDescription.MarkdownDescription,
+							Optional:            true,
 							Computed:            true,
+
+							Default: booldefault.StaticBool(true),
 						},
 
 						"client_id": schema.StringAttribute{
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application ID used to authenticate to the authorization server.").Description,
 							Computed:    true,
+
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 
 						"client_secret": schema.StringAttribute{
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application secret ID used to authenticate to the authorization server.").Description,
 							Computed:    true,
 							Sensitive:   true,
-						},
 
-						"certificate_based_authentication": schema.ListNestedAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("Certificate based authentication settings.").Description,
-							Computed:    true,
-
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"key_id": schema.StringAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that represents a PingOne ID for the issuance certificate key.").Description,
-										Computed:    true,
-									},
-								},
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
 							},
 						},
 
 						"support_unsigned_request_object": schema.BoolAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the request query parameter JWT is allowed to be unsigned.").Description,
-							Computed:    true,
+							Description:         oidcSupportUnsignedRequestObjectDescription.Description,
+							MarkdownDescription: oidcSupportUnsignedRequestObjectDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: booldefault.StaticBool(false),
 						},
 
 						"require_signed_request_object": schema.BoolAttribute{
 							Description:         oidcRequireSignedRequestObjectDescription.Description,
 							MarkdownDescription: oidcRequireSignedRequestObjectDescription.MarkdownDescription,
+							Optional:            true,
 							Computed:            true,
+
+							Default: booldefault.StaticBool(false),
 						},
 
-						"mobile_app": schema.ListNestedAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("Mobile application integration settings.").Description,
-							Computed:    true,
+						"bundle_id": schema.StringAttribute{
+							Description:         oidcBundleIdDescription.Description,
+							MarkdownDescription: oidcBundleIdDescription.MarkdownDescription,
+							DeprecationMessage:  "This field is deprecated and will be removed in a future release. Use `oidc_options.mobile_app.bundle_id` instead.",
+							Optional:            true,
+							Computed:            true,
 
-							NestedObject: schema.NestedAttributeObject{
+							Validators: []validator.String{
+								stringvalidator.LengthAtLeast(attrMinLength),
+							},
+						},
+
+						"package_name": schema.StringAttribute{
+							Description:         oidcPackageNameDescription.Description,
+							MarkdownDescription: oidcPackageNameDescription.MarkdownDescription,
+							DeprecationMessage:  "This field is deprecated and will be removed in a future release. Use `oidc_options.mobile_app.package_name` instead.",
+							Optional:            true,
+							Computed:            true,
+
+							Validators: []validator.String{
+								stringvalidator.LengthAtLeast(attrMinLength),
+							},
+						},
+					},
+
+					Blocks: map[string]schema.Block{
+						"certificate_based_authentication": schema.ListNestedBlock{
+							Description:         oidcCertificateBasedAuthenticationDescription.Description,
+							MarkdownDescription: oidcCertificateBasedAuthenticationDescription.MarkdownDescription,
+
+							NestedObject: schema.NestedBlockObject{
+								Attributes: map[string]schema.Attribute{
+									"key_id": schema.StringAttribute{
+										Description:         oidcCertificateBasedAuthenticationKeyIdDescription.Description,
+										MarkdownDescription: oidcCertificateBasedAuthenticationKeyIdDescription.MarkdownDescription,
+										Required:            true,
+
+										Validators: []validator.String{
+											verify.P1ResourceIDValidator(),
+										},
+									},
+								},
+							},
+
+							Validators: []validator.List{
+								listvalidator.SizeAtMost(1),
+							},
+						},
+
+						"mobile_app": schema.ListNestedBlock{
+							Description:         oidcMobileAppDescription.Description,
+							MarkdownDescription: oidcMobileAppDescription.MarkdownDescription,
+
+							NestedObject: schema.NestedBlockObject{
 								Attributes: map[string]schema.Attribute{
 									"bundle_id": schema.StringAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the bundle associated with the application, for push notifications in native apps.").Description,
-										Computed:    true,
+										Description:         oidcMobileAppBundleIdDescription.Description,
+										MarkdownDescription: oidcMobileAppBundleIdDescription.MarkdownDescription,
+										Optional:            true,
+
+										PlanModifiers: []planmodifier.String{
+											stringplanmodifier.RequiresReplace(),
+										},
+
+										Validators: []validator.String{
+											stringvalidator.LengthAtLeast(1),
+										},
 									},
 
 									"package_name": schema.StringAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the package name associated with the application, for push notifications in native apps.").Description,
-										Computed:    true,
+										Description:         oidcMobileAppPackageNameDescription.Description,
+										MarkdownDescription: oidcMobileAppPackageNameDescription.MarkdownDescription,
+										Optional:            true,
+
+										PlanModifiers: []planmodifier.String{
+											stringplanmodifier.RequiresReplace(),
+										},
+
+										Validators: []validator.String{
+											stringvalidator.LengthAtLeast(1),
+										},
 									},
 
 									"huawei_app_id": schema.StringAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("The unique identifier for the app on the device and in the Huawei Mobile Service AppGallery.").Description,
-										Computed:    true,
+										Description:         oidcMobileAppHuaweiAppIdDescription.Description,
+										MarkdownDescription: oidcMobileAppHuaweiAppIdDescription.MarkdownDescription,
+										Optional:            true,
+
+										PlanModifiers: []planmodifier.String{
+											stringplanmodifier.RequiresReplace(),
+										},
+
+										Validators: []validator.String{
+											stringvalidator.LengthAtLeast(1),
+											stringvalidator.AlsoRequires(
+												path.MatchRelative().AtParent().AtName("huawei_app_id"),
+												path.MatchRelative().AtParent().AtName("huawei_package_name"),
+											),
+										},
 									},
 
 									"huawei_package_name": schema.StringAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("The package name associated with the application, for push notifications in native apps.").Description,
-										Computed:    true,
+										Description:         oidcMobileAppHuaweiPackageNameDescription.Description,
+										MarkdownDescription: oidcMobileAppHuaweiPackageNameDescription.MarkdownDescription,
+										Optional:            true,
+
+										PlanModifiers: []planmodifier.String{
+											stringplanmodifier.RequiresReplace(),
+										},
+
+										Validators: []validator.String{
+											stringvalidator.LengthAtLeast(1),
+											stringvalidator.AlsoRequires(
+												path.MatchRelative().AtParent().AtName("huawei_app_id"),
+												path.MatchRelative().AtParent().AtName("huawei_package_name"),
+											),
+										},
 									},
 
 									"passcode_refresh_seconds": schema.Int64Attribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("The amount of time a passcode should be displayed before being replaced with a new passcode.").Description,
-										Computed:    true,
+										Description:         oidcMobileAppPasscodeRefreshSecondsDescription.Description,
+										MarkdownDescription: oidcMobileAppPasscodeRefreshSecondsDescription.MarkdownDescription,
+										Optional:            true,
+										Computed:            true,
+
+										Default: int64default.StaticInt64(30),
+
+										Validators: []validator.Int64{
+											int64validator.Between(30, 60),
+										},
 									},
 
 									"universal_app_link": schema.StringAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a URI prefix that enables direct triggering of the mobile application when scanning a QR code.").Description,
-										Computed:    true,
+										Description:         oidcMobileAppUniversalAppLinkDescription.Description,
+										MarkdownDescription: oidcMobileAppUniversalAppLinkDescription.MarkdownDescription,
+										Optional:            true,
+
+										Validators: []validator.String{
+											stringvalidator.LengthAtLeast(1),
+										},
 									},
+								},
 
-									"integrity_detection": schema.ListNestedAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("Mobile application integrity detection settings.").Description,
-										Computed:    true,
+								Blocks: map[string]schema.Block{
+									"integrity_detection": schema.ListNestedBlock{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies mobile application integrity detection settings.").Description,
 
-										NestedObject: schema.NestedAttributeObject{
+										NestedObject: schema.NestedBlockObject{
 											Attributes: map[string]schema.Attribute{
 												"enabled": schema.BoolAttribute{
 													Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether device integrity detection takes place on mobile devices.").Description,
