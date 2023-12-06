@@ -402,13 +402,58 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 		"A single block that specifies SAML application specific settings.",
 	).ExactlyOneOf(appTypesExactlyOneOf)
 
+	samlOptionsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the type associated with the application.",
+	).AllowedValues(
+		string(management.ENUMAPPLICATIONTYPE_WEB_APP),
+		string(management.ENUMAPPLICATIONTYPE_CUSTOM_APP),
+	).DefaultValue(string(management.ENUMAPPLICATIONTYPE_WEB_APP)).RequiresReplace()
+
+	samlOptionsAssertionSignedEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the SAML assertion itself should be signed.",
+	).DefaultValue(true)
+
+	samlOptionsIdpSigningKeyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"**Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `idp_signing_key` block going forward.  An ID for the certificate key pair to be used by the identity provider to sign assertions and responses. If this property is omitted, the default signing certificate for the environment is used.",
+	)
+
 	samlEnableRequestedAuthnContextDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether `requestedAuthnContext` is taken into account in policy decision-making.",
 	)
 
-	samlSpVerificationCertificateIds := framework.SchemaAttributeDescriptionFromMarkdown(
-		"**Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `sp_verification.certificate_ids` attribute going forward.  A list that specifies the certificate IDs used to verify the service provider signature.",
+	samlOptionsResponseIsSignedDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the SAML assertion response itself should be signed.",
+	).DefaultValue(false)
+
+	samlOptionsSloBindingDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the binding protocol to be used for the logout response.",
+	).AllowedValuesEnum(management.AllowedEnumApplicationSAMLSloBindingEnumValues).AppendMarkdownString(
+		fmt.Sprintf("Existing configurations with no data default to `%s`.", string(management.ENUMAPPLICATIONSAMLSLOBINDING_POST)),
+	).DefaultValue(string(management.ENUMAPPLICATIONSAMLSLOBINDING_POST))
+
+	samlOptionsSloResponseEndpointDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the endpoint URL to submit the logout response. If a value is not provided, the `slo_endpoint` property value is used to submit SLO response.",
 	)
+
+	samlOptionsSloWindowDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request.  The minimum value is `1` hour and the maximum is `24` hours.",
+	)
+
+	samlSpVerificationCertificateIds := framework.SchemaAttributeDescriptionFromMarkdown(
+		"**Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `sp_verification.certificate_ids` parameter going forward.  A list that specifies the certificate IDs used to verify the service provider signature.",
+	)
+
+	samlOptionsIdpSigningKeyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"SAML application assertion/response signing key settings.  Use with `assertion_signed_enabled` to enable assertion signing and/or `response_is_signed` to enable response signing.  It's highly recommended, and best practice, to define signing key settings for the configured SAML application.  However if this property is omitted, the default signing certificate for the environment is used.  This parameter will become a required field in the next major release of the provider.",
+	)
+
+	samlOptionsIdpSigningKeyAlgorithmDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("Specifies the signature algorithm of the key. For RSA keys, options are `%s`, `%s` and `%s`. For elliptical curve (EC) keys, options are `%s`, `%s` and `%s`.", string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_ECDSA)),
+	)
+
+	samlOptionsSpVerificationAuthnRequestSignedDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the Authn Request signing should be enforced.",
+	).DefaultValue(false)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -1156,98 +1201,227 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 					Attributes: map[string]schema.Attribute{
 						"home_page_url": schema.StringAttribute{
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the custom home page URL for the application.").Description,
-							Computed:    true,
+							Optional:    true,
+
+							Validators: []validator.String{
+								stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Expected value to have a url with schema of \"https\"."),
+							},
 						},
 
 						"type": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the type associated with the application.").Description,
-							Computed:    true,
+							Description:         samlOptionsTypeDescription.Description,
+							MarkdownDescription: samlOptionsTypeDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: stringdefault.StaticString(string(management.ENUMAPPLICATIONTYPE_WEB_APP)),
+
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.RequiresReplace(),
+							},
+
+							Validators: []validator.String{
+								stringvalidator.OneOf(
+									string(management.ENUMAPPLICATIONTYPE_WEB_APP),
+									string(management.ENUMAPPLICATIONTYPE_CUSTOM_APP),
+								),
+							},
 						},
 
 						"acs_urls": schema.SetAttribute{
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("A list of string that specifies the Assertion Consumer Service URLs. The first URL in the list is used as default (there must be at least one URL).").Description,
+							Required:    true,
+
 							ElementType: types.StringType,
-							Computed:    true,
 						},
 
 						"assertion_duration": schema.Int64Attribute{
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the assertion validity duration in seconds.").Description,
-							Computed:    true,
+							Required:    true,
 						},
 
 						"assertion_signed_enabled": schema.BoolAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the SAML assertion itself should be signed.").Description,
-							Computed:    true,
+							Description:         samlOptionsAssertionSignedEnabledDescription.Description,
+							MarkdownDescription: samlOptionsAssertionSignedEnabledDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: booldefault.StaticBool(true),
+						},
+
+						"idp_signing_key_id": schema.StringAttribute{
+							Description:         samlOptionsIdpSigningKeyIdDescription.Description,
+							MarkdownDescription: samlOptionsIdpSigningKeyIdDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							DeprecationMessage: "The `idp_signing_key_id` attribute is deprecated and will be removed in the next major release.  Please use the `idp_signing_key` block going forward.",
+
+							Validators: []validator.String{
+								verify.P1ResourceIDValidator(),
+								stringvalidator.ConflictsWith(
+									path.MatchRelative().AtParent().AtName("idp_signing_key"),
+								),
+							},
 						},
 
 						"enable_requested_authn_context": schema.BoolAttribute{
 							Description:         samlEnableRequestedAuthnContextDescription.Description,
 							MarkdownDescription: samlEnableRequestedAuthnContextDescription.MarkdownDescription,
-							Computed:            true,
+							Optional:            true,
 						},
 
 						"nameid_format": schema.StringAttribute{
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the format of the Subject NameID attibute in the SAML assertion.").Description,
-							Computed:    true,
+							Optional:    true,
 						},
 
 						"response_is_signed": schema.BoolAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the SAML assertion response itself should be signed.").Description,
-							Computed:    true,
+							Description:         samlOptionsResponseIsSignedDescription.Description,
+							MarkdownDescription: samlOptionsResponseIsSignedDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: booldefault.StaticBool(false),
 						},
 
 						"slo_binding": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the binding protocol to be used for the logout response.").Description,
-							Computed:    true,
+							Description:         samlOptionsSloBindingDescription.Description,
+							MarkdownDescription: samlOptionsSloBindingDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: stringdefault.StaticString(string(management.ENUMAPPLICATIONSAMLSLOBINDING_POST)),
+
+							Validators: []validator.String{
+								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationSAMLSloBindingEnumValues)...),
+							},
 						},
 
 						"slo_endpoint": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the logout endpoint URL.").Description,
-							Computed:    true,
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the logout endpoint URL. This is an optional property. However, if a logout endpoint URL is not defined, logout actions result in an error.").Description,
+							Optional:    true,
+
+							Validators: []validator.String{
+								stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Expected value to have a url with schema of \"http\" or \"https\"."),
+							},
 						},
 
 						"slo_response_endpoint": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the endpoint URL to submit the logout response.").Description,
-							Computed:    true,
+							Description:         samlOptionsSloResponseEndpointDescription.Description,
+							MarkdownDescription: samlOptionsSloResponseEndpointDescription.MarkdownDescription,
+							Optional:            true,
+
+							Validators: []validator.String{
+								stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Expected value to have a url with schema of \"http\" or \"https\"."),
+							},
 						},
 
 						"slo_window": schema.Int64Attribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request.").Description,
-							Computed:    true,
+							Description:         samlOptionsSloWindowDescription.Description,
+							MarkdownDescription: samlOptionsSloWindowDescription.MarkdownDescription,
+							Optional:            true,
+
+							Validators: []validator.Int64{
+								int64validator.Between(0, 24),
+							},
 						},
 
 						"sp_entity_id": schema.StringAttribute{
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the service provider entity ID used to lookup the application. This is a required property and is unique within the environment.").Description,
-							Computed:    true,
+							Required:    true,
 						},
 
 						"sp_verification_certificate_ids": schema.SetAttribute{
 							Description:         samlSpVerificationCertificateIds.Description,
 							MarkdownDescription: samlSpVerificationCertificateIds.MarkdownDescription,
+							Optional:            true,
 							Computed:            true,
 
-							ElementType:        types.StringType,
-							DeprecationMessage: "The `sp_verification_certificate_ids` attribute is deprecated and will be removed in the next major release.  Please use the `sp_verification.certificate_ids` attribute going forward.",
-						},
-					},
+							DeprecationMessage: "The `sp_verification_certificate_ids` parameter is deprecated and will be removed in the next major release.  Please use the `sp_verification.certificate_ids` parameter going forward.",
 
-					Blocks: map[string]schema.Block{
-								Attributes: map[string]schema.Attribute{
-									"authn_request_signed": schema.BoolAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the Authn Request signing should be enforced.").Description,
-										Computed:    true,
-									},
-									"certificate_ids": schema.SetAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("A list that specifies the certificate IDs used to verify the service provider signature.").Description,
-										ElementType: types.StringType,
-										Computed:    true,
-									},
-								},
+							ElementType: types.StringType,
+
+							Validators: []validator.Set{
+								setvalidator.ValueStringsAre(
+									verify.P1ResourceIDValidator(),
+								),
+								setvalidator.ConflictsWith(
+									path.MatchRelative().AtParent().AtName("sp_verification"),
+								),
 							},
 						},
 					},
 
 					Blocks: map[string]schema.Block{
+						"idp_signing_key": schema.ListNestedBlock{
+							Description:         samlOptionsIdpSigningKeyDescription.Description,
+							MarkdownDescription: samlOptionsIdpSigningKeyDescription.MarkdownDescription,
+
+							NestedObject: schema.NestedBlockObject{
+								Attributes: map[string]schema.Attribute{
+									"algorithm": schema.StringAttribute{
+										Description:         samlOptionsIdpSigningKeyAlgorithmDescription.Description,
+										MarkdownDescription: samlOptionsIdpSigningKeyAlgorithmDescription.MarkdownDescription,
+										Required:            true,
+
+										Validators: []validator.String{
+											stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumCertificateKeySignagureAlgorithmEnumValues)...),
+										},
+									},
+
+									"key_id": schema.StringAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.  Must be a valid PingOne resource ID.").Description,
+										Required:    true,
+
+										Validators: []validator.String{
+											verify.P1ResourceIDValidator(),
+										},
+									},
+								},
+							},
+
+							Validators: []validator.List{
+								listvalidator.SizeAtMost(1),
+								listvalidator.ConflictsWith(
+									path.MatchRelative().AtParent().AtName("idp_signing_key_id"),
+								),
+							},
+						},
+
+						"sp_verification": schema.ListNestedBlock{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A single block item that specifies SP signature verification settings.").Description,
+
+							NestedObject: schema.NestedBlockObject{
+								Attributes: map[string]schema.Attribute{
+									"authn_request_signed": schema.BoolAttribute{
+										Description:         samlOptionsSpVerificationAuthnRequestSignedDescription.Description,
+										MarkdownDescription: samlOptionsSpVerificationAuthnRequestSignedDescription.MarkdownDescription,
+										Optional:            true,
+										Computed:            true,
+
+										Default: booldefault.StaticBool(false),
+									},
+
+									"certificate_ids": schema.SetAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("A list that specifies the certificate IDs used to verify the service provider signature.  Values must be valid PingOne resource IDs.").Description,
+										ElementType: types.StringType,
+										Required:    true,
+
+										Validators: []validator.Set{
+											setvalidator.ValueStringsAre(
+												verify.P1ResourceIDValidator(),
+											),
+										},
+									},
+								},
+							},
+
+							Validators: []validator.List{
+								listvalidator.SizeAtMost(1),
+							},
+						},
+
 						"cors_settings": resourceApplicationSchemaCorsSettings(),
 					},
 				},

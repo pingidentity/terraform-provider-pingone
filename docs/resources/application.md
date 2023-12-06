@@ -327,9 +327,7 @@ Optional:
 <a id="nestedblock--saml_options"></a>
 ### Nested Schema for `saml_options`
 
-Optional:
-
-- `cors_settings` (Block List) A single block that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings. (see [below for nested schema](#nestedblock--saml_options--cors_settings))
+Required:
 
 - `acs_urls` (Set of String) A list of string that specifies the Assertion Consumer Service URLs. The first URL in the list is used as default (there must be at least one URL).
 - `assertion_duration` (Number) An integer that specifies the assertion validity duration in seconds.
@@ -337,21 +335,21 @@ Optional:
 
 Optional:
 
-- `assertion_signed_enabled` (Boolean) A boolean that specifies whether the SAML assertion itself should be signed. Defaults to `true`.
-- `cors_settings` (Block List, Max: 1) A single block that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings. (see [below for nested schema](#nestedblock--saml_options--cors_settings))
+- `assertion_signed_enabled` (Boolean) A boolean that specifies whether the SAML assertion itself should be signed.  Defaults to `true`.
+- `cors_settings` (Block List) A single block that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings. (see [below for nested schema](#nestedblock--saml_options--cors_settings))
 - `enable_requested_authn_context` (Boolean) A boolean that specifies whether `requestedAuthnContext` is taken into account in policy decision-making.
 - `home_page_url` (String) A string that specifies the custom home page URL for the application.
-- `idp_signing_key` (Block List, Max: 1) SAML application assertion/response signing key settings.  Use with `assertion_signed_enabled` to enable assertion signing and/or `response_is_signed` to enable response signing.  It's highly recommended, and best practice, to define signing key settings for the configured SAML application.  However if this property is omitted, the default signing certificate for the environment is used.  This parameter will become a required field in the next major release of the provider. (see [below for nested schema](#nestedblock--saml_options--idp_signing_key))
+- `idp_signing_key` (Block List) SAML application assertion/response signing key settings.  Use with `assertion_signed_enabled` to enable assertion signing and/or `response_is_signed` to enable response signing.  It's highly recommended, and best practice, to define signing key settings for the configured SAML application.  However if this property is omitted, the default signing certificate for the environment is used.  This parameter will become a required field in the next major release of the provider. (see [below for nested schema](#nestedblock--saml_options--idp_signing_key))
 - `idp_signing_key_id` (String, Deprecated) **Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `idp_signing_key` block going forward.  An ID for the certificate key pair to be used by the identity provider to sign assertions and responses. If this property is omitted, the default signing certificate for the environment is used.
 - `nameid_format` (String) A string that specifies the format of the Subject NameID attibute in the SAML assertion.
-- `response_is_signed` (Boolean) A boolean that specifies whether the SAML assertion response itself should be signed. Defaults to `false`.
-- `slo_binding` (String) A string that specifies the binding protocol to be used for the logout response. Options are `HTTP_REDIRECT` and `HTTP_POST`.  Existing configurations with no data default to `HTTP_POST`. Defaults to `HTTP_POST`.
+- `response_is_signed` (Boolean) A boolean that specifies whether the SAML assertion response itself should be signed.  Defaults to `false`.
+- `slo_binding` (String) A string that specifies the binding protocol to be used for the logout response.  Options are `HTTP_POST`, `HTTP_REDIRECT`.  Existing configurations with no data default to `HTTP_POST`.  Defaults to `HTTP_POST`.
 - `slo_endpoint` (String) A string that specifies the logout endpoint URL. This is an optional property. However, if a logout endpoint URL is not defined, logout actions result in an error.
 - `slo_response_endpoint` (String) A string that specifies the endpoint URL to submit the logout response. If a value is not provided, the `slo_endpoint` property value is used to submit SLO response.
-- `slo_window` (Number) An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request. The minimum value is `1` hour and the maximum is `24` hours.
-- `sp_verification` (Block List, Max: 1) A single block item that specifies SP signature verification settings. (see [below for nested schema](#nestedblock--saml_options--sp_verification))
+- `slo_window` (Number) An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request.  The minimum value is `1` hour and the maximum is `24` hours.
+- `sp_verification` (Block List) A single block item that specifies SP signature verification settings. (see [below for nested schema](#nestedblock--saml_options--sp_verification))
 - `sp_verification_certificate_ids` (Set of String, Deprecated) **Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `sp_verification.certificate_ids` parameter going forward.  A list that specifies the certificate IDs used to verify the service provider signature.
-- `type` (String) A string that specifies the type associated with the application.  Options are `WEB_APP` and `CUSTOM_APP`. Defaults to `WEB_APP`.
+- `type` (String) A string that specifies the type associated with the application.  Options are `CUSTOM_APP`, `WEB_APP`.  Defaults to `WEB_APP`.  This field is immutable and will trigger a replace plan if changed.
 
 <a id="nestedblock--saml_options--cors_settings"></a>
 ### Nested Schema for `saml_options.cors_settings`
@@ -371,7 +369,7 @@ Optional:
 Required:
 
 - `algorithm` (String) Specifies the signature algorithm of the key. For RSA keys, options are `SHA256withRSA`, `SHA384withRSA` and `SHA512withRSA`. For elliptical curve (EC) keys, options are `SHA256withECDSA`, `SHA384withECDSA` and `SHA512withECDSA`.
-- `key_id` (String) An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.
+- `key_id` (String) An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.  Must be a valid PingOne resource ID.
 
 
 <a id="nestedblock--saml_options--sp_verification"></a>
@@ -379,11 +377,11 @@ Required:
 
 Required:
 
-- `certificate_ids` (Set of String) A list that specifies the certificate IDs used to verify the service provider signature.  Must be valid PingOne resource IDs.
+- `certificate_ids` (Set of String) A list that specifies the certificate IDs used to verify the service provider signature.  Values must be valid PingOne resource IDs.
 
 Optional:
 
-- `authn_request_signed` (Boolean) A boolean that specifies whether the Authn Request signing should be enforced. Defaults to `false`.
+- `authn_request_signed` (Boolean) A boolean that specifies whether the Authn Request signing should be enforced.  Defaults to `false`.
 
 ## Import
 
