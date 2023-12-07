@@ -20,6 +20,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -830,7 +831,7 @@ func (p *applicationDataSourceModel) toStateExternalLinkOptions(apiObject *manag
 
 func (p *applicationDataSourceModel) iconOkToTF(apiObject *management.ApplicationIcon, ok bool) (basetypes.ListValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	tfObjType := types.ObjectType{AttrTypes: applicationIconTFObjectTypes}
+	tfObjType := types.ObjectType{AttrTypes: service.ImageTFObjectTypes}
 
 	if !ok || apiObject == nil {
 		return types.ListNull(tfObjType), diags
@@ -841,7 +842,7 @@ func (p *applicationDataSourceModel) iconOkToTF(apiObject *management.Applicatio
 		"href": framework.StringOkToTF(apiObject.GetHrefOk()),
 	}
 
-	flattenedObj, d := types.ObjectValue(applicationIconTFObjectTypes, applicationIcon)
+	flattenedObj, d := types.ObjectValue(service.ImageTFObjectTypes, applicationIcon)
 	diags.Append(d...)
 
 	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))

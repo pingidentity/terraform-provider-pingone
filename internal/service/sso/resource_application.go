@@ -268,7 +268,10 @@ var (
 
 // Framework interfaces
 var (
-	_ resource.Resource = &ApplicationResource{}
+	_ resource.Resource                   = &ApplicationResource{}
+	_ resource.ResourceWithConfigure      = &ApplicationResource{}
+	_ resource.ResourceWithImportState    = &ApplicationResource{}
+	_ resource.ResourceWithValidateConfig = &ApplicationResource{}
 )
 
 // New Object
@@ -375,9 +378,12 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 		"A string that specifies whether pushed authorization requests (PAR) are required.",
 	).AllowedValuesEnum(management.AllowedEnumApplicationOIDCPARRequirementEnumValues).DefaultValue(string(management.ENUMAPPLICATIONOIDCPARREQUIREMENT_OPTIONAL))
 
+	const oidcOptionsParTimeoutDefault = 60
+	const oidcOptionsParTimeoutMin = 1
+	const oidcOptionsParTimeoutMax = 600
 	oidcOptionsParTimeoutDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that specifies the pushed authorization request (PAR) timeout in seconds.  If a value is not provided, the default value is `60`.  Valid values are between `1` and `600`.",
-	).DefaultValue(60)
+		fmt.Sprintf("An integer that specifies the pushed authorization request (PAR) timeout in seconds.  Valid values are between `%d` and `%d`.", oidcOptionsParTimeoutMin, oidcOptionsParTimeoutMax),
+	).DefaultValue(oidcOptionsParTimeoutDefault)
 
 	oidcOptionsPKCEEnforcementDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies how `PKCE` request parameters are handled on the authorize request.",
@@ -395,16 +401,24 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 		"A list of strings that specifies the URLs that the browser can be redirected to after logout.  The provided URLs are expected to use the `https://`, `http://` schema, or a custom mobile native schema (e.g., `org.bxretail.app://logout`).",
 	)
 
+	const oidcOptionsRefreshTokenDurationDefault = 2592000
+	const oidcOptionsRefreshTokenDurationMin = 60
+	const oidcOptionsRefreshTokenDurationMax = 2147483647
 	oidcOptionsRefreshTokenDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that specifies the lifetime in seconds of the refresh token. If a value is not provided, the default value is `2592000`, or 30 days. Valid values are between `60` and `2147483647`. If the `refresh_token_rolling_duration` property is specified for the application, then this property value must be less than or equal to the value of `refresh_token_rolling_duration`. After this property is set, the value cannot be nullified - this will force recreation of the resource. This value is used to generate the value for the exp claim when minting a new refresh token.",
-	).DefaultValue(2592000)
+		fmt.Sprintf("An integer that specifies the lifetime in seconds of the refresh token. Valid values are between `%d` and `%d`. If the `refresh_token_rolling_duration` property is specified for the application, then this property value must be less than or equal to the value of `refresh_token_rolling_duration`. After this property is set, the value cannot be nullified - this will force recreation of the resource. This value is used to generate the value for the exp claim when minting a new refresh token.", oidcOptionsRefreshTokenDurationMin, oidcOptionsRefreshTokenDurationMax),
+	).DefaultValue(oidcOptionsRefreshTokenDurationDefault)
 
+	const oidcOptionsRefreshTokenRollingDurationDefault = 15552000
+	const oidcOptionsRefreshTokenRollingDurationMin = 60
+	const oidcOptionsRefreshTokenRollingDurationMax = 2147483647
 	oidcOptionsRefreshTokenRollingDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that specifies the number of seconds a refresh token can be exchanged before re-authentication is required. If a value is not provided, the default value is `15552000`, or 180 days. Valid values are between `60` and `2147483647`. After this property is set, the value cannot be nullified - this will force recreation of the resource. This value is used to generate the value for the exp claim when minting a new refresh token.",
-	).DefaultValue(15552000)
+		fmt.Sprintf("An integer that specifies the number of seconds a refresh token can be exchanged before re-authentication is required. Valid values are between `%d` and `%d`. After this property is set, the value cannot be nullified - this will force recreation of the resource. This value is used to generate the value for the exp claim when minting a new refresh token.", oidcOptionsRefreshTokenRollingDurationMin, oidcOptionsRefreshTokenRollingDurationMax),
+	).DefaultValue(oidcOptionsRefreshTokenRollingDurationDefault)
 
+	const oidcOptionsRefreshTokenRollingGracePeriodDurationMin = 0
+	const oidcOptionsRefreshTokenRollingGracePeriodDurationMax = 86400
 	oidcOptionsRefreshTokenRollingGracePeriodDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The number of seconds that a refresh token may be reused after having been exchanged for a new set of tokens. This is useful in the case of network errors on the client. Valid values are between `0` and `86400` seconds. `Null` is treated the same as `0`.",
+		fmt.Sprintf("The number of seconds that a refresh token may be reused after having been exchanged for a new set of tokens. This is useful in the case of network errors on the client. Valid values are between `%d` and `%d` seconds. `Null` is treated the same as `0`.", oidcOptionsRefreshTokenRollingGracePeriodDurationMin, oidcOptionsRefreshTokenRollingGracePeriodDurationMax),
 	)
 
 	oidcOptionsAdditionalRefreshTokenReplayProtectionEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -455,9 +469,12 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 		"The package name associated with the application, for push notifications in native apps. The value of this property is unique per environment, and once defined, is immutable.  Required with `huawei_app_id`.",
 	).RequiresReplace()
 
+	const oidcOptionsMobileAppPasscodeRefreshSecondsDefault = 30
+	const oidcOptionsMobileAppPasscodeRefreshSecondsMin = 30
+	const oidcOptionsMobileAppPasscodeRefreshSecondsMax = 60
 	oidcOptionsMobileAppPasscodeRefreshSecondsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The amount of time a passcode should be displayed before being replaced with a new passcode - must be between `30` and `60` seconds.",
-	).DefaultValue(30)
+		fmt.Sprintf("The amount of time a passcode should be displayed before being replaced with a new passcode - must be between `%d` and `%d` seconds.", oidcOptionsMobileAppPasscodeRefreshSecondsMin, oidcOptionsMobileAppPasscodeRefreshSecondsMax),
+	).DefaultValue(oidcOptionsMobileAppPasscodeRefreshSecondsDefault)
 
 	oidcOptionsMobileAppUniversalAppLinkDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies a URI prefix that enables direct triggering of the mobile application when scanning a QR code. The URI prefix can be set to a universal link with a valid value (which can be a URL address that starts with `HTTP://` or `HTTPS://`, such as `https://www.bxretail.org`), or an app schema, which is just a string and requires no special validation.",
@@ -538,8 +555,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 		"A string that specifies the endpoint URL to submit the logout response. If a value is not provided, the `slo_endpoint` property value is used to submit SLO response.",
 	)
 
+	const samlOptionsSloWindowMin = 0
+	const samlOptionsSloWindowMax = 24
 	samlOptionsSloWindowDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request.  The minimum value is `1` hour and the maximum is `24` hours.",
+		fmt.Sprintf("An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request.  The minimum value is `%d` hour and the maximum is `%d` hours.", samlOptionsSloWindowMin, samlOptionsSloWindowMax),
 	)
 
 	samlOptionsSpVerificationCertificateIds := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -860,10 +879,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							Optional:            true,
 							Computed:            true,
 
-							Default: int64default.StaticInt64(60),
+							Default: int64default.StaticInt64(oidcOptionsParTimeoutDefault),
 
 							Validators: []validator.Int64{
-								int64validator.Between(0, 600),
+								int64validator.Between(oidcOptionsParTimeoutMin, oidcOptionsParTimeoutMax),
 							},
 						},
 
@@ -923,10 +942,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							Optional:            true,
 							Computed:            true,
 
-							Default: int64default.StaticInt64(2592000),
+							Default: int64default.StaticInt64(oidcOptionsRefreshTokenDurationDefault),
 
 							Validators: []validator.Int64{
-								int64validator.Between(60, 2147483647),
+								int64validator.Between(oidcOptionsRefreshTokenDurationMin, oidcOptionsRefreshTokenDurationMax),
 							},
 						},
 
@@ -936,10 +955,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							Optional:            true,
 							Computed:            true,
 
-							Default: int64default.StaticInt64(15552000),
+							Default: int64default.StaticInt64(oidcOptionsRefreshTokenRollingDurationDefault),
 
 							Validators: []validator.Int64{
-								int64validator.Between(60, 2147483647),
+								int64validator.Between(oidcOptionsRefreshTokenRollingDurationMin, oidcOptionsRefreshTokenRollingDurationMax),
 							},
 						},
 
@@ -949,7 +968,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							Optional:            true,
 
 							Validators: []validator.Int64{
-								int64validator.Between(60, 86400),
+								int64validator.Between(oidcOptionsRefreshTokenRollingGracePeriodDurationMin, oidcOptionsRefreshTokenRollingGracePeriodDurationMax),
 							},
 						},
 
@@ -1124,10 +1143,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 										Optional:            true,
 										Computed:            true,
 
-										Default: int64default.StaticInt64(30),
+										Default: int64default.StaticInt64(oidcOptionsMobileAppPasscodeRefreshSecondsDefault),
 
 										Validators: []validator.Int64{
-											int64validator.Between(30, 60),
+											int64validator.Between(oidcOptionsMobileAppPasscodeRefreshSecondsMin, oidcOptionsMobileAppPasscodeRefreshSecondsMax),
 										},
 									},
 
@@ -1426,7 +1445,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							Optional:            true,
 
 							Validators: []validator.Int64{
-								int64validator.Between(0, 24),
+								int64validator.Between(samlOptionsSloWindowMin, samlOptionsSloWindowMax),
 							},
 						},
 
@@ -1555,8 +1574,9 @@ func resourceApplicationSchemaCorsSettings() schema.ListNestedBlock {
 		string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_SPECIFIC_ORIGINS): "rejects all CORS requests except those listed in `origins`",
 	})
 
+	const originsMax = 20
 	originsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value must be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 address.  Subdomains may use the wildcard (`*`) to match any string.  Must be non-empty when `behavior` is `%s` and must be omitted or empty when `behavior` is `%s`.  Limited to 20 values.", string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_SPECIFIC_ORIGINS), string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_NO_ORIGINS)),
+		fmt.Sprintf("A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value must be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 address.  Subdomains may use the wildcard (`*`) to match any string.  Must be non-empty when `behavior` is `%s` and must be omitted or empty when `behavior` is `%s`.  Limited to %d values.", string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_SPECIFIC_ORIGINS), string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_NO_ORIGINS), originsMax),
 	)
 
 	return schema.ListNestedBlock{
@@ -1583,7 +1603,7 @@ func resourceApplicationSchemaCorsSettings() schema.ListNestedBlock {
 					ElementType: types.StringType,
 
 					Validators: []validator.Set{
-						setvalidator.SizeAtMost(20),
+						setvalidator.SizeAtMost(originsMax),
 						setvalidator.ValueStringsAre(
 							stringvalidator.RegexMatches(
 								regexp.MustCompile(`^(https?:\/\/)?(localhost|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|([\*a-zA-Z0-9-]+\.)+[a-zA-Z]{2,})(:\d{1,5})?$`),
@@ -1624,6 +1644,35 @@ func (r *ApplicationResource) Configure(ctx context.Context, req resource.Config
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
 		return
+	}
+}
+
+func (r *ApplicationResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var data ApplicationResourceModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+
+	if !data.OIDCOptions.IsNull() && !data.OIDCOptions.IsUnknown() {
+		var plan []ApplicationOIDCOptionsResourceModel
+		resp.Diagnostics.Append(data.OIDCOptions.ElementsAs(ctx, &plan, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		if len(plan) > 0 {
+			if !plan[0].CertificateBasedAuthentication.IsNull() && !plan[0].CertificateBasedAuthentication.IsUnknown() {
+				if !plan[0].Type.Equal(types.StringValue(string(management.ENUMAPPLICATIONTYPE_NATIVE_APP))) {
+					resp.Diagnostics.AddAttributeError(
+						path.Root("oidc_options").AtName("certificate_based_authentication"),
+						"Invalid configuration",
+						fmt.Sprintf("`certificate_based_authentication` can only be set with OIDC applications that have a `type` value of `%s`.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
+					)
+
+					return
+				}
+			}
+
+		}
 	}
 }
 
@@ -2015,7 +2064,7 @@ func (p *ApplicationResourceModel) expandCreate(ctx context.Context) (*managemen
 	}
 
 	if !p.ExternalLinkOptions.IsNull() && !p.ExternalLinkOptions.IsUnknown() {
-		data.ApplicationExternalLink, d = p.expandApplicationExternalLink()
+		data.ApplicationExternalLink, d = p.expandApplicationExternalLink(ctx)
 		diags = append(diags, d...)
 	}
 
@@ -2038,8 +2087,26 @@ func (p *ApplicationResourceModel) expandUpdate(ctx context.Context) (*managemen
 	}
 
 	if !p.ExternalLinkOptions.IsNull() && !p.ExternalLinkOptions.IsUnknown() {
-		data.ApplicationExternalLink, d = p.expandApplicationExternalLink()
+		data.ApplicationExternalLink, d = p.expandApplicationExternalLink(ctx)
 		diags = append(diags, d...)
+	}
+
+	return data, diags
+}
+
+func (p *ApplicationCorsSettingsResourceModel) expand() (*management.ApplicationCorsSettings, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewApplicationCorsSettings(management.EnumApplicationCorsSettingsBehavior(p.Behavior.ValueString()))
+
+	if !p.Origins.IsNull() && !p.Origins.IsUnknown() {
+		var origins []string
+		d := p.Origins.ElementsAs(context.Background(), &origins, false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+		data.SetOrigins(origins)
 	}
 
 	return data, diags
@@ -2067,7 +2134,18 @@ func (p *ApplicationResourceModel) expandApplicationOIDC(ctx context.Context) (*
 
 		planItem := plan[0]
 
-		grantTypes := planItem.GrantTypes
+		grantTypes := make([]management.EnumApplicationOIDCGrantType, 0)
+
+		var grantTypesPlan []string
+
+		diags.Append(planItem.GrantTypes.ElementsAs(ctx, &grantTypesPlan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		for _, v := range grantTypesPlan {
+			grantTypes = append(grantTypes, management.EnumApplicationOIDCGrantType(v))
+		}
 
 		data = management.NewApplicationOIDC(
 			p.Enabled.ValueBool(),
@@ -2077,6 +2155,381 @@ func (p *ApplicationResourceModel) expandApplicationOIDC(ctx context.Context) (*
 			grantTypes,
 			management.EnumApplicationOIDCTokenAuthMethod(planItem.TokenEndpointAuthnMethod.ValueString()),
 		)
+
+		applicationCommon, d := p.expandApplicationCommon(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.Description = applicationCommon.Description
+		data.LoginPageUrl = applicationCommon.LoginPageUrl
+		data.Icon = applicationCommon.Icon
+		data.AccessControl = applicationCommon.AccessControl
+		data.HiddenFromAppPortal = applicationCommon.HiddenFromAppPortal
+
+		if !planItem.CorsSettings.IsNull() && !planItem.CorsSettings.IsUnknown() {
+			var corsPlan []ApplicationCorsSettingsResourceModel
+
+			diags.Append(planItem.CorsSettings.ElementsAs(ctx, &corsPlan, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			if len(corsPlan) == 0 {
+				diags.AddError(
+					"Invalid configuration",
+					"The `oidc_options.cors_settings` block is declared but has no configuration.  Please report this to the provider maintainers.",
+				)
+			}
+
+			corsSettings, d := corsPlan[0].expand()
+			diags = append(diags, d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+			data.SetCorsSettings(*corsSettings)
+		}
+
+		if !planItem.HomePageUrl.IsNull() && !planItem.HomePageUrl.IsUnknown() {
+			data.SetHomePageUrl(planItem.HomePageUrl.ValueString())
+		}
+
+		if !planItem.InitiateLoginUri.IsNull() && !planItem.InitiateLoginUri.IsUnknown() {
+			data.SetInitiateLoginUri(planItem.InitiateLoginUri.ValueString())
+		}
+
+		if !planItem.TargetLinkUri.IsNull() && !planItem.TargetLinkUri.IsUnknown() {
+			data.SetTargetLinkUri(planItem.TargetLinkUri.ValueString())
+		}
+
+		if !planItem.ResponseTypes.IsNull() && !planItem.ResponseTypes.IsUnknown() {
+			var responseTypesPlan []string
+
+			diags.Append(planItem.ResponseTypes.ElementsAs(ctx, &responseTypesPlan, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			obj := make([]management.EnumApplicationOIDCResponseType, 0)
+
+			for _, v := range responseTypesPlan {
+				obj = append(obj, management.EnumApplicationOIDCResponseType(v))
+			}
+			data.SetResponseTypes(obj)
+		}
+
+		if !planItem.ParRequirement.IsNull() && !planItem.ParRequirement.IsUnknown() {
+			data.SetParRequirement(management.EnumApplicationOIDCPARRequirement(planItem.ParRequirement.ValueString()))
+		}
+
+		if !planItem.ParTimeout.IsNull() && !planItem.ParTimeout.IsUnknown() {
+			data.SetParTimeout(int32(planItem.ParTimeout.ValueInt64()))
+		}
+
+		if !planItem.PKCEEnforcement.IsNull() && !planItem.PKCEEnforcement.IsUnknown() {
+			data.SetPkceEnforcement(management.EnumApplicationOIDCPKCEOption(planItem.PKCEEnforcement.ValueString()))
+		}
+
+		if !planItem.RedirectUris.IsNull() && !planItem.RedirectUris.IsUnknown() {
+			var redirectUrisPlan []string
+
+			diags.Append(planItem.RedirectUris.ElementsAs(ctx, &redirectUrisPlan, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			data.SetRedirectUris(redirectUrisPlan)
+		}
+
+		if !planItem.AllowWildcardsInRedirectUris.IsNull() && !planItem.AllowWildcardsInRedirectUris.IsUnknown() {
+			data.SetAllowWildcardInRedirectUris(planItem.AllowWildcardsInRedirectUris.ValueBool())
+		}
+
+		if !planItem.PostLogoutRedirectUris.IsNull() && !planItem.PostLogoutRedirectUris.IsUnknown() {
+			var postLogoutRedirectUrisPlan []string
+
+			diags.Append(planItem.PostLogoutRedirectUris.ElementsAs(ctx, &postLogoutRedirectUrisPlan, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			data.SetPostLogoutRedirectUris(postLogoutRedirectUrisPlan)
+		}
+
+		if !planItem.RefreshTokenDuration.IsNull() && !planItem.RefreshTokenDuration.IsUnknown() {
+			data.SetRefreshTokenDuration(int32(planItem.RefreshTokenDuration.ValueInt64()))
+		}
+
+		if !planItem.RefreshTokenRollingDuration.IsNull() && !planItem.RefreshTokenRollingDuration.IsUnknown() {
+			data.SetRefreshTokenRollingDuration(int32(planItem.RefreshTokenRollingDuration.ValueInt64()))
+		}
+
+		if !planItem.RefreshTokenRollingGracePeriodDuration.IsNull() && !planItem.RefreshTokenRollingGracePeriodDuration.IsUnknown() {
+			data.SetRefreshTokenRollingGracePeriodDuration(int32(planItem.RefreshTokenRollingGracePeriodDuration.ValueInt64()))
+		}
+
+		if !planItem.AdditionalRefreshTokenReplayProtectionEnabled.IsNull() && !planItem.AdditionalRefreshTokenReplayProtectionEnabled.IsUnknown() {
+			data.SetAdditionalRefreshTokenReplayProtectionEnabled(planItem.AdditionalRefreshTokenReplayProtectionEnabled.ValueBool())
+		}
+
+		if !p.Tags.IsNull() && !p.Tags.IsUnknown() {
+			var tagsPlan []string
+
+			diags.Append(p.Tags.ElementsAs(ctx, &tagsPlan, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			tags := make([]management.EnumApplicationTags, 0)
+
+			for _, v := range tagsPlan {
+				tags = append(tags, management.EnumApplicationTags(v))
+			}
+
+			data.Tags = tags
+
+		}
+
+		data.SetAssignActorRoles(false)
+
+		if !planItem.CertificateBasedAuthentication.IsNull() && !planItem.CertificateBasedAuthentication.IsUnknown() {
+			if !planItem.Type.Equal(types.StringValue(string(management.ENUMAPPLICATIONTYPE_NATIVE_APP))) {
+				diags.AddError(
+					"Invalid configuration",
+					fmt.Sprintf("`certificate_based_authentication` can only be set with applications that have a `type` value of `%s`.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
+				)
+
+				return nil, diags
+			}
+
+			var kerberosPlan []ApplicationOIDCCertificateBasedAuthenticationResourceModel
+
+			diags.Append(planItem.CertificateBasedAuthentication.ElementsAs(ctx, &kerberosPlan, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			if len(kerberosPlan) == 0 {
+				diags.AddError(
+					"Invalid configuration",
+					"The `oidc_options.certificate_based_authentication` block is declared but has no configuration.  Please report this to the provider maintainers.",
+				)
+			}
+
+			data.SetKerberos(*management.NewApplicationOIDCAllOfKerberos(*management.NewApplicationOIDCAllOfKerberosKey(kerberosPlan[0].KeyId.ValueString())))
+		}
+
+		if !planItem.SupportUnsignedRequestObject.IsNull() && !planItem.SupportUnsignedRequestObject.IsUnknown() {
+			data.SetSupportUnsignedRequestObject(planItem.SupportUnsignedRequestObject.ValueBool())
+		}
+
+		if !planItem.RequireSignedRequestObject.IsNull() && !planItem.RequireSignedRequestObject.IsUnknown() {
+			data.SetRequireSignedRequestObject(planItem.RequireSignedRequestObject.ValueBool())
+		}
+
+		if !planItem.MobileApp.IsNull() && !planItem.MobileApp.IsUnknown() {
+			var mobileAppPlan []ApplicationOIDCMobileAppResourceModel
+
+			diags.Append(planItem.MobileApp.ElementsAs(ctx, &mobileAppPlan, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			if len(mobileAppPlan) == 0 {
+				diags.AddError(
+					"Invalid configuration",
+					"The `oidc_options.mobile_app` block is declared but has no configuration.  Please report this to the provider maintainers.",
+				)
+			}
+
+			mobile, d := mobileAppPlan[0].expand(ctx)
+			diags = append(diags, d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			data.SetMobile(*mobile)
+		}
+
+		if !planItem.BundleId.IsNull() && !planItem.BundleId.IsUnknown() {
+			data.SetBundleId(planItem.BundleId.ValueString())
+		}
+
+		if !planItem.PackageName.IsNull() && !planItem.PackageName.IsUnknown() {
+			data.SetPackageName(planItem.PackageName.ValueString())
+		}
+	}
+
+	return data, diags
+}
+
+func (p *ApplicationOIDCMobileAppResourceModel) expand(ctx context.Context) (*management.ApplicationOIDCAllOfMobile, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewApplicationOIDCAllOfMobile()
+
+	if !p.BundleId.IsNull() && !p.BundleId.IsUnknown() {
+		data.SetBundleId(p.BundleId.ValueString())
+	}
+
+	if !p.HuaweiAppId.IsNull() && !p.HuaweiAppId.IsUnknown() {
+		data.SetHuaweiAppId(p.HuaweiAppId.ValueString())
+	}
+
+	if !p.HuaweiPackageName.IsNull() && !p.HuaweiPackageName.IsUnknown() {
+		data.SetHuaweiPackageName(p.HuaweiPackageName.ValueString())
+	}
+
+	if !p.IntegrityDetection.IsNull() && !p.IntegrityDetection.IsUnknown() {
+
+		var integrityDetectionPlan []ApplicationOIDCMobileAppIntegrityDetectionResourceModel
+		diags.Append(p.IntegrityDetection.ElementsAs(ctx, &integrityDetectionPlan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if len(integrityDetectionPlan) == 0 {
+			diags.AddError(
+				"Invalid configuration",
+				"The `oidc_options.mobile_app` block is declared but has no configuration.  Please report this to the provider maintainers.",
+			)
+		}
+
+		integrityDetection, d := integrityDetectionPlan[0].expand(ctx)
+		diags = append(diags, d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetIntegrityDetection(*integrityDetection)
+	}
+
+	if !p.PackageName.IsNull() && !p.PackageName.IsUnknown() {
+		data.SetPackageName(p.PackageName.ValueString())
+	}
+
+	if !p.PasscodeRefreshSeconds.IsNull() && !p.PasscodeRefreshSeconds.IsUnknown() {
+		data.SetPasscodeRefreshDuration(*management.NewApplicationOIDCAllOfMobilePasscodeRefreshDuration(
+			int32(p.PasscodeRefreshSeconds.ValueInt64()),
+			management.ENUMPASSCODEREFRESHTIMEUNIT_SECONDS,
+		))
+	}
+
+	if !p.UniversalAppLink.IsNull() && !p.UniversalAppLink.IsUnknown() {
+		data.SetUriPrefix(p.UniversalAppLink.ValueString())
+	}
+
+	return data, diags
+}
+
+func (p *ApplicationOIDCMobileAppIntegrityDetectionResourceModel) expand(ctx context.Context) (*management.ApplicationOIDCAllOfMobileIntegrityDetection, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewApplicationOIDCAllOfMobileIntegrityDetection()
+
+	if !p.Enabled.IsNull() && !p.Enabled.IsUnknown() {
+		var mode management.EnumEnabledStatus
+		if p.Enabled.ValueBool() {
+			mode = management.ENUMENABLEDSTATUS_ENABLED
+		} else {
+			mode = management.ENUMENABLEDSTATUS_DISABLED
+		}
+		data.SetMode(mode)
+	}
+
+	googleVerificationIncluded := true
+
+	if !p.ExcludedPlatforms.IsNull() && !p.ExcludedPlatforms.IsUnknown() {
+		var excludedPlatformsPlan []string
+
+		diags.Append(p.ExcludedPlatforms.ElementsAs(ctx, &excludedPlatformsPlan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		excludedPlatforms := make([]management.EnumMobileIntegrityDetectionPlatform, 0)
+
+		for _, v := range excludedPlatformsPlan {
+			excludedPlatforms = append(excludedPlatforms, management.EnumMobileIntegrityDetectionPlatform(v))
+			if v == string(management.ENUMMOBILEINTEGRITYDETECTIONPLATFORM_GOOGLE) {
+				googleVerificationIncluded = false
+			}
+		}
+
+		data.SetExcludedPlatforms(excludedPlatforms)
+	}
+
+	if !p.GooglePlay.IsNull() && !p.GooglePlay.IsUnknown() {
+
+		var googlePlayPlan []ApplicationOIDCMobileAppIntegrityDetectionGooglePlayResourceModel
+		diags.Append(p.GooglePlay.ElementsAs(ctx, &googlePlayPlan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if len(googlePlayPlan) == 0 {
+			diags.AddError(
+				"Invalid configuration",
+				"The `oidc_options.mobile_app.integrity_detection.google_play` block is declared but has no configuration.  Please report this to the provider maintainers.",
+			)
+		}
+
+		googlePlay := management.NewApplicationOIDCAllOfMobileIntegrityDetectionGooglePlay()
+
+		if !googlePlayPlan[0].DecryptionKey.IsNull() && !googlePlayPlan[0].DecryptionKey.IsUnknown() {
+			googlePlay.SetDecryptionKey(googlePlayPlan[0].DecryptionKey.ValueString())
+		}
+
+		if !googlePlayPlan[0].ServiceAccountCredentialsJson.IsNull() && !googlePlayPlan[0].ServiceAccountCredentialsJson.IsUnknown() {
+			googlePlay.SetServiceAccountCredentials(googlePlayPlan[0].ServiceAccountCredentialsJson.ValueString())
+		}
+
+		if !googlePlayPlan[0].VerificationKey.IsNull() && !googlePlayPlan[0].VerificationKey.IsUnknown() {
+			googlePlay.SetVerificationKey(googlePlayPlan[0].VerificationKey.ValueString())
+		}
+
+		if !googlePlayPlan[0].VerificationType.IsNull() && !googlePlayPlan[0].VerificationType.IsUnknown() {
+			googlePlay.SetVerificationType(management.EnumApplicationNativeGooglePlayVerificationType(googlePlayPlan[0].VerificationType.ValueString()))
+		}
+
+		data.SetGooglePlay(*googlePlay)
+	} else {
+		if googleVerificationIncluded {
+			diags.AddError(
+				"Invalid configuration",
+				"The `oidc_options.mobile_app.integrity_detection.google_play` is required when the mobile integrity check is enabled in the application and `excluded_platforms` is unset, or `excluded_platforms` is not configured with `GOOGLE`.",
+			)
+		}
+
+	}
+
+	if !p.CacheDuration.IsNull() && !p.CacheDuration.IsUnknown() {
+
+		var cacheDurationPlan []ApplicationOIDCMobileAppIntegrityDetectionCacheDurationResourceModel
+		diags.Append(p.CacheDuration.ElementsAs(ctx, &cacheDurationPlan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if len(cacheDurationPlan) == 0 {
+			diags.AddError(
+				"Invalid configuration",
+				"The `oidc_options.mobile_app.integrity_detection.cache_duration` block is declared but has no configuration.  Please report this to the provider maintainers.",
+			)
+		}
+
+		cacheDuration := management.NewApplicationOIDCAllOfMobileIntegrityDetectionCacheDuration()
+
+		if !cacheDurationPlan[0].Amount.IsNull() && !cacheDurationPlan[0].Amount.IsUnknown() {
+			cacheDuration.SetAmount(int32(cacheDurationPlan[0].Amount.ValueInt64()))
+		}
+
+		if !cacheDurationPlan[0].Units.IsNull() && !cacheDurationPlan[0].Units.IsUnknown() {
+			cacheDuration.SetUnits(management.EnumDurationUnitMinsHours(cacheDurationPlan[0].Units.ValueString()))
+		}
+
+		data.SetCacheDuration(*cacheDuration)
 	}
 
 	return data, diags
@@ -2104,15 +2557,175 @@ func (p *ApplicationResourceModel) expandApplicationSAML(ctx context.Context) (*
 
 		planItem := plan[0]
 
+		var acsUrls []string
+
+		diags.Append(planItem.AcsUrls.ElementsAs(ctx, &acsUrls, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
 		data = management.NewApplicationSAML(
 			p.Enabled.ValueBool(),
 			p.Name.ValueString(),
 			management.ENUMAPPLICATIONPROTOCOL_SAML,
 			management.EnumApplicationType(planItem.Type.ValueString()),
 			acsUrls,
-			assertionDuration,
-			spEntityId,
+			int32(planItem.AssertionDuration.ValueInt64()),
+			planItem.SpEntityId.ValueString(),
 		)
+
+		applicationCommon, d := p.expandApplicationCommon(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.Description = applicationCommon.Description
+		data.LoginPageUrl = applicationCommon.LoginPageUrl
+		data.Icon = applicationCommon.Icon
+		data.AccessControl = applicationCommon.AccessControl
+		data.HiddenFromAppPortal = applicationCommon.HiddenFromAppPortal
+
+		// SAML specific options
+		if !planItem.CorsSettings.IsNull() && !planItem.CorsSettings.IsUnknown() {
+			var corsPlan []ApplicationCorsSettingsResourceModel
+
+			diags.Append(planItem.CorsSettings.ElementsAs(ctx, &corsPlan, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			if len(corsPlan) == 0 {
+				diags.AddError(
+					"Invalid configuration",
+					"The `saml_options.cors_settings` block is declared but has no configuration.  Please report this to the provider maintainers.",
+				)
+			}
+
+			corsSettings, d := corsPlan[0].expand()
+			diags = append(diags, d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+			data.SetCorsSettings(*corsSettings)
+		}
+
+		if !planItem.HomePageUrl.IsNull() && !planItem.HomePageUrl.IsUnknown() {
+			data.SetHomePageUrl(planItem.HomePageUrl.ValueString())
+		}
+
+		if !planItem.AssertionSignedEnabled.IsNull() && !planItem.AssertionSignedEnabled.IsUnknown() {
+			data.SetAssertionSigned(planItem.AssertionSignedEnabled.ValueBool())
+		}
+
+		if !planItem.IdpSigningKeyId.IsNull() && !planItem.IdpSigningKeyId.IsUnknown() {
+			data.SetIdpSigning(*management.NewApplicationSAMLAllOfIdpSigning(*management.NewApplicationSAMLAllOfIdpSigningKey(planItem.IdpSigningKeyId.ValueString())))
+		}
+
+		if !planItem.IdpSigningKey.IsNull() && !planItem.IdpSigningKey.IsUnknown() {
+
+			var idpSigningOptionsPlan []ApplicationSAMLOptionsIdpSigningKeyResourceModel
+
+			diags.Append(planItem.IdpSigningKey.ElementsAs(ctx, &idpSigningOptionsPlan, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			if len(idpSigningOptionsPlan) == 0 {
+				diags.AddError(
+					"Invalid configuration",
+					"The `saml_options.idp_signing_key` block is declared but has no configuration.  Please report this to the provider maintainers.",
+				)
+			}
+
+			idpSigning := *management.NewApplicationSAMLAllOfIdpSigning(*management.NewApplicationSAMLAllOfIdpSigningKey(idpSigningOptionsPlan[0].KeyId.ValueString()))
+			idpSigning.SetAlgorithm(management.EnumCertificateKeySignagureAlgorithm(idpSigningOptionsPlan[0].Algorithm.ValueString()))
+
+			data.SetIdpSigning(idpSigning)
+		}
+
+		if !planItem.EnableRequestedAuthnContext.IsNull() && !planItem.EnableRequestedAuthnContext.IsUnknown() {
+			data.SetEnableRequestedAuthnContext(planItem.EnableRequestedAuthnContext.ValueBool())
+		}
+
+		if !planItem.NameIdFormat.IsNull() && !planItem.NameIdFormat.IsUnknown() {
+			data.SetNameIdFormat(planItem.NameIdFormat.ValueString())
+		}
+
+		if !planItem.ResponseIsSigned.IsNull() && !planItem.ResponseIsSigned.IsUnknown() {
+			data.SetResponseSigned(planItem.ResponseIsSigned.ValueBool())
+		}
+
+		if !planItem.SloBinding.IsNull() && !planItem.SloBinding.IsUnknown() {
+			data.SetSloBinding(management.EnumApplicationSAMLSloBinding(planItem.SloBinding.ValueString()))
+		}
+
+		if !planItem.SloEndpoint.IsNull() && !planItem.SloEndpoint.IsUnknown() {
+			data.SetSloEndpoint(planItem.SloEndpoint.ValueString())
+		}
+
+		if !planItem.SloResponseEndpoint.IsNull() && !planItem.SloResponseEndpoint.IsUnknown() {
+			data.SetSloResponseEndpoint(planItem.SloResponseEndpoint.ValueString())
+		}
+
+		if !planItem.SloWindow.IsNull() && !planItem.SloWindow.IsUnknown() {
+			data.SetSloWindow(int32(planItem.SloWindow.ValueInt64()))
+		}
+
+		if !planItem.SpVerificationCertificateIds.IsNull() && !planItem.SpVerificationCertificateIds.IsUnknown() {
+			var certificateIdsPlan []string
+
+			diags.Append(planItem.SpVerificationCertificateIds.ElementsAs(ctx, &certificateIdsPlan, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			certificates := make([]management.ApplicationSAMLAllOfSpVerificationCertificates, 0)
+			for _, v := range certificateIdsPlan {
+				certificate := *management.NewApplicationSAMLAllOfSpVerificationCertificates(v)
+				certificates = append(certificates, certificate)
+			}
+
+			data.SetSpVerification(*management.NewApplicationSAMLAllOfSpVerification(certificates))
+		}
+
+		if !planItem.SpVerification.IsNull() && !planItem.SpVerification.IsUnknown() {
+			var spVerificationPlan []ApplicationSAMLOptionsSpVerificationResourceModel
+
+			diags.Append(planItem.SpVerification.ElementsAs(ctx, &spVerificationPlan, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			if len(spVerificationPlan) == 0 {
+				diags.AddError(
+					"Invalid configuration",
+					"The `saml_options.idp_signing_key` block is declared but has no configuration.  Please report this to the provider maintainers.",
+				)
+			}
+
+			certificates := make([]management.ApplicationSAMLAllOfSpVerificationCertificates, 0)
+			if !spVerificationPlan[0].CertificateIds.IsNull() && !spVerificationPlan[0].CertificateIds.IsUnknown() {
+				var certificateIdsPlan []string
+
+				diags.Append(planItem.SpVerification.ElementsAs(ctx, &certificateIdsPlan, false)...)
+				if diags.HasError() {
+					return nil, diags
+				}
+				for _, v := range certificateIdsPlan {
+					certificate := *management.NewApplicationSAMLAllOfSpVerificationCertificates(v)
+					certificates = append(certificates, certificate)
+				}
+			}
+
+			spVerification := management.NewApplicationSAMLAllOfSpVerification(certificates)
+
+			if !spVerificationPlan[0].AuthnRequestSigned.IsNull() && !spVerificationPlan[0].AuthnRequestSigned.IsUnknown() {
+				spVerification.SetAuthnRequestSigned(spVerificationPlan[0].AuthnRequestSigned.ValueBool())
+			}
+
+			data.SetSpVerification(*spVerification)
+		}
 	}
 
 	return data, diags
@@ -2148,43 +2761,115 @@ func (p *ApplicationResourceModel) expandApplicationExternalLink(ctx context.Con
 			planItem.HomePageUrl.ValueString(),
 		)
 
-		if !p.Description.IsNull() && !p.Description.IsUnknown() {
-			data.SetDescription(p.Description.ValueString())
+		applicationCommon, d := p.expandApplicationCommon(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
 		}
 
-		if !p.Icon.IsNull() && !p.Icon.IsUnknown() {
-			var plan []service.ImageResourceModel
-			d := p.Icon.ElementsAs(ctx, &plan, false)
-			diags.Append(d...)
-			if diags.HasError() {
-				return nil, diags
-			}
+		data.Description = applicationCommon.Description
+		data.LoginPageUrl = applicationCommon.LoginPageUrl
+		data.Icon = applicationCommon.Icon
+		data.AccessControl = applicationCommon.AccessControl
+		data.HiddenFromAppPortal = applicationCommon.HiddenFromAppPortal
 
-			if len(plan) == 0 {
-				diags.AddError(
-					"Invalid configuration",
-					"The `icon` block is declared but has no configuration.  Please report this to the provider maintainers.",
-				)
-			}
-
-			iconPlanItem := plan[0]
-
-			data.SetIcon(*management.NewApplicationIcon(
-				iconPlanItem.Id.ValueString(),
-				iconPlanItem.Href.ValueString(),
-			))
-		}
-
-		if !p.AccessControlRoleType.IsNull() && !p.AccessControlRoleType.IsUnknown() {
-			data.SetAccessControl(*v1)
-		}
-
-		if !p.HiddenFromAppPortal.IsNull() && !p.HiddenFromAppPortal.IsUnknown() {
-			data.SetHiddenFromAppPortal(p.HiddenFromAppPortal.ValueBool())
-		}
 	}
 
 	return data, diags
+}
+
+func (p *ApplicationResourceModel) expandApplicationCommon(ctx context.Context) (*management.Application, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.Application{}
+
+	if !p.Description.IsNull() && !p.Description.IsUnknown() {
+		data.SetDescription(p.Description.ValueString())
+	}
+
+	if !p.LoginPageUrl.IsNull() && !p.LoginPageUrl.IsUnknown() {
+		data.SetLoginPageUrl(p.LoginPageUrl.ValueString())
+	}
+
+	if !p.Icon.IsNull() && !p.Icon.IsUnknown() {
+		var plan []service.ImageResourceModel
+		d := p.Icon.ElementsAs(ctx, &plan, false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if len(plan) == 0 {
+			diags.AddError(
+				"Invalid configuration",
+				"The `icon` block is declared but has no configuration.  Please report this to the provider maintainers.",
+			)
+
+			return nil, diags
+		}
+
+		iconPlanItem := plan[0]
+
+		data.SetIcon(*management.NewApplicationIcon(
+			iconPlanItem.Id.ValueString(),
+			iconPlanItem.Href.ValueString(),
+		))
+	}
+
+	accessControl := *management.NewApplicationAccessControl()
+	accessControlCount := 0
+
+	if !p.AccessControlRoleType.IsNull() && !p.AccessControlRoleType.IsUnknown() {
+		accessControl.SetRole(*management.NewApplicationAccessControlRole(management.EnumApplicationAccessControlType(p.AccessControlRoleType.ValueString())))
+		accessControlCount += 1
+	}
+
+	if !p.AccessControlGroupOptions.IsNull() && !p.AccessControlGroupOptions.IsUnknown() {
+		var plan []ApplicationAccessControlGroupOptionsResourceModel
+		d := p.AccessControlGroupOptions.ElementsAs(ctx, &plan, false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if len(plan) == 0 {
+			diags.AddError(
+				"Invalid configuration",
+				"The `access_control_group_options` block is declared but has no configuration.  Please report this to the provider maintainers.",
+			)
+
+			return nil, diags
+		}
+
+		planItem := plan[0]
+
+		groups := make([]management.ApplicationAccessControlGroupGroupsInner, 0)
+
+		var groupsPlan []string
+
+		diags.Append(planItem.Groups.ElementsAs(ctx, &groupsPlan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		for _, group := range groupsPlan {
+			groups = append(groups, *management.NewApplicationAccessControlGroupGroupsInner(group))
+		}
+
+		accessControl.SetGroup(*management.NewApplicationAccessControlGroup(management.EnumApplicationAccessControlGroupType(planItem.Type.ValueString()), groups))
+
+		accessControlCount += 1
+	}
+
+	if accessControlCount > 0 {
+		data.SetAccessControl(accessControl)
+	}
+
+	if !p.HiddenFromAppPortal.IsNull() && !p.HiddenFromAppPortal.IsUnknown() {
+		data.SetHiddenFromAppPortal(p.HiddenFromAppPortal.ValueBool())
+	}
+
+	return &data, diags
 }
 
 func (p *ApplicationResourceModel) toState(apiObject *management.ReadOneApplication200Response, apiSecretObject *management.ApplicationSecret) diag.Diagnostics {
@@ -2350,6 +3035,7 @@ func applicationOidcOptionsToTF(apiObject *management.ApplicationOIDC, apiObject
 	}
 
 	kerberos, d := applicationOidcOptionsCertificateBasedAuthenticationToTF(apiObject.GetKerberosOk())
+	diags.Append(d...)
 
 	corsSettings, d := applicationCorsSettingsOkToTF(apiObject.GetCorsSettingsOk())
 	diags.Append(d...)
