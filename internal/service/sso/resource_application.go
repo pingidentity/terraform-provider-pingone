@@ -168,6 +168,7 @@ var (
 	applicationOidcOptionsTFObjectTypes = map[string]attr.Type{
 		"additional_refresh_token_replay_protection_enabled": types.BoolType,
 		"allow_wildcards_in_redirect_uris":                   types.BoolType,
+		"bundle_id":                                          types.StringType,
 		"certificate_based_authentication":                   types.ListType{ElemType: types.ObjectType{AttrTypes: applicationOidcOptionsCertificateAuthenticationTFObjectTypes}},
 		"client_id":                                          types.StringType,
 		"client_secret":                                      types.StringType,
@@ -176,6 +177,7 @@ var (
 		"home_page_url":                                      types.StringType,
 		"initiate_login_uri":                                 types.StringType,
 		"mobile_app":                                         types.ListType{ElemType: types.ObjectType{AttrTypes: applicationOidcMobileAppTFObjectTypes}},
+		"package_name":                                       types.StringType,
 		"par_requirement":                                    types.StringType,
 		"par_timeout":                                        types.Int64Type,
 		"pkce_enforcement":                                   types.StringType,
@@ -1754,7 +1756,7 @@ func (r *ApplicationResource) Create(ctx context.Context, req resource.CreateReq
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationSecretApi.ReadApplicationSecret(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationSecretApi.ReadApplicationSecret(ctx, plan.EnvironmentId.ValueString(), applicationId).Execute()
 				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadApplicationSecret",
@@ -2894,9 +2896,9 @@ func (p *ApplicationResourceModel) toState(apiObject *management.ReadOneApplicat
 		p.LoginPageUrl = framework.StringOkToTF(v.GetLoginPageUrlOk())
 
 		p.AccessControlRoleType = types.StringNull()
-		p.AccessControlGroupOptions = types.ListNull(types.StringType)
-		if v, ok := v.GetAccessControlOk(); ok {
-			p.AccessControlRoleType = framework.EnumOkToTF(v.GetRoleOk())
+		p.AccessControlGroupOptions = types.ListNull(types.ObjectType{AttrTypes: applicationAccessControlGroupOptionsTFObjectTypes})
+		if vA, ok := v.GetAccessControlOk(); ok {
+			p.AccessControlRoleType = framework.EnumOkToTF(vA.GetRoleOk())
 		}
 
 		p.HiddenFromAppPortal = framework.BoolOkToTF(v.GetHiddenFromAppPortalOk())
@@ -2924,9 +2926,9 @@ func (p *ApplicationResourceModel) toState(apiObject *management.ReadOneApplicat
 		p.LoginPageUrl = framework.StringOkToTF(v.GetLoginPageUrlOk())
 
 		p.AccessControlRoleType = types.StringNull()
-		p.AccessControlGroupOptions = types.ListNull(types.StringType)
-		if v, ok := v.GetAccessControlOk(); ok {
-			p.AccessControlRoleType = framework.EnumOkToTF(v.GetRoleOk())
+		p.AccessControlGroupOptions = types.ListNull(types.ObjectType{AttrTypes: applicationAccessControlGroupOptionsTFObjectTypes})
+		if vA, ok := v.GetAccessControlOk(); ok {
+			p.AccessControlRoleType = framework.EnumOkToTF(vA.GetRoleOk())
 		}
 
 		p.HiddenFromAppPortal = framework.BoolOkToTF(v.GetHiddenFromAppPortalOk())
@@ -2955,9 +2957,9 @@ func (p *ApplicationResourceModel) toState(apiObject *management.ReadOneApplicat
 		p.LoginPageUrl = framework.StringOkToTF(v.GetLoginPageUrlOk())
 
 		p.AccessControlRoleType = types.StringNull()
-		p.AccessControlGroupOptions = types.ListNull(types.StringType)
-		if v, ok := v.GetAccessControlOk(); ok {
-			p.AccessControlRoleType = framework.EnumOkToTF(v.GetRoleOk())
+		p.AccessControlGroupOptions = types.ListNull(types.ObjectType{AttrTypes: applicationAccessControlGroupOptionsTFObjectTypes})
+		if vA, ok := v.GetAccessControlOk(); ok {
+			p.AccessControlRoleType = framework.EnumOkToTF(vA.GetRoleOk())
 		}
 
 		p.HiddenFromAppPortal = framework.BoolOkToTF(v.GetHiddenFromAppPortalOk())
@@ -3045,7 +3047,7 @@ func applicationOidcOptionsToTF(apiObject *management.ApplicationOIDC, apiObject
 
 	attributesMap := map[string]attr.Value{
 		"additional_refresh_token_replay_protection_enabled": framework.BoolOkToTF(apiObject.GetAdditionalRefreshTokenReplayProtectionEnabledOk()),
-		"allow_wildcard_redirect_uris":                       framework.BoolOkToTF(apiObject.GetAllowWildcardInRedirectUrisOk()),
+		"allow_wildcards_in_redirect_uris":                   framework.BoolOkToTF(apiObject.GetAllowWildcardInRedirectUrisOk()),
 		"bundle_id":                                          framework.StringOkToTF(apiObject.GetBundleIdOk()),
 		"certificate_based_authentication":                   kerberos,
 		"client_id":                                          framework.StringOkToTF(apiObject.GetIdOk()),
@@ -3055,6 +3057,7 @@ func applicationOidcOptionsToTF(apiObject *management.ApplicationOIDC, apiObject
 		"home_page_url":                                      framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
 		"initiate_login_uri":                                 framework.StringOkToTF(apiObject.GetInitiateLoginUriOk()),
 		"mobile_app":                                         mobileApp,
+		"package_name":                                       framework.StringOkToTF(apiObject.GetPackageNameOk()),
 		"par_requirement":                                    framework.EnumOkToTF(apiObject.GetParRequirementOk()),
 		"par_timeout":                                        framework.Int32OkToTF(apiObject.GetParTimeoutOk()),
 		"pkce_enforcement":                                   framework.EnumOkToTF(apiObject.GetPkceEnforcementOk()),
@@ -3067,7 +3070,7 @@ func applicationOidcOptionsToTF(apiObject *management.ApplicationOIDC, apiObject
 		"response_types":                                     framework.EnumSetOkToTF(apiObject.GetResponseTypesOk()),
 		"support_unsigned_request_object":                    framework.BoolOkToTF(apiObject.GetSupportUnsignedRequestObjectOk()),
 		"target_link_uri":                                    framework.StringOkToTF(apiObject.GetTargetLinkUriOk()),
-		"token_endpoint_auth_method":                         framework.EnumOkToTF(apiObject.GetTokenEndpointAuthMethodOk()),
+		"token_endpoint_authn_method":                        framework.EnumOkToTF(apiObject.GetTokenEndpointAuthMethodOk()),
 		"type":                                               framework.EnumOkToTF(apiObject.GetTypeOk()),
 	}
 
