@@ -1,0 +1,3 @@
+```release-note:bug
+Fix HTTP/HTTPS URL validation on multiple resources. See issue #686 for details.
+```
