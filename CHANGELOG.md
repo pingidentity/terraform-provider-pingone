@@ -2,9 +2,10 @@
 
 NOTES:
 
+* Add `lifecycle.prevent_destroy` best practice to documentation and examples for data-carrying resources, to mitigate potential accidental data loss. ([#691](https://github.com/pingidentity/terraform-provider-pingone/issues/691))
 * `data-source/pingone_application`: Deprecated the `saml_options.sp_verification_certificate_ids` attribute.  This attribute will be removed in the next major release.  Use the `saml_options.sp_verification.certificate_ids` attribute going forward. ([#680](https://github.com/pingidentity/terraform-provider-pingone/issues/680))
 * `resource/pingone_application`: Deprecated the `saml_options.sp_verification_certificate_ids` parameter.  This parameter will be removed in the next major release.  Use the `saml_options.sp_verification.certificate_ids` parameter going forward. ([#680](https://github.com/pingidentity/terraform-provider-pingone/issues/680))
-* resource/pingone_application_attribute_mapping: Corrected application attribute mapping documentation example when using custom OIDC scopes. ([#684](https://github.com/pingidentity/terraform-provider-pingone/issues/684))
+* `resource/pingone_application_attribute_mapping`: Corrected application attribute mapping documentation example when using custom OIDC scopes. ([#684](https://github.com/pingidentity/terraform-provider-pingone/issues/684))
 
 ENHANCEMENTS:
 
@@ -15,7 +16,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 
-* Fix HTTP/HTTPS URL validation on multiple resources. See issue #686 for details. ([#687](https://github.com/pingidentity/terraform-provider-pingone/issues/687))
+* Fix HTTP/HTTPS URL validation on multiple resources. See issue ([#686](https://github.com/pingidentity/terraform-provider-pingone/issues/686)) for details. ([#687](https://github.com/pingidentity/terraform-provider-pingone/issues/687))
 
 ## 0.24.0 (30 November 2023)
 
