@@ -11,6 +11,8 @@ description: |-
 
 ~> This resource cannot manage the default population of an environment.  The `pingone_population_default` resource can be used instead.
 
+~> This resource carries data and if destroyed, could result in data loss.  Please use the `lifecycle.prevent_destroy` meta-argument ([documentation link](https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#prevent_destroy)) to prevent accidental data loss.
+
 {{ if .HasExample -}}
 ## Example Usage
 

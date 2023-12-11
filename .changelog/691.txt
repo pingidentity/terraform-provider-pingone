@@ -1,0 +1,3 @@
+```release-note:note
+Add `lifecycle.prevent_destroy` best practice to documentation and examples for data-carrying resources, to mitigate potential accidental data loss.
+```
