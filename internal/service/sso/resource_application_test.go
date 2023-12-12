@@ -264,7 +264,7 @@ func TestAccApplication_OIDCMinimalWeb(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
@@ -334,7 +334,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
@@ -450,7 +450,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
@@ -528,7 +528,7 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
@@ -627,7 +627,7 @@ func TestAccApplication_OIDCMinimalNative(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
@@ -714,7 +714,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
@@ -776,7 +776,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
@@ -839,7 +839,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
@@ -1368,7 +1368,7 @@ func TestAccApplication_OIDCMinimalCustom(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
@@ -1509,7 +1509,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
@@ -1764,7 +1764,7 @@ func TestAccApplication_OIDCMinimalService(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
@@ -1908,7 +1908,7 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
@@ -2065,7 +2065,7 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.*", "https://www.pingidentity.com/logout"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
@@ -2157,7 +2157,7 @@ func TestAccApplication_OIDCMinimalSPA(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
@@ -2226,7 +2226,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
@@ -2285,7 +2285,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.*", "https://www.pingidentity.com/logout"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
@@ -2340,7 +2340,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
@@ -2419,7 +2419,7 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
@@ -2511,7 +2511,7 @@ func TestAccApplication_OIDCMinimalWorker(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
@@ -2580,7 +2580,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
@@ -2635,7 +2635,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
@@ -2690,7 +2690,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_duration", "15552000"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.refresh_token_rolling_grace_period_duration"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.0.client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
@@ -2729,7 +2729,7 @@ func TestAccApplication_OIDC_WildcardInRedirectURI(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccApplicationConfig_OIDC_WildcardInRedirect(resourceName, name, false),
-				ExpectError: regexp.MustCompile("Current configuration is invalid as wildcards are not allowed in redirect URIs.  Wildcards can be enabled by setting `allow_wildcards_in_redirect_uris` to `true`."),
+				ExpectError: regexp.MustCompile("Invalid configuration"),
 			},
 			{
 				Config: testAccApplicationConfig_OIDC_WildcardInRedirect(resourceName, name, true),
@@ -3315,7 +3315,6 @@ resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "My test OIDC app"
-  tags           = []
   login_page_url = "https://www.pingidentity.com"
 
   icon {
@@ -3419,7 +3418,6 @@ resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "My test OIDC app"
-  tags           = []
   login_page_url = "https://www.pingidentity.com"
 
   icon {
@@ -3861,7 +3859,6 @@ resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "My test OIDC app"
-  tags           = []
   login_page_url = "https://www.pingidentity.com"
 
   icon {
@@ -3971,7 +3968,6 @@ resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "My test OIDC app"
-  tags           = []
   login_page_url = "https://www.pingidentity.com"
 
   icon {
@@ -4078,7 +4074,6 @@ resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "My test OIDC app"
-  tags           = []
   login_page_url = "https://www.pingidentity.com"
 
   icon {
@@ -4178,7 +4173,6 @@ resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "My test OIDC app"
-  tags           = []
   login_page_url = "https://www.pingidentity.com"
 
   icon {

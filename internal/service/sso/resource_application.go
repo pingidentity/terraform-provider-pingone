@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -622,6 +623,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 				ElementType: types.StringType,
 
 				Validators: []validator.Set{
+					setvalidator.SizeAtLeast(attrMinLength),
 					setvalidator.ValueStringsAre(
 						stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationTagsEnumValues)...),
 					),
@@ -1662,6 +1664,7 @@ func (r *ApplicationResource) ValidateConfig(ctx context.Context, req resource.V
 		}
 
 		if len(plan) > 0 {
+			// Certificate based authentication
 			if !plan[0].CertificateBasedAuthentication.IsNull() && !plan[0].CertificateBasedAuthentication.IsUnknown() {
 				if !plan[0].Type.Equal(types.StringValue(string(management.ENUMAPPLICATIONTYPE_NATIVE_APP))) {
 					resp.Diagnostics.AddAttributeError(
@@ -1669,11 +1672,32 @@ func (r *ApplicationResource) ValidateConfig(ctx context.Context, req resource.V
 						"Invalid configuration",
 						fmt.Sprintf("`certificate_based_authentication` can only be set with OIDC applications that have a `type` value of `%s`.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
 					)
-
-					return
 				}
 			}
 
+			// Wildcards in redirect URIs
+			if !plan[0].RedirectUris.IsNull() && !plan[0].RedirectUris.IsUnknown() {
+				var uris []string
+				resp.Diagnostics.Append(plan[0].RedirectUris.ElementsAs(ctx, &uris, false)...)
+
+				if resp.Diagnostics.HasError() {
+					return
+				}
+
+				for _, uri := range uris {
+					if strings.Contains(uri, "*") {
+						if plan[0].AllowWildcardsInRedirectUris.IsNull() || plan[0].AllowWildcardsInRedirectUris.Equal(types.BoolValue(false)) {
+							resp.Diagnostics.AddAttributeError(
+								path.Root("oidc_options").AtName("redirect_uris"),
+								"Invalid configuration",
+								"Current configuration is invalid as wildcards are not allowed in redirect URIs.  Wildcards can be enabled by setting `allow_wildcards_in_redirect_uris` to `true`.",
+							)
+							break
+						}
+
+					}
+				}
+			}
 		}
 	}
 }
@@ -1711,7 +1735,7 @@ func (r *ApplicationResource) Create(ctx context.Context, req resource.CreateReq
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateApplication",
-		framework.DefaultCustomError,
+		applicationWriteCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&createResponse,
 	)...)
@@ -1922,7 +1946,7 @@ func (r *ApplicationResource) Update(ctx context.Context, req resource.UpdateReq
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateApplication",
-		framework.DefaultCustomError,
+		applicationWriteCustomError,
 		nil,
 		&response,
 	)...)
@@ -2048,6 +2072,24 @@ func (r *ApplicationResource) ImportState(ctx context.Context, req resource.Impo
 
 		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
 	}
+}
+
+func applicationWriteCustomError(error model.P1Error) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// Wildcards in redirect URis
+	m, err := regexp.MatchString("^Wildcards are not allowed in redirect URIs.", error.GetMessage())
+	if err != nil {
+		diags.AddError("API Validation error", "Cannot match error string for wildcard in redirect URIs")
+		return diags
+	}
+	if m {
+		diags.AddError("Invalid configuration", "Current configuration is invalid as wildcards are not allowed in redirect URIs.  Wildcards can be enabled by setting `allow_wildcards_in_redirect_uris` to `true`.")
+
+		return diags
+	}
+
+	return framework.DefaultCustomError(error)
 }
 
 func (p *ApplicationResourceModel) expandCreate(ctx context.Context) (*management.CreateApplicationRequest, diag.Diagnostics) {
@@ -2553,7 +2595,7 @@ func (p *ApplicationResourceModel) expandApplicationSAML(ctx context.Context) (*
 		if len(plan) == 0 {
 			diags.AddError(
 				"Invalid configuration",
-				"The `oidc_options` block is declared but has no configuration.  Please report this to the provider maintainers.",
+				"The `saml_options` block is declared but has no configuration.  Please report this to the provider maintainers.",
 			)
 		}
 
@@ -2702,7 +2744,7 @@ func (p *ApplicationResourceModel) expandApplicationSAML(ctx context.Context) (*
 			if len(spVerificationPlan) == 0 {
 				diags.AddError(
 					"Invalid configuration",
-					"The `saml_options.idp_signing_key` block is declared but has no configuration.  Please report this to the provider maintainers.",
+					"The `saml_options.sp_verification` block is declared but has no configuration.  Please report this to the provider maintainers.",
 				)
 			}
 
@@ -2710,7 +2752,7 @@ func (p *ApplicationResourceModel) expandApplicationSAML(ctx context.Context) (*
 			if !spVerificationPlan[0].CertificateIds.IsNull() && !spVerificationPlan[0].CertificateIds.IsUnknown() {
 				var certificateIdsPlan []string
 
-				diags.Append(planItem.SpVerification.ElementsAs(ctx, &certificateIdsPlan, false)...)
+				diags.Append(spVerificationPlan[0].CertificateIds.ElementsAs(ctx, &certificateIdsPlan, false)...)
 				if diags.HasError() {
 					return nil, diags
 				}
@@ -2749,7 +2791,7 @@ func (p *ApplicationResourceModel) expandApplicationExternalLink(ctx context.Con
 		if len(plan) == 0 {
 			diags.AddError(
 				"Invalid configuration",
-				"The `oidc_options` block is declared but has no configuration.  Please report this to the provider maintainers.",
+				"The `external_link_options` block is declared but has no configuration.  Please report this to the provider maintainers.",
 			)
 		}
 
@@ -2898,7 +2940,12 @@ func (p *ApplicationResourceModel) toState(apiObject *management.ReadOneApplicat
 		p.AccessControlRoleType = types.StringNull()
 		p.AccessControlGroupOptions = types.ListNull(types.ObjectType{AttrTypes: applicationAccessControlGroupOptionsTFObjectTypes})
 		if vA, ok := v.GetAccessControlOk(); ok {
-			p.AccessControlRoleType = framework.EnumOkToTF(vA.GetRoleOk())
+			if vR, ok := vA.GetRoleOk(); ok {
+				p.AccessControlRoleType = framework.EnumOkToTF(vR.GetTypeOk())
+			}
+
+			p.AccessControlGroupOptions, d = applicationAccessControlGroupOptionsToTF(vA.GetGroupOk())
+			diags = append(diags, d...)
 		}
 
 		p.HiddenFromAppPortal = framework.BoolOkToTF(v.GetHiddenFromAppPortalOk())
@@ -2928,7 +2975,12 @@ func (p *ApplicationResourceModel) toState(apiObject *management.ReadOneApplicat
 		p.AccessControlRoleType = types.StringNull()
 		p.AccessControlGroupOptions = types.ListNull(types.ObjectType{AttrTypes: applicationAccessControlGroupOptionsTFObjectTypes})
 		if vA, ok := v.GetAccessControlOk(); ok {
-			p.AccessControlRoleType = framework.EnumOkToTF(vA.GetRoleOk())
+			if vR, ok := vA.GetRoleOk(); ok {
+				p.AccessControlRoleType = framework.EnumOkToTF(vR.GetTypeOk())
+			}
+
+			p.AccessControlGroupOptions, d = applicationAccessControlGroupOptionsToTF(vA.GetGroupOk())
+			diags = append(diags, d...)
 		}
 
 		p.HiddenFromAppPortal = framework.BoolOkToTF(v.GetHiddenFromAppPortalOk())
@@ -2959,7 +3011,12 @@ func (p *ApplicationResourceModel) toState(apiObject *management.ReadOneApplicat
 		p.AccessControlRoleType = types.StringNull()
 		p.AccessControlGroupOptions = types.ListNull(types.ObjectType{AttrTypes: applicationAccessControlGroupOptionsTFObjectTypes})
 		if vA, ok := v.GetAccessControlOk(); ok {
-			p.AccessControlRoleType = framework.EnumOkToTF(vA.GetRoleOk())
+			if vR, ok := vA.GetRoleOk(); ok {
+				p.AccessControlRoleType = framework.EnumOkToTF(vR.GetTypeOk())
+			}
+
+			p.AccessControlGroupOptions, d = applicationAccessControlGroupOptionsToTF(vA.GetGroupOk())
+			diags = append(diags, d...)
 		}
 
 		p.HiddenFromAppPortal = framework.BoolOkToTF(v.GetHiddenFromAppPortalOk())
@@ -2996,6 +3053,38 @@ func applicationExternalLinkOptionsToTF(apiObject *management.ApplicationExterna
 	}
 
 	flattenedObj, d := types.ObjectValue(applicationExternalLinkOptionsTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func applicationAccessControlGroupOptionsToTF(apiObject *management.ApplicationAccessControlGroup, ok bool) (types.List, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	tfObjType := types.ObjectType{AttrTypes: applicationAccessControlGroupOptionsTFObjectTypes}
+
+	if !ok && apiObject == nil {
+		return types.ListNull(tfObjType), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"type": framework.EnumOkToTF(apiObject.GetTypeOk()),
+	}
+
+	if v, ok := apiObject.GetGroupsOk(); ok {
+		groups := make([]string, 0)
+
+		for _, group := range v {
+			groups = append(groups, group.GetId())
+		}
+
+		attributesMap["groups"] = framework.StringSetToTF(groups)
+	}
+
+	flattenedObj, d := types.ObjectValue(applicationAccessControlGroupOptionsTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
