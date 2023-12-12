@@ -543,7 +543,7 @@ func (p *systemApplicationResourceModel) expand(ctx context.Context, apiClient *
 
 		accessControl.SetGroup(
 			*management.NewApplicationAccessControlGroup(
-				plan.Type.ValueString(),
+				management.EnumApplicationAccessControlGroupType(plan.Type.ValueString()),
 				groups,
 			),
 		)
