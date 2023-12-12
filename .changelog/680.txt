@@ -1,0 +1,15 @@
+```release-note:note
+`resource/pingone_application`: Deprecated the `saml_options.sp_verification_certificate_ids` parameter.  This parameter will be removed in the next major release.  Use the `saml_options.sp_verification.certificate_ids` parameter going forward.
+```
+
+```release-note:enhancement
+`resource/pingone_application`: Added the `saml_options.sp_verification.authn_request_signed` parameter to support the "Enforce Signed AuthnRequest" option for SAML applications.
+```
+
+```release-note:note
+`data-source/pingone_application`: Deprecated the `saml_options.sp_verification_certificate_ids` attribute.  This attribute will be removed in the next major release.  Use the `saml_options.sp_verification.certificate_ids` attribute going forward.
+```
+
+```release-note:enhancement
+`data-source/pingone_application`: Added the `saml_options.sp_verification.authn_request_signed` attribute to support the "Enforce Signed AuthnRequest" option for SAML applications.
+```

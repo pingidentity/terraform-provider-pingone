@@ -127,6 +127,7 @@ func TestAccMFAPolicy_SMS_Full(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_FullSMS(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.pairing_disabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.otp_lifetime_duration", "75"),
@@ -184,6 +185,7 @@ func TestAccMFAPolicy_SMS_Minimal(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_MinimalSMS(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.pairing_disabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.otp_lifetime_duration", "30"),
@@ -225,6 +227,7 @@ func TestAccMFAPolicy_SMS_Change(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_FullSMS(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.pairing_disabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.otp_lifetime_duration", "75"),
@@ -245,6 +248,7 @@ func TestAccMFAPolicy_SMS_Change(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_MinimalSMS(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.pairing_disabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.otp_lifetime_duration", "30"),
@@ -265,6 +269,7 @@ func TestAccMFAPolicy_SMS_Change(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_FullSMS(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.pairing_disabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.otp_lifetime_duration", "75"),
@@ -306,6 +311,7 @@ func TestAccMFAPolicy_Voice_Full(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_FullVoice(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "PROMPT_TO_SELECT"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.pairing_disabled", "true"),
@@ -363,6 +369,7 @@ func TestAccMFAPolicy_Voice_Minimal(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_MinimalVoice(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.pairing_disabled", "false"),
@@ -404,6 +411,7 @@ func TestAccMFAPolicy_Voice_Change(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_FullVoice(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "PROMPT_TO_SELECT"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.pairing_disabled", "true"),
@@ -424,6 +432,7 @@ func TestAccMFAPolicy_Voice_Change(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_MinimalVoice(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.pairing_disabled", "false"),
@@ -444,6 +453,7 @@ func TestAccMFAPolicy_Voice_Change(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_FullVoice(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "PROMPT_TO_SELECT"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.pairing_disabled", "true"),
@@ -485,6 +495,7 @@ func TestAccMFAPolicy_Email_Full(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_FullEmail(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "ALWAYS_DISPLAY_DEVICES"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "email.0.enabled", "true"),
@@ -542,6 +553,7 @@ func TestAccMFAPolicy_Email_Minimal(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_MinimalEmail(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "email.0.enabled", "true"),
@@ -583,6 +595,7 @@ func TestAccMFAPolicy_Email_Change(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_FullEmail(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "ALWAYS_DISPLAY_DEVICES"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "email.0.enabled", "true"),
@@ -603,6 +616,7 @@ func TestAccMFAPolicy_Email_Change(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_MinimalEmail(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "email.0.enabled", "true"),
@@ -623,6 +637,7 @@ func TestAccMFAPolicy_Email_Change(t *testing.T) {
 			{
 				Config: testAccMFAPolicyConfig_FullEmail(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "ALWAYS_DISPLAY_DEVICES"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "email.0.enabled", "true"),
@@ -1821,6 +1836,7 @@ resource "pingone_mfa_policy" "%[2]s" {
   name           = "%[3]s"
 
   new_device_notification = "SMS_THEN_EMAIL"
+  device_selection        = "DEFAULT_TO_FIRST"
 
   sms {
     enabled          = true
@@ -1902,6 +1918,7 @@ resource "pingone_mfa_policy" "%[2]s" {
   name           = "%[3]s"
 
   new_device_notification = "SMS_THEN_EMAIL"
+  device_selection        = "PROMPT_TO_SELECT"
 
   sms {
     enabled = false
@@ -1983,6 +2000,7 @@ resource "pingone_mfa_policy" "%[2]s" {
   name           = "%[3]s"
 
   new_device_notification = "SMS_THEN_EMAIL"
+  device_selection        = "ALWAYS_DISPLAY_DEVICES"
 
   sms {
     enabled = false

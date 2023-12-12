@@ -45,6 +45,11 @@ type applicationDataSourceModel struct {
 }
 
 var (
+	applicationCorsSettingsTFObjectTypes = map[string]attr.Type{
+		"behavior": types.StringType,
+		"origins":  types.SetType{ElemType: types.StringType},
+	}
+
 	applicationOidcOptionsTFObjectTypes = map[string]attr.Type{
 		"type":                                        types.StringType,
 		"home_page_url":                               types.StringType,
@@ -68,6 +73,7 @@ var (
 		"certificate_based_authentication": types.ListType{ElemType: types.ObjectType{AttrTypes: applicationOidcOptionsCertificateAuthenticationTFObjectTypes}},
 		"support_unsigned_request_object":  types.BoolType,
 		"require_signed_request_object":    types.BoolType,
+		"cors_settings":                    types.ListType{ElemType: types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes}},
 		"mobile_app":                       types.ListType{ElemType: types.ObjectType{AttrTypes: applicationOidcMobileAppTFObjectTypes}},
 	}
 
@@ -120,11 +126,18 @@ var (
 		"slo_window":                      types.Int64Type,
 		"sp_entity_id":                    types.StringType,
 		"sp_verification_certificate_ids": types.SetType{ElemType: types.StringType},
+		"sp_verification":                 types.ListType{ElemType: types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes}},
+		"cors_settings":                   types.ListType{ElemType: types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes}},
 	}
 
 	applicationSamlOptionsIdpSigningKeyTFObjectTypes = map[string]attr.Type{
 		"algorithm": types.StringType,
 		"key_id":    types.StringType,
+	}
+
+	applicationSamlOptionsSpVerificationTFObjectTypes = map[string]attr.Type{
+		"certificate_ids":      types.SetType{ElemType: types.StringType},
+		"authn_request_signed": types.BoolType,
 	}
 
 	applicationExternalLinkOptionsTFObjectTypes = map[string]attr.Type{
@@ -207,6 +220,10 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 
 	samlEnableRequestedAuthnContextDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether `requestedAuthnContext` is taken into account in policy decision-making.",
+	)
+
+	samlSpVerificationCertificateIds := framework.SchemaAttributeDescriptionFromMarkdown(
+		"**Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `sp_verification.certificate_ids` attribute going forward.  A list that specifies the certificate IDs used to verify the service provider signature.",
 	)
 
 	resp.Schema = schema.Schema{
@@ -424,6 +441,7 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 							MarkdownDescription: oidcRequireSignedRequestObjectDescription.MarkdownDescription,
 							Computed:            true,
 						},
+						"cors_settings": datasourceApplicationSchemaCorsSettings(),
 						"mobile_app": schema.ListNestedAttribute{
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("Mobile application integration settings.").Description,
 							Computed:    true,
@@ -596,11 +614,71 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 							Computed:    true,
 						},
 						"sp_verification_certificate_ids": schema.SetAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A list that specifies the certificate IDs used to verify the service provider signature.").Description,
-							ElementType: types.StringType,
-							Computed:    true,
+							Description:         samlSpVerificationCertificateIds.Description,
+							MarkdownDescription: samlSpVerificationCertificateIds.MarkdownDescription,
+							ElementType:         types.StringType,
+							DeprecationMessage:  "The `sp_verification_certificate_ids` attribute is deprecated and will be removed in the next major release.  Please use the `sp_verification.certificate_ids` attribute going forward.",
+							Computed:            true,
 						},
+						"sp_verification": schema.ListNestedAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A single list item that specifies SP signature verification settings.").Description,
+							Computed:    true,
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"authn_request_signed": schema.BoolAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the Authn Request signing should be enforced.").Description,
+										Computed:    true,
+									},
+									"certificate_ids": schema.SetAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("A list that specifies the certificate IDs used to verify the service provider signature.").Description,
+										ElementType: types.StringType,
+										Computed:    true,
+									},
+								},
+							},
+						},
+						"cors_settings": datasourceApplicationSchemaCorsSettings(),
 					},
+				},
+			},
+		},
+	}
+}
+
+func datasourceApplicationSchemaCorsSettings() schema.ListNestedAttribute {
+
+	listDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single block that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings.",
+	)
+
+	behaviorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that represents the behavior of how Authorization and Authentication APIs interact with CORS requests that reference the application.",
+	).AllowedValuesComplex(map[string]string{
+		string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_NO_ORIGINS):       "rejects all CORS requests",
+		string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_SPECIFIC_ORIGINS): "rejects all CORS requests except those listed in `origins`",
+	})
+
+	originsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value will be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 address.  Subdomains may use the wildcard (`*`) to match any string.  Is expected to be non-empty when `behavior` is `ALLOW_SPECIFIC_ORIGINS` and is expected to be omitted or empty when `behavior` is `ALLOW_NO_ORIGINS`.  Limited to 20 values.",
+	)
+
+	return schema.ListNestedAttribute{
+		Description:         listDescription.Description,
+		MarkdownDescription: listDescription.MarkdownDescription,
+		Computed:            true,
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{
+				"behavior": schema.StringAttribute{
+					Description:         behaviorDescription.Description,
+					MarkdownDescription: behaviorDescription.MarkdownDescription,
+					Computed:            true,
+				},
+				"origins": schema.SetAttribute{
+					Description:         originsDescription.Description,
+					MarkdownDescription: originsDescription.MarkdownDescription,
+					Computed:            true,
+
+					ElementType: types.StringType,
 				},
 			},
 		},
@@ -932,6 +1010,21 @@ func (p *applicationDataSourceModel) toStateOIDCOptions(apiObject *management.Ap
 	kerberoObj, d := p.applicationOidcKerberosOkToTF(apiObject.GetKerberosOk())
 	diags.Append(d...)
 
+	// CORS Settings
+	corsSettingsObj := types.ListNull(types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes})
+	if v, ok := apiObject.GetCorsSettingsOk(); ok {
+		corsSettings := map[string]attr.Value{
+			"behavior": framework.EnumOkToTF(v.GetBehaviorOk()),
+			"origins":  framework.StringSetOkToTF(v.GetOriginsOk()),
+		}
+
+		corsSettingsFlattenedObj, d := types.ObjectValue(applicationCorsSettingsTFObjectTypes, corsSettings)
+		diags.Append(d...)
+
+		corsSettingsObj, d = types.ListValue(types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes}, append([]attr.Value{}, corsSettingsFlattenedObj))
+		diags.Append(d...)
+	}
+
 	mobileObj, d := p.applicationOidcMobileOkToTF(apiObject.GetMobileOk())
 	diags.Append(d...)
 
@@ -959,6 +1052,7 @@ func (p *applicationDataSourceModel) toStateOIDCOptions(apiObject *management.Ap
 		"certificate_based_authentication": kerberoObj,
 		"support_unsigned_request_object":  framework.BoolOkToTF(apiObject.GetSupportUnsignedRequestObjectOk()),
 		"require_signed_request_object":    framework.BoolOkToTF(apiObject.GetRequireSignedRequestObjectOk()),
+		"cors_settings":                    corsSettingsObj,
 		"mobile_app":                       mobileObj,
 	}
 
@@ -1145,14 +1239,44 @@ func (p *applicationDataSourceModel) toStateSAMLOptions(apiObject *management.Ap
 	idpSigningKeyObj, d := types.ListValue(types.ObjectType{AttrTypes: applicationSamlOptionsIdpSigningKeyTFObjectTypes}, append([]attr.Value{}, flattenedObj))
 	diags.Append(d...)
 
-	// SP Verification Certificate Ids
+	// SP Verification
 	var idList []string
-	if v, ok := apiObject.SpVerification.GetCertificatesOk(); ok {
+	spVerification := map[string]attr.Value{}
+	if v, ok := apiObject.GetSpVerificationOk(); ok {
+		spVerification["authn_request_signed"] = framework.BoolOkToTF(v.GetAuthnRequestSignedOk())
 
-		idList = make([]string, 0)
-		for _, j := range v {
-			idList = append(idList, j.GetId())
+		if v1, ok := v.GetCertificatesOk(); ok {
+
+			idList = make([]string, 0)
+			for _, j := range v1 {
+				idList = append(idList, j.GetId())
+			}
 		}
+
+		spVerification["certificate_ids"] = framework.StringSetToTF(idList)
+	} else {
+		spVerification["authn_request_signed"] = types.BoolNull()
+		spVerification["certificate_ids"] = types.SetNull(types.StringType)
+	}
+	spVerificationFlattenedObj, d := types.ObjectValue(applicationSamlOptionsSpVerificationTFObjectTypes, spVerification)
+	diags.Append(d...)
+
+	spVerificationObj, d := types.ListValue(types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes}, append([]attr.Value{}, spVerificationFlattenedObj))
+	diags.Append(d...)
+
+	// CORS Settings
+	corsSettingsObj := types.ListNull(types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes})
+	if v, ok := apiObject.GetCorsSettingsOk(); ok {
+		corsSettings := map[string]attr.Value{
+			"behavior": framework.EnumOkToTF(v.GetBehaviorOk()),
+			"origins":  framework.StringSetOkToTF(v.GetOriginsOk()),
+		}
+
+		corsSettingsFlattenedObj, d := types.ObjectValue(applicationCorsSettingsTFObjectTypes, corsSettings)
+		diags.Append(d...)
+
+		corsSettingsObj, d = types.ListValue(types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes}, append([]attr.Value{}, corsSettingsFlattenedObj))
+		diags.Append(d...)
 	}
 
 	// Build Main Object
@@ -1172,6 +1296,8 @@ func (p *applicationDataSourceModel) toStateSAMLOptions(apiObject *management.Ap
 		"slo_response_endpoint":           framework.StringOkToTF(apiObject.GetSloResponseEndpointOk()),
 		"slo_window":                      framework.Int32OkToTF(apiObject.GetSloWindowOk()),
 		"sp_verification_certificate_ids": framework.StringSetToTF(idList),
+		"sp_verification":                 spVerificationObj,
+		"cors_settings":                   corsSettingsObj,
 	}
 
 	samlObject, d := types.ObjectValue(applicationSamlOptionsTFObjectTypes, samlOptions)

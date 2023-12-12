@@ -23,6 +23,7 @@ func TestAccCertificateSigningResponse_Full(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	pkcs12 := os.Getenv("PINGONE_KEY_PKCS12")
+	keystorePassword := os.Getenv("PINGONE_KEY_PKCS12_PASSWORD")
 	pemResponse := os.Getenv("PINGONE_KEY_PEM_CSR_RESPONSE")
 
 	resource.Test(t, resource.TestCase{
@@ -38,7 +39,7 @@ func TestAccCertificateSigningResponse_Full(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCertificateSigningResponseConfig_Full(environmentName, licenseID, resourceName, pkcs12, pemResponse),
+				Config: testAccCertificateSigningResponseConfig_Full(environmentName, licenseID, resourceName, pkcs12, keystorePassword, pemResponse),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -61,7 +62,7 @@ func TestAccCertificateSigningResponse_Full(t *testing.T) {
 	})
 }
 
-func testAccCertificateSigningResponseConfig_Full(environmentName, licenseID, resourceName, pkcs12, pemResponse string) string {
+func testAccCertificateSigningResponseConfig_Full(environmentName, licenseID, resourceName, pkcs12, keystorePassword, pemResponse string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -72,6 +73,8 @@ resource "pingone_key" "%[3]s" {
 %[4]s
 EOT
 
+  pkcs12_file_password = "%[5]s"
+
   usage_type = "SIGNING"
 }
 
@@ -80,7 +83,7 @@ resource "pingone_certificate_signing_response" "%[3]s" {
 
   key_id               = pingone_key.%[3]s.id
   pem_ca_response_file = <<EOT
-%[5]s
+%[6]s
 EOT
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pkcs12, pemResponse)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pkcs12, keystorePassword, pemResponse)
 }

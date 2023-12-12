@@ -379,6 +379,46 @@ func TestAccUser_AllWithoutReplacement(t *testing.T) {
 	})
 }
 
+func TestAccUser_AccountLocked(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_user.%s", resourceName)
+
+	name := resourceName
+
+	lockedStep := resource.TestStep{
+		Config: testAccUserConfig_AccountLocked(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "account.status", "LOCKED"),
+			resource.TestCheckResourceAttr(resourceFullName, "account.can_authenticate", "false"),
+		),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.User_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			lockedStep,
+			{
+				Config: testAccUserConfig_Minimal(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "account.status", "OK"),
+					resource.TestCheckResourceAttr(resourceFullName, "account.can_authenticate", "true"),
+				),
+			},
+			lockedStep,
+		},
+	})
+}
+
 func TestAccUser_ChangePopulation(t *testing.T) {
 	t.Parallel()
 
@@ -786,6 +826,36 @@ resource "pingone_user" "%[2]s" {
 
   mfa_enabled = %[4]t
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, mfaEnabled)
+}
+
+func testAccUserConfig_AccountLocked(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_user" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  username      = "%[3]s"
+  email         = "%[3]s@pingidentity.com"
+  population_id = pingone_population.%[2]s.id
+
+  enabled = true
+  name = {
+    family = "Test User F"
+    given  = "Test User G"
+  }
+
+  account = {
+    status           = "LOCKED"
+    can_authenticate = false
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccUserConfig_CustomPopulation(resourceName, name string) string {

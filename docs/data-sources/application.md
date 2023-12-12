@@ -86,6 +86,7 @@ Read-Only:
 - `certificate_based_authentication` (Attributes List) Certificate based authentication settings. (see [below for nested schema](#nestedatt--oidc_options--certificate_based_authentication))
 - `client_id` (String) A string that specifies the application ID used to authenticate to the authorization server.
 - `client_secret` (String, Sensitive) A string that specifies the application secret ID used to authenticate to the authorization server.
+- `cors_settings` (Attributes List) A single block that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings. (see [below for nested schema](#nestedatt--oidc_options--cors_settings))
 - `grant_types` (Set of String) A list that specifies the grant type for the authorization request.
 - `home_page_url` (String) The custom home page URL for the application.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.
 - `initiate_login_uri` (String) A string that specifies the URI to use for third-parties to begin the sign-on process for the application.
@@ -111,6 +112,15 @@ Read-Only:
 Read-Only:
 
 - `key_id` (String) A string that represents a PingOne ID for the issuance certificate key.
+
+
+<a id="nestedatt--oidc_options--cors_settings"></a>
+### Nested Schema for `oidc_options.cors_settings`
+
+Read-Only:
+
+- `behavior` (String) A string that represents the behavior of how Authorization and Authentication APIs interact with CORS requests that reference the application.  Options are `ALLOW_NO_ORIGINS` (rejects all CORS requests), `ALLOW_SPECIFIC_ORIGINS` (rejects all CORS requests except those listed in `origins`).
+- `origins` (Set of String) A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value will be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 address.  Subdomains may use the wildcard (`*`) to match any string.  Is expected to be non-empty when `behavior` is `ALLOW_SPECIFIC_ORIGINS` and is expected to be omitted or empty when `behavior` is `ALLOW_NO_ORIGINS`.  Limited to 20 values.
 
 
 <a id="nestedatt--oidc_options--mobile_app"></a>
@@ -167,6 +177,7 @@ Read-Only:
 - `acs_urls` (Set of String) A list of string that specifies the Assertion Consumer Service URLs. The first URL in the list is used as default (there must be at least one URL).
 - `assertion_duration` (Number) An integer that specifies the assertion validity duration in seconds.
 - `assertion_signed_enabled` (Boolean) A boolean that specifies whether the SAML assertion itself should be signed.
+- `cors_settings` (Attributes List) A single block that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings. (see [below for nested schema](#nestedatt--saml_options--cors_settings))
 - `enable_requested_authn_context` (Boolean) A boolean that specifies whether `requestedAuthnContext` is taken into account in policy decision-making.
 - `home_page_url` (String) A string that specifies the custom home page URL for the application.
 - `idp_signing_key` (Attributes List) SAML application assertion/response signing key settings. (see [below for nested schema](#nestedatt--saml_options--idp_signing_key))
@@ -177,8 +188,18 @@ Read-Only:
 - `slo_response_endpoint` (String) A string that specifies the endpoint URL to submit the logout response.
 - `slo_window` (Number) An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request.
 - `sp_entity_id` (String) A string that specifies the service provider entity ID used to lookup the application. This is a required property and is unique within the environment.
-- `sp_verification_certificate_ids` (Set of String) A list that specifies the certificate IDs used to verify the service provider signature.
+- `sp_verification` (Attributes List) A single list item that specifies SP signature verification settings. (see [below for nested schema](#nestedatt--saml_options--sp_verification))
+- `sp_verification_certificate_ids` (Set of String, Deprecated) **Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `sp_verification.certificate_ids` attribute going forward.  A list that specifies the certificate IDs used to verify the service provider signature.
 - `type` (String) A string that specifies the type associated with the application.
+
+<a id="nestedatt--saml_options--cors_settings"></a>
+### Nested Schema for `saml_options.cors_settings`
+
+Read-Only:
+
+- `behavior` (String) A string that represents the behavior of how Authorization and Authentication APIs interact with CORS requests that reference the application.  Options are `ALLOW_NO_ORIGINS` (rejects all CORS requests), `ALLOW_SPECIFIC_ORIGINS` (rejects all CORS requests except those listed in `origins`).
+- `origins` (Set of String) A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value will be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 address.  Subdomains may use the wildcard (`*`) to match any string.  Is expected to be non-empty when `behavior` is `ALLOW_SPECIFIC_ORIGINS` and is expected to be omitted or empty when `behavior` is `ALLOW_NO_ORIGINS`.  Limited to 20 values.
+
 
 <a id="nestedatt--saml_options--idp_signing_key"></a>
 ### Nested Schema for `saml_options.idp_signing_key`
@@ -187,3 +208,12 @@ Read-Only:
 
 - `algorithm` (String) A string that specifies the signature algorithm of the key.
 - `key_id` (String) An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.
+
+
+<a id="nestedatt--saml_options--sp_verification"></a>
+### Nested Schema for `saml_options.sp_verification`
+
+Read-Only:
+
+- `authn_request_signed` (Boolean) A boolean that specifies whether the Authn Request signing should be enforced.
+- `certificate_ids` (Set of String) A list that specifies the certificate IDs used to verify the service provider signature.

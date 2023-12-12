@@ -319,6 +319,7 @@ func ResourceApplication() *schema.Resource {
 							Optional:    true,
 							Default:     false,
 						},
+						"cors_settings": resourceApplicationSchemaCorsSettings(),
 						"mobile_app": {
 							Description: fmt.Sprintf("Mobile application integration settings for `%s` type applications.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
 							Type:        schema.TypeList,
@@ -550,7 +551,7 @@ func ResourceApplication() *schema.Resource {
 							Default:     true,
 						},
 						"idp_signing_key_id": {
-							Description:      "An ID for the certificate key pair to be used by the identity provider to sign assertions and responses. If this property is omitted, the default signing certificate for the environment is used.",
+							Description:      "**Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `idp_signing_key` block going forward.  An ID for the certificate key pair to be used by the identity provider to sign assertions and responses. If this property is omitted, the default signing certificate for the environment is used.",
 							Type:             schema.TypeString,
 							Optional:         true,
 							Computed:         true,
@@ -629,15 +630,75 @@ func ResourceApplication() *schema.Resource {
 							Required:    true,
 						},
 						"sp_verification_certificate_ids": {
-							Description: "A list that specifies the certificate IDs used to verify the service provider signature.",
-							Type:        schema.TypeSet,
-							Optional:    true,
+							Description:   "**Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `sp_verification.certificate_ids` parameter going forward.  A list that specifies the certificate IDs used to verify the service provider signature.",
+							Type:          schema.TypeSet,
+							Optional:      true,
+							Computed:      true,
+							ConflictsWith: []string{"saml_options.0.sp_verification"},
+							Deprecated:    "The `sp_verification_certificate_ids` parameter is deprecated and will be removed in the next major release.  Please use the `sp_verification.certificate_ids` parameter going forward.",
 							Elem: &schema.Schema{
 								Type:             schema.TypeString,
 								ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
 							},
 						},
+						"sp_verification": {
+							Description:   "A single block item that specifies SP signature verification settings.",
+							Type:          schema.TypeList,
+							MaxItems:      1,
+							Optional:      true,
+							Computed:      true,
+							ConflictsWith: []string{"saml_options.0.sp_verification_certificate_ids"},
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"authn_request_signed": {
+										Description: "A boolean that specifies whether the Authn Request signing should be enforced.",
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Default:     false,
+									},
+									"certificate_ids": {
+										Description: "A list that specifies the certificate IDs used to verify the service provider signature.  Must be valid PingOne resource IDs.",
+										Type:        schema.TypeSet,
+										Required:    true,
+										Elem: &schema.Schema{
+											Type:             schema.TypeString,
+											ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+										},
+									},
+								},
+							},
+						},
+						"cors_settings": resourceApplicationSchemaCorsSettings(),
 					},
+				},
+			},
+		},
+	}
+}
+
+func resourceApplicationSchemaCorsSettings() *schema.Schema {
+	return &schema.Schema{
+		Description: "A single block that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings.",
+		Type:        schema.TypeList,
+		MaxItems:    1,
+		Optional:    true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"behavior": {
+					Description:      fmt.Sprintf("A string that specifies the behavior of how Authorization and Authentication APIs interact with CORS requests that reference the application.  Options are `%s` (rejects all CORS requests) and `%s` (rejects all CORS requests except those listed in `origins`).", string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_NO_ORIGINS), string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_SPECIFIC_ORIGINS)),
+					Type:             schema.TypeString,
+					Required:         true,
+					ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_SPECIFIC_ORIGINS), string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_NO_ORIGINS)}, false)),
+				},
+				"origins": {
+					Description: fmt.Sprintf("A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value must be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 address.  Subdomains may use the wildcard (`*`) to match any string.  Must be non-empty when `behavior` is `%s` and must be omitted or empty when `behavior` is `%s`.  Limited to 20 values.", string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_SPECIFIC_ORIGINS), string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_NO_ORIGINS)),
+					Type:        schema.TypeSet,
+					MaxItems:    20,
+					Elem: &schema.Schema{
+						Type:             schema.TypeString,
+						ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(regexp.MustCompile(`^(https?:\/\/)?(localhost|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|([\*a-zA-Z0-9-]+\.)+[a-zA-Z]{2,})(:\d{1,5})?$`), "Expected value to be a URL (with schema of \"http\" or \"https\") without a path.  Subdomains may use a wildcard to match any string")),
+					},
+					Optional: true,
 				},
 			},
 		},
@@ -1161,6 +1222,15 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 
 		// Set the OIDC specific optional options
 
+		if v1, ok := oidcOptions["cors_settings"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
+			corsSettings, d := expandCorsSettings(v1[0].(map[string]interface{}))
+			diags = append(diags, d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+			application.SetCorsSettings(*corsSettings)
+		}
+
 		if v1, ok := oidcOptions["home_page_url"].(string); ok && v1 != "" {
 			application.SetHomePageUrl(v1)
 		}
@@ -1464,6 +1534,32 @@ func expandMobileIntegrityGooglePlay(s map[string]interface{}) (*management.Appl
 	return obj, diags
 }
 
+func expandCorsSettings(s map[string]interface{}) (*management.ApplicationCorsSettings, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	cors := management.NewApplicationCorsSettings(management.EnumApplicationCorsSettingsBehavior(s["behavior"].(string)))
+
+	if v2, ok := s["origins"].(*schema.Set); ok && v2 != nil && len(v2.List()) > 0 && v2.List()[0] != nil {
+		obj := make([]string, 0)
+		for _, j := range v2.List() {
+			obj = append(obj, j.(string))
+		}
+		cors.SetOrigins(obj)
+	} else {
+		if cors.GetBehavior() == management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_SPECIFIC_ORIGINS {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Invalid configuration",
+				Detail:   fmt.Sprintf("CORS origins (`cors_settings.origins`) are required when the behavior is set to %s", management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_SPECIFIC_ORIGINS),
+			})
+
+			return nil, diags
+		}
+	}
+
+	return cors, diags
+}
+
 // SAML
 func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML, diag.Diagnostics) {
 	var diags diag.Diagnostics
@@ -1516,6 +1612,15 @@ func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML,
 		}
 
 		// Set the SAML specific optional options
+
+		if v1, ok := samlOptions["cors_settings"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
+			corsSettings, d := expandCorsSettings(v1[0].(map[string]interface{}))
+			diags = append(diags, d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+			application.SetCorsSettings(*corsSettings)
+		}
 
 		if v1, ok := samlOptions["home_page_url"].(string); ok && v1 != "" {
 			application.SetHomePageUrl(v1)
@@ -1579,6 +1684,26 @@ func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML,
 			}
 
 			application.SetSpVerification(*management.NewApplicationSAMLAllOfSpVerification(certificates))
+		}
+
+		if v1, ok := samlOptions["sp_verification"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
+			spVerificationOptions := v1[0].(map[string]interface{})
+
+			certificates := make([]management.ApplicationSAMLAllOfSpVerificationCertificates, 0)
+			if v2, ok := spVerificationOptions["certificate_ids"].(*schema.Set); ok && v2 != nil && len(v2.List()) > 0 && v2.List()[0] != nil {
+				for _, j := range v2.List() {
+					certificate := *management.NewApplicationSAMLAllOfSpVerificationCertificates(j.(string))
+					certificates = append(certificates, certificate)
+				}
+			}
+
+			spVerification := management.NewApplicationSAMLAllOfSpVerification(certificates)
+
+			if v2, ok := spVerificationOptions["authn_request_signed"].(bool); ok {
+				spVerification.SetAuthnRequestSigned(v2)
+			}
+
+			application.SetSpVerification(*spVerification)
 		}
 
 	} else {
@@ -1839,6 +1964,12 @@ func flattenOIDCOptions(application *management.ApplicationOIDC, secret *managem
 		item["require_signed_request_object"] = nil
 	}
 
+	if v, ok := application.GetCorsSettingsOk(); ok {
+		item["cors_settings"] = flattenCorsSettings(v)
+	} else {
+		item["cors_settings"] = nil
+	}
+
 	if v, ok := application.GetMobileOk(); ok {
 		j, diags := flattenMobile(v)
 		if diags.HasError() {
@@ -1885,6 +2016,26 @@ func flattenKerberos(kerberos *management.ApplicationOIDCAllOfKerberos) interfac
 		item["key_id"] = v.GetId()
 	} else {
 		item["key_id"] = nil
+	}
+
+	items := make([]interface{}, 0)
+	return append(items, item)
+}
+
+func flattenCorsSettings(s *management.ApplicationCorsSettings) interface{} {
+
+	item := map[string]interface{}{}
+
+	if v, ok := s.GetBehaviorOk(); ok {
+		item["behavior"] = v
+	} else {
+		item["behavior"] = nil
+	}
+
+	if v, ok := s.GetOriginsOk(); ok {
+		item["origins"] = v
+	} else {
+		item["origins"] = nil
 	}
 
 	items := make([]interface{}, 0)
@@ -2084,16 +2235,17 @@ func flattenSAMLOptions(application *management.ApplicationSAML) interface{} {
 		item["slo_window"] = nil
 	}
 
-	if v, ok := application.SpVerification.GetCertificatesOk(); ok {
-
-		idList := make([]string, 0)
-		for _, j := range v {
-			idList = append(idList, j.GetId())
-		}
-
-		item["sp_verification_certificate_ids"] = idList
+	if v, ok := application.GetSpVerificationOk(); ok {
+		item["sp_verification"], item["sp_verification_certificate_ids"] = flattenSpVerificationOptions(v)
 	} else {
+		item["sp_verification"] = nil
 		item["sp_verification_certificate_ids"] = nil
+	}
+
+	if v, ok := application.GetCorsSettingsOk(); ok {
+		item["cors_settings"] = flattenCorsSettings(v)
+	} else {
+		item["cors_settings"] = nil
 	}
 
 	items := make([]interface{}, 0)
@@ -2123,4 +2275,30 @@ func flattenIdpSigningOptions(idpSigning *management.ApplicationSAMLAllOfIdpSign
 
 	items := make([]interface{}, 0)
 	return append(items, item), signingKeyID
+}
+
+func flattenSpVerificationOptions(spVerification *management.ApplicationSAMLAllOfSpVerification) (interface{}, []string) {
+
+	item := map[string]interface{}{}
+
+	certficateIds := make([]string, 0)
+
+	if v, ok := spVerification.GetAuthnRequestSignedOk(); ok {
+		item["authn_request_signed"] = *v
+	} else {
+		item["authn_request_signed"] = nil
+	}
+
+	if v, ok := spVerification.GetCertificatesOk(); ok {
+		for _, j := range v {
+			certficateIds = append(certficateIds, j.GetId())
+		}
+
+		item["certificate_ids"] = certficateIds
+	} else {
+		item["certificate_ids"] = nil
+	}
+
+	items := make([]interface{}, 0)
+	return append(items, item), certficateIds
 }

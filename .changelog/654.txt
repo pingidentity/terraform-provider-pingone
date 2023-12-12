@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_user`: Fixed inconsistent result when attempting to create a user in where `account.status` is `LOCKED`.
+```

@@ -182,7 +182,7 @@ resource "pingone_mfa_policy" "my_awesome_mfa_policy" {
 
 ### Optional
 
-- `device_selection` (String) A string that defines the device selection method. Options are `DEFAULT_TO_FIRST` (this is the default setting for new environments), `PROMPT_TO_SELECT` and `ALWAYS_PROMPT_TO_SELECT`. Defaults to `DEFAULT_TO_FIRST`.
+- `device_selection` (String) A string that defines the device selection method. Options are `DEFAULT_TO_FIRST` (this is the default setting for new environments), `PROMPT_TO_SELECT` and `ALWAYS_DISPLAY_DEVICES`. Defaults to `DEFAULT_TO_FIRST`.
 - `fido2` (Block List, Max: 1) FIDO2 device authentication policy settings. (see [below for nested schema](#nestedblock--fido2))
 - `new_device_notification` (String) A string that defines whether a user should be notified if a new authentication method has been added to their account. Options are `NONE` (the default), `EMAIL_THEN_SMS` and `SMS_THEN_EMAIL`. Defaults to `NONE`.
 - `platform` (Block List, Max: 1, Deprecated) **Deprecation Notice** The `platform` FIDO device type is deprecated and needs to be replaced with the `fido2` device type.  `platform` will not be configurable for newly created environments, or existing environments that have not had their environment upgraded to use the latest FIDO2 policies. Platform biometrics authentication policy settings. (see [below for nested schema](#nestedblock--platform))

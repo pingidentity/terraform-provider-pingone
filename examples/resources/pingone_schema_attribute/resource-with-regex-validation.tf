@@ -18,4 +18,9 @@ resource "pingone_schema_attribute" "my_awesome_regex_attribute" {
       "Strange456!"
     ]
   }
+
+  lifecycle {
+    # change the `prevent_destroy` parameter value to `true` to prevent this data carrying resource from being destroyed
+    prevent_destroy = false
+  }
 }

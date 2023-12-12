@@ -9,6 +9,8 @@ description: |-
 
 {{ .Description | trimspace }}
 
+~> This resource carries data and if destroyed, could result in data loss.  Please use the `lifecycle.prevent_destroy` meta-argument ([documentation link](https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#prevent_destroy)) to prevent accidental data loss.
+
 ## Example Usage
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource.tf") }}
