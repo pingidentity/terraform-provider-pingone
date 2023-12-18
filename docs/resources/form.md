@@ -98,24 +98,24 @@ resource "pingone_form" "my_awesome_form" {
 
 ### Required
 
+- `cols` (Number) An integer that specifies the number of columns in the form (min = `1`; max = `4`).
 - `components` (Attributes) A single object that specifies the form configuration elements. (see [below for nested schema](#nestedatt--components))
 - `environment_id` (String) The ID of the environment to manage the form in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
-- `mark_optional` (Boolean) A boolean that specifies whether optional fields are highlighted in the rendered form.
-- `mark_required` (Boolean) A boolean that specifies whether required fields are highlighted in the rendered form.
 - `name` (String) A string that specifies the form name, which must be provided and must be unique within an environment.
 
 ### Optional
 
 - `category` (String) A string that specifies the type of form.  Options are `CUSTOM` (allows the form to be built with fields that do not map specifically to the PingOne directory attributes).  Defaults to `CUSTOM`.
-- `cols` (Number) An integer that specifies the number of columns in the form (min = `1`; max = `4`).  Defaults to `UNKNOWN`.
 - `description` (String) A string that specifies the description of the form.
-- `language_bundle` (Map of String) An map of strings that provides i18n keys to their translations. This object includes both the keys and their default translations. The PingOne language management service finds this object, and creates the new keys for translation for this form.
-- `translation_method` (String) A string that specifies how to translate the text strings in the form.  Options are `DEFAULT_VALUE`, `KEY`, `TRANSLATE`.  Defaults to `UNKNOWN`.
+- `mark_optional` (Boolean) A boolean that specifies whether optional fields are highlighted in the rendered form.
+- `mark_required` (Boolean) A boolean that specifies whether required fields are highlighted in the rendered form.
+- `translation_method` (String) A string that specifies how to translate the text strings in the form.  Options are `DEFAULT_VALUE`, `KEY`, `TRANSLATE`.
 
 ### Read-Only
 
 - `field_types` (Set of String) A set of strings that specifies the field types in the form.  Options are `CHECKBOX`, `COMBOBOX`, `DIVIDER`, `DROPDOWN`, `EMPTY_FIELD`, `ERROR_DISPLAY`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `RECAPTCHA_V2`, `SLATE_TEXTBLOB`, `SOCIAL_LOGIN_BUTTON`, `SUBMIT_BUTTON`, `TEXT`, `TEXTBLOB`.
 - `id` (String) The ID of this resource.
+- `language_bundle` (Map of String) An map of strings that provides i18n keys to their translations. This object includes both the keys and their default translations. The PingOne language management service finds this object, and creates the new keys for translation for this form.
 
 <a id="nestedatt--components"></a>
 ### Nested Schema for `components`
@@ -133,24 +133,8 @@ Required:
 
 Optional:
 
-- `field_checkbox` (Attributes) A single object that specifies options for the `CHECKBOX` form field type.  At least one of the following must be defined: `field_text`, `field_password`, `field_password_verify`, `field_radio`, `field_checkbox`, `field_dropdown`, `field_combobox`, `field_divider`, `field_empty_field`, `field_textblob`, `field_slate_textblob`, `field_submit_button`, `field_error_display`, `field_flow_link`, `field_flow_button`, `field_recaptcha_v2`, `field_qr_code`, `field_social_login_button`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedatt--components--fields--field_checkbox))
-- `field_combobox` (Attributes) A single object that specifies options for the `COMBOBOX` form field type.  At least one of the following must be defined: `field_text`, `field_password`, `field_password_verify`, `field_radio`, `field_checkbox`, `field_dropdown`, `field_combobox`, `field_divider`, `field_empty_field`, `field_textblob`, `field_slate_textblob`, `field_submit_button`, `field_error_display`, `field_flow_link`, `field_flow_button`, `field_recaptcha_v2`, `field_qr_code`, `field_social_login_button`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedatt--components--fields--field_combobox))
-- `field_divider` (Attributes) A single object that specifies options for the `DIVIDER` form field type.  At least one of the following must be defined: `field_text`, `field_password`, `field_password_verify`, `field_radio`, `field_checkbox`, `field_dropdown`, `field_combobox`, `field_divider`, `field_empty_field`, `field_textblob`, `field_slate_textblob`, `field_submit_button`, `field_error_display`, `field_flow_link`, `field_flow_button`, `field_recaptcha_v2`, `field_qr_code`, `field_social_login_button`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedatt--components--fields--field_divider))
-- `field_dropdown` (Attributes) A single object that specifies options for the `DROPDOWN` form field type.  At least one of the following must be defined: `field_text`, `field_password`, `field_password_verify`, `field_radio`, `field_checkbox`, `field_dropdown`, `field_combobox`, `field_divider`, `field_empty_field`, `field_textblob`, `field_slate_textblob`, `field_submit_button`, `field_error_display`, `field_flow_link`, `field_flow_button`, `field_recaptcha_v2`, `field_qr_code`, `field_social_login_button`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedatt--components--fields--field_dropdown))
-- `field_empty_field` (Attributes) A single object that specifies options for the `EMPTY_FIELD` form field type.  At least one of the following must be defined: `field_text`, `field_password`, `field_password_verify`, `field_radio`, `field_checkbox`, `field_dropdown`, `field_combobox`, `field_divider`, `field_empty_field`, `field_textblob`, `field_slate_textblob`, `field_submit_button`, `field_error_display`, `field_flow_link`, `field_flow_button`, `field_recaptcha_v2`, `field_qr_code`, `field_social_login_button`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedatt--components--fields--field_empty_field))
-- `field_error_display` (Attributes) A single object that specifies options for the `ERROR_DISPLAY` form field type.  At least one of the following must be defined: `field_text`, `field_password`, `field_password_verify`, `field_radio`, `field_checkbox`, `field_dropdown`, `field_combobox`, `field_divider`, `field_empty_field`, `field_textblob`, `field_slate_textblob`, `field_submit_button`, `field_error_display`, `field_flow_link`, `field_flow_button`, `field_recaptcha_v2`, `field_qr_code`, `field_social_login_button`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedatt--components--fields--field_error_display))
-- `field_flow_button` (Attributes) A single object that specifies options for the `FLOW_BUTTON` form field type.  At least one of the following must be defined: `field_text`, `field_password`, `field_password_verify`, `field_radio`, `field_checkbox`, `field_dropdown`, `field_combobox`, `field_divider`, `field_empty_field`, `field_textblob`, `field_slate_textblob`, `field_submit_button`, `field_error_display`, `field_flow_link`, `field_flow_button`, `field_recaptcha_v2`, `field_qr_code`, `field_social_login_button`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedatt--components--fields--field_flow_button))
-- `field_flow_link` (Attributes) A single object that specifies options for the `FLOW_LINK` form field type.  At least one of the following must be defined: `field_text`, `field_password`, `field_password_verify`, `field_radio`, `field_checkbox`, `field_dropdown`, `field_combobox`, `field_divider`, `field_empty_field`, `field_textblob`, `field_slate_textblob`, `field_submit_button`, `field_error_display`, `field_flow_link`, `field_flow_button`, `field_recaptcha_v2`, `field_qr_code`, `field_social_login_button`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedatt--components--fields--field_flow_link))
-- `field_password` (Attributes) A single object that specifies options for the `PASSWORD` form field type.  At least one of the following must be defined: `field_text`, `field_password`, `field_password_verify`, `field_radio`, `field_checkbox`, `field_dropdown`, `field_combobox`, `field_divider`, `field_empty_field`, `field_textblob`, `field_slate_textblob`, `field_submit_button`, `field_error_display`, `field_flow_link`, `field_flow_button`, `field_recaptcha_v2`, `field_qr_code`, `field_social_login_button`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedatt--components--fields--field_password))
-- `field_password_verify` (Attributes) A single object that specifies options for the `PASSWORD_VERIFY` form field type.  At least one of the following must be defined: `field_text`, `field_password`, `field_password_verify`, `field_radio`, `field_checkbox`, `field_dropdown`, `field_combobox`, `field_divider`, `field_empty_field`, `field_textblob`, `field_slate_textblob`, `field_submit_button`, `field_error_display`, `field_flow_link`, `field_flow_button`, `field_recaptcha_v2`, `field_qr_code`, `field_social_login_button`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedatt--components--fields--field_password_verify))
-- `field_qr_code` (Attributes) A single object that specifies options for the `QR_CODE` form field type.  At least one of the following must be defined: `field_text`, `field_password`, `field_password_verify`, `field_radio`, `field_checkbox`, `field_dropdown`, `field_combobox`, `field_divider`, `field_empty_field`, `field_textblob`, `field_slate_textblob`, `field_submit_button`, `field_error_display`, `field_flow_link`, `field_flow_button`, `field_recaptcha_v2`, `field_qr_code`, `field_social_login_button`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedatt--components--fields--field_qr_code))
-- `field_radio` (Attributes) A single object that specifies options for the `RADIO` form field type.  At least one of the following must be defined: `field_text`, `field_password`, `field_password_verify`, `field_radio`, `field_checkbox`, `field_dropdown`, `field_combobox`, `field_divider`, `field_empty_field`, `field_textblob`, `field_slate_textblob`, `field_submit_button`, `field_error_display`, `field_flow_link`, `field_flow_button`, `field_recaptcha_v2`, `field_qr_code`, `field_social_login_button`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedatt--components--fields--field_radio))
-- `field_recaptcha_v2` (Attributes) A single object that specifies options for the `RECAPTCHA_V2` form field type.  At least one of the following must be defined: `field_text`, `field_password`, `field_password_verify`, `field_radio`, `field_checkbox`, `field_dropdown`, `field_combobox`, `field_divider`, `field_empty_field`, `field_textblob`, `field_slate_textblob`, `field_submit_button`, `field_error_display`, `field_flow_link`, `field_flow_button`, `field_recaptcha_v2`, `field_qr_code`, `field_social_login_button`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedatt--components--fields--field_recaptcha_v2))
-- `field_slate_textblob` (Attributes) A single object that specifies options for the `SLATE_TEXTBLOB` form field type.  At least one of the following must be defined: `field_text`, `field_password`, `field_password_verify`, `field_radio`, `field_checkbox`, `field_dropdown`, `field_combobox`, `field_divider`, `field_empty_field`, `field_textblob`, `field_slate_textblob`, `field_submit_button`, `field_error_display`, `field_flow_link`, `field_flow_button`, `field_recaptcha_v2`, `field_qr_code`, `field_social_login_button`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedatt--components--fields--field_slate_textblob))
-- `field_social_login_button` (Attributes) A single object that specifies options for the `SOCIAL_LOGIN_BUTTON` form field type.  At least one of the following must be defined: `field_text`, `field_password`, `field_password_verify`, `field_radio`, `field_checkbox`, `field_dropdown`, `field_combobox`, `field_divider`, `field_empty_field`, `field_textblob`, `field_slate_textblob`, `field_submit_button`, `field_error_display`, `field_flow_link`, `field_flow_button`, `field_recaptcha_v2`, `field_qr_code`, `field_social_login_button`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedatt--components--fields--field_social_login_button))
-- `field_submit_button` (Attributes) A single object that specifies options for the `SUBMIT_BUTTON` form field type.  At least one of the following must be defined: `field_text`, `field_password`, `field_password_verify`, `field_radio`, `field_checkbox`, `field_dropdown`, `field_combobox`, `field_divider`, `field_empty_field`, `field_textblob`, `field_slate_textblob`, `field_submit_button`, `field_error_display`, `field_flow_link`, `field_flow_button`, `field_recaptcha_v2`, `field_qr_code`, `field_social_login_button`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedatt--components--fields--field_submit_button))
-- `field_text` (Attributes) A single object that specifies options for the `TEXT` form field type.  At least one of the following must be defined: `field_text`, `field_password`, `field_password_verify`, `field_radio`, `field_checkbox`, `field_dropdown`, `field_combobox`, `field_divider`, `field_empty_field`, `field_textblob`, `field_slate_textblob`, `field_submit_button`, `field_error_display`, `field_flow_link`, `field_flow_button`, `field_recaptcha_v2`, `field_qr_code`, `field_social_login_button`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedatt--components--fields--field_text))
-- `field_textblob` (Attributes) A single object that specifies options for the `TEXTBLOB` form field type.  At least one of the following must be defined: `field_text`, `field_password`, `field_password_verify`, `field_radio`, `field_checkbox`, `field_dropdown`, `field_combobox`, `field_divider`, `field_empty_field`, `field_textblob`, `field_slate_textblob`, `field_submit_button`, `field_error_display`, `field_flow_link`, `field_flow_button`, `field_recaptcha_v2`, `field_qr_code`, `field_social_login_button`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedatt--components--fields--field_textblob))
+- `field_submit_button` (Attributes) A single object that specifies options for the `SUBMIT_BUTTON` form field type.  At least one of the following must be defined: `field_text`, `field_submit_button`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedatt--components--fields--field_submit_button))
+- `field_text` (Attributes) A single object that specifies options for the `TEXT` form field type.  At least one of the following must be defined: `field_text`, `field_submit_button`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedatt--components--fields--field_text))
 
 Read-Only:
 
@@ -161,7 +145,7 @@ Read-Only:
 
 Required:
 
-- `col` (Number) An integer that specifies the column position of the form field in the form  (min = `1`; max = `4`).
+- `col` (Number) An integer that specifies the column position of the form field in the form  (min = `0`; max = `3`).
 - `row` (Number) An integer that specifies the row position of the form field in the form (maximum number is `50`).
 
 Optional:
@@ -169,286 +153,16 @@ Optional:
 - `width` (Number) An integer that specifies the width of the form field in the form (in percentage).
 
 
-<a id="nestedatt--components--fields--field_checkbox"></a>
-### Nested Schema for `components.fields.field_checkbox`
-
-Required:
-
-- `key` (String) A string that specifies an identifier for the field component.
-- `layout` (String) A string that specifies layout attributes for radio button and checkbox fields.  Options are `HORIZONTAL`, `VERTICAL`.
-- `options` (Set of String) An array of strings that specifies the unique list of options.
-- `required` (Boolean) A boolean that specifies whether the field is required.
-
-Optional:
-
-- `attribute_disabled` (Boolean) A boolean that specifies whether the linked directory attribute is disabled.  This field is immutable and will trigger a replace plan if changed.
-- `label_mode` (String) A string that specifies how the field is rendered.  Options are `DEFAULT`, `FLOAT`.
-- `other_option_attribute_disabled` (Boolean) A boolean that specifies whether the directory attribute option is disabled. Set to `true` if it references a PingOne directory attribute.
-- `other_option_enabled` (Boolean) A boolean that specifies whether the end user can type an entry that is not in a predefined list.
-- `other_option_input_label` (String) A string that specifies the label for the other option in drop-down controls.
-- `other_option_key` (String) A string that specifies whether the form identifies that the choice is a custom choice not from a predefined list.
-- `other_option_label` (String) A string that specifies the label for a custom or "other" choice in a list.
-- `validation` (Attributes) An object containing validation data for the field. (see [below for nested schema](#nestedatt--components--fields--field_checkbox--validation))
-
-<a id="nestedatt--components--fields--field_checkbox--validation"></a>
-### Nested Schema for `components.fields.field_checkbox.validation`
-
-Optional:
-
-- `error_message` (String) A string that specifies the error message to be displayed when the field validation fails.
-- `regex` (String) A string that specifies a validation regular expression. The expression must be a valid regular expression string. This is a required property when the validation type is `CUSTOM`.
-- `type` (String) A string that specifies the validation type.  Options are `CUSTOM`, `NONE`.
-
-
-
-<a id="nestedatt--components--fields--field_combobox"></a>
-### Nested Schema for `components.fields.field_combobox`
-
-
-<a id="nestedatt--components--fields--field_divider"></a>
-### Nested Schema for `components.fields.field_divider`
-
-Optional:
-
-- `content` (String) A string that specifies the field content (for example, HTML.)
-
-
-<a id="nestedatt--components--fields--field_dropdown"></a>
-### Nested Schema for `components.fields.field_dropdown`
-
-Required:
-
-- `key` (String) A string that specifies an identifier for the field component.
-- `options` (Set of String) An array of strings that specifies the unique list of options.
-- `required` (Boolean) A boolean that specifies whether the field is required.
-
-Optional:
-
-- `attribute_disabled` (Boolean) A boolean that specifies whether the linked directory attribute is disabled.  This field is immutable and will trigger a replace plan if changed.
-- `label_mode` (String) A string that specifies how the field is rendered.  Options are `DEFAULT`, `FLOAT`.
-- `layout` (String) A string that specifies layout attributes for radio button and checkbox fields.  Options are `HORIZONTAL`, `VERTICAL`.
-- `other_option_attribute_disabled` (Boolean) A boolean that specifies whether the directory attribute option is disabled. Set to `true` if it references a PingOne directory attribute.
-- `other_option_enabled` (Boolean) A boolean that specifies whether the end user can type an entry that is not in a predefined list.
-- `other_option_input_label` (String) A string that specifies the label for the other option in drop-down controls.
-- `other_option_key` (String) A string that specifies whether the form identifies that the choice is a custom choice not from a predefined list.
-- `other_option_label` (String) A string that specifies the label for a custom or "other" choice in a list.
-- `validation` (Attributes) An object containing validation data for the field. (see [below for nested schema](#nestedatt--components--fields--field_dropdown--validation))
-
-<a id="nestedatt--components--fields--field_dropdown--validation"></a>
-### Nested Schema for `components.fields.field_dropdown.validation`
-
-Optional:
-
-- `error_message` (String) A string that specifies the error message to be displayed when the field validation fails.
-- `regex` (String) A string that specifies a validation regular expression. The expression must be a valid regular expression string. This is a required property when the validation type is `CUSTOM`.
-- `type` (String) A string that specifies the validation type.  Options are `CUSTOM`, `NONE`.
-
-
-
-<a id="nestedatt--components--fields--field_empty_field"></a>
-### Nested Schema for `components.fields.field_empty_field`
-
-Optional:
-
-- `content` (String) A string that specifies the field content (for example, HTML.)
-
-
-<a id="nestedatt--components--fields--field_error_display"></a>
-### Nested Schema for `components.fields.field_error_display`
-
-Optional:
-
-- `content` (String) A string that specifies the field content (for example, HTML.)
-
-
-<a id="nestedatt--components--fields--field_flow_button"></a>
-### Nested Schema for `components.fields.field_flow_button`
-
-Required:
-
-- `key` (String) A string that specifies an identifier for the field component.
-- `label` (String) A string that specifies the button label.
-
-Optional:
-
-- `styles` (Attributes) A single object that describes style settings for the button. (see [below for nested schema](#nestedatt--components--fields--field_flow_button--styles))
-
-<a id="nestedatt--components--fields--field_flow_button--styles"></a>
-### Nested Schema for `components.fields.field_flow_button.styles`
-
-Optional:
-
-- `alignment` (String) A string that specifies the button alignment.  Options are `CENTER`, `LEFT`, `RIGHT`.
-- `background_color` (String) A string that specifies the button background color. The value must be a valid hexadecimal color.
-- `border_color` (String) A string that specifies the button border color. The value must be a valid hexadecimal color.
-- `enabled` (Boolean) A boolean that specifies whether the button is enabled.
-- `text_color` (String) A string that specifies the button text color. The value must be a valid hexadecimal color.
-- `width` (Number) An integer that specifies the button width. Set as a percentage.
-
-
-
-<a id="nestedatt--components--fields--field_flow_link"></a>
-### Nested Schema for `components.fields.field_flow_link`
-
-Required:
-
-- `key` (String) A string that specifies an identifier for the field component.
-- `label` (String) A string that specifies the link label.
-
-Optional:
-
-- `styles` (Attributes) A single object that describes style settings for the flow link. (see [below for nested schema](#nestedatt--components--fields--field_flow_link--styles))
-
-<a id="nestedatt--components--fields--field_flow_link--styles"></a>
-### Nested Schema for `components.fields.field_flow_link.styles`
-
-Optional:
-
-- `enabled` (String) A boolean that specifies whether the link is enabled.
-- `horizontal_alignment` (String) A string that specifies the link alignment.  Options are `CENTER`, `LEFT`, `RIGHT`.
-- `text_color` (String) A string that specifies the link text color.
-
-
-
-<a id="nestedatt--components--fields--field_password"></a>
-### Nested Schema for `components.fields.field_password`
-
-Required:
-
-- `key` (String) A string that specifies an identifier for the field component.
-- `required` (Boolean) A boolean that specifies whether the field is required.
-
-Optional:
-
-- `attribute_disabled` (Boolean) A boolean that specifies whether the linked directory attribute is disabled.  This field is immutable and will trigger a replace plan if changed.
-- `label_mode` (String) A string that specifies how the field is rendered.  Options are `DEFAULT`, `FLOAT`.
-- `layout` (String) A string that specifies layout attributes for radio button and checkbox fields.  Options are `HORIZONTAL`, `VERTICAL`.
-- `options` (Set of String) An array of strings that specifies the unique list of options.
-- `other_option_attribute_disabled` (Boolean) A boolean that specifies whether the directory attribute option is disabled. Set to `true` if it references a PingOne directory attribute.
-- `other_option_enabled` (Boolean) A boolean that specifies whether the end user can type an entry that is not in a predefined list.
-- `other_option_input_label` (String) A string that specifies the label for the other option in drop-down controls.
-- `other_option_key` (String) A string that specifies whether the form identifies that the choice is a custom choice not from a predefined list.
-- `other_option_label` (String) A string that specifies the label for a custom or "other" choice in a list.
-- `validation` (Attributes) An object containing validation data for the field. (see [below for nested schema](#nestedatt--components--fields--field_password--validation))
-
-<a id="nestedatt--components--fields--field_password--validation"></a>
-### Nested Schema for `components.fields.field_password.validation`
-
-Optional:
-
-- `error_message` (String) A string that specifies the error message to be displayed when the field validation fails.
-- `regex` (String) A string that specifies a validation regular expression. The expression must be a valid regular expression string. This is a required property when the validation type is `CUSTOM`.
-- `type` (String) A string that specifies the validation type.  Options are `CUSTOM`, `NONE`.
-
-
-
-<a id="nestedatt--components--fields--field_password_verify"></a>
-### Nested Schema for `components.fields.field_password_verify`
-
-Optional:
-
-- `label_password_verify` (String) A string that when a second field for verifies password is used, this poperty specifies the field label for that verify field.
-
-
-<a id="nestedatt--components--fields--field_qr_code"></a>
-### Nested Schema for `components.fields.field_qr_code`
-
-Required:
-
-- `alignment` (String) A string that specifies the QR Code alignment.  Options are `CENTER`, `LEFT`, `RIGHT`.
-- `qr_code_type` (String) A string that specifies the QR Code type.
-- `show_border` (Boolean) A boolean that specifies the border visibility.
-
-
-<a id="nestedatt--components--fields--field_radio"></a>
-### Nested Schema for `components.fields.field_radio`
-
-Required:
-
-- `key` (String) A string that specifies an identifier for the field component.
-- `layout` (String) A string that specifies layout attributes for radio button and checkbox fields.  Options are `HORIZONTAL`, `VERTICAL`.
-- `options` (Set of String) An array of strings that specifies the unique list of options.
-- `required` (Boolean) A boolean that specifies whether the field is required.
-
-Optional:
-
-- `attribute_disabled` (Boolean) A boolean that specifies whether the linked directory attribute is disabled.  This field is immutable and will trigger a replace plan if changed.
-- `label_mode` (String) A string that specifies how the field is rendered.  Options are `DEFAULT`, `FLOAT`.
-- `other_option_attribute_disabled` (Boolean) A boolean that specifies whether the directory attribute option is disabled. Set to `true` if it references a PingOne directory attribute.
-- `other_option_enabled` (Boolean) A boolean that specifies whether the end user can type an entry that is not in a predefined list.
-- `other_option_input_label` (String) A string that specifies the label for the other option in drop-down controls.
-- `other_option_key` (String) A string that specifies whether the form identifies that the choice is a custom choice not from a predefined list.
-- `other_option_label` (String) A string that specifies the label for a custom or "other" choice in a list.
-- `validation` (Attributes) An object containing validation data for the field. (see [below for nested schema](#nestedatt--components--fields--field_radio--validation))
-
-<a id="nestedatt--components--fields--field_radio--validation"></a>
-### Nested Schema for `components.fields.field_radio.validation`
-
-Optional:
-
-- `error_message` (String) A string that specifies the error message to be displayed when the field validation fails.
-- `regex` (String) A string that specifies a validation regular expression. The expression must be a valid regular expression string. This is a required property when the validation type is `CUSTOM`.
-- `type` (String) A string that specifies the validation type.  Options are `CUSTOM`, `NONE`.
-
-
-
-<a id="nestedatt--components--fields--field_recaptcha_v2"></a>
-### Nested Schema for `components.fields.field_recaptcha_v2`
-
-Required:
-
-- `alignment` (String) A string that specifies the reCAPTCHA alignment.  Options are `CENTER`, `LEFT`, `RIGHT`.
-- `key` (String) A string that specifies an identifier for the field component.
-- `size` (String) A string that specifies the reCAPTCHA size.  Options are `COMPACT`, `NORMAL`.
-- `theme` (String) A string that specifies the reCAPTCHA theme.  Options are `DARK`, `LIGHT`.
-
-
-<a id="nestedatt--components--fields--field_slate_textblob"></a>
-### Nested Schema for `components.fields.field_slate_textblob`
-
-Optional:
-
-- `content` (String) A string that specifies the field content (for example, HTML.)
-
-
-<a id="nestedatt--components--fields--field_social_login_button"></a>
-### Nested Schema for `components.fields.field_social_login_button`
-
-Required:
-
-- `icon_src` (Boolean) A string that specifies the HTTP link (URL format) for the external identity provider's icon.
-- `idp_enabled` (Boolean) A boolean that specifies whether the external identity provider is enabled.
-- `idp_id` (String) A string that specifies the external identity provider's ID.
-- `idp_name` (String) A string that specifies the external identity provider name.
-- `idp_type` (String) A string that specifies the external identity provider type.  Options are `AMAZON`, `APPLE`, `FACEBOOK`, `GITHUB`, `GOOGLE`, `LDAP`, `LINKEDIN`, `MICROSOFT`, `OPENID_CONNECT`, `PAYPAL`, `SAML`, `TWITTER`, `YAHOO`.
-- `label` (String) A string that specifies the social login button label.
-
-Optional:
-
-- `styles` (Attributes) A single object that describes style settings for the social login button. (see [below for nested schema](#nestedatt--components--fields--field_social_login_button--styles))
-- `width` (Number) An integer that specifies the button width. Set as a percentage.
-
-<a id="nestedatt--components--fields--field_social_login_button--styles"></a>
-### Nested Schema for `components.fields.field_social_login_button.width`
-
-Optional:
-
-- `enabled` (String) A boolean that specifies whether the social login button is enabled.
-- `horizontal_alignment` (String) A string that specifies the social login button alignment.  Options are `CENTER`, `LEFT`, `RIGHT`.
-- `text_color` (String) A string that specifies the social login button text color.
-
-
-
 <a id="nestedatt--components--fields--field_submit_button"></a>
 ### Nested Schema for `components.fields.field_submit_button`
 
 Required:
 
-- `key` (String) A string that specifies an identifier for the field component.
 - `label` (String) A string that specifies the button label.
 
 Optional:
 
+- `key` (String) A string that specifies an identifier for the field component.
 - `styles` (Attributes) A single object that describes style settings for the button. (see [below for nested schema](#nestedatt--components--fields--field_submit_button--styles))
 
 <a id="nestedatt--components--fields--field_submit_button--styles"></a>
@@ -471,7 +185,7 @@ Optional:
 Required:
 
 - `key` (String) A string that specifies an identifier for the field component.
-- `required` (Boolean) A boolean that specifies whether the field is required.
+- `label` (String) A string that specifies the field label.
 - `validation` (Attributes) An object containing validation data for the field. (see [below for nested schema](#nestedatt--components--fields--field_text--validation))
 
 Optional:
@@ -479,15 +193,16 @@ Optional:
 - `attribute_disabled` (Boolean) A boolean that specifies whether the linked directory attribute is disabled.  This field is immutable and will trigger a replace plan if changed.
 - `label_mode` (String) A string that specifies how the field is rendered.  Options are `DEFAULT`, `FLOAT`.
 - `layout` (String) A string that specifies layout attributes for radio button and checkbox fields.  Options are `HORIZONTAL`, `VERTICAL`.
-- `options` (Set of String) An array of strings that specifies the unique list of options.
+- `options` (Attributes Set) An array of objects that specifies the unique list of options. (see [below for nested schema](#nestedatt--components--fields--field_text--options))
 - `other_option_attribute_disabled` (Boolean) A boolean that specifies whether the directory attribute option is disabled. Set to `true` if it references a PingOne directory attribute.
 - `other_option_enabled` (Boolean) A boolean that specifies whether the end user can type an entry that is not in a predefined list.
 - `other_option_input_label` (String) A string that specifies the label for the other option in drop-down controls.
 - `other_option_key` (String) A string that specifies whether the form identifies that the choice is a custom choice not from a predefined list.
 - `other_option_label` (String) A string that specifies the label for a custom or "other" choice in a list.
+- `required` (Boolean) A boolean that specifies whether the field is required.
 
 <a id="nestedatt--components--fields--field_text--validation"></a>
-### Nested Schema for `components.fields.field_text.other_option_label`
+### Nested Schema for `components.fields.field_text.required`
 
 Required:
 
@@ -495,17 +210,17 @@ Required:
 
 Optional:
 
-- `error_message` (String) A string that specifies the error message to be displayed when the field validation fails.
+- `error_message` (String) A string that specifies the error message to be displayed when the field validation fails.  When configuring this parameter, the `regex` parameter is required.
 - `regex` (String) A string that specifies a validation regular expression. The expression must be a valid regular expression string. This is a required property when the validation type is `CUSTOM`.
 
 
-
-<a id="nestedatt--components--fields--field_textblob"></a>
-### Nested Schema for `components.fields.field_textblob`
+<a id="nestedatt--components--fields--field_text--options"></a>
+### Nested Schema for `components.fields.field_text.required`
 
 Optional:
 
-- `content` (String) A string that specifies the field content (for example, HTML.)
+- `label` (String)
+- `value` (String)
 
 ## Import
 

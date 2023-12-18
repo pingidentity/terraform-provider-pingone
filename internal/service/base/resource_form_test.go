@@ -76,7 +76,7 @@ func TestAccForm_NewEnv(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_authorize_decision_endpoint.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 
@@ -120,10 +120,11 @@ func TestAccForm_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "description", "This is my awesome form"),
 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
-			resource.TestCheckResourceAttr(resourceFullName, "language_bundle", "test"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.button.text", "Submit"),
 			resource.TestCheckResourceAttr(resourceFullName, "translation_method", "DEFAULT_VALUE"),
 		),
 	}
@@ -136,10 +137,11 @@ func TestAccForm_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "false"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "cols"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "language_bundle"),
+			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.button.text", "Submit"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "translation_method"),
 		),
 	}
@@ -189,6 +191,7 @@ func TestAccForm_Full(t *testing.T) {
 	})
 }
 
+// TODO
 func TestAccForm_Multiple(t *testing.T) {
 	t.Parallel()
 
@@ -257,15 +260,21 @@ func TestAccForm_FieldText(t *testing.T) {
 		Config: testAccFormConfig_FieldTextFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":                        "0",
-				"position.col":                        "0",
-				"field_text.label":                    "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.username.label\",\"defaultTranslation\":\"Username\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
-				"field_text.key":                      "user.username",
-				"field_text.mode":                     "ATTRIBUTE_MODE",
-				"field_text.required":                 "true",
-				"field_text.validation.type":          "CUSTOM",
-				"field_text.validation.regex":         "[a-zA-Z0-9]+",
-				"field_text.validation.error_message": "Regex validation error test message",
+				"position.row":                               "0",
+				"position.col":                               "0",
+				"position.width":                             "50",
+				"type":                                       "TEXT",
+				"field_text.label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.username.label\",\"defaultTranslation\":\"Username\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
+				"field_text.label_mode":                      "FLOAT",
+				"field_text.layout":                          "VERTICAL",
+				"field_text.key":                             "user.username",
+				"field_text.required":                        "true",
+				"field_text.attribute_disabled":              "false",
+				"field_text.validation.type":                 "CUSTOM",
+				"field_text.validation.regex":                "[a-zA-Z0-9]+",
+				"field_text.validation.error_message":        "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Must be alphanumeric\"}]}]",
+				"field_text.other_option_enabled":            "false",
+				"field_text.other_option_attribute_disabled": "false",
 			}),
 		),
 	}
@@ -274,10 +283,16 @@ func TestAccForm_FieldText(t *testing.T) {
 		Config: testAccFormConfig_FieldTextMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":        "0",
-				"position.col":        "0",
-				"field_text.key":      "1234567",
-				"field_text.required": "false",
+				"position.row":                               "0",
+				"position.col":                               "0",
+				"type":                                       "TEXT",
+				"field_text.label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
+				"field_text.key":                             "text-field",
+				"field_text.required":                        "false",
+				"field_text.attribute_disabled":              "false",
+				"field_text.validation.type":                 "NONE",
+				"field_text.other_option_enabled":            "false",
+				"field_text.other_option_attribute_disabled": "false",
 			}),
 		),
 	}
@@ -338,32 +353,41 @@ func TestAccForm_FieldPassword(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccFormConfig_FieldPasswordFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-			resource.TestCheckResourceAttr(resourceFullName, "description", "This is my awesome form"),
-			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "true"),
-			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
-			resource.TestCheckResourceAttr(resourceFullName, "language_bundle", "test"),
-			resource.TestCheckResourceAttr(resourceFullName, "translation_method", "DEFAULT_VALUE"),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"position.row":                               "0",
+				"position.col":                               "0",
+				"position.width":                             "50",
+				"type":                                       "TEXT",
+				"field_text.label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.username.label\",\"defaultTranslation\":\"Username\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
+				"field_text.label_mode":                      "FLOAT",
+				"field_text.layout":                          "VERTICAL",
+				"field_text.key":                             "user.username",
+				"field_text.required":                        "true",
+				"field_text.attribute_disabled":              "false",
+				"field_text.validation.type":                 "CUSTOM",
+				"field_text.validation.regex":                "[a-zA-Z0-9]+",
+				"field_text.validation.error_message":        "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Must be alphanumeric\"}]}]",
+				"field_text.other_option_enabled":            "false",
+				"field_text.other_option_attribute_disabled": "false",
+			}),
 		),
 	}
 
 	minimalStep := resource.TestStep{
 		Config: testAccFormConfig_FieldPasswordMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
-			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "true"),
-			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "false"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "cols"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "language_bundle"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "translation_method"),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"position.row":                               "0",
+				"position.col":                               "0",
+				"type":                                       "TEXT",
+				"field_text.label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
+				"field_text.key":                             "text-field",
+				"field_text.required":                        "false",
+				"field_text.attribute_disabled":              "false",
+				"field_text.validation.type":                 "NONE",
+				"field_text.other_option_enabled":            "false",
+				"field_text.other_option_attribute_disabled": "false",
+			}),
 		),
 	}
 
@@ -1823,10 +1847,12 @@ func testAccFormConfig_NewEnv(environmentName, licenseID, resourceName, name str
 resource "pingone_form" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  name = "My Awesome Minimal Form"
+  name = "%[4]s"
 
   mark_required = true
   mark_optional = false
+
+  cols = 4
 
   components = {
     fields = [
@@ -1837,11 +1863,23 @@ resource "pingone_form" "%[3]s" {
         }
 
         field_text = {
-          key = "user.username"
+          label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
+
+          key = "text-field"
+
           validation = {
             type = "NONE"
           }
-          required = true
+        }
+      },
+      {
+        position = {
+          row = 1
+          col = 0
+        }
+
+        field_submit_button = {
+          label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
         }
       }
     ]
@@ -1861,18 +1899,10 @@ resource "pingone_form" "%[2]s" {
 
   category = "CUSTOM"
 
-  mark_required = false
+  mark_required = true
   mark_optional = true
 
   cols = 4
-
-  language_bundle = {
-    "button.text"                              = "Submit",
-    "fields.user.email.label"                  = "Email Address",
-    "fields.user.password.label"               = "Password"
-    "fields.user.password.labelPasswordVerify" = "Verify Password",
-    "fields.user.username.label"               = "Username",
-  }
 
   translation_method = "DEFAULT_VALUE"
 
@@ -1885,11 +1915,23 @@ resource "pingone_form" "%[2]s" {
         }
 
         field_text = {
-          key = "user.username"
+          label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
+
+          key = "text-field"
+
           validation = {
             type = "NONE"
           }
-          required = true
+        }
+      },
+      {
+        position = {
+          row = 1
+          col = 0
+        }
+
+        field_submit_button = {
+          label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
         }
       }
     ]
@@ -1906,8 +1948,7 @@ resource "pingone_form" "%[2]s" {
 
   name = "%[3]s"
 
-  mark_required = true
-  mark_optional = false
+  cols = 4
 
   components = {
     fields = [
@@ -1918,11 +1959,23 @@ resource "pingone_form" "%[2]s" {
         }
 
         field_text = {
-          key = "user.username"
+          label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
+
+          key = "text-field"
+
           validation = {
             type = "NONE"
           }
-          required = true
+        }
+      },
+      {
+        position = {
+          row = 1
+          col = 0
+        }
+
+        field_submit_button = {
+          label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
         }
       }
     ]
@@ -2113,47 +2166,41 @@ resource "pingone_form" "%[2]s" {
 
   name = "%[3]s"
 
-  mark_required = true
-  mark_optional = false
+  mark_required = false
+  mark_optional = true
+
+  cols = 4
 
   components = {
     fields = [
       {
         position = {
-          row = 0
-          col = 0
+          row   = 0
+          col   = 0
+          width = 50
         }
 
         field_text = {
           label              = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.username.label\",\"defaultTranslation\":\"Username\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
           label_mode         = "FLOAT"
           layout             = "VERTICAL"
-          options            = ["test", "test1", "test2", "test3"]
           key                = "user.username"
-          mode               = "ATTRIBUTE_MODE"
           required           = true
-          attribute_disabled = true
+          attribute_disabled = false
           validation = {
             type          = "CUSTOM"
             regex         = "[a-zA-Z0-9]+"
-            error_message = "Regex validation error test message"
+            error_message = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Must be alphanumeric\"}]}]"
           }
-
-          other_option_enabled            = true
-          other_option_key                = "key.123"
-          other_option_label              = "Test label 432"
-          other_option_input_label        = "Test label 123"
-          other_option_attribute_disabled = true
         }
       },
       {
         position = {
-          row = 2
+          row = 1
           col = 0
         }
 
         field_submit_button = {
-          key   = "697dc4e9-acf5-4c04-9f7e-3974ea999c37"
           label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
         }
       }
@@ -2174,6 +2221,8 @@ resource "pingone_form" "%[2]s" {
   mark_required = true
   mark_optional = false
 
+  cols = 4
+
   components = {
     fields = [
       {
@@ -2183,18 +2232,22 @@ resource "pingone_form" "%[2]s" {
         }
 
         field_text = {
-          key      = "1234567"
-          required = false
+          label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
+
+          key = "text-field"
+
+          validation = {
+            type = "NONE"
+          }
         }
       },
       {
         position = {
-          row = 2
+          row = 1
           col = 0
         }
 
         field_submit_button = {
-          key   = "697dc4e9-acf5-4c04-9f7e-3974ea999c37"
           label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
         }
       }
@@ -2224,25 +2277,25 @@ resource "pingone_form" "%[2]s" {
         }
 
         field_password = {
-			label              = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.username.label\",\"defaultTranslation\":\"Username\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
-			label_mode         = "FLOAT"
-			layout             = "VERTICAL"
-			options            = ["test", "test1", "test2", "test3"]
-			key                = "user.username"
-			mode               = "ATTRIBUTE_MODE"
-			required           = true
-			attribute_disabled = true
-			validation = {
-			  type          = "CUSTOM"
-			  regex         = "[a-zA-Z0-9]+"
-			  error_message = "Regex validation error test message"
-			}
-  
-			other_option_enabled            = true
-			other_option_key                = "key.123"
-			other_option_label              = "Test label 432"
-			other_option_input_label        = "Test label 123"
-			other_option_attribute_disabled = true
+          label              = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.username.label\",\"defaultTranslation\":\"Username\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+          label_mode         = "FLOAT"
+          layout             = "VERTICAL"
+          options            = ["test", "test1", "test2", "test3"]
+          key                = "user.username"
+          mode               = "ATTRIBUTE_MODE"
+          required           = true
+          attribute_disabled = true
+          validation = {
+            type          = "CUSTOM"
+            regex         = "[a-zA-Z0-9]+"
+            error_message = "Regex validation error test message"
+          }
+
+          other_option_enabled            = true
+          other_option_key                = "key.123"
+          other_option_label              = "Test label 432"
+          other_option_input_label        = "Test label 123"
+          other_option_attribute_disabled = true
         }
       },
       {
@@ -2293,7 +2346,7 @@ resource "pingone_form" "%[2]s" {
         }
 
         field_submit_button = {
-          key   = "697dc4e9-acf5-4c04-9f7e-3974ea999c37"
+          //key   = "697dc4e9-acf5-4c04-9f7e-3974ea999c37"
           label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
         }
       }
