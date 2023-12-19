@@ -248,100 +248,6 @@ func TestAccForm_Multiple(t *testing.T) {
 	})
 }
 
-func TestAccForm_FieldText(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
-
-	name := resourceName
-
-	fullStep := resource.TestStep{
-		Config: testAccFormConfig_FieldTextFull(resourceName, name),
-		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":                    "0",
-				"position.col":                    "0",
-				"position.width":                  "50",
-				"type":                            "TEXT",
-				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.username.label\",\"defaultTranslation\":\"Username\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
-				"label_mode":                      "FLOAT",
-				"layout":                          "VERTICAL",
-				"key":                             "user.username",
-				"required":                        "true",
-				"attribute_disabled":              "false",
-				"validation.type":                 "CUSTOM",
-				"validation.regex":                "[a-zA-Z0-9]+",
-				"validation.error_message":        "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Must be alphanumeric\"}]}]",
-				"other_option_enabled":            "false",
-				"other_option_attribute_disabled": "false",
-			}),
-		),
-	}
-
-	minimalStep := resource.TestStep{
-		Config: testAccFormConfig_FieldTextMinimal(resourceName, name),
-		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":                    "0",
-				"position.col":                    "0",
-				"type":                            "TEXT",
-				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
-				"key":                             "text-field",
-				"required":                        "false",
-				"attribute_disabled":              "false",
-				"validation.type":                 "NONE",
-				"other_option_enabled":            "false",
-				"other_option_attribute_disabled": "false",
-			}),
-		),
-	}
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
-		},
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.Form_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			// Full step
-			fullStep,
-			{
-				Config:  testAccFormConfig_FieldTextFull(resourceName, name),
-				Destroy: true,
-			},
-			// Minimal step
-			minimalStep,
-			{
-				Config:  testAccFormConfig_FieldTextMinimal(resourceName, name),
-				Destroy: true,
-			},
-			// Change
-			fullStep,
-			minimalStep,
-			fullStep,
-			// Test importing the resource
-			{
-				ResourceName: resourceFullName,
-				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-					return func(s *terraform.State) (string, error) {
-						rs, ok := s.RootModule().Resources[resourceFullName]
-						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-						}
-
-						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-					}
-				}(),
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-		},
-	})
-}
-
 func TestAccForm_FieldPassword(t *testing.T) {
 	t.Parallel()
 
@@ -501,6 +407,201 @@ func TestAccForm_FieldPasswordVerify(t *testing.T) {
 			minimalStep,
 			{
 				Config:  testAccFormConfig_FieldPasswordVerifyMinimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			fullStep,
+			minimalStep,
+			fullStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccForm_FieldRadio(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
+
+	name := resourceName
+
+	fullStep := resource.TestStep{
+		Config: testAccFormConfig_FieldRadioFull(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"position.row":                    "0",
+				"position.col":                    "0",
+				"position.width":                  "50",
+				"type":                            "RADIO",
+				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.locale.label\",\"defaultTranslation\":\"Locale\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
+				"label_mode":                      "FLOAT",
+				"layout":                          "VERTICAL",
+				"key":                             "user.locale",
+				"required":                        "true",
+				"attribute_disabled":              "false",
+				"other_option_enabled":            "false",
+				"other_option_attribute_disabled": "false",
+				"options.0.value":                 "Option1",
+				"options.0.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]",
+				"options.1.value":                 "Option2",
+				"options.1.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 2\"}]}]",
+				"options.2.value":                 "Option3",
+				"options.2.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]",
+			}),
+		),
+	}
+
+	minimalStep := resource.TestStep{
+		Config: testAccFormConfig_FieldRadioMinimal(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"position.row":                    "0",
+				"position.col":                    "0",
+				"type":                            "RADIO",
+				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
+				"key":                             "radio-field",
+				"layout":                          "HORIZONTAL",
+				"required":                        "false",
+				"attribute_disabled":              "false",
+				"other_option_enabled":            "false",
+				"other_option_attribute_disabled": "false",
+				"options.0.value":                 "Option1",
+				"options.0.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]",
+				"options.1.value":                 "Option3",
+				"options.1.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]",
+			}),
+		),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.Form_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full step
+			fullStep,
+			{
+				Config:  testAccFormConfig_FieldRadioFull(resourceName, name),
+				Destroy: true,
+			},
+			// Minimal step
+			minimalStep,
+			{
+				Config:  testAccFormConfig_FieldRadioMinimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			fullStep,
+			minimalStep,
+			fullStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccForm_FieldText(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
+
+	name := resourceName
+
+	fullStep := resource.TestStep{
+		Config: testAccFormConfig_FieldTextFull(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"position.row":                    "0",
+				"position.col":                    "0",
+				"position.width":                  "50",
+				"type":                            "TEXT",
+				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.username.label\",\"defaultTranslation\":\"Username\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
+				"label_mode":                      "FLOAT",
+				"layout":                          "VERTICAL",
+				"key":                             "user.username",
+				"required":                        "true",
+				"attribute_disabled":              "false",
+				"validation.type":                 "CUSTOM",
+				"validation.regex":                "[a-zA-Z0-9]+",
+				"validation.error_message":        "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Must be alphanumeric\"}]}]",
+				"other_option_enabled":            "false",
+				"other_option_attribute_disabled": "false",
+			}),
+		),
+	}
+
+	minimalStep := resource.TestStep{
+		Config: testAccFormConfig_FieldTextMinimal(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"position.row":                    "0",
+				"position.col":                    "0",
+				"type":                            "TEXT",
+				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
+				"key":                             "text-field",
+				"required":                        "false",
+				"attribute_disabled":              "false",
+				"validation.type":                 "NONE",
+				"other_option_enabled":            "false",
+				"other_option_attribute_disabled": "false",
+			}),
+		),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.Form_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full step
+			fullStep,
+			{
+				Config:  testAccFormConfig_FieldTextFull(resourceName, name),
+				Destroy: true,
+			},
+			// Minimal step
+			minimalStep,
+			{
+				Config:  testAccFormConfig_FieldTextMinimal(resourceName, name),
 				Destroy: true,
 			},
 			// Change
@@ -888,105 +989,6 @@ resource "pingone_form" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccFormConfig_FieldTextFull(resourceName, name string) string {
-	return fmt.Sprintf(`
-	%[1]s
-
-resource "pingone_form" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "%[3]s"
-
-  mark_required = false
-  mark_optional = true
-
-  cols = 4
-
-  components = {
-    fields = [
-      {
-        type = "TEXT"
-
-        position = {
-          row   = 0
-          col   = 0
-          width = 50
-        }
-
-        label              = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.username.label\",\"defaultTranslation\":\"Username\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
-        label_mode         = "FLOAT"
-        layout             = "VERTICAL"
-        key                = "user.username"
-        required           = true
-        attribute_disabled = false
-        validation = {
-          type          = "CUSTOM"
-          regex         = "[a-zA-Z0-9]+"
-          error_message = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Must be alphanumeric\"}]}]"
-        }
-      },
-      {
-        type = "SUBMIT_BUTTON"
-
-        position = {
-          row = 1
-          col = 0
-        }
-
-        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
-      }
-    ]
-  }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
-}
-
-func testAccFormConfig_FieldTextMinimal(resourceName, name string) string {
-	return fmt.Sprintf(`
-	%[1]s
-
-resource "pingone_form" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "%[3]s"
-
-  mark_required = true
-  mark_optional = false
-
-  cols = 4
-
-  components = {
-    fields = [
-      {
-        type = "TEXT"
-
-        position = {
-          row = 0
-          col = 0
-        }
-
-        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
-
-        key = "text-field"
-
-        validation = {
-          type = "NONE"
-        }
-      },
-      {
-        type = "SUBMIT_BUTTON"
-
-        position = {
-          row = 1
-          col = 0
-        }
-
-        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
-      }
-    ]
-  }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
-}
-
 func testAccFormConfig_FieldPasswordFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -1154,6 +1156,223 @@ resource "pingone_form" "%[2]s" {
         label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
 
         key = "password-field"
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_FieldRadioFull(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "RADIO"
+
+        position = {
+          row   = 0
+          col   = 0
+          width = 50
+        }
+
+        label              = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.locale.label\",\"defaultTranslation\":\"Locale\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+        label_mode         = "FLOAT"
+        layout             = "VERTICAL"
+        key                = "user.locale"
+        required           = true
+        attribute_disabled = false
+
+        options = [
+          {
+            value = "Option2",
+            label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 2\"}]}]"
+          },
+          {
+            value = "Option1",
+            label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]"
+          },
+          {
+            value = "Option3",
+            label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"
+          }
+        ]
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_FieldRadioMinimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "RADIO"
+
+        position = {
+          row = 0
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
+
+        key = "radio-field"
+
+        layout = "HORIZONTAL"
+
+        options = [
+          {
+            value = "Option1",
+            label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]"
+          },
+          {
+            value = "Option3",
+            label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"
+          }
+        ]
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_FieldTextFull(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = false
+  mark_optional = true
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "TEXT"
+
+        position = {
+          row   = 0
+          col   = 0
+          width = 50
+        }
+
+        label              = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.username.label\",\"defaultTranslation\":\"Username\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+        label_mode         = "FLOAT"
+        layout             = "VERTICAL"
+        key                = "user.username"
+        required           = true
+        attribute_disabled = false
+        validation = {
+          type          = "CUSTOM"
+          regex         = "[a-zA-Z0-9]+"
+          error_message = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Must be alphanumeric\"}]}]"
+        }
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_FieldTextMinimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "TEXT"
+
+        position = {
+          row = 0
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
+
+        key = "text-field"
+
+        validation = {
+          type = "NONE"
+        }
       },
       {
         type = "SUBMIT_BUTTON"

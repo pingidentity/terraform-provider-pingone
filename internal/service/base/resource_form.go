@@ -1511,14 +1511,16 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 	}
 
 	switch p.Type.ValueString() {
-	case string(management.ENUMFORMFIELDTYPE_TEXT):
-		data.FormFieldText, d = p.expandFieldText(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_PASSWORD):
 		data.FormFieldPassword, d = p.expandFieldPassword(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY):
 		data.FormFieldPasswordVerify, d = p.expandFieldPasswordVerify(ctx, positionData)
+	case string(management.ENUMFORMFIELDTYPE_RADIO):
+		data.FormFieldRadio, d = p.expandFieldRadio(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON):
 		data.FormFieldSubmitButton, d = p.expandFieldSubmitButton(ctx, positionData)
+	case string(management.ENUMFORMFIELDTYPE_TEXT):
+		data.FormFieldText, d = p.expandFieldText(ctx, positionData)
 	}
 
 	if diags.HasError() {
@@ -1558,48 +1560,6 @@ func (p *formComponentsFieldElementValidationResourceModel) expand(ctx context.C
 
 	if !p.ErrorMessage.IsNull() && !p.ErrorMessage.IsUnknown() {
 		data.SetErrorMessage(p.ErrorMessage.ValueString())
-	}
-
-	return data, diags
-}
-
-func (p *formComponentsFieldResourceModel) expandFieldText(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldText, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	var plan formComponentsFieldElementValidationResourceModel
-	p.Validation.As(ctx, &plan, basetypes.ObjectAsOptions{
-		UnhandledNullAsEmpty:    false,
-		UnhandledUnknownAsEmpty: false,
-	})
-
-	validationData, d := plan.expand(ctx)
-	diags.Append(d...)
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	data := management.NewFormFieldText(
-		management.ENUMFORMFIELDTYPE_TEXT,
-		*positionData,
-		p.Key.ValueString(),
-		p.Label.ValueString(),
-		*validationData,
-	)
-
-	if !p.AttributeDisabled.IsNull() && !p.AttributeDisabled.IsUnknown() {
-		data.SetAttributeDisabled(p.AttributeDisabled.ValueBool())
-	}
-
-	if !p.LabelMode.IsNull() && !p.LabelMode.IsUnknown() {
-		data.SetLabelMode(management.EnumFormElementLabelMode(p.LabelMode.ValueString()))
-	}
-
-	if !p.Layout.IsNull() && !p.Layout.IsUnknown() {
-		data.SetLayout(management.EnumFormElementLayout(p.Layout.ValueString()))
-	}
-
-	if !p.Required.IsNull() && !p.Required.IsUnknown() {
-		data.SetRequired(p.Required.ValueBool())
 	}
 
 	return data, diags
@@ -1675,6 +1635,49 @@ func (p *formComponentsFieldResourceModel) expandFieldPasswordVerify(ctx context
 	return data, diags
 }
 
+func (p *formComponentsFieldResourceModel) expandFieldRadio(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldRadio, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var optionsPlan []formComponentsFieldElementOptionsResourceModel
+	diags.Append(p.Options.ElementsAs(ctx, &optionsPlan, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	options := make([]management.FormElementOption, 0)
+	for _, v := range optionsPlan {
+		optionsObj := *management.NewFormElementOption(
+			v.Label.ValueString(),
+			v.Value.ValueString(),
+		)
+
+		options = append(options, optionsObj)
+	}
+
+	data := management.NewFormFieldRadio(
+		management.ENUMFORMFIELDTYPE_RADIO,
+		*positionData,
+		p.Key.ValueString(),
+		p.Label.ValueString(),
+		management.EnumFormElementLayout(p.Layout.ValueString()),
+		options,
+	)
+
+	if !p.AttributeDisabled.IsNull() && !p.AttributeDisabled.IsUnknown() {
+		data.SetAttributeDisabled(p.AttributeDisabled.ValueBool())
+	}
+
+	if !p.LabelMode.IsNull() && !p.LabelMode.IsUnknown() {
+		data.SetLabelMode(management.EnumFormElementLabelMode(p.LabelMode.ValueString()))
+	}
+
+	if !p.Required.IsNull() && !p.Required.IsUnknown() {
+		data.SetRequired(p.Required.ValueBool())
+	}
+
+	return data, diags
+}
+
 func (p *formComponentsFieldResourceModel) expandFieldSubmitButton(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldSubmitButton, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -1698,6 +1701,48 @@ func (p *formComponentsFieldResourceModel) expandFieldSubmitButton(ctx context.C
 		diags.Append(d...)
 
 		data.SetStyles(*stylesData)
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldResourceModel) expandFieldText(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldText, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var plan formComponentsFieldElementValidationResourceModel
+	p.Validation.As(ctx, &plan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})
+
+	validationData, d := plan.expand(ctx)
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	data := management.NewFormFieldText(
+		management.ENUMFORMFIELDTYPE_TEXT,
+		*positionData,
+		p.Key.ValueString(),
+		p.Label.ValueString(),
+		*validationData,
+	)
+
+	if !p.AttributeDisabled.IsNull() && !p.AttributeDisabled.IsUnknown() {
+		data.SetAttributeDisabled(p.AttributeDisabled.ValueBool())
+	}
+
+	if !p.LabelMode.IsNull() && !p.LabelMode.IsUnknown() {
+		data.SetLabelMode(management.EnumFormElementLabelMode(p.LabelMode.ValueString()))
+	}
+
+	if !p.Layout.IsNull() && !p.Layout.IsUnknown() {
+		data.SetLayout(management.EnumFormElementLayout(p.Layout.ValueString()))
+	}
+
+	if !p.Required.IsNull() && !p.Required.IsUnknown() {
+		data.SetRequired(p.Required.ValueBool())
 	}
 
 	return data, diags
@@ -2115,9 +2160,33 @@ func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.Form
 		case *management.FormFieldRadio:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
-			attributeMap["position"] = position
-			attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
-			//attributeMap["field_radio"], d = formComponentsFieldsFieldElementToTF(t)
+
+			validation, d := formComponentsFieldsElementValidationOkToTF(t.GetValidationOk())
+			diags.Append(d...)
+
+			options, d := formComponentsFieldsElementOptionsOkToTF(t.GetOptionsOk())
+			diags.Append(d...)
+
+			attributeMap = map[string]attr.Value{
+				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
+				"key":                             framework.StringOkToTF(t.GetKeyOk()),
+				"label_mode":                      framework.EnumOkToTF(t.GetLabelModeOk()),
+				"label_password_verify":           types.StringNull(),
+				"label":                           framework.StringOkToTF(t.GetLabelOk()),
+				"layout":                          framework.EnumOkToTF(t.GetLayoutOk()),
+				"options":                         options,
+				"other_option_attribute_disabled": framework.BoolOkToTF(t.GetOtherOptionAttributeDisabledOk()),
+				"other_option_enabled":            framework.BoolOkToTF(t.GetOtherOptionEnabledOk()),
+				"other_option_input_label":        framework.StringOkToTF(t.GetOtherOptionInputLabelOk()),
+				"other_option_key":                framework.StringOkToTF(t.GetOtherOptionKeyOk()),
+				"other_option_label":              framework.StringOkToTF(t.GetOtherOptionLabelOk()),
+				"position":                        position,
+				"required":                        framework.BoolOkToTF(t.GetRequiredOk()),
+				"show_password_requirements":      types.BoolNull(),
+				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
+				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
+				"validation":                      validation,
+			}
 
 		case *management.FormFieldRecaptchaV2:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
