@@ -129,7 +129,6 @@ Required:
 
 Required:
 
-- `label` (String) A string that specifies the field label.
 - `position` (Attributes) A single object that specifies the position of the form field in the form. (see [below for nested schema](#nestedatt--components--fields--position))
 - `type` (String) A string that specifies the type of form field.  Options are `CHECKBOX`, `COMBOBOX`, `DIVIDER`, `DROPDOWN`, `EMPTY_FIELD`, `ERROR_DISPLAY`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `RECAPTCHA_V2`, `SLATE_TEXTBLOB`, `SOCIAL_LOGIN_BUTTON`, `SUBMIT_BUTTON`, `TEXT`, `TEXTBLOB`.
 
@@ -137,6 +136,7 @@ Optional:
 
 - `attribute_disabled` (Boolean) A boolean that specifies whether the linked directory attribute is disabled.  This field is immutable and will trigger a replace plan if changed.
 - `key` (String) A string that specifies an identifier for the field component.
+- `label` (String) A string that specifies the field label.
 - `label_mode` (String) A string that specifies how the field is rendered.  Options are `DEFAULT`, `FLOAT`.
 - `label_password_verify` (String) A string that when a second field for verifies password is used, this property specifies the field label for that verify field.
 - `layout` (String) A string that specifies layout attributes for radio button and checkbox fields.  Options are `HORIZONTAL`, `VERTICAL`.

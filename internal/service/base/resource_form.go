@@ -627,7 +627,9 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 								"label": schema.StringAttribute{
 									Description:         componentsFieldsLabelDescription.Description,
 									MarkdownDescription: componentsFieldsLabelDescription.MarkdownDescription,
-									Required:            true,
+									Optional:            true,
+
+									// TODO: functional validator
 								},
 
 								"label_password_verify": schema.StringAttribute{
@@ -1513,6 +1515,8 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 	switch p.Type.ValueString() {
 	case string(management.ENUMFORMFIELDTYPE_CHECKBOX):
 		data.FormFieldCheckbox, d = p.expandFieldCheckbox(ctx, positionData)
+	case string(management.ENUMFORMFIELDTYPE_DIVIDER):
+		data.FormFieldDivider, d = p.expandItemDivider(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_DROPDOWN):
 		data.FormFieldDropdown, d = p.expandFieldDropdown(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_PASSWORD):
@@ -1608,6 +1612,17 @@ func (p *formComponentsFieldResourceModel) expandFieldCheckbox(ctx context.Conte
 	if !p.Required.IsNull() && !p.Required.IsUnknown() {
 		data.SetRequired(p.Required.ValueBool())
 	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldResourceModel) expandItemDivider(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldDivider, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldDivider(
+		management.ENUMFORMFIELDTYPE_DIVIDER,
+		*positionData,
+	)
 
 	return data, diags
 }
@@ -2165,9 +2180,27 @@ func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.Form
 		case *management.FormFieldDivider:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
-			attributeMap["position"] = position
-			attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
-			//attributeMap["field_divider"], d = formComponentsFieldsFieldItemToTF(t)
+
+			attributeMap = map[string]attr.Value{
+				"attribute_disabled":              types.BoolNull(),
+				"key":                             types.StringNull(),
+				"label_mode":                      types.StringNull(),
+				"label_password_verify":           types.StringNull(),
+				"label":                           types.StringNull(),
+				"layout":                          types.StringNull(),
+				"options":                         types.SetNull(types.ObjectType{AttrTypes: formComponentsFieldsFieldElementOptionTFObjectTypes}),
+				"other_option_attribute_disabled": types.BoolNull(),
+				"other_option_enabled":            types.BoolNull(),
+				"other_option_input_label":        types.StringNull(),
+				"other_option_key":                types.StringNull(),
+				"other_option_label":              types.StringNull(),
+				"position":                        position,
+				"required":                        types.BoolNull(),
+				"show_password_requirements":      types.BoolNull(),
+				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
+				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
+				"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
+			}
 
 		case *management.FormFieldDropdown:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
