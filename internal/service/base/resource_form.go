@@ -54,6 +54,7 @@ type formComponentsFieldResourceModel struct {
 	Key                          types.String `tfsdk:"key"`
 	Label                        types.String `tfsdk:"label"`
 	LabelMode                    types.String `tfsdk:"label_mode"`
+	LabelPasswordVerify          types.String `tfsdk:"label_password_verify"`
 	Layout                       types.String `tfsdk:"layout"`
 	Options                      types.Set    `tfsdk:"options"`
 	OtherOptionAttributeDisabled types.Bool   `tfsdk:"other_option_attribute_disabled"`
@@ -64,9 +65,9 @@ type formComponentsFieldResourceModel struct {
 	Position                     types.Object `tfsdk:"position"`
 	Required                     types.Bool   `tfsdk:"required"`
 	ShowPasswordRequirements     types.Bool   `tfsdk:"show_password_requirements"`
+	Styles                       types.Object `tfsdk:"styles"`
 	Type                         types.String `tfsdk:"type"`
 	Validation                   types.Object `tfsdk:"validation"`
-	Styles                       types.Object `tfsdk:"styles"`
 }
 
 type formComponentsFieldPositionResourceModel struct {
@@ -185,6 +186,7 @@ var (
 		"attribute_disabled":              types.BoolType,
 		"key":                             types.StringType,
 		"label_mode":                      types.StringType,
+		"label_password_verify":           types.StringType,
 		"label":                           types.StringType,
 		"layout":                          types.StringType,
 		"options":                         types.SetType{ElemType: types.ObjectType{AttrTypes: formComponentsFieldsFieldElementOptionTFObjectTypes}},
@@ -196,9 +198,9 @@ var (
 		"position":                        types.ObjectType{AttrTypes: formComponentsFieldsPositionTFObjectTypes},
 		"required":                        types.BoolType,
 		"show_password_requirements":      types.BoolType,
+		"styles":                          types.ObjectType{AttrTypes: formComponentsFieldsFieldStylesTFObjectTypes},
 		"type":                            types.StringType,
 		"validation":                      types.ObjectType{AttrTypes: formComponentsFieldsFieldElementValidationTFObjectTypes},
-		"styles":                          types.ObjectType{AttrTypes: formComponentsFieldsFieldStylesTFObjectTypes},
 	}
 
 	// Form Components Fields Position
@@ -384,6 +386,10 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 
 	componentsFieldsLabelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the field label.",
+	)
+
+	componentsFieldsLabelPasswordVerifyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that when a second field for verifies password is used, this property specifies the field label for that verify field.",
 	)
 
 	componentsFieldsLabelModeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -622,6 +628,14 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Description:         componentsFieldsLabelDescription.Description,
 									MarkdownDescription: componentsFieldsLabelDescription.MarkdownDescription,
 									Required:            true,
+								},
+
+								"label_password_verify": schema.StringAttribute{
+									Description:         componentsFieldsLabelPasswordVerifyDescription.Description,
+									MarkdownDescription: componentsFieldsLabelPasswordVerifyDescription.MarkdownDescription,
+									Optional:            true,
+
+									// TODO: functional validator
 								},
 
 								"label_mode": schema.StringAttribute{
@@ -1501,6 +1515,8 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 		data.FormFieldText, d = p.expandFieldText(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_PASSWORD):
 		data.FormFieldPassword, d = p.expandFieldPassword(ctx, positionData)
+	case string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY):
+		data.FormFieldPasswordVerify, d = p.expandFieldPasswordVerify(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON):
 		data.FormFieldSubmitButton, d = p.expandFieldSubmitButton(ctx, positionData)
 	}
@@ -1566,16 +1582,12 @@ func (p *formComponentsFieldResourceModel) expandFieldText(ctx context.Context, 
 		management.ENUMFORMFIELDTYPE_TEXT,
 		*positionData,
 		p.Key.ValueString(),
-		p.Required.ValueBool(),
+		p.Label.ValueString(),
 		*validationData,
 	)
 
 	if !p.AttributeDisabled.IsNull() && !p.AttributeDisabled.IsUnknown() {
 		data.SetAttributeDisabled(p.AttributeDisabled.ValueBool())
-	}
-
-	if !p.Label.IsNull() && !p.Label.IsUnknown() {
-		data.SetLabel(p.Label.ValueString())
 	}
 
 	if !p.LabelMode.IsNull() && !p.LabelMode.IsUnknown() {
@@ -1584,6 +1596,10 @@ func (p *formComponentsFieldResourceModel) expandFieldText(ctx context.Context, 
 
 	if !p.Layout.IsNull() && !p.Layout.IsUnknown() {
 		data.SetLayout(management.EnumFormElementLayout(p.Layout.ValueString()))
+	}
+
+	if !p.Required.IsNull() && !p.Required.IsUnknown() {
+		data.SetRequired(p.Required.ValueBool())
 	}
 
 	return data, diags
@@ -1596,15 +1612,11 @@ func (p *formComponentsFieldResourceModel) expandFieldPassword(ctx context.Conte
 		management.ENUMFORMFIELDTYPE_PASSWORD,
 		*positionData,
 		p.Key.ValueString(),
-		p.Required.ValueBool(),
+		p.Label.ValueString(),
 	)
 
 	if !p.AttributeDisabled.IsNull() && !p.AttributeDisabled.IsUnknown() {
 		data.SetAttributeDisabled(p.AttributeDisabled.ValueBool())
-	}
-
-	if !p.Label.IsNull() && !p.Label.IsUnknown() {
-		data.SetLabel(p.Label.ValueString())
 	}
 
 	if !p.LabelMode.IsNull() && !p.LabelMode.IsUnknown() {
@@ -1613,6 +1625,47 @@ func (p *formComponentsFieldResourceModel) expandFieldPassword(ctx context.Conte
 
 	if !p.Layout.IsNull() && !p.Layout.IsUnknown() {
 		data.SetLayout(management.EnumFormElementLayout(p.Layout.ValueString()))
+	}
+
+	if !p.Required.IsNull() && !p.Required.IsUnknown() {
+		data.SetRequired(p.Required.ValueBool())
+	}
+
+	if !p.ShowPasswordRequirements.IsNull() && !p.ShowPasswordRequirements.IsUnknown() {
+		data.SetShowPasswordRequirements(p.ShowPasswordRequirements.ValueBool())
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldResourceModel) expandFieldPasswordVerify(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldPasswordVerify, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldPasswordVerify(
+		management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY,
+		*positionData,
+		p.Key.ValueString(),
+		p.Label.ValueString(),
+	)
+
+	if !p.AttributeDisabled.IsNull() && !p.AttributeDisabled.IsUnknown() {
+		data.SetAttributeDisabled(p.AttributeDisabled.ValueBool())
+	}
+
+	if !p.LabelMode.IsNull() && !p.LabelMode.IsUnknown() {
+		data.SetLabelMode(management.EnumFormElementLabelMode(p.LabelMode.ValueString()))
+	}
+
+	if !p.LabelPasswordVerify.IsNull() && !p.LabelPasswordVerify.IsUnknown() {
+		data.SetLabelPasswordVerify(p.LabelPasswordVerify.ValueString())
+	}
+
+	if !p.Layout.IsNull() && !p.Layout.IsUnknown() {
+		data.SetLayout(management.EnumFormElementLayout(p.Layout.ValueString()))
+	}
+
+	if !p.Required.IsNull() && !p.Required.IsUnknown() {
+		data.SetRequired(p.Required.ValueBool())
 	}
 
 	if !p.ShowPasswordRequirements.IsNull() && !p.ShowPasswordRequirements.IsUnknown() {
@@ -2004,6 +2057,7 @@ func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.Form
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
 				"label_mode":                      framework.EnumOkToTF(t.GetLabelModeOk()),
+				"label_password_verify":           types.StringNull(),
 				"label":                           framework.StringOkToTF(t.GetLabelOk()),
 				"layout":                          framework.EnumOkToTF(t.GetLayoutOk()),
 				"options":                         options,
@@ -2021,11 +2075,35 @@ func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.Form
 			}
 
 		case *management.FormFieldPasswordVerify:
+			options, d := formComponentsFieldsElementOptionsOkToTF(t.GetOptionsOk())
+			diags.Append(d...)
+
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
-			attributeMap["position"] = position
-			attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
-			//attributeMap["field_password_verify"], d = formComponentsFieldsFieldPasswordVerifyToTF(t)
+
+			validation, d := formComponentsFieldsElementValidationOkToTF(t.GetValidationOk())
+			diags.Append(d...)
+
+			attributeMap = map[string]attr.Value{
+				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
+				"key":                             framework.StringOkToTF(t.GetKeyOk()),
+				"label_mode":                      framework.EnumOkToTF(t.GetLabelModeOk()),
+				"label_password_verify":           framework.StringOkToTF(t.GetLabelPasswordVerifyOk()),
+				"label":                           framework.StringOkToTF(t.GetLabelOk()),
+				"layout":                          framework.EnumOkToTF(t.GetLayoutOk()),
+				"options":                         options,
+				"other_option_attribute_disabled": framework.BoolOkToTF(t.GetOtherOptionAttributeDisabledOk()),
+				"other_option_enabled":            framework.BoolOkToTF(t.GetOtherOptionEnabledOk()),
+				"other_option_input_label":        framework.StringOkToTF(t.GetOtherOptionInputLabelOk()),
+				"other_option_key":                framework.StringOkToTF(t.GetOtherOptionKeyOk()),
+				"other_option_label":              framework.StringOkToTF(t.GetOtherOptionLabelOk()),
+				"position":                        position,
+				"required":                        framework.BoolOkToTF(t.GetRequiredOk()),
+				"show_password_requirements":      framework.BoolOkToTF(t.GetShowPasswordRequirementsOk()),
+				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
+				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
+				"validation":                      validation,
+			}
 
 		case *management.FormFieldQrCode:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
@@ -2073,6 +2151,7 @@ func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.Form
 				"attribute_disabled":              types.BoolNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
 				"label_mode":                      types.StringNull(),
+				"label_password_verify":           types.StringNull(),
 				"label":                           framework.StringOkToTF(t.GetLabelOk()),
 				"layout":                          types.StringNull(),
 				"options":                         types.SetNull(types.ObjectType{AttrTypes: formComponentsFieldsFieldElementOptionTFObjectTypes}),
@@ -2103,6 +2182,7 @@ func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.Form
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
 				"label_mode":                      framework.EnumOkToTF(t.GetLabelModeOk()),
+				"label_password_verify":           types.StringNull(),
 				"label":                           framework.StringOkToTF(t.GetLabelOk()),
 				"layout":                          framework.EnumOkToTF(t.GetLayoutOk()),
 				"options":                         options,

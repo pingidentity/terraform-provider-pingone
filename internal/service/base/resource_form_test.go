@@ -434,6 +434,99 @@ func TestAccForm_FieldPassword(t *testing.T) {
 	})
 }
 
+func TestAccForm_FieldPasswordVerify(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
+
+	name := resourceName
+
+	fullStep := resource.TestStep{
+		Config: testAccFormConfig_FieldPasswordVerifyFull(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"position.row":                    "0",
+				"position.col":                    "0",
+				"position.width":                  "50",
+				"type":                            "PASSWORD_VERIFY",
+				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.password.label\",\"defaultTranslation\":\"Password\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
+				"label_mode":                      "FLOAT",
+				"label_password_verify":           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.password.labelPasswordVerify\",\"defaultTranslation\":\"Verify Password\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
+				"layout":                          "VERTICAL",
+				"key":                             "user.password",
+				"required":                        "true",
+				"attribute_disabled":              "false",
+				"other_option_enabled":            "false",
+				"other_option_attribute_disabled": "false",
+				"show_password_requirements":      "true",
+			}),
+		),
+	}
+
+	minimalStep := resource.TestStep{
+		Config: testAccFormConfig_FieldPasswordVerifyMinimal(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"position.row":                    "0",
+				"position.col":                    "0",
+				"type":                            "PASSWORD_VERIFY",
+				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
+				"key":                             "password-field",
+				"required":                        "false",
+				"attribute_disabled":              "false",
+				"other_option_enabled":            "false",
+				"other_option_attribute_disabled": "false",
+				"show_password_requirements":      "false",
+			}),
+		),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.Form_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full step
+			fullStep,
+			{
+				Config:  testAccFormConfig_FieldPasswordVerifyFull(resourceName, name),
+				Destroy: true,
+			},
+			// Minimal step
+			minimalStep,
+			{
+				Config:  testAccFormConfig_FieldPasswordVerifyMinimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			fullStep,
+			minimalStep,
+			fullStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccForm_BadParameters(t *testing.T) {
 	t.Parallel()
 
@@ -495,31 +588,31 @@ resource "pingone_form" "%[3]s" {
   components = {
     fields = [
       {
-		type = "TEXT"
+        type = "TEXT"
 
         position = {
           row = 0
           col = 0
         }
 
-          label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
 
-          key = "text-field"
+        key = "text-field"
 
-          validation = {
-            type = "NONE"
-          }
+        validation = {
+          type = "NONE"
+        }
       },
       {
-		type = "SUBMIT_BUTTON"
+        type = "SUBMIT_BUTTON"
 
         position = {
           row = 1
           col = 0
         }
 
-          label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
-        }
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
     ]
   }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
@@ -547,30 +640,30 @@ resource "pingone_form" "%[2]s" {
   components = {
     fields = [
       {
-		type = "TEXT"
+        type = "TEXT"
 
         position = {
           row = 0
           col = 0
         }
 
-          label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
 
-          key = "text-field"
+        key = "text-field"
 
-          validation = {
-            type = "NONE"
-          }
+        validation = {
+          type = "NONE"
+        }
       },
       {
-		type = "SUBMIT_BUTTON"
+        type = "SUBMIT_BUTTON"
 
-		position = {
+        position = {
           row = 1
           col = 0
         }
 
-          label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
       }
     ]
   }
@@ -591,30 +684,30 @@ resource "pingone_form" "%[2]s" {
   components = {
     fields = [
       {
-		type = "TEXT"
+        type = "TEXT"
 
-		position = {
+        position = {
           row = 0
           col = 0
         }
 
-          label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
 
-          key = "text-field"
+        key = "text-field"
 
-          validation = {
-            type = "NONE"
-          }
+        validation = {
+          type = "NONE"
+        }
       },
       {
-		type = "SUBMIT_BUTTON"
+        type = "SUBMIT_BUTTON"
 
-		position = {
+        position = {
           row = 1
           col = 0
         }
 
-          label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
       }
     ]
   }
@@ -812,7 +905,7 @@ resource "pingone_form" "%[2]s" {
   components = {
     fields = [
       {
-		type = "TEXT"
+        type = "TEXT"
 
         position = {
           row   = 0
@@ -820,27 +913,27 @@ resource "pingone_form" "%[2]s" {
           width = 50
         }
 
-          label              = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.username.label\",\"defaultTranslation\":\"Username\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
-          label_mode         = "FLOAT"
-          layout             = "VERTICAL"
-          key                = "user.username"
-          required           = true
-          attribute_disabled = false
-          validation = {
-            type          = "CUSTOM"
-            regex         = "[a-zA-Z0-9]+"
-            error_message = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Must be alphanumeric\"}]}]"
-          }
+        label              = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.username.label\",\"defaultTranslation\":\"Username\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+        label_mode         = "FLOAT"
+        layout             = "VERTICAL"
+        key                = "user.username"
+        required           = true
+        attribute_disabled = false
+        validation = {
+          type          = "CUSTOM"
+          regex         = "[a-zA-Z0-9]+"
+          error_message = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Must be alphanumeric\"}]}]"
+        }
       },
       {
-		type = "SUBMIT_BUTTON"
+        type = "SUBMIT_BUTTON"
 
-		position = {
+        position = {
           row = 1
           col = 0
         }
 
-          label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
       }
     ]
   }
@@ -864,30 +957,30 @@ resource "pingone_form" "%[2]s" {
   components = {
     fields = [
       {
-		type = "TEXT"
+        type = "TEXT"
 
-		position = {
+        position = {
           row = 0
           col = 0
         }
 
-          label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
 
-          key = "text-field"
+        key = "text-field"
 
-          validation = {
-            type = "NONE"
-          }
+        validation = {
+          type = "NONE"
+        }
       },
       {
-		type = "SUBMIT_BUTTON"
+        type = "SUBMIT_BUTTON"
 
-		position = {
+        position = {
           row = 1
           col = 0
         }
 
-          label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
       }
     ]
   }
@@ -911,24 +1004,24 @@ resource "pingone_form" "%[2]s" {
   components = {
     fields = [
       {
-		type = "PASSWORD"
+        type = "PASSWORD"
 
-		position = {
+        position = {
           row   = 0
           col   = 0
           width = 50
         }
 
-          label              = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.password.label\",\"defaultTranslation\":\"Password\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
-          label_mode         = "FLOAT"
-          layout             = "VERTICAL"
-          key                = "user.password"
-          required           = true
-          attribute_disabled = false
-          show_password_requirements = true
+        label                      = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.password.label\",\"defaultTranslation\":\"Password\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+        label_mode                 = "FLOAT"
+        layout                     = "VERTICAL"
+        key                        = "user.password"
+        required                   = true
+        attribute_disabled         = false
+        show_password_requirements = true
       },
       {
-		type = "SUBMIT_BUTTON"
+        type = "SUBMIT_BUTTON"
 
         position = {
           row = 1
@@ -959,7 +1052,7 @@ resource "pingone_form" "%[2]s" {
   components = {
     fields = [
       {
-		type = "PASSWORD"
+        type = "PASSWORD"
 
         position = {
           row = 0
@@ -971,7 +1064,99 @@ resource "pingone_form" "%[2]s" {
         key = "password-field"
       },
       {
-		type = "SUBMIT_BUTTON"
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_FieldPasswordVerifyFull(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "PASSWORD_VERIFY"
+
+        position = {
+          row   = 0
+          col   = 0
+          width = 50
+        }
+
+        label                      = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.password.label\",\"defaultTranslation\":\"Password\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+        label_mode                 = "FLOAT"
+        label_password_verify      = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.password.labelPasswordVerify\",\"defaultTranslation\":\"Verify Password\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+        layout                     = "VERTICAL"
+        key                        = "user.password"
+        required                   = true
+        attribute_disabled         = false
+        show_password_requirements = true
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_FieldPasswordVerifyMinimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "PASSWORD_VERIFY"
+
+        position = {
+          row = 0
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
+
+        key = "password-field"
+      },
+      {
+        type = "SUBMIT_BUTTON"
 
         position = {
           row = 1

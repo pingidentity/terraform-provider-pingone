@@ -138,6 +138,7 @@ Optional:
 - `attribute_disabled` (Boolean) A boolean that specifies whether the linked directory attribute is disabled.  This field is immutable and will trigger a replace plan if changed.
 - `key` (String) A string that specifies an identifier for the field component.
 - `label_mode` (String) A string that specifies how the field is rendered.  Options are `DEFAULT`, `FLOAT`.
+- `label_password_verify` (String) A string that when a second field for verifies password is used, this property specifies the field label for that verify field.
 - `layout` (String) A string that specifies layout attributes for radio button and checkbox fields.  Options are `HORIZONTAL`, `VERTICAL`.
 - `options` (Attributes Set) An array of objects that specifies the unique list of options. (see [below for nested schema](#nestedatt--components--fields--options))
 - `other_option_attribute_disabled` (Boolean) A boolean that specifies whether the directory attribute option is disabled. Set to `true` if it references a PingOne directory attribute.
