@@ -129,16 +129,26 @@ Required:
 
 Required:
 
+- `label` (String) A string that specifies the field label.
 - `position` (Attributes) A single object that specifies the position of the form field in the form. (see [below for nested schema](#nestedatt--components--fields--position))
+- `type` (String) A string that specifies the type of form field.  Options are `CHECKBOX`, `COMBOBOX`, `DIVIDER`, `DROPDOWN`, `EMPTY_FIELD`, `ERROR_DISPLAY`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `RECAPTCHA_V2`, `SLATE_TEXTBLOB`, `SOCIAL_LOGIN_BUTTON`, `SUBMIT_BUTTON`, `TEXT`, `TEXTBLOB`.
 
 Optional:
 
-- `field_submit_button` (Attributes) A single object that specifies options for the `SUBMIT_BUTTON` form field type.  At least one of the following must be defined: `field_text`, `field_submit_button`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedatt--components--fields--field_submit_button))
-- `field_text` (Attributes) A single object that specifies options for the `TEXT` form field type.  At least one of the following must be defined: `field_text`, `field_submit_button`.  This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules. (see [below for nested schema](#nestedatt--components--fields--field_text))
-
-Read-Only:
-
-- `type` (String) A string that specifies the type of form field.  Options are `CHECKBOX`, `COMBOBOX`, `DIVIDER`, `DROPDOWN`, `EMPTY_FIELD`, `ERROR_DISPLAY`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `RECAPTCHA_V2`, `SLATE_TEXTBLOB`, `SOCIAL_LOGIN_BUTTON`, `SUBMIT_BUTTON`, `TEXT`, `TEXTBLOB`.
+- `attribute_disabled` (Boolean) A boolean that specifies whether the linked directory attribute is disabled.  This field is immutable and will trigger a replace plan if changed.
+- `key` (String) A string that specifies an identifier for the field component.
+- `label_mode` (String) A string that specifies how the field is rendered.  Options are `DEFAULT`, `FLOAT`.
+- `layout` (String) A string that specifies layout attributes for radio button and checkbox fields.  Options are `HORIZONTAL`, `VERTICAL`.
+- `options` (Attributes Set) An array of objects that specifies the unique list of options. (see [below for nested schema](#nestedatt--components--fields--options))
+- `other_option_attribute_disabled` (Boolean) A boolean that specifies whether the directory attribute option is disabled. Set to `true` if it references a PingOne directory attribute.
+- `other_option_enabled` (Boolean) A boolean that specifies whether the end user can type an entry that is not in a predefined list.
+- `other_option_input_label` (String) A string that specifies the label for the other option in drop-down controls.
+- `other_option_key` (String) A string that specifies whether the form identifies that the choice is a custom choice not from a predefined list.
+- `other_option_label` (String) A string that specifies the label for a custom or "other" choice in a list.
+- `required` (Boolean) A boolean that specifies whether the field is required.
+- `show_password_requirements` (Boolean)
+- `styles` (Attributes) A single object that describes style settings for the button. (see [below for nested schema](#nestedatt--components--fields--styles))
+- `validation` (Attributes) An object containing validation data for the field. (see [below for nested schema](#nestedatt--components--fields--validation))
 
 <a id="nestedatt--components--fields--position"></a>
 ### Nested Schema for `components.fields.position`
@@ -153,20 +163,17 @@ Optional:
 - `width` (Number) An integer that specifies the width of the form field in the form (in percentage).
 
 
-<a id="nestedatt--components--fields--field_submit_button"></a>
-### Nested Schema for `components.fields.field_submit_button`
+<a id="nestedatt--components--fields--options"></a>
+### Nested Schema for `components.fields.options`
 
 Required:
 
-- `label` (String) A string that specifies the button label.
+- `label` (String)
+- `value` (String)
 
-Optional:
 
-- `key` (String) A string that specifies an identifier for the field component.
-- `styles` (Attributes) A single object that describes style settings for the button. (see [below for nested schema](#nestedatt--components--fields--field_submit_button--styles))
-
-<a id="nestedatt--components--fields--field_submit_button--styles"></a>
-### Nested Schema for `components.fields.field_submit_button.styles`
+<a id="nestedatt--components--fields--styles"></a>
+### Nested Schema for `components.fields.styles`
 
 Optional:
 
@@ -178,31 +185,8 @@ Optional:
 - `width` (Number) An integer that specifies the button width. Set as a percentage.
 
 
-
-<a id="nestedatt--components--fields--field_text"></a>
-### Nested Schema for `components.fields.field_text`
-
-Required:
-
-- `key` (String) A string that specifies an identifier for the field component.
-- `label` (String) A string that specifies the field label.
-- `validation` (Attributes) An object containing validation data for the field. (see [below for nested schema](#nestedatt--components--fields--field_text--validation))
-
-Optional:
-
-- `attribute_disabled` (Boolean) A boolean that specifies whether the linked directory attribute is disabled.  This field is immutable and will trigger a replace plan if changed.
-- `label_mode` (String) A string that specifies how the field is rendered.  Options are `DEFAULT`, `FLOAT`.
-- `layout` (String) A string that specifies layout attributes for radio button and checkbox fields.  Options are `HORIZONTAL`, `VERTICAL`.
-- `options` (Attributes Set) An array of objects that specifies the unique list of options. (see [below for nested schema](#nestedatt--components--fields--field_text--options))
-- `other_option_attribute_disabled` (Boolean) A boolean that specifies whether the directory attribute option is disabled. Set to `true` if it references a PingOne directory attribute.
-- `other_option_enabled` (Boolean) A boolean that specifies whether the end user can type an entry that is not in a predefined list.
-- `other_option_input_label` (String) A string that specifies the label for the other option in drop-down controls.
-- `other_option_key` (String) A string that specifies whether the form identifies that the choice is a custom choice not from a predefined list.
-- `other_option_label` (String) A string that specifies the label for a custom or "other" choice in a list.
-- `required` (Boolean) A boolean that specifies whether the field is required.
-
-<a id="nestedatt--components--fields--field_text--validation"></a>
-### Nested Schema for `components.fields.field_text.required`
+<a id="nestedatt--components--fields--validation"></a>
+### Nested Schema for `components.fields.validation`
 
 Required:
 
@@ -212,15 +196,6 @@ Optional:
 
 - `error_message` (String) A string that specifies the error message to be displayed when the field validation fails.  When configuring this parameter, the `regex` parameter is required.
 - `regex` (String) A string that specifies a validation regular expression. The expression must be a valid regular expression string. This is a required property when the validation type is `CUSTOM`.
-
-
-<a id="nestedatt--components--fields--field_text--options"></a>
-### Nested Schema for `components.fields.field_text.required`
-
-Optional:
-
-- `label` (String)
-- `value` (String)
 
 ## Import
 

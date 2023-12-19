@@ -260,21 +260,21 @@ func TestAccForm_FieldText(t *testing.T) {
 		Config: testAccFormConfig_FieldTextFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":                               "0",
-				"position.col":                               "0",
-				"position.width":                             "50",
-				"type":                                       "TEXT",
-				"field_text.label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.username.label\",\"defaultTranslation\":\"Username\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
-				"field_text.label_mode":                      "FLOAT",
-				"field_text.layout":                          "VERTICAL",
-				"field_text.key":                             "user.username",
-				"field_text.required":                        "true",
-				"field_text.attribute_disabled":              "false",
-				"field_text.validation.type":                 "CUSTOM",
-				"field_text.validation.regex":                "[a-zA-Z0-9]+",
-				"field_text.validation.error_message":        "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Must be alphanumeric\"}]}]",
-				"field_text.other_option_enabled":            "false",
-				"field_text.other_option_attribute_disabled": "false",
+				"position.row":                    "0",
+				"position.col":                    "0",
+				"position.width":                  "50",
+				"type":                            "TEXT",
+				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.username.label\",\"defaultTranslation\":\"Username\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
+				"label_mode":                      "FLOAT",
+				"layout":                          "VERTICAL",
+				"key":                             "user.username",
+				"required":                        "true",
+				"attribute_disabled":              "false",
+				"validation.type":                 "CUSTOM",
+				"validation.regex":                "[a-zA-Z0-9]+",
+				"validation.error_message":        "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Must be alphanumeric\"}]}]",
+				"other_option_enabled":            "false",
+				"other_option_attribute_disabled": "false",
 			}),
 		),
 	}
@@ -283,16 +283,16 @@ func TestAccForm_FieldText(t *testing.T) {
 		Config: testAccFormConfig_FieldTextMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":                               "0",
-				"position.col":                               "0",
-				"type":                                       "TEXT",
-				"field_text.label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
-				"field_text.key":                             "text-field",
-				"field_text.required":                        "false",
-				"field_text.attribute_disabled":              "false",
-				"field_text.validation.type":                 "NONE",
-				"field_text.other_option_enabled":            "false",
-				"field_text.other_option_attribute_disabled": "false",
+				"position.row":                    "0",
+				"position.col":                    "0",
+				"type":                            "TEXT",
+				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
+				"key":                             "text-field",
+				"required":                        "false",
+				"attribute_disabled":              "false",
+				"validation.type":                 "NONE",
+				"other_option_enabled":            "false",
+				"other_option_attribute_disabled": "false",
 			}),
 		),
 	}
@@ -354,21 +354,19 @@ func TestAccForm_FieldPassword(t *testing.T) {
 		Config: testAccFormConfig_FieldPasswordFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":                               "0",
-				"position.col":                               "0",
-				"position.width":                             "50",
-				"type":                                       "TEXT",
-				"field_text.label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.username.label\",\"defaultTranslation\":\"Username\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
-				"field_text.label_mode":                      "FLOAT",
-				"field_text.layout":                          "VERTICAL",
-				"field_text.key":                             "user.username",
-				"field_text.required":                        "true",
-				"field_text.attribute_disabled":              "false",
-				"field_text.validation.type":                 "CUSTOM",
-				"field_text.validation.regex":                "[a-zA-Z0-9]+",
-				"field_text.validation.error_message":        "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Must be alphanumeric\"}]}]",
-				"field_text.other_option_enabled":            "false",
-				"field_text.other_option_attribute_disabled": "false",
+				"position.row":                    "0",
+				"position.col":                    "0",
+				"position.width":                  "50",
+				"type":                            "PASSWORD",
+				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.password.label\",\"defaultTranslation\":\"Password\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
+				"label_mode":                      "FLOAT",
+				"layout":                          "VERTICAL",
+				"key":                             "user.password",
+				"required":                        "true",
+				"attribute_disabled":              "false",
+				"other_option_enabled":            "false",
+				"other_option_attribute_disabled": "false",
+				"show_password_requirements":      "true",
 			}),
 		),
 	}
@@ -377,16 +375,16 @@ func TestAccForm_FieldPassword(t *testing.T) {
 		Config: testAccFormConfig_FieldPasswordMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":                               "0",
-				"position.col":                               "0",
-				"type":                                       "TEXT",
-				"field_text.label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
-				"field_text.key":                             "text-field",
-				"field_text.required":                        "false",
-				"field_text.attribute_disabled":              "false",
-				"field_text.validation.type":                 "NONE",
-				"field_text.other_option_enabled":            "false",
-				"field_text.other_option_attribute_disabled": "false",
+				"position.row":                    "0",
+				"position.col":                    "0",
+				"type":                            "PASSWORD",
+				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
+				"key":                             "password-field",
+				"required":                        "false",
+				"attribute_disabled":              "false",
+				"other_option_enabled":            "false",
+				"other_option_attribute_disabled": "false",
+				"show_password_requirements":      "false",
 			}),
 		),
 	}
@@ -435,1366 +433,6 @@ func TestAccForm_FieldPassword(t *testing.T) {
 		},
 	})
 }
-
-// func TestAccForm_FieldPasswordVerify(t *testing.T) {
-// 	t.Parallel()
-
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
-
-// 	name := resourceName
-
-// 	fullStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldPasswordVerifyFull(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckResourceAttr(resourceFullName, "description", "This is my awesome form"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "false"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle", "test"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "translation_method", "DEFAULT_VALUE"),
-// 		),
-// 	}
-
-// 	minimalStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldPasswordVerifyMinimal(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "false"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "cols"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "language_bundle"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "translation_method"),
-// 		),
-// 	}
-
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			acctest.PreCheckClient(t)
-// 			acctest.PreCheckNoFeatureFlag(t)
-// 		},
-// 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-// 		CheckDestroy:             base.Form_CheckDestroy,
-// 		ErrorCheck:               acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			// Full step
-// 			fullStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldPasswordVerifyFull(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Minimal step
-// 			minimalStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldPasswordVerifyMinimal(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Change
-// 			fullStep,
-// 			minimalStep,
-// 			fullStep,
-// 			// Test importing the resource
-// 			{
-// 				ResourceName: resourceFullName,
-// 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-// 					return func(s *terraform.State) (string, error) {
-// 						rs, ok := s.RootModule().Resources[resourceFullName]
-// 						if !ok {
-// 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-// 						}
-
-// 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-// 					}
-// 				}(),
-// 				ImportState:       true,
-// 				ImportStateVerify: true,
-// 			},
-// 		},
-// 	})
-// }
-
-// func TestAccForm_FieldRadio(t *testing.T) {
-// 	t.Parallel()
-
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
-
-// 	name := resourceName
-
-// 	fullStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldRadioFull(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckResourceAttr(resourceFullName, "description", "This is my awesome form"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "false"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle", "test"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "translation_method", "DEFAULT_VALUE"),
-// 		),
-// 	}
-
-// 	minimalStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldRadioMinimal(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "false"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "cols"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "language_bundle"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "translation_method"),
-// 		),
-// 	}
-
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			acctest.PreCheckClient(t)
-// 			acctest.PreCheckNoFeatureFlag(t)
-// 		},
-// 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-// 		CheckDestroy:             base.Form_CheckDestroy,
-// 		ErrorCheck:               acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			// Full step
-// 			fullStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldRadioFull(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Minimal step
-// 			minimalStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldRadioMinimal(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Change
-// 			fullStep,
-// 			minimalStep,
-// 			fullStep,
-// 			// Test importing the resource
-// 			{
-// 				ResourceName: resourceFullName,
-// 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-// 					return func(s *terraform.State) (string, error) {
-// 						rs, ok := s.RootModule().Resources[resourceFullName]
-// 						if !ok {
-// 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-// 						}
-
-// 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-// 					}
-// 				}(),
-// 				ImportState:       true,
-// 				ImportStateVerify: true,
-// 			},
-// 		},
-// 	})
-// }
-
-// func TestAccForm_FieldCheckbox(t *testing.T) {
-// 	t.Parallel()
-
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
-
-// 	name := resourceName
-
-// 	fullStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldCheckboxFull(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckResourceAttr(resourceFullName, "description", "This is my awesome form"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "false"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle", "test"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "translation_method", "DEFAULT_VALUE"),
-// 		),
-// 	}
-
-// 	minimalStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldCheckboxMinimal(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "false"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "cols"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "language_bundle"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "translation_method"),
-// 		),
-// 	}
-
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			acctest.PreCheckClient(t)
-// 			acctest.PreCheckNoFeatureFlag(t)
-// 		},
-// 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-// 		CheckDestroy:             base.Form_CheckDestroy,
-// 		ErrorCheck:               acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			// Full step
-// 			fullStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldCheckboxFull(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Minimal step
-// 			minimalStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldCheckboxMinimal(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Change
-// 			fullStep,
-// 			minimalStep,
-// 			fullStep,
-// 			// Test importing the resource
-// 			{
-// 				ResourceName: resourceFullName,
-// 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-// 					return func(s *terraform.State) (string, error) {
-// 						rs, ok := s.RootModule().Resources[resourceFullName]
-// 						if !ok {
-// 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-// 						}
-
-// 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-// 					}
-// 				}(),
-// 				ImportState:       true,
-// 				ImportStateVerify: true,
-// 			},
-// 		},
-// 	})
-// }
-
-// func TestAccForm_FieldDropdown(t *testing.T) {
-// 	t.Parallel()
-
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
-
-// 	name := resourceName
-
-// 	fullStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldDropdownFull(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckResourceAttr(resourceFullName, "description", "This is my awesome form"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "false"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle", "test"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "translation_method", "DEFAULT_VALUE"),
-// 		),
-// 	}
-
-// 	minimalStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldDropdownMinimal(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "false"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "cols"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "language_bundle"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "translation_method"),
-// 		),
-// 	}
-
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			acctest.PreCheckClient(t)
-// 			acctest.PreCheckNoFeatureFlag(t)
-// 		},
-// 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-// 		CheckDestroy:             base.Form_CheckDestroy,
-// 		ErrorCheck:               acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			// Full step
-// 			fullStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldDropdownFull(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Minimal step
-// 			minimalStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldDropdownMinimal(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Change
-// 			fullStep,
-// 			minimalStep,
-// 			fullStep,
-// 			// Test importing the resource
-// 			{
-// 				ResourceName: resourceFullName,
-// 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-// 					return func(s *terraform.State) (string, error) {
-// 						rs, ok := s.RootModule().Resources[resourceFullName]
-// 						if !ok {
-// 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-// 						}
-
-// 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-// 					}
-// 				}(),
-// 				ImportState:       true,
-// 				ImportStateVerify: true,
-// 			},
-// 		},
-// 	})
-// }
-
-// func TestAccForm_FieldCombobox(t *testing.T) {
-// 	t.Parallel()
-
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
-
-// 	name := resourceName
-
-// 	fullStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldComboboxFull(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckResourceAttr(resourceFullName, "description", "This is my awesome form"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "false"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle", "test"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "translation_method", "DEFAULT_VALUE"),
-// 		),
-// 	}
-
-// 	minimalStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldComboboxMinimal(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "false"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "cols"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "language_bundle"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "translation_method"),
-// 		),
-// 	}
-
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			acctest.PreCheckClient(t)
-// 			acctest.PreCheckNoFeatureFlag(t)
-// 		},
-// 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-// 		CheckDestroy:             base.Form_CheckDestroy,
-// 		ErrorCheck:               acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			// Full step
-// 			fullStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldComboboxFull(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Minimal step
-// 			minimalStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldComboboxMinimal(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Change
-// 			fullStep,
-// 			minimalStep,
-// 			fullStep,
-// 			// Test importing the resource
-// 			{
-// 				ResourceName: resourceFullName,
-// 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-// 					return func(s *terraform.State) (string, error) {
-// 						rs, ok := s.RootModule().Resources[resourceFullName]
-// 						if !ok {
-// 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-// 						}
-
-// 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-// 					}
-// 				}(),
-// 				ImportState:       true,
-// 				ImportStateVerify: true,
-// 			},
-// 		},
-// 	})
-// }
-
-// func TestAccForm_FieldDivider(t *testing.T) {
-// 	t.Parallel()
-
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
-
-// 	name := resourceName
-
-// 	fullStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldDividerFull(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckResourceAttr(resourceFullName, "description", "This is my awesome form"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "false"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle", "test"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "translation_method", "DEFAULT_VALUE"),
-// 		),
-// 	}
-
-// 	minimalStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldDividerMinimal(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "false"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "cols"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "language_bundle"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "translation_method"),
-// 		),
-// 	}
-
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			acctest.PreCheckClient(t)
-// 			acctest.PreCheckNoFeatureFlag(t)
-// 		},
-// 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-// 		CheckDestroy:             base.Form_CheckDestroy,
-// 		ErrorCheck:               acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			// Full step
-// 			fullStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldDividerFull(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Minimal step
-// 			minimalStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldDividerMinimal(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Change
-// 			fullStep,
-// 			minimalStep,
-// 			fullStep,
-// 			// Test importing the resource
-// 			{
-// 				ResourceName: resourceFullName,
-// 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-// 					return func(s *terraform.State) (string, error) {
-// 						rs, ok := s.RootModule().Resources[resourceFullName]
-// 						if !ok {
-// 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-// 						}
-
-// 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-// 					}
-// 				}(),
-// 				ImportState:       true,
-// 				ImportStateVerify: true,
-// 			},
-// 		},
-// 	})
-// }
-
-// func TestAccForm_FieldEmptyField(t *testing.T) {
-// 	t.Parallel()
-
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
-
-// 	name := resourceName
-
-// 	fullStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldEmptyFieldFull(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckResourceAttr(resourceFullName, "description", "This is my awesome form"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "false"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle", "test"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "translation_method", "DEFAULT_VALUE"),
-// 		),
-// 	}
-
-// 	minimalStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldEmptyFieldMinimal(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "false"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "cols"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "language_bundle"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "translation_method"),
-// 		),
-// 	}
-
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			acctest.PreCheckClient(t)
-// 			acctest.PreCheckNoFeatureFlag(t)
-// 		},
-// 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-// 		CheckDestroy:             base.Form_CheckDestroy,
-// 		ErrorCheck:               acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			// Full step
-// 			fullStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldEmptyFieldFull(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Minimal step
-// 			minimalStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldEmptyFieldMinimal(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Change
-// 			fullStep,
-// 			minimalStep,
-// 			fullStep,
-// 			// Test importing the resource
-// 			{
-// 				ResourceName: resourceFullName,
-// 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-// 					return func(s *terraform.State) (string, error) {
-// 						rs, ok := s.RootModule().Resources[resourceFullName]
-// 						if !ok {
-// 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-// 						}
-
-// 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-// 					}
-// 				}(),
-// 				ImportState:       true,
-// 				ImportStateVerify: true,
-// 			},
-// 		},
-// 	})
-// }
-
-// func TestAccForm_FieldTextblob(t *testing.T) {
-// 	t.Parallel()
-
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
-
-// 	name := resourceName
-
-// 	fullStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldTextBlobFull(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckResourceAttr(resourceFullName, "description", "This is my awesome form"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "false"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle", "test"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "translation_method", "DEFAULT_VALUE"),
-// 		),
-// 	}
-
-// 	minimalStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldTextBlobMinimal(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "false"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "cols"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "language_bundle"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "translation_method"),
-// 		),
-// 	}
-
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			acctest.PreCheckClient(t)
-// 			acctest.PreCheckNoFeatureFlag(t)
-// 		},
-// 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-// 		CheckDestroy:             base.Form_CheckDestroy,
-// 		ErrorCheck:               acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			// Full step
-// 			fullStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldTextBlobFull(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Minimal step
-// 			minimalStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldTextBlobMinimal(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Change
-// 			fullStep,
-// 			minimalStep,
-// 			fullStep,
-// 			// Test importing the resource
-// 			{
-// 				ResourceName: resourceFullName,
-// 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-// 					return func(s *terraform.State) (string, error) {
-// 						rs, ok := s.RootModule().Resources[resourceFullName]
-// 						if !ok {
-// 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-// 						}
-
-// 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-// 					}
-// 				}(),
-// 				ImportState:       true,
-// 				ImportStateVerify: true,
-// 			},
-// 		},
-// 	})
-// }
-
-// func TestAccForm_FieldSlateTextblob(t *testing.T) {
-// 	t.Parallel()
-
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
-
-// 	name := resourceName
-
-// 	fullStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldSlateTextBlobFull(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckResourceAttr(resourceFullName, "description", "This is my awesome form"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "false"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle", "test"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "translation_method", "DEFAULT_VALUE"),
-// 		),
-// 	}
-
-// 	minimalStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldSlateTextBlobMinimal(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "false"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "cols"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "language_bundle"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "translation_method"),
-// 		),
-// 	}
-
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			acctest.PreCheckClient(t)
-// 			acctest.PreCheckNoFeatureFlag(t)
-// 		},
-// 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-// 		CheckDestroy:             base.Form_CheckDestroy,
-// 		ErrorCheck:               acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			// Full step
-// 			fullStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldSlateTextBlobFull(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Minimal step
-// 			minimalStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldSlateTextBlobMinimal(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Change
-// 			fullStep,
-// 			minimalStep,
-// 			fullStep,
-// 			// Test importing the resource
-// 			{
-// 				ResourceName: resourceFullName,
-// 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-// 					return func(s *terraform.State) (string, error) {
-// 						rs, ok := s.RootModule().Resources[resourceFullName]
-// 						if !ok {
-// 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-// 						}
-
-// 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-// 					}
-// 				}(),
-// 				ImportState:       true,
-// 				ImportStateVerify: true,
-// 			},
-// 		},
-// 	})
-// }
-
-// func TestAccForm_FieldSubmitButton(t *testing.T) {
-// 	t.Parallel()
-
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
-
-// 	name := resourceName
-
-// 	fullStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldSubmitButtonFull(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckResourceAttr(resourceFullName, "description", "This is my awesome form"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "false"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle", "test"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "translation_method", "DEFAULT_VALUE"),
-// 		),
-// 	}
-
-// 	minimalStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldSubmitButtonMinimal(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "false"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "cols"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "language_bundle"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "translation_method"),
-// 		),
-// 	}
-
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			acctest.PreCheckClient(t)
-// 			acctest.PreCheckNoFeatureFlag(t)
-// 		},
-// 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-// 		CheckDestroy:             base.Form_CheckDestroy,
-// 		ErrorCheck:               acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			// Full step
-// 			fullStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldSubmitButtonFull(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Minimal step
-// 			minimalStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldSubmitButtonMinimal(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Change
-// 			fullStep,
-// 			minimalStep,
-// 			fullStep,
-// 			// Test importing the resource
-// 			{
-// 				ResourceName: resourceFullName,
-// 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-// 					return func(s *terraform.State) (string, error) {
-// 						rs, ok := s.RootModule().Resources[resourceFullName]
-// 						if !ok {
-// 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-// 						}
-
-// 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-// 					}
-// 				}(),
-// 				ImportState:       true,
-// 				ImportStateVerify: true,
-// 			},
-// 		},
-// 	})
-// }
-
-// func TestAccForm_FieldErrorDisplay(t *testing.T) {
-// 	t.Parallel()
-
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
-
-// 	name := resourceName
-
-// 	fullStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldErrorDisplayFull(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckResourceAttr(resourceFullName, "description", "This is my awesome form"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "false"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle", "test"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "translation_method", "DEFAULT_VALUE"),
-// 		),
-// 	}
-
-// 	minimalStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldErrorDisplayMinimal(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "false"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "cols"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "language_bundle"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "translation_method"),
-// 		),
-// 	}
-
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			acctest.PreCheckClient(t)
-// 			acctest.PreCheckNoFeatureFlag(t)
-// 		},
-// 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-// 		CheckDestroy:             base.Form_CheckDestroy,
-// 		ErrorCheck:               acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			// Full step
-// 			fullStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldErrorDisplayFull(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Minimal step
-// 			minimalStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldErrorDisplayMinimal(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Change
-// 			fullStep,
-// 			minimalStep,
-// 			fullStep,
-// 			// Test importing the resource
-// 			{
-// 				ResourceName: resourceFullName,
-// 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-// 					return func(s *terraform.State) (string, error) {
-// 						rs, ok := s.RootModule().Resources[resourceFullName]
-// 						if !ok {
-// 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-// 						}
-
-// 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-// 					}
-// 				}(),
-// 				ImportState:       true,
-// 				ImportStateVerify: true,
-// 			},
-// 		},
-// 	})
-// }
-
-// func TestAccForm_FieldFlowLink(t *testing.T) {
-// 	t.Parallel()
-
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
-
-// 	name := resourceName
-
-// 	fullStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldFlowLinkFull(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckResourceAttr(resourceFullName, "description", "This is my awesome form"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "false"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle", "test"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "translation_method", "DEFAULT_VALUE"),
-// 		),
-// 	}
-
-// 	minimalStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldFlowLinkMinimal(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "false"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "cols"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "language_bundle"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "translation_method"),
-// 		),
-// 	}
-
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			acctest.PreCheckClient(t)
-// 			acctest.PreCheckNoFeatureFlag(t)
-// 		},
-// 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-// 		CheckDestroy:             base.Form_CheckDestroy,
-// 		ErrorCheck:               acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			// Full step
-// 			fullStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldFlowLinkFull(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Minimal step
-// 			minimalStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldFlowLinkMinimal(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Change
-// 			fullStep,
-// 			minimalStep,
-// 			fullStep,
-// 			// Test importing the resource
-// 			{
-// 				ResourceName: resourceFullName,
-// 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-// 					return func(s *terraform.State) (string, error) {
-// 						rs, ok := s.RootModule().Resources[resourceFullName]
-// 						if !ok {
-// 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-// 						}
-
-// 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-// 					}
-// 				}(),
-// 				ImportState:       true,
-// 				ImportStateVerify: true,
-// 			},
-// 		},
-// 	})
-// }
-
-// func TestAccForm_FieldFlowButton(t *testing.T) {
-// 	t.Parallel()
-
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
-
-// 	name := resourceName
-
-// 	fullStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldFlowButtonFull(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckResourceAttr(resourceFullName, "description", "This is my awesome form"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "false"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle", "test"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "translation_method", "DEFAULT_VALUE"),
-// 		),
-// 	}
-
-// 	minimalStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldFlowButtonMinimal(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "false"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "cols"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "language_bundle"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "translation_method"),
-// 		),
-// 	}
-
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			acctest.PreCheckClient(t)
-// 			acctest.PreCheckNoFeatureFlag(t)
-// 		},
-// 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-// 		CheckDestroy:             base.Form_CheckDestroy,
-// 		ErrorCheck:               acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			// Full step
-// 			fullStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldFlowButtonFull(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Minimal step
-// 			minimalStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldFlowButtonMinimal(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Change
-// 			fullStep,
-// 			minimalStep,
-// 			fullStep,
-// 			// Test importing the resource
-// 			{
-// 				ResourceName: resourceFullName,
-// 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-// 					return func(s *terraform.State) (string, error) {
-// 						rs, ok := s.RootModule().Resources[resourceFullName]
-// 						if !ok {
-// 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-// 						}
-
-// 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-// 					}
-// 				}(),
-// 				ImportState:       true,
-// 				ImportStateVerify: true,
-// 			},
-// 		},
-// 	})
-// }
-
-// func TestAccForm_FieldRecaptchaV2(t *testing.T) {
-// 	t.Parallel()
-
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
-
-// 	name := resourceName
-
-// 	fullStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldRecaptchaV2Full(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckResourceAttr(resourceFullName, "description", "This is my awesome form"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "false"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle", "test"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "translation_method", "DEFAULT_VALUE"),
-// 		),
-// 	}
-
-// 	minimalStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldRecaptchaV2Minimal(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "false"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "cols"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "language_bundle"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "translation_method"),
-// 		),
-// 	}
-
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			acctest.PreCheckClient(t)
-// 			acctest.PreCheckNoFeatureFlag(t)
-// 		},
-// 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-// 		CheckDestroy:             base.Form_CheckDestroy,
-// 		ErrorCheck:               acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			// Full step
-// 			fullStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldRecaptchaV2Full(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Minimal step
-// 			minimalStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldRecaptchaV2Minimal(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Change
-// 			fullStep,
-// 			minimalStep,
-// 			fullStep,
-// 			// Test importing the resource
-// 			{
-// 				ResourceName: resourceFullName,
-// 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-// 					return func(s *terraform.State) (string, error) {
-// 						rs, ok := s.RootModule().Resources[resourceFullName]
-// 						if !ok {
-// 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-// 						}
-
-// 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-// 					}
-// 				}(),
-// 				ImportState:       true,
-// 				ImportStateVerify: true,
-// 			},
-// 		},
-// 	})
-// }
-
-// func TestAccForm_FieldQrCode(t *testing.T) {
-// 	t.Parallel()
-
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
-
-// 	name := resourceName
-
-// 	fullStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldQrCodeFull(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckResourceAttr(resourceFullName, "description", "This is my awesome form"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "false"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle", "test"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "translation_method", "DEFAULT_VALUE"),
-// 		),
-// 	}
-
-// 	minimalStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldQrCodeMinimal(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "false"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "cols"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "language_bundle"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "translation_method"),
-// 		),
-// 	}
-
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			acctest.PreCheckClient(t)
-// 			acctest.PreCheckNoFeatureFlag(t)
-// 		},
-// 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-// 		CheckDestroy:             base.Form_CheckDestroy,
-// 		ErrorCheck:               acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			// Full step
-// 			fullStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldQrCodeFull(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Minimal step
-// 			minimalStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldQrCodeMinimal(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Change
-// 			fullStep,
-// 			minimalStep,
-// 			fullStep,
-// 			// Test importing the resource
-// 			{
-// 				ResourceName: resourceFullName,
-// 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-// 					return func(s *terraform.State) (string, error) {
-// 						rs, ok := s.RootModule().Resources[resourceFullName]
-// 						if !ok {
-// 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-// 						}
-
-// 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-// 					}
-// 				}(),
-// 				ImportState:       true,
-// 				ImportStateVerify: true,
-// 			},
-// 		},
-// 	})
-// }
-
-// func TestAccForm_FieldSocialLoginButton(t *testing.T) {
-// 	t.Parallel()
-
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
-
-// 	name := resourceName
-
-// 	fullStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldSocialLoginButtonFull(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckResourceAttr(resourceFullName, "description", "This is my awesome form"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "false"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle", "test"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "translation_method", "DEFAULT_VALUE"),
-// 		),
-// 	}
-
-// 	minimalStep := resource.TestStep{
-// 		Config: testAccFormConfig_FieldSocialLoginButtonMinimal(resourceName, name),
-// 		Check: resource.ComposeTestCheckFunc(
-// 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "true"),
-// 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "false"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "cols"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "language_bundle"),
-// 			resource.TestCheckNoResourceAttr(resourceFullName, "translation_method"),
-// 		),
-// 	}
-
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			acctest.PreCheckClient(t)
-// 			acctest.PreCheckNoFeatureFlag(t)
-// 		},
-// 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-// 		CheckDestroy:             base.Form_CheckDestroy,
-// 		ErrorCheck:               acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			// Full step
-// 			fullStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldSocialLoginButtonFull(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Minimal step
-// 			minimalStep,
-// 			{
-// 				Config:  testAccFormConfig_FieldSocialLoginButtonMinimal(resourceName, name),
-// 				Destroy: true,
-// 			},
-// 			// Change
-// 			fullStep,
-// 			minimalStep,
-// 			fullStep,
-// 			// Test importing the resource
-// 			{
-// 				ResourceName: resourceFullName,
-// 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-// 					return func(s *terraform.State) (string, error) {
-// 						rs, ok := s.RootModule().Resources[resourceFullName]
-// 						if !ok {
-// 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-// 						}
-
-// 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-// 					}
-// 				}(),
-// 				ImportState:       true,
-// 				ImportStateVerify: true,
-// 			},
-// 		},
-// 	})
-// }
 
 func TestAccForm_BadParameters(t *testing.T) {
 	t.Parallel()
@@ -1857,12 +495,13 @@ resource "pingone_form" "%[3]s" {
   components = {
     fields = [
       {
+		type = "TEXT"
+
         position = {
           row = 0
           col = 0
         }
 
-        field_text = {
           label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
 
           key = "text-field"
@@ -1870,18 +509,17 @@ resource "pingone_form" "%[3]s" {
           validation = {
             type = "NONE"
           }
-        }
       },
       {
+		type = "SUBMIT_BUTTON"
+
         position = {
           row = 1
           col = 0
         }
 
-        field_submit_button = {
           label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
         }
-      }
     ]
   }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
@@ -1909,12 +547,13 @@ resource "pingone_form" "%[2]s" {
   components = {
     fields = [
       {
+		type = "TEXT"
+
         position = {
           row = 0
           col = 0
         }
 
-        field_text = {
           label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
 
           key = "text-field"
@@ -1922,17 +561,16 @@ resource "pingone_form" "%[2]s" {
           validation = {
             type = "NONE"
           }
-        }
       },
       {
-        position = {
+		type = "SUBMIT_BUTTON"
+
+		position = {
           row = 1
           col = 0
         }
 
-        field_submit_button = {
           label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
-        }
       }
     ]
   }
@@ -1953,12 +591,13 @@ resource "pingone_form" "%[2]s" {
   components = {
     fields = [
       {
-        position = {
+		type = "TEXT"
+
+		position = {
           row = 0
           col = 0
         }
 
-        field_text = {
           label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
 
           key = "text-field"
@@ -1966,17 +605,16 @@ resource "pingone_form" "%[2]s" {
           validation = {
             type = "NONE"
           }
-        }
       },
       {
-        position = {
+		type = "SUBMIT_BUTTON"
+
+		position = {
           row = 1
           col = 0
         }
 
-        field_submit_button = {
           label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
-        }
       }
     ]
   }
@@ -2174,13 +812,14 @@ resource "pingone_form" "%[2]s" {
   components = {
     fields = [
       {
+		type = "TEXT"
+
         position = {
           row   = 0
           col   = 0
           width = 50
         }
 
-        field_text = {
           label              = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.username.label\",\"defaultTranslation\":\"Username\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
           label_mode         = "FLOAT"
           layout             = "VERTICAL"
@@ -2192,17 +831,16 @@ resource "pingone_form" "%[2]s" {
             regex         = "[a-zA-Z0-9]+"
             error_message = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Must be alphanumeric\"}]}]"
           }
-        }
       },
       {
-        position = {
+		type = "SUBMIT_BUTTON"
+
+		position = {
           row = 1
           col = 0
         }
 
-        field_submit_button = {
           label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
-        }
       }
     ]
   }
@@ -2226,12 +864,13 @@ resource "pingone_form" "%[2]s" {
   components = {
     fields = [
       {
-        position = {
+		type = "TEXT"
+
+		position = {
           row = 0
           col = 0
         }
 
-        field_text = {
           label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
 
           key = "text-field"
@@ -2239,17 +878,16 @@ resource "pingone_form" "%[2]s" {
           validation = {
             type = "NONE"
           }
-        }
       },
       {
-        position = {
+		type = "SUBMIT_BUTTON"
+
+		position = {
           row = 1
           col = 0
         }
 
-        field_submit_button = {
           label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
-        }
       }
     ]
   }
@@ -2268,46 +906,36 @@ resource "pingone_form" "%[2]s" {
   mark_required = true
   mark_optional = false
 
+  cols = 4
+
   components = {
     fields = [
       {
-        position = {
-          row = 0
-          col = 0
+		type = "PASSWORD"
+
+		position = {
+          row   = 0
+          col   = 0
+          width = 50
         }
 
-        field_password = {
-          label              = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.username.label\",\"defaultTranslation\":\"Username\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+          label              = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.password.label\",\"defaultTranslation\":\"Password\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
           label_mode         = "FLOAT"
           layout             = "VERTICAL"
-          options            = ["test", "test1", "test2", "test3"]
-          key                = "user.username"
-          mode               = "ATTRIBUTE_MODE"
+          key                = "user.password"
           required           = true
-          attribute_disabled = true
-          validation = {
-            type          = "CUSTOM"
-            regex         = "[a-zA-Z0-9]+"
-            error_message = "Regex validation error test message"
-          }
-
-          other_option_enabled            = true
-          other_option_key                = "key.123"
-          other_option_label              = "Test label 432"
-          other_option_input_label        = "Test label 123"
-          other_option_attribute_disabled = true
-        }
+          attribute_disabled = false
+          show_password_requirements = true
       },
       {
+		type = "SUBMIT_BUTTON"
+
         position = {
-          row = 2
+          row = 1
           col = 0
         }
 
-        field_submit_button = {
-          key   = "697dc4e9-acf5-4c04-9f7e-3974ea999c37"
-          label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
-        }
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
       }
     ]
   }
@@ -2326,29 +954,31 @@ resource "pingone_form" "%[2]s" {
   mark_required = true
   mark_optional = false
 
+  cols = 4
+
   components = {
     fields = [
       {
+		type = "PASSWORD"
+
         position = {
           row = 0
           col = 0
         }
 
-        field_password = {
-          key      = "1234567"
-          required = false
-        }
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
+
+        key = "password-field"
       },
       {
+		type = "SUBMIT_BUTTON"
+
         position = {
-          row = 2
+          row = 1
           col = 0
         }
 
-        field_submit_button = {
-          //key   = "697dc4e9-acf5-4c04-9f7e-3974ea999c37"
-          label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
-        }
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
       }
     ]
   }
