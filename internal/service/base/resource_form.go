@@ -120,12 +120,22 @@ type formComponentsFieldButtonResourceModel struct {
 type formComponentsFieldFlowButtonResourceModel formComponentsFieldButtonResourceModel
 
 type formComponentsFieldButtonStylesResourceModel struct {
-	Width           types.Int64  `tfsdk:"width"`
 	Alignment       types.String `tfsdk:"alignment"`
 	BackgroundColor types.String `tfsdk:"background_color"`
-	TextColor       types.String `tfsdk:"text_color"`
 	BorderColor     types.String `tfsdk:"border_color"`
 	Enabled         types.Bool   `tfsdk:"enabled"`
+	Height          types.Int64  `tfsdk:"height"`
+	Padding         types.Object `tfsdk:"padding"`
+	TextColor       types.String `tfsdk:"text_color"`
+	Width           types.Int64  `tfsdk:"width"`
+	WidthUnit       types.String `tfsdk:"width_unit"`
+}
+
+type formComponentsFieldButtonStylesPaddingResourceModel struct {
+	Bottom types.Int64 `tfsdk:"bottom"`
+	Left   types.Int64 `tfsdk:"left"`
+	Right  types.Int64 `tfsdk:"right"`
+	Top    types.Int64 `tfsdk:"top"`
 }
 
 // FLOW_LINK
@@ -247,12 +257,22 @@ var (
 
 	// Form Components Fields Field Button Styles
 	formComponentsFieldsFieldStylesTFObjectTypes = map[string]attr.Type{
-		"width":            types.Int64Type,
 		"alignment":        types.StringType,
 		"background_color": types.StringType,
-		"text_color":       types.StringType,
 		"border_color":     types.StringType,
 		"enabled":          types.BoolType,
+		"height":           types.StringType,
+		"padding":          types.ObjectType{AttrTypes: formComponentsFieldsFieldStylesPaddingTFObjectTypes},
+		"text_color":       types.StringType,
+		"width":            types.Int64Type,
+		"width_unit":       types.StringType,
+	}
+
+	formComponentsFieldsFieldStylesPaddingTFObjectTypes = map[string]attr.Type{
+		"bottom": types.Int64Type,
+		"left":   types.Int64Type,
+		"right":  types.Int64Type,
+		"top":    types.Int64Type,
 	}
 
 	// Form Components Fields Field Flow Link
@@ -478,16 +498,44 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		"A string that specifies the button background color. The value must be a valid hexadecimal color.",
 	)
 
-	componentsFieldsStylesTextColorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the button text color. The value must be a valid hexadecimal color.",
-	)
-
 	componentsFieldsStylesBorderColorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the button border color. The value must be a valid hexadecimal color.",
 	)
 
 	componentsFieldsStylesEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the button is enabled.",
+	)
+
+	componentsFieldsStylesHeightDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	componentsFieldsStylesPaddingDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	componentsFieldsStylesPaddingTopDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	componentsFieldsStylesPaddingRightDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	componentsFieldsStylesPaddingBottomDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	componentsFieldsStylesPaddingLeftDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	componentsFieldsStylesTextColorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the button text color. The value must be a valid hexadecimal color.",
+	)
+
+	componentsFieldsStylesWidthUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
 	)
 
 	fieldTypesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -813,12 +861,6 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									// TODO: functional validator
 
 									Attributes: map[string]schema.Attribute{
-										"width": schema.Int64Attribute{
-											Description:         componentsFieldsStylesWidthDescription.Description,
-											MarkdownDescription: componentsFieldsStylesWidthDescription.MarkdownDescription,
-											Optional:            true,
-										},
-
 										"alignment": schema.StringAttribute{
 											Description:         componentsFieldsStylesAlignmentDescription.Description,
 											MarkdownDescription: componentsFieldsStylesAlignmentDescription.MarkdownDescription,
@@ -835,12 +877,6 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 											Optional:            true,
 										},
 
-										"text_color": schema.StringAttribute{
-											Description:         componentsFieldsStylesTextColorDescription.Description,
-											MarkdownDescription: componentsFieldsStylesTextColorDescription.MarkdownDescription,
-											Optional:            true,
-										},
-
 										"border_color": schema.StringAttribute{
 											Description:         componentsFieldsStylesBorderColorDescription.Description,
 											MarkdownDescription: componentsFieldsStylesBorderColorDescription.MarkdownDescription,
@@ -850,6 +886,63 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 										"enabled": schema.BoolAttribute{
 											Description:         componentsFieldsStylesEnabledDescription.Description,
 											MarkdownDescription: componentsFieldsStylesEnabledDescription.MarkdownDescription,
+											Optional:            true,
+											Computed:            true,
+										},
+
+										"height": schema.Int64Attribute{
+											Description:         componentsFieldsStylesHeightDescription.Description,
+											MarkdownDescription: componentsFieldsStylesHeightDescription.MarkdownDescription,
+											Optional:            true,
+										},
+
+										"padding": schema.SingleNestedAttribute{
+											Description:         componentsFieldsStylesPaddingDescription.Description,
+											MarkdownDescription: componentsFieldsStylesPaddingDescription.MarkdownDescription,
+											Optional:            true,
+
+											Attributes: map[string]schema.Attribute{
+												"top": schema.Int64Attribute{
+													Description:         componentsFieldsStylesPaddingTopDescription.Description,
+													MarkdownDescription: componentsFieldsStylesPaddingTopDescription.MarkdownDescription,
+													Optional:            true,
+												},
+
+												"right": schema.Int64Attribute{
+													Description:         componentsFieldsStylesPaddingRightDescription.Description,
+													MarkdownDescription: componentsFieldsStylesPaddingRightDescription.MarkdownDescription,
+													Optional:            true,
+												},
+
+												"bottom": schema.Int64Attribute{
+													Description:         componentsFieldsStylesPaddingBottomDescription.Description,
+													MarkdownDescription: componentsFieldsStylesPaddingBottomDescription.MarkdownDescription,
+													Optional:            true,
+												},
+
+												"left": schema.Int64Attribute{
+													Description:         componentsFieldsStylesPaddingLeftDescription.Description,
+													MarkdownDescription: componentsFieldsStylesPaddingLeftDescription.MarkdownDescription,
+													Optional:            true,
+												},
+											},
+										},
+
+										"text_color": schema.StringAttribute{
+											Description:         componentsFieldsStylesTextColorDescription.Description,
+											MarkdownDescription: componentsFieldsStylesTextColorDescription.MarkdownDescription,
+											Optional:            true,
+										},
+
+										"width": schema.Int64Attribute{
+											Description:         componentsFieldsStylesWidthDescription.Description,
+											MarkdownDescription: componentsFieldsStylesWidthDescription.MarkdownDescription,
+											Optional:            true,
+										},
+
+										"width_unit": schema.StringAttribute{
+											Description:         componentsFieldsStylesWidthUnitDescription.Description,
+											MarkdownDescription: componentsFieldsStylesWidthUnitDescription.MarkdownDescription,
 											Optional:            true,
 										},
 									},
@@ -1743,6 +1836,35 @@ func (p *formComponentsFieldResourceModel) expandFieldDropdown(ctx context.Conte
 	return data, diags
 }
 
+func (p *formComponentsFieldResourceModel) expandFieldFlowButton(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldFlowButton, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldFlowButton(
+		management.ENUMFORMFIELDTYPE_FLOW_BUTTON,
+		*positionData,
+		p.Key.ValueString(),
+		p.Label.ValueString(),
+	)
+
+	if !p.Styles.IsNull() && !p.Styles.IsUnknown() {
+		var plan formComponentsFieldButtonStylesResourceModel
+		diags.Append(p.Styles.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		stylesData, d := plan.expand(ctx)
+		diags.Append(d...)
+
+		data.SetStyles(*stylesData)
+	}
+
+	return data, diags
+}
+
 func (p *formComponentsFieldResourceModel) expandItemEmptyField(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldEmptyField, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -1978,10 +2100,10 @@ func (p *formComponentsFieldResourceModel) expandItemTextblob(ctx context.Contex
 	return data, diags
 }
 
-func (p *formComponentsFieldButtonStylesResourceModel) expand(ctx context.Context) (*management.FormFlowButtonStyles, diag.Diagnostics) {
+func (p *formComponentsFieldButtonStylesResourceModel) expand(ctx context.Context) (*management.FormStyles, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data := management.NewFormFlowButtonStyles()
+	data := management.NewFormStyles()
 
 	if !p.Alignment.IsNull() && !p.Alignment.IsUnknown() {
 		data.SetAlignment(management.EnumFormItemAlignment(p.Alignment.ValueString()))
@@ -1999,12 +2121,24 @@ func (p *formComponentsFieldButtonStylesResourceModel) expand(ctx context.Contex
 		data.SetEnabled(p.Enabled.ValueBool())
 	}
 
+	if !p.Height.IsNull() && !p.Height.IsUnknown() {
+		data.SetHeight(int32(p.Height.ValueInt64()))
+	}
+
+	if !p.Padding.IsNull() && !p.Padding.IsUnknown() {
+		//panic()
+	}
+
 	if !p.TextColor.IsNull() && !p.TextColor.IsUnknown() {
 		data.SetTextColor(p.TextColor.ValueString())
 	}
 
 	if !p.Width.IsNull() && !p.Width.IsUnknown() {
 		data.SetWidth(int32(p.Width.ValueInt64()))
+	}
+
+	if !p.WidthUnit.IsNull() && !p.WidthUnit.IsUnknown() {
+		data.SetWidthUnit(management.EnumFormStylesWidthUnit(p.WidthUnit.ValueString()))
 	}
 
 	return data, diags
@@ -2438,9 +2572,31 @@ func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.Form
 		case *management.FormFieldFlowButton:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
-			attributeMap["position"] = position
-			attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
-			//attributeMap["field_flow_button"], d = formComponentsFieldsFieldButtonToTF(t)
+
+			styles, d := formComponentsFieldsButtonStylesOkToTF(t.GetStylesOk())
+			diags.Append(d...)
+
+			attributeMap = map[string]attr.Value{
+				"attribute_disabled":              types.BoolNull(),
+				"content":                         types.StringNull(),
+				"key":                             framework.StringOkToTF(t.GetKeyOk()),
+				"label_mode":                      types.StringNull(),
+				"label_password_verify":           types.StringNull(),
+				"label":                           framework.StringOkToTF(t.GetLabelOk()),
+				"layout":                          types.StringNull(),
+				"options":                         types.SetNull(types.ObjectType{AttrTypes: formComponentsFieldsFieldElementOptionTFObjectTypes}),
+				"other_option_attribute_disabled": types.BoolNull(),
+				"other_option_enabled":            types.BoolNull(),
+				"other_option_input_label":        types.StringNull(),
+				"other_option_key":                types.StringNull(),
+				"other_option_label":              types.StringNull(),
+				"position":                        position,
+				"required":                        types.BoolNull(),
+				"show_password_requirements":      types.BoolNull(),
+				"styles":                          styles,
+				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
+				"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
+			}
 
 		case *management.FormFieldFlowLink:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
@@ -2750,7 +2906,7 @@ func formComponentsFieldsElementOptionsOkToTF(apiObject []management.FormElement
 	return returnVar, diags
 }
 
-func formComponentsFieldsButtonStylesOkToTF(apiObject *management.FormFlowButtonStyles, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func formComponentsFieldsButtonStylesOkToTF(apiObject *management.FormStyles, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2762,8 +2918,11 @@ func formComponentsFieldsButtonStylesOkToTF(apiObject *management.FormFlowButton
 		"background_color": framework.StringOkToTF(apiObject.GetBackgroundColorOk()),
 		"border_color":     framework.StringOkToTF(apiObject.GetBorderColorOk()),
 		"enabled":          framework.BoolOkToTF(apiObject.GetEnabledOk()),
-		"text_color":       framework.StringOkToTF(apiObject.GetTextColorOk()),
-		"width":            framework.Int32OkToTF(apiObject.GetWidthOk()),
+		"height":           framework.Int32OkToTF(apiObject.GetHeightOk()),
+		//"padding":          padding,
+		"text_color": framework.StringOkToTF(apiObject.GetTextColorOk()),
+		"width":      framework.Int32OkToTF(apiObject.GetWidthOk()),
+		"width_unit": framework.EnumOkToTF(apiObject.GetWidthUnitOk()),
 	})
 	diags.Append(d...)
 

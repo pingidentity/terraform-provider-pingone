@@ -183,8 +183,22 @@ Optional:
 - `background_color` (String) A string that specifies the button background color. The value must be a valid hexadecimal color.
 - `border_color` (String) A string that specifies the button border color. The value must be a valid hexadecimal color.
 - `enabled` (Boolean) A boolean that specifies whether the button is enabled.
+- `height` (Number)
+- `padding` (Attributes) (see [below for nested schema](#nestedatt--components--fields--styles--padding))
 - `text_color` (String) A string that specifies the button text color. The value must be a valid hexadecimal color.
 - `width` (Number) An integer that specifies the button width. Set as a percentage.
+- `width_unit` (String)
+
+<a id="nestedatt--components--fields--styles--padding"></a>
+### Nested Schema for `components.fields.styles.width_unit`
+
+Optional:
+
+- `bottom` (Number)
+- `left` (Number)
+- `right` (Number)
+- `top` (Number)
+
 
 
 <a id="nestedatt--components--fields--validation"></a>

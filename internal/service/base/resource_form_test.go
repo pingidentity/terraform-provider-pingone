@@ -549,6 +549,98 @@ func TestAccForm_FieldDropdown(t *testing.T) {
 	})
 }
 
+func TestAccForm_FieldFlowButton(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
+
+	name := resourceName
+
+	fullStep := resource.TestStep{
+		Config: testAccFormConfig_FieldFlowButtonFull(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"position.row":            "0",
+				"position.col":            "0",
+				"position.width":          "50",
+				"type":                    "FLOW_BUTTON",
+				"key":                     "button-field-full",
+				"label":                   "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
+				"styles.width":            "25",
+				"styles.width_unit":       "PERCENT",
+				"styles.height":           "36",
+				"styles.padding.top":      "10",
+				"styles.padding.right":    "12",
+				"styles.padding.bottom":   "14",
+				"styles.padding.left":     "16",
+				"styles.alignment":        "RIGHT",
+				"styles.background_color": "#FF0000",
+				"styles.text_color":       "#00FF00",
+				"styles.border_color":     "#0000FF",
+				"styles.enabled":          "true",
+			}),
+		),
+	}
+
+	minimalStep := resource.TestStep{
+		Config: testAccFormConfig_FieldFlowButtonMinimal(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"position.row": "0",
+				"position.col": "0",
+				"type":         "FLOW_BUTTON",
+				"key":          "button-field",
+				"label":        "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
+			}),
+		),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.Form_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full step
+			fullStep,
+			{
+				Config:  testAccFormConfig_FieldFlowButtonFull(resourceName, name),
+				Destroy: true,
+			},
+			// Minimal step
+			minimalStep,
+			{
+				Config:  testAccFormConfig_FieldFlowButtonMinimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			fullStep,
+			minimalStep,
+			fullStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccForm_FieldPassword(t *testing.T) {
 	t.Parallel()
 
@@ -853,6 +945,12 @@ func TestAccForm_FieldSubmitButton(t *testing.T) {
 				"type":                    "SUBMIT_BUTTON",
 				"label":                   "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
 				"styles.width":            "25",
+				"styles.width_unit":       "PERCENT",
+				"styles.height":           "36",
+				"styles.padding.top":      "10",
+				"styles.padding.right":    "12",
+				"styles.padding.bottom":   "14",
+				"styles.padding.left":     "16",
 				"styles.alignment":        "RIGHT",
 				"styles.background_color": "#FF0000",
 				"styles.text_color":       "#00FF00",
@@ -2139,6 +2237,92 @@ resource "pingone_form" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
+func testAccFormConfig_FieldFlowButtonFull(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "FLOW_BUTTON"
+
+		key = "button-field-full"
+
+        position = {
+          row   = 0
+          col   = 0
+          width = 50
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+
+        styles = {
+          width            = 25
+		  width_unit = "PERCENT"
+		  height           = 36
+
+		  padding = {
+			top = 10
+			right = 12
+			bottom = 14
+			left = 16
+		  }
+
+          alignment        = "RIGHT"
+          background_color = "#FF0000"
+          text_color       = "#00FF00"
+          border_color     = "#0000FF"
+          enabled          = true
+        }
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_FieldFlowButtonMinimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "FLOW_BUTTON"
+
+		key = "button-field"
+
+        position = {
+          row = 0
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
 func testAccFormConfig_FieldPasswordFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -2440,6 +2624,88 @@ resource "pingone_form" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
+func testAccFormConfig_FieldSubmitButtonFull(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row   = 0
+          col   = 0
+          width = 50
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+
+        styles = {
+          width            = 25
+		  width_unit = "PERCENT"
+		  height           = 36
+
+		  padding = {
+			top = 10
+			right = 12
+			bottom = 14
+			left = 16
+		  }
+
+          alignment        = "RIGHT"
+          background_color = "#FF0000"
+          text_color       = "#00FF00"
+          border_color     = "#0000FF"
+          enabled          = true
+        }
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_FieldSubmitButtonMinimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 0
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
 func testAccFormConfig_FieldTextFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -2486,78 +2752,6 @@ resource "pingone_form" "%[2]s" {
         }
 
         label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
-      }
-    ]
-  }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
-}
-
-func testAccFormConfig_FieldSubmitButtonFull(resourceName, name string) string {
-	return fmt.Sprintf(`
-	%[1]s
-
-resource "pingone_form" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "%[3]s"
-
-  mark_required = true
-  mark_optional = false
-
-  cols = 4
-
-  components = {
-    fields = [
-      {
-        type = "SUBMIT_BUTTON"
-
-        position = {
-          row   = 0
-          col   = 0
-          width = 50
-        }
-
-        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
-
-        styles = {
-          width            = 25
-          alignment        = "RIGHT"
-          background_color = "#FF0000"
-          text_color       = "#00FF00"
-          border_color     = "#0000FF"
-          enabled          = true
-        }
-      }
-    ]
-  }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
-}
-
-func testAccFormConfig_FieldSubmitButtonMinimal(resourceName, name string) string {
-	return fmt.Sprintf(`
-	%[1]s
-
-resource "pingone_form" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "%[3]s"
-
-  mark_required = true
-  mark_optional = false
-
-  cols = 4
-
-  components = {
-    fields = [
-      {
-        type = "SUBMIT_BUTTON"
-
-        position = {
-          row = 0
-          col = 0
-        }
-
-        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
       }
     ]
   }
