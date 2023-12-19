@@ -981,6 +981,82 @@ func TestAccForm_ItemEmptyField(t *testing.T) {
 	})
 }
 
+func TestAccForm_ItemErrorDisplay(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
+
+	name := resourceName
+
+	fullStep := resource.TestStep{
+		Config: testAccFormConfig_ItemErrorDisplayFull(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"position.row":   "0",
+				"position.col":   "1",
+				"position.width": "50",
+				"type":           "ERROR_DISPLAY",
+			}),
+		),
+	}
+
+	minimalStep := resource.TestStep{
+		Config: testAccFormConfig_ItemErrorDisplayMinimal(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"position.row": "0",
+				"position.col": "1",
+				"type":         "ERROR_DISPLAY",
+			}),
+		),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.Form_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full step
+			fullStep,
+			{
+				Config:  testAccFormConfig_ItemErrorDisplayFull(resourceName, name),
+				Destroy: true,
+			},
+			// Minimal step
+			minimalStep,
+			{
+				Config:  testAccFormConfig_ItemErrorDisplayMinimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			fullStep,
+			minimalStep,
+			fullStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccForm_BadParameters(t *testing.T) {
 	t.Parallel()
 
@@ -2171,8 +2247,87 @@ resource "pingone_form" "%[2]s" {
         type = "EMPTY_FIELD"
 
         position = {
+          row = 0
+          col = 1
+        }
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_ItemErrorDisplayFull(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "ERROR_DISPLAY"
+
+        position = {
           row   = 0
           col   = 1
+          width = 50
+        }
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_ItemErrorDisplayMinimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "ERROR_DISPLAY"
+
+        position = {
+          row = 0
+          col = 1
         }
       },
       {
