@@ -1519,6 +1519,8 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 		data.FormFieldDivider, d = p.expandItemDivider(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_DROPDOWN):
 		data.FormFieldDropdown, d = p.expandFieldDropdown(ctx, positionData)
+	case string(management.ENUMFORMFIELDTYPE_EMPTY_FIELD):
+		data.FormFieldEmptyField, d = p.expandItemEmptyField(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_PASSWORD):
 		data.FormFieldPassword, d = p.expandFieldPassword(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY):
@@ -1669,6 +1671,17 @@ func (p *formComponentsFieldResourceModel) expandFieldDropdown(ctx context.Conte
 	if !p.Required.IsNull() && !p.Required.IsUnknown() {
 		data.SetRequired(p.Required.ValueBool())
 	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldResourceModel) expandItemEmptyField(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldEmptyField, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldEmptyField(
+		management.ENUMFORMFIELDTYPE_EMPTY_FIELD,
+		*positionData,
+	)
 
 	return data, diags
 }
@@ -2236,9 +2249,27 @@ func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.Form
 		case *management.FormFieldEmptyField:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
-			attributeMap["position"] = position
-			attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
-			//attributeMap["field_empty_field"], d = formComponentsFieldsFieldItemToTF(t)
+
+			attributeMap = map[string]attr.Value{
+				"attribute_disabled":              types.BoolNull(),
+				"key":                             types.StringNull(),
+				"label_mode":                      types.StringNull(),
+				"label_password_verify":           types.StringNull(),
+				"label":                           types.StringNull(),
+				"layout":                          types.StringNull(),
+				"options":                         types.SetNull(types.ObjectType{AttrTypes: formComponentsFieldsFieldElementOptionTFObjectTypes}),
+				"other_option_attribute_disabled": types.BoolNull(),
+				"other_option_enabled":            types.BoolNull(),
+				"other_option_input_label":        types.StringNull(),
+				"other_option_key":                types.StringNull(),
+				"other_option_label":              types.StringNull(),
+				"position":                        position,
+				"required":                        types.BoolNull(),
+				"show_password_requirements":      types.BoolNull(),
+				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
+				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
+				"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
+			}
 
 		case *management.FormFieldErrorDisplay:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
