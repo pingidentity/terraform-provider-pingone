@@ -1543,6 +1543,8 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 		data.FormFieldPasswordVerify, d = p.expandFieldPasswordVerify(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_RADIO):
 		data.FormFieldRadio, d = p.expandFieldRadio(ctx, positionData)
+	case string(management.ENUMFORMFIELDTYPE_SLATE_TEXTBLOB):
+		data.FormFieldSlateTextblob, d = p.expandItemSlateTextblob(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON):
 		data.FormFieldSubmitButton, d = p.expandFieldSubmitButton(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_TEXT):
@@ -1893,6 +1895,21 @@ func (p *formComponentsFieldResourceModel) expandFieldText(ctx context.Context, 
 
 	if !p.Required.IsNull() && !p.Required.IsUnknown() {
 		data.SetRequired(p.Required.ValueBool())
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldResourceModel) expandItemSlateTextblob(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldSlateTextblob, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldSlateTextblob(
+		management.ENUMFORMFIELDTYPE_SLATE_TEXTBLOB,
+		*positionData,
+	)
+
+	if !p.Content.IsNull() && !p.Content.IsUnknown() {
+		data.SetContent(p.Content.ValueString())
 	}
 
 	return data, diags
@@ -2472,9 +2489,28 @@ func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.Form
 		case *management.FormFieldSlateTextblob:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
-			attributeMap["position"] = position
-			attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
-			//attributeMap["field_slate_textblob"], d = formComponentsFieldsFieldItemToTF(t)
+
+			attributeMap = map[string]attr.Value{
+				"attribute_disabled":              types.BoolNull(),
+				"content":                         framework.StringOkToTF(t.GetContentOk()),
+				"key":                             types.StringNull(),
+				"label_mode":                      types.StringNull(),
+				"label_password_verify":           types.StringNull(),
+				"label":                           types.StringNull(),
+				"layout":                          types.StringNull(),
+				"options":                         types.SetNull(types.ObjectType{AttrTypes: formComponentsFieldsFieldElementOptionTFObjectTypes}),
+				"other_option_attribute_disabled": types.BoolNull(),
+				"other_option_enabled":            types.BoolNull(),
+				"other_option_input_label":        types.StringNull(),
+				"other_option_key":                types.StringNull(),
+				"other_option_label":              types.StringNull(),
+				"position":                        position,
+				"required":                        types.BoolNull(),
+				"show_password_requirements":      types.BoolNull(),
+				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
+				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
+				"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
+			}
 
 		case *management.FormFieldSocialLoginButton:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
