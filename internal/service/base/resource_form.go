@@ -1529,6 +1529,8 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 	switch p.Type.ValueString() {
 	case string(management.ENUMFORMFIELDTYPE_CHECKBOX):
 		data.FormFieldCheckbox, d = p.expandFieldCheckbox(ctx, positionData)
+	case string(management.ENUMFORMFIELDTYPE_COMBOBOX):
+		data.FormFieldCombobox, d = p.expandFieldCombobox(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_DIVIDER):
 		data.FormFieldDivider, d = p.expandItemDivider(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_DROPDOWN):
@@ -1629,6 +1631,52 @@ func (p *formComponentsFieldResourceModel) expandFieldCheckbox(ctx context.Conte
 
 	if !p.LabelMode.IsNull() && !p.LabelMode.IsUnknown() {
 		data.SetLabelMode(management.EnumFormElementLabelMode(p.LabelMode.ValueString()))
+	}
+
+	if !p.Required.IsNull() && !p.Required.IsUnknown() {
+		data.SetRequired(p.Required.ValueBool())
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldResourceModel) expandFieldCombobox(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldCombobox, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var optionsPlan []formComponentsFieldElementOptionsResourceModel
+	diags.Append(p.Options.ElementsAs(ctx, &optionsPlan, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	options := make([]management.FormElementOption, 0)
+	for _, v := range optionsPlan {
+		optionsObj := *management.NewFormElementOption(
+			v.Label.ValueString(),
+			v.Value.ValueString(),
+		)
+
+		options = append(options, optionsObj)
+	}
+
+	data := management.NewFormFieldCombobox(
+		management.ENUMFORMFIELDTYPE_COMBOBOX,
+		*positionData,
+		p.Key.ValueString(),
+		p.Label.ValueString(),
+		options,
+	)
+
+	if !p.AttributeDisabled.IsNull() && !p.AttributeDisabled.IsUnknown() {
+		data.SetAttributeDisabled(p.AttributeDisabled.ValueBool())
+	}
+
+	if !p.LabelMode.IsNull() && !p.LabelMode.IsUnknown() {
+		data.SetLabelMode(management.EnumFormElementLabelMode(p.LabelMode.ValueString()))
+	}
+
+	if !p.Layout.IsNull() && !p.Layout.IsUnknown() {
+		data.SetLayout(management.EnumFormElementLayout(p.Layout.ValueString()))
 	}
 
 	if !p.Required.IsNull() && !p.Required.IsUnknown() {
@@ -2248,9 +2296,34 @@ func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.Form
 		case *management.FormFieldCombobox:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
-			attributeMap["position"] = position
-			attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
-			//attributeMap["field_combobox"], d = formComponentsFieldsFieldComboboxToTF(t)
+
+			validation, d := formComponentsFieldsElementValidationOkToTF(t.GetValidationOk())
+			diags.Append(d...)
+
+			options, d := formComponentsFieldsElementOptionsOkToTF(t.GetOptionsOk())
+			diags.Append(d...)
+
+			attributeMap = map[string]attr.Value{
+				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
+				"content":                         types.StringNull(),
+				"key":                             framework.StringOkToTF(t.GetKeyOk()),
+				"label_mode":                      framework.EnumOkToTF(t.GetLabelModeOk()),
+				"label_password_verify":           types.StringNull(),
+				"label":                           framework.StringOkToTF(t.GetLabelOk()),
+				"layout":                          framework.EnumOkToTF(t.GetLayoutOk()),
+				"options":                         options,
+				"other_option_attribute_disabled": framework.BoolOkToTF(t.GetOtherOptionAttributeDisabledOk()),
+				"other_option_enabled":            framework.BoolOkToTF(t.GetOtherOptionEnabledOk()),
+				"other_option_input_label":        framework.StringOkToTF(t.GetOtherOptionInputLabelOk()),
+				"other_option_key":                framework.StringOkToTF(t.GetOtherOptionKeyOk()),
+				"other_option_label":              framework.StringOkToTF(t.GetOtherOptionLabelOk()),
+				"position":                        position,
+				"required":                        framework.BoolOkToTF(t.GetRequiredOk()),
+				"show_password_requirements":      types.BoolNull(),
+				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
+				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
+				"validation":                      validation,
+			}
 
 		case *management.FormFieldDivider:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
