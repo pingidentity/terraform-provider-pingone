@@ -51,6 +51,7 @@ type formComponentsResourceModel struct {
 
 type formComponentsFieldResourceModel struct {
 	AttributeDisabled            types.Bool   `tfsdk:"attribute_disabled"`
+	Content                      types.String `tfsdk:"content"`
 	Key                          types.String `tfsdk:"key"`
 	Label                        types.String `tfsdk:"label"`
 	LabelMode                    types.String `tfsdk:"label_mode"`
@@ -184,6 +185,7 @@ var (
 	// Form Components Fields
 	formComponentsFieldsTFObjectTypes = map[string]attr.Type{
 		"attribute_disabled":              types.BoolType,
+		"content":                         types.StringType,
 		"key":                             types.StringType,
 		"label_mode":                      types.StringType,
 		"label_password_verify":           types.StringType,
@@ -379,6 +381,10 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	componentsFieldsAttributeDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the linked directory attribute is disabled.",
 	).RequiresReplace()
+
+	componentsFieldsContentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
 
 	componentsFieldsKeyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies an identifier for the field component.",
@@ -614,6 +620,14 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Computed:            true,
 
 									// TODO: Validator can't be false if key is "user.username" or similar
+								},
+
+								"content": schema.StringAttribute{
+									Description:         componentsFieldsContentDescription.Description,
+									MarkdownDescription: componentsFieldsContentDescription.MarkdownDescription,
+									Optional:            true,
+
+									// TODO Functional validator
 								},
 
 								"key": schema.StringAttribute{
@@ -1533,6 +1547,8 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 		data.FormFieldSubmitButton, d = p.expandFieldSubmitButton(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_TEXT):
 		data.FormFieldText, d = p.expandFieldText(ctx, positionData)
+	case string(management.ENUMFORMFIELDTYPE_TEXTBLOB):
+		data.FormFieldTextblob, d = p.expandItemTextblob(ctx, positionData)
 	}
 
 	if diags.HasError() {
@@ -1882,6 +1898,21 @@ func (p *formComponentsFieldResourceModel) expandFieldText(ctx context.Context, 
 	return data, diags
 }
 
+func (p *formComponentsFieldResourceModel) expandItemTextblob(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldTextblob, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldTextblob(
+		management.ENUMFORMFIELDTYPE_TEXTBLOB,
+		*positionData,
+	)
+
+	if !p.Content.IsNull() && !p.Content.IsUnknown() {
+		data.SetContent(p.Content.ValueString())
+	}
+
+	return data, diags
+}
+
 func (p *formComponentsFieldButtonStylesResourceModel) expand(ctx context.Context) (*management.FormFlowButtonStyles, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -2177,6 +2208,7 @@ func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.Form
 
 			attributeMap = map[string]attr.Value{
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
+				"content":                         types.StringNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
 				"label_mode":                      framework.EnumOkToTF(t.GetLabelModeOk()),
 				"label_password_verify":           types.StringNull(),
@@ -2209,6 +2241,7 @@ func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.Form
 
 			attributeMap = map[string]attr.Value{
 				"attribute_disabled":              types.BoolNull(),
+				"content":                         types.StringNull(),
 				"key":                             types.StringNull(),
 				"label_mode":                      types.StringNull(),
 				"label_password_verify":           types.StringNull(),
@@ -2240,6 +2273,7 @@ func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.Form
 
 			attributeMap = map[string]attr.Value{
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
+				"content":                         types.StringNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
 				"label_mode":                      framework.EnumOkToTF(t.GetLabelModeOk()),
 				"label_password_verify":           types.StringNull(),
@@ -2265,6 +2299,7 @@ func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.Form
 
 			attributeMap = map[string]attr.Value{
 				"attribute_disabled":              types.BoolNull(),
+				"content":                         types.StringNull(),
 				"key":                             types.StringNull(),
 				"label_mode":                      types.StringNull(),
 				"label_password_verify":           types.StringNull(),
@@ -2290,6 +2325,7 @@ func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.Form
 
 			attributeMap = map[string]attr.Value{
 				"attribute_disabled":              types.BoolNull(),
+				"content":                         types.StringNull(),
 				"key":                             types.StringNull(),
 				"label_mode":                      types.StringNull(),
 				"label_password_verify":           types.StringNull(),
@@ -2335,6 +2371,7 @@ func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.Form
 
 			attributeMap = map[string]attr.Value{
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
+				"content":                         types.StringNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
 				"label_mode":                      framework.EnumOkToTF(t.GetLabelModeOk()),
 				"label_password_verify":           types.StringNull(),
@@ -2366,6 +2403,7 @@ func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.Form
 
 			attributeMap = map[string]attr.Value{
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
+				"content":                         types.StringNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
 				"label_mode":                      framework.EnumOkToTF(t.GetLabelModeOk()),
 				"label_password_verify":           framework.StringOkToTF(t.GetLabelPasswordVerifyOk()),
@@ -2404,6 +2442,7 @@ func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.Form
 
 			attributeMap = map[string]attr.Value{
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
+				"content":                         types.StringNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
 				"label_mode":                      framework.EnumOkToTF(t.GetLabelModeOk()),
 				"label_password_verify":           types.StringNull(),
@@ -2453,6 +2492,7 @@ func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.Form
 
 			attributeMap = map[string]attr.Value{
 				"attribute_disabled":              types.BoolNull(),
+				"content":                         types.StringNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
 				"label_mode":                      types.StringNull(),
 				"label_password_verify":           types.StringNull(),
@@ -2484,6 +2524,7 @@ func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.Form
 
 			attributeMap = map[string]attr.Value{
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
+				"content":                         types.StringNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
 				"label_mode":                      framework.EnumOkToTF(t.GetLabelModeOk()),
 				"label_password_verify":           types.StringNull(),
@@ -2506,9 +2547,28 @@ func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.Form
 		case *management.FormFieldTextblob:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
-			attributeMap["position"] = position
-			attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
-			//attributeMap["field_textblob"], d = formComponentsFieldsFieldItemToTF(t)
+
+			attributeMap = map[string]attr.Value{
+				"attribute_disabled":              types.BoolNull(),
+				"content":                         framework.StringOkToTF(t.GetContentOk()),
+				"key":                             types.StringNull(),
+				"label_mode":                      types.StringNull(),
+				"label_password_verify":           types.StringNull(),
+				"label":                           types.StringNull(),
+				"layout":                          types.StringNull(),
+				"options":                         types.SetNull(types.ObjectType{AttrTypes: formComponentsFieldsFieldElementOptionTFObjectTypes}),
+				"other_option_attribute_disabled": types.BoolNull(),
+				"other_option_enabled":            types.BoolNull(),
+				"other_option_input_label":        types.StringNull(),
+				"other_option_key":                types.StringNull(),
+				"other_option_label":              types.StringNull(),
+				"position":                        position,
+				"required":                        types.BoolNull(),
+				"show_password_requirements":      types.BoolNull(),
+				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
+				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
+				"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
+			}
 		}
 
 		objValue, d := types.ObjectValue(formComponentsFieldsTFObjectTypes, attributeMap)

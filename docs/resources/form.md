@@ -135,6 +135,7 @@ Required:
 Optional:
 
 - `attribute_disabled` (Boolean) A boolean that specifies whether the linked directory attribute is disabled.  This field is immutable and will trigger a replace plan if changed.
+- `content` (String)
 - `key` (String) A string that specifies an identifier for the field component.
 - `label` (String) A string that specifies the field label.
 - `label_mode` (String) A string that specifies how the field is rendered.  Options are `DEFAULT`, `FLOAT`.
