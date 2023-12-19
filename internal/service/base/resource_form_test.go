@@ -835,6 +835,90 @@ func TestAccForm_FieldRadio(t *testing.T) {
 	})
 }
 
+func TestAccForm_FieldSubmitButton(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
+
+	name := resourceName
+
+	fullStep := resource.TestStep{
+		Config: testAccFormConfig_FieldSubmitButtonFull(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"position.row":            "0",
+				"position.col":            "0",
+				"position.width":          "50",
+				"type":                    "SUBMIT_BUTTON",
+				"label":                   "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
+				"styles.width":            "25",
+				"styles.alignment":        "RIGHT",
+				"styles.background_color": "#FF0000",
+				"styles.text_color":       "#00FF00",
+				"styles.border_color":     "#0000FF",
+				"styles.enabled":          "true",
+			}),
+		),
+	}
+
+	minimalStep := resource.TestStep{
+		Config: testAccFormConfig_FieldSubmitButtonMinimal(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"position.row": "0",
+				"position.col": "0",
+				"type":         "SUBMIT_BUTTON",
+				"label":        "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
+			}),
+		),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.Form_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full step
+			fullStep,
+			{
+				Config:  testAccFormConfig_FieldSubmitButtonFull(resourceName, name),
+				Destroy: true,
+			},
+			// Minimal step
+			minimalStep,
+			{
+				Config:  testAccFormConfig_FieldSubmitButtonMinimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			fullStep,
+			minimalStep,
+			fullStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccForm_FieldText(t *testing.T) {
 	t.Parallel()
 
@@ -2402,6 +2486,78 @@ resource "pingone_form" "%[2]s" {
         }
 
         label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_FieldSubmitButtonFull(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row   = 0
+          col   = 0
+          width = 50
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+
+        styles = {
+          width            = 25
+          alignment        = "RIGHT"
+          background_color = "#FF0000"
+          text_color       = "#00FF00"
+          border_color     = "#0000FF"
+          enabled          = true
+        }
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_FieldSubmitButtonMinimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 0
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
       }
     ]
   }
