@@ -50,6 +50,7 @@ type formComponentsResourceModel struct {
 }
 
 type formComponentsFieldResourceModel struct {
+	Alignment                    types.String `tfsdk:"alignment"`
 	AttributeDisabled            types.Bool   `tfsdk:"attribute_disabled"`
 	Content                      types.String `tfsdk:"content"`
 	Key                          types.String `tfsdk:"key"`
@@ -66,7 +67,9 @@ type formComponentsFieldResourceModel struct {
 	Position                     types.Object `tfsdk:"position"`
 	Required                     types.Bool   `tfsdk:"required"`
 	ShowPasswordRequirements     types.Bool   `tfsdk:"show_password_requirements"`
+	Size                         types.String `tfsdk:"size"`
 	Styles                       types.Object `tfsdk:"styles"`
+	Theme                        types.String `tfsdk:"theme"`
 	Type                         types.String `tfsdk:"type"`
 	Validation                   types.Object `tfsdk:"validation"`
 }
@@ -194,6 +197,7 @@ var (
 
 	// Form Components Fields
 	formComponentsFieldsTFObjectTypes = map[string]attr.Type{
+		"alignment":                       types.StringType,
 		"attribute_disabled":              types.BoolType,
 		"content":                         types.StringType,
 		"key":                             types.StringType,
@@ -210,7 +214,9 @@ var (
 		"position":                        types.ObjectType{AttrTypes: formComponentsFieldsPositionTFObjectTypes},
 		"required":                        types.BoolType,
 		"show_password_requirements":      types.BoolType,
+		"size":                            types.StringType,
 		"styles":                          types.ObjectType{AttrTypes: formComponentsFieldsFieldStylesTFObjectTypes},
+		"theme":                           types.StringType,
 		"type":                            types.StringType,
 		"validation":                      types.ObjectType{AttrTypes: formComponentsFieldsFieldElementValidationTFObjectTypes},
 	}
@@ -326,9 +332,10 @@ var (
 
 // Framework interfaces
 var (
-	_ resource.Resource                = &FormResource{}
-	_ resource.ResourceWithConfigure   = &FormResource{}
-	_ resource.ResourceWithImportState = &FormResource{}
+	_ resource.Resource                   = &FormResource{}
+	_ resource.ResourceWithConfigure      = &FormResource{}
+	_ resource.ResourceWithImportState    = &FormResource{}
+	_ resource.ResourceWithValidateConfig = &FormResource{}
 )
 
 // New Object
@@ -537,6 +544,18 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	componentsFieldsStylesWidthUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"",
 	)
+
+	componentsFieldsSizeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the reCAPTCHA size.",
+	).AllowedValuesEnum(management.AllowedEnumFormRecaptchaV2SizeEnumValues)
+
+	componentsFieldsThemeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the reCAPTCHA theme.",
+	).AllowedValuesEnum(management.AllowedEnumFormRecaptchaV2ThemeEnumValues)
+
+	componentsFieldsAlignmentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the reCAPTCHA alignment.",
+	).AllowedValuesEnum(management.AllowedEnumFormItemAlignmentEnumValues)
 
 	fieldTypesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A set of strings that specifies the field types in the form.",
@@ -947,6 +966,30 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 										},
 									},
 								},
+
+								"size": schema.StringAttribute{
+									Description:         componentsFieldsSizeDescription.Description,
+									MarkdownDescription: componentsFieldsSizeDescription.MarkdownDescription,
+									Optional:            true,
+
+									// TODO: functional validator
+								},
+
+								"theme": schema.StringAttribute{
+									Description:         componentsFieldsThemeDescription.Description,
+									MarkdownDescription: componentsFieldsThemeDescription.MarkdownDescription,
+									Optional:            true,
+
+									// TODO: functional validator
+								},
+
+								"alignment": schema.StringAttribute{
+									Description:         componentsFieldsAlignmentDescription.Description,
+									MarkdownDescription: componentsFieldsAlignmentDescription.MarkdownDescription,
+									Optional:            true,
+
+									// TODO: functional validator
+								},
 							},
 						},
 
@@ -1094,50 +1137,6 @@ func formFieldFlowLinkSchemaAttributes() map[string]schema.Attribute {
 					Optional:            true,
 				},
 			},
-		},
-	}
-}
-
-func formFieldRecaptchaV2SchemaAttributes() map[string]schema.Attribute {
-	keyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies an identifier for the field component.",
-	)
-
-	sizeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the reCAPTCHA size.",
-	).AllowedValuesEnum(management.AllowedEnumFormRecaptchaV2SizeEnumValues)
-
-	themeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the reCAPTCHA theme.",
-	).AllowedValuesEnum(management.AllowedEnumFormRecaptchaV2ThemeEnumValues)
-
-	alignmentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the reCAPTCHA alignment.",
-	).AllowedValuesEnum(management.AllowedEnumFormItemAlignmentEnumValues)
-
-	return map[string]schema.Attribute{
-		"key": schema.StringAttribute{
-			Description:         keyDescription.Description,
-			MarkdownDescription: keyDescription.MarkdownDescription,
-			Required:            true,
-		},
-
-		"size": schema.StringAttribute{
-			Description:         sizeDescription.Description,
-			MarkdownDescription: sizeDescription.MarkdownDescription,
-			Required:            true,
-		},
-
-		"theme": schema.StringAttribute{
-			Description:         themeDescription.Description,
-			MarkdownDescription: themeDescription.MarkdownDescription,
-			Required:            true,
-		},
-
-		"alignment": schema.StringAttribute{
-			Description:         alignmentDescription.Description,
-			MarkdownDescription: alignmentDescription.MarkdownDescription,
-			Required:            true,
 		},
 	}
 }
@@ -1294,6 +1293,14 @@ func formFieldSocialLoginButtonSchemaAttributes() map[string]schema.Attribute {
 			Optional:            true,
 		},
 	}
+}
+
+func (r *FormResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	//var data formComponentsResourceModel
+
+	// Validate Position conflicts
+
+	// Validate schema required/optional fields
 }
 
 func (r *FormResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -1638,6 +1645,8 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 		data.FormFieldPasswordVerify = p.expandFieldPasswordVerify(positionData)
 	case string(management.ENUMFORMFIELDTYPE_RADIO):
 		data.FormFieldRadio, d = p.expandFieldRadio(ctx, positionData)
+	case string(management.ENUMFORMFIELDTYPE_RECAPTCHA_V2):
+		data.FormFieldRecaptchaV2 = p.expandItemRecaptchaV2(positionData)
 	case string(management.ENUMFORMFIELDTYPE_SLATE_TEXTBLOB):
 		data.FormFieldSlateTextblob = p.expandItemSlateTextblob(positionData)
 	case string(management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON):
@@ -2099,6 +2108,18 @@ func (p *formComponentsFieldResourceModel) expandFieldText(ctx context.Context, 
 	return data, diags
 }
 
+func (p *formComponentsFieldResourceModel) expandItemRecaptchaV2(positionData *management.FormFieldCommonPosition) *management.FormFieldRecaptchaV2 {
+	data := management.NewFormFieldRecaptchaV2(
+		management.ENUMFORMFIELDTYPE_RECAPTCHA_V2,
+		*positionData,
+		management.EnumFormRecaptchaV2Size(p.Size.ValueString()),
+		management.EnumFormRecaptchaV2Theme(p.Theme.ValueString()),
+		management.EnumFormItemAlignment(p.Alignment.ValueString()),
+	)
+
+	return data
+}
+
 func (p *formComponentsFieldResourceModel) expandItemSlateTextblob(positionData *management.FormFieldCommonPosition) *management.FormFieldSlateTextblob {
 	data := management.NewFormFieldSlateTextblob(
 		management.ENUMFORMFIELDTYPE_SLATE_TEXTBLOB,
@@ -2301,21 +2322,6 @@ func (p *formComponentsFieldFlowButtonResourceModel) expand(ctx context.Context,
 	return data, diags
 }
 
-func (p *formComponentsFieldRecaptchaV2ResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldRecaptchaV2, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	data := management.NewFormFieldRecaptchaV2(
-		management.ENUMFORMFIELDTYPE_RECAPTCHA_V2,
-		*positionData,
-		p.Key.ValueString(),
-		management.EnumFormRecaptchaV2Size(p.Size.ValueString()),
-		management.EnumFormRecaptchaV2Theme(p.Theme.ValueString()),
-		management.EnumFormItemAlignment(p.Alignment.ValueString()),
-	)
-
-	return data, diags
-}
-
 func (p *formComponentsFieldQrCodeResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldQrCode, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -2464,6 +2470,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
+				"alignment":                       types.StringNull(),
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
 				"content":                         types.StringNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
@@ -2480,7 +2487,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"position":                        position,
 				"required":                        framework.BoolOkToTF(t.GetRequiredOk()),
 				"show_password_requirements":      types.BoolNull(),
+				"size":                            types.StringNull(),
 				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
+				"theme":                           types.StringNull(),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      validation,
 			}
@@ -2496,6 +2505,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
+				"alignment":                       types.StringNull(),
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
 				"content":                         types.StringNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
@@ -2512,7 +2522,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"position":                        position,
 				"required":                        framework.BoolOkToTF(t.GetRequiredOk()),
 				"show_password_requirements":      types.BoolNull(),
+				"size":                            types.StringNull(),
 				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
+				"theme":                           types.StringNull(),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      validation,
 			}
@@ -2522,6 +2534,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
+				"alignment":                       types.StringNull(),
 				"attribute_disabled":              types.BoolNull(),
 				"content":                         types.StringNull(),
 				"key":                             types.StringNull(),
@@ -2538,7 +2551,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"position":                        position,
 				"required":                        types.BoolNull(),
 				"show_password_requirements":      types.BoolNull(),
+				"size":                            types.StringNull(),
 				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
+				"theme":                           types.StringNull(),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
 			}
@@ -2554,6 +2569,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
+				"alignment":                       types.StringNull(),
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
 				"content":                         types.StringNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
@@ -2570,7 +2586,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"position":                        position,
 				"required":                        framework.BoolOkToTF(t.GetRequiredOk()),
 				"show_password_requirements":      types.BoolNull(),
+				"size":                            types.StringNull(),
 				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
+				"theme":                           types.StringNull(),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      validation,
 			}
@@ -2580,6 +2598,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
+				"alignment":                       types.StringNull(),
 				"attribute_disabled":              types.BoolNull(),
 				"content":                         types.StringNull(),
 				"key":                             types.StringNull(),
@@ -2596,7 +2615,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"position":                        position,
 				"required":                        types.BoolNull(),
 				"show_password_requirements":      types.BoolNull(),
+				"size":                            types.StringNull(),
 				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
+				"theme":                           types.StringNull(),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
 			}
@@ -2606,6 +2627,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
+				"alignment":                       types.StringNull(),
 				"attribute_disabled":              types.BoolNull(),
 				"content":                         types.StringNull(),
 				"key":                             types.StringNull(),
@@ -2622,7 +2644,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"position":                        position,
 				"required":                        types.BoolNull(),
 				"show_password_requirements":      types.BoolNull(),
+				"size":                            types.StringNull(),
 				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
+				"theme":                           types.StringNull(),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
 			}
@@ -2635,6 +2659,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
+				"alignment":                       types.StringNull(),
 				"attribute_disabled":              types.BoolNull(),
 				"content":                         types.StringNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
@@ -2651,7 +2676,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"position":                        position,
 				"required":                        types.BoolNull(),
 				"show_password_requirements":      types.BoolNull(),
+				"size":                            types.StringNull(),
 				"styles":                          styles,
+				"theme":                           types.StringNull(),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
 			}
@@ -2664,6 +2691,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
+				"alignment":                       types.StringNull(),
 				"attribute_disabled":              types.BoolNull(),
 				"content":                         types.StringNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
@@ -2680,7 +2708,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"position":                        position,
 				"required":                        types.BoolNull(),
 				"show_password_requirements":      types.BoolNull(),
+				"size":                            types.StringNull(),
 				"styles":                          styles,
+				"theme":                           types.StringNull(),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
 			}
@@ -2696,6 +2726,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
+				"alignment":                       types.StringNull(),
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
 				"content":                         types.StringNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
@@ -2712,7 +2743,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"position":                        position,
 				"required":                        framework.BoolOkToTF(t.GetRequiredOk()),
 				"show_password_requirements":      framework.BoolOkToTF(t.GetShowPasswordRequirementsOk()),
+				"size":                            types.StringNull(),
 				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
+				"theme":                           types.StringNull(),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      validation,
 			}
@@ -2728,6 +2761,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
+				"alignment":                       types.StringNull(),
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
 				"content":                         types.StringNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
@@ -2744,7 +2778,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"position":                        position,
 				"required":                        framework.BoolOkToTF(t.GetRequiredOk()),
 				"show_password_requirements":      framework.BoolOkToTF(t.GetShowPasswordRequirementsOk()),
+				"size":                            types.StringNull(),
 				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
+				"theme":                           types.StringNull(),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      validation,
 			}
@@ -2767,6 +2803,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
+				"alignment":                       types.StringNull(),
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
 				"content":                         types.StringNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
@@ -2783,7 +2820,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"position":                        position,
 				"required":                        framework.BoolOkToTF(t.GetRequiredOk()),
 				"show_password_requirements":      types.BoolNull(),
+				"size":                            types.StringNull(),
 				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
+				"theme":                           types.StringNull(),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      validation,
 			}
@@ -2791,15 +2830,38 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 		case *management.FormFieldRecaptchaV2:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
-			attributeMap["position"] = position
-			attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
-			//attributeMap["field_recaptcha_v2"], d = formComponentsFieldsFieldRecaptchaV2ToTF(t)
+
+			attributeMap = map[string]attr.Value{
+				"alignment":                       framework.EnumOkToTF(t.GetAlignmentOk()),
+				"attribute_disabled":              types.BoolNull(),
+				"content":                         types.StringNull(),
+				"key":                             types.StringNull(),
+				"label_mode":                      types.StringNull(),
+				"label_password_verify":           types.StringNull(),
+				"label":                           types.StringNull(),
+				"layout":                          types.StringNull(),
+				"options":                         types.SetNull(types.ObjectType{AttrTypes: formComponentsFieldsFieldElementOptionTFObjectTypes}),
+				"other_option_attribute_disabled": types.BoolNull(),
+				"other_option_enabled":            types.BoolNull(),
+				"other_option_input_label":        types.StringNull(),
+				"other_option_key":                types.StringNull(),
+				"other_option_label":              types.StringNull(),
+				"position":                        position,
+				"required":                        types.BoolNull(),
+				"show_password_requirements":      types.BoolNull(),
+				"size":                            framework.EnumOkToTF(t.GetSizeOk()),
+				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
+				"theme":                           framework.EnumOkToTF(t.GetThemeOk()),
+				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
+				"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
+			}
 
 		case *management.FormFieldSlateTextblob:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
+				"alignment":                       types.StringNull(),
 				"attribute_disabled":              types.BoolNull(),
 				"content":                         framework.StringOkToTF(t.GetContentOk()),
 				"key":                             types.StringNull(),
@@ -2816,7 +2878,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"position":                        position,
 				"required":                        types.BoolNull(),
 				"show_password_requirements":      types.BoolNull(),
+				"size":                            types.StringNull(),
 				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
+				"theme":                           types.StringNull(),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
 			}
@@ -2836,6 +2900,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
+				"alignment":                       types.StringNull(),
 				"attribute_disabled":              types.BoolNull(),
 				"content":                         types.StringNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
@@ -2852,7 +2917,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"position":                        position,
 				"required":                        types.BoolNull(),
 				"show_password_requirements":      types.BoolNull(),
+				"size":                            types.StringNull(),
 				"styles":                          styles,
+				"theme":                           types.StringNull(),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
 			}
@@ -2868,6 +2935,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
+				"alignment":                       types.StringNull(),
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
 				"content":                         types.StringNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
@@ -2884,7 +2952,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"position":                        position,
 				"required":                        framework.BoolOkToTF(t.GetRequiredOk()),
 				"show_password_requirements":      types.BoolNull(),
+				"size":                            types.StringNull(),
 				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
+				"theme":                           types.StringNull(),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      validation,
 			}
@@ -2894,6 +2964,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
+				"alignment":                       types.StringNull(),
 				"attribute_disabled":              types.BoolNull(),
 				"content":                         framework.StringOkToTF(t.GetContentOk()),
 				"key":                             types.StringNull(),
@@ -2910,7 +2981,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"position":                        position,
 				"required":                        types.BoolNull(),
 				"show_password_requirements":      types.BoolNull(),
+				"size":                            types.StringNull(),
 				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
+				"theme":                           types.StringNull(),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
 			}

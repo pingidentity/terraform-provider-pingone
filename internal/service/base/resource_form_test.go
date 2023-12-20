@@ -259,6 +259,7 @@ func TestAccForm_FieldCheckbox(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccFormConfig_FieldCheckboxFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":                    "0",
 				"position.col":                    "0",
@@ -285,9 +286,11 @@ func TestAccForm_FieldCheckbox(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccFormConfig_FieldCheckboxMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":                    "0",
 				"position.col":                    "0",
+				"position.width":                  "",
 				"type":                            "CHECKBOX",
 				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
 				"key":                             "checkbox-field",
@@ -360,6 +363,7 @@ func TestAccForm_FieldCombobox(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccFormConfig_FieldComboboxFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":                    "0",
 				"position.col":                    "0",
@@ -386,9 +390,11 @@ func TestAccForm_FieldCombobox(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccFormConfig_FieldComboboxMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":                    "0",
 				"position.col":                    "0",
+				"position.width":                  "",
 				"type":                            "COMBOBOX",
 				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
 				"key":                             "combobox-field",
@@ -460,6 +466,7 @@ func TestAccForm_FieldDropdown(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccFormConfig_FieldDropdownFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":                    "0",
 				"position.col":                    "0",
@@ -486,9 +493,11 @@ func TestAccForm_FieldDropdown(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccFormConfig_FieldDropdownMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":                    "0",
 				"position.col":                    "0",
+				"position.width":                  "",
 				"type":                            "DROPDOWN",
 				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
 				"key":                             "dropdown-field",
@@ -560,6 +569,7 @@ func TestAccForm_FieldPassword(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccFormConfig_FieldPasswordFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":                    "0",
 				"position.col":                    "0",
@@ -581,9 +591,11 @@ func TestAccForm_FieldPassword(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccFormConfig_FieldPasswordMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":                    "0",
 				"position.col":                    "0",
+				"position.width":                  "",
 				"type":                            "PASSWORD",
 				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
 				"key":                             "password-field",
@@ -652,6 +664,7 @@ func TestAccForm_FieldPasswordVerify(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccFormConfig_FieldPasswordVerifyFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":                    "0",
 				"position.col":                    "0",
@@ -674,9 +687,11 @@ func TestAccForm_FieldPasswordVerify(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccFormConfig_FieldPasswordVerifyMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":                    "0",
 				"position.col":                    "0",
+				"position.width":                  "",
 				"type":                            "PASSWORD_VERIFY",
 				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
 				"key":                             "password-field",
@@ -745,6 +760,7 @@ func TestAccForm_FieldRadio(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccFormConfig_FieldRadioFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":                    "0",
 				"position.col":                    "0",
@@ -771,9 +787,11 @@ func TestAccForm_FieldRadio(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccFormConfig_FieldRadioMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":                    "0",
 				"position.col":                    "0",
+				"position.width":                  "",
 				"type":                            "RADIO",
 				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
 				"key":                             "radio-field",
@@ -846,6 +864,7 @@ func TestAccForm_FieldSubmitButton(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccFormConfig_FieldSubmitButtonFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":            "0",
 				"position.col":            "0",
@@ -871,11 +890,13 @@ func TestAccForm_FieldSubmitButton(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccFormConfig_FieldSubmitButtonMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row": "0",
-				"position.col": "0",
-				"type":         "SUBMIT_BUTTON",
-				"label":        "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
+				"position.row":   "0",
+				"position.col":   "0",
+				"position.width": "",
+				"type":           "SUBMIT_BUTTON",
+				"label":          "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
 			}),
 		),
 	}
@@ -936,6 +957,7 @@ func TestAccForm_FieldText(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccFormConfig_FieldTextFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":                    "0",
 				"position.col":                    "0",
@@ -959,9 +981,11 @@ func TestAccForm_FieldText(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccFormConfig_FieldTextMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":                    "0",
 				"position.col":                    "0",
+				"position.width":                  "",
 				"type":                            "TEXT",
 				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
 				"key":                             "text-field",
@@ -1030,6 +1054,7 @@ func TestAccForm_ItemDivider(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccFormConfig_ItemDividerFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":   "0",
 				"position.col":   "0",
@@ -1042,10 +1067,12 @@ func TestAccForm_ItemDivider(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccFormConfig_ItemDividerMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row": "0",
-				"position.col": "0",
-				"type":         "DIVIDER",
+				"position.row":   "0",
+				"position.col":   "0",
+				"position.width": "",
+				"type":           "DIVIDER",
 			}),
 		),
 	}
@@ -1106,6 +1133,7 @@ func TestAccForm_ItemEmptyField(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccFormConfig_ItemEmptyFieldFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":   "0",
 				"position.col":   "1",
@@ -1118,6 +1146,7 @@ func TestAccForm_ItemEmptyField(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccFormConfig_ItemEmptyFieldMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row": "0",
 				"position.col": "1",
@@ -1182,6 +1211,7 @@ func TestAccForm_ItemErrorDisplay(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccFormConfig_ItemErrorDisplayFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":   "0",
 				"position.col":   "0",
@@ -1194,10 +1224,12 @@ func TestAccForm_ItemErrorDisplay(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccFormConfig_ItemErrorDisplayMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row": "0",
-				"position.col": "0",
-				"type":         "ERROR_DISPLAY",
+				"position.row":   "0",
+				"position.col":   "0",
+				"position.width": "",
+				"type":           "ERROR_DISPLAY",
 			}),
 		),
 	}
@@ -1258,6 +1290,7 @@ func TestAccForm_ItemFlowButton(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccFormConfig_ItemFlowButtonFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":            "0",
 				"position.col":            "0",
@@ -1284,12 +1317,14 @@ func TestAccForm_ItemFlowButton(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccFormConfig_ItemFlowButtonMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row": "0",
-				"position.col": "0",
-				"type":         "FLOW_BUTTON",
-				"key":          "button-field",
-				"label":        "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
+				"position.row":   "0",
+				"position.col":   "0",
+				"position.width": "",
+				"type":           "FLOW_BUTTON",
+				"key":            "button-field",
+				"label":          "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
 			}),
 		),
 	}
@@ -1350,6 +1385,7 @@ func TestAccForm_ItemFlowLink(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccFormConfig_ItemFlowLinkFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":          "0",
 				"position.col":          "0",
@@ -1371,12 +1407,14 @@ func TestAccForm_ItemFlowLink(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccFormConfig_ItemFlowLinkMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row": "0",
-				"position.col": "0",
-				"type":         "FLOW_LINK",
-				"key":          "link-field",
-				"label":        "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
+				"position.row":   "0",
+				"position.col":   "0",
+				"position.width": "",
+				"type":           "FLOW_LINK",
+				"key":            "link-field",
+				"label":          "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
 			}),
 		),
 	}
@@ -1426,7 +1464,7 @@ func TestAccForm_ItemFlowLink(t *testing.T) {
 	})
 }
 
-func TestAccForm_ItemTextblob(t *testing.T) {
+func TestAccForm_ItemRecaptchaV2(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -1435,25 +1473,33 @@ func TestAccForm_ItemTextblob(t *testing.T) {
 	name := resourceName
 
 	fullStep := resource.TestStep{
-		Config: testAccFormConfig_ItemTextblobFull(resourceName, name),
+		Config: testAccFormConfig_ItemRecaptchaV2Full(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":   "0",
 				"position.col":   "0",
 				"position.width": "50",
-				"type":           "TEXTBLOB",
-				"content":        "<p>Two baguettes in a zoo cage, the sign says 'Bread in captivity'.</p>",
+				"type":           "RECAPTCHA_V2",
+				"theme":          "LIGHT",
+				"size":           "NORMAL",
+				"alignment":      "RIGHT",
 			}),
 		),
 	}
 
 	minimalStep := resource.TestStep{
-		Config: testAccFormConfig_ItemTextblobMinimal(resourceName, name),
+		Config: testAccFormConfig_ItemRecaptchaV2Minimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row": "0",
-				"position.col": "0",
-				"type":         "TEXTBLOB",
+				"position.row":   "0",
+				"position.col":   "0",
+				"position.width": "",
+				"type":           "RECAPTCHA_V2",
+				"theme":          "DARK",
+				"size":           "COMPACT",
+				"alignment":      "LEFT",
 			}),
 		),
 	}
@@ -1470,13 +1516,13 @@ func TestAccForm_ItemTextblob(t *testing.T) {
 			// Full step
 			fullStep,
 			{
-				Config:  testAccFormConfig_ItemTextblobFull(resourceName, name),
+				Config:  testAccFormConfig_ItemRecaptchaV2Full(resourceName, name),
 				Destroy: true,
 			},
 			// Minimal step
 			minimalStep,
 			{
-				Config:  testAccFormConfig_ItemTextblobMinimal(resourceName, name),
+				Config:  testAccFormConfig_ItemRecaptchaV2Minimal(resourceName, name),
 				Destroy: true,
 			},
 			// Change
@@ -1514,6 +1560,7 @@ func TestAccForm_ItemSlateTextblob(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccFormConfig_ItemSlateTextblobFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":   "0",
 				"position.col":   "0",
@@ -1559,6 +1606,86 @@ func TestAccForm_ItemSlateTextblob(t *testing.T) {
 			// // Change
 			// fullStep,
 			// minimalStep,
+			fullStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccForm_ItemTextblob(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
+
+	name := resourceName
+
+	fullStep := resource.TestStep{
+		Config: testAccFormConfig_ItemTextblobFull(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"position.row":   "0",
+				"position.col":   "0",
+				"position.width": "50",
+				"type":           "TEXTBLOB",
+				"content":        "<p>Two baguettes in a zoo cage, the sign says 'Bread in captivity'.</p>",
+			}),
+		),
+	}
+
+	minimalStep := resource.TestStep{
+		Config: testAccFormConfig_ItemTextblobMinimal(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"position.row":   "0",
+				"position.col":   "0",
+				"position.width": "",
+				"type":           "TEXTBLOB",
+			}),
+		),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.Form_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full step
+			fullStep,
+			{
+				Config:  testAccFormConfig_ItemTextblobFull(resourceName, name),
+				Destroy: true,
+			},
+			// Minimal step
+			minimalStep,
+			{
+				Config:  testAccFormConfig_ItemTextblobMinimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			fullStep,
+			minimalStep,
 			fullStep,
 			// Test importing the resource
 			{
@@ -3220,9 +3347,9 @@ resource "pingone_form" "%[2]s" {
             left   = 16
           }
 
-          alignment        = "RIGHT"
-          text_color       = "#00FF00"
-          enabled          = true
+          alignment  = "RIGHT"
+          text_color = "#00FF00"
+          enabled    = true
         }
       },
       {
@@ -3283,7 +3410,7 @@ resource "pingone_form" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccFormConfig_ItemTextblobFull(resourceName, name string) string {
+func testAccFormConfig_ItemRecaptchaV2Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -3300,7 +3427,7 @@ resource "pingone_form" "%[2]s" {
   components = {
     fields = [
       {
-        type = "TEXTBLOB"
+        type = "RECAPTCHA_V2"
 
         position = {
           row   = 0
@@ -3308,7 +3435,9 @@ resource "pingone_form" "%[2]s" {
           width = 50
         }
 
-        content = "<p>Two baguettes in a zoo cage, the sign says 'Bread in captivity'.</p>"
+        theme     = "LIGHT"
+        size      = "NORMAL"
+        alignment = "RIGHT"
       },
       {
         type = "SUBMIT_BUTTON"
@@ -3325,7 +3454,7 @@ resource "pingone_form" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccFormConfig_ItemTextblobMinimal(resourceName, name string) string {
+func testAccFormConfig_ItemRecaptchaV2Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -3342,12 +3471,16 @@ resource "pingone_form" "%[2]s" {
   components = {
     fields = [
       {
-        type = "TEXTBLOB"
+        type = "RECAPTCHA_V2"
 
         position = {
           row = 0
           col = 0
         }
+
+        theme     = "DARK"
+        size      = "COMPACT"
+        alignment = "LEFT"
       },
       {
         type = "SUBMIT_BUTTON"
@@ -3444,3 +3577,84 @@ resource "pingone_form" "%[2]s" {
 //   }
 // }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 // }
+
+func testAccFormConfig_ItemTextblobFull(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "TEXTBLOB"
+
+        position = {
+          row   = 0
+          col   = 0
+          width = 50
+        }
+
+        content = "<p>Two baguettes in a zoo cage, the sign says 'Bread in captivity'.</p>"
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_ItemTextblobMinimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "TEXTBLOB"
+
+        position = {
+          row = 0
+          col = 0
+        }
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}

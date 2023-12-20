@@ -134,6 +134,7 @@ Required:
 
 Optional:
 
+- `alignment` (String) A string that specifies the reCAPTCHA alignment.  Options are `CENTER`, `LEFT`, `RIGHT`.
 - `attribute_disabled` (Boolean) A boolean that specifies whether the linked directory attribute is disabled.  This field is immutable and will trigger a replace plan if changed.
 - `content` (String)
 - `key` (String) A string that specifies an identifier for the field component.
@@ -149,7 +150,9 @@ Optional:
 - `other_option_label` (String) A string that specifies the label for a custom or "other" choice in a list.
 - `required` (Boolean) A boolean that specifies whether the field is required.
 - `show_password_requirements` (Boolean)
+- `size` (String) A string that specifies the reCAPTCHA size.  Options are `COMPACT`, `NORMAL`.
 - `styles` (Attributes) A single object that describes style settings for the button. (see [below for nested schema](#nestedatt--components--fields--styles))
+- `theme` (String) A string that specifies the reCAPTCHA theme.  Options are `DARK`, `LIGHT`.
 - `validation` (Attributes) An object containing validation data for the field. (see [below for nested schema](#nestedatt--components--fields--validation))
 
 <a id="nestedatt--components--fields--position"></a>
