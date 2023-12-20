@@ -1204,7 +1204,6 @@ func formFieldValidationDocumentation(key string) string {
 
 	requiredTypes := []string{}
 	optionalTypes := []string{}
-	notApplicableTypes := []string{}
 
 	for formFieldType, formField := range formComponentsFieldsSchemaDefMap {
 		if slices.Contains(formField.Required, key) {
@@ -1213,10 +1212,6 @@ func formFieldValidationDocumentation(key string) string {
 
 		if slices.Contains(formField.Optional, key) {
 			optionalTypes = append(optionalTypes, string(formFieldType))
-		}
-
-		if !slices.Contains(formField.Required, key) && !slices.Contains(formField.Optional, key) {
-			notApplicableTypes = append(notApplicableTypes, string(formFieldType))
 		}
 	}
 

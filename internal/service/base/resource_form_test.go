@@ -2067,8 +2067,8 @@ resource "pingone_form" "%[2]s" {
         type = "TEXTBLOB"
 
         position = {
-          row   = 0
-          col   = 0
+          row = 0
+          col = 0
         }
 
         content = "<h2>Sign On</h2><hr>"
@@ -2099,10 +2099,10 @@ resource "pingone_form" "%[2]s" {
                   "text" = ""
                 },
                 {
-                  "type" = "i18n",
-                  "key" = "fields.user.username.label",
+                  "type"               = "i18n",
+                  "key"                = "fields.user.username.label",
                   "defaultTranslation" = "Username",
-                  "inline" = true,
+                  "inline"             = true,
                   "children" = [
                     {
                       "text" = ""
@@ -2141,10 +2141,10 @@ resource "pingone_form" "%[2]s" {
                   "text" = ""
                 },
                 {
-                  "type" = "i18n",
-                  "key" = "fields.user.password.label",
+                  "type"               = "i18n",
+                  "key"                = "fields.user.password.label",
                   "defaultTranslation" = "Password",
-                  "inline" = true,
+                  "inline"             = true,
                   "children" = [
                     {
                       "text" = ""
@@ -2158,7 +2158,7 @@ resource "pingone_form" "%[2]s" {
             }
           ]
         )
-        
+
         required = true
       },
       {
@@ -2178,10 +2178,10 @@ resource "pingone_form" "%[2]s" {
                   "text" = ""
                 },
                 {
-                  "type" = "i18n",
-                  "key" = "button.text.signOn",
+                  "type"               = "i18n",
+                  "key"                = "button.text.signOn",
                   "defaultTranslation" = "Sign On",
-                  "inline" = true,
+                  "inline"             = true,
                   "children" = [
                     {
                       "text" = ""
@@ -2243,10 +2243,10 @@ resource "pingone_form" "%[2]s" {
                   "text" = ""
                 },
                 {
-                  "type" = "i18n",
-                  "key" = "fields.user.username.label",
+                  "type"               = "i18n",
+                  "key"                = "fields.user.username.label",
                   "defaultTranslation" = "Username",
-                  "inline" = true,
+                  "inline"             = true,
                   "children" = [
                     {
                       "text" = ""
@@ -2267,12 +2267,12 @@ resource "pingone_form" "%[2]s" {
           type = "NONE"
         }
       },
-	  {
+      {
         type = "TEXTBLOB"
 
         position = {
-          row   = 0
-          col   = 0
+          row = 0
+          col = 0
         }
 
         content = "<h2>Sign On</h2><hr>"
@@ -2294,10 +2294,10 @@ resource "pingone_form" "%[2]s" {
                   "text" = ""
                 },
                 {
-                  "type" = "i18n",
-                  "key" = "button.text.signOn",
+                  "type"               = "i18n",
+                  "key"                = "button.text.signOn",
                   "defaultTranslation" = "Sign On",
-                  "inline" = true,
+                  "inline"             = true,
                   "children" = [
                     {
                       "text" = ""
