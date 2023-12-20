@@ -208,21 +208,21 @@ Required:
 
 Optional:
 
-- `alignment` (String) **Required** when the `type` is one of `RECAPTCHA_V2`, `QR_CODE`.  A string that specifies the reCAPTCHA alignment.  Options are `CENTER`, `LEFT`, `RIGHT`.
-- `attribute_disabled` (Boolean) Optional when the `type` is one of `COMBOBOX`, `PASSWORD`, `CHECKBOX`, `DROPDOWN`, `PASSWORD_VERIFY`, `TEXT`, `RADIO`.  A boolean that specifies whether the linked directory attribute is disabled.
+- `alignment` (String) **Required** when the `type` is one of `QR_CODE`, `RECAPTCHA_V2`.  A string that specifies the reCAPTCHA alignment.  Options are `CENTER`, `LEFT`, `RIGHT`.
+- `attribute_disabled` (Boolean) Optional when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `TEXT`.  A boolean that specifies whether the linked directory attribute is disabled.
 - `content` (String) Optional when the `type` is one of `SLATE_TEXTBLOB`, `TEXTBLOB`.
-- `key` (String) **Required** when the `type` is one of `COMBOBOX`, `QR_CODE`, `PASSWORD`, `TEXT`, `CHECKBOX`, `DROPDOWN`, `PASSWORD_VERIFY`, `FLOW_BUTTON`, `FLOW_LINK`, `RADIO`.  A string that specifies an identifier for the field component.
-- `label` (String) **Required** when the `type` is one of `PASSWORD`, `CHECKBOX`, `DROPDOWN`, `PASSWORD_VERIFY`, `TEXT`, `FLOW_BUTTON`, `FLOW_LINK`, `RADIO`, `SUBMIT_BUTTON`, `COMBOBOX`.  A string that specifies the field label.
-- `label_mode` (String) Optional when the `type` is one of `COMBOBOX`, `PASSWORD`, `DROPDOWN`, `PASSWORD_VERIFY`, `TEXT`, `CHECKBOX`, `RADIO`.  A string that specifies how the field is rendered.  Options are `DEFAULT`, `FLOAT`.
+- `key` (String) **Required** when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `TEXT`.  A string that specifies an identifier for the field component.
+- `label` (String) **Required** when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `SUBMIT_BUTTON`, `TEXT`.  A string that specifies the field label.
+- `label_mode` (String) Optional when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `TEXT`.  A string that specifies how the field is rendered.  Options are `DEFAULT`, `FLOAT`.
 - `label_password_verify` (String) Optional when the `type` is one of `PASSWORD_VERIFY`.  A string that when a second field for verifies password is used, this property specifies the field label for that verify field.
-- `layout` (String) **Required** when the `type` is one of `CHECKBOX`, `RADIO`, optional when the `type` is one of `DROPDOWN`, `PASSWORD_VERIFY`, `TEXT`, `COMBOBOX`, `PASSWORD`.  A string that specifies layout attributes for radio button and checkbox fields.  Options are `HORIZONTAL`, `VERTICAL`.
-- `options` (Attributes Set) **Required** when the `type` is one of `DROPDOWN`, `CHECKBOX`, `RADIO`, `COMBOBOX`.  An array of objects that specifies the unique list of options. (see [below for nested schema](#nestedatt--components--fields--options))
+- `layout` (String) **Required** when the `type` is one of `CHECKBOX`, `RADIO`, optional when the `type` is one of `COMBOBOX`, `DROPDOWN`, `PASSWORD`, `PASSWORD_VERIFY`, `TEXT`.  A string that specifies layout attributes for radio button and checkbox fields.  Options are `HORIZONTAL`, `VERTICAL`.
+- `options` (Attributes Set) **Required** when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `RADIO`.  An array of objects that specifies the unique list of options. (see [below for nested schema](#nestedatt--components--fields--options))
 - `qr_code_type` (String) **Required** when the `type` is one of `QR_CODE`.  A string that specifies the QR Code type.
-- `required` (Boolean) Optional when the `type` is one of `DROPDOWN`, `PASSWORD_VERIFY`, `TEXT`, `CHECKBOX`, `RADIO`, `COMBOBOX`, `PASSWORD`.  A boolean that specifies whether the field is required.
+- `required` (Boolean) Optional when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `TEXT`.  A boolean that specifies whether the field is required.
 - `show_border` (Boolean) Optional when the `type` is one of `QR_CODE`.  A boolean that specifies the border visibility.
 - `show_password_requirements` (Boolean) Optional when the `type` is one of `PASSWORD`, `PASSWORD_VERIFY`.
 - `size` (String) **Required** when the `type` is one of `RECAPTCHA_V2`.  A string that specifies the reCAPTCHA size.  Options are `COMPACT`, `NORMAL`.
-- `styles` (Attributes) Optional when the `type` is one of `SUBMIT_BUTTON`, `FLOW_BUTTON`, `FLOW_LINK`.  A single object that describes style settings for the field. (see [below for nested schema](#nestedatt--components--fields--styles))
+- `styles` (Attributes) Optional when the `type` is one of `FLOW_BUTTON`, `FLOW_LINK`, `SUBMIT_BUTTON`.  A single object that describes style settings for the field. (see [below for nested schema](#nestedatt--components--fields--styles))
 - `theme` (String) **Required** when the `type` is one of `RECAPTCHA_V2`.  A string that specifies the reCAPTCHA theme.  Options are `DARK`, `LIGHT`.
 - `validation` (Attributes) **Required** when the `type` is one of `TEXT`.  An object containing validation data for the field. (see [below for nested schema](#nestedatt--components--fields--validation))
 

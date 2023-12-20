@@ -1220,11 +1220,13 @@ func formFieldValidationDocumentation(key string) string {
 	descriptionSet := false
 
 	if len(requiredTypes) > 0 {
+		slices.Sort(requiredTypes)
 		returnVar += fmt.Sprintf("**Required** when the `type` is one of `%s`", strings.Join(requiredTypes, "`, `"))
 		descriptionSet = true
 	}
 
 	if len(optionalTypes) > 0 {
+		slices.Sort(optionalTypes)
 		if descriptionSet {
 			returnVar += ", o"
 		} else {
@@ -1242,11 +1244,126 @@ func formFieldValidationDocumentation(key string) string {
 }
 
 func (r *FormResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	//var data formComponentsResourceModel
+	var data []formComponentsFieldResourceModel
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("components").AtName("fields"), &data)...)
 
-	// Validate Position conflicts
+	positions := make([]formComponentsFieldPositionResourceModel, 0)
 
-	// Validate schema required/optional fields
+	hasSubmitButton := false
+
+	for _, field := range data {
+		// Validate has submit button
+		if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON))) {
+			hasSubmitButton = true
+		}
+
+		// Validate Position conflicts
+		var positionPlan formComponentsFieldPositionResourceModel
+		resp.Diagnostics.Append(field.Position.As(ctx, &positionPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		for _, existingPosition := range positions {
+			if existingPosition.Col.Equal(positionPlan.Col) && existingPosition.Row.Equal(positionPlan.Row) {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("components").AtName("fields"),
+					"Invalid DaVinci form configuration",
+					fmt.Sprintf("The combination of `col` and `row` must be unique between form fields.  The position `col`: `%d`, `row`: `%d` is duplicated.", positionPlan.Col.ValueInt64(), positionPlan.Row.ValueInt64()),
+				)
+			}
+		}
+
+		positions = append(positions, positionPlan)
+
+		// Validate Required/Optional
+		if v, ok := formComponentsFieldsSchemaDefMap[management.EnumFormFieldType(field.Type.ValueString())]; ok {
+			for _, requiredField := range v.Required {
+				if !field.validateFieldSet(requiredField) {
+					resp.Diagnostics.AddAttributeError(
+						path.Root("components").AtName("fields"),
+						"Invalid DaVinci form configuration",
+						fmt.Sprintf("The `%s` field is required for the `%s` field type.", requiredField, field.Type.ValueString()),
+					)
+				}
+			}
+		} else {
+			resp.Diagnostics.AddAttributeWarning(
+				path.Root("components").AtName("fields"),
+				"Cannot validate form configuration",
+				fmt.Sprintf("The form field type `%s` does not have Required/Optional metadata configured.  Please report this to the provider maintainers.", field.Type.ValueString()),
+			)
+		}
+	}
+
+	// Validate has submit button
+	if !hasSubmitButton {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("components").AtName("fields"),
+			"Invalid DaVinci form configuration",
+			"The DaVinci form is expected to contain a submit button field (`type` parameter value of `SUBMIT_BUTTON`).",
+		)
+	}
+
+}
+
+func (r *formComponentsFieldResourceModel) validateFieldSet(field string) bool {
+
+	switch field {
+	case "alignment":
+		return !r.Alignment.IsNull()
+	case "attribute_disabled":
+		return !r.AttributeDisabled.IsNull()
+	case "content":
+		return !r.Content.IsNull()
+	case "key":
+		return !r.Key.IsNull()
+	case "label":
+		return !r.Label.IsNull()
+	case "label_mode":
+		return !r.LabelMode.IsNull()
+	case "label_password_verify":
+		return !r.LabelPasswordVerify.IsNull()
+	case "layout":
+		return !r.Layout.IsNull()
+	case "options":
+		return !r.Options.IsNull()
+	case "other_option_attribute_disabled":
+		return !r.OtherOptionAttributeDisabled.IsNull()
+	case "other_option_enabled":
+		return !r.OtherOptionEnabled.IsNull()
+	case "other_option_input_label":
+		return !r.OtherOptionInputLabel.IsNull()
+	case "other_option_key":
+		return !r.OtherOptionKey.IsNull()
+	case "other_option_label":
+		return !r.OtherOptionLabel.IsNull()
+	case "position":
+		return !r.Position.IsNull()
+	case "qr_code_type":
+		return !r.QrCodeType.IsNull()
+	case "required":
+		return !r.Required.IsNull()
+	case "show_border":
+		return !r.ShowBorder.IsNull()
+	case "show_password_requirements":
+		return !r.ShowPasswordRequirements.IsNull()
+	case "size":
+		return !r.Size.IsNull()
+	case "styles":
+		return !r.Styles.IsNull()
+	case "theme":
+		return !r.Theme.IsNull()
+	case "type":
+		return !r.Type.IsNull()
+	case "validation":
+		return !r.Validation.IsNull()
+	default:
+		return false
+	}
 }
 
 func (r *FormResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {

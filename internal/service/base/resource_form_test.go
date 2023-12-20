@@ -382,6 +382,11 @@ func TestAccForm_FieldCheckbox(t *testing.T) {
 		CheckDestroy:             base.Form_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Validate
+			{
+				Config:      testAccFormConfig_FieldCheckboxMissingRequiredParams(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid DaVinci form configuration`),
+			},
 			// Full step
 			fullStep,
 			{
@@ -485,6 +490,11 @@ func TestAccForm_FieldCombobox(t *testing.T) {
 		CheckDestroy:             base.Form_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Validate
+			{
+				Config:      testAccFormConfig_FieldComboboxMissingRequiredParams(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid DaVinci form configuration`),
+			},
 			// Full step
 			fullStep,
 			{
@@ -588,6 +598,11 @@ func TestAccForm_FieldDropdown(t *testing.T) {
 		CheckDestroy:             base.Form_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Validate
+			{
+				Config:      testAccFormConfig_FieldDropdownMissingRequiredParams(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid DaVinci form configuration`),
+			},
 			// Full step
 			fullStep,
 			{
@@ -683,6 +698,11 @@ func TestAccForm_FieldPassword(t *testing.T) {
 		CheckDestroy:             base.Form_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Validate
+			{
+				Config:      testAccFormConfig_FieldPasswordMissingRequiredParams(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid DaVinci form configuration`),
+			},
 			// Full step
 			fullStep,
 			{
@@ -779,6 +799,11 @@ func TestAccForm_FieldPasswordVerify(t *testing.T) {
 		CheckDestroy:             base.Form_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Validate
+			{
+				Config:      testAccFormConfig_FieldPasswordVerifyMissingRequiredParams(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid DaVinci form configuration`),
+			},
 			// Full step
 			fullStep,
 			{
@@ -883,6 +908,11 @@ func TestAccForm_FieldRadio(t *testing.T) {
 		CheckDestroy:             base.Form_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Validate
+			{
+				Config:      testAccFormConfig_FieldRadioMissingRequiredParams(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid DaVinci form configuration`),
+			},
 			// Full step
 			fullStep,
 			{
@@ -976,6 +1006,11 @@ func TestAccForm_FieldSubmitButton(t *testing.T) {
 		CheckDestroy:             base.Form_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Validate
+			{
+				Config:      testAccFormConfig_FieldSubmitButtonMissingRequiredParams(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid DaVinci form configuration`),
+			},
 			// Full step
 			fullStep,
 			{
@@ -1073,6 +1108,11 @@ func TestAccForm_FieldText(t *testing.T) {
 		CheckDestroy:             base.Form_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Validate
+			{
+				Config:      testAccFormConfig_FieldTextMissingRequiredParams(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid DaVinci form configuration`),
+			},
 			// Full step
 			fullStep,
 			{
@@ -1152,6 +1192,7 @@ func TestAccForm_ItemDivider(t *testing.T) {
 		CheckDestroy:             base.Form_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Validate - not required
 			// Full step
 			fullStep,
 			{
@@ -1230,6 +1271,7 @@ func TestAccForm_ItemEmptyField(t *testing.T) {
 		CheckDestroy:             base.Form_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Validate - Not required
 			// Full step
 			fullStep,
 			{
@@ -1309,6 +1351,7 @@ func TestAccForm_ItemErrorDisplay(t *testing.T) {
 		CheckDestroy:             base.Form_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Validate - Not required
 			// Full step
 			fullStep,
 			{
@@ -1404,6 +1447,11 @@ func TestAccForm_ItemFlowButton(t *testing.T) {
 		CheckDestroy:             base.Form_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Validate
+			{
+				Config:      testAccFormConfig_ItemFlowButtonMissingRequiredParams(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid DaVinci form configuration`),
+			},
 			// Full step
 			fullStep,
 			{
@@ -1494,6 +1542,11 @@ func TestAccForm_ItemFlowLink(t *testing.T) {
 		CheckDestroy:             base.Form_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Validate
+			{
+				Config:      testAccFormConfig_ItemFlowLinkMissingRequiredParams(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid DaVinci form configuration`),
+			},
 			// Full step
 			fullStep,
 			{
@@ -1581,6 +1634,11 @@ func TestAccForm_ItemQRCode(t *testing.T) {
 		CheckDestroy:             base.Form_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Validate
+			{
+				Config:      testAccFormConfig_ItemQRCodeMissingRequiredParams(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid DaVinci form configuration`),
+			},
 			// Full step
 			fullStep,
 			{
@@ -1666,6 +1724,11 @@ func TestAccForm_ItemRecaptchaV2(t *testing.T) {
 		CheckDestroy:             base.Form_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Validate
+			{
+				Config:      testAccFormConfig_ItemRecaptchaV2MissingRequiredParams(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid DaVinci form configuration`),
+			},
 			// Full step
 			fullStep,
 			{
@@ -1744,6 +1807,11 @@ func TestAccForm_ItemSlateTextblob(t *testing.T) {
 		CheckDestroy:             base.Form_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Validate
+			// {
+			// 	Config:      testAccFormConfig_ItemSlateTextblobMissingRequiredParams(resourceName, name),
+			// 	ExpectError: regexp.MustCompile(`Invalid DaVinci form configuration`),
+			// },
 			// Full step
 			fullStep,
 			{
@@ -1824,6 +1892,7 @@ func TestAccForm_ItemTextblob(t *testing.T) {
 		CheckDestroy:             base.Form_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Validate - Not required
 			// Full step
 			fullStep,
 			{
@@ -1878,6 +1947,15 @@ func TestAccForm_BadParameters(t *testing.T) {
 		CheckDestroy:             base.Form_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Test validation
+			{
+				Config:      testAccFormConfig_MultipleStepDuplicatePosition(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid DaVinci form configuration`),
+			},
+			{
+				Config:      testAccFormConfig_NoSubmitButton(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid DaVinci form configuration`),
+			},
 			// Configure
 			{
 				Config: testAccFormConfig_Minimal(resourceName, name),
@@ -2317,6 +2395,122 @@ resource "pingone_form" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
+func testAccFormConfig_MultipleStepDuplicatePosition(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "ERROR_DISPLAY"
+
+        position = {
+          row = 1
+          col = 0
+        }
+      },
+      {
+        type = "TEXT"
+
+        position = {
+          row = 2
+          col = 0
+        }
+
+        key = "user.username"
+        label = jsonencode(
+          [
+            {
+              "type" = "paragraph",
+              "children" = [
+                {
+                  "text" = ""
+                },
+                {
+                  "type"               = "i18n",
+                  "key"                = "fields.user.username.label",
+                  "defaultTranslation" = "Username",
+                  "inline"             = true,
+                  "children" = [
+                    {
+                      "text" = ""
+                    }
+                  ]
+                },
+                {
+                  "text" = ""
+                }
+              ]
+            }
+          ]
+        )
+
+        required = true
+
+        validation = {
+          type = "NONE"
+        }
+      },
+      {
+        type = "TEXTBLOB"
+
+        position = {
+          row = 0
+          col = 0
+        }
+
+        content = "<h2>Sign On</h2><hr>"
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 2
+          col = 0
+        }
+
+        label = jsonencode(
+          [
+            {
+              "type" = "paragraph",
+              "children" = [
+                {
+                  "text" = ""
+                },
+                {
+                  "type"               = "i18n",
+                  "key"                = "button.text.signOn",
+                  "defaultTranslation" = "Sign On",
+                  "inline"             = true,
+                  "children" = [
+                    {
+                      "text" = ""
+                    }
+                  ]
+                },
+                {
+                  "text" = ""
+                }
+              ]
+            }
+          ]
+        )
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
 func testAccFormConfig_FieldCheckboxFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -2430,6 +2624,67 @@ resource "pingone_form" "%[2]s" {
         key = "checkbox-field"
 
         layout = "HORIZONTAL"
+
+        options = [
+          {
+            value = "Option1",
+            label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]"
+          },
+          {
+            value = "Option3",
+            label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"
+          }
+        ]
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_FieldCheckboxMissingRequiredParams(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_schema_attribute" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  display_name = "%[3]s"
+
+  type        = "STRING"
+  unique      = false
+  multivalued = true
+}
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "CHECKBOX"
+
+        position = {
+          row = 0
+          col = 0
+        }
 
         options = [
           {
@@ -2584,6 +2839,56 @@ resource "pingone_form" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
+func testAccFormConfig_FieldComboboxMissingRequiredParams(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "COMBOBOX"
+
+        position = {
+          row = 0
+          col = 0
+        }
+
+        options = [
+          {
+            value = "Option1",
+            label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]"
+          },
+          {
+            value = "Option3",
+            label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"
+          }
+        ]
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
 func testAccFormConfig_FieldDropdownFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -2673,6 +2978,56 @@ resource "pingone_form" "%[2]s" {
         label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
 
         key = "dropdown-field"
+
+        options = [
+          {
+            value = "Option1",
+            label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]"
+          },
+          {
+            value = "Option3",
+            label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"
+          }
+        ]
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_FieldDropdownMissingRequiredParams(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "DROPDOWN"
+
+        position = {
+          row = 0
+          col = 0
+        }
 
         options = [
           {
@@ -2791,6 +3146,45 @@ resource "pingone_form" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
+func testAccFormConfig_FieldPasswordMissingRequiredParams(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "PASSWORD"
+
+        position = {
+          row = 0
+          col = 0
+        }
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
 func testAccFormConfig_FieldPasswordVerifyFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -2867,6 +3261,45 @@ resource "pingone_form" "%[2]s" {
         label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
 
         key = "password-field"
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_FieldPasswordVerifyMissingRequiredParams(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "PASSWORD_VERIFY"
+
+        position = {
+          row = 0
+          col = 0
+        }
       },
       {
         type = "SUBMIT_BUTTON"
@@ -3001,6 +3434,56 @@ resource "pingone_form" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
+func testAccFormConfig_FieldRadioMissingRequiredParams(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "RADIO"
+
+        position = {
+          row = 0
+          col = 0
+        }
+
+        options = [
+          {
+            value = "Option1",
+            label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]"
+          },
+          {
+            value = "Option3",
+            label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"
+          }
+        ]
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
 func testAccFormConfig_FieldSubmitButtonFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -3077,6 +3560,35 @@ resource "pingone_form" "%[2]s" {
         }
 
         label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_FieldSubmitButtonMissingRequiredParams(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 0
+          col = 0
+        }
       }
     ]
   }
@@ -3162,6 +3674,49 @@ resource "pingone_form" "%[2]s" {
         label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
 
         key = "text-field"
+
+        validation = {
+          type = "NONE"
+        }
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_FieldTextMissingRequiredParams(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "TEXT"
+
+        position = {
+          row = 0
+          col = 0
+        }
 
         validation = {
           type = "NONE"
@@ -3559,6 +4114,47 @@ resource "pingone_form" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
+func testAccFormConfig_ItemFlowButtonMissingRequiredParams(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "FLOW_BUTTON"
+
+        position = {
+          row = 0
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
 func testAccFormConfig_ItemFlowLinkFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -3636,6 +4232,47 @@ resource "pingone_form" "%[2]s" {
         type = "FLOW_LINK"
 
         key = "link-field"
+
+        position = {
+          row = 0
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_ItemFlowLinkMissingRequiredParams(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "FLOW_LINK"
 
         position = {
           row = 0
@@ -3747,6 +4384,45 @@ resource "pingone_form" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
+func testAccFormConfig_ItemQRCodeMissingRequiredParams(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "QR_CODE"
+
+        position = {
+          row = 0
+          col = 0
+        }
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
 func testAccFormConfig_ItemRecaptchaV2Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -3818,6 +4494,45 @@ resource "pingone_form" "%[2]s" {
         theme     = "DARK"
         size      = "COMPACT"
         alignment = "LEFT"
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_ItemRecaptchaV2MissingRequiredParams(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "RECAPTCHA_V2"
+
+        position = {
+          row = 0
+          col = 0
+        }
       },
       {
         type = "SUBMIT_BUTTON"
@@ -3990,6 +4705,35 @@ resource "pingone_form" "%[2]s" {
         }
 
         label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_NoSubmitButton(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "TEXTBLOB"
+
+        position = {
+          row = 0
+          col = 0
+        }
       }
     ]
   }
