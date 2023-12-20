@@ -191,7 +191,6 @@ func TestAccForm_Full(t *testing.T) {
 	})
 }
 
-// TODO
 func TestAccForm_Multiple(t *testing.T) {
 	t.Parallel()
 
@@ -203,8 +202,46 @@ func TestAccForm_Multiple(t *testing.T) {
 	step1 := resource.TestStep{
 		Config: testAccFormConfig_MultipleStep1(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "6"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "5"),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"type":           "TEXTBLOB",
+				"position.row":   "0",
+				"position.col":   "0",
+				"position.width": "",
+				"content":        "<h2>Sign On</h2><hr>",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"type":           "ERROR_DISPLAY",
+				"position.row":   "1",
+				"position.col":   "0",
+				"position.width": "",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"type":            "TEXT",
+				"position.row":    "2",
+				"position.col":    "0",
+				"position.width":  "",
+				"key":             "user.username",
+				"label":           "[{\"children\":[{\"text\":\"\"},{\"children\":[{\"text\":\"\"}],\"defaultTranslation\":\"Username\",\"inline\":true,\"key\":\"fields.user.username.label\",\"type\":\"i18n\"},{\"text\":\"\"}],\"type\":\"paragraph\"}]",
+				"required":        "true",
+				"validation.type": "NONE",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"type":           "PASSWORD",
+				"position.row":   "3",
+				"position.col":   "0",
+				"position.width": "",
+				"key":            "user.password",
+				"label":          "[{\"children\":[{\"text\":\"\"},{\"children\":[{\"text\":\"\"}],\"defaultTranslation\":\"Password\",\"inline\":true,\"key\":\"fields.user.password.label\",\"type\":\"i18n\"},{\"text\":\"\"}],\"type\":\"paragraph\"}]",
+				"required":       "true",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"type":           "SUBMIT_BUTTON",
+				"position.row":   "4",
+				"position.col":   "0",
+				"position.width": "",
+				"label":          "[{\"children\":[{\"text\":\"\"},{\"children\":[{\"text\":\"\"}],\"defaultTranslation\":\"Sign On\",\"inline\":true,\"key\":\"button.text.signOn\",\"type\":\"i18n\"},{\"text\":\"\"}],\"type\":\"paragraph\"}]",
+			}),
 		),
 	}
 
@@ -212,7 +249,36 @@ func TestAccForm_Multiple(t *testing.T) {
 		Config: testAccFormConfig_MultipleStep2(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "4"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"type":           "TEXTBLOB",
+				"position.row":   "0",
+				"position.col":   "0",
+				"position.width": "",
+				"content":        "<h2>Sign On</h2><hr>",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"type":           "ERROR_DISPLAY",
+				"position.row":   "1",
+				"position.col":   "0",
+				"position.width": "",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"type":            "TEXT",
+				"position.row":    "2",
+				"position.col":    "0",
+				"position.width":  "",
+				"key":             "user.username",
+				"label":           "[{\"children\":[{\"text\":\"\"},{\"children\":[{\"text\":\"\"}],\"defaultTranslation\":\"Username\",\"inline\":true,\"key\":\"fields.user.username.label\",\"type\":\"i18n\"},{\"text\":\"\"}],\"type\":\"paragraph\"}]",
+				"required":        "true",
+				"validation.type": "NONE",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"type":           "SUBMIT_BUTTON",
+				"position.row":   "3",
+				"position.col":   "0",
+				"position.width": "",
+				"label":          "[{\"children\":[{\"text\":\"\"},{\"children\":[{\"text\":\"\"}],\"defaultTranslation\":\"Sign On\",\"inline\":true,\"key\":\"button.text.signOn\",\"type\":\"i18n\"},{\"text\":\"\"}],\"type\":\"paragraph\"}]",
+			}),
 		),
 	}
 
@@ -1993,89 +2059,142 @@ resource "pingone_form" "%[2]s" {
   mark_required = true
   mark_optional = false
 
+  cols = 4
+
   components = {
     fields = [
       {
+        type = "TEXTBLOB"
+
         position = {
-          row = 0
-          col = 0
+          row   = 0
+          col   = 0
         }
 
-        field_slate_textblob = {
-          key     = "c8301910-4539-4980-a113-9120ebdd6bd5"
-          content = "[{\"children\":[{\"text\":\"Create Your Profile\"}],\"type\":\"heading-1\"},{\"children\":[{\"text\":\"Enter the required information below\"}]},{\"type\":\"divider\",\"children\":[{\"text\":\"\"}]},{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"}]}]"
-        }
+        content = "<h2>Sign On</h2><hr>"
       },
       {
+        type = "ERROR_DISPLAY"
+
         position = {
           row = 1
           col = 0
         }
-
-        field_error_display = {
-          key = "1e16e184-a8ad-40d6-b87d-866ca41df39e"
-        }
       },
       {
+        type = "TEXT"
+
         position = {
           row = 2
           col = 0
         }
 
-        field_text = {
-          label    = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.username.label\",\"defaultTranslation\":\"Username\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
-          key      = "user.username"
-          mode     = "ATTRIBUTE_MODE"
-          required = true
-          validation = {
-            type = "NONE"
-          }
+        key = "user.username"
+        label = jsonencode(
+          [
+            {
+              "type" = "paragraph",
+              "children" = [
+                {
+                  "text" = ""
+                },
+                {
+                  "type" = "i18n",
+                  "key" = "fields.user.username.label",
+                  "defaultTranslation" = "Username",
+                  "inline" = true,
+                  "children" = [
+                    {
+                      "text" = ""
+                    }
+                  ]
+                },
+                {
+                  "text" = ""
+                }
+              ]
+            }
+          ]
+        )
+
+        required = true
+
+        validation = {
+          type = "NONE"
         }
       },
       {
+        type = "PASSWORD"
+
         position = {
           row = 3
           col = 0
         }
 
-        field_text = {
-          label    = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.email.label\",\"defaultTranslation\":\"Email Address\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
-          key      = "user.email"
-          mode     = "ATTRIBUTE_MODE"
-          required = true
-          validation = {
-            type = "NONE"
-          }
-        }
+        key = "user.password"
+        label = jsonencode(
+          [
+            {
+              "type" = "paragraph",
+              "children" = [
+                {
+                  "text" = ""
+                },
+                {
+                  "type" = "i18n",
+                  "key" = "fields.user.password.label",
+                  "defaultTranslation" = "Password",
+                  "inline" = true,
+                  "children" = [
+                    {
+                      "text" = ""
+                    }
+                  ]
+                },
+                {
+                  "text" = ""
+                }
+              ]
+            }
+          ]
+        )
+        
+        required = true
       },
       {
-        "position" : {
+        type = "SUBMIT_BUTTON"
+
+        position = {
           row = 4
           col = 0
         }
 
-        field_password_verify = {
-          label               = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.password.label\",\"defaultTranslation\":\"Password\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
-          labelPasswordVerify = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.password.labelPasswordVerify\",\"defaultTranslation\":\"Verify Password\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
-          key                 = "user.password"
-          mode                = "ATTRIBUTE_MODE"
-          required            = true
-          validation = {
-            type = "NONE"
-          },
-          show_password_requirements : true
-        }
-      },
-      {
-        position = {
-          row = 5
-          col = 0
-        }
-
-        field_submit_button = {
-          key   = "697dc4e9-acf5-4c04-9f7e-3974ea999c37"
-          label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
-        }
+        label = jsonencode(
+          [
+            {
+              "type" = "paragraph",
+              "children" = [
+                {
+                  "text" = ""
+                },
+                {
+                  "type" = "i18n",
+                  "key" = "button.text.signOn",
+                  "defaultTranslation" = "Sign On",
+                  "inline" = true,
+                  "children" = [
+                    {
+                      "text" = ""
+                    }
+                  ]
+                },
+                {
+                  "text" = ""
+                }
+              ]
+            }
+          ]
+        )
       }
     ]
   }
@@ -2094,61 +2213,104 @@ resource "pingone_form" "%[2]s" {
   mark_required = true
   mark_optional = false
 
+  cols = 4
+
   components = {
     fields = [
       {
-        position = {
-          row = 0
-          col = 0
-        }
+        type = "ERROR_DISPLAY"
 
-        field_slate_textblob = {
-          key     = "c8301910-4539-4980-a113-9120ebdd6bd5"
-          content = "[{\"children\":[{\"text\":\"Create Your Profile\"}],\"type\":\"heading-1\"},{\"children\":[{\"text\":\"Enter the required information below\"}]},{\"type\":\"divider\",\"children\":[{\"text\":\"\"}]},{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"}]}]"
+        position = {
+          row = 1
+          col = 0
         }
       },
       {
+        type = "TEXT"
+
         position = {
           row = 2
           col = 0
         }
 
-        field_text = {
-          label    = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.email.label\",\"defaultTranslation\":\"Email Address\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
-          key      = "user.email"
-          mode     = "ATTRIBUTE_MODE"
-          required = true
-          validation = {
-            type = "NONE"
-          }
+        key = "user.username"
+        label = jsonencode(
+          [
+            {
+              "type" = "paragraph",
+              "children" = [
+                {
+                  "text" = ""
+                },
+                {
+                  "type" = "i18n",
+                  "key" = "fields.user.username.label",
+                  "defaultTranslation" = "Username",
+                  "inline" = true,
+                  "children" = [
+                    {
+                      "text" = ""
+                    }
+                  ]
+                },
+                {
+                  "text" = ""
+                }
+              ]
+            }
+          ]
+        )
+
+        required = true
+
+        validation = {
+          type = "NONE"
         }
       },
-      {
+	  {
+        type = "TEXTBLOB"
+
         position = {
-          row = 1
-          col = 0
+          row   = 0
+          col   = 0
         }
 
-        field_text = {
-          label    = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.username.label\",\"defaultTranslation\":\"Username\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
-          key      = "user.username"
-          mode     = "ATTRIBUTE_MODE"
-          required = true
-          validation = {
-            type = "NONE"
-          }
-        }
+        content = "<h2>Sign On</h2><hr>"
       },
       {
+        type = "SUBMIT_BUTTON"
+
         position = {
           row = 3
           col = 0
         }
 
-        field_submit_button = {
-          key   = "697dc4e9-acf5-4c04-9f7e-3974ea999c37"
-          label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
-        }
+        label = jsonencode(
+          [
+            {
+              "type" = "paragraph",
+              "children" = [
+                {
+                  "text" = ""
+                },
+                {
+                  "type" = "i18n",
+                  "key" = "button.text.signOn",
+                  "defaultTranslation" = "Sign On",
+                  "inline" = true,
+                  "children" = [
+                    {
+                      "text" = ""
+                    }
+                  ]
+                },
+                {
+                  "text" = ""
+                }
+              ]
+            }
+          ]
+        )
       }
     ]
   }

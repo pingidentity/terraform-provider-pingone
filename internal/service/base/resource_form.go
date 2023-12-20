@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
@@ -25,6 +26,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
+	"golang.org/x/exp/slices"
 )
 
 // Types
@@ -121,6 +123,11 @@ type formComponentsFieldButtonStylesPaddingResourceModel struct {
 	Top    types.Int64 `tfsdk:"top"`
 }
 
+type formComponentsFieldsSchemaDef struct {
+	Required []string
+	Optional []string
+}
+
 var (
 	// Form Components
 	formComponentsTFObjectTypes = map[string]attr.Type{
@@ -195,6 +202,208 @@ var (
 		"left":   types.Int64Type,
 		"right":  types.Int64Type,
 		"top":    types.Int64Type,
+	}
+
+	formComponentsFieldsSchemaDefMap = map[management.EnumFormFieldType]formComponentsFieldsSchemaDef{
+		management.ENUMFORMFIELDTYPE_CHECKBOX: {
+			Required: []string{
+				"type",
+				"position",
+				"key",
+				"label",
+				"layout",
+				"options",
+			},
+			Optional: []string{
+				"attribute_disabled",
+				"label_mode",
+				"required",
+			},
+		},
+		management.ENUMFORMFIELDTYPE_COMBOBOX: {
+			Required: []string{
+				"type",
+				"position",
+				"key",
+				"label",
+				"options",
+			},
+			Optional: []string{
+				"attribute_disabled",
+				"label_mode",
+				"layout",
+				"required",
+			},
+		},
+		management.ENUMFORMFIELDTYPE_DIVIDER: {
+			Required: []string{
+				"type",
+				"position",
+			},
+			Optional: []string{},
+		},
+		management.ENUMFORMFIELDTYPE_DROPDOWN: {
+			Required: []string{
+				"type",
+				"position",
+				"key",
+				"label",
+				"options",
+			},
+			Optional: []string{
+				"attribute_disabled",
+				"label_mode",
+				"layout",
+				"required",
+			},
+		},
+		management.ENUMFORMFIELDTYPE_EMPTY_FIELD: {
+			Required: []string{
+				"type",
+				"position",
+			},
+			Optional: []string{},
+		},
+		management.ENUMFORMFIELDTYPE_ERROR_DISPLAY: {
+			Required: []string{
+				"type",
+				"position",
+			},
+			Optional: []string{},
+		},
+		management.ENUMFORMFIELDTYPE_FLOW_BUTTON: {
+			Required: []string{
+				"type",
+				"position",
+				"key",
+				"label",
+			},
+			Optional: []string{
+				"styles",
+			},
+		},
+		management.ENUMFORMFIELDTYPE_FLOW_LINK: {
+			Required: []string{
+				"type",
+				"position",
+				"key",
+				"label",
+			},
+			Optional: []string{
+				"styles",
+			},
+		},
+		management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY: {
+			Required: []string{
+				"type",
+				"position",
+				"key",
+				"label",
+			},
+			Optional: []string{
+				"attribute_disabled",
+				"label_mode",
+				"label_password_verify",
+				"layout",
+				"required",
+				"show_password_requirements",
+			},
+		},
+		management.ENUMFORMFIELDTYPE_PASSWORD: {
+			Required: []string{
+				"type",
+				"position",
+				"key",
+				"label",
+			},
+			Optional: []string{
+				"attribute_disabled",
+				"label_mode",
+				"layout",
+				"required",
+				"show_password_requirements",
+			},
+		},
+		management.ENUMFORMFIELDTYPE_QR_CODE: {
+			Required: []string{
+				"type",
+				"position",
+				"key",
+				"qr_code_type",
+				"alignment",
+			},
+			Optional: []string{
+				"show_border",
+			},
+		},
+		management.ENUMFORMFIELDTYPE_RADIO: {
+			Required: []string{
+				"type",
+				"position",
+				"key",
+				"label",
+				"layout",
+				"options",
+			},
+			Optional: []string{
+				"attribute_disabled",
+				"label_mode",
+				"required",
+			},
+		},
+		management.ENUMFORMFIELDTYPE_RECAPTCHA_V2: {
+			Required: []string{
+				"type",
+				"position",
+				"size",
+				"theme",
+				"alignment",
+			},
+			Optional: []string{},
+		},
+		management.ENUMFORMFIELDTYPE_SLATE_TEXTBLOB: {
+			Required: []string{
+				"type",
+				"position",
+			},
+			Optional: []string{
+				"content",
+			},
+		},
+		management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON: {
+			Required: []string{
+				"type",
+				"position",
+				"label",
+			},
+			Optional: []string{
+				"styles",
+			},
+		},
+		management.ENUMFORMFIELDTYPE_TEXT: {
+			Required: []string{
+				"type",
+				"position",
+				"key",
+				"label",
+				"validation",
+			},
+			Optional: []string{
+				"attribute_disabled",
+				"label_mode",
+				"layout",
+				"required",
+			},
+		},
+		management.ENUMFORMFIELDTYPE_TEXTBLOB: {
+			Required: []string{
+				"type",
+				"position",
+			},
+			Optional: []string{
+				"content",
+			},
+		},
 	}
 )
 
@@ -274,7 +483,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	)
 
 	componentsFieldsPositionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object that specifies the position of the form field in the form.",
+		"A single object that specifies the position of the form field in the form.  The combination of `col` and `row` must be unique between form fields.",
 	)
 
 	componentsFieldsPositionColDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -294,34 +503,50 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	).AllowedValuesEnum(supportedFormFieldTypes)
 
 	componentsFieldsAttributeDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("attribute_disabled"),
+	).AppendMarkdownString(
 		"A boolean that specifies whether the linked directory attribute is disabled.",
-	).RequiresReplace()
+	)
 
 	componentsFieldsContentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("content"),
+	).AppendMarkdownString(
 		"",
 	)
 
 	componentsFieldsKeyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("key"),
+	).AppendMarkdownString(
 		"A string that specifies an identifier for the field component.",
 	)
 
 	componentsFieldsLabelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("label"),
+	).AppendMarkdownString(
 		"A string that specifies the field label.",
 	)
 
 	componentsFieldsLabelPasswordVerifyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("label_password_verify"),
+	).AppendMarkdownString(
 		"A string that when a second field for verifies password is used, this property specifies the field label for that verify field.",
 	)
 
 	componentsFieldsLabelModeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("label_mode"),
+	).AppendMarkdownString(
 		"A string that specifies how the field is rendered.",
 	).AllowedValuesEnum(management.AllowedEnumFormElementLabelModeEnumValues)
 
 	componentsFieldsLayoutDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("layout"),
+	).AppendMarkdownString(
 		"A string that specifies layout attributes for radio button and checkbox fields.",
 	).AllowedValuesEnum(management.AllowedEnumFormElementLayoutEnumValues)
 
 	componentsFieldsOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("options"),
+	).AppendMarkdownString(
 		"An array of objects that specifies the unique list of options.",
 	)
 
@@ -334,10 +559,14 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	)
 
 	componentsFieldsRequiredDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("required"),
+	).AppendMarkdownString(
 		"A boolean that specifies whether the field is required.",
 	)
 
 	componentsFieldsValidationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("validation"),
+	).AppendMarkdownString(
 		"An object containing validation data for the field.",
 	)
 
@@ -374,11 +603,15 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	)
 
 	componentsFieldsShowPasswordRequirementsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("show_password_requirements"),
+	).AppendMarkdownString(
 		"",
 	)
 
 	componentsFieldsStylesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object that describes style settings for the button.",
+		formFieldValidationDocumentation("styles"),
+	).AppendMarkdownString(
+		"A single object that describes style settings for the field.",
 	)
 
 	componentsFieldsStylesWidthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -434,31 +667,41 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	)
 
 	componentsFieldsSizeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("size"),
+	).AppendMarkdownString(
 		"A string that specifies the reCAPTCHA size.",
 	).AllowedValuesEnum(management.AllowedEnumFormRecaptchaV2SizeEnumValues)
 
 	componentsFieldsThemeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("theme"),
+	).AppendMarkdownString(
 		"A string that specifies the reCAPTCHA theme.",
 	).AllowedValuesEnum(management.AllowedEnumFormRecaptchaV2ThemeEnumValues)
 
 	componentsFieldsAlignmentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("alignment"),
+	).AppendMarkdownString(
 		"A string that specifies the reCAPTCHA alignment.",
 	).AllowedValuesEnum(management.AllowedEnumFormItemAlignmentEnumValues)
 
 	componentsFieldsQrCodeTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("qr_code_type"),
+	).AppendMarkdownString(
 		"A string that specifies the QR Code type.",
 	)
 
 	componentsFieldsShowBorderDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("show_border"),
+	).AppendMarkdownString(
 		"A boolean that specifies the border visibility.",
 	)
 
 	fieldTypesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A set of strings that specifies the field types in the form.",
-	).AllowedValuesEnum(management.AllowedEnumFormFieldTypeEnumValues)
+	).AllowedValuesEnum(supportedFormFieldTypes)
 
 	languageBundleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An map of strings that provides i18n keys to their translations. This object includes both the keys and their default translations. The PingOne language management service finds this object, and creates the new keys for translation for this form.",
+		"An map of strings that provides i18n keys to their translations. This object includes both the keys and their default translations.",
 	)
 
 	markOptionalDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -475,7 +718,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage PingOne forms for an environment.",
+		Description: "Resource to create and manage PingOne DaVinci forms in an environment.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -724,7 +967,6 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 								"other_option_enabled": schema.BoolAttribute{
 									Description:         componentsFieldsOtherOptionEnabledDescription.Description,
 									MarkdownDescription: componentsFieldsOtherOptionEnabledDescription.MarkdownDescription,
-									Optional:            true,
 									Computed:            true,
 
 									// TODO: functional validator
@@ -733,7 +975,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 								"other_option_key": schema.StringAttribute{
 									Description:         componentsFieldsOtherOptionKeyDescription.Description,
 									MarkdownDescription: componentsFieldsOtherOptionKeyDescription.MarkdownDescription,
-									Optional:            true,
+									Computed:            true,
 
 									// TODO: functional validator
 								},
@@ -741,7 +983,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 								"other_option_label": schema.StringAttribute{
 									Description:         componentsFieldsOtherOptionLabelDescription.Description,
 									MarkdownDescription: componentsFieldsOtherOptionLabelDescription.MarkdownDescription,
-									Optional:            true,
+									Computed:            true,
 
 									// TODO: functional validator
 								},
@@ -749,7 +991,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 								"other_option_input_label": schema.StringAttribute{
 									Description:         componentsFieldsOtherOptionInputLabelDescription.Description,
 									MarkdownDescription: componentsFieldsOtherOptionInputLabelDescription.MarkdownDescription,
-									Optional:            true,
+									Computed:            true,
 
 									// TODO: functional validator
 								},
@@ -757,7 +999,6 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 								"other_option_attribute_disabled": schema.BoolAttribute{
 									Description:         componentsFieldsOtherOptionAttributeDisabledDescription.Description,
 									MarkdownDescription: componentsFieldsOtherOptionAttributeDisabledDescription.MarkdownDescription,
-									Optional:            true,
 									Computed:            true,
 
 									// TODO: functional validator
@@ -958,6 +1199,51 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			},
 		},
 	}
+}
+func formFieldValidationDocumentation(key string) string {
+
+	requiredTypes := []string{}
+	optionalTypes := []string{}
+	notApplicableTypes := []string{}
+
+	for formFieldType, formField := range formComponentsFieldsSchemaDefMap {
+		if slices.Contains(formField.Required, key) {
+			requiredTypes = append(requiredTypes, string(formFieldType))
+		}
+
+		if slices.Contains(formField.Optional, key) {
+			optionalTypes = append(optionalTypes, string(formFieldType))
+		}
+
+		if !slices.Contains(formField.Required, key) && !slices.Contains(formField.Optional, key) {
+			notApplicableTypes = append(notApplicableTypes, string(formFieldType))
+		}
+	}
+
+	returnVar := ""
+
+	descriptionSet := false
+
+	if len(requiredTypes) > 0 {
+		returnVar += fmt.Sprintf("**Required** when the `type` is one of `%s`", strings.Join(requiredTypes, "`, `"))
+		descriptionSet = true
+	}
+
+	if len(optionalTypes) > 0 {
+		if descriptionSet {
+			returnVar += ", o"
+		} else {
+			returnVar += "O"
+		}
+		returnVar += fmt.Sprintf("ptional when the `type` is one of `%s`", strings.Join(optionalTypes, "`, `"))
+		descriptionSet = true
+	}
+
+	if descriptionSet {
+		returnVar += "."
+	}
+
+	return returnVar
 }
 
 func (r *FormResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {

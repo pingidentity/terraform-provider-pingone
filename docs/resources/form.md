@@ -2,12 +2,12 @@
 page_title: "pingone_form Resource - terraform-provider-pingone"
 subcategory: "Platform"
 description: |-
-  Resource to create and manage PingOne forms for an environment.
+  Resource to create and manage PingOne DaVinci forms in an environment.
 ---
 
 # pingone_form (Resource)
 
-Resource to create and manage PingOne forms for an environment.
+Resource to create and manage PingOne DaVinci forms in an environment.
 
 ## Example Usage
 
@@ -19,74 +19,148 @@ resource "pingone_environment" "my_environment" {
 resource "pingone_form" "my_awesome_form" {
   environment_id = pingone_environment.my_environment.id
 
-  name        = "My Awesome Form"
-  description = "This is my awesome form"
+  name        = "My Awesome Sign On Form"
+  description = "This is my awesome form with fields for sign on"
 
   mark_required = false
   mark_optional = true
 
   cols = 4
 
-  language_bundle = {
-    "button.text"                              = "Submit",
-    "fields.user.email.label"                  = "Email Address",
-    "fields.user.password.label"               = "Password"
-    "fields.user.password.labelPasswordVerify" = "Verify Password",
-    "fields.user.username.label"               = "Username",
-  }
-
   components = {
     fields = [
       {
-        position = {
-          row = 0,
-          col = 0,
+        type = "TEXTBLOB"
 
-          field_slate_textblob = {
-            content = jsonencode(
-              [
-                {
-                  "children" : [
-                    {
-                      "text" : "My awesome form!"
-                    }
-                  ],
-                  "type" : "heading-1"
-                },
-                {
-                  "children" : [
-                    {
-                      "text" : "Enter the required information below"
-                    }
-                  ]
-                },
-                {
-                  "type" : "divider",
-                  "children" : [
-                    {
-                      "text" : ""
-                    }
-                  ]
-                },
-                {
-                  "type" : "paragraph",
-                  "children" : [
-                    {
-                      "text" : ""
-                    }
-                  ]
-                }
-            ])
-          }
+        position = {
+          row = 0
+          col = 0
+        }
+
+        content = "<h2>Sign On</h2><hr>"
+      },
+      {
+        type = "ERROR_DISPLAY"
+
+        position = {
+          row = 1
+          col = 0
         }
       },
       {
-        position = {
-          row = 1,
-          col = 0,
+        type = "TEXT"
 
-          field_error_display = {}
+        position = {
+          row = 2
+          col = 0
         }
+
+        key = "user.username"
+        label = jsonencode(
+          [
+            {
+              "type" = "paragraph",
+              "children" = [
+                {
+                  "text" = ""
+                },
+                {
+                  "type"               = "i18n",
+                  "key"                = "fields.user.username.label",
+                  "defaultTranslation" = "Username",
+                  "inline"             = true,
+                  "children" = [
+                    {
+                      "text" = ""
+                    }
+                  ]
+                },
+                {
+                  "text" = ""
+                }
+              ]
+            }
+          ]
+        )
+
+        required = true
+
+        validation = {
+          type = "NONE"
+        }
+      },
+      {
+        type = "PASSWORD"
+
+        position = {
+          row = 3
+          col = 0
+        }
+
+        key = "user.password"
+        label = jsonencode(
+          [
+            {
+              "type" = "paragraph",
+              "children" = [
+                {
+                  "text" = ""
+                },
+                {
+                  "type"               = "i18n",
+                  "key"                = "fields.user.password.label",
+                  "defaultTranslation" = "Password",
+                  "inline"             = true,
+                  "children" = [
+                    {
+                      "text" = ""
+                    }
+                  ]
+                },
+                {
+                  "text" = ""
+                }
+              ]
+            }
+          ]
+        )
+
+        required = true
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 4
+          col = 0
+        }
+
+        label = jsonencode(
+          [
+            {
+              "type" = "paragraph",
+              "children" = [
+                {
+                  "text" = ""
+                },
+                {
+                  "type"               = "i18n",
+                  "key"                = "button.text.signOn",
+                  "defaultTranslation" = "Sign On",
+                  "inline"             = true,
+                  "children" = [
+                    {
+                      "text" = ""
+                    }
+                  ]
+                },
+                {
+                  "text" = ""
+                }
+              ]
+            }
+          ]
+        )
       }
     ]
   }
@@ -113,9 +187,9 @@ resource "pingone_form" "my_awesome_form" {
 
 ### Read-Only
 
-- `field_types` (Set of String) A set of strings that specifies the field types in the form.  Options are `CHECKBOX`, `COMBOBOX`, `DIVIDER`, `DROPDOWN`, `EMPTY_FIELD`, `ERROR_DISPLAY`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `RECAPTCHA_V2`, `SLATE_TEXTBLOB`, `SOCIAL_LOGIN_BUTTON`, `SUBMIT_BUTTON`, `TEXT`, `TEXTBLOB`.
+- `field_types` (Set of String) A set of strings that specifies the field types in the form.  Options are `CHECKBOX`, `COMBOBOX`, `DIVIDER`, `DROPDOWN`, `EMPTY_FIELD`, `ERROR_DISPLAY`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `RECAPTCHA_V2`, `SLATE_TEXTBLOB`, `SUBMIT_BUTTON`, `TEXT`, `TEXTBLOB`.
 - `id` (String) The ID of this resource.
-- `language_bundle` (Map of String) An map of strings that provides i18n keys to their translations. This object includes both the keys and their default translations. The PingOne language management service finds this object, and creates the new keys for translation for this form.
+- `language_bundle` (Map of String) An map of strings that provides i18n keys to their translations. This object includes both the keys and their default translations.
 
 <a id="nestedatt--components"></a>
 ### Nested Schema for `components`
@@ -129,33 +203,36 @@ Required:
 
 Required:
 
-- `position` (Attributes) A single object that specifies the position of the form field in the form. (see [below for nested schema](#nestedatt--components--fields--position))
+- `position` (Attributes) A single object that specifies the position of the form field in the form.  The combination of `col` and `row` must be unique between form fields. (see [below for nested schema](#nestedatt--components--fields--position))
 - `type` (String) A string that specifies the type of form field.  Options are `CHECKBOX`, `COMBOBOX`, `DIVIDER`, `DROPDOWN`, `EMPTY_FIELD`, `ERROR_DISPLAY`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `RECAPTCHA_V2`, `SLATE_TEXTBLOB`, `SUBMIT_BUTTON`, `TEXT`, `TEXTBLOB`.
 
 Optional:
 
-- `alignment` (String) A string that specifies the reCAPTCHA alignment.  Options are `CENTER`, `LEFT`, `RIGHT`.
-- `attribute_disabled` (Boolean) A boolean that specifies whether the linked directory attribute is disabled.  This field is immutable and will trigger a replace plan if changed.
-- `content` (String)
-- `key` (String) A string that specifies an identifier for the field component.
-- `label` (String) A string that specifies the field label.
-- `label_mode` (String) A string that specifies how the field is rendered.  Options are `DEFAULT`, `FLOAT`.
-- `label_password_verify` (String) A string that when a second field for verifies password is used, this property specifies the field label for that verify field.
-- `layout` (String) A string that specifies layout attributes for radio button and checkbox fields.  Options are `HORIZONTAL`, `VERTICAL`.
-- `options` (Attributes Set) An array of objects that specifies the unique list of options. (see [below for nested schema](#nestedatt--components--fields--options))
+- `alignment` (String) **Required** when the `type` is one of `RECAPTCHA_V2`, `QR_CODE`.  A string that specifies the reCAPTCHA alignment.  Options are `CENTER`, `LEFT`, `RIGHT`.
+- `attribute_disabled` (Boolean) Optional when the `type` is one of `COMBOBOX`, `PASSWORD`, `CHECKBOX`, `DROPDOWN`, `PASSWORD_VERIFY`, `TEXT`, `RADIO`.  A boolean that specifies whether the linked directory attribute is disabled.
+- `content` (String) Optional when the `type` is one of `SLATE_TEXTBLOB`, `TEXTBLOB`.
+- `key` (String) **Required** when the `type` is one of `COMBOBOX`, `QR_CODE`, `PASSWORD`, `TEXT`, `CHECKBOX`, `DROPDOWN`, `PASSWORD_VERIFY`, `FLOW_BUTTON`, `FLOW_LINK`, `RADIO`.  A string that specifies an identifier for the field component.
+- `label` (String) **Required** when the `type` is one of `PASSWORD`, `CHECKBOX`, `DROPDOWN`, `PASSWORD_VERIFY`, `TEXT`, `FLOW_BUTTON`, `FLOW_LINK`, `RADIO`, `SUBMIT_BUTTON`, `COMBOBOX`.  A string that specifies the field label.
+- `label_mode` (String) Optional when the `type` is one of `COMBOBOX`, `PASSWORD`, `DROPDOWN`, `PASSWORD_VERIFY`, `TEXT`, `CHECKBOX`, `RADIO`.  A string that specifies how the field is rendered.  Options are `DEFAULT`, `FLOAT`.
+- `label_password_verify` (String) Optional when the `type` is one of `PASSWORD_VERIFY`.  A string that when a second field for verifies password is used, this property specifies the field label for that verify field.
+- `layout` (String) **Required** when the `type` is one of `CHECKBOX`, `RADIO`, optional when the `type` is one of `DROPDOWN`, `PASSWORD_VERIFY`, `TEXT`, `COMBOBOX`, `PASSWORD`.  A string that specifies layout attributes for radio button and checkbox fields.  Options are `HORIZONTAL`, `VERTICAL`.
+- `options` (Attributes Set) **Required** when the `type` is one of `DROPDOWN`, `CHECKBOX`, `RADIO`, `COMBOBOX`.  An array of objects that specifies the unique list of options. (see [below for nested schema](#nestedatt--components--fields--options))
+- `qr_code_type` (String) **Required** when the `type` is one of `QR_CODE`.  A string that specifies the QR Code type.
+- `required` (Boolean) Optional when the `type` is one of `DROPDOWN`, `PASSWORD_VERIFY`, `TEXT`, `CHECKBOX`, `RADIO`, `COMBOBOX`, `PASSWORD`.  A boolean that specifies whether the field is required.
+- `show_border` (Boolean) Optional when the `type` is one of `QR_CODE`.  A boolean that specifies the border visibility.
+- `show_password_requirements` (Boolean) Optional when the `type` is one of `PASSWORD`, `PASSWORD_VERIFY`.
+- `size` (String) **Required** when the `type` is one of `RECAPTCHA_V2`.  A string that specifies the reCAPTCHA size.  Options are `COMPACT`, `NORMAL`.
+- `styles` (Attributes) Optional when the `type` is one of `SUBMIT_BUTTON`, `FLOW_BUTTON`, `FLOW_LINK`.  A single object that describes style settings for the field. (see [below for nested schema](#nestedatt--components--fields--styles))
+- `theme` (String) **Required** when the `type` is one of `RECAPTCHA_V2`.  A string that specifies the reCAPTCHA theme.  Options are `DARK`, `LIGHT`.
+- `validation` (Attributes) **Required** when the `type` is one of `TEXT`.  An object containing validation data for the field. (see [below for nested schema](#nestedatt--components--fields--validation))
+
+Read-Only:
+
 - `other_option_attribute_disabled` (Boolean) A boolean that specifies whether the directory attribute option is disabled. Set to `true` if it references a PingOne directory attribute.
 - `other_option_enabled` (Boolean) A boolean that specifies whether the end user can type an entry that is not in a predefined list.
 - `other_option_input_label` (String) A string that specifies the label for the other option in drop-down controls.
 - `other_option_key` (String) A string that specifies whether the form identifies that the choice is a custom choice not from a predefined list.
 - `other_option_label` (String) A string that specifies the label for a custom or "other" choice in a list.
-- `qr_code_type` (String) A string that specifies the QR Code type.
-- `required` (Boolean) A boolean that specifies whether the field is required.
-- `show_border` (Boolean) A boolean that specifies the border visibility.
-- `show_password_requirements` (Boolean)
-- `size` (String) A string that specifies the reCAPTCHA size.  Options are `COMPACT`, `NORMAL`.
-- `styles` (Attributes) A single object that describes style settings for the button. (see [below for nested schema](#nestedatt--components--fields--styles))
-- `theme` (String) A string that specifies the reCAPTCHA theme.  Options are `DARK`, `LIGHT`.
-- `validation` (Attributes) An object containing validation data for the field. (see [below for nested schema](#nestedatt--components--fields--validation))
 
 <a id="nestedatt--components--fields--position"></a>
 ### Nested Schema for `components.fields.position`
