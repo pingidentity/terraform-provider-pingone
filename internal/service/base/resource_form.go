@@ -119,7 +119,7 @@ type formComponentsFieldButtonResourceModel struct {
 
 type formComponentsFieldFlowButtonResourceModel formComponentsFieldButtonResourceModel
 
-type formComponentsFieldButtonStylesResourceModel struct {
+type formComponentsFieldStylesResourceModel struct {
 	Alignment       types.String `tfsdk:"alignment"`
 	BackgroundColor types.String `tfsdk:"background_color"`
 	BorderColor     types.String `tfsdk:"border_color"`
@@ -1367,7 +1367,7 @@ func (r *FormResource) Create(ctx context.Context, req resource.CreateRequest, r
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(ctx, response)...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -1412,7 +1412,7 @@ func (r *FormResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(ctx, response)...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -1461,7 +1461,7 @@ func (r *FormResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(ctx, response)...)
+	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -1600,7 +1600,7 @@ func (p *formResourceModel) expand(ctx context.Context) (*management.Form, diag.
 }
 
 func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*management.FormField, diag.Diagnostics) {
-	var diags diag.Diagnostics
+	var d, diags diag.Diagnostics
 
 	data := &management.FormField{}
 
@@ -1613,11 +1613,7 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 		return nil, diags
 	}
 
-	positionData, d := positionPlan.expand(ctx)
-	diags.Append(d...)
-	if diags.HasError() {
-		return nil, diags
-	}
+	positionData := positionPlan.expand()
 
 	switch p.Type.ValueString() {
 	case string(management.ENUMFORMFIELDTYPE_CHECKBOX):
@@ -1625,30 +1621,34 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 	case string(management.ENUMFORMFIELDTYPE_COMBOBOX):
 		data.FormFieldCombobox, d = p.expandFieldCombobox(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_DIVIDER):
-		data.FormFieldDivider, d = p.expandItemDivider(ctx, positionData)
+		data.FormFieldDivider = p.expandItemDivider(positionData)
 	case string(management.ENUMFORMFIELDTYPE_DROPDOWN):
 		data.FormFieldDropdown, d = p.expandFieldDropdown(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_EMPTY_FIELD):
-		data.FormFieldEmptyField, d = p.expandItemEmptyField(ctx, positionData)
+		data.FormFieldEmptyField = p.expandItemEmptyField(positionData)
 	case string(management.ENUMFORMFIELDTYPE_ERROR_DISPLAY):
-		data.FormFieldErrorDisplay, d = p.expandItemErrorDisplay(ctx, positionData)
+		data.FormFieldErrorDisplay = p.expandItemErrorDisplay(positionData)
 	case string(management.ENUMFORMFIELDTYPE_FLOW_BUTTON):
 		data.FormFieldFlowButton, d = p.expandItemFlowButton(ctx, positionData)
+	case string(management.ENUMFORMFIELDTYPE_FLOW_LINK):
+		data.FormFieldFlowLink, d = p.expandItemFlowLink(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_PASSWORD):
-		data.FormFieldPassword, d = p.expandFieldPassword(ctx, positionData)
+		data.FormFieldPassword = p.expandFieldPassword(positionData)
 	case string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY):
-		data.FormFieldPasswordVerify, d = p.expandFieldPasswordVerify(ctx, positionData)
+		data.FormFieldPasswordVerify = p.expandFieldPasswordVerify(positionData)
 	case string(management.ENUMFORMFIELDTYPE_RADIO):
 		data.FormFieldRadio, d = p.expandFieldRadio(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_SLATE_TEXTBLOB):
-		data.FormFieldSlateTextblob, d = p.expandItemSlateTextblob(ctx, positionData)
+		data.FormFieldSlateTextblob = p.expandItemSlateTextblob(positionData)
 	case string(management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON):
 		data.FormFieldSubmitButton, d = p.expandFieldSubmitButton(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_TEXT):
 		data.FormFieldText, d = p.expandFieldText(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_TEXTBLOB):
-		data.FormFieldTextblob, d = p.expandItemTextblob(ctx, positionData)
+		data.FormFieldTextblob = p.expandItemTextblob(positionData)
 	}
+
+	diags.Append(d...)
 
 	if diags.HasError() {
 		return nil, diags
@@ -1657,8 +1657,7 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 	return data, diags
 }
 
-func (p *formComponentsFieldPositionResourceModel) expand(ctx context.Context) (*management.FormFieldCommonPosition, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func (p *formComponentsFieldPositionResourceModel) expand() *management.FormFieldCommonPosition {
 
 	data := management.NewFormFieldCommonPosition(
 		int32(p.Row.ValueInt64()),
@@ -1669,11 +1668,10 @@ func (p *formComponentsFieldPositionResourceModel) expand(ctx context.Context) (
 		data.SetWidth(int32(p.Width.ValueInt64()))
 	}
 
-	return data, diags
+	return data
 }
 
-func (p *formComponentsFieldElementValidationResourceModel) expand(ctx context.Context) (*management.FormElementValidation, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func (p *formComponentsFieldElementValidationResourceModel) expand() *management.FormElementValidation {
 
 	data := management.NewFormElementValidation()
 
@@ -1689,7 +1687,7 @@ func (p *formComponentsFieldElementValidationResourceModel) expand(ctx context.C
 		data.SetErrorMessage(p.ErrorMessage.ValueString())
 	}
 
-	return data, diags
+	return data
 }
 
 func (p *formComponentsFieldResourceModel) expandFieldCheckbox(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldCheckbox, diag.Diagnostics) {
@@ -1781,15 +1779,14 @@ func (p *formComponentsFieldResourceModel) expandFieldCombobox(ctx context.Conte
 	return data, diags
 }
 
-func (p *formComponentsFieldResourceModel) expandItemDivider(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldDivider, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func (p *formComponentsFieldResourceModel) expandItemDivider(positionData *management.FormFieldCommonPosition) *management.FormFieldDivider {
 
 	data := management.NewFormFieldDivider(
 		management.ENUMFORMFIELDTYPE_DIVIDER,
 		*positionData,
 	)
 
-	return data, diags
+	return data
 }
 
 func (p *formComponentsFieldResourceModel) expandFieldDropdown(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldDropdown, diag.Diagnostics) {
@@ -1838,26 +1835,24 @@ func (p *formComponentsFieldResourceModel) expandFieldDropdown(ctx context.Conte
 	return data, diags
 }
 
-func (p *formComponentsFieldResourceModel) expandItemEmptyField(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldEmptyField, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func (p *formComponentsFieldResourceModel) expandItemEmptyField(positionData *management.FormFieldCommonPosition) *management.FormFieldEmptyField {
 
 	data := management.NewFormFieldEmptyField(
 		management.ENUMFORMFIELDTYPE_EMPTY_FIELD,
 		*positionData,
 	)
 
-	return data, diags
+	return data
 }
 
-func (p *formComponentsFieldResourceModel) expandItemErrorDisplay(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldErrorDisplay, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func (p *formComponentsFieldResourceModel) expandItemErrorDisplay(positionData *management.FormFieldCommonPosition) *management.FormFieldErrorDisplay {
 
 	data := management.NewFormFieldErrorDisplay(
 		management.ENUMFORMFIELDTYPE_ERROR_DISPLAY,
 		*positionData,
 	)
 
-	return data, diags
+	return data
 }
 
 func (p *formComponentsFieldResourceModel) expandItemFlowButton(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldFlowButton, diag.Diagnostics) {
@@ -1871,7 +1866,7 @@ func (p *formComponentsFieldResourceModel) expandItemFlowButton(ctx context.Cont
 	)
 
 	if !p.Styles.IsNull() && !p.Styles.IsUnknown() {
-		var plan formComponentsFieldButtonStylesResourceModel
+		var plan formComponentsFieldStylesResourceModel
 		diags.Append(p.Styles.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -1880,17 +1875,49 @@ func (p *formComponentsFieldResourceModel) expandItemFlowButton(ctx context.Cont
 			return nil, diags
 		}
 
-		stylesData, d := plan.expand(ctx)
+		stylesData, d := plan.expand(ctx, "BUTTON")
 		diags.Append(d...)
 
-		data.SetStyles(*stylesData)
+		if v, ok := stylesData.(*management.FormStyles); ok {
+			data.SetStyles(*v)
+		}
 	}
 
 	return data, diags
 }
 
-func (p *formComponentsFieldResourceModel) expandFieldPassword(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldPassword, diag.Diagnostics) {
+func (p *formComponentsFieldResourceModel) expandItemFlowLink(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldFlowLink, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	data := management.NewFormFieldFlowLink(
+		management.ENUMFORMFIELDTYPE_FLOW_LINK,
+		*positionData,
+		p.Key.ValueString(),
+		p.Label.ValueString(),
+	)
+
+	if !p.Styles.IsNull() && !p.Styles.IsUnknown() {
+		var plan formComponentsFieldStylesResourceModel
+		diags.Append(p.Styles.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		stylesData, d := plan.expand(ctx, "FLOW_LINK")
+		diags.Append(d...)
+
+		if v, ok := stylesData.(*management.FormFlowLinkStyles); ok {
+			data.SetStyles(*v)
+		}
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldResourceModel) expandFieldPassword(positionData *management.FormFieldCommonPosition) *management.FormFieldPassword {
 
 	data := management.NewFormFieldPassword(
 		management.ENUMFORMFIELDTYPE_PASSWORD,
@@ -1919,11 +1946,10 @@ func (p *formComponentsFieldResourceModel) expandFieldPassword(ctx context.Conte
 		data.SetShowPasswordRequirements(p.ShowPasswordRequirements.ValueBool())
 	}
 
-	return data, diags
+	return data
 }
 
-func (p *formComponentsFieldResourceModel) expandFieldPasswordVerify(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldPasswordVerify, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func (p *formComponentsFieldResourceModel) expandFieldPasswordVerify(positionData *management.FormFieldCommonPosition) *management.FormFieldPasswordVerify {
 
 	data := management.NewFormFieldPasswordVerify(
 		management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY,
@@ -1956,7 +1982,7 @@ func (p *formComponentsFieldResourceModel) expandFieldPasswordVerify(ctx context
 		data.SetShowPasswordRequirements(p.ShowPasswordRequirements.ValueBool())
 	}
 
-	return data, diags
+	return data
 }
 
 func (p *formComponentsFieldResourceModel) expandFieldRadio(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldRadio, diag.Diagnostics) {
@@ -2012,7 +2038,7 @@ func (p *formComponentsFieldResourceModel) expandFieldSubmitButton(ctx context.C
 	)
 
 	if !p.Styles.IsNull() && !p.Styles.IsUnknown() {
-		var plan formComponentsFieldButtonStylesResourceModel
+		var plan formComponentsFieldStylesResourceModel
 		diags.Append(p.Styles.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -2021,10 +2047,12 @@ func (p *formComponentsFieldResourceModel) expandFieldSubmitButton(ctx context.C
 			return nil, diags
 		}
 
-		stylesData, d := plan.expand(ctx)
+		stylesData, d := plan.expand(ctx, "BUTTON")
 		diags.Append(d...)
 
-		data.SetStyles(*stylesData)
+		if v, ok := stylesData.(*management.FormStyles); ok {
+			data.SetStyles(*v)
+		}
 	}
 
 	return data, diags
@@ -2034,16 +2062,15 @@ func (p *formComponentsFieldResourceModel) expandFieldText(ctx context.Context, 
 	var diags diag.Diagnostics
 
 	var plan formComponentsFieldElementValidationResourceModel
-	p.Validation.As(ctx, &plan, basetypes.ObjectAsOptions{
+	diags.Append(p.Validation.As(ctx, &plan, basetypes.ObjectAsOptions{
 		UnhandledNullAsEmpty:    false,
 		UnhandledUnknownAsEmpty: false,
-	})
-
-	validationData, d := plan.expand(ctx)
-	diags.Append(d...)
+	})...)
 	if diags.HasError() {
 		return nil, diags
 	}
+
+	validationData := plan.expand()
 
 	data := management.NewFormFieldText(
 		management.ENUMFORMFIELDTYPE_TEXT,
@@ -2072,9 +2099,7 @@ func (p *formComponentsFieldResourceModel) expandFieldText(ctx context.Context, 
 	return data, diags
 }
 
-func (p *formComponentsFieldResourceModel) expandItemSlateTextblob(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldSlateTextblob, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
+func (p *formComponentsFieldResourceModel) expandItemSlateTextblob(positionData *management.FormFieldCommonPosition) *management.FormFieldSlateTextblob {
 	data := management.NewFormFieldSlateTextblob(
 		management.ENUMFORMFIELDTYPE_SLATE_TEXTBLOB,
 		*positionData,
@@ -2084,11 +2109,10 @@ func (p *formComponentsFieldResourceModel) expandItemSlateTextblob(ctx context.C
 		data.SetContent(p.Content.ValueString())
 	}
 
-	return data, diags
+	return data
 }
 
-func (p *formComponentsFieldResourceModel) expandItemTextblob(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldTextblob, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func (p *formComponentsFieldResourceModel) expandItemTextblob(positionData *management.FormFieldCommonPosition) *management.FormFieldTextblob {
 
 	data := management.NewFormFieldTextblob(
 		management.ENUMFORMFIELDTYPE_TEXTBLOB,
@@ -2099,78 +2123,136 @@ func (p *formComponentsFieldResourceModel) expandItemTextblob(ctx context.Contex
 		data.SetContent(p.Content.ValueString())
 	}
 
-	return data, diags
+	return data
 }
 
-func (p *formComponentsFieldButtonStylesResourceModel) expand(ctx context.Context) (*management.FormStyles, diag.Diagnostics) {
+func (p *formComponentsFieldStylesResourceModel) expand(ctx context.Context, styleType string) (interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data := management.NewFormStyles()
+	if styleType == "BUTTON" {
+		data := management.NewFormStyles()
 
-	if !p.Alignment.IsNull() && !p.Alignment.IsUnknown() {
-		data.SetAlignment(management.EnumFormItemAlignment(p.Alignment.ValueString()))
-	}
-
-	if !p.BackgroundColor.IsNull() && !p.BackgroundColor.IsUnknown() {
-		data.SetBackgroundColor(p.BackgroundColor.ValueString())
-	}
-
-	if !p.BorderColor.IsNull() && !p.BorderColor.IsUnknown() {
-		data.SetBorderColor(p.BorderColor.ValueString())
-	}
-
-	if !p.Enabled.IsNull() && !p.Enabled.IsUnknown() {
-		data.SetEnabled(p.Enabled.ValueBool())
-	}
-
-	if !p.Height.IsNull() && !p.Height.IsUnknown() {
-		data.SetHeight(int32(p.Height.ValueInt64()))
-	}
-
-	if !p.Padding.IsNull() && !p.Padding.IsUnknown() {
-		var plan formComponentsFieldButtonStylesPaddingResourceModel
-		diags.Append(p.Padding.As(ctx, &plan, basetypes.ObjectAsOptions{
-			UnhandledNullAsEmpty:    false,
-			UnhandledUnknownAsEmpty: false,
-		})...)
-		if diags.HasError() {
-			return nil, diags
+		if !p.Alignment.IsNull() && !p.Alignment.IsUnknown() {
+			data.SetAlignment(management.EnumFormItemAlignment(p.Alignment.ValueString()))
 		}
 
-		padding := management.NewFormStylesPadding()
-
-		if !plan.Bottom.IsNull() && !plan.Bottom.IsUnknown() {
-			padding.SetBottom(int32(plan.Bottom.ValueInt64()))
+		if !p.BackgroundColor.IsNull() && !p.BackgroundColor.IsUnknown() {
+			data.SetBackgroundColor(p.BackgroundColor.ValueString())
 		}
 
-		if !plan.Left.IsNull() && !plan.Left.IsUnknown() {
-			padding.SetLeft(int32(plan.Left.ValueInt64()))
+		if !p.BorderColor.IsNull() && !p.BorderColor.IsUnknown() {
+			data.SetBorderColor(p.BorderColor.ValueString())
 		}
 
-		if !plan.Right.IsNull() && !plan.Right.IsUnknown() {
-			padding.SetRight(int32(plan.Right.ValueInt64()))
+		if !p.Enabled.IsNull() && !p.Enabled.IsUnknown() {
+			data.SetEnabled(p.Enabled.ValueBool())
 		}
 
-		if !plan.Top.IsNull() && !plan.Top.IsUnknown() {
-			padding.SetTop(int32(plan.Top.ValueInt64()))
+		if !p.Height.IsNull() && !p.Height.IsUnknown() {
+			data.SetHeight(int32(p.Height.ValueInt64()))
 		}
 
-		data.SetPadding(*padding)
+		if !p.Padding.IsNull() && !p.Padding.IsUnknown() {
+			var plan formComponentsFieldButtonStylesPaddingResourceModel
+			diags.Append(p.Padding.As(ctx, &plan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			padding := management.NewFormStylesPadding()
+
+			if !plan.Bottom.IsNull() && !plan.Bottom.IsUnknown() {
+				padding.SetBottom(int32(plan.Bottom.ValueInt64()))
+			}
+
+			if !plan.Left.IsNull() && !plan.Left.IsUnknown() {
+				padding.SetLeft(int32(plan.Left.ValueInt64()))
+			}
+
+			if !plan.Right.IsNull() && !plan.Right.IsUnknown() {
+				padding.SetRight(int32(plan.Right.ValueInt64()))
+			}
+
+			if !plan.Top.IsNull() && !plan.Top.IsUnknown() {
+				padding.SetTop(int32(plan.Top.ValueInt64()))
+			}
+
+			data.SetPadding(*padding)
+		}
+
+		if !p.TextColor.IsNull() && !p.TextColor.IsUnknown() {
+			data.SetTextColor(p.TextColor.ValueString())
+		}
+
+		if !p.Width.IsNull() && !p.Width.IsUnknown() {
+			data.SetWidth(int32(p.Width.ValueInt64()))
+		}
+
+		if !p.WidthUnit.IsNull() && !p.WidthUnit.IsUnknown() {
+			data.SetWidthUnit(management.EnumFormStylesWidthUnit(p.WidthUnit.ValueString()))
+		}
+
+		return data, diags
 	}
 
-	if !p.TextColor.IsNull() && !p.TextColor.IsUnknown() {
-		data.SetTextColor(p.TextColor.ValueString())
+	if styleType == "FLOW_LINK" {
+		data := management.NewFormFlowLinkStyles()
+
+		if !p.Alignment.IsNull() && !p.Alignment.IsUnknown() {
+			data.SetAlignment(management.EnumFormItemAlignment(p.Alignment.ValueString()))
+		}
+
+		if !p.Enabled.IsNull() && !p.Enabled.IsUnknown() {
+			data.SetEnabled(p.Enabled.ValueBool())
+		}
+
+		if !p.Padding.IsNull() && !p.Padding.IsUnknown() {
+			var plan formComponentsFieldButtonStylesPaddingResourceModel
+			diags.Append(p.Padding.As(ctx, &plan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			padding := management.NewFormStylesPadding()
+
+			if !plan.Bottom.IsNull() && !plan.Bottom.IsUnknown() {
+				padding.SetBottom(int32(plan.Bottom.ValueInt64()))
+			}
+
+			if !plan.Left.IsNull() && !plan.Left.IsUnknown() {
+				padding.SetLeft(int32(plan.Left.ValueInt64()))
+			}
+
+			if !plan.Right.IsNull() && !plan.Right.IsUnknown() {
+				padding.SetRight(int32(plan.Right.ValueInt64()))
+			}
+
+			if !plan.Top.IsNull() && !plan.Top.IsUnknown() {
+				padding.SetTop(int32(plan.Top.ValueInt64()))
+			}
+
+			data.SetPadding(*padding)
+		}
+
+		if !p.TextColor.IsNull() && !p.TextColor.IsUnknown() {
+			data.SetTextColor(p.TextColor.ValueString())
+		}
+
+		return data, diags
 	}
 
-	if !p.Width.IsNull() && !p.Width.IsUnknown() {
-		data.SetWidth(int32(p.Width.ValueInt64()))
-	}
+	diags.AddError(
+		"Unhandled style type",
+		fmt.Sprintf("Unhandled style type %s.  This is a bug in the provider and must be reported to the provider maintainers.", styleType),
+	)
 
-	if !p.WidthUnit.IsNull() && !p.WidthUnit.IsUnknown() {
-		data.SetWidthUnit(management.EnumFormStylesWidthUnit(p.WidthUnit.ValueString()))
-	}
-
-	return data, diags
+	return nil, diags
 }
 
 func (p *formComponentsFieldErrorDisplayResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldErrorDisplay, diag.Diagnostics) {
@@ -2188,55 +2270,6 @@ func (p *formComponentsFieldErrorDisplayResourceModel) expand(ctx context.Contex
 	return data, diags
 }
 
-func (p *formComponentsFieldFlowLinkResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldFlowLink, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	data := management.NewFormFieldFlowLink(
-		management.ENUMFORMFIELDTYPE_FLOW_LINK,
-		*positionData,
-		p.Key.ValueString(),
-		p.Label.ValueString(),
-	)
-
-	if !p.Styles.IsNull() && !p.Styles.IsUnknown() {
-		var plan formComponentsFieldFlowLinkStylesResourceModel
-		diags.Append(p.Styles.As(ctx, &plan, basetypes.ObjectAsOptions{
-			UnhandledNullAsEmpty:    false,
-			UnhandledUnknownAsEmpty: false,
-		})...)
-		if diags.HasError() {
-			return nil, diags
-		}
-
-		stylesData, d := plan.expand(ctx)
-		diags.Append(d...)
-
-		data.SetStyles(*stylesData)
-	}
-
-	return data, diags
-}
-
-func (p *formComponentsFieldFlowLinkStylesResourceModel) expand(ctx context.Context) (*management.FormFlowLinkStyles, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	data := management.NewFormFlowLinkStyles()
-
-	if !p.HorizontalAlignment.IsNull() && !p.HorizontalAlignment.IsUnknown() {
-		data.SetHorizontalAlignment(management.EnumFormItemAlignment(p.HorizontalAlignment.ValueString()))
-	}
-
-	if !p.Enabled.IsNull() && !p.Enabled.IsUnknown() {
-		data.SetEnabled(p.Enabled.ValueBool())
-	}
-
-	if !p.TextColor.IsNull() && !p.TextColor.IsUnknown() {
-		data.SetTextColor(p.TextColor.ValueString())
-	}
-
-	return data, diags
-}
-
 func (p *formComponentsFieldFlowButtonResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldFlowButton, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -2248,7 +2281,7 @@ func (p *formComponentsFieldFlowButtonResourceModel) expand(ctx context.Context,
 	)
 
 	if !p.Styles.IsNull() && !p.Styles.IsUnknown() {
-		var plan formComponentsFieldButtonStylesResourceModel
+		var plan formComponentsFieldStylesResourceModel
 		diags.Append(p.Styles.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -2257,10 +2290,12 @@ func (p *formComponentsFieldFlowButtonResourceModel) expand(ctx context.Context,
 			return nil, diags
 		}
 
-		stylesData, d := plan.expand(ctx)
+		stylesData, d := plan.expand(ctx, "BUTTON")
 		diags.Append(d...)
 
-		data.SetStyles(*stylesData)
+		if v, ok := stylesData.(*management.FormStyles); ok {
+			data.SetStyles(*v)
+		}
 	}
 
 	return data, diags
@@ -2319,8 +2354,7 @@ func (p *formComponentsFieldSocialLoginButtonResourceModel) expand(ctx context.C
 			return nil, diags
 		}
 
-		stylesData, d := plan.expand(ctx)
-		diags.Append(d...)
+		stylesData := plan.expand()
 
 		data.SetStyles(*stylesData)
 	}
@@ -2332,9 +2366,7 @@ func (p *formComponentsFieldSocialLoginButtonResourceModel) expand(ctx context.C
 	return data, diags
 }
 
-func (p *formComponentsFieldSocialLoginButtonStylesResourceModel) expand(ctx context.Context) (*management.FormSocialLoginButtonStyles, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
+func (p *formComponentsFieldSocialLoginButtonStylesResourceModel) expand() *management.FormSocialLoginButtonStyles {
 	data := management.NewFormSocialLoginButtonStyles()
 
 	if !p.HorizontalAlignment.IsNull() && !p.HorizontalAlignment.IsUnknown() {
@@ -2349,10 +2381,10 @@ func (p *formComponentsFieldSocialLoginButtonStylesResourceModel) expand(ctx con
 		data.SetTextColor(p.TextColor.ValueString())
 	}
 
-	return data, diags
+	return data
 }
 
-func (p *formResourceModel) toState(ctx context.Context, apiObject *management.Form) diag.Diagnostics {
+func (p *formResourceModel) toState(apiObject *management.Form) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -2377,23 +2409,20 @@ func (p *formResourceModel) toState(ctx context.Context, apiObject *management.F
 	p.TranslationMethod = framework.EnumOkToTF(apiObject.GetTranslationMethodOk())
 
 	var d diag.Diagnostics
-	v, vok := apiObject.GetComponentsOk()
-	p.Components, d = formComponentsOkToTF(ctx, v, vok)
+	p.Components, d = formComponentsOkToTF(apiObject.GetComponentsOk())
 	diags.Append(d...)
 
 	return diags
 }
 
-func formComponentsOkToTF(ctx context.Context, apiObject *management.FormComponents, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func formComponentsOkToTF(apiObject *management.FormComponents, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
 		return types.ObjectNull(formComponentsTFObjectTypes), diags
 	}
 
-	v, vok := apiObject.GetFieldsOk()
-
-	fields, d := formComponentsFieldsOkToTF(ctx, v, vok)
+	fields, d := formComponentsFieldsOkToTF(apiObject.GetFieldsOk())
 	diags.Append(d...)
 	if diags.HasError() {
 		return types.ObjectNull(formComponentsTFObjectTypes), diags
@@ -2407,7 +2436,7 @@ func formComponentsOkToTF(ctx context.Context, apiObject *management.FormCompone
 	return objValue, diags
 }
 
-func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.FormField, ok bool) (basetypes.SetValue, diag.Diagnostics) {
+func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (basetypes.SetValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	tfObjType := types.ObjectType{AttrTypes: formComponentsFieldsTFObjectTypes}
@@ -2602,7 +2631,7 @@ func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.Form
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
 
-			styles, d := formComponentsFieldsButtonStylesOkToTF(t.GetStylesOk())
+			styles, d := formComponentsFieldsStylesOkToTF(t.GetStylesOk())
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
@@ -2630,9 +2659,31 @@ func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.Form
 		case *management.FormFieldFlowLink:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
-			attributeMap["position"] = position
-			attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
-			//attributeMap["field_flow_link"], d = formComponentsFieldsFieldFlowLinkToTF(t)
+
+			styles, d := formComponentsFieldsFlowLinkStylesOkToTF(t.GetStylesOk())
+			diags.Append(d...)
+
+			attributeMap = map[string]attr.Value{
+				"attribute_disabled":              types.BoolNull(),
+				"content":                         types.StringNull(),
+				"key":                             framework.StringOkToTF(t.GetKeyOk()),
+				"label_mode":                      types.StringNull(),
+				"label_password_verify":           types.StringNull(),
+				"label":                           framework.StringOkToTF(t.GetLabelOk()),
+				"layout":                          types.StringNull(),
+				"options":                         types.SetNull(types.ObjectType{AttrTypes: formComponentsFieldsFieldElementOptionTFObjectTypes}),
+				"other_option_attribute_disabled": types.BoolNull(),
+				"other_option_enabled":            types.BoolNull(),
+				"other_option_input_label":        types.StringNull(),
+				"other_option_key":                types.StringNull(),
+				"other_option_label":              types.StringNull(),
+				"position":                        position,
+				"required":                        types.BoolNull(),
+				"show_password_requirements":      types.BoolNull(),
+				"styles":                          styles,
+				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
+				"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
+			}
 
 		case *management.FormFieldPassword:
 			options, d := formComponentsFieldsElementOptionsOkToTF(t.GetOptionsOk())
@@ -2781,7 +2832,7 @@ func formComponentsFieldsOkToTF(ctx context.Context, apiObject []management.Form
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
 
-			styles, d := formComponentsFieldsButtonStylesOkToTF(t.GetStylesOk())
+			styles, d := formComponentsFieldsStylesOkToTF(t.GetStylesOk())
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
@@ -2935,7 +2986,7 @@ func formComponentsFieldsElementOptionsOkToTF(apiObject []management.FormElement
 	return returnVar, diags
 }
 
-func formComponentsFieldsButtonStylesOkToTF(apiObject *management.FormStyles, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func formComponentsFieldsStylesOkToTF(apiObject *management.FormStyles, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2958,6 +3009,35 @@ func formComponentsFieldsButtonStylesOkToTF(apiObject *management.FormStyles, ok
 		"text_color":       framework.StringOkToTF(apiObject.GetTextColorOk()),
 		"width":            framework.Int32OkToTF(apiObject.GetWidthOk()),
 		"width_unit":       framework.EnumOkToTF(apiObject.GetWidthUnitOk()),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func formComponentsFieldsFlowLinkStylesOkToTF(apiObject *management.FormFlowLinkStyles, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes), diags
+	}
+
+	padding, d := formComponentsFieldsPaddingOkToTF(apiObject.GetPaddingOk())
+	diags.Append(d...)
+	if diags.HasError() {
+		return types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes), diags
+	}
+
+	objValue, d := types.ObjectValue(formComponentsFieldsFieldStylesTFObjectTypes, map[string]attr.Value{
+		"alignment":        framework.EnumOkToTF(apiObject.GetAlignmentOk()),
+		"background_color": types.StringNull(),
+		"border_color":     types.StringNull(),
+		"enabled":          framework.BoolOkToTF(apiObject.GetEnabledOk()),
+		"height":           types.Int64Null(),
+		"padding":          padding,
+		"text_color":       framework.StringOkToTF(apiObject.GetTextColorOk()),
+		"width":            types.Int64Null(),
+		"width_unit":       types.StringNull(),
 	})
 	diags.Append(d...)
 
