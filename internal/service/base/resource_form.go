@@ -261,7 +261,7 @@ var (
 		"background_color": types.StringType,
 		"border_color":     types.StringType,
 		"enabled":          types.BoolType,
-		"height":           types.StringType,
+		"height":           types.Int64Type,
 		"padding":          types.ObjectType{AttrTypes: formComponentsFieldsFieldStylesPaddingTFObjectTypes},
 		"text_color":       types.StringType,
 		"width":            types.Int64Type,
@@ -1632,6 +1632,8 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 		data.FormFieldEmptyField, d = p.expandItemEmptyField(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_ERROR_DISPLAY):
 		data.FormFieldErrorDisplay, d = p.expandItemErrorDisplay(ctx, positionData)
+	case string(management.ENUMFORMFIELDTYPE_FLOW_BUTTON):
+		data.FormFieldFlowButton, d = p.expandItemFlowButton(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_PASSWORD):
 		data.FormFieldPassword, d = p.expandFieldPassword(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY):
@@ -1836,7 +1838,29 @@ func (p *formComponentsFieldResourceModel) expandFieldDropdown(ctx context.Conte
 	return data, diags
 }
 
-func (p *formComponentsFieldResourceModel) expandFieldFlowButton(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldFlowButton, diag.Diagnostics) {
+func (p *formComponentsFieldResourceModel) expandItemEmptyField(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldEmptyField, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldEmptyField(
+		management.ENUMFORMFIELDTYPE_EMPTY_FIELD,
+		*positionData,
+	)
+
+	return data, diags
+}
+
+func (p *formComponentsFieldResourceModel) expandItemErrorDisplay(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldErrorDisplay, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldErrorDisplay(
+		management.ENUMFORMFIELDTYPE_ERROR_DISPLAY,
+		*positionData,
+	)
+
+	return data, diags
+}
+
+func (p *formComponentsFieldResourceModel) expandItemFlowButton(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldFlowButton, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data := management.NewFormFieldFlowButton(
@@ -1861,28 +1885,6 @@ func (p *formComponentsFieldResourceModel) expandFieldFlowButton(ctx context.Con
 
 		data.SetStyles(*stylesData)
 	}
-
-	return data, diags
-}
-
-func (p *formComponentsFieldResourceModel) expandItemEmptyField(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldEmptyField, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	data := management.NewFormFieldEmptyField(
-		management.ENUMFORMFIELDTYPE_EMPTY_FIELD,
-		*positionData,
-	)
-
-	return data, diags
-}
-
-func (p *formComponentsFieldResourceModel) expandItemErrorDisplay(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldErrorDisplay, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	data := management.NewFormFieldErrorDisplay(
-		management.ENUMFORMFIELDTYPE_ERROR_DISPLAY,
-		*positionData,
-	)
 
 	return data, diags
 }
@@ -2126,7 +2128,34 @@ func (p *formComponentsFieldButtonStylesResourceModel) expand(ctx context.Contex
 	}
 
 	if !p.Padding.IsNull() && !p.Padding.IsUnknown() {
-		//panic()
+		var plan formComponentsFieldButtonStylesPaddingResourceModel
+		diags.Append(p.Padding.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		padding := management.NewFormStylesPadding()
+
+		if !plan.Bottom.IsNull() && !plan.Bottom.IsUnknown() {
+			padding.SetBottom(int32(plan.Bottom.ValueInt64()))
+		}
+
+		if !plan.Left.IsNull() && !plan.Left.IsUnknown() {
+			padding.SetLeft(int32(plan.Left.ValueInt64()))
+		}
+
+		if !plan.Right.IsNull() && !plan.Right.IsUnknown() {
+			padding.SetRight(int32(plan.Right.ValueInt64()))
+		}
+
+		if !plan.Top.IsNull() && !plan.Top.IsUnknown() {
+			padding.SetTop(int32(plan.Top.ValueInt64()))
+		}
+
+		data.SetPadding(*padding)
 	}
 
 	if !p.TextColor.IsNull() && !p.TextColor.IsUnknown() {
@@ -2913,16 +2942,40 @@ func formComponentsFieldsButtonStylesOkToTF(apiObject *management.FormStyles, ok
 		return types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes), diags
 	}
 
+	padding, d := formComponentsFieldsPaddingOkToTF(apiObject.GetPaddingOk())
+	diags.Append(d...)
+	if diags.HasError() {
+		return types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes), diags
+	}
+
 	objValue, d := types.ObjectValue(formComponentsFieldsFieldStylesTFObjectTypes, map[string]attr.Value{
 		"alignment":        framework.EnumOkToTF(apiObject.GetAlignmentOk()),
 		"background_color": framework.StringOkToTF(apiObject.GetBackgroundColorOk()),
 		"border_color":     framework.StringOkToTF(apiObject.GetBorderColorOk()),
 		"enabled":          framework.BoolOkToTF(apiObject.GetEnabledOk()),
 		"height":           framework.Int32OkToTF(apiObject.GetHeightOk()),
-		//"padding":          padding,
-		"text_color": framework.StringOkToTF(apiObject.GetTextColorOk()),
-		"width":      framework.Int32OkToTF(apiObject.GetWidthOk()),
-		"width_unit": framework.EnumOkToTF(apiObject.GetWidthUnitOk()),
+		"padding":          padding,
+		"text_color":       framework.StringOkToTF(apiObject.GetTextColorOk()),
+		"width":            framework.Int32OkToTF(apiObject.GetWidthOk()),
+		"width_unit":       framework.EnumOkToTF(apiObject.GetWidthUnitOk()),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func formComponentsFieldsPaddingOkToTF(apiObject *management.FormStylesPadding, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(formComponentsFieldsFieldStylesPaddingTFObjectTypes), diags
+	}
+
+	objValue, d := types.ObjectValue(formComponentsFieldsFieldStylesPaddingTFObjectTypes, map[string]attr.Value{
+		"bottom": framework.Int32OkToTF(apiObject.GetBottomOk()),
+		"left":   framework.Int32OkToTF(apiObject.GetLeftOk()),
+		"right":  framework.Int32OkToTF(apiObject.GetRightOk()),
+		"top":    framework.Int32OkToTF(apiObject.GetTopOk()),
 	})
 	diags.Append(d...)
 

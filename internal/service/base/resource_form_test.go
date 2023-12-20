@@ -2256,7 +2256,7 @@ resource "pingone_form" "%[2]s" {
       {
         type = "FLOW_BUTTON"
 
-		key = "button-field-full"
+        key = "button-field-full"
 
         position = {
           row   = 0
@@ -2267,16 +2267,16 @@ resource "pingone_form" "%[2]s" {
         label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
 
         styles = {
-          width            = 25
-		  width_unit = "PERCENT"
-		  height           = 36
+          width      = 25
+          width_unit = "PERCENT"
+          height     = 36
 
-		  padding = {
-			top = 10
-			right = 12
-			bottom = 14
-			left = 16
-		  }
+          padding = {
+            top    = 10
+            right  = 12
+            bottom = 14
+            left   = 16
+          }
 
           alignment        = "RIGHT"
           background_color = "#FF0000"
@@ -2284,6 +2284,16 @@ resource "pingone_form" "%[2]s" {
           border_color     = "#0000FF"
           enabled          = true
         }
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
       }
     ]
   }
@@ -2309,7 +2319,7 @@ resource "pingone_form" "%[2]s" {
       {
         type = "FLOW_BUTTON"
 
-		key = "button-field"
+        key = "button-field"
 
         position = {
           row = 0
@@ -2317,6 +2327,16 @@ resource "pingone_form" "%[2]s" {
         }
 
         label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
       }
     ]
   }
@@ -2652,16 +2672,16 @@ resource "pingone_form" "%[2]s" {
         label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
 
         styles = {
-          width            = 25
-		  width_unit = "PERCENT"
-		  height           = 36
+          width      = 25
+          width_unit = "PERCENT"
+          height     = 36
 
-		  padding = {
-			top = 10
-			right = 12
-			bottom = 14
-			left = 16
-		  }
+          padding = {
+            top    = 10
+            right  = 12
+            bottom = 14
+            left   = 16
+          }
 
           alignment        = "RIGHT"
           background_color = "#FF0000"
