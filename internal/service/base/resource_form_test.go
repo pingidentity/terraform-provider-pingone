@@ -864,7 +864,7 @@ func TestAccForm_FieldSubmitButton(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccFormConfig_FieldSubmitButtonFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "1"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":            "0",
 				"position.col":            "0",
@@ -890,7 +890,7 @@ func TestAccForm_FieldSubmitButton(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccFormConfig_FieldSubmitButtonMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "1"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":   "0",
 				"position.col":   "0",
@@ -1133,7 +1133,7 @@ func TestAccForm_ItemEmptyField(t *testing.T) {
 	fullStep := resource.TestStep{
 		Config: testAccFormConfig_ItemEmptyFieldFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "3"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row":   "0",
 				"position.col":   "1",
@@ -1146,7 +1146,7 @@ func TestAccForm_ItemEmptyField(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccFormConfig_ItemEmptyFieldMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "3"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
 				"position.row": "0",
 				"position.col": "1",
@@ -3522,10 +3522,10 @@ resource "pingone_form" "%[2]s" {
           width = 50
         }
 
-        key     = "qr-code-field-full"
-        qr_code_type      = "MFA_AUTH"
-        alignment = "RIGHT"
-		show_border = true
+        key          = "qr-code-field-full"
+        qr_code_type = "MFA_AUTH"
+        alignment    = "RIGHT"
+        show_border  = true
       },
       {
         type = "SUBMIT_BUTTON"
@@ -3566,9 +3566,9 @@ resource "pingone_form" "%[2]s" {
           col = 0
         }
 
-        key     = "qr-code-field"
-        qr_code_type      = "MFA_AUTH"
-        alignment = "LEFT"
+        key          = "qr-code-field"
+        qr_code_type = "MFA_AUTH"
+        alignment    = "LEFT"
       },
       {
         type = "SUBMIT_BUTTON"

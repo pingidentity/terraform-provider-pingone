@@ -130,7 +130,7 @@ Required:
 Required:
 
 - `position` (Attributes) A single object that specifies the position of the form field in the form. (see [below for nested schema](#nestedatt--components--fields--position))
-- `type` (String) A string that specifies the type of form field.  Options are `CHECKBOX`, `COMBOBOX`, `DIVIDER`, `DROPDOWN`, `EMPTY_FIELD`, `ERROR_DISPLAY`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `RECAPTCHA_V2`, `SLATE_TEXTBLOB`, `SOCIAL_LOGIN_BUTTON`, `SUBMIT_BUTTON`, `TEXT`, `TEXTBLOB`.
+- `type` (String) A string that specifies the type of form field.  Options are `CHECKBOX`, `COMBOBOX`, `DIVIDER`, `DROPDOWN`, `EMPTY_FIELD`, `ERROR_DISPLAY`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `RECAPTCHA_V2`, `SLATE_TEXTBLOB`, `SUBMIT_BUTTON`, `TEXT`, `TEXTBLOB`.
 
 Optional:
 

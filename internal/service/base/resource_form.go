@@ -87,32 +87,10 @@ type formComponentsFieldElementOptionsResourceModel struct {
 	Label types.String `tfsdk:"label"`
 }
 
-type formComponentsFieldElementOptionResourceModel struct {
-	Label types.String `tfsdk:"label"`
-	Value types.String `tfsdk:"value"`
-}
-
 type formComponentsFieldElementValidationResourceModel struct {
 	Regex        types.String `tfsdk:"regex"`
 	Type         types.String `tfsdk:"type"`
 	ErrorMessage types.String `tfsdk:"error_message"`
-}
-
-// DIVIDER, PARAGRAPH, EMPTY_FIELD, ERROR_DISPLAY, (TEXTBLOB, SLATE_TEXTBLOB)?
-type formComponentsFieldItemResourceModel struct {
-	Content types.String `tfsdk:"content"`
-}
-
-type formComponentsFieldDividerResourceModel formComponentsFieldItemResourceModel
-type formComponentsFieldParagraphResourceModel formComponentsFieldItemResourceModel
-type formComponentsFieldEmptyFieldResourceModel formComponentsFieldItemResourceModel
-type formComponentsFieldErrorDisplayResourceModel formComponentsFieldItemResourceModel
-type formComponentsFieldTextblobResourceModel formComponentsFieldItemResourceModel
-type formComponentsFieldSlateTextblobResourceModel formComponentsFieldItemResourceModel
-
-// PASSWORD_VERIFY
-type formComponentsFieldPasswordVerifyResourceModel struct {
-	LabelPasswordVerify types.String `tfsdk:"label_password_verify"`
 }
 
 // SUBMIT_BUTTON, FLOW_BUTTON
@@ -141,52 +119,6 @@ type formComponentsFieldButtonStylesPaddingResourceModel struct {
 	Left   types.Int64 `tfsdk:"left"`
 	Right  types.Int64 `tfsdk:"right"`
 	Top    types.Int64 `tfsdk:"top"`
-}
-
-// FLOW_LINK
-type formComponentsFieldFlowLinkResourceModel struct {
-	Key    types.String `tfsdk:"key"`
-	Label  types.String `tfsdk:"label"`
-	Styles types.Object `tfsdk:"styles"`
-}
-
-type formComponentsFieldFlowLinkStylesResourceModel struct {
-	HorizontalAlignment types.String `tfsdk:"horizontal_alignment"`
-	TextColor           types.String `tfsdk:"text_color"`
-	Enabled             types.Bool   `tfsdk:"enabled"`
-}
-
-// RECAPTCHA_V2
-type formComponentsFieldRecaptchaV2ResourceModel struct {
-	Key       types.String `tfsdk:"key"`
-	Size      types.String `tfsdk:"size"`
-	Theme     types.String `tfsdk:"theme"`
-	Alignment types.String `tfsdk:"alignment"`
-}
-
-// QR_CODE
-type formComponentsFieldQrCodeResourceModel struct {
-	QrCodeType types.String `tfsdk:"qr_code_type"`
-	Alignment  types.String `tfsdk:"alignment"`
-	ShowBorder types.Bool   `tfsdk:"show_border"`
-}
-
-// SOCIAL_LOGIN_BUTTON
-type formComponentsFieldSocialLoginButtonResourceModel struct {
-	Label      types.String `tfsdk:"label"`
-	Styles     types.Object `tfsdk:"styles"`
-	IdpType    types.String `tfsdk:"idp_type"`
-	IdpName    types.String `tfsdk:"idp_name"`
-	IdpId      types.String `tfsdk:"idp_id"`
-	IdpEnabled types.Bool   `tfsdk:"idp_enabled"`
-	IconSrc    types.String `tfsdk:"icon_src"`
-	Width      types.Int64  `tfsdk:"width"`
-}
-
-type formComponentsFieldSocialLoginButtonStylesResourceModel struct {
-	HorizontalAlignment types.String `tfsdk:"horizontal_alignment"`
-	TextColor           types.String `tfsdk:"text_color"`
-	Enabled             types.Bool   `tfsdk:"enabled"`
 }
 
 var (
@@ -245,26 +177,6 @@ var (
 		"error_message": types.StringType,
 	}
 
-	// Form Components Fields Field Password Verify
-	formComponentsFieldsFieldPasswordVerifyTFObjectTypes = map[string]attr.Type{
-		"label_password_verify": types.StringType,
-	}
-
-	// Form Components Fields Field Combobox
-	formComponentsFieldsFieldComboboxTFObjectTypes = map[string]attr.Type{}
-
-	// Form Components Fields Field Item
-	formComponentsFieldsFieldItemTFObjectTypes = map[string]attr.Type{
-		"content": types.StringType,
-	}
-
-	// Form Components Fields Field Button
-	formComponentsFieldsFieldButtonTFObjectTypes = map[string]attr.Type{
-		"key":    types.StringType,
-		"label":  types.StringType,
-		"styles": types.ObjectType{AttrTypes: formComponentsFieldsFieldStylesTFObjectTypes},
-	}
-
 	// Form Components Fields Field Button Styles
 	formComponentsFieldsFieldStylesTFObjectTypes = map[string]attr.Type{
 		"alignment":        types.StringType,
@@ -283,54 +195,6 @@ var (
 		"left":   types.Int64Type,
 		"right":  types.Int64Type,
 		"top":    types.Int64Type,
-	}
-
-	// Form Components Fields Field Flow Link
-	formComponentsFieldsFieldFlowLinkTFObjectTypes = map[string]attr.Type{
-		"key":    types.StringType,
-		"label":  types.StringType,
-		"styles": types.ObjectType{AttrTypes: formComponentsFieldsFieldFlowLinkStylesTFObjectTypes},
-	}
-
-	// Form Components Fields Field Flow Link Styles
-	formComponentsFieldsFieldFlowLinkStylesTFObjectTypes = map[string]attr.Type{
-		"horizontal_alignment": types.StringType,
-		"text_color":           types.StringType,
-		"enabled":              types.BoolType,
-	}
-
-	// Form Components Fields Field Recaptcha V2
-	formComponentsFieldsFieldRecaptchaV2TFObjectTypes = map[string]attr.Type{
-		"key":       types.StringType,
-		"size":      types.StringType,
-		"theme":     types.StringType,
-		"alignment": types.StringType,
-	}
-
-	// Form Components Fields Field Qr Code
-	formComponentsFieldsFieldQrCodeTFObjectTypes = map[string]attr.Type{
-		"qr_code_type": types.StringType,
-		"alignment":    types.StringType,
-		"show_border":  types.BoolType,
-	}
-
-	// Form Components Fields Field Social Login Button
-	formComponentsFieldsFieldSocialLoginButtonTFObjectTypes = map[string]attr.Type{
-		"label":       types.StringType,
-		"styles":      types.ObjectType{AttrTypes: formComponentsFieldsFieldSocialLoginButtonStylesTFObjectTypes},
-		"idp_type":    types.StringType,
-		"idp_name":    types.StringType,
-		"idp_id":      types.StringType,
-		"idp_enabled": types.BoolType,
-		"icon_src":    types.StringType,
-		"width":       types.Int64Type,
-	}
-
-	// Form Components Fields Field Social Login Button Styles
-	formComponentsFieldsFieldSocialLoginButtonStylesTFObjectTypes = map[string]attr.Type{
-		"horizontal_alignment": types.StringType,
-		"text_color":           types.StringType,
-		"enabled":              types.BoolType,
 	}
 )
 
@@ -361,6 +225,26 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	const rowMaxValue = 50
 	const colMinValue = 0
 	const colMaxValue = 3
+
+	supportedFormFieldTypes := []management.EnumFormFieldType{
+		management.ENUMFORMFIELDTYPE_TEXT,
+		management.ENUMFORMFIELDTYPE_PASSWORD,
+		management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY,
+		management.ENUMFORMFIELDTYPE_RADIO,
+		management.ENUMFORMFIELDTYPE_CHECKBOX,
+		management.ENUMFORMFIELDTYPE_DROPDOWN,
+		management.ENUMFORMFIELDTYPE_COMBOBOX,
+		management.ENUMFORMFIELDTYPE_DIVIDER,
+		management.ENUMFORMFIELDTYPE_EMPTY_FIELD,
+		management.ENUMFORMFIELDTYPE_TEXTBLOB,
+		management.ENUMFORMFIELDTYPE_SLATE_TEXTBLOB,
+		management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON,
+		management.ENUMFORMFIELDTYPE_ERROR_DISPLAY,
+		management.ENUMFORMFIELDTYPE_FLOW_LINK,
+		management.ENUMFORMFIELDTYPE_FLOW_BUTTON,
+		management.ENUMFORMFIELDTYPE_RECAPTCHA_V2,
+		management.ENUMFORMFIELDTYPE_QR_CODE,
+	}
 
 	nameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the form name, which must be provided and must be unique within an environment.",
@@ -407,7 +291,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 
 	componentsFieldsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of form field.",
-	).AllowedValuesEnum(management.AllowedEnumFormFieldTypeEnumValues)
+	).AllowedValuesEnum(supportedFormFieldTypes)
 
 	componentsFieldsAttributeDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the linked directory attribute is disabled.",
@@ -690,6 +574,10 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Description:         componentsFieldsTypeDescription.Description,
 									MarkdownDescription: componentsFieldsTypeDescription.MarkdownDescription,
 									Required:            true,
+
+									Validators: []validator.String{
+										stringvalidator.OneOf(utils.EnumSliceToStringSlice(supportedFormFieldTypes)...),
+									},
 								},
 
 								"attribute_disabled": schema.BoolAttribute{
@@ -1068,224 +956,6 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumFormTranslationMethodEnumValues)...),
 				},
 			},
-		},
-	}
-}
-
-func formFieldItemSchemaAttributes() map[string]schema.Attribute {
-	contentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the field content (for example, HTML.)",
-	)
-
-	return map[string]schema.Attribute{
-		"content": schema.StringAttribute{
-			Description:         contentDescription.Description,
-			MarkdownDescription: contentDescription.MarkdownDescription,
-			Optional:            true,
-		},
-	}
-}
-
-func formFieldElementPasswordVerifySchemaAttributes() map[string]schema.Attribute {
-	labelPasswordVerifyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that when a second field for verifies password is used, this poperty specifies the field label for that verify field.",
-	)
-
-	return map[string]schema.Attribute{
-		"label_password_verify": schema.StringAttribute{
-			Description:         labelPasswordVerifyDescription.Description,
-			MarkdownDescription: labelPasswordVerifyDescription.MarkdownDescription,
-			Optional:            true,
-		},
-	}
-}
-
-func formFieldFlowLinkSchemaAttributes() map[string]schema.Attribute {
-	keyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies an identifier for the field component.",
-	)
-
-	labelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the link label.",
-	)
-
-	stylesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object that describes style settings for the flow link.",
-	)
-
-	stylesHorizontalAlignmentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the link alignment.",
-	).AllowedValuesEnum(management.AllowedEnumFormItemAlignmentEnumValues)
-
-	stylesTextColorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the link text color.",
-	)
-
-	stylesEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A boolean that specifies whether the link is enabled.",
-	)
-
-	return map[string]schema.Attribute{
-		"key": schema.StringAttribute{
-			Description:         keyDescription.Description,
-			MarkdownDescription: keyDescription.MarkdownDescription,
-			Required:            true,
-		},
-
-		"label": schema.StringAttribute{
-			Description:         labelDescription.Description,
-			MarkdownDescription: labelDescription.MarkdownDescription,
-			Required:            true,
-		},
-
-		"styles": schema.SingleNestedAttribute{
-			Description:         stylesDescription.Description,
-			MarkdownDescription: stylesDescription.MarkdownDescription,
-			Optional:            true,
-
-			Attributes: map[string]schema.Attribute{
-				"horizontal_alignment": schema.StringAttribute{
-					Description:         stylesHorizontalAlignmentDescription.Description,
-					MarkdownDescription: stylesHorizontalAlignmentDescription.MarkdownDescription,
-					Optional:            true,
-
-					Validators: []validator.String{
-						stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumFormItemAlignmentEnumValues)...),
-					},
-				},
-
-				"text_color": schema.StringAttribute{
-					Description:         stylesTextColorDescription.Description,
-					MarkdownDescription: stylesTextColorDescription.MarkdownDescription,
-					Optional:            true,
-				},
-
-				"enabled": schema.BoolAttribute{
-					Description:         stylesEnabledDescription.Description,
-					MarkdownDescription: stylesEnabledDescription.MarkdownDescription,
-					Optional:            true,
-				},
-			},
-		},
-	}
-}
-
-func formFieldSocialLoginButtonSchemaAttributes() map[string]schema.Attribute {
-	labelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the social login button label.",
-	)
-
-	stylesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object that describes style settings for the social login button.",
-	)
-
-	stylesHorizontalAlignmentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the social login button alignment.",
-	).AllowedValuesEnum(management.AllowedEnumFormItemAlignmentEnumValues)
-
-	stylesTextColorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the social login button text color.",
-	)
-
-	stylesEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A boolean that specifies whether the social login button is enabled.",
-	)
-
-	idpTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the external identity provider type.",
-	).AllowedValuesEnum(management.AllowedEnumFormSocialLoginIdpTypeEnumValues)
-
-	idpNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the external identity provider name.",
-	)
-
-	idpIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the external identity provider's ID.",
-	)
-
-	idpEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A boolean that specifies whether the external identity provider is enabled.",
-	)
-
-	iconSrcDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the HTTP link (URL format) for the external identity provider's icon.",
-	)
-
-	widthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that specifies the button width. Set as a percentage.",
-	)
-
-	return map[string]schema.Attribute{
-		"label": schema.StringAttribute{
-			Description:         labelDescription.Description,
-			MarkdownDescription: labelDescription.MarkdownDescription,
-			Required:            true,
-		},
-
-		"styles": schema.SingleNestedAttribute{
-			Description:         stylesDescription.Description,
-			MarkdownDescription: stylesDescription.MarkdownDescription,
-			Optional:            true,
-
-			Attributes: map[string]schema.Attribute{
-				"horizontal_alignment": schema.StringAttribute{
-					Description:         stylesHorizontalAlignmentDescription.Description,
-					MarkdownDescription: stylesHorizontalAlignmentDescription.MarkdownDescription,
-					Optional:            true,
-
-					Validators: []validator.String{
-						stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumFormItemAlignmentEnumValues)...),
-					},
-				},
-
-				"text_color": schema.StringAttribute{
-					Description:         stylesTextColorDescription.Description,
-					MarkdownDescription: stylesTextColorDescription.MarkdownDescription,
-					Optional:            true,
-				},
-
-				"enabled": schema.BoolAttribute{
-					Description:         stylesEnabledDescription.Description,
-					MarkdownDescription: stylesEnabledDescription.MarkdownDescription,
-					Optional:            true,
-				},
-			},
-		},
-
-		"idp_type": schema.StringAttribute{
-			Description:         idpTypeDescription.Description,
-			MarkdownDescription: idpTypeDescription.MarkdownDescription,
-			Required:            true,
-		},
-
-		"idp_name": schema.StringAttribute{
-			Description:         idpNameDescription.Description,
-			MarkdownDescription: idpNameDescription.MarkdownDescription,
-			Required:            true,
-		},
-
-		"idp_id": schema.StringAttribute{
-			Description:         idpIdDescription.Description,
-			MarkdownDescription: idpIdDescription.MarkdownDescription,
-			Required:            true,
-		},
-
-		"idp_enabled": schema.BoolAttribute{
-			Description:         idpEnabledDescription.Description,
-			MarkdownDescription: idpEnabledDescription.MarkdownDescription,
-			Required:            true,
-		},
-
-		"icon_src": schema.StringAttribute{
-			Description:         iconSrcDescription.Description,
-			MarkdownDescription: iconSrcDescription.MarkdownDescription,
-			Required:            true,
-		},
-
-		"width": schema.Int64Attribute{
-			Description:         widthDescription.Description,
-			MarkdownDescription: widthDescription.MarkdownDescription,
-			Optional:            true,
 		},
 	}
 }
@@ -2289,21 +1959,6 @@ func (p *formComponentsFieldStylesResourceModel) expand(ctx context.Context, sty
 	return nil, diags
 }
 
-func (p *formComponentsFieldErrorDisplayResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldErrorDisplay, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	data := management.NewFormFieldErrorDisplay(
-		management.ENUMFORMFIELDTYPE_ERROR_DISPLAY,
-		*positionData,
-	)
-
-	if !p.Content.IsNull() && !p.Content.IsUnknown() {
-		data.SetContent(p.Content.ValueString())
-	}
-
-	return data, diags
-}
-
 func (p *formComponentsFieldFlowButtonResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldFlowButton, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -2333,60 +1988,6 @@ func (p *formComponentsFieldFlowButtonResourceModel) expand(ctx context.Context,
 	}
 
 	return data, diags
-}
-
-func (p *formComponentsFieldSocialLoginButtonResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldSocialLoginButton, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	data := management.NewFormFieldSocialLoginButton(
-		management.ENUMFORMFIELDTYPE_SOCIAL_LOGIN_BUTTON,
-		*positionData,
-		p.Label.ValueString(),
-		management.EnumFormSocialLoginIdpType(p.IdpType.ValueString()),
-		p.IdpType.ValueString(),
-		p.IdpId.ValueString(),
-		p.IdpEnabled.ValueBool(),
-		p.IconSrc.ValueString(),
-	)
-
-	if !p.Styles.IsNull() && !p.Styles.IsUnknown() {
-		var plan formComponentsFieldSocialLoginButtonStylesResourceModel
-		diags.Append(p.Styles.As(ctx, &plan, basetypes.ObjectAsOptions{
-			UnhandledNullAsEmpty:    false,
-			UnhandledUnknownAsEmpty: false,
-		})...)
-		if diags.HasError() {
-			return nil, diags
-		}
-
-		stylesData := plan.expand()
-
-		data.SetStyles(*stylesData)
-	}
-
-	if !p.Width.IsNull() && !p.Width.IsUnknown() {
-		data.SetWidth(int32(p.Width.ValueInt64()))
-	}
-
-	return data, diags
-}
-
-func (p *formComponentsFieldSocialLoginButtonStylesResourceModel) expand() *management.FormSocialLoginButtonStyles {
-	data := management.NewFormSocialLoginButtonStyles()
-
-	if !p.HorizontalAlignment.IsNull() && !p.HorizontalAlignment.IsUnknown() {
-		data.SetHorizontalAlignment(management.EnumFormItemAlignment(p.HorizontalAlignment.ValueString()))
-	}
-
-	if !p.Enabled.IsNull() && !p.Enabled.IsUnknown() {
-		data.SetEnabled(p.Enabled.ValueBool())
-	}
-
-	if !p.TextColor.IsNull() && !p.TextColor.IsUnknown() {
-		data.SetTextColor(p.TextColor.ValueString())
-	}
-
-	return data
 }
 
 func (p *formResourceModel) toState(apiObject *management.Form) diag.Diagnostics {
@@ -2721,13 +2322,6 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"type":     framework.EnumOkToTF(t.GetTypeOk()),
 			}
 
-		case *management.FormFieldSocialLoginButton:
-			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
-			diags.Append(d...)
-			attributeMap["position"] = position
-			attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
-			//attributeMap["field_social_login_button"], d = formComponentsFieldsFieldSocialLoginButtonToTF(t)
-
 		case *management.FormFieldSubmitButton:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
@@ -2823,7 +2417,7 @@ func formComponentsFieldsConvertEmptyValuesToTFNulls(attributeMap map[string]att
 		"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
 	}
 
-	for k, _ := range nullMap {
+	for k := range nullMap {
 		if attributeMap[k] == nil {
 			attributeMap[k] = nullMap[k]
 		}
