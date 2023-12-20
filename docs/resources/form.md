@@ -148,7 +148,9 @@ Optional:
 - `other_option_input_label` (String) A string that specifies the label for the other option in drop-down controls.
 - `other_option_key` (String) A string that specifies whether the form identifies that the choice is a custom choice not from a predefined list.
 - `other_option_label` (String) A string that specifies the label for a custom or "other" choice in a list.
+- `qr_code_type` (String) A string that specifies the QR Code type.
 - `required` (Boolean) A boolean that specifies whether the field is required.
+- `show_border` (Boolean) A boolean that specifies the border visibility.
 - `show_password_requirements` (Boolean)
 - `size` (String) A string that specifies the reCAPTCHA size.  Options are `COMPACT`, `NORMAL`.
 - `styles` (Attributes) A single object that describes style settings for the button. (see [below for nested schema](#nestedatt--components--fields--styles))

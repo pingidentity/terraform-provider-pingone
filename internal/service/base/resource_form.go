@@ -65,7 +65,9 @@ type formComponentsFieldResourceModel struct {
 	OtherOptionKey               types.String `tfsdk:"other_option_key"`
 	OtherOptionLabel             types.String `tfsdk:"other_option_label"`
 	Position                     types.Object `tfsdk:"position"`
+	QrCodeType                   types.String `tfsdk:"qr_code_type"`
 	Required                     types.Bool   `tfsdk:"required"`
+	ShowBorder                   types.Bool   `tfsdk:"show_border"`
 	ShowPasswordRequirements     types.Bool   `tfsdk:"show_password_requirements"`
 	Size                         types.String `tfsdk:"size"`
 	Styles                       types.Object `tfsdk:"styles"`
@@ -212,7 +214,9 @@ var (
 		"other_option_key":                types.StringType,
 		"other_option_label":              types.StringType,
 		"position":                        types.ObjectType{AttrTypes: formComponentsFieldsPositionTFObjectTypes},
+		"qr_code_type":                    types.StringType,
 		"required":                        types.BoolType,
+		"show_border":                     types.BoolType,
 		"show_password_requirements":      types.BoolType,
 		"size":                            types.StringType,
 		"styles":                          types.ObjectType{AttrTypes: formComponentsFieldsFieldStylesTFObjectTypes},
@@ -556,6 +560,14 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	componentsFieldsAlignmentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the reCAPTCHA alignment.",
 	).AllowedValuesEnum(management.AllowedEnumFormItemAlignmentEnumValues)
+
+	componentsFieldsQrCodeTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the QR Code type.",
+	)
+
+	componentsFieldsShowBorderDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies the border visibility.",
+	)
 
 	fieldTypesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A set of strings that specifies the field types in the form.",
@@ -990,6 +1002,23 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 
 									// TODO: functional validator
 								},
+
+								"qr_code_type": schema.StringAttribute{
+									Description:         componentsFieldsQrCodeTypeDescription.Description,
+									MarkdownDescription: componentsFieldsQrCodeTypeDescription.MarkdownDescription,
+									Optional:            true,
+
+									// TODO: functional validator
+								},
+
+								"show_border": schema.BoolAttribute{
+									Description:         componentsFieldsShowBorderDescription.Description,
+									MarkdownDescription: componentsFieldsShowBorderDescription.MarkdownDescription,
+									Optional:            true,
+									Computed:            true,
+
+									// TODO: functional validator
+								},
 							},
 						},
 
@@ -1137,40 +1166,6 @@ func formFieldFlowLinkSchemaAttributes() map[string]schema.Attribute {
 					Optional:            true,
 				},
 			},
-		},
-	}
-}
-
-func formFieldQrCodeSchemaAttributes() map[string]schema.Attribute {
-	qrCodeTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the QR Code type.",
-	)
-
-	alignmentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the QR Code alignment.",
-	).AllowedValuesEnum(management.AllowedEnumFormItemAlignmentEnumValues)
-
-	showBorderDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A boolean that specifies the border visibility.",
-	)
-
-	return map[string]schema.Attribute{
-		"qr_code_type": schema.StringAttribute{
-			Description:         qrCodeTypeDescription.Description,
-			MarkdownDescription: qrCodeTypeDescription.MarkdownDescription,
-			Required:            true,
-		},
-
-		"alignment": schema.StringAttribute{
-			Description:         alignmentDescription.Description,
-			MarkdownDescription: alignmentDescription.MarkdownDescription,
-			Required:            true,
-		},
-
-		"show_border": schema.BoolAttribute{
-			Description:         showBorderDescription.Description,
-			MarkdownDescription: showBorderDescription.MarkdownDescription,
-			Required:            true,
 		},
 	}
 }
@@ -1643,6 +1638,8 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 		data.FormFieldPassword = p.expandFieldPassword(positionData)
 	case string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY):
 		data.FormFieldPasswordVerify = p.expandFieldPasswordVerify(positionData)
+	case string(management.ENUMFORMFIELDTYPE_QR_CODE):
+		data.FormFieldQrCode = p.expandItemQRCode(positionData)
 	case string(management.ENUMFORMFIELDTYPE_RADIO):
 		data.FormFieldRadio, d = p.expandFieldRadio(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_RECAPTCHA_V2):
@@ -2108,6 +2105,22 @@ func (p *formComponentsFieldResourceModel) expandFieldText(ctx context.Context, 
 	return data, diags
 }
 
+func (p *formComponentsFieldResourceModel) expandItemQRCode(positionData *management.FormFieldCommonPosition) *management.FormFieldQrCode {
+	data := management.NewFormFieldQrCode(
+		management.ENUMFORMFIELDTYPE_QR_CODE,
+		*positionData,
+		p.Key.ValueString(),
+		management.EnumFormQrCodeType(p.QrCodeType.ValueString()),
+		management.EnumFormItemAlignment(p.Alignment.ValueString()),
+	)
+
+	if !p.ShowBorder.IsNull() && !p.ShowBorder.IsUnknown() {
+		data.SetShowBorder(p.ShowBorder.ValueBool())
+	}
+
+	return data
+}
+
 func (p *formComponentsFieldResourceModel) expandItemRecaptchaV2(positionData *management.FormFieldCommonPosition) *management.FormFieldRecaptchaV2 {
 	data := management.NewFormFieldRecaptchaV2(
 		management.ENUMFORMFIELDTYPE_RECAPTCHA_V2,
@@ -2322,20 +2335,6 @@ func (p *formComponentsFieldFlowButtonResourceModel) expand(ctx context.Context,
 	return data, diags
 }
 
-func (p *formComponentsFieldQrCodeResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldQrCode, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	data := management.NewFormFieldQrCode(
-		management.ENUMFORMFIELDTYPE_QR_CODE,
-		*positionData,
-		management.EnumFormQrCodeType(p.QrCodeType.ValueString()),
-		management.EnumFormItemAlignment(p.Alignment.ValueString()),
-		p.ShowBorder.ValueBool(),
-	)
-
-	return data, diags
-}
-
 func (p *formComponentsFieldSocialLoginButtonResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldSocialLoginButton, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -2470,12 +2469,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
-				"alignment":                       types.StringNull(),
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
-				"content":                         types.StringNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
 				"label_mode":                      framework.EnumOkToTF(t.GetLabelModeOk()),
-				"label_password_verify":           types.StringNull(),
 				"label":                           framework.StringOkToTF(t.GetLabelOk()),
 				"layout":                          framework.EnumOkToTF(t.GetLayoutOk()),
 				"options":                         options,
@@ -2486,10 +2482,6 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"other_option_label":              framework.StringOkToTF(t.GetOtherOptionLabelOk()),
 				"position":                        position,
 				"required":                        framework.BoolOkToTF(t.GetRequiredOk()),
-				"show_password_requirements":      types.BoolNull(),
-				"size":                            types.StringNull(),
-				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
-				"theme":                           types.StringNull(),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      validation,
 			}
@@ -2505,12 +2497,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
-				"alignment":                       types.StringNull(),
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
-				"content":                         types.StringNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
 				"label_mode":                      framework.EnumOkToTF(t.GetLabelModeOk()),
-				"label_password_verify":           types.StringNull(),
 				"label":                           framework.StringOkToTF(t.GetLabelOk()),
 				"layout":                          framework.EnumOkToTF(t.GetLayoutOk()),
 				"options":                         options,
@@ -2521,10 +2510,6 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"other_option_label":              framework.StringOkToTF(t.GetOtherOptionLabelOk()),
 				"position":                        position,
 				"required":                        framework.BoolOkToTF(t.GetRequiredOk()),
-				"show_password_requirements":      types.BoolNull(),
-				"size":                            types.StringNull(),
-				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
-				"theme":                           types.StringNull(),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      validation,
 			}
@@ -2534,28 +2519,8 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
-				"alignment":                       types.StringNull(),
-				"attribute_disabled":              types.BoolNull(),
-				"content":                         types.StringNull(),
-				"key":                             types.StringNull(),
-				"label_mode":                      types.StringNull(),
-				"label_password_verify":           types.StringNull(),
-				"label":                           types.StringNull(),
-				"layout":                          types.StringNull(),
-				"options":                         types.SetNull(types.ObjectType{AttrTypes: formComponentsFieldsFieldElementOptionTFObjectTypes}),
-				"other_option_attribute_disabled": types.BoolNull(),
-				"other_option_enabled":            types.BoolNull(),
-				"other_option_input_label":        types.StringNull(),
-				"other_option_key":                types.StringNull(),
-				"other_option_label":              types.StringNull(),
-				"position":                        position,
-				"required":                        types.BoolNull(),
-				"show_password_requirements":      types.BoolNull(),
-				"size":                            types.StringNull(),
-				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
-				"theme":                           types.StringNull(),
-				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
-				"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
+				"position": position,
+				"type":     framework.EnumOkToTF(t.GetTypeOk()),
 			}
 
 		case *management.FormFieldDropdown:
@@ -2569,12 +2534,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
-				"alignment":                       types.StringNull(),
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
-				"content":                         types.StringNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
 				"label_mode":                      framework.EnumOkToTF(t.GetLabelModeOk()),
-				"label_password_verify":           types.StringNull(),
 				"label":                           framework.StringOkToTF(t.GetLabelOk()),
 				"layout":                          framework.EnumOkToTF(t.GetLayoutOk()),
 				"options":                         options,
@@ -2585,10 +2547,6 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"other_option_label":              framework.StringOkToTF(t.GetOtherOptionLabelOk()),
 				"position":                        position,
 				"required":                        framework.BoolOkToTF(t.GetRequiredOk()),
-				"show_password_requirements":      types.BoolNull(),
-				"size":                            types.StringNull(),
-				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
-				"theme":                           types.StringNull(),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      validation,
 			}
@@ -2598,28 +2556,8 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
-				"alignment":                       types.StringNull(),
-				"attribute_disabled":              types.BoolNull(),
-				"content":                         types.StringNull(),
-				"key":                             types.StringNull(),
-				"label_mode":                      types.StringNull(),
-				"label_password_verify":           types.StringNull(),
-				"label":                           types.StringNull(),
-				"layout":                          types.StringNull(),
-				"options":                         types.SetNull(types.ObjectType{AttrTypes: formComponentsFieldsFieldElementOptionTFObjectTypes}),
-				"other_option_attribute_disabled": types.BoolNull(),
-				"other_option_enabled":            types.BoolNull(),
-				"other_option_input_label":        types.StringNull(),
-				"other_option_key":                types.StringNull(),
-				"other_option_label":              types.StringNull(),
-				"position":                        position,
-				"required":                        types.BoolNull(),
-				"show_password_requirements":      types.BoolNull(),
-				"size":                            types.StringNull(),
-				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
-				"theme":                           types.StringNull(),
-				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
-				"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
+				"position": position,
+				"type":     framework.EnumOkToTF(t.GetTypeOk()),
 			}
 
 		case *management.FormFieldErrorDisplay:
@@ -2627,28 +2565,8 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
-				"alignment":                       types.StringNull(),
-				"attribute_disabled":              types.BoolNull(),
-				"content":                         types.StringNull(),
-				"key":                             types.StringNull(),
-				"label_mode":                      types.StringNull(),
-				"label_password_verify":           types.StringNull(),
-				"label":                           types.StringNull(),
-				"layout":                          types.StringNull(),
-				"options":                         types.SetNull(types.ObjectType{AttrTypes: formComponentsFieldsFieldElementOptionTFObjectTypes}),
-				"other_option_attribute_disabled": types.BoolNull(),
-				"other_option_enabled":            types.BoolNull(),
-				"other_option_input_label":        types.StringNull(),
-				"other_option_key":                types.StringNull(),
-				"other_option_label":              types.StringNull(),
-				"position":                        position,
-				"required":                        types.BoolNull(),
-				"show_password_requirements":      types.BoolNull(),
-				"size":                            types.StringNull(),
-				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
-				"theme":                           types.StringNull(),
-				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
-				"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
+				"position": position,
+				"type":     framework.EnumOkToTF(t.GetTypeOk()),
 			}
 
 		case *management.FormFieldFlowButton:
@@ -2659,28 +2577,11 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
-				"alignment":                       types.StringNull(),
-				"attribute_disabled":              types.BoolNull(),
-				"content":                         types.StringNull(),
-				"key":                             framework.StringOkToTF(t.GetKeyOk()),
-				"label_mode":                      types.StringNull(),
-				"label_password_verify":           types.StringNull(),
-				"label":                           framework.StringOkToTF(t.GetLabelOk()),
-				"layout":                          types.StringNull(),
-				"options":                         types.SetNull(types.ObjectType{AttrTypes: formComponentsFieldsFieldElementOptionTFObjectTypes}),
-				"other_option_attribute_disabled": types.BoolNull(),
-				"other_option_enabled":            types.BoolNull(),
-				"other_option_input_label":        types.StringNull(),
-				"other_option_key":                types.StringNull(),
-				"other_option_label":              types.StringNull(),
-				"position":                        position,
-				"required":                        types.BoolNull(),
-				"show_password_requirements":      types.BoolNull(),
-				"size":                            types.StringNull(),
-				"styles":                          styles,
-				"theme":                           types.StringNull(),
-				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
-				"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
+				"key":      framework.StringOkToTF(t.GetKeyOk()),
+				"label":    framework.StringOkToTF(t.GetLabelOk()),
+				"position": position,
+				"styles":   styles,
+				"type":     framework.EnumOkToTF(t.GetTypeOk()),
 			}
 
 		case *management.FormFieldFlowLink:
@@ -2691,28 +2592,11 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
-				"alignment":                       types.StringNull(),
-				"attribute_disabled":              types.BoolNull(),
-				"content":                         types.StringNull(),
-				"key":                             framework.StringOkToTF(t.GetKeyOk()),
-				"label_mode":                      types.StringNull(),
-				"label_password_verify":           types.StringNull(),
-				"label":                           framework.StringOkToTF(t.GetLabelOk()),
-				"layout":                          types.StringNull(),
-				"options":                         types.SetNull(types.ObjectType{AttrTypes: formComponentsFieldsFieldElementOptionTFObjectTypes}),
-				"other_option_attribute_disabled": types.BoolNull(),
-				"other_option_enabled":            types.BoolNull(),
-				"other_option_input_label":        types.StringNull(),
-				"other_option_key":                types.StringNull(),
-				"other_option_label":              types.StringNull(),
-				"position":                        position,
-				"required":                        types.BoolNull(),
-				"show_password_requirements":      types.BoolNull(),
-				"size":                            types.StringNull(),
-				"styles":                          styles,
-				"theme":                           types.StringNull(),
-				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
-				"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
+				"key":      framework.StringOkToTF(t.GetKeyOk()),
+				"label":    framework.StringOkToTF(t.GetLabelOk()),
+				"position": position,
+				"styles":   styles,
+				"type":     framework.EnumOkToTF(t.GetTypeOk()),
 			}
 
 		case *management.FormFieldPassword:
@@ -2726,12 +2610,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
-				"alignment":                       types.StringNull(),
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
-				"content":                         types.StringNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
 				"label_mode":                      framework.EnumOkToTF(t.GetLabelModeOk()),
-				"label_password_verify":           types.StringNull(),
 				"label":                           framework.StringOkToTF(t.GetLabelOk()),
 				"layout":                          framework.EnumOkToTF(t.GetLayoutOk()),
 				"options":                         options,
@@ -2743,9 +2624,6 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"position":                        position,
 				"required":                        framework.BoolOkToTF(t.GetRequiredOk()),
 				"show_password_requirements":      framework.BoolOkToTF(t.GetShowPasswordRequirementsOk()),
-				"size":                            types.StringNull(),
-				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
-				"theme":                           types.StringNull(),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      validation,
 			}
@@ -2761,9 +2639,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
-				"alignment":                       types.StringNull(),
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
-				"content":                         types.StringNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
 				"label_mode":                      framework.EnumOkToTF(t.GetLabelModeOk()),
 				"label_password_verify":           framework.StringOkToTF(t.GetLabelPasswordVerifyOk()),
@@ -2778,9 +2654,6 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"position":                        position,
 				"required":                        framework.BoolOkToTF(t.GetRequiredOk()),
 				"show_password_requirements":      framework.BoolOkToTF(t.GetShowPasswordRequirementsOk()),
-				"size":                            types.StringNull(),
-				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
-				"theme":                           types.StringNull(),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      validation,
 			}
@@ -2788,9 +2661,15 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 		case *management.FormFieldQrCode:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
-			attributeMap["position"] = position
-			attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
-			//attributeMap["field_qr_code"], d = formComponentsFieldsFieldQrCodeToTF(t)
+
+			attributeMap = map[string]attr.Value{
+				"alignment":    framework.EnumOkToTF(t.GetAlignmentOk()),
+				"key":          framework.StringOkToTF(t.GetKeyOk()),
+				"position":     position,
+				"qr_code_type": framework.EnumOkToTF(t.GetQrCodeTypeOk()),
+				"show_border":  framework.BoolOkToTF(t.GetShowBorderOk()),
+				"type":         framework.EnumOkToTF(t.GetTypeOk()),
+			}
 
 		case *management.FormFieldRadio:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
@@ -2803,12 +2682,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
-				"alignment":                       types.StringNull(),
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
-				"content":                         types.StringNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
 				"label_mode":                      framework.EnumOkToTF(t.GetLabelModeOk()),
-				"label_password_verify":           types.StringNull(),
 				"label":                           framework.StringOkToTF(t.GetLabelOk()),
 				"layout":                          framework.EnumOkToTF(t.GetLayoutOk()),
 				"options":                         options,
@@ -2819,10 +2695,6 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"other_option_label":              framework.StringOkToTF(t.GetOtherOptionLabelOk()),
 				"position":                        position,
 				"required":                        framework.BoolOkToTF(t.GetRequiredOk()),
-				"show_password_requirements":      types.BoolNull(),
-				"size":                            types.StringNull(),
-				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
-				"theme":                           types.StringNull(),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      validation,
 			}
@@ -2832,28 +2704,11 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
-				"alignment":                       framework.EnumOkToTF(t.GetAlignmentOk()),
-				"attribute_disabled":              types.BoolNull(),
-				"content":                         types.StringNull(),
-				"key":                             types.StringNull(),
-				"label_mode":                      types.StringNull(),
-				"label_password_verify":           types.StringNull(),
-				"label":                           types.StringNull(),
-				"layout":                          types.StringNull(),
-				"options":                         types.SetNull(types.ObjectType{AttrTypes: formComponentsFieldsFieldElementOptionTFObjectTypes}),
-				"other_option_attribute_disabled": types.BoolNull(),
-				"other_option_enabled":            types.BoolNull(),
-				"other_option_input_label":        types.StringNull(),
-				"other_option_key":                types.StringNull(),
-				"other_option_label":              types.StringNull(),
-				"position":                        position,
-				"required":                        types.BoolNull(),
-				"show_password_requirements":      types.BoolNull(),
-				"size":                            framework.EnumOkToTF(t.GetSizeOk()),
-				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
-				"theme":                           framework.EnumOkToTF(t.GetThemeOk()),
-				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
-				"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
+				"alignment": framework.EnumOkToTF(t.GetAlignmentOk()),
+				"position":  position,
+				"size":      framework.EnumOkToTF(t.GetSizeOk()),
+				"theme":     framework.EnumOkToTF(t.GetThemeOk()),
+				"type":      framework.EnumOkToTF(t.GetTypeOk()),
 			}
 
 		case *management.FormFieldSlateTextblob:
@@ -2861,28 +2716,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
-				"alignment":                       types.StringNull(),
-				"attribute_disabled":              types.BoolNull(),
-				"content":                         framework.StringOkToTF(t.GetContentOk()),
-				"key":                             types.StringNull(),
-				"label_mode":                      types.StringNull(),
-				"label_password_verify":           types.StringNull(),
-				"label":                           types.StringNull(),
-				"layout":                          types.StringNull(),
-				"options":                         types.SetNull(types.ObjectType{AttrTypes: formComponentsFieldsFieldElementOptionTFObjectTypes}),
-				"other_option_attribute_disabled": types.BoolNull(),
-				"other_option_enabled":            types.BoolNull(),
-				"other_option_input_label":        types.StringNull(),
-				"other_option_key":                types.StringNull(),
-				"other_option_label":              types.StringNull(),
-				"position":                        position,
-				"required":                        types.BoolNull(),
-				"show_password_requirements":      types.BoolNull(),
-				"size":                            types.StringNull(),
-				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
-				"theme":                           types.StringNull(),
-				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
-				"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
+				"content":  framework.StringOkToTF(t.GetContentOk()),
+				"position": position,
+				"type":     framework.EnumOkToTF(t.GetTypeOk()),
 			}
 
 		case *management.FormFieldSocialLoginButton:
@@ -2900,28 +2736,11 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
-				"alignment":                       types.StringNull(),
-				"attribute_disabled":              types.BoolNull(),
-				"content":                         types.StringNull(),
-				"key":                             framework.StringOkToTF(t.GetKeyOk()),
-				"label_mode":                      types.StringNull(),
-				"label_password_verify":           types.StringNull(),
-				"label":                           framework.StringOkToTF(t.GetLabelOk()),
-				"layout":                          types.StringNull(),
-				"options":                         types.SetNull(types.ObjectType{AttrTypes: formComponentsFieldsFieldElementOptionTFObjectTypes}),
-				"other_option_attribute_disabled": types.BoolNull(),
-				"other_option_enabled":            types.BoolNull(),
-				"other_option_input_label":        types.StringNull(),
-				"other_option_key":                types.StringNull(),
-				"other_option_label":              types.StringNull(),
-				"position":                        position,
-				"required":                        types.BoolNull(),
-				"show_password_requirements":      types.BoolNull(),
-				"size":                            types.StringNull(),
-				"styles":                          styles,
-				"theme":                           types.StringNull(),
-				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
-				"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
+				"key":      framework.StringOkToTF(t.GetKeyOk()),
+				"label":    framework.StringOkToTF(t.GetLabelOk()),
+				"position": position,
+				"styles":   styles,
+				"type":     framework.EnumOkToTF(t.GetTypeOk()),
 			}
 
 		case *management.FormFieldText:
@@ -2935,12 +2754,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
-				"alignment":                       types.StringNull(),
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
-				"content":                         types.StringNull(),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
 				"label_mode":                      framework.EnumOkToTF(t.GetLabelModeOk()),
-				"label_password_verify":           types.StringNull(),
 				"label":                           framework.StringOkToTF(t.GetLabelOk()),
 				"layout":                          framework.EnumOkToTF(t.GetLayoutOk()),
 				"options":                         options,
@@ -2951,10 +2767,6 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"other_option_label":              framework.StringOkToTF(t.GetOtherOptionLabelOk()),
 				"position":                        position,
 				"required":                        framework.BoolOkToTF(t.GetRequiredOk()),
-				"show_password_requirements":      types.BoolNull(),
-				"size":                            types.StringNull(),
-				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
-				"theme":                           types.StringNull(),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      validation,
 			}
@@ -2964,30 +2776,13 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
-				"alignment":                       types.StringNull(),
-				"attribute_disabled":              types.BoolNull(),
-				"content":                         framework.StringOkToTF(t.GetContentOk()),
-				"key":                             types.StringNull(),
-				"label_mode":                      types.StringNull(),
-				"label_password_verify":           types.StringNull(),
-				"label":                           types.StringNull(),
-				"layout":                          types.StringNull(),
-				"options":                         types.SetNull(types.ObjectType{AttrTypes: formComponentsFieldsFieldElementOptionTFObjectTypes}),
-				"other_option_attribute_disabled": types.BoolNull(),
-				"other_option_enabled":            types.BoolNull(),
-				"other_option_input_label":        types.StringNull(),
-				"other_option_key":                types.StringNull(),
-				"other_option_label":              types.StringNull(),
-				"position":                        position,
-				"required":                        types.BoolNull(),
-				"show_password_requirements":      types.BoolNull(),
-				"size":                            types.StringNull(),
-				"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
-				"theme":                           types.StringNull(),
-				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
-				"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
+				"content":  framework.StringOkToTF(t.GetContentOk()),
+				"position": position,
+				"type":     framework.EnumOkToTF(t.GetTypeOk()),
 			}
 		}
+
+		attributeMap = formComponentsFieldsConvertEmptyValuesToTFNulls(attributeMap)
 
 		objValue, d := types.ObjectValue(formComponentsFieldsTFObjectTypes, attributeMap)
 		diags.Append(d...)
@@ -2998,6 +2793,43 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 	diags.Append(d...)
 
 	return returnVar, diags
+}
+
+func formComponentsFieldsConvertEmptyValuesToTFNulls(attributeMap map[string]attr.Value) map[string]attr.Value {
+	nullMap := map[string]attr.Value{
+		"alignment":                       types.StringNull(),
+		"attribute_disabled":              types.BoolNull(),
+		"content":                         types.StringNull(),
+		"key":                             types.StringNull(),
+		"label_mode":                      types.StringNull(),
+		"label_password_verify":           types.StringNull(),
+		"label":                           types.StringNull(),
+		"layout":                          types.StringNull(),
+		"options":                         types.SetNull(types.ObjectType{AttrTypes: formComponentsFieldsFieldElementOptionTFObjectTypes}),
+		"other_option_attribute_disabled": types.BoolNull(),
+		"other_option_enabled":            types.BoolNull(),
+		"other_option_input_label":        types.StringNull(),
+		"other_option_key":                types.StringNull(),
+		"other_option_label":              types.StringNull(),
+		"position":                        types.ObjectNull(formComponentsFieldsPositionTFObjectTypes),
+		"qr_code_type":                    types.StringNull(),
+		"required":                        types.BoolNull(),
+		"show_border":                     types.BoolNull(),
+		"show_password_requirements":      types.BoolNull(),
+		"size":                            types.StringNull(),
+		"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
+		"theme":                           types.StringNull(),
+		"type":                            types.StringNull(),
+		"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
+	}
+
+	for k, _ := range nullMap {
+		if attributeMap[k] == nil {
+			attributeMap[k] = nullMap[k]
+		}
+	}
+
+	return attributeMap
 }
 
 func formComponentsFieldsPositionOkToTF(apiObject *management.FormFieldCommonPosition, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
