@@ -4,8 +4,17 @@ NOTES:
 
 * Add `lifecycle.prevent_destroy` best practice to documentation and examples for data-carrying resources, to mitigate potential accidental data loss. ([#691](https://github.com/pingidentity/terraform-provider-pingone/issues/691))
 * `data-source/pingone_application`: Deprecated the `saml_options.sp_verification_certificate_ids` attribute.  This attribute will be removed in the next major release.  Use the `saml_options.sp_verification.certificate_ids` attribute going forward. ([#680](https://github.com/pingidentity/terraform-provider-pingone/issues/680))
-* `resource/pingone_application`: Deprecated the `saml_options.sp_verification_certificate_ids` parameter.  This parameter will be removed in the next major release.  Use the `saml_options.sp_verification.certificate_ids` parameter going forward. ([#680](https://github.com/pingidentity/terraform-provider-pingone/issues/680))
 * `resource/pingone_application_attribute_mapping`: Corrected application attribute mapping documentation example when using custom OIDC scopes. ([#684](https://github.com/pingidentity/terraform-provider-pingone/issues/684))
+* `resource/pingone_application`: Deprecated the `saml_options.sp_verification_certificate_ids` parameter.  This parameter will be removed in the next major release.  Use the `saml_options.sp_verification.certificate_ids` parameter going forward. ([#680](https://github.com/pingidentity/terraform-provider-pingone/issues/680))
+* bump `github.com/google/uuid` v1.4.0 => v1.5.0 ([#701](https://github.com/pingidentity/terraform-provider-pingone/issues/701))
+* bump `github.com/hashicorp/terraform-plugin-go` v0.19.1 => v0.20.0 ([#701](https://github.com/pingidentity/terraform-provider-pingone/issues/701))
+* bump `github.com/hashicorp/terraform-plugin-mux` v0.12.0 => v0.13.0 ([#701](https://github.com/pingidentity/terraform-provider-pingone/issues/701))
+* bump `github.com/hashicorp/terraform-plugin-sdk/v2` v2.30.0 => v2.31.0 ([#701](https://github.com/pingidentity/terraform-provider-pingone/issues/701))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.6.0 => v0.6.1 ([#701](https://github.com/pingidentity/terraform-provider-pingone/issues/701))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.33.0 => v0.34.0 ([#701](https://github.com/pingidentity/terraform-provider-pingone/issues/701))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.18.1 => v0.18.2 ([#701](https://github.com/pingidentity/terraform-provider-pingone/issues/701))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` v0.12.0 => v0.12.1 ([#701](https://github.com/pingidentity/terraform-provider-pingone/issues/701))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.11.2 => v0.11.3 ([#701](https://github.com/pingidentity/terraform-provider-pingone/issues/701))
 
 ENHANCEMENTS:
 
