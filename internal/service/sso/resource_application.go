@@ -1802,7 +1802,10 @@ func expandCommonOptionalAttributes(d *schema.ResourceData) management.Applicati
 				groups = append(groups, *management.NewApplicationAccessControlGroupGroupsInner(j.(string)))
 			}
 
-			accessControl.SetGroup(*management.NewApplicationAccessControlGroup(obj["type"].(string), groups))
+			accessControl.SetGroup(*management.NewApplicationAccessControlGroup(
+				management.EnumApplicationAccessControlGroupType(obj["type"].(string)),
+				groups,
+			))
 
 			accessControlCount += 1
 		}
