@@ -16,6 +16,11 @@ NOTES:
 * bump `github.com/patrickcping/pingone-go-sdk-v2/risk` v0.12.0 => v0.12.1 ([#701](https://github.com/pingidentity/terraform-provider-pingone/issues/701))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` v0.11.2 => v0.11.3 ([#701](https://github.com/pingidentity/terraform-provider-pingone/issues/701))
 
+FEATURES:
+
+* **New Resource:** `pingone_form` ([#655](https://github.com/pingidentity/terraform-provider-pingone/issues/655))
+* **New Resource:** `pingone_forms_recaptcha_v2` ([#655](https://github.com/pingidentity/terraform-provider-pingone/issues/655))
+
 ENHANCEMENTS:
 
 * `data-source/pingone_application`: Added the `saml_options.sp_verification.authn_request_signed` attribute to support the "Enforce Signed AuthnRequest" option for SAML applications. ([#680](https://github.com/pingidentity/terraform-provider-pingone/issues/680))
