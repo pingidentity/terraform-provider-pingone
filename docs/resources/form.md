@@ -210,7 +210,7 @@ Optional:
 
 - `alignment` (String) **Required** when the `type` is one of `QR_CODE`, `RECAPTCHA_V2`.  A string that specifies the reCAPTCHA alignment.  Options are `CENTER`, `LEFT`, `RIGHT`.
 - `attribute_disabled` (Boolean) Optional when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `TEXT`.  A boolean that specifies whether the linked directory attribute is disabled.
-- `content` (String) Optional when the `type` is one of `SLATE_TEXTBLOB`, `TEXTBLOB`.
+- `content` (String) Optional when the `type` is one of `SLATE_TEXTBLOB`, `TEXTBLOB`.  A string that specifies the field's content (for example, HTML when the field type is `TEXTBLOB`.)
 - `key` (String) **Required** when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `TEXT`.  A string that specifies an identifier for the field component.
 - `label` (String) **Required** when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `SUBMIT_BUTTON`, `TEXT`.  A string that specifies the field label.
 - `label_mode` (String) Optional when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `TEXT`.  A string that specifies how the field is rendered.  Options are `DEFAULT`, `FLOAT`.
@@ -220,7 +220,7 @@ Optional:
 - `qr_code_type` (String) **Required** when the `type` is one of `QR_CODE`.  A string that specifies the QR Code type.
 - `required` (Boolean) Optional when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `TEXT`.  A boolean that specifies whether the field is required.
 - `show_border` (Boolean) Optional when the `type` is one of `QR_CODE`.  A boolean that specifies the border visibility.
-- `show_password_requirements` (Boolean) Optional when the `type` is one of `PASSWORD`, `PASSWORD_VERIFY`.
+- `show_password_requirements` (Boolean) Optional when the `type` is one of `PASSWORD`, `PASSWORD_VERIFY`.  A boolean that specifies whether to display password requirements to the user.
 - `size` (String) **Required** when the `type` is one of `RECAPTCHA_V2`.  A string that specifies the reCAPTCHA size.  Options are `COMPACT`, `NORMAL`.
 - `styles` (Attributes) Optional when the `type` is one of `FLOW_BUTTON`, `FLOW_LINK`, `SUBMIT_BUTTON`.  A single object that describes style settings for the field. (see [below for nested schema](#nestedatt--components--fields--styles))
 - `theme` (String) **Required** when the `type` is one of `RECAPTCHA_V2`.  A string that specifies the reCAPTCHA theme.  Options are `DARK`, `LIGHT`.
@@ -252,8 +252,8 @@ Optional:
 
 Required:
 
-- `label` (String)
-- `value` (String)
+- `label` (String) A string that specifies the option's label in the form field that is shown to the end user.
+- `value` (String) A string that specifies the option's value in the form field that is posted as form data.
 
 
 <a id="nestedatt--components--fields--styles"></a>
@@ -265,21 +265,21 @@ Optional:
 - `background_color` (String) A string that specifies the button background color. The value must be a valid hexadecimal color.
 - `border_color` (String) A string that specifies the button border color. The value must be a valid hexadecimal color.
 - `enabled` (Boolean) A boolean that specifies whether the button is enabled.
-- `height` (Number)
-- `padding` (Attributes) (see [below for nested schema](#nestedatt--components--fields--styles--padding))
+- `height` (Number) An integer that specifies a custom height of the field (in pixels) when displayed in the form.
+- `padding` (Attributes) A single object that specifies custom padding styles for the field. (see [below for nested schema](#nestedatt--components--fields--styles--padding))
 - `text_color` (String) A string that specifies the button text color. The value must be a valid hexadecimal color.
 - `width` (Number) An integer that specifies the button width. Set as a percentage.
-- `width_unit` (String)
+- `width_unit` (String) A string that specifies the unit to apply to the `width` parameter.  Options are `PERCENT`, `PIXELS`.
 
 <a id="nestedatt--components--fields--styles--padding"></a>
 ### Nested Schema for `components.fields.styles.width_unit`
 
 Optional:
 
-- `bottom` (Number)
-- `left` (Number)
-- `right` (Number)
-- `top` (Number)
+- `bottom` (Number) An integer that specifies the bottom padding (in pixels) to apply to the field.
+- `left` (Number) An integer that specifies the left padding (in pixels) to apply to the field.
+- `right` (Number) An integer that specifies the right padding (in pixels) to apply to the field.
+- `top` (Number) An integer that specifies the top padding (in pixels) to apply to the field.
 
 
 

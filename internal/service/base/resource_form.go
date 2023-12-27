@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -511,7 +512,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	componentsFieldsContentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		formFieldValidationDocumentation("content"),
 	).AppendMarkdownString(
-		"",
+		fmt.Sprintf("A string that specifies the field's content (for example, HTML when the field type is `%s`.)", string(management.ENUMFORMFIELDTYPE_TEXTBLOB)),
 	)
 
 	componentsFieldsKeyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -551,11 +552,11 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	)
 
 	componentsFieldsOptionsLabelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A string that specifies the option's label in the form field that is shown to the end user.",
 	)
 
 	componentsFieldsOptionsValueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A string that specifies the option's value in the form field that is posted as form data.",
 	)
 
 	componentsFieldsRequiredDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -605,7 +606,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	componentsFieldsShowPasswordRequirementsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		formFieldValidationDocumentation("show_password_requirements"),
 	).AppendMarkdownString(
-		"",
+		"A boolean that specifies whether to display password requirements to the user.",
 	)
 
 	componentsFieldsStylesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -635,27 +636,27 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	)
 
 	componentsFieldsStylesHeightDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"An integer that specifies a custom height of the field (in pixels) when displayed in the form.",
 	)
 
 	componentsFieldsStylesPaddingDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A single object that specifies custom padding styles for the field.",
 	)
 
 	componentsFieldsStylesPaddingTopDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"An integer that specifies the top padding (in pixels) to apply to the field.",
 	)
 
 	componentsFieldsStylesPaddingRightDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"An integer that specifies the right padding (in pixels) to apply to the field.",
 	)
 
 	componentsFieldsStylesPaddingBottomDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"An integer that specifies the bottom padding (in pixels) to apply to the field.",
 	)
 
 	componentsFieldsStylesPaddingLeftDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"An integer that specifies the left padding (in pixels) to apply to the field.",
 	)
 
 	componentsFieldsStylesTextColorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -663,8 +664,8 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	)
 
 	componentsFieldsStylesWidthUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	)
+		"A string that specifies the unit to apply to the `width` parameter.",
+	).AllowedValuesEnum(management.AllowedEnumFormStylesWidthUnitEnumValues)
 
 	componentsFieldsSizeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		formFieldValidationDocumentation("size"),
@@ -828,40 +829,30 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									MarkdownDescription: componentsFieldsAttributeDisabledDescription.MarkdownDescription,
 									Optional:            true,
 									Computed:            true,
-
-									// TODO: Validator can't be false if key is "user.username" or similar
 								},
 
 								"content": schema.StringAttribute{
 									Description:         componentsFieldsContentDescription.Description,
 									MarkdownDescription: componentsFieldsContentDescription.MarkdownDescription,
 									Optional:            true,
-
-									// TODO Functional validator
 								},
 
 								"key": schema.StringAttribute{
 									Description:         componentsFieldsKeyDescription.Description,
 									MarkdownDescription: componentsFieldsKeyDescription.MarkdownDescription,
 									Optional:            true,
-
-									// TODO Functional validator
 								},
 
 								"label": schema.StringAttribute{
 									Description:         componentsFieldsLabelDescription.Description,
 									MarkdownDescription: componentsFieldsLabelDescription.MarkdownDescription,
 									Optional:            true,
-
-									// TODO: functional validator
 								},
 
 								"label_password_verify": schema.StringAttribute{
 									Description:         componentsFieldsLabelPasswordVerifyDescription.Description,
 									MarkdownDescription: componentsFieldsLabelPasswordVerifyDescription.MarkdownDescription,
 									Optional:            true,
-
-									// TODO: functional validator
 								},
 
 								"label_mode": schema.StringAttribute{
@@ -879,8 +870,6 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									MarkdownDescription: componentsFieldsLayoutDescription.MarkdownDescription,
 									Optional:            true,
 
-									// TODO functional validator
-
 									Validators: []validator.String{
 										stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumFormElementLayoutEnumValues)...),
 									},
@@ -890,8 +879,6 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Description:         componentsFieldsOptionsDescription.Description,
 									MarkdownDescription: componentsFieldsOptionsDescription.MarkdownDescription,
 									Optional:            true,
-
-									// TODO functional validator
 
 									NestedObject: schema.NestedAttributeObject{
 										Attributes: map[string]schema.Attribute{
@@ -915,16 +902,12 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									MarkdownDescription: componentsFieldsRequiredDescription.MarkdownDescription,
 									Optional:            true,
 									Computed:            true,
-
-									// TODO: Validator can't be false if key is "user.username" or similar
 								},
 
 								"validation": schema.SingleNestedAttribute{
 									Description:         componentsFieldsValidationDescription.Description,
 									MarkdownDescription: componentsFieldsValidationDescription.MarkdownDescription,
 									Optional:            true,
-
-									// TODO: optional validator
 
 									Attributes: map[string]schema.Attribute{
 										"regex": schema.StringAttribute{
@@ -968,40 +951,30 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Description:         componentsFieldsOtherOptionEnabledDescription.Description,
 									MarkdownDescription: componentsFieldsOtherOptionEnabledDescription.MarkdownDescription,
 									Computed:            true,
-
-									// TODO: functional validator
 								},
 
 								"other_option_key": schema.StringAttribute{
 									Description:         componentsFieldsOtherOptionKeyDescription.Description,
 									MarkdownDescription: componentsFieldsOtherOptionKeyDescription.MarkdownDescription,
 									Computed:            true,
-
-									// TODO: functional validator
 								},
 
 								"other_option_label": schema.StringAttribute{
 									Description:         componentsFieldsOtherOptionLabelDescription.Description,
 									MarkdownDescription: componentsFieldsOtherOptionLabelDescription.MarkdownDescription,
 									Computed:            true,
-
-									// TODO: functional validator
 								},
 
 								"other_option_input_label": schema.StringAttribute{
 									Description:         componentsFieldsOtherOptionInputLabelDescription.Description,
 									MarkdownDescription: componentsFieldsOtherOptionInputLabelDescription.MarkdownDescription,
 									Computed:            true,
-
-									// TODO: functional validator
 								},
 
 								"other_option_attribute_disabled": schema.BoolAttribute{
 									Description:         componentsFieldsOtherOptionAttributeDisabledDescription.Description,
 									MarkdownDescription: componentsFieldsOtherOptionAttributeDisabledDescription.MarkdownDescription,
 									Computed:            true,
-
-									// TODO: functional validator
 								},
 
 								"show_password_requirements": schema.BoolAttribute{
@@ -1009,16 +982,12 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									MarkdownDescription: componentsFieldsShowPasswordRequirementsDescription.MarkdownDescription,
 									Optional:            true,
 									Computed:            true,
-
-									// TODO: functional validator
 								},
 
 								"styles": schema.SingleNestedAttribute{
 									Description:         componentsFieldsStylesDescription.Description,
 									MarkdownDescription: componentsFieldsStylesDescription.MarkdownDescription,
 									Optional:            true,
-
-									// TODO: functional validator
 
 									Attributes: map[string]schema.Attribute{
 										"alignment": schema.StringAttribute{
@@ -1112,32 +1081,24 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Description:         componentsFieldsSizeDescription.Description,
 									MarkdownDescription: componentsFieldsSizeDescription.MarkdownDescription,
 									Optional:            true,
-
-									// TODO: functional validator
 								},
 
 								"theme": schema.StringAttribute{
 									Description:         componentsFieldsThemeDescription.Description,
 									MarkdownDescription: componentsFieldsThemeDescription.MarkdownDescription,
 									Optional:            true,
-
-									// TODO: functional validator
 								},
 
 								"alignment": schema.StringAttribute{
 									Description:         componentsFieldsAlignmentDescription.Description,
 									MarkdownDescription: componentsFieldsAlignmentDescription.MarkdownDescription,
 									Optional:            true,
-
-									// TODO: functional validator
 								},
 
 								"qr_code_type": schema.StringAttribute{
 									Description:         componentsFieldsQrCodeTypeDescription.Description,
 									MarkdownDescription: componentsFieldsQrCodeTypeDescription.MarkdownDescription,
 									Optional:            true,
-
-									// TODO: functional validator
 								},
 
 								"show_border": schema.BoolAttribute{
@@ -1145,8 +1106,6 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									MarkdownDescription: componentsFieldsShowBorderDescription.MarkdownDescription,
 									Optional:            true,
 									Computed:            true,
-
-									// TODO: functional validator
 								},
 							},
 						},
@@ -1296,6 +1255,26 @@ func (r *FormResource) ValidateConfig(ctx context.Context, req resource.Validate
 				"Cannot validate form configuration",
 				fmt.Sprintf("The form field type `%s` does not have Required/Optional metadata configured.  Please report this to the provider maintainers.", field.Type.ValueString()),
 			)
+		}
+
+		// Validate parameters must have specific values if the `key` is a user field
+		m, err := regexp.Compile(`^user\..+$`)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Unexpected error",
+				fmt.Sprintf("Failed to compile regex: %s.  This is always a bug in the provider.  Please report this error to the provider maintainers.", err.Error()),
+			)
+			return
+		}
+
+		if m.MatchString(field.Key.ValueString()) {
+			if !field.Required.IsNull() && !field.Required.IsUnknown() && !field.Required.ValueBool() {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("components").AtName("fields"),
+					"Invalid DaVinci form configuration",
+					fmt.Sprintf("The `required` parameter must be set to `true` for the `%s` field type when the `key` is a user field.", field.Type.ValueString()),
+				)
+			}
 		}
 	}
 
