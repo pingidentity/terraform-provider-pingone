@@ -10,11 +10,13 @@ NOTES:
 * bump `github.com/hashicorp/terraform-plugin-go` v0.19.1 => v0.20.0 ([#701](https://github.com/pingidentity/terraform-provider-pingone/issues/701))
 * bump `github.com/hashicorp/terraform-plugin-mux` v0.12.0 => v0.13.0 ([#701](https://github.com/pingidentity/terraform-provider-pingone/issues/701))
 * bump `github.com/hashicorp/terraform-plugin-sdk/v2` v2.30.0 => v2.31.0 ([#701](https://github.com/pingidentity/terraform-provider-pingone/issues/701))
+* bump `github.com/hashicorp/terraform-plugin-testing` v1.5.1 => v1.6.0 ([#689](https://github.com/pingidentity/terraform-provider-pingone/issues/689))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.6.0 => v0.6.1 ([#701](https://github.com/pingidentity/terraform-provider-pingone/issues/701))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.33.0 => v0.34.0 ([#701](https://github.com/pingidentity/terraform-provider-pingone/issues/701))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.18.1 => v0.18.2 ([#701](https://github.com/pingidentity/terraform-provider-pingone/issues/701))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/risk` v0.12.0 => v0.12.1 ([#701](https://github.com/pingidentity/terraform-provider-pingone/issues/701))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` v0.11.2 => v0.11.3 ([#701](https://github.com/pingidentity/terraform-provider-pingone/issues/701))
+* bump `golang.org/x/crypto` v0.16.0 => v0.17.0 ([#699](https://github.com/pingidentity/terraform-provider-pingone/issues/699))
 
 FEATURES:
 
