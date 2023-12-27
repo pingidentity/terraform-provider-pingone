@@ -1,0 +1,7 @@
+```release-note:new-resource
+pingone_form
+```
+
+```release-note:new-resource
+pingone_forms_recaptcha_v2
+```
