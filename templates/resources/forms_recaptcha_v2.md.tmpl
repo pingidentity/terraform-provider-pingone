@@ -1,0 +1,28 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: "Platform"
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+~> Before you can define your environment's Recaptcha configuration in PingOne, you must register your site domain with Google to create a Recaptcha configuration. For more information about how to create the Google configuration for your domain, see [Google reCAPTCHA](https://www.google.com/recaptcha/admin/create). After you complete the configuration, Google provides the secret key and site key that you need to set your environment's PingOne Recaptcha configuration.
+
+{{ if .HasExample -}}
+## Example Usage
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource.tf") }}
+{{- end }}
+
+{{ .SchemaMarkdown | trimspace }}
+
+{{ if .HasImport -}}
+## Import
+
+Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
+
+{{ codefile "shell" (printf "%s%s%s" "examples/resources/" .Name "/import.sh") }}
+{{- end }}
