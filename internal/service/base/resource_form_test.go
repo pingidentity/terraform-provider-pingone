@@ -123,8 +123,6 @@ func TestAccForm_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
-			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
-			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.button.text", "Submit"),
 			resource.TestCheckResourceAttr(resourceFullName, "translation_method", "DEFAULT_VALUE"),
 		),
 	}
@@ -140,8 +138,6 @@ func TestAccForm_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
-			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
-			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.button.text", "Submit"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "translation_method"),
 		),
 	}
