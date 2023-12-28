@@ -9,6 +9,8 @@ description: |-
 
 Resource to create and manage PingOne schema attributes.
 
+~> This resource carries data and if destroyed, could result in data loss.  Please use the `lifecycle.prevent_destroy` meta-argument ([documentation link](https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#prevent_destroy)) to prevent accidental data loss.
+
 ## Example Usage
 
 ```terraform
@@ -26,6 +28,11 @@ resource "pingone_schema_attribute" "my_attribute" {
   type        = "STRING"
   unique      = false
   multivalued = false
+
+  lifecycle {
+    # change the `prevent_destroy` parameter value to `true` to prevent this data carrying resource from being destroyed
+    prevent_destroy = false
+  }
 }
 ```
 
@@ -51,6 +58,11 @@ resource "pingone_schema_attribute" "my_awesome_regex_attribute" {
       "Charm123!",
       "Strange456!"
     ]
+  }
+
+  lifecycle {
+    # change the `prevent_destroy` parameter value to `true` to prevent this data carrying resource from being destroyed
+    prevent_destroy = false
   }
 }
 ```

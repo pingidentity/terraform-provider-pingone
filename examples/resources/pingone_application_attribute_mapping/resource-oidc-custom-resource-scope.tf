@@ -2,15 +2,8 @@ resource "pingone_environment" "my_environment" {
   # ...
 }
 
-resource "pingone_resource" "my_resource" {
+resource "pingone_resource_scope_openid" "my_resource_scope" {
   environment_id = pingone_environment.my_environment.id
-
-  name = "My resource"
-}
-
-resource "pingone_resource_scope" "my_resource_scope" {
-  environment_id = pingone_environment.my_environment.id
-  resource_id    = pingone_resource.my_resource.id
 
   name = "example_scope"
 }
@@ -34,10 +27,10 @@ resource "pingone_application_resource_grant" "custom_grant" {
   environment_id = pingone_environment.my_environment.id
   application_id = pingone_application.my_awesome_spa.id
 
-  resource_name = pingone_resource.my_resource.name
+  resource_name = "openid"
 
   scope_names = [
-    pingone_resource_scope.my_resource_scope.name
+    pingone_resource_scope_openid.my_resource_scope.name
   ]
 }
 
@@ -49,7 +42,7 @@ resource "pingone_application_attribute_mapping" "foo" {
   value = "$${user.email}"
 
   oidc_scopes = [
-    pingone_resource_scope.my_resource_scope.id
+    pingone_resource_scope_openid.my_resource_scope.id
   ]
 
   oidc_id_token_enabled = true

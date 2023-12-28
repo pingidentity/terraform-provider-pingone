@@ -1034,6 +1034,9 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsSingleString(t *test
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{ // Workaround for import consistency errors in SDKv2
+					"conditions.0.user_attribute_equals.0.value_boolean",
+				},
 			},
 		},
 	})
@@ -1199,6 +1202,11 @@ func TestAccSignOnPolicyAction_ConditionsUserAttributeEqualsMultiple(t *testing.
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{ // Workaround for import consistency errors in SDKv2
+					"conditions.0.user_attribute_equals.0.value_boolean",
+					"conditions.0.user_attribute_equals.2.value_boolean",
+					"conditions.0.user_attribute_equals.3.value_boolean",
+				},
 			},
 		},
 	})
@@ -1655,6 +1663,10 @@ func TestAccSignOnPolicyAction_ConditionsCompound(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{ // Workaround for import consistency errors in SDKv2
+					"conditions.0.user_attribute_equals.0.value_boolean",
+					"conditions.0.user_attribute_equals.1.value_boolean",
+				},
 			},
 		},
 	})

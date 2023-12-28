@@ -1588,10 +1588,11 @@ func TestAccRiskPredictor_Velocity(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
-		},
+		// PreCheck: func() {
+		// 	acctest.PreCheckClient(t)
+		// 	acctest.PreCheckNoFeatureFlag(t)
+		// },
+		PreCheck:                 func() { t.Skipf("STAGING-21856") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             risk.RiskPredictor_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -1719,10 +1720,11 @@ func TestAccRiskPredictor_Velocity_OverwriteUndeletable(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
-		},
+		// PreCheck: func() {
+		// 	acctest.PreCheckClient(t)
+		// 	acctest.PreCheckNoFeatureFlag(t)
+		// },
+		PreCheck:                 func() { t.Skipf("STAGING-21856") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             risk.RiskPredictor_CheckDestroyUndeletable,
 		ErrorCheck:               acctest.ErrorCheck(t),

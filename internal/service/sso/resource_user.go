@@ -428,6 +428,10 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 							"The time the specified user account was locked. This property might be absent if the account is unlocked or if the account was locked out automatically by failed password attempts.",
 						).Description,
 						Computed: true,
+
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
 					},
 
 					"status": schema.StringAttribute{
@@ -940,6 +944,13 @@ func (r *UserResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 		resp.Diagnostics.Append(d...)
 
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("account"), objValue)...)
+	} else {
+		var accountPlan *UserAccountResourceModel
+		resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root("account"), &accountPlan)...)
+
+		if !accountPlan.Status.Equal(types.StringValue("LOCKED")) {
+			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("account").AtName("locked_at"), types.StringNull())...)
+		}
 	}
 }
 

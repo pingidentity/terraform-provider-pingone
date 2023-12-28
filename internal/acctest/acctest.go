@@ -383,13 +383,18 @@ func CheckParentEnvironmentDestroy(ctx context.Context, apiClient *management.AP
 }
 
 func CheckForResourceDestroy(r *http.Response, err error) (bool, error) {
+	defaultDestroyHttpCode := 404
+	return CheckForResourceDestroyCustomHTTPCode(r, err, defaultDestroyHttpCode)
+}
+
+func CheckForResourceDestroyCustomHTTPCode(r *http.Response, err error, customHttpCode int) (bool, error) {
 	if err != nil {
 
 		if r == nil {
 			return false, fmt.Errorf("Response object does not exist and no error detected")
 		}
 
-		if r.StatusCode == 404 {
+		if r.StatusCode == customHttpCode {
 			return true, nil
 		}
 

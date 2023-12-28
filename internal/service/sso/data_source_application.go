@@ -926,7 +926,7 @@ func (p *applicationDataSourceModel) accessControlOkToTF(apiObject *management.A
 		}
 
 		groupObj := map[string]attr.Value{
-			"type":   framework.StringOkToTF(group.GetTypeOk()),
+			"type":   framework.EnumOkToTF(group.GetTypeOk()),
 			"groups": framework.StringSetToTF(groups),
 		}
 

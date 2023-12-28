@@ -12,4 +12,9 @@ resource "pingone_schema_attribute" "my_attribute" {
   type        = "STRING"
   unique      = false
   multivalued = false
+
+  lifecycle {
+    # change the `prevent_destroy` parameter value to `true` to prevent this data carrying resource from being destroyed
+    prevent_destroy = false
+  }
 }
