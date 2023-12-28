@@ -71,6 +71,7 @@ jobs:
           cache: true
       
       - run: cd tools && go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
+      - run: cd tools && go install github.com/katbyte/terrafmt
       - run: make generate
 
       - name: git diff
@@ -89,6 +90,7 @@ jobs:
           cache: true
       
       - run: cd tools && go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
+      - run: cd tools && go install github.com/katbyte/terrafmt
       - run: make generate
 
       - name: docscategory lint
