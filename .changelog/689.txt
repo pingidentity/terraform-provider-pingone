@@ -1,0 +1,3 @@
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-testing` v1.5.1 => v1.6.0
+```

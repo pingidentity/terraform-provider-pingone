@@ -2900,7 +2900,10 @@ func (p *ApplicationResourceModel) expandApplicationCommon(ctx context.Context) 
 			groups = append(groups, *management.NewApplicationAccessControlGroupGroupsInner(group))
 		}
 
-		accessControl.SetGroup(*management.NewApplicationAccessControlGroup(management.EnumApplicationAccessControlGroupType(planItem.Type.ValueString()), groups))
+		accessControl.SetGroup(*management.NewApplicationAccessControlGroup(
+			management.EnumApplicationAccessControlGroupType(obj["type"].(string)),
+			groups,
+		))
 
 		accessControlCount += 1
 	}

@@ -1,0 +1,1 @@
+$ terraform import pingone_form.example <environment_id>/<form_id>

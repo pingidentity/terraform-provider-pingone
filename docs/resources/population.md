@@ -11,6 +11,8 @@ Resource to create and manage a PingOne population in an environment.
 
 ~> This resource cannot manage the default population of an environment.  The `pingone_population_default` resource can be used instead.
 
+~> This resource carries data and if destroyed, could result in data loss.  Please use the `lifecycle.prevent_destroy` meta-argument ([documentation link](https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#prevent_destroy)) to prevent accidental data loss.
+
 ## Example Usage
 
 ```terraform
@@ -23,6 +25,11 @@ resource "pingone_population" "my_population" {
 
   name        = "My awesome population"
   description = "My new population for awesome people"
+
+  lifecycle {
+    # change the `prevent_destroy` parameter value to `true` to prevent this data carrying resource from being destroyed
+    prevent_destroy = false
+  }
 }
 ```
 

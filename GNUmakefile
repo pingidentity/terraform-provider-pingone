@@ -1,4 +1,4 @@
-TEST?=$$(go list ./...)
+TEST_PATH?=$$(go list ./...)
 SWEEP_DIR=./internal/sweep
 NAMESPACE=pingidentity
 PKG_NAME=pingone
@@ -6,27 +6,34 @@ BINARY=terraform-provider-${NAME}
 VERSION=0.25.0
 OS_ARCH=linux_amd64
 
-default: build
+default: install
 
 tools:
 	go generate -tags tools tools/tools.go
 
 fmtcheck:
-	terraform fmt -recursive ./examples/
+	@echo "==> Formatting Terraform documentation examples with terraform fmt..."
+	@terraform fmt -recursive ./examples/
 
-build: fmtcheck
+build:
+	go mod tidy
+	go mod vendor
+	go build -v .
+
+install: build
 	go install -ldflags="-X main.version=$(VERSION)"
 
-generate: fmtcheck
+generate: build fmt
 	tfplugindocs generate
 
-test: fmtcheck
-	go test $(TEST) $(TESTARGS) -timeout=5m
+test: build
+	go test $(TEST_PATH) $(TESTARGS) -timeout=5m
 
-testacc: fmtcheck
-	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m
+testacc: build
+	TF_ACC=1 go test $$(go list ./internal/client/...) -v $(TESTARGS) -timeout 120m
+	TF_ACC=1 go test $$(go list ./internal/service/...) -v $(TESTARGS) -timeout 120m
 
-sweep:
+sweep: build
 	@echo "WARNING: This will destroy infrastructure. Use only in development accounts."
 	go test $(SWEEP_DIR) -v -sweep=all $(SWEEPARGS) -timeout 10m
 
@@ -93,6 +100,8 @@ terrafmtcheck:
 		exit 1; \
 	fi
 
+fmt: terrafmt fmtcheck
+
 devcheck: build vet tools generate terrafmt docscategorycheck lint test sweep testacc
 
-.PHONY: tools build generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck
+.PHONY: tools build install generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck

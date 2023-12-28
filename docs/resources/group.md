@@ -9,6 +9,8 @@ description: |-
 
 Resource to create and manage PingOne groups.
 
+~> This resource carries data and if destroyed, could result in data loss.  Please use the `lifecycle.prevent_destroy` meta-argument ([documentation link](https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#prevent_destroy)) to prevent accidental data loss.
+
 ## Example Usage
 
 ```terraform
@@ -21,6 +23,11 @@ resource "pingone_group" "my_awesome_group" {
 
   name        = "My awesome group"
   description = "My new awesome group for people who are awesome"
+
+  lifecycle {
+    # change the `prevent_destroy` parameter value to `true` to prevent this data carrying resource from being destroyed
+    prevent_destroy = false
+  }
 }
 ```
 

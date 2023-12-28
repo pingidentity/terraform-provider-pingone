@@ -6,6 +6,11 @@ resource "pingone_population" "my_population" {
   environment_id = pingone_environment.my_environment.id
 
   name = "My population of awesome identities"
+
+  lifecycle {
+    # change the `prevent_destroy` parameter value to `true` to prevent this data carrying resource from being destroyed
+    prevent_destroy = false
+  }
 }
 
 resource "pingone_user" "foo" {
@@ -22,6 +27,11 @@ resource "pingone_group" "my_awesome_group" {
 
   name        = "My awesome group"
   description = "My new awesome group for people who are awesome"
+
+  lifecycle {
+    # change the `prevent_destroy` parameter value to `true` to prevent this data carrying resource from being destroyed
+    prevent_destroy = false
+  }
 }
 
 resource "pingone_user_group_assignment" "bar" {

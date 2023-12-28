@@ -19,6 +19,11 @@ resource "pingone_environment" "my_environment" {
 resource "pingone_population" "my_population" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Population"
+
+  lifecycle {
+    # change the `prevent_destroy` parameter value to `true` to prevent this data carrying resource from being destroyed
+    prevent_destroy = false
+  }
 }
 
 resource "pingone_gateway" "my_ldap_gateway" {
