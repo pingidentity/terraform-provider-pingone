@@ -1,0 +1,7 @@
+```release-note:note
+To avoid plan inconsistency issues in earlier versions of Terraform, the provider now requires Terraform `v1.3` or later.
+```
+
+```release-note:bug
+`resource/pingone_user`: Resolve plan inconsistency issues when using Teraform version `v1.3`.
+```

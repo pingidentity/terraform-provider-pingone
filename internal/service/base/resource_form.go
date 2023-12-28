@@ -15,9 +15,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -42,7 +44,6 @@ type formResourceModel struct {
 	Cols              types.Int64  `tfsdk:"cols"`
 	Components        types.Object `tfsdk:"components"`
 	FieldTypes        types.Set    `tfsdk:"field_types"`
-	LanguageBundle    types.Map    `tfsdk:"language_bundle"`
 	MarkOptional      types.Bool   `tfsdk:"mark_optional"`
 	MarkRequired      types.Bool   `tfsdk:"mark_required"`
 	TranslationMethod types.String `tfsdk:"translation_method"`
@@ -414,6 +415,7 @@ var (
 	_ resource.ResourceWithConfigure      = &FormResource{}
 	_ resource.ResourceWithImportState    = &FormResource{}
 	_ resource.ResourceWithValidateConfig = &FormResource{}
+	_ resource.ResourceWithModifyPlan     = &FormResource{}
 )
 
 // New Object
@@ -701,10 +703,6 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		"A set of strings that specifies the field types in the form.",
 	).AllowedValuesEnum(supportedFormFieldTypes)
 
-	languageBundleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An map of strings that provides i18n keys to their translations. This object includes both the keys and their default translations.",
-	)
-
 	markOptionalDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether optional fields are highlighted in the rendered form.",
 	)
@@ -957,18 +955,30 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Description:         componentsFieldsOtherOptionKeyDescription.Description,
 									MarkdownDescription: componentsFieldsOtherOptionKeyDescription.MarkdownDescription,
 									Computed:            true,
+
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 
 								"other_option_label": schema.StringAttribute{
 									Description:         componentsFieldsOtherOptionLabelDescription.Description,
 									MarkdownDescription: componentsFieldsOtherOptionLabelDescription.MarkdownDescription,
 									Computed:            true,
+
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 
 								"other_option_input_label": schema.StringAttribute{
 									Description:         componentsFieldsOtherOptionInputLabelDescription.Description,
 									MarkdownDescription: componentsFieldsOtherOptionInputLabelDescription.MarkdownDescription,
 									Computed:            true,
+
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 
 								"other_option_attribute_disabled": schema.BoolAttribute{
@@ -1017,6 +1027,10 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 											MarkdownDescription: componentsFieldsStylesEnabledDescription.MarkdownDescription,
 											Optional:            true,
 											Computed:            true,
+
+											PlanModifiers: []planmodifier.Bool{
+												boolplanmodifier.UseStateForUnknown(),
+											},
 										},
 
 										"height": schema.Int64Attribute{
@@ -1120,14 +1134,6 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			"field_types": schema.SetAttribute{
 				Description:         fieldTypesDescription.Description,
 				MarkdownDescription: fieldTypesDescription.MarkdownDescription,
-				Computed:            true,
-
-				ElementType: types.StringType,
-			},
-
-			"language_bundle": schema.MapAttribute{
-				Description:         languageBundleDescription.Description,
-				MarkdownDescription: languageBundleDescription.MarkdownDescription,
 				Computed:            true,
 
 				ElementType: types.StringType,
@@ -1343,6 +1349,117 @@ func (r *formComponentsFieldResourceModel) validateFieldSet(field string) bool {
 	default:
 		return false
 	}
+}
+
+// ModifyPlan
+func (r *FormResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+
+	// Destruction plan
+	if req.Plan.Raw.IsNull() {
+		return
+	}
+
+	var data, modifiedData []formComponentsFieldResourceModel
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("components").AtName("fields"), &data)...)
+
+	modifiedPlan := false
+	fieldTypes := make([]string, 0)
+
+	for _, field := range data {
+
+		// attribute_disabled default
+		if field.AttributeDisabled.IsUnknown() {
+			switch field.Type.ValueString() {
+			case string(management.ENUMFORMFIELDTYPE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_COMBOBOX), string(management.ENUMFORMFIELDTYPE_DROPDOWN), string(management.ENUMFORMFIELDTYPE_RADIO), string(management.ENUMFORMFIELDTYPE_PASSWORD), string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY), string(management.ENUMFORMFIELDTYPE_TEXT):
+				field.AttributeDisabled = types.BoolValue(false)
+			default:
+				field.AttributeDisabled = types.BoolNull()
+			}
+			modifiedPlan = true
+		}
+
+		// required default
+		if field.Required.IsUnknown() {
+			switch field.Type.ValueString() {
+			case string(management.ENUMFORMFIELDTYPE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_COMBOBOX), string(management.ENUMFORMFIELDTYPE_DROPDOWN), string(management.ENUMFORMFIELDTYPE_RADIO), string(management.ENUMFORMFIELDTYPE_PASSWORD), string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY), string(management.ENUMFORMFIELDTYPE_TEXT):
+				field.Required = types.BoolValue(false)
+			default:
+				field.Required = types.BoolNull()
+			}
+			modifiedPlan = true
+		}
+
+		// show_password_requirements default
+		if field.ShowPasswordRequirements.IsUnknown() {
+			switch field.Type.ValueString() {
+			case string(management.ENUMFORMFIELDTYPE_PASSWORD), string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY):
+				field.ShowPasswordRequirements = types.BoolValue(false)
+			default:
+				field.ShowPasswordRequirements = types.BoolNull()
+			}
+			modifiedPlan = true
+		}
+
+		// show_border default
+		if field.ShowBorder.IsUnknown() {
+			switch field.Type.ValueString() {
+			case string(management.ENUMFORMFIELDTYPE_QR_CODE):
+				field.ShowBorder = types.BoolValue(false)
+			default:
+				field.ShowBorder = types.BoolNull()
+			}
+			modifiedPlan = true
+		}
+
+		// other_option_attribute_disabled default
+		if field.OtherOptionAttributeDisabled.IsUnknown() {
+			switch field.Type.ValueString() {
+			case string(management.ENUMFORMFIELDTYPE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_COMBOBOX), string(management.ENUMFORMFIELDTYPE_DROPDOWN), string(management.ENUMFORMFIELDTYPE_RADIO), string(management.ENUMFORMFIELDTYPE_PASSWORD), string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY), string(management.ENUMFORMFIELDTYPE_TEXT):
+				field.OtherOptionAttributeDisabled = types.BoolValue(false)
+			default:
+				field.OtherOptionAttributeDisabled = types.BoolNull()
+			}
+			modifiedPlan = true
+		}
+
+		// other_option_enabled default
+		if field.OtherOptionEnabled.IsUnknown() {
+			switch field.Type.ValueString() {
+			case string(management.ENUMFORMFIELDTYPE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_COMBOBOX), string(management.ENUMFORMFIELDTYPE_DROPDOWN), string(management.ENUMFORMFIELDTYPE_RADIO), string(management.ENUMFORMFIELDTYPE_PASSWORD), string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY), string(management.ENUMFORMFIELDTYPE_TEXT):
+				field.OtherOptionEnabled = types.BoolValue(false)
+			default:
+				field.OtherOptionEnabled = types.BoolNull()
+			}
+			modifiedPlan = true
+		}
+
+		// other_option_input_label default
+		if field.OtherOptionInputLabel.IsUnknown() {
+			field.OtherOptionInputLabel = types.StringNull()
+			modifiedPlan = true
+		}
+
+		// other_option_key default
+		if field.OtherOptionKey.IsUnknown() {
+			field.OtherOptionKey = types.StringNull()
+			modifiedPlan = true
+		}
+
+		// other_option_label default
+		if field.OtherOptionLabel.IsUnknown() {
+			field.OtherOptionLabel = types.StringNull()
+			modifiedPlan = true
+		}
+
+		modifiedData = append(modifiedData, field)
+		fieldTypes = append(fieldTypes, field.Type.ValueString())
+	}
+
+	if modifiedPlan {
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("components").AtName("fields"), modifiedData)...)
+	}
+
+	resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("field_types"), fieldTypes)...)
 }
 
 func (r *FormResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -2386,7 +2503,6 @@ func (p *formResourceModel) toState(apiObject *management.Form) diag.Diagnostics
 	p.Category = framework.EnumOkToTF(apiObject.GetCategoryOk())
 	p.Cols = framework.Int32OkToTF(apiObject.GetColsOk())
 	p.FieldTypes = framework.EnumSetOkToTF(apiObject.GetFieldTypesOk())
-	p.LanguageBundle = framework.StringMapOkToTF(apiObject.GetLanguageBundleOk())
 	p.MarkOptional = framework.BoolOkToTF(apiObject.GetMarkOptionalOk())
 	p.MarkRequired = framework.BoolOkToTF(apiObject.GetMarkRequiredOk())
 	p.TranslationMethod = framework.EnumOkToTF(apiObject.GetTranslationMethodOk())
