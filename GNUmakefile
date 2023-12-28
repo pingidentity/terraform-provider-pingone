@@ -16,7 +16,7 @@ fmtcheck:
 	@echo "==> Formatting Terraform documentation examples with terraform fmt..."
 	@terraform fmt -recursive ./examples/
 
-build: fmt
+build:
 	go mod tidy
 	go mod vendor
 	go build -v .
@@ -24,7 +24,7 @@ build: fmt
 install: build
 	go install -ldflags="-X main.version=$(VERSION)"
 
-generate: build
+generate: build fmt
 	tfplugindocs generate
 
 test: build
