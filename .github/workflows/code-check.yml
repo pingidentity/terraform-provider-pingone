@@ -12,6 +12,7 @@ on:
       - 'CONTRIBUTING.md'
       - 'LICENSE'
   push:
+    branches: [ "main" ]
     paths-ignore:
       - 'README.md'
       - '.vscode'
