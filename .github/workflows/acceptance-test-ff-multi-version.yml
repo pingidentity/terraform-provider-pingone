@@ -34,7 +34,7 @@ jobs:
 
     - name: Build
       run: |
-        go build -v .
+        make build
 
   # run acceptance tests in a matrix with Terraform core versions
   test:

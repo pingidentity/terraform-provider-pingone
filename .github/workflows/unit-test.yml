@@ -61,22 +61,13 @@ jobs:
 
     - name: Build
       run: |
-        go build -v .
+        make build
 
-  # run acceptance tests in a matrix with Terraform core versions
   test:
-    name: Matrix Test
+    name: Unit Test
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        # list whatever Terraform versions here you would like to support
-        terraform:
-          - '1.0.*'
-          - '1.1.*'
-          - '1.2.*'
     steps:
 
     - name: Check out code into the Go module directory
@@ -89,11 +80,6 @@ jobs:
         cache: true
       id: go
 
-    - uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: ${{ matrix.terraform }}
-        terraform_wrapper: false
-
     - name: Get dependencies
       run: |
         go mod download
@@ -103,7 +89,7 @@ jobs:
       run: |
         make vet
         
-    - name: TF unit tests
+    - name: Unit tests
       timeout-minutes: 10
       run: |
         make test
