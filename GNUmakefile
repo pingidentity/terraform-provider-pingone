@@ -1,5 +1,4 @@
 TEST_PATH?=$$(go list ./...)
-TEST_ACC_PATH?=$$(go list ./internal/{service,client}/...)
 SWEEP_DIR=./internal/sweep
 NAMESPACE=pingidentity
 PKG_NAME=pingone
@@ -31,7 +30,8 @@ test: build
 	go test $(TEST_PATH) $(TESTARGS) -timeout=5m
 
 testacc: build
-	TF_ACC=1 go test $(TEST_ACC_PATH) -v $(TESTARGS) -timeout 120m
+	TF_ACC=1 go test $$(go list ./internal/client/...) -v $(TESTARGS) -timeout 120m
+	TF_ACC=1 go test $$(go list ./internal/service/...) -v $(TESTARGS) -timeout 120m
 
 sweep: build
 	@echo "WARNING: This will destroy infrastructure. Use only in development accounts."
