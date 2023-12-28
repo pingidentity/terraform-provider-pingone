@@ -239,6 +239,10 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 						return framework.StringToTF(v)
 					}
 
+					if v := os.Getenv("PINGONE_TERRAFORM_REGION_OVERRIDE"); v != "" {
+						return framework.StringToTF(v)
+					}
+
 					if r.region.Region != "" {
 						return types.StringValue(r.region.Region)
 					}
@@ -252,7 +256,16 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 				},
 
 				Validators: []validator.String{
-					stringvalidator.OneOf(model.RegionsAvailableList()...),
+					stringvalidator.OneOf(
+						func() []string {
+							if v := os.Getenv("PINGONE_TERRAFORM_REGION_OVERRIDE"); v != "" {
+								return []string{
+									v,
+								}
+							}
+
+							return model.RegionsAvailableList()
+						}()...),
 				},
 			},
 
@@ -1119,7 +1132,24 @@ func (p *environmentResourceModel) expand(ctx context.Context) (*management.Envi
 		environmentLicense = *management.NewEnvironmentLicense(p.LicenseId.ValueString())
 	}
 
-	environment := management.NewEnvironment(environmentLicense, p.Name.ValueString(), model.FindRegionByName(p.Region.ValueString()).APICode, management.EnumEnvironmentType(p.Type.ValueString()))
+	var region management.EnvironmentRegion
+	if v := os.Getenv("PINGONE_TERRAFORM_REGION_OVERRIDE"); v != "" {
+		region = management.EnvironmentRegion{
+			String: &v,
+		}
+	} else {
+		regionCode := model.FindRegionByName(p.Region.ValueString()).APICode
+		region = management.EnvironmentRegion{
+			EnumRegionCode: &regionCode,
+		}
+	}
+
+	environment := management.NewEnvironment(
+		environmentLicense,
+		p.Name.ValueString(),
+		region,
+		management.EnumEnvironmentType(p.Type.ValueString()),
+	)
 
 	if !p.Description.IsNull() {
 		environment.SetDescription(p.Description.ValueString())
@@ -1303,7 +1333,16 @@ func (p *environmentResourceModel) toState(environmentApiObject *management.Envi
 	p.Name = framework.StringOkToTF(environmentApiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(environmentApiObject.GetDescriptionOk())
 	p.Type = framework.EnumOkToTF(environmentApiObject.GetTypeOk())
-	p.Region = enumRegionCodeOkToTF(environmentApiObject.GetRegionOk())
+
+	if v, ok := environmentApiObject.GetRegionOk(); ok {
+		if v.EnumRegionCode != nil {
+			p.Region = enumRegionCodeToTF(v.EnumRegionCode)
+		}
+
+		if v.String != nil {
+			p.Region = framework.StringToTF(*v.String)
+		}
+	}
 
 	if v, ok := environmentApiObject.GetLicenseOk(); ok {
 		p.LicenseId = framework.StringOkToTF(v.GetIdOk())
@@ -1448,8 +1487,8 @@ func toStateEnvironmentServicesBookmark(bookmarks []management.BillOfMaterialsPr
 
 }
 
-func enumRegionCodeOkToTF(v *management.EnumRegionCode, ok bool) basetypes.StringValue {
-	if !ok || v == nil {
+func enumRegionCodeToTF(v *management.EnumRegionCode) basetypes.StringValue {
+	if v == nil {
 		return types.StringNull()
 	} else {
 		return types.StringValue(model.FindRegionByAPICode(*v).Region)

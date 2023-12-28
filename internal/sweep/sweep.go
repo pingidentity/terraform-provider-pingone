@@ -97,7 +97,7 @@ func FetchTaggedEnvironmentsByPrefix(ctx context.Context, apiClient *management.
 
 }
 
-func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient, region management.EnumRegionCode, index string) error {
+func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient, region management.EnvironmentRegion, index string) error {
 
 	environmentLicense := os.Getenv("PINGONE_LICENSE_ID")
 
@@ -106,7 +106,7 @@ func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient,
 		fmt.Sprintf("%sdynamic-%s", EnvironmentNamePrefix, index),
 		region,
 		management.ENUMENVIRONMENTTYPE_SANDBOX,
-	) // Environment |  (optional)
+	)
 
 	productBOMItems := make([]management.BillOfMaterialsProductsInner, 0)
 
