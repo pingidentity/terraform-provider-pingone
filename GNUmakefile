@@ -102,6 +102,6 @@ terrafmtcheck:
 
 fmt: terrafmt fmtcheck
 
-devcheck: build vet tools generate terrafmt docscategorycheck lint test sweep testacc
+devcheck: build vet tools fmt generate docscategorycheck lint test sweep testacc
 
 .PHONY: tools build install generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck
