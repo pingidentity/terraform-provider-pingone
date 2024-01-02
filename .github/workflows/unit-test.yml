@@ -18,6 +18,7 @@ on:
       - 'scripts/**'
       - 'templates/**'
   push:
+    branches: [ "main" ]
     paths-ignore:
       - 'README.md'
       - '.vscode'
