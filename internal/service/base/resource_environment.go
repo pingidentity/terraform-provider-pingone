@@ -235,11 +235,11 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 
 				Default: stringdefaultinternal.StaticStringUnknownable(func() basetypes.StringValue {
 
-					if v := os.Getenv("PINGONE_REGION"); v != "" {
+					if v := os.Getenv("PINGONE_TERRAFORM_REGION_OVERRIDE"); v != "" {
 						return framework.StringToTF(v)
 					}
 
-					if v := os.Getenv("PINGONE_TERRAFORM_REGION_OVERRIDE"); v != "" {
+					if v := os.Getenv("PINGONE_REGION"); v != "" {
 						return framework.StringToTF(v)
 					}
 

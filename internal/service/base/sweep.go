@@ -62,7 +62,7 @@ func sweepEnvironments(regionString string) error {
 	}
 
 	var region management.EnvironmentRegion
-	if v := os.Getenv("PINGONE_REGION_OVERRIDE"); v != "" {
+	if v := os.Getenv("PINGONE_TERRAFORM_REGION_OVERRIDE"); v != "" {
 		region = management.EnvironmentRegion{
 			String: &v,
 		}
