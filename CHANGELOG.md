@@ -21,6 +21,7 @@ NOTES:
 
 FEATURES:
 
+* **New Resource:** `pingone_application_secret` ([#709](https://github.com/pingidentity/terraform-provider-pingone/issues/709))
 * **New Resource:** `pingone_form` ([#655](https://github.com/pingidentity/terraform-provider-pingone/issues/655))
 * **New Resource:** `pingone_forms_recaptcha_v2` ([#655](https://github.com/pingidentity/terraform-provider-pingone/issues/655))
 
