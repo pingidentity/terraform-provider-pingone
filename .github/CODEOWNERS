@@ -1,1 +1,9 @@
-* @pingidentity/cloud-solutions-cicd-terraform
+* @patrickcping
+/.github/ @pingidentity/cloud-solutions-cicd-terraform
+/contributing/ @pingidentity/cloud-solutions-cicd-terraform
+/docs/ @pingidentity/cloud-solutions-cicd-terraform
+/CONTRIBUTING.md @pingidentity/cloud-solutions-cicd-terraform
+/LICENSE @pingidentity/cloud-solutions-cicd-terraform
+/README.md @pingidentity/cloud-solutions-cicd-terraform
+resource_*.go @pingidentity/cloud-solutions-cicd-terraform
+data_source_*.go @pingidentity/cloud-solutions-cicd-terraform
