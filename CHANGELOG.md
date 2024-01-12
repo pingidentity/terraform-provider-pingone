@@ -2,6 +2,7 @@
 
 NOTES:
 
+* Added the ability to append custom information (by environment variable) to the default user agent string sent with every API request.  See registry documentation for details. ([#708](https://github.com/pingidentity/terraform-provider-pingone/issues/708))
 * Upgrade go to `v1.21`. ([#707](https://github.com/pingidentity/terraform-provider-pingone/issues/707))
 * `resource/pingone_environment`: Added ability to override `region` parameter validation with custom values. ([#706](https://github.com/pingidentity/terraform-provider-pingone/issues/706))
 * bump `github.com/cloudflare/circl` 1.3.6 => 1.3.7 ([#711](https://github.com/pingidentity/terraform-provider-pingone/issues/711))
