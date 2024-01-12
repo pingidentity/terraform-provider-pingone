@@ -41,7 +41,6 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version-file: 'go.mod'
-        cache: true
       id: go
 
     - name: Get dependencies
@@ -69,7 +68,6 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-          cache: false
       
       - run: cd tools && go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
       - run: cd tools && go install github.com/katbyte/terrafmt
@@ -88,7 +86,6 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-          cache: true
       
       - run: cd tools && go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
       - run: cd tools && go install github.com/katbyte/terrafmt
@@ -106,7 +103,6 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-          cache: true
 
       - run: cd tools && go install github.com/katbyte/terrafmt
       - name: terrafmtcheck lint
@@ -121,7 +117,6 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-          cache: true
 
       - id: golangci-lint-version
         working-directory: tools
@@ -145,7 +140,6 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-          cache: true
 
       - run: cd tools && go install github.com/pavius/impi/cmd/impi
 
@@ -165,7 +159,6 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-          cache: true
 
       - run: cd tools && go install github.com/bflad/tfproviderlint/cmd/tfproviderlintx
 
@@ -184,7 +177,6 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-          cache: true
 
       - run: cd tools && go install github.com/terraform-linters/tflint
 
