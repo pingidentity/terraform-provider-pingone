@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -29,7 +30,6 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
-	"golang.org/x/exp/slices"
 )
 
 // Types
@@ -1452,7 +1452,10 @@ func (r *FormResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 		}
 
 		modifiedData = append(modifiedData, field)
-		fieldTypes = append(fieldTypes, field.Type.ValueString())
+
+		if !slices.Contains(fieldTypes, field.Type.ValueString()) {
+			fieldTypes = append(fieldTypes, field.Type.ValueString())
+		}
 	}
 
 	if modifiedPlan {

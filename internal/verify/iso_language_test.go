@@ -1,9 +1,8 @@
 package verify
 
 import (
+	"slices"
 	"testing"
-
-	"golang.org/x/exp/slices"
 )
 
 func TestIsoList_Success(t *testing.T) {

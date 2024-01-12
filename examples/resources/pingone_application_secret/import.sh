@@ -1,0 +1,1 @@
+$ terraform import pingone_application_secret.example <environment_id>/<application_id>
