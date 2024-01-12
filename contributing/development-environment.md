@@ -2,8 +2,8 @@
 
 ## Requirements
 
-- [Terraform](https://www.terraform.io/downloads.html) 1.0+ (to run acceptance tests)
-- [Go](https://golang.org/doc/install) 1.19+ (to build and test the provider plugin)
+- [Terraform](https://www.terraform.io/downloads.html) 1.3+ (to run acceptance tests)
+- [Go](https://golang.org/doc/install) 1.21+ (to build and test the provider plugin)
 
 ## Quick Start
 
@@ -25,10 +25,16 @@ Enter the provider directory and run `make tools`. This will install the needed 
 $ make tools
 ```
 
-To compile the provider, run `make build`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
+To compile the provider, run `make build`.
 
 ```sh
 $ make build
+```
+
+To install the provider for local use, run `make install`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
+
+```sh
+$ make install
 ...
 $ $GOPATH/bin/terraform-provider-pingone
 ...
@@ -72,7 +78,7 @@ Occasionally, development may include changes to the [PingOne GO SDK](https://gi
 ```
 module github.com/pingidentity/terraform-provider-pingone
 
-go 1.19
+go 1.21
 
 replace github.com/patrickcping/pingone-go-sdk-v2/management => ../pingone-go-sdk-v2/management
 

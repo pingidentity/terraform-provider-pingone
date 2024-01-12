@@ -1,6 +1,6 @@
 module github.com/pingidentity/terraform-provider-pingone
 
-go 1.20
+go 1.21
 
 require (
 	github.com/google/uuid v1.5.0
@@ -11,21 +11,21 @@ require (
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-mux v0.13.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.31.0
-	github.com/patrickcping/pingone-go-sdk-v2 v0.11.3
-	github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement v0.3.0
-	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.4.0
-	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.6.1
-	github.com/patrickcping/pingone-go-sdk-v2/management v0.34.0
-	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.18.2
-	github.com/patrickcping/pingone-go-sdk-v2/risk v0.12.1
-	github.com/patrickcping/pingone-go-sdk-v2/verify v0.4.0
-	golang.org/x/exp v0.0.0-20231226003508-02704c960a9b
+	github.com/patrickcping/pingone-go-sdk-v2 v0.11.4
+	github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement v0.3.1
+	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.4.1
+	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.6.2
+	github.com/patrickcping/pingone-go-sdk-v2/management v0.35.0
+	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.18.3
+	github.com/patrickcping/pingone-go-sdk-v2/risk v0.12.2
+	github.com/patrickcping/pingone-go-sdk-v2/verify v0.4.1
 )
 
 require (
 	github.com/go-test/deep v1.1.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
+	golang.org/x/exp v0.0.0-20231226003508-02704c960a9b // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
 
