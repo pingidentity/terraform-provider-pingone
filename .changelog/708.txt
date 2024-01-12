@@ -1,0 +1,3 @@
+```release-note:note
+Added the ability to append custom information (by environment variable) to the default user agent string sent with every API request.  See registry documentation for details.
+```
