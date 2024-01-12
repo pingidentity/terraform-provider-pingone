@@ -1452,7 +1452,10 @@ func (r *FormResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 		}
 
 		modifiedData = append(modifiedData, field)
-		fieldTypes = append(fieldTypes, field.Type.ValueString())
+
+		if !slices.Contains(fieldTypes, field.Type.ValueString()) {
+			fieldTypes = append(fieldTypes, field.Type.ValueString())
+		}
 	}
 
 	if modifiedPlan {

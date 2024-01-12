@@ -1,4 +1,14 @@
-## 0.25.0 (Unreleased)
+## 0.25.1 (Unreleased)
+
+NOTES:
+
+* bump `github.com/cloudflare/circl` 1.3.6 => 1.3.7 ([#711](https://github.com/pingidentity/terraform-provider-pingone/issues/711))
+
+BUG FIXES:
+
+* `resource/pingone_form`: Fix error "This attribute contains duplicate values of the same type" when configuring multiple form controls of the same type. ([#714](https://github.com/pingidentity/terraform-provider-pingone/issues/714))
+
+## 0.25.0 (02 January 2024)
 
 NOTES:
 
@@ -21,6 +31,7 @@ NOTES:
 
 FEATURES:
 
+* **New Resource:** `pingone_application_secret` ([#709](https://github.com/pingidentity/terraform-provider-pingone/issues/709))
 * **New Resource:** `pingone_form` ([#655](https://github.com/pingidentity/terraform-provider-pingone/issues/655))
 * **New Resource:** `pingone_forms_recaptcha_v2` ([#655](https://github.com/pingidentity/terraform-provider-pingone/issues/655))
 
