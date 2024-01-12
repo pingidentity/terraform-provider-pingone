@@ -7,7 +7,7 @@ description: |-
 
 # PingOne Provider
 
-The PingOne provider1 interacts with the configuration of the PingOne platform via the management API. The provider requires credentials from worker application client before it can be used.
+The PingOne provider interacts with the configuration of the PingOne platform via the management API. The provider requires credentials from worker application client before it can be used.
 
 ## Getting Started
 
