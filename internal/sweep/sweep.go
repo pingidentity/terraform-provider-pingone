@@ -135,7 +135,7 @@ func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient,
 					for _, allowedRegion := range details[0].GetInnerError().AllowedValues {
 						allowedRegions = append(allowedRegions, model.FindRegionByAPICode(management.EnumRegionCode(allowedRegion)).Region)
 					}
-					diags := diag.FromErr(fmt.Errorf("Incompatible environment region for the organization tenant.  Expecting regions %v, region provided: %s", allowedRegions, region))
+					diags := diag.FromErr(fmt.Errorf("Incompatible environment region for the organization tenant.  Expecting regions %v, region provided: %+v", allowedRegions, region))
 
 					return diags
 				}
