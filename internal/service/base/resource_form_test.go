@@ -3244,11 +3244,11 @@ resource "pingone_form" "%[2]s" {
           col = 0
         }
 
-		validation = {
-			type          = "CUSTOM"
-			regex         = "[a-zA-Z0-9]+"
-			error_message = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Must be alphanumeric\"}]}]"
-		  }
+        validation = {
+          type          = "CUSTOM"
+          regex         = "[a-zA-Z0-9]+"
+          error_message = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Must be alphanumeric\"}]}]"
+        }
       },
       {
         type = "SUBMIT_BUTTON"
@@ -3424,11 +3424,11 @@ resource "pingone_form" "%[2]s" {
           col = 0
         }
 
-		validation = {
-			type          = "CUSTOM"
-			regex         = "[a-zA-Z0-9]+"
-			error_message = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Must be alphanumeric\"}]}]"
-		  }
+        validation = {
+          type          = "CUSTOM"
+          regex         = "[a-zA-Z0-9]+"
+          error_message = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Must be alphanumeric\"}]}]"
+        }
       },
       {
         type = "SUBMIT_BUTTON"
