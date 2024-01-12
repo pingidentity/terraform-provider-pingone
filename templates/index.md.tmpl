@@ -44,7 +44,7 @@ For code examples showing how to configure the PingOne service using Terraform, 
 
 ### Custom User Agent information
 
-The DaVinci provider allows custom information to be appended to the default user agent string (that includes Terraform provider version information) by setting the `PINGONE_TF_APPEND_USER_AGENT` environment variable.  This can be useful when troubleshooting issues with Ping Identity Support, or adding context to HTTP requests.
+The PingOne provider allows custom information to be appended to the default user agent string (that includes Terraform provider version information) by setting the `PINGONE_TF_APPEND_USER_AGENT` environment variable.  This can be useful when troubleshooting issues with Ping Identity Support, or adding context to HTTP requests.
 
 {{ codefile "shell" (printf "%s" "examples/provider/provider-custom-user-agent.sh") }}
 
