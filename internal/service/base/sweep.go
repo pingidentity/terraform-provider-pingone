@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
@@ -21,7 +22,7 @@ func init() {
 	})
 }
 
-func sweepEnvironments(region string) error {
+func sweepEnvironments(regionString string) error {
 
 	var ctx = context.Background()
 
@@ -60,7 +61,18 @@ func sweepEnvironments(region string) error {
 
 	}
 
-	err = sweep.CreateTestEnvironment(ctx, apiClient, p1Client.API.Region.APICode, "general-test")
+	var region management.EnvironmentRegion
+	if v := os.Getenv("PINGONE_TERRAFORM_REGION_OVERRIDE"); v != "" {
+		region = management.EnvironmentRegion{
+			String: &v,
+		}
+	} else {
+		region = management.EnvironmentRegion{
+			EnumRegionCode: &p1Client.API.Region.APICode,
+		}
+	}
+
+	err = sweep.CreateTestEnvironment(ctx, apiClient, region, "general-test")
 	if err != nil {
 		log.Printf("Error creating environment `general-test` during sweep: %s", err)
 	}
