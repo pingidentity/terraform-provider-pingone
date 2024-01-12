@@ -2,7 +2,17 @@
 
 NOTES:
 
+* Upgrade go to `v1.21`. ([#707](https://github.com/pingidentity/terraform-provider-pingone/issues/707))
+* `resource/pingone_environment`: Added ability to override `region` parameter validation with custom values. ([#706](https://github.com/pingidentity/terraform-provider-pingone/issues/706))
 * bump `github.com/cloudflare/circl` 1.3.6 => 1.3.7 ([#711](https://github.com/pingidentity/terraform-provider-pingone/issues/711))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement` v0.3.0 => v0.3.1 ([#707](https://github.com/pingidentity/terraform-provider-pingone/issues/707))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.4.0 => v0.4.1 ([#707](https://github.com/pingidentity/terraform-provider-pingone/issues/707))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.6.1 => v0.6.2 ([#707](https://github.com/pingidentity/terraform-provider-pingone/issues/707))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.34.0 => v0.35.0 ([#707](https://github.com/pingidentity/terraform-provider-pingone/issues/707))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.18.2 => v0.18.3 ([#707](https://github.com/pingidentity/terraform-provider-pingone/issues/707))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` v0.12.1 => v0.12.2 ([#707](https://github.com/pingidentity/terraform-provider-pingone/issues/707))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/verify` v0.4.0 => v0.4.1 ([#707](https://github.com/pingidentity/terraform-provider-pingone/issues/707))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.11.3 => v0.11.4 ([#707](https://github.com/pingidentity/terraform-provider-pingone/issues/707))
 
 BUG FIXES:
 
