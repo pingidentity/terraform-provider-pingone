@@ -309,6 +309,7 @@ var (
 				"layout",
 				"required",
 				"show_password_requirements",
+				"validation",
 			},
 		},
 		management.ENUMFORMFIELDTYPE_PASSWORD: {
@@ -324,6 +325,7 @@ var (
 				"layout",
 				"required",
 				"show_password_requirements",
+				"validation",
 			},
 		},
 		management.ENUMFORMFIELDTYPE_QR_CODE: {
@@ -1282,6 +1284,28 @@ func (r *FormResource) ValidateConfig(ctx context.Context, req resource.Validate
 				)
 			}
 		}
+
+		// Validate if PASSWORD or PASSWORDVERIFY, the validation.type must be NONE
+		if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_PASSWORD))) || field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY))) {
+			if !field.Validation.IsNull() && !field.Validation.IsUnknown() {
+				var vPlan formComponentsFieldElementValidationResourceModel
+				resp.Diagnostics.Append(field.Validation.As(ctx, &vPlan, basetypes.ObjectAsOptions{
+					UnhandledNullAsEmpty:    false,
+					UnhandledUnknownAsEmpty: false,
+				})...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+
+				if !vPlan.Type.Equal(types.StringValue(string(management.ENUMFORMELEMENTVALIDATIONTYPE_NONE))) {
+					resp.Diagnostics.AddAttributeError(
+						path.Root("components").AtName("fields"),
+						"Invalid DaVinci form configuration",
+						fmt.Sprintf("The `validation.type` parameter must be set to `NONE` for the `%s` field type.", field.Type.ValueString()),
+					)
+				}
+			}
+		}
 	}
 
 	// Validate has submit button
@@ -1802,9 +1826,9 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 	case string(management.ENUMFORMFIELDTYPE_FLOW_LINK):
 		data.FormFieldFlowLink, d = p.expandItemFlowLink(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_PASSWORD):
-		data.FormFieldPassword = p.expandFieldPassword(positionData)
+		data.FormFieldPassword, d = p.expandFieldPassword(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY):
-		data.FormFieldPasswordVerify = p.expandFieldPasswordVerify(positionData)
+		data.FormFieldPasswordVerify, d = p.expandFieldPasswordVerify(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_QR_CODE):
 		data.FormFieldQrCode = p.expandItemQRCode(positionData)
 	case string(management.ENUMFORMFIELDTYPE_RADIO):
@@ -2090,7 +2114,8 @@ func (p *formComponentsFieldResourceModel) expandItemFlowLink(ctx context.Contex
 	return data, diags
 }
 
-func (p *formComponentsFieldResourceModel) expandFieldPassword(positionData *management.FormFieldCommonPosition) *management.FormFieldPassword {
+func (p *formComponentsFieldResourceModel) expandFieldPassword(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldPassword, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
 	data := management.NewFormFieldPassword(
 		management.ENUMFORMFIELDTYPE_PASSWORD,
@@ -2119,10 +2144,34 @@ func (p *formComponentsFieldResourceModel) expandFieldPassword(positionData *man
 		data.SetShowPasswordRequirements(p.ShowPasswordRequirements.ValueBool())
 	}
 
-	return data
+	if !p.Validation.IsNull() && !p.Validation.IsUnknown() {
+		var plan formComponentsFieldElementValidationResourceModel
+		diags.Append(p.Validation.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if !plan.Type.Equal(types.StringValue(string(management.ENUMFORMELEMENTVALIDATIONTYPE_NONE))) {
+			diags.AddAttributeError(
+				path.Root("components").AtName("fields"),
+				"Invalid DaVinci form configuration",
+				fmt.Sprintf("The `validation.type` parameter must be set to `NONE` for the `%s` field type.", string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY)),
+			)
+		}
+
+		validationData := plan.expand()
+
+		data.SetValidation(*validationData)
+	}
+
+	return data, diags
 }
 
-func (p *formComponentsFieldResourceModel) expandFieldPasswordVerify(positionData *management.FormFieldCommonPosition) *management.FormFieldPasswordVerify {
+func (p *formComponentsFieldResourceModel) expandFieldPasswordVerify(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldPasswordVerify, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
 	data := management.NewFormFieldPasswordVerify(
 		management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY,
@@ -2155,7 +2204,30 @@ func (p *formComponentsFieldResourceModel) expandFieldPasswordVerify(positionDat
 		data.SetShowPasswordRequirements(p.ShowPasswordRequirements.ValueBool())
 	}
 
-	return data
+	if !p.Validation.IsNull() && !p.Validation.IsUnknown() {
+		var plan formComponentsFieldElementValidationResourceModel
+		diags.Append(p.Validation.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if !plan.Type.Equal(types.StringValue(string(management.ENUMFORMELEMENTVALIDATIONTYPE_NONE))) {
+			diags.AddAttributeError(
+				path.Root("components").AtName("fields"),
+				"Invalid DaVinci form configuration",
+				fmt.Sprintf("The `validation.type` parameter must be set to `NONE` for the `%s` field type.", string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY)),
+			)
+		}
+
+		validationData := plan.expand()
+
+		data.SetValidation(*validationData)
+	}
+
+	return data, diags
 }
 
 func (p *formComponentsFieldResourceModel) expandFieldRadio(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldRadio, diag.Diagnostics) {

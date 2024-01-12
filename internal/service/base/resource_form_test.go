@@ -713,6 +713,7 @@ func TestAccForm_FieldPassword(t *testing.T) {
 				"other_option_enabled":            "false",
 				"other_option_attribute_disabled": "false",
 				"show_password_requirements":      "true",
+				"validation.type":                 "NONE",
 			}),
 		),
 	}
@@ -749,6 +750,10 @@ func TestAccForm_FieldPassword(t *testing.T) {
 			// Validate
 			{
 				Config:      testAccFormConfig_FieldPasswordMissingRequiredParams(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid DaVinci form configuration`),
+			},
+			{
+				Config:      testAccFormConfig_FieldPasswordInvalidValidation(resourceName, name),
 				ExpectError: regexp.MustCompile(`Invalid DaVinci form configuration`),
 			},
 			// Full step
@@ -814,6 +819,7 @@ func TestAccForm_FieldPasswordVerify(t *testing.T) {
 				"other_option_enabled":            "false",
 				"other_option_attribute_disabled": "false",
 				"show_password_requirements":      "true",
+				"validation.type":                 "NONE",
 			}),
 		),
 	}
@@ -850,6 +856,10 @@ func TestAccForm_FieldPasswordVerify(t *testing.T) {
 			// Validate
 			{
 				Config:      testAccFormConfig_FieldPasswordVerifyMissingRequiredParams(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid DaVinci form configuration`),
+			},
+			{
+				Config:      testAccFormConfig_FieldPasswordVerifyInvalidValidation(resourceName, name),
 				ExpectError: regexp.MustCompile(`Invalid DaVinci form configuration`),
 			},
 			// Full step
@@ -3108,6 +3118,10 @@ resource "pingone_form" "%[2]s" {
         required                   = true
         attribute_disabled         = false
         show_password_requirements = true
+
+        validation = {
+          type = "NONE"
+        }
       },
       {
         type = "SUBMIT_BUTTON"
@@ -3206,6 +3220,51 @@ resource "pingone_form" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
+func testAccFormConfig_FieldPasswordInvalidValidation(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "PASSWORD"
+
+        position = {
+          row = 0
+          col = 0
+        }
+
+        validation = {
+          type          = "CUSTOM"
+          regex         = "[a-zA-Z0-9]+"
+          error_message = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Must be alphanumeric\"}]}]"
+        }
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
 func testAccFormConfig_FieldPasswordVerifyFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -3239,6 +3298,10 @@ resource "pingone_form" "%[2]s" {
         required                   = true
         attribute_disabled         = false
         show_password_requirements = true
+
+        validation = {
+          type = "NONE"
+        }
       },
       {
         type = "SUBMIT_BUTTON"
@@ -3320,6 +3383,51 @@ resource "pingone_form" "%[2]s" {
         position = {
           row = 0
           col = 0
+        }
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_FieldPasswordVerifyInvalidValidation(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "PASSWORD_VERIFY"
+
+        position = {
+          row = 0
+          col = 0
+        }
+
+        validation = {
+          type          = "CUSTOM"
+          regex         = "[a-zA-Z0-9]+"
+          error_message = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Must be alphanumeric\"}]}]"
         }
       },
       {
