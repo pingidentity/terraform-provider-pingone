@@ -713,6 +713,7 @@ func TestAccForm_FieldPassword(t *testing.T) {
 				"other_option_enabled":            "false",
 				"other_option_attribute_disabled": "false",
 				"show_password_requirements":      "true",
+				"validation.type":                 "NONE",
 			}),
 		),
 	}
@@ -814,6 +815,7 @@ func TestAccForm_FieldPasswordVerify(t *testing.T) {
 				"other_option_enabled":            "false",
 				"other_option_attribute_disabled": "false",
 				"show_password_requirements":      "true",
+				"validation.type":                 "NONE",
 			}),
 		),
 	}
@@ -3108,6 +3110,10 @@ resource "pingone_form" "%[2]s" {
         required                   = true
         attribute_disabled         = false
         show_password_requirements = true
+
+        validation = {
+          type = "NONE"
+        }
       },
       {
         type = "SUBMIT_BUTTON"
@@ -3239,6 +3245,10 @@ resource "pingone_form" "%[2]s" {
         required                   = true
         attribute_disabled         = false
         show_password_requirements = true
+
+        validation = {
+          type = "NONE"
+        }
       },
       {
         type = "SUBMIT_BUTTON"
