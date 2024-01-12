@@ -18,6 +18,7 @@ NOTES:
 BUG FIXES:
 
 * `resource/pingone_form`: Fix error "This attribute contains duplicate values of the same type" when configuring multiple form controls of the same type. ([#714](https://github.com/pingidentity/terraform-provider-pingone/issues/714))
+* `resource/pingone_form`: Fixed "Provider produced inconsistent result after apply" error when configuring `PASSWORD` or `PASSWORD_VERIFY` type form controls with the `validation` parameter set. ([#715](https://github.com/pingidentity/terraform-provider-pingone/issues/715))
 
 ## 0.25.0 (02 January 2024)
 
