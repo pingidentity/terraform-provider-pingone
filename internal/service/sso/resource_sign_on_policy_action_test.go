@@ -252,6 +252,10 @@ func TestAccSignOnPolicyAction_LoginAction_Gateway(t *testing.T) {
 				Config:      testAccSignOnPolicyActionConfig_LoginFullWithNewUserProvisioningWrongGateway(resourceName, name),
 				ExpectError: regexp.MustCompile(`Only 'LDAP' type gateways are supported for new user provisioning.`),
 			},
+			{
+				Config:      testAccSignOnPolicyActionConfig_LoginFullWithMissingNewUserProvisioning(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid Gateway Configuration.`),
+			},
 		},
 	})
 }
@@ -2065,6 +2069,74 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
       }
     }
   }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccSignOnPolicyActionConfig_LoginFullWithMissingNewUserProvisioning(resourceName, name string) string {
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_gateway" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  type = "LDAP"
+
+  bind_dn       = "ou=test,dc=example,dc=com"
+  bind_password = "dummyPasswordValue"
+
+  vendor = "PingDirectory"
+
+  servers = [
+    "ds1.dummyldapservice.com:389",
+    "ds3.dummyldapservice.com:389",
+    "ds2.dummyldapservice.com:389",
+  ]
+
+  user_type {
+    name               = "User Set 1"
+    password_authority = "LDAP"
+    search_base_dn     = "ou=users1,dc=example,dc=com"
+
+    user_link_attributes = ["objectGUID", "objectSid"]
+
+    push_password_changes_to_ldap = true
+  }
+}
+
+resource "pingone_gateway_credential" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  gateway_id     = pingone_gateway.%[2]s.id
+}
+
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+
+  priority = 1
+
+  login {
+    recovery_enabled = false
+
+    new_user_provisioning {
+      gateway {
+        id           = pingone_gateway.%[2]s.id
+        user_type_id = pingone_gateway.%[2]s.user_type.* [index(pingone_gateway.%[2]s.user_type[*].name, "User Set 1")].id
+      }
+    }
+  }
+
+  depends_on = [
+    pingone_gateway_credential.%[2]s,
+  ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 

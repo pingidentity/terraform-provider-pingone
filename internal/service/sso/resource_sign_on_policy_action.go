@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -431,11 +432,21 @@ var (
 
 		// Value not allowed
 		if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
-			if target, ok := details[0].GetTargetOk(); ok && details[0].GetCode() == "INVALID_VALUE" && *target == "newUserProvisioning.gateways" {
+			if message, ok := details[0].GetMessageOk(); ok && details[0].GetCode() == "INVALID_VALUE" && strings.Contains(strings.ToLower(*message), "only 'ldap' type gateways are supported for newuserprovisioning") {
 				diags = append(diags, diag.Diagnostic{
 					Severity: diag.Error,
 					Summary:  "Only 'LDAP' type gateways are supported for new user provisioning.",
 					Detail:   "The \"new_user_provisioning.gateway\" provided for the login sign on policy action is not supported by the PingOne platform.  Please ensure gateways are of type 'LDAP'.",
+				})
+
+				return diags
+			}
+
+			if message, ok := details[0].GetMessageOk(); ok && details[0].GetCode() == "INVALID_VALUE" && strings.Contains(strings.ToLower(*message), "all user types must have newuserlookup configuration to support provisioning") {
+				diags = append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "Invalid Gateway Configuration.",
+					Detail:   "The LDAP gateway provided for the login sign on policy action does not have a new user lookup configuration.  Please ensure the gateway has a new user lookup configuration (hint: `user_type.user_migration` on the `pingone_gateway` resource).",
 				})
 
 				return diags
