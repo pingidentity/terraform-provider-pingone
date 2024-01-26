@@ -101,6 +101,7 @@ Required:
 
 Optional:
 
+- `delivery_methods` (Set of String) The delivery methods for which the limit is being defined.  This limits defined in this block are configured as two groups, Voice/SMS, or Email.  Email cannot be configured with Voice and/or SMS limits.  Options are `Email` (configuration of Email limits but can not be set alongside `SMS` or `Voice`), `SMS` (configuration of SMS limits and can be set alongside `Voice`, but not `Email`), `Voice` (configuration of Voice limits and can be set alongside `SMS`, but not `Email`).  Defaults to `["SMS", "Voice"]`.
 - `total` (Number) The maximum number of notifications allowed per day.  Cannot be set with `used` and `unused`.
 - `unused` (Number) The maximum number of notifications that can be received and not responded to each day. Must be configured with `used` and cannot be configured with `total`.
 - `used` (Number) The maximum number of notifications that can be received and responded to each day. Must be configured with `unused` and cannot be configured with `total`.
