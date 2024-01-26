@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -41,12 +42,11 @@ type NotificationPolicyResourceModel struct {
 }
 
 type NotificationPolicyQuotaResourceModel struct {
-	Type types.String `tfsdk:"type"`
-	// To enable when the platform supports individual configuration
-	// DeliveryMethods types.Set    `tfsdk:"delivery_methods"`
-	Total  types.Int64 `tfsdk:"total"`
-	Used   types.Int64 `tfsdk:"used"`
-	Unused types.Int64 `tfsdk:"unused"`
+	Type            types.String `tfsdk:"type"`
+	DeliveryMethods types.Set    `tfsdk:"delivery_methods"`
+	Total           types.Int64  `tfsdk:"total"`
+	Used            types.Int64  `tfsdk:"used"`
+	Unused          types.Int64  `tfsdk:"unused"`
 }
 
 type NotificationPolicyCountryLimitResourceModel struct {
@@ -58,10 +58,9 @@ type NotificationPolicyCountryLimitResourceModel struct {
 var (
 	quotaTFObjectTypes = map[string]attr.Type{
 		"type": types.StringType,
-		// To enable when the platform supports individual configuration
-		// "delivery_method": types.SetType{
-		// 	ElemType: types.StringType,
-		// },
+		"delivery_method": types.SetType{
+			ElemType: types.StringType,
+		},
 		"total":  types.Int64Type,
 		"used":   types.Int64Type,
 		"unused": types.Int64Type,
@@ -271,6 +270,14 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 							Description:         quotaCountryLimitDeliveryMethodsDescription.Description,
 							MarkdownDescription: quotaCountryLimitDeliveryMethodsDescription.MarkdownDescription,
 							Optional:            true,
+
+							Default: setdefault.StaticValue(types.SetValueMust(
+								types.StringType,
+								[]attr.Value{
+									types.StringValue(string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODSSMSVOICE_SMS)),
+									types.StringValue(string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODSSMSVOICE_VOICE)),
+								},
+							)),
 
 							ElementType: types.StringType,
 
@@ -602,10 +609,15 @@ func (p *NotificationPolicyResourceModel) expand(ctx context.Context) (*manageme
 		return nil, diags
 	}
 
-	deliveryMethods := make([]management.NotificationsPolicyQuotasInnerDeliveryMethodsInner, 0)
-
 	quotas := make([]management.NotificationsPolicyQuotasInner, 0)
 	for _, v := range quotaPlan {
+
+		var deliveryMethodsPlan []string
+		diags.Append(v.DeliveryMethods.ElementsAs(ctx, &deliveryMethodsPlan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
 		quota := *management.NewNotificationsPolicyQuotasInner(
 			management.EnumNotificationsPolicyQuotaItemType(v.Type.ValueString()),
 			deliveryMethods,
