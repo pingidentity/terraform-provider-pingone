@@ -1,5 +1,9 @@
 ## 0.26.0 (Unreleased)
 
+ENHANCEMENTS:
+
+* `resource/pingone_notification_policy`: Added support for `Email` delivery method quotas. ([#722](https://github.com/pingidentity/terraform-provider-pingone/issues/722))
+
 BUG FIXES:
 
 * `resource/pingone_sign_on_policy_action`: Corrected the "login" sign on policy action error messages when configuring a gateway with missing configuration. ([#721](https://github.com/pingidentity/terraform-provider-pingone/issues/721))
