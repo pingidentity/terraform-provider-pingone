@@ -58,7 +58,7 @@ type NotificationPolicyCountryLimitResourceModel struct {
 var (
 	quotaTFObjectTypes = map[string]attr.Type{
 		"type": types.StringType,
-		"delivery_method": types.SetType{
+		"delivery_methods": types.SetType{
 			ElemType: types.StringType,
 		},
 		"total":  types.Int64Type,
@@ -96,6 +96,7 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 
 	const attrMinLength = 1
 	const emailAddressMaxLength = 5
+	const maxQuotaLimit = 2
 
 	quotaDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object block that define the SMS/Voice limits.",
@@ -132,10 +133,10 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 	quotaCountryLimitDeliveryMethodsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The delivery methods for which the limit is being defined.",
 	).AppendMarkdownString("This limits defined in this block are configured as two groups, Voice/SMS, or Email.  Email cannot be configured with Voice and/or SMS limits.").AllowedValuesComplex(map[string]string{
-		string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODSSMSVOICE_SMS):   fmt.Sprintf("configuration of SMS limits and can be set alongside `%s`, but not `%s`", string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODSSMSVOICE_VOICE), string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODSEMAIL_EMAIL)),
-		string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODSSMSVOICE_VOICE): fmt.Sprintf("configuration of Voice limits and can be set alongside `%s`, but not `%s`", string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODSSMSVOICE_SMS), string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODSEMAIL_EMAIL)),
-		string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODSEMAIL_EMAIL):    fmt.Sprintf("configuration of Email limits but can not be set alongside `%s` or `%s`", string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODSSMSVOICE_SMS), string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODSSMSVOICE_VOICE)),
-	}).DefaultValue(fmt.Sprintf(`["%s", "%s"]`, string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODSSMSVOICE_SMS), string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODSSMSVOICE_VOICE)))
+		string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODS_SMS):   fmt.Sprintf("configuration of SMS limits and can be set alongside `%s`, but not `%s`", string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODS_VOICE), string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODS_EMAIL)),
+		string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODS_VOICE): fmt.Sprintf("configuration of Voice limits and can be set alongside `%s`, but not `%s`", string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODS_SMS), string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODS_EMAIL)),
+		string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODS_EMAIL): fmt.Sprintf("configuration of Email limits but can not be set alongside `%s` or `%s`", string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODS_SMS), string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODS_VOICE)),
+	}).DefaultValue(fmt.Sprintf(`["%s", "%s"]`, string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODS_SMS), string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODS_VOICE)))
 
 	quotaTotalDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The maximum number of notifications allowed per day.  Cannot be set with `used` and `unused`.",
@@ -270,12 +271,13 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 							Description:         quotaCountryLimitDeliveryMethodsDescription.Description,
 							MarkdownDescription: quotaCountryLimitDeliveryMethodsDescription.MarkdownDescription,
 							Optional:            true,
+							Computed:            true,
 
 							Default: setdefault.StaticValue(types.SetValueMust(
 								types.StringType,
 								[]attr.Value{
-									types.StringValue(string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODSSMSVOICE_SMS)),
-									types.StringValue(string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODSSMSVOICE_VOICE)),
+									types.StringValue(string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODS_SMS)),
+									types.StringValue(string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODS_VOICE)),
 								},
 							)),
 
@@ -285,10 +287,10 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 								setvalidator.SizeAtLeast(1),
 								setvalidator.Any(
 									setvalidator.ValueStringsAre(
-										stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsPolicyQuotaDeliveryMethodsEmailEnumValues)...),
+										stringvalidator.OneOf(string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODS_SMS), string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODS_VOICE)),
 									),
 									setvalidator.ValueStringsAre(
-										stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsPolicyQuotaDeliveryMethodsSMSVoiceEnumValues)...),
+										stringvalidator.OneOf(string(management.ENUMNOTIFICATIONSPOLICYQUOTADELIVERYMETHODS_EMAIL)),
 									),
 								),
 							},
@@ -327,7 +329,7 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 				},
 
 				Validators: []validator.List{
-					listvalidator.SizeAtMost(2),
+					listvalidator.SizeAtMost(maxQuotaLimit),
 				},
 			},
 		},
@@ -612,7 +614,7 @@ func (p *NotificationPolicyResourceModel) expand(ctx context.Context) (*manageme
 	quotas := make([]management.NotificationsPolicyQuotasInner, 0)
 	for _, v := range quotaPlan {
 
-		var deliveryMethodsPlan []string
+		var deliveryMethodsPlan []management.EnumNotificationsPolicyQuotaDeliveryMethods
 		diags.Append(v.DeliveryMethods.ElementsAs(ctx, &deliveryMethodsPlan, false)...)
 		if diags.HasError() {
 			return nil, diags
@@ -620,7 +622,7 @@ func (p *NotificationPolicyResourceModel) expand(ctx context.Context) (*manageme
 
 		quota := *management.NewNotificationsPolicyQuotasInner(
 			management.EnumNotificationsPolicyQuotaItemType(v.Type.ValueString()),
-			deliveryMethods,
+			deliveryMethodsPlan,
 		)
 
 		if !v.Total.IsNull() && !v.Total.IsUnknown() {
