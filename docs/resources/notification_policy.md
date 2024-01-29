@@ -19,7 +19,7 @@ resource "pingone_environment" "my_environment" {
 resource "pingone_notification_policy" "unlimited" {
   environment_id = pingone_environment.my_environment.id
 
-  name = "Unlimited Quota SMS and Voice"
+  name = "Unlimited Quotas SMS, Voice and Email"
 }
 ```
 
@@ -33,11 +33,18 @@ resource "pingone_environment" "my_environment" {
 resource "pingone_notification_policy" "environment" {
   environment_id = pingone_environment.my_environment.id
 
-  name = "Environment Quota SMS and Voice"
+  name = "Environment Quota SMS, Voice and Email"
 
   quota {
-    type  = "ENVIRONMENT"
-    total = 100
+    type             = "ENVIRONMENT"
+    delivery_methods = ["SMS", "Voice"]
+    total            = 100
+  }
+
+  quota {
+    type             = "ENVIRONMENT"
+    delivery_methods = ["Email"]
+    total            = 100
   }
 }
 ```
@@ -52,11 +59,18 @@ resource "pingone_environment" "my_environment" {
 resource "pingone_notification_policy" "user" {
   environment_id = pingone_environment.my_environment.id
 
-  name = "User Quota SMS and Voice"
+  name = "User Quota SMS, Voice and Email"
 
   quota {
-    type  = "USER"
-    total = 30
+    type             = "USER"
+    delivery_methods = ["SMS", "Voice"]
+    total            = 30
+  }
+
+  quota {
+    type             = "USER"
+    delivery_methods = ["Email"]
+    total            = 30
   }
 }
 ```
