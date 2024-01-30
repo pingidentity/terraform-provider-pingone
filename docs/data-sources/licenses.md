@@ -37,12 +37,12 @@ data "pingone_licenses" "my_licenses_by_data_filter" {
 
 ### Required
 
-- `organization_id` (String) The ID of the organization.
+- `organization_id` (String) The ID of the organization to retreive licenses for.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Optional
 
-- `data_filter` (Block Set) Individual data filters to apply to the license selection. (see [below for nested schema](#nestedblock--data_filter))
-- `scim_filter` (String) A SCIM filter to apply to the license selection.  A SCIM filter offers the greatest flexibility in filtering licenses.
+- `data_filter` (Block List) Individual data filters to apply to the license selection.  Allowed attributes to filter: `name`, `package`, `status` (see [below for nested schema](#nestedblock--data_filter))
+- `scim_filter` (String) A SCIM filter to apply to the license selection.  A SCIM filter offers the greatest flexibility in filtering licenses.  The SCIM filter can use the following attributes: `name`, `package`, `status`.
 
 ### Read-Only
 
@@ -54,8 +54,5 @@ data "pingone_licenses" "my_licenses_by_data_filter" {
 
 Required:
 
-- `values` (Set of String) The possible values (case sensitive) of the attribute defined in the `name` parameter to filter.  If the attribute filter is `package`, the value is a free text, case-sensitive field.  Package names are not fixed and can change over time. If the attribute filter is `status`, available values are `ACTIVE`, `EXPIRED`, `FUTURE` and `TERMINATED`.  If the attribute filter is `name`, the exact name of the license should be provided.
-
-Optional:
-
-- `name` (String) The attribute name to filter on.  Options are `name`, `package` or `status`.
+- `name` (String) The attribute name to filter on.  Must be one of the following values: `name`, `package`, `status`.
+- `values` (List of String) The possible values (case sensitive) of the attribute defined in the `name` parameter to filter.
