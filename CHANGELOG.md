@@ -3,6 +3,11 @@
 NOTES:
 
 * `data-source/pingone_licenses`: Migrated to plugin framework. ([#728](https://github.com/pingidentity/terraform-provider-pingone/issues/728))
+* bump `github.com/google/uuid` 1.5.0 => 1.6.0 ([#729](https://github.com/pingidentity/terraform-provider-pingone/issues/729))
+* bump `github.com/hashicorp/terraform-plugin-framework` 1.4.2 => 1.5.0 ([#729](https://github.com/pingidentity/terraform-provider-pingone/issues/729))
+* bump `github.com/hashicorp/terraform-plugin-go` 0.20.0 => 0.21.0 ([#729](https://github.com/pingidentity/terraform-provider-pingone/issues/729))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.35.0 => 0.36.0 ([#729](https://github.com/pingidentity/terraform-provider-pingone/issues/729))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.11.4 => 0.11.5 ([#729](https://github.com/pingidentity/terraform-provider-pingone/issues/729))
 
 FEATURES:
 
