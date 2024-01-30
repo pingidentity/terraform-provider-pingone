@@ -37,6 +37,8 @@ func Resources() []func() resource.Resource {
 func DataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewApplicationDataSource,
+		NewApplicationFlowPolicyAssignmentsDataSource,
+		NewApplicationSignOnPolicyAssignmentsDataSource,
 		NewFlowPoliciesDataSource,
 		NewFlowPolicyDataSource,
 		NewGroupDataSource,
