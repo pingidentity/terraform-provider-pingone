@@ -2,6 +2,8 @@
 
 FEATURES:
 
+* **New Data Source:** `pingone_application_flow_policy_assignments` ([#727](https://github.com/pingidentity/terraform-provider-pingone/issues/727))
+* **New Data Source:** `pingone_application_sign_on_policy_assignments` ([#727](https://github.com/pingidentity/terraform-provider-pingone/issues/727))
 * **New Resource:** `pingone_identity_propagation_plan` ([#726](https://github.com/pingidentity/terraform-provider-pingone/issues/726))
 
 ENHANCEMENTS:
