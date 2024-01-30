@@ -5,13 +5,16 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -380,7 +383,7 @@ func TestAccNotificationTemplateContent_InvalidData(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccNotificationTemplateContentConfig_DefaultVariant_Push_Minimal(environmentName, licenseID, resourceName, name.Invalid, locale.Valid),
-				ExpectError: regexp.MustCompile(`expected template_name to be one of \["email_verification_admin" "email_verification_user" "general" "transaction" "verification_code_template" "recovery_code_template" "device_pairing" "strong_authentication" "email_phone_verification" "id_verification" "credential_issued" "credential_updated" "digital_wallet_pairing" "credential_revoked"\], got strong_authentication_doesnotexist`),
+				ExpectError: regexp.MustCompile(fmt.Sprintf(`expected template_name to be one of \["%s"\], got strong_authentication_doesnotexist`, strings.Join(utils.EnumSliceToStringSlice(management.AllowedEnumTemplateNameEnumValues), "\" \""))),
 			},
 			{
 				Config:      testAccNotificationTemplateContentConfig_DefaultVariant_Push_Minimal(environmentName, licenseID, resourceName, name.Valid, locale.Invalid),
