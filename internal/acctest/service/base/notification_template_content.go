@@ -36,7 +36,7 @@ func NotificationTemplateContent_CheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, r, err := apiClient.NotificationsTemplatesApi.ReadOneContent(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["template_name"], rs.Primary.ID).Execute()
+		_, r, err := apiClient.NotificationsTemplatesApi.ReadOneContent(ctx, rs.Primary.Attributes["environment_id"], management.EnumTemplateName(rs.Primary.Attributes["template_name"]), rs.Primary.ID).Execute()
 
 		shouldContinue, err = acctest.CheckForResourceDestroy(r, err)
 		if err != nil {
@@ -74,7 +74,7 @@ func NotificationTemplateContent_RemovalDrift_PreConfig(ctx context.Context, api
 		t.Fatalf("One of environment ID, template name or resource ID cannot be determined. Environment ID: %s, Template Name: %s, Resource ID: %s", environmentID, templateName, resourceID)
 	}
 
-	_, err := apiClient.NotificationsTemplatesApi.DeleteContent(ctx, environmentID, templateName, resourceID).Execute()
+	_, err := apiClient.NotificationsTemplatesApi.DeleteContent(ctx, environmentID, management.EnumTemplateName(templateName), resourceID).Execute()
 	if err != nil {
 		t.Fatalf("Failed to delete notification template contents: %v", err)
 	}
