@@ -18,6 +18,7 @@ FEATURES:
 ENHANCEMENTS:
 
 * `resource/pingone_notification_policy`: Added support for `Email` delivery method quotas. ([#722](https://github.com/pingidentity/terraform-provider-pingone/issues/722))
+* `resource/pingone_notification_template_content`: Added support for `credential_verification` and `new_device_paired` notification templates. ([#720](https://github.com/pingidentity/terraform-provider-pingone/issues/720))
 
 BUG FIXES:
 
