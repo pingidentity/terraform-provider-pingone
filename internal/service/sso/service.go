@@ -16,6 +16,7 @@ func Resources() []func() resource.Resource {
 		NewApplicationFlowPolicyAssignmentResource,
 		NewApplicationResourceGrantResource,
 		NewApplicationRoleAssignmentResource,
+		NewApplicationSecretResource,
 		NewGroupNestingResource,
 		NewGroupResource,
 		NewGroupRoleAssignmentResource,
@@ -36,6 +37,8 @@ func Resources() []func() resource.Resource {
 func DataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewApplicationDataSource,
+		NewApplicationFlowPolicyAssignmentsDataSource,
+		NewApplicationSignOnPolicyAssignmentsDataSource,
 		NewFlowPoliciesDataSource,
 		NewFlowPolicyDataSource,
 		NewGroupDataSource,

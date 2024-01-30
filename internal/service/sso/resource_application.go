@@ -286,7 +286,7 @@ func ResourceApplication() *schema.Resource {
 							Computed:    true,
 						},
 						"client_secret": {
-							Description: "A string that specifies the application secret ID used to authenticate to the authorization server.",
+							Description: "A string that specifies the application secret ID used to authenticate to the authorization server.\n\n~> The `client_secret` cannot be rotated in this resource.  The `pingone_application_secret` resource should be used to control rotation of the `client_secret` value.  If using the `pingone_application_secret` resource, use of this attribute is likely to conflict with that resource.  In this case, the `pingone_application_secret.secret` attribute should be used instead.",
 							Type:        schema.TypeString,
 							Computed:    true,
 							Sensitive:   true,

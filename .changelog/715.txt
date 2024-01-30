@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_form`: Fixed "Provider produced inconsistent result after apply" error when configuring `PASSWORD` or `PASSWORD_VERIFY` type form controls with the `validation` parameter set.
+```

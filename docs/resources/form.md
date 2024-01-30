@@ -223,7 +223,7 @@ Optional:
 - `size` (String) **Required** when the `type` is one of `RECAPTCHA_V2`.  A string that specifies the reCAPTCHA size.  Options are `COMPACT`, `NORMAL`.
 - `styles` (Attributes) Optional when the `type` is one of `FLOW_BUTTON`, `FLOW_LINK`, `SUBMIT_BUTTON`.  A single object that describes style settings for the field. (see [below for nested schema](#nestedatt--components--fields--styles))
 - `theme` (String) **Required** when the `type` is one of `RECAPTCHA_V2`.  A string that specifies the reCAPTCHA theme.  Options are `DARK`, `LIGHT`.
-- `validation` (Attributes) **Required** when the `type` is one of `TEXT`.  An object containing validation data for the field. (see [below for nested schema](#nestedatt--components--fields--validation))
+- `validation` (Attributes) **Required** when the `type` is one of `TEXT`, optional when the `type` is one of `PASSWORD`, `PASSWORD_VERIFY`.  An object containing validation data for the field. (see [below for nested schema](#nestedatt--components--fields--validation))
 
 Read-Only:
 

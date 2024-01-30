@@ -102,7 +102,6 @@ func New(version string) func() *schema.Provider {
 				"pingone_certificate_signing_request":    base.DatasourceCertificateSigningRequest(),
 				"pingone_language":                       base.DatasourceLanguage(),
 				"pingone_license":                        base.DatasourceLicense(),
-				"pingone_licenses":                       base.DatasourceLicenses(),
 				"pingone_trusted_email_domain_dkim":      base.DatasourceTrustedEmailDomainDKIM(),
 				"pingone_trusted_email_domain_ownership": base.DatasourceTrustedEmailDomainOwnership(),
 				"pingone_trusted_email_domain_spf":       base.DatasourceTrustedEmailDomainSPF(),

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -14,6 +15,7 @@ import (
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -41,10 +43,10 @@ func ResourceNotificationTemplateContent() *schema.Resource {
 				ForceNew:         true,
 			},
 			"template_name": {
-				Description:      "The ID of the template to manage localised contents for.  Options are `email_verification_admin`, `email_verification_user`, `general`, `transaction`, `verification_code_template`, `recovery_code_template`, `device_pairing`, `strong_authentication`, `email_phone_verification`, `id_verification`, `credential_issued`, `credential_updated`, `digital_wallet_pairing`, `credential_revoked`.",
+				Description:      fmt.Sprintf("The ID of the template to manage localised contents for.  Options are `%s`.", strings.Join(utils.EnumSliceToStringSlice(management.AllowedEnumTemplateNameEnumValues), "`, `")),
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"email_verification_admin", "email_verification_user", "general", "transaction", "verification_code_template", "recovery_code_template", "device_pairing", "strong_authentication", "email_phone_verification", "id_verification", "credential_issued", "credential_updated", "digital_wallet_pairing", "credential_revoked"}, false)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(utils.EnumSliceToStringSlice(management.AllowedEnumTemplateNameEnumValues), false)),
 				ForceNew:         true,
 			},
 			"locale": {
@@ -245,7 +247,7 @@ func resourceNotificationTemplateContentCreate(ctx context.Context, d *schema.Re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.NotificationsTemplatesApi.CreateContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string)).TemplateContent(*templateContent).Execute()
+			fO, fR, fErr := apiClient.NotificationsTemplatesApi.CreateContent(ctx, d.Get("environment_id").(string), management.EnumTemplateName(d.Get("template_name").(string))).TemplateContent(*templateContent).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateContent",
@@ -288,7 +290,7 @@ func resourceNotificationTemplateContentRead(ctx context.Context, d *schema.Reso
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.NotificationsTemplatesApi.ReadOneContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string), d.Id()).Execute()
+			fO, fR, fErr := apiClient.NotificationsTemplatesApi.ReadOneContent(ctx, d.Get("environment_id").(string), management.EnumTemplateName(d.Get("template_name").(string)), d.Id()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneContent",
@@ -433,7 +435,7 @@ func resourceNotificationTemplateContentUpdate(ctx context.Context, d *schema.Re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.NotificationsTemplatesApi.UpdateContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string), d.Id()).TemplateContent(*templateContent).Execute()
+			fO, fR, fErr := apiClient.NotificationsTemplatesApi.UpdateContent(ctx, d.Get("environment_id").(string), management.EnumTemplateName(d.Get("template_name").(string)), d.Id()).TemplateContent(*templateContent).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateContent",
@@ -457,7 +459,7 @@ func resourceNotificationTemplateContentDelete(ctx context.Context, d *schema.Re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := apiClient.NotificationsTemplatesApi.DeleteContent(ctx, d.Get("environment_id").(string), d.Get("template_name").(string), d.Id()).Execute()
+			fR, fErr := apiClient.NotificationsTemplatesApi.DeleteContent(ctx, d.Get("environment_id").(string), management.EnumTemplateName(d.Get("template_name").(string)), d.Id()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteContent",
@@ -480,7 +482,7 @@ func resourceNotificationTemplateContentImport(ctx context.Context, d *schema.Re
 		},
 		{
 			Label:  "template_name",
-			Regexp: regexp.MustCompile(`email_verification_admin|email_verification_user|general|transaction|verification_code_template|recovery_code_template|device_pairing|strong_authentication|email_phone_verification|id_verification|credential_issued|credential_updated|digital_wallet_pairing|credential_revoked`),
+			Regexp: regexp.MustCompile(fmt.Sprintf("`%s`", strings.Join(utils.EnumSliceToStringSlice(management.AllowedEnumTemplateNameEnumValues), "|"))),
 		},
 		{
 			Label:  "notification_template_content_id",

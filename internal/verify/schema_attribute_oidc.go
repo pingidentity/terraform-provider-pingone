@@ -2,9 +2,8 @@ package verify
 
 import (
 	"fmt"
+	"slices"
 	"strings"
-
-	"golang.org/x/exp/slices"
 )
 
 var illegalOIDCattributeNames = []string{"acr", "amr", "aud", "auth_time", "client_id", "env", "exp", "iat", "iss", "jti", "org", "p1.*", "scope", "sid", "sub"}

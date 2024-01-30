@@ -1,4 +1,53 @@
-## 0.25.0 (Unreleased)
+## 0.26.0 (Unreleased)
+
+NOTES:
+
+* `data-source/pingone_licenses`: Migrated to plugin framework. ([#728](https://github.com/pingidentity/terraform-provider-pingone/issues/728))
+* bump `github.com/google/uuid` 1.5.0 => 1.6.0 ([#729](https://github.com/pingidentity/terraform-provider-pingone/issues/729))
+* bump `github.com/hashicorp/terraform-plugin-framework` 1.4.2 => 1.5.0 ([#729](https://github.com/pingidentity/terraform-provider-pingone/issues/729))
+* bump `github.com/hashicorp/terraform-plugin-go` 0.20.0 => 0.21.0 ([#729](https://github.com/pingidentity/terraform-provider-pingone/issues/729))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.35.0 => 0.36.0 ([#729](https://github.com/pingidentity/terraform-provider-pingone/issues/729))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.11.4 => 0.11.5 ([#729](https://github.com/pingidentity/terraform-provider-pingone/issues/729))
+
+FEATURES:
+
+* **New Data Source:** `pingone_application_flow_policy_assignments` ([#727](https://github.com/pingidentity/terraform-provider-pingone/issues/727))
+* **New Data Source:** `pingone_application_sign_on_policy_assignments` ([#727](https://github.com/pingidentity/terraform-provider-pingone/issues/727))
+* **New Resource:** `pingone_identity_propagation_plan` ([#726](https://github.com/pingidentity/terraform-provider-pingone/issues/726))
+
+ENHANCEMENTS:
+
+* `resource/pingone_notification_policy`: Added support for `Email` delivery method quotas. ([#722](https://github.com/pingidentity/terraform-provider-pingone/issues/722))
+* `resource/pingone_notification_template_content`: Added support for `credential_verification` and `new_device_paired` notification templates. ([#720](https://github.com/pingidentity/terraform-provider-pingone/issues/720))
+
+BUG FIXES:
+
+* `data-source/pingone_licenses`: Fixed `data_filter.name` defined as an optional parameter.  The `data_filter.name` parameter is now required when defining the `data_filter` block. ([#728](https://github.com/pingidentity/terraform-provider-pingone/issues/728))
+* `resource/pingone_sign_on_policy_action`: Corrected the "login" sign on policy action error messages when configuring a gateway with missing configuration. ([#721](https://github.com/pingidentity/terraform-provider-pingone/issues/721))
+
+## 0.25.1 (15 January 2024)
+
+NOTES:
+
+* Added the ability to append custom information (by environment variable) to the default user agent string sent with every API request.  See registry documentation for details. ([#708](https://github.com/pingidentity/terraform-provider-pingone/issues/708))
+* Upgrade go to `v1.21`. ([#707](https://github.com/pingidentity/terraform-provider-pingone/issues/707))
+* `resource/pingone_environment`: Added ability to override `region` parameter validation with custom values. ([#706](https://github.com/pingidentity/terraform-provider-pingone/issues/706))
+* bump `github.com/cloudflare/circl` 1.3.6 => 1.3.7 ([#711](https://github.com/pingidentity/terraform-provider-pingone/issues/711))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement` v0.3.0 => v0.3.1 ([#707](https://github.com/pingidentity/terraform-provider-pingone/issues/707))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.4.0 => v0.4.1 ([#707](https://github.com/pingidentity/terraform-provider-pingone/issues/707))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.6.1 => v0.6.2 ([#707](https://github.com/pingidentity/terraform-provider-pingone/issues/707))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.34.0 => v0.35.0 ([#707](https://github.com/pingidentity/terraform-provider-pingone/issues/707))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.18.2 => v0.18.3 ([#707](https://github.com/pingidentity/terraform-provider-pingone/issues/707))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` v0.12.1 => v0.12.2 ([#707](https://github.com/pingidentity/terraform-provider-pingone/issues/707))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/verify` v0.4.0 => v0.4.1 ([#707](https://github.com/pingidentity/terraform-provider-pingone/issues/707))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.11.3 => v0.11.4 ([#707](https://github.com/pingidentity/terraform-provider-pingone/issues/707))
+
+BUG FIXES:
+
+* `resource/pingone_form`: Fix error "This attribute contains duplicate values of the same type" when configuring multiple form controls of the same type. ([#714](https://github.com/pingidentity/terraform-provider-pingone/issues/714))
+* `resource/pingone_form`: Fixed "Provider produced inconsistent result after apply" error when configuring `PASSWORD` or `PASSWORD_VERIFY` type form controls with the `validation` parameter set. ([#715](https://github.com/pingidentity/terraform-provider-pingone/issues/715))
+
+## 0.25.0 (02 January 2024)
 
 NOTES:
 
@@ -21,6 +70,7 @@ NOTES:
 
 FEATURES:
 
+* **New Resource:** `pingone_application_secret` ([#709](https://github.com/pingidentity/terraform-provider-pingone/issues/709))
 * **New Resource:** `pingone_form` ([#655](https://github.com/pingidentity/terraform-provider-pingone/issues/655))
 * **New Resource:** `pingone_forms_recaptcha_v2` ([#655](https://github.com/pingidentity/terraform-provider-pingone/issues/655))
 

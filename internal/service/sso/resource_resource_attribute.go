@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -20,7 +21,6 @@ import (
 	customboolvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
-	"golang.org/x/exp/slices"
 )
 
 // Types

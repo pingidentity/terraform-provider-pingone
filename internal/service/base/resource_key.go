@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"net/http"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -29,7 +30,6 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
-	"golang.org/x/exp/slices"
 )
 
 // Types

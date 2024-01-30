@@ -2,9 +2,8 @@ package verify
 
 import (
 	"fmt"
+	"slices"
 	"strings"
-
-	"golang.org/x/exp/slices"
 )
 
 var reservedLanguageCodes = []string{"zh", "nl", "en", "fr", "fr-CA", "de", "it", "ja", "ko", "pt", "ru", "es", "th", "tr"}

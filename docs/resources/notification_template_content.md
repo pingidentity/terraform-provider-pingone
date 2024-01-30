@@ -77,7 +77,7 @@ resource "pingone_notification_template_content" "voice" {
 
 - `environment_id` (String) The ID of the environment to manage notification template contents in.
 - `locale` (String) An ISO standard language code. For more information about standard language codes, see [ISO Language Code Table](http://www.lingoes.net/en/translator/langcode.htm).
-- `template_name` (String) The ID of the template to manage localised contents for.  Options are `email_verification_admin`, `email_verification_user`, `general`, `transaction`, `verification_code_template`, `recovery_code_template`, `device_pairing`, `strong_authentication`, `email_phone_verification`, `id_verification`, `credential_issued`, `credential_updated`, `digital_wallet_pairing`, `credential_revoked`.
+- `template_name` (String) The ID of the template to manage localised contents for.  Options are `credential_issued`, `credential_revoked`, `credential_updated`, `credential_verification`, `device_pairing`, `digital_wallet_pairing`, `email_verification_admin`, `email_verification_user`, `email_phone_verification`, `general`, `id_verification`, `new_device_paired`, `recovery_code_template`, `strong_authentication`, `transaction`, `verification_code_template`.
 
 ### Optional
 

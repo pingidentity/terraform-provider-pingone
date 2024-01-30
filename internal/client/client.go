@@ -3,6 +3,8 @@ package client
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone"
 )
@@ -14,7 +16,11 @@ type Client struct {
 
 func (c *Config) APIClient(ctx context.Context, version string) (*Client, error) {
 
-	userAgent := fmt.Sprintf("terraform-provider-pingone/%s/go", version)
+	userAgent := fmt.Sprintf("terraform-provider-pingone/%s", version)
+
+	if v := strings.TrimSpace(os.Getenv("PINGONE_TF_APPEND_USER_AGENT")); v != "" {
+		userAgent += fmt.Sprintf(" %s", v)
+	}
 
 	config := &pingone.Config{
 		ClientID:             &c.ClientID,
@@ -24,7 +30,7 @@ func (c *Config) APIClient(ctx context.Context, version string) (*Client, error)
 		Region:               c.Region,
 		APIHostnameOverride:  c.APIHostnameOverride,
 		AuthHostnameOverride: c.AuthHostnameOverride,
-		UserAgentOverride:    &userAgent,
+		UserAgentSuffix:      &userAgent,
 		ProxyURL:             c.ProxyURL,
 	}
 
