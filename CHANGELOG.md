@@ -1,5 +1,9 @@
 ## 0.26.0 (Unreleased)
 
+FEATURES:
+
+* **New Resource:** `pingone_identity_propagation_plan` ([#726](https://github.com/pingidentity/terraform-provider-pingone/issues/726))
+
 ENHANCEMENTS:
 
 * `resource/pingone_notification_policy`: Added support for `Email` delivery method quotas. ([#722](https://github.com/pingidentity/terraform-provider-pingone/issues/722))
