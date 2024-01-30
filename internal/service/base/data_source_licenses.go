@@ -54,7 +54,7 @@ func (r *LicensesDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 			"id": framework.Attr_ID(),
 
 			"organization_id": framework.Attr_LinkID(framework.SchemaAttributeDescriptionFromMarkdown(
-				"The ID of the organization to retreive licenses for.",
+				"The ID of the organization to retrieve licenses for.",
 			)),
 
 			"scim_filter": framework.Attr_SCIMFilter(framework.SchemaAttributeDescriptionFromMarkdown(

@@ -37,7 +37,7 @@ data "pingone_licenses" "my_licenses_by_data_filter" {
 
 ### Required
 
-- `organization_id` (String) The ID of the organization to retreive licenses for.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `organization_id` (String) The ID of the organization to retrieve licenses for.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Optional
 
