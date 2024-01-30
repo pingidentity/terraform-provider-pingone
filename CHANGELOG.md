@@ -1,5 +1,9 @@
 ## 0.26.0 (Unreleased)
 
+NOTES:
+
+* `data-source/pingone_licenses`: Migrated to plugin framework. ([#728](https://github.com/pingidentity/terraform-provider-pingone/issues/728))
+
 FEATURES:
 
 * **New Data Source:** `pingone_application_flow_policy_assignments` ([#727](https://github.com/pingidentity/terraform-provider-pingone/issues/727))
@@ -12,6 +16,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 
+* `data-source/pingone_licenses`: Fixed `data_filter.name` defined as an optional parameter.  The `data_filter.name` parameter is now required when defining the `data_filter` block. ([#728](https://github.com/pingidentity/terraform-provider-pingone/issues/728))
 * `resource/pingone_sign_on_policy_action`: Corrected the "login" sign on policy action error messages when configuring a gateway with missing configuration. ([#721](https://github.com/pingidentity/terraform-provider-pingone/issues/721))
 
 ## 0.25.1 (15 January 2024)
