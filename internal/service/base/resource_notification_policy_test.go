@@ -119,19 +119,7 @@ func TestAccNotificationPolicy_Full(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "quota.#", "1"),
-			resource.TestCheckResourceAttr(resourceFullName, "country_limit.type", "DENIED"),
-		),
-	}
-
-	fullStep2 := resource.TestStep{
-		Config: testAccNotificationPolicyConfig_Full(resourceName, name),
-		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-			resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "quota.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "quota.#", "2"),
 			resource.TestCheckResourceAttr(resourceFullName, "country_limit.type", "DENIED"),
 		),
 	}
@@ -172,9 +160,6 @@ func TestAccNotificationPolicy_Full(t *testing.T) {
 			// Change
 			fullStep1,
 			minimalStep,
-			// Full change
-			fullStep1,
-			fullStep2,
 			fullStep1,
 			// Test importing the resource
 			{
@@ -207,15 +192,23 @@ func TestAccNotificationPolicy_Quotas(t *testing.T) {
 	quotaEnvironment := resource.TestStep{
 		Config: testAccNotificationPolicyConfig_QuotaEnvironment(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttr(resourceFullName, "quota.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "quota.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "quota.*", map[string]string{
-				"type": "ENVIRONMENT",
-				// "delivery_methods.#": "2",
-				// "delivery_methods.0": "SMS",
-				// "delivery_methods.1": "Voice",
-				"total":  "10000",
-				"unused": "",
-				"used":   "",
+				"type":               "ENVIRONMENT",
+				"delivery_methods.#": "2",
+				"delivery_methods.0": "SMS",
+				"delivery_methods.1": "Voice",
+				"total":              "10000",
+				"unused":             "",
+				"used":               "",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "quota.*", map[string]string{
+				"type":               "ENVIRONMENT",
+				"delivery_methods.#": "1",
+				"delivery_methods.0": "Email",
+				"total":              "500",
+				"unused":             "",
+				"used":               "",
 			}),
 		),
 	}
@@ -225,13 +218,12 @@ func TestAccNotificationPolicy_Quotas(t *testing.T) {
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "quota.#", "1"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "quota.*", map[string]string{
-				"type": "USER",
-				// "delivery_methods.#": "2",
-				// "delivery_methods.0": "SMS",
-				// "delivery_methods.1": "Voice",
-				"total":  "",
-				"unused": "45",
-				"used":   "40",
+				"type":               "USER",
+				"delivery_methods.#": "1",
+				"delivery_methods.0": "SMS",
+				"total":              "",
+				"unused":             "45",
+				"used":               "40",
 			}),
 		),
 	}
@@ -252,6 +244,15 @@ func TestAccNotificationPolicy_Quotas(t *testing.T) {
 		CheckDestroy:             base.NotificationPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Invalid
+			{
+				Config:      testAccNotificationPolicyConfig_QuotaUser_Invalid(resourceName, name),
+				ExpectError: regexp.MustCompile("Invalid parameter"),
+			},
+			{
+				Config:      testAccNotificationPolicyConfig_QuotaUser_InvalidDeliveryMethod(resourceName, name),
+				ExpectError: regexp.MustCompile("Invalid Attribute Value Match"),
+			},
 			// Variant 1 New
 			quotaEnvironment,
 			{
@@ -275,11 +276,6 @@ func TestAccNotificationPolicy_Quotas(t *testing.T) {
 			quotaUser,
 			quotaUnlimited,
 			quotaEnvironment,
-			// Invalid
-			{
-				Config:      testAccNotificationPolicyConfig_QuotaUser_Invalid(resourceName, name),
-				ExpectError: regexp.MustCompile("Invalid parameter"),
-			},
 		},
 	})
 }
@@ -452,8 +448,15 @@ resource "pingone_notification_policy" "%[2]s" {
   name = "%[3]s"
 
   quota {
-    type  = "ENVIRONMENT"
-    total = 10000
+    type             = "ENVIRONMENT"
+    delivery_methods = ["SMS", "Voice"]
+    total            = 10000
+  }
+
+  quota {
+    type             = "ENVIRONMENT"
+    delivery_methods = ["Email"]
+    total            = 10000
   }
 
   country_limit = {
@@ -492,6 +495,12 @@ resource "pingone_notification_policy" "%[2]s" {
     type  = "ENVIRONMENT"
     total = 10000
   }
+
+  quota {
+    type             = "ENVIRONMENT"
+    delivery_methods = ["Email"]
+    total            = 500
+  }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -505,9 +514,10 @@ resource "pingone_notification_policy" "%[2]s" {
   name = "%[3]s"
 
   quota {
-    type   = "USER"
-    used   = 40
-    unused = 45
+    type             = "USER"
+    delivery_methods = ["SMS"]
+    used             = 40
+    unused           = 45
   }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -537,6 +547,23 @@ resource "pingone_notification_policy" "%[2]s" {
     type   = "USER"
     used   = 55
     unused = 45
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccNotificationPolicyConfig_QuotaUser_InvalidDeliveryMethod(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_notification_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  quota {
+    type             = "USER"
+    delivery_methods = ["SMS", "Email"]
+    total            = 100
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

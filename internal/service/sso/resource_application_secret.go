@@ -157,8 +157,8 @@ func (r *ApplicationSecretResource) Create(ctx context.Context, req resource.Cre
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := r.Client.ManagementAPIClient.ApplicationSecretApi.UpdateApplicationSecret(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), nil, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationSecretApi.UpdateApplicationSecret(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateApplicationSecret",
 		framework.DefaultCustomError,
