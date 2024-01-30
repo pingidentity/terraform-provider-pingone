@@ -41,8 +41,8 @@ data "pingone_licenses" "my_licenses_by_data_filter" {
 
 ### Optional
 
-- `data_filter` (Block List) Individual data filters to apply to the license selection.  Allowed attributes to filter: `name`, `package`, `status` (see [below for nested schema](#nestedblock--data_filter))
-- `scim_filter` (String) A SCIM filter to apply to the license selection.  A SCIM filter offers the greatest flexibility in filtering licenses.  The SCIM filter can use the following attributes: `name`, `package`, `status`.
+- `data_filter` (Block List) Individual data filters to apply to the license selection.  If the attribute filter is `status`, available values are `ACTIVE`, `EXPIRED`, `FUTURE` and `TERMINATED`.  Allowed attributes to filter: `name`, `package`, `status` (see [below for nested schema](#nestedblock--data_filter))
+- `scim_filter` (String) A SCIM filter to apply to the license selection.  A SCIM filter offers the greatest flexibility in filtering licenses.  If the attribute filter is `status`, available values are `ACTIVE`, `EXPIRED`, `FUTURE` and `TERMINATED`.  The SCIM filter can use the following attributes: `name`, `package`, `status`.
 
 ### Read-Only
 

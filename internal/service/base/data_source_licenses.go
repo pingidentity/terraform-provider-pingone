@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
@@ -60,7 +59,7 @@ func (r *LicensesDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 
 			"scim_filter": framework.Attr_SCIMFilter(framework.SchemaAttributeDescriptionFromMarkdown(
 				"A SCIM filter to apply to the license selection.  A SCIM filter offers the greatest flexibility in filtering licenses.",
-			),
+			).AppendMarkdownString(fmt.Sprintf("If the attribute filter is `status`, available values are `%s`, `%s`, `%s` and `%s`.", management.ENUMLICENSESTATUS_ACTIVE, management.ENUMLICENSESTATUS_EXPIRED, management.ENUMLICENSESTATUS_FUTURE, management.ENUMLICENSESTATUS_TERMINATED)),
 				filterableAttributes,
 				[]string{"data_filter"},
 			),
@@ -73,7 +72,7 @@ func (r *LicensesDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 		Blocks: map[string]schema.Block{
 			"data_filter": framework.Attr_DataFilter(framework.SchemaAttributeDescriptionFromMarkdown(
 				"Individual data filters to apply to the license selection.",
-			),
+			).AppendMarkdownString(fmt.Sprintf("If the attribute filter is `status`, available values are `%s`, `%s`, `%s` and `%s`.", management.ENUMLICENSESTATUS_ACTIVE, management.ENUMLICENSESTATUS_EXPIRED, management.ENUMLICENSESTATUS_FUTURE, management.ENUMLICENSESTATUS_TERMINATED)),
 				filterableAttributes,
 				[]string{"scim_filter"},
 			),
@@ -133,36 +132,8 @@ func (r *LicensesDataSource) Read(ctx context.Context, req datasource.ReadReques
 
 	} else if !data.DataFilter.IsNull() {
 
-		var dataFilterIn []framework.DataFilterModel
-		resp.Diagnostics.Append(data.DataFilter.ElementsAs(ctx, &dataFilterIn, false)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		filterSet := make([]interface{}, 0)
-
-		for _, v := range dataFilterIn {
-
-			values := framework.TFListToStringSlice(ctx, v.Values)
-			tflog.Debug(ctx, "Filter set loop", map[string]interface{}{
-				"name":          v.Name.ValueString(),
-				"len(elements)": fmt.Sprintf("%d", len(v.Values.Elements())),
-				"len(values)":   fmt.Sprintf("%d", len(values)),
-			})
-			filterSet = append(filterSet, map[string]interface{}{
-				"name":   v.Name.ValueString(),
-				"values": values,
-			})
-		}
-
-		scimFilter := filter.BuildScimFilter(filterSet, map[string]string{})
-
-		tflog.Debug(ctx, "SCIM Filter", map[string]interface{}{
-			"scimFilter": scimFilter,
-		})
-
 		filterFunction = func() (any, *http.Response, error) {
-			return r.Client.ManagementAPIClient.LicensesApi.ReadAllLicenses(ctx, data.OrganizationId.ValueString()).Filter(scimFilter).Execute()
+			return r.Client.ManagementAPIClient.LicensesApi.ReadAllLicenses(ctx, data.OrganizationId.ValueString()).Execute()
 		}
 
 	} else {
@@ -187,8 +158,24 @@ func (r *LicensesDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
+	licenses := entityArray.Embedded.GetLicenses()
+	if !data.DataFilter.IsNull() {
+		var dataFilterPlan []framework.DataFilterModel
+		resp.Diagnostics.Append(data.DataFilter.ElementsAs(ctx, &dataFilterPlan, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		var d diag.Diagnostics
+		licenses, d = filterResults(ctx, dataFilterPlan, entityArray.Embedded.GetLicenses())
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(data.OrganizationId.ValueString(), entityArray.Embedded.GetLicenses())...)
+	resp.Diagnostics.Append(data.toState(data.OrganizationId.ValueString(), licenses)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -216,4 +203,47 @@ func (p *LicensesDataSourceModel) toState(environmentID string, licenses []manag
 	diags.Append(d...)
 
 	return diags
+}
+
+func filterResults(ctx context.Context, filterPlan []framework.DataFilterModel, licenses []management.License) ([]management.License, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	items := make([]management.License, 0)
+
+	for _, license := range licenses {
+
+		filterMap := map[string]string{
+			"name":    license.GetName(),
+			"package": license.GetPackage(),
+			"status":  string(license.GetStatus()),
+		}
+
+		include := true
+
+		for _, filter := range filterPlan {
+
+			for k, v := range filterMap {
+				if filter.Name.ValueString() == k {
+
+					var filterValues []string
+					diags.Append(filter.Values.ElementsAs(ctx, &filterValues, false)...)
+					if diags.HasError() {
+						return nil, diags
+					}
+
+					if !slices.Contains(filterValues, v) {
+						include = false
+					}
+				}
+			}
+
+		}
+
+		if include {
+			items = append(items, license)
+		}
+
+	}
+
+	return items, diags
 }
