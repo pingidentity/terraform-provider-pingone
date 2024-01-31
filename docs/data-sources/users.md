@@ -15,20 +15,21 @@ Datasource to retrieve multiple PingOne user IDs selected by a SCIM filter.
 data "pingone_users" "example_by_data_filter" {
   environment_id = var.environment_id
 
-  data_filter {
-    name = "memberOfGroups.id"
-    values = [
-      pingone_group.my_first_group.id,
-      pingone_group.my_second_group.id
-    ]
-  }
-
-  data_filter {
-    name = "population.id"
-    values = [
-      pingone_population.my_population.id
-    ]
-  }
+  data_filters = [
+    {
+      name = "memberOfGroups.id"
+      values = [
+        pingone_group.my_first_group.id,
+        pingone_group.my_second_group.id
+      ]
+    },
+    {
+      name = "population.id"
+      values = [
+        pingone_population.my_population.id
+      ]
+    }
+  ]
 }
 
 data "pingone_users" "example_by_scim_filter" {
@@ -47,16 +48,16 @@ data "pingone_users" "example_by_scim_filter" {
 
 ### Optional
 
-- `data_filter` (Block List) Individual data filters to apply to the user selection.  Allowed attributes to filter: `accountId`, `address.streetAddress`, `address.locality`, `address.region`, `address.postalCode`, `address.countryCode`, `email`, `enabled`, `endDate`, `externalId`, `locale`, `mobilePhone`, `name.formatted`, `name.given`, `name.middle`, `name.family`, `name.honorificPrefix`, `name.honorificSuffix`, `nickname`, `population.id`, `photo.href`, `preferredLanguage`, `primaryPhone`, `startDate`, `timezone`, `title`, `type`, `username`, `memberOfGroups.id` (see [below for nested schema](#nestedblock--data_filter))
-- `scim_filter` (String) A SCIM filter to apply to the user selection.  A SCIM filter offers the greatest flexibility in filtering users.  The SCIM filter can use the following attributes: `accountId`, `address.streetAddress`, `address.locality`, `address.region`, `address.postalCode`, `address.countryCode`, `email`, `enabled`, `endDate`, `externalId`, `locale`, `mobilePhone`, `name.formatted`, `name.given`, `name.middle`, `name.family`, `name.honorificPrefix`, `name.honorificSuffix`, `nickname`, `population.id`, `photo.href`, `preferredLanguage`, `primaryPhone`, `startDate`, `timezone`, `title`, `type`, `username`, `memberOfGroups.id`.
+- `data_filters` (Attributes List) Individual data filters to apply to the user selection.  Allowed attributes to filter: `accountId`, `address.streetAddress`, `address.locality`, `address.region`, `address.postalCode`, `address.countryCode`, `email`, `enabled`, `endDate`, `externalId`, `locale`, `mobilePhone`, `name.formatted`, `name.given`, `name.middle`, `name.family`, `name.honorificPrefix`, `name.honorificSuffix`, `nickname`, `population.id`, `photo.href`, `preferredLanguage`, `primaryPhone`, `startDate`, `timezone`, `title`, `type`, `username`, `memberOfGroups.id`.  At least one of the following must be defined: `scim_filter`, `data_filters`. (see [below for nested schema](#nestedatt--data_filters))
+- `scim_filter` (String) A SCIM filter to apply to the user selection.  A SCIM filter offers the greatest flexibility in filtering users.  The SCIM filter can use the following attributes: `accountId`, `address.streetAddress`, `address.locality`, `address.region`, `address.postalCode`, `address.countryCode`, `email`, `enabled`, `endDate`, `externalId`, `locale`, `mobilePhone`, `name.formatted`, `name.given`, `name.middle`, `name.family`, `name.honorificPrefix`, `name.honorificSuffix`, `nickname`, `population.id`, `photo.href`, `preferredLanguage`, `primaryPhone`, `startDate`, `timezone`, `title`, `type`, `username`, `memberOfGroups.id`.  At least one of the following must be defined: `scim_filter`, `data_filters`.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 - `ids` (List of String) The list of resulting IDs of users that have been successfully retrieved and filtered.
 
-<a id="nestedblock--data_filter"></a>
-### Nested Schema for `data_filter`
+<a id="nestedatt--data_filters"></a>
+### Nested Schema for `data_filters`
 
 Required:
 

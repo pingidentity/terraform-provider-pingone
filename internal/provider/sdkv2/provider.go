@@ -117,7 +117,6 @@ func New(version string) func() *schema.Provider {
 				"pingone_certificate_signing_response":  base.ResourceCertificateSigningResponse(),
 				"pingone_gateway":                       base.ResourceGateway(),
 				"pingone_gateway_credential":            base.ResourceGatewayCredential(),
-				"pingone_image":                         base.ResourceImage(),
 				"pingone_language":                      base.ResourceLanguage(),
 				"pingone_language_update":               base.ResourceLanguageUpdate(),
 				"pingone_notification_template_content": base.ResourceNotificationTemplateContent(),
@@ -129,9 +128,8 @@ func New(version string) func() *schema.Provider {
 				"pingone_sign_on_policy":                        sso.ResourceSignOnPolicy(),
 				"pingone_sign_on_policy_action":                 sso.ResourceSignOnPolicyAction(),
 
-				"pingone_mfa_fido_policy": mfa.ResourceFIDOPolicy(),
-				"pingone_mfa_policy":      mfa.ResourceMFAPolicy(),
-				"pingone_mfa_settings":    mfa.ResourceMFASettings(),
+				"pingone_mfa_policy":   mfa.ResourceMFAPolicy(),
+				"pingone_mfa_settings": mfa.ResourceMFASettings(),
 			},
 		}
 

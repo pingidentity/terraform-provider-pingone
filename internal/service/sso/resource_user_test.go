@@ -123,7 +123,6 @@ func TestAccUser_All(t *testing.T) {
 			//resource.TestCheckNoResourceAttr(resourceFullName, "email_verified"),
 			resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "status", "DISABLED"),
 			resource.TestCheckResourceAttr(resourceFullName, "account.can_authenticate", "false"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "account.locked_at"),
 			resource.TestCheckResourceAttr(resourceFullName, "account.status", "OK"),
@@ -170,7 +169,6 @@ func TestAccUser_All(t *testing.T) {
 			//resource.TestCheckNoResourceAttr(resourceFullName, "email_verified"),
 			resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
-			resource.TestCheckResourceAttr(resourceFullName, "status", "ENABLED"),
 			resource.TestCheckResourceAttr(resourceFullName, "account.can_authenticate", "true"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "account.locked_at"),
 			resource.TestCheckResourceAttr(resourceFullName, "account.status", "OK"),
@@ -274,7 +272,6 @@ func TestAccUser_AllWithoutReplacement(t *testing.T) {
 			//resource.TestCheckNoResourceAttr(resourceFullName, "email_verified"),
 			resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "status", "DISABLED"),
 			resource.TestCheckResourceAttr(resourceFullName, "account.can_authenticate", "false"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "account.locked_at"),
 			resource.TestCheckResourceAttr(resourceFullName, "account.status", "OK"),
@@ -318,7 +315,6 @@ func TestAccUser_AllWithoutReplacement(t *testing.T) {
 			//resource.TestCheckNoResourceAttr(resourceFullName, "email_verified"),
 			resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
-			resource.TestCheckResourceAttr(resourceFullName, "status", "ENABLED"),
 			resource.TestCheckResourceAttr(resourceFullName, "account.can_authenticate", "true"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "account.locked_at"),
 			resource.TestCheckResourceAttr(resourceFullName, "account.status", "OK"),
@@ -444,7 +440,7 @@ func TestAccUser_ChangePopulation(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "username", name),
 					resource.TestCheckResourceAttr(resourceFullName, "email", fmt.Sprintf("%s@pingidentity.com", name)),
 					resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "status", "ENABLED"),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 				),
 			},
 			{
@@ -455,7 +451,7 @@ func TestAccUser_ChangePopulation(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "username", name),
 					resource.TestCheckResourceAttr(resourceFullName, "email", fmt.Sprintf("%s@pingidentity.com", name)),
 					resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "status", "ENABLED"),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 				),
 			},
 		},
@@ -613,7 +609,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  linkedin {
+  linkedin = {
     client_id     = "dummyclientid1"
     client_secret = "dummyclientsecret1"
   }
@@ -700,7 +696,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  linkedin {
+  linkedin = {
     client_id     = "dummyclientid1"
     client_secret = "dummyclientsecret1"
   }
@@ -776,7 +772,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  linkedin {
+  linkedin = {
     client_id     = "dummyclientid1"
     client_secret = "dummyclientsecret1"
   }
@@ -805,7 +801,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  linkedin {
+  linkedin = {
     client_id     = "dummyclientid1"
     client_secret = "dummyclientsecret1"
   }

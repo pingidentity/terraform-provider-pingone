@@ -133,15 +133,16 @@ func testAccLicensesDataSourceConfig_ByDataFilter1(resourceName, organizationID 
 data "pingone_licenses" "%[1]s" {
   organization_id = "%[2]s"
 
-  data_filter {
-    name   = "package"
-    values = ["INTERNAL", "ADMIN"]
-  }
-
-  data_filter {
-    name   = "status"
-    values = ["ACTIVE"]
-  }
+  data_filters = [
+    {
+      name   = "package"
+      values = ["INTERNAL", "ADMIN"]
+    },
+    {
+      name   = "status"
+      values = ["ACTIVE"]
+    }
+  ]
 }`, resourceName, organizationID)
 }
 
@@ -150,15 +151,16 @@ func testAccLicensesDataSourceConfig_ByDataFilter2(resourceName, organizationID 
 data "pingone_licenses" "%[1]s" {
   organization_id = "%[2]s"
 
-  data_filter {
-    name   = "name"
-    values = ["INTERNAL"]
-  }
-
-  data_filter {
-    name   = "status"
-    values = ["ACTIVE"]
-  }
+  data_filters = [
+    {
+      name   = "name"
+      values = ["INTERNAL"]
+    },
+    {
+      name   = "status"
+      values = ["ACTIVE"]
+    }
+  ]
 }`, resourceName, organizationID)
 }
 
@@ -167,14 +169,15 @@ func testAccLicensesDataSourceConfig_ByDataFilter3(resourceName, organizationID 
 data "pingone_licenses" "%[1]s" {
   organization_id = "%[2]s"
 
-  data_filter {
-    name   = "package"
-    values = ["INTERNAL"]
-  }
-
-  data_filter {
-    name   = "status"
-    values = ["EXPIRED"]
-  }
+  data_filters = [
+    {
+      name   = "package"
+      values = ["INTERNAL"]
+    },
+    {
+      name   = "status"
+      values = ["EXPIRED"]
+    }
+  ]
 }`, resourceName, organizationID)
 }

@@ -104,15 +104,17 @@ resource "pingone_environment" "%[3]s" {
   type       = "SANDBOX"
   license_id = "%[2]s"
 
-  service {
-    type = "SSO"
-  }
-  service {
-    type = "MFA"
-  }
-  service {
-    type = "Risk"
-  }
+  services = [
+    {
+      type = "SSO"
+    },
+    {
+      type = "MFA"
+    },
+    {
+      type = "Risk"
+    }
+  ]
 }
 
 data "pingone_credential_issuer_profile" "%[3]s" {

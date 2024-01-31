@@ -248,7 +248,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 
 				Attributes: map[string]schema.Attribute{
 					"background_image": schema.StringAttribute{
-						Description: "The URL or fully qualified path to the image file used for the credential background.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.  Image size must not exceed 50 KB.",
+						Description: "The URL or fully qualified path to the image file used for the credential background.  This can be retrieved from the `uploaded_image.href` parameter of the `pingone_image` resource.  Image size must not exceed 50 KB.",
 						Optional:    true,
 						Validators: []validator.String{
 							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
@@ -310,7 +310,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 					},
 
 					"logo_image": schema.StringAttribute{
-						Description: "The URL or fully qualified path to the image file used for the credential logo.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.  Image size must not exceed 25 KB.",
+						Description: "The URL or fully qualified path to the image file used for the credential logo.  This can be retrieved from the `uploaded_image.href` parameter of the `pingone_image` resource.  Image size must not exceed 25 KB.",
 						Optional:    true,
 
 						Validators: []validator.String{

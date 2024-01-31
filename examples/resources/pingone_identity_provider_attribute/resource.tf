@@ -8,7 +8,7 @@ resource "pingone_identity_provider" "apple" {
   name    = "Apple"
   enabled = true
 
-  apple {
+  apple = {
     client_id                 = var.apple_client_id
     client_secret_signing_key = var.apple_client_secret_signing_key
     key_id                    = var.apple_key_id

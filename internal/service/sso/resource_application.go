@@ -490,22 +490,6 @@ func ResourceApplication() *schema.Resource {
 								},
 							},
 						},
-						"bundle_id": {
-							Description:      "**Deprecation Notice** This field is deprecated and will be removed in a future release. Use `oidc_options.mobile_app.bundle_id` instead. A string that specifies the bundle associated with the application, for push notifications in native apps. The value of the `bundle_id` property is unique per environment, and once defined, is immutable; any change will force recreation of the application resource.",
-							Type:             schema.TypeString,
-							Optional:         true,
-							Computed:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
-							Deprecated:       "This field is deprecated and will be removed in a future release. Use `oidc_options.mobile_app.bundle_id` instead.",
-						},
-						"package_name": {
-							Description:      "**Deprecation Notice** This field is deprecated and will be removed in a future release. Use `oidc_options.mobile_app.package_name` instead. A string that specifies the package name associated with the application, for push notifications in native apps. The value of the `package_name` property is unique per environment, and once defined, is immutable; any change will force recreation of the application resource.",
-							Type:             schema.TypeString,
-							Optional:         true,
-							Computed:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
-							Deprecated:       "This field is deprecated and will be removed in a future release. Use `oidc_options.mobile_app.package_name` instead.",
-						},
 					},
 				},
 			},
@@ -550,22 +534,12 @@ func ResourceApplication() *schema.Resource {
 							Optional:    true,
 							Default:     true,
 						},
-						"idp_signing_key_id": {
-							Description:      "**Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `idp_signing_key` block going forward.  An ID for the certificate key pair to be used by the identity provider to sign assertions and responses. If this property is omitted, the default signing certificate for the environment is used.",
-							Type:             schema.TypeString,
-							Optional:         true,
-							Computed:         true,
-							ConflictsWith:    []string{"saml_options.0.idp_signing_key"},
-							Deprecated:       "The `idp_signing_key_id` attribute is deprecated and will be removed in the next major release.  Please use the `idp_signing_key` block going forward.",
-							ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-						},
 						"idp_signing_key": {
-							Description:   "SAML application assertion/response signing key settings.  Use with `assertion_signed_enabled` to enable assertion signing and/or `response_is_signed` to enable response signing.  It's highly recommended, and best practice, to define signing key settings for the configured SAML application.  However if this property is omitted, the default signing certificate for the environment is used.  This parameter will become a required field in the next major release of the provider.",
-							Type:          schema.TypeList,
-							MaxItems:      1,
-							Optional:      true,
-							Computed:      true,
-							ConflictsWith: []string{"saml_options.0.idp_signing_key_id"},
+							Description: "SAML application assertion/response signing key settings.  Use with `assertion_signed_enabled` to enable assertion signing and/or `response_is_signed` to enable response signing.  It's highly recommended, and best practice, to define signing key settings for the configured SAML application.  However if this property is omitted, the default signing certificate for the environment is used.  This parameter will become a required field in the next major release of the provider.",
+							Type:        schema.TypeList,
+							MaxItems:    1,
+							Optional:    true,
+							Computed:    true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"algorithm": {
@@ -629,25 +603,11 @@ func ResourceApplication() *schema.Resource {
 							Type:        schema.TypeString,
 							Required:    true,
 						},
-						"sp_verification_certificate_ids": {
-							Description:   "**Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `sp_verification.certificate_ids` parameter going forward.  A list that specifies the certificate IDs used to verify the service provider signature.",
-							Type:          schema.TypeSet,
-							Optional:      true,
-							Computed:      true,
-							ConflictsWith: []string{"saml_options.0.sp_verification"},
-							Deprecated:    "The `sp_verification_certificate_ids` parameter is deprecated and will be removed in the next major release.  Please use the `sp_verification.certificate_ids` parameter going forward.",
-							Elem: &schema.Schema{
-								Type:             schema.TypeString,
-								ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-							},
-						},
 						"sp_verification": {
-							Description:   "A single block item that specifies SP signature verification settings.",
-							Type:          schema.TypeList,
-							MaxItems:      1,
-							Optional:      true,
-							Computed:      true,
-							ConflictsWith: []string{"saml_options.0.sp_verification_certificate_ids"},
+							Description: "A single block item that specifies SP signature verification settings.",
+							Type:        schema.TypeList,
+							MaxItems:    1,
+							Optional:    true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"authn_request_signed": {
@@ -1341,14 +1301,6 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 			application.SetMobile(*mobile)
 		}
 
-		if v1, ok := oidcOptions["bundle_id"].(string); ok && v1 != "" {
-			application.SetBundleId(v1)
-		}
-
-		if v1, ok := oidcOptions["package_name"].(string); ok && v1 != "" {
-			application.SetPackageName(v1)
-		}
-
 	} else {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -1630,10 +1582,6 @@ func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML,
 			application.SetAssertionSigned(v1)
 		}
 
-		if v1, ok := samlOptions["idp_signing_key_id"].(string); ok && v1 != "" {
-			application.SetIdpSigning(*management.NewApplicationSAMLAllOfIdpSigning(*management.NewApplicationSAMLAllOfIdpSigningKey(v1)))
-		}
-
 		if v1, ok := samlOptions["idp_signing_key"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
 
 			idpSigningOptions := v1[0].(map[string]interface{})
@@ -1674,16 +1622,6 @@ func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML,
 
 		if v1, ok := samlOptions["slo_window"].(int); ok && v1 > 0 {
 			application.SetSloWindow(int32(v1))
-		}
-
-		if v1, ok := samlOptions["sp_verification_certificate_ids"].(*schema.Set); ok && v1 != nil && len(v1.List()) > 0 && v1.List()[0] != nil {
-			certificates := make([]management.ApplicationSAMLAllOfSpVerificationCertificates, 0)
-			for _, j := range v1.List() {
-				certificate := *management.NewApplicationSAMLAllOfSpVerificationCertificates(j.(string))
-				certificates = append(certificates, certificate)
-			}
-
-			application.SetSpVerification(*management.NewApplicationSAMLAllOfSpVerification(certificates))
 		}
 
 		if v1, ok := samlOptions["sp_verification"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
@@ -1983,18 +1921,6 @@ func flattenOIDCOptions(application *management.ApplicationOIDC, secret *managem
 		item["mobile_app"] = nil
 	}
 
-	if v, ok := application.GetBundleIdOk(); ok {
-		item["bundle_id"] = v
-	} else {
-		item["bundle_id"] = nil
-	}
-
-	if v, ok := application.GetPackageNameOk(); ok {
-		item["package_name"] = v
-	} else {
-		item["package_name"] = nil
-	}
-
 	items := make([]interface{}, 0)
 	return append(items, item), diags
 
@@ -2190,10 +2116,9 @@ func flattenSAMLOptions(application *management.ApplicationSAML) interface{} {
 	}
 
 	if v, ok := application.GetIdpSigningOk(); ok {
-		item["idp_signing_key"], item["idp_signing_key_id"] = flattenIdpSigningOptions(v)
+		item["idp_signing_key"] = flattenIdpSigningOptions(v)
 	} else {
 		item["idp_signing_key"] = nil
-		item["idp_signing_key_id"] = nil
 	}
 
 	if v, ok := application.GetEnableRequestedAuthnContextOk(); ok {
@@ -2239,10 +2164,9 @@ func flattenSAMLOptions(application *management.ApplicationSAML) interface{} {
 	}
 
 	if v, ok := application.GetSpVerificationOk(); ok {
-		item["sp_verification"], item["sp_verification_certificate_ids"] = flattenSpVerificationOptions(v)
+		item["sp_verification"] = flattenSpVerificationOptions(v)
 	} else {
 		item["sp_verification"] = nil
-		item["sp_verification_certificate_ids"] = nil
 	}
 
 	if v, ok := application.GetCorsSettingsOk(); ok {
@@ -2256,11 +2180,9 @@ func flattenSAMLOptions(application *management.ApplicationSAML) interface{} {
 
 }
 
-func flattenIdpSigningOptions(idpSigning *management.ApplicationSAMLAllOfIdpSigning) (interface{}, *string) {
+func flattenIdpSigningOptions(idpSigning *management.ApplicationSAMLAllOfIdpSigning) interface{} {
 
 	item := map[string]interface{}{}
-
-	var signingKeyID *string
 
 	if v, ok := idpSigning.GetAlgorithmOk(); ok {
 		item["algorithm"] = string(*v)
@@ -2272,15 +2194,14 @@ func flattenIdpSigningOptions(idpSigning *management.ApplicationSAMLAllOfIdpSign
 	if v, ok := idpSigning.GetKeyOk(); ok {
 		if v1, ok := v.GetIdOk(); ok {
 			item["key_id"] = v1
-			signingKeyID = v1
 		}
 	}
 
 	items := make([]interface{}, 0)
-	return append(items, item), signingKeyID
+	return append(items, item)
 }
 
-func flattenSpVerificationOptions(spVerification *management.ApplicationSAMLAllOfSpVerification) (interface{}, []string) {
+func flattenSpVerificationOptions(spVerification *management.ApplicationSAMLAllOfSpVerification) interface{} {
 
 	item := map[string]interface{}{}
 
@@ -2303,5 +2224,5 @@ func flattenSpVerificationOptions(spVerification *management.ApplicationSAMLAllO
 	}
 
 	items := make([]interface{}, 0)
-	return append(items, item), certficateIds
+	return append(items, item)
 }

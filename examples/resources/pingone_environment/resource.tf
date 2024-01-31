@@ -4,16 +4,19 @@ resource "pingone_environment" "my_environment" {
   type        = "SANDBOX"
   license_id  = var.license_id
 
-  service {
-    type = "SSO"
-  }
-
-  service {
-    type = "MFA"
-  }
-
-  service {
-    type        = "PingFederate"
-    console_url = "https://my-pingfederate-console.example.com/pingfederate"
-  }
+  services = [
+    {
+      type = "SSO"
+    },
+    {
+      type = "DaVinci"
+    },
+    {
+      type = "MFA"
+    },
+    {
+      type        = "PingFederate"
+      console_url = "https://my-pingfederate-console.example.com/pingfederate"
+    }
+  ]
 }

@@ -21,10 +21,12 @@ data "pingone_populations" "by_scim_filter" {
 data "pingone_populations" "by_data_filter" {
   environment_id = var.environment_id
 
-  data_filter {
-    name   = "name"
-    values = ["My first population", "My second population"]
-  }
+  data_filters = [
+    {
+      name   = "name"
+      values = ["My first population", "My second population"]
+    }
+  ]
 }
 ```
 
@@ -37,16 +39,16 @@ data "pingone_populations" "by_data_filter" {
 
 ### Optional
 
-- `data_filter` (Block List) Individual data filters to apply to the population selection.  Allowed attributes to filter: `id`, `name` (see [below for nested schema](#nestedblock--data_filter))
-- `scim_filter` (String) A SCIM filter to apply to the population selection.  A SCIM filter offers the greatest flexibility in filtering populations.  The SCIM filter can use the following attributes: `id`, `name`.
+- `data_filters` (Attributes List) Individual data filters to apply to the population selection.  Allowed attributes to filter: `id`, `name`.  At least one of the following must be defined: `scim_filter`, `data_filters`. (see [below for nested schema](#nestedatt--data_filters))
+- `scim_filter` (String) A SCIM filter to apply to the population selection.  A SCIM filter offers the greatest flexibility in filtering populations.  The SCIM filter can use the following attributes: `id`, `name`.  At least one of the following must be defined: `scim_filter`, `data_filters`.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 - `ids` (List of String) The list of resulting IDs of populations that have been successfully retrieved and filtered.
 
-<a id="nestedblock--data_filter"></a>
-### Nested Schema for `data_filter`
+<a id="nestedatt--data_filters"></a>
+### Nested Schema for `data_filters`
 
 Required:
 

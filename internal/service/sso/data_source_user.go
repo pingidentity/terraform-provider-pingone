@@ -31,7 +31,6 @@ type UserDataSourceModel struct {
 	Username          types.String `tfsdk:"username"`
 	Email             types.String `tfsdk:"email"`
 	EmailVerified     types.Bool   `tfsdk:"email_verified"`
-	Status            types.String `tfsdk:"status"`
 	Enabled           types.Bool   `tfsdk:"enabled"`
 	PopulationId      types.String `tfsdk:"population_id"`
 	Account           types.Object `tfsdk:"account"`
@@ -98,10 +97,6 @@ func (r *UserDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 	emailDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the user's email address. For more information about email address formatting, see section 3.4 of [RFC 2822, Internet Message Format](http://www.faqs.org/rfcs/rfc2822.html).",
 	).ExactlyOneOf(exactlyOneOfDSPaths)
-
-	statusDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"**Deprecation notice**: This attribute is deprecated and will be removed in a future release. Please use the `enabled` attribute instead.  The enabled status of the user.",
-	).AllowedValues("ENABLED", "DISABLED")
 
 	enabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the user is enabled. This attribute is set to `true` by default when a user is created.",
@@ -271,13 +266,6 @@ func (r *UserDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 					"A boolean that specifies whether the user's email is verified.",
 				).Description,
 				Computed: true,
-			},
-
-			"status": schema.StringAttribute{
-				Description:         statusDescription.Description,
-				MarkdownDescription: statusDescription.MarkdownDescription,
-				Computed:            true,
-				DeprecationMessage:  "This attribute is deprecated and will be removed in a future release. Please use the `enabled` attribute instead.",
 			},
 
 			"enabled": schema.BoolAttribute{
@@ -731,14 +719,6 @@ func (p *UserDataSourceModel) toState(apiObject *management.User, apiObjectEnabl
 
 	//p.EmailVerified = framework.BoolOkToTF(apiObject.GetEmailVerifiedOk())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
-
-	// deprecated start
-	if v, ok := apiObject.GetEnabledOk(); ok && *v {
-		p.Status = framework.StringToTF("ENABLED")
-	} else {
-		p.Status = framework.StringToTF("DISABLED")
-	}
-	// deprecated end
 
 	var d diag.Diagnostics
 

@@ -2,12 +2,12 @@
 page_title: "pingone_image Resource - terraform-provider-pingone"
 subcategory: "Platform"
 description: |-
-  Resource to create and manage PingOne images.
+  Resource to create and manage PingOne images in an environment.
 ---
 
 # pingone_image (Resource)
 
-Resource to create and manage PingOne images.
+Resource to create and manage PingOne images in an environment.
 
 ## Example Usage
 
@@ -28,23 +28,23 @@ resource "pingone_image" "foo" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to create the image in.
-- `image_file_base64` (String) A base64 encoded image file to import.  Only PNG, GIF and JPG images are supported.
+- `environment_id` (String) The ID of the environment to create the image in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `image_file_base64` (String) A base64 encoded image file to import.  Only PNG, GIF and JPG images are supported.  This field is immutable and will trigger a replace plan if changed.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `uploaded_image` (List of Object) A block that specifies the processed image details. (see [below for nested schema](#nestedatt--uploaded_image))
+- `uploaded_image` (Attributes) A single object that specifies the processed image details. (see [below for nested schema](#nestedatt--uploaded_image))
 
 <a id="nestedatt--uploaded_image"></a>
 ### Nested Schema for `uploaded_image`
 
 Read-Only:
 
-- `height` (Number)
-- `href` (String)
-- `type` (String)
-- `width` (Number)
+- `height` (Number) The height of the image (in pixels).
+- `href` (String) A string that specifies the URL or fully qualified path to the image source file.
+- `type` (String) A string that specifies the type of format used for the image. Options are `jpg`, `png`, and `gif`.
+- `width` (Number) The width of the image (in pixels).
 
 ## Import
 

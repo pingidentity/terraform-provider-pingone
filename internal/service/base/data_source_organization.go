@@ -15,17 +15,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 // Types
-type OrganizationDataSource struct {
-	Client *pingone.Client
-	region model.RegionMapping
-}
+type OrganizationDataSource serviceClientType
 
 type OrganizationDataSourceModel struct {
 	Id                   types.String `tfsdk:"id"`
@@ -34,12 +29,6 @@ type OrganizationDataSourceModel struct {
 	Description          types.String `tfsdk:"description"`
 	Type                 types.String `tfsdk:"type"`
 	BillingConnectionIds types.Set    `tfsdk:"billing_connection_ids"`
-	BaseUrlAPI           types.String `tfsdk:"base_url_api"`
-	BaseUrlAuth          types.String `tfsdk:"base_url_auth"`
-	BaseUrlOrchestrate   types.String `tfsdk:"base_url_orchestrate"`
-	BaseUrlAgreementMgmt types.String `tfsdk:"base_url_agreement_management"`
-	BaseUrlConsole       types.String `tfsdk:"base_url_console"`
-	BaseUrlApps          types.String `tfsdk:"base_url_apps"`
 }
 
 // Framework interfaces
@@ -103,42 +92,6 @@ func (r *OrganizationDataSource) Schema(ctx context.Context, req datasource.Sche
 				ElementType: types.StringType,
 				Computed:    true,
 			},
-
-			"base_url_api": schema.StringAttribute{
-				Description:        "**Deprecation message**.  This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.  Helper attribute that provides an indication of the hostname of the API endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
-				Computed:           true,
-				DeprecationMessage: "This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.",
-			},
-
-			"base_url_auth": schema.StringAttribute{
-				Description:        "**Deprecation message**.  This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.  Helper attribute that provides an indication of the hostname of the Authentication endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
-				Computed:           true,
-				DeprecationMessage: "This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.",
-			},
-
-			"base_url_orchestrate": schema.StringAttribute{
-				Description:        "**Deprecation message**.  This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.  Helper attribute that provides an indication of the hostname of the Orchestration endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
-				Computed:           true,
-				DeprecationMessage: "This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.",
-			},
-
-			"base_url_agreement_management": schema.StringAttribute{
-				Description:        "**Deprecation message**.  This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.  Helper attribute that provides an indication of the hostname of the Agreement Management endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
-				Computed:           true,
-				DeprecationMessage: "This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.",
-			},
-
-			"base_url_console": schema.StringAttribute{
-				Description:        "**Deprecation message**.  This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.  Helper attribute that provides an indication of the hostname of the Console endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
-				Computed:           true,
-				DeprecationMessage: "This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.",
-			},
-
-			"base_url_apps": schema.StringAttribute{
-				Description:        "**Deprecation message**.  This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.  Helper attribute that provides an indication of the hostname of the Applications endpoint.  This attribute does not update if a non-production PingOne organization is used, nor if a custom domain is configured in any environment.",
-				Computed:           true,
-				DeprecationMessage: "This attribute is deprecated and will be removed in a future release.  Please review published modules for the PingOne provider on the Terraform Registry to gain equivalent functionality.",
-			},
 		},
 	}
 }
@@ -167,7 +120,6 @@ func (r *OrganizationDataSource) Configure(ctx context.Context, req datasource.C
 		)
 		return
 	}
-	r.region = resourceConfig.Client.API.Region
 }
 
 func (r *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -258,11 +210,11 @@ func (r *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRe
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&organization, r.region)...)
+	resp.Diagnostics.Append(data.toState(&organization)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (p *OrganizationDataSourceModel) toState(v *management.Organization, region model.RegionMapping) diag.Diagnostics {
+func (p *OrganizationDataSourceModel) toState(v *management.Organization) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if v == nil {
@@ -280,13 +232,6 @@ func (p *OrganizationDataSourceModel) toState(v *management.Organization, region
 	p.Description = framework.StringOkToTF(v.GetDescriptionOk())
 	p.Type = organzationTypeEnumOkToTF(v.GetTypeOk())
 	p.BillingConnectionIds = organizationBillingConnectionIdsOkToTF(v.GetBillingConnectionsOk())
-
-	p.BaseUrlAPI = framework.StringToTF(fmt.Sprintf("api.pingone.%s", region.URLSuffix))
-	p.BaseUrlAuth = framework.StringToTF(fmt.Sprintf("auth.pingone.%s", region.URLSuffix))
-	p.BaseUrlOrchestrate = framework.StringToTF(fmt.Sprintf("orchestrate-api.pingone.%s", region.URLSuffix))
-	p.BaseUrlAgreementMgmt = framework.StringToTF(fmt.Sprintf("agreement-mgmt.pingone.%s", region.URLSuffix))
-	p.BaseUrlConsole = framework.StringToTF(fmt.Sprintf("console.pingone.%s", region.URLSuffix))
-	p.BaseUrlApps = framework.StringToTF(fmt.Sprintf("apps.pingone.%s", region.URLSuffix))
 
 	return diags
 }

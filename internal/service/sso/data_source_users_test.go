@@ -41,7 +41,7 @@ func TestAccUsersDataSource_BySCIMFilter(t *testing.T) {
 	})
 }
 
-func TestAccUsersDataSource_ByDataFilter(t *testing.T) {
+func TestAccUsersDataSource_ByDataFilters(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -59,7 +59,7 @@ func TestAccUsersDataSource_ByDataFilter(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccUsersDataSourceConfig_ByDataFilter1(resourceName, name),
+				Config: testAccUsersDataSourceConfig_ByDataFilters1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -69,7 +69,7 @@ func TestAccUsersDataSource_ByDataFilter(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccUsersDataSourceConfig_ByDataFilter2(resourceName, name),
+				Config: testAccUsersDataSourceConfig_ByDataFilters2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -160,7 +160,7 @@ data "pingone_users" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, filter)
 }
 
-func testAccUsersDataSourceConfig_ByDataFilter1(resourceName, name string) string {
+func testAccUsersDataSourceConfig_ByDataFilters1(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -197,15 +197,16 @@ resource "pingone_user" "%[2]s-3" {
 data "pingone_users" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
-  data_filter {
-    name   = "username"
-    values = ["%[3]s-1", "%[3]s-2"]
-  }
-
-  data_filter {
-    name   = "population.id"
-    values = [pingone_population.%[2]s.id]
-  }
+  data_filters = [
+    {
+      name   = "username"
+      values = ["%[3]s-1", "%[3]s-2"]
+    },
+    {
+      name   = "population.id"
+      values = [pingone_population.%[2]s.id]
+    }
+  ]
 
   depends_on = [
     pingone_user.%[2]s-1,
@@ -216,7 +217,7 @@ data "pingone_users" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccUsersDataSourceConfig_ByDataFilter2(resourceName, name string) string {
+func testAccUsersDataSourceConfig_ByDataFilters2(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -253,10 +254,12 @@ resource "pingone_user" "%[2]s-3" {
 data "pingone_users" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
-  data_filter {
-    name   = "population.id"
-    values = [pingone_population.%[2]s.id]
-  }
+  data_filters = [
+    {
+      name   = "population.id"
+      values = [pingone_population.%[2]s.id]
+    }
+  ]
 
   depends_on = [
     pingone_user.%[2]s-1,

@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -17,9 +16,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -33,8 +34,8 @@ type brandingThemeResourceModel struct {
 	Name                 types.String `tfsdk:"name"`
 	Template             types.String `tfsdk:"template"`
 	Default              types.Bool   `tfsdk:"default"`
-	Logo                 types.List   `tfsdk:"logo"`
-	BackgroundImage      types.List   `tfsdk:"background_image"`
+	Logo                 types.Object `tfsdk:"logo"`
+	BackgroundImage      types.Object `tfsdk:"background_image"`
 	BackgroundColor      types.String `tfsdk:"background_color"`
 	UseDefaultBackground types.Bool   `tfsdk:"use_default_background"`
 	BodyTextColor        types.String `tfsdk:"body_text_color"`
@@ -87,11 +88,11 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 	).ExactlyOneOf(backgroundExactlyOneOfRelativePaths)
 
 	backgroundImageDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single block that specifies the HREF and ID for the background image.",
+		"A single object that specifies the HREF and ID for the background image.",
 	).ExactlyOneOf(backgroundExactlyOneOfRelativePaths)
 
 	logoDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single block that specifies the HREF and ID for the company logo, for this branding template.  If not set, the environment's default logo (set with the `pingone_branding_settings` resource) will be applied.",
+		"A single object that specifies the HREF and ID for the company logo, for this branding template.  If not set, the environment's default logo (set with the `pingone_branding_settings` resource) will be applied.",
 	)
 
 	logoIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -99,7 +100,7 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 	)
 
 	logoHrefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The URL or fully qualified path to the logo file used for branding.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.",
+		"The URL or fully qualified path to the logo file used for branding.  This can be retrieved from the `uploaded_image.href` parameter of the `pingone_image` resource.",
 	)
 
 	backgroundImageIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -107,7 +108,7 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 	)
 
 	backgroundImageHrefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The URL or fully qualified path to the background image file used for branding.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.",
+		"The URL or fully qualified path to the background image file used for branding.  This can be retrieved from the `uploaded_image.href` parameter of the `pingone_image` resource.",
 	)
 
 	resp.Schema = schema.Schema{
@@ -144,6 +145,60 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 
 				PlanModifiers: []planmodifier.Bool{
 					boolplanmodifier.UseStateForUnknown(),
+				},
+			},
+
+			"logo": schema.SingleNestedAttribute{
+				Description:         logoDescription.Description,
+				MarkdownDescription: logoDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description:         logoIdDescription.Description,
+						MarkdownDescription: logoIdDescription.MarkdownDescription,
+						Required:            true,
+
+						Validators: []validator.String{
+							verify.P1ResourceIDValidator(),
+						},
+					},
+
+					"href": schema.StringAttribute{
+						Description:         logoHrefDescription.Description,
+						MarkdownDescription: logoHrefDescription.MarkdownDescription,
+						Required:            true,
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+						},
+					},
+				},
+			},
+
+			"background_image": schema.SingleNestedAttribute{
+				Description:         backgroundImageDescription.Description,
+				MarkdownDescription: backgroundImageDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description:         backgroundImageIdDescription.Description,
+						MarkdownDescription: backgroundImageIdDescription.MarkdownDescription,
+						Required:            true,
+
+						Validators: []validator.String{
+							verify.P1ResourceIDValidator(),
+						},
+					},
+
+					"href": schema.StringAttribute{
+						Description:         backgroundImageHrefDescription.Description,
+						MarkdownDescription: backgroundImageHrefDescription.MarkdownDescription,
+						Required:            true,
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+						},
+					},
 				},
 			},
 
@@ -227,75 +282,6 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 				Required:    true,
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(verify.HexColorCode, "Value must be a valid hex color code."),
-				},
-			},
-		},
-
-		Blocks: map[string]schema.Block{
-
-			"logo": schema.ListNestedBlock{
-				Description:         logoDescription.Description,
-				MarkdownDescription: logoDescription.MarkdownDescription,
-
-				NestedObject: schema.NestedBlockObject{
-
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Description:         logoIdDescription.Description,
-							MarkdownDescription: logoIdDescription.MarkdownDescription,
-							Required:            true,
-
-							Validators: []validator.String{
-								verify.P1ResourceIDValidator(),
-							},
-						},
-
-						"href": schema.StringAttribute{
-							Description:         logoHrefDescription.Description,
-							MarkdownDescription: logoHrefDescription.MarkdownDescription,
-							Required:            true,
-							Validators: []validator.String{
-								stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
-							},
-						},
-					},
-				},
-
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-				},
-			},
-
-			"background_image": schema.ListNestedBlock{
-				Description:         backgroundImageDescription.Description,
-				MarkdownDescription: backgroundImageDescription.MarkdownDescription,
-
-				NestedObject: schema.NestedBlockObject{
-
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Description:         backgroundImageIdDescription.Description,
-							MarkdownDescription: backgroundImageIdDescription.MarkdownDescription,
-							Required:            true,
-
-							Validators: []validator.String{
-								verify.P1ResourceIDValidator(),
-							},
-						},
-
-						"href": schema.StringAttribute{
-							Description:         backgroundImageHrefDescription.Description,
-							MarkdownDescription: backgroundImageHrefDescription.MarkdownDescription,
-							Required:            true,
-							Validators: []validator.String{
-								stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
-							},
-						},
-					},
-				},
-
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
 				},
 			},
 		},
@@ -547,13 +533,14 @@ func (p *brandingThemeResourceModel) expand(ctx context.Context) (*management.Br
 
 	if !p.Logo.IsNull() && !p.Logo.IsUnknown() {
 
-		var plan []imageResourceModel
-		diags.Append(p.Logo.ElementsAs(ctx, &plan, false)...)
+		diags.Append(p.Logo.As(ctx, &logo, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		logo = plan[0]
 		logoType = management.ENUMBRANDINGLOGOTYPE_IMAGE
 
 	}
@@ -562,13 +549,14 @@ func (p *brandingThemeResourceModel) expand(ctx context.Context) (*management.Br
 	var background imageResourceModel
 	if !p.BackgroundImage.IsNull() && !p.BackgroundImage.IsUnknown() {
 
-		var plan []imageResourceModel
-		diags.Append(p.BackgroundImage.ElementsAs(ctx, &plan, false)...)
+		diags.Append(p.BackgroundImage.As(ctx, &background, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		background = plan[0]
 		backgroundType = management.ENUMBRANDINGTHEMEBACKGROUNDTYPE_IMAGE
 
 	}
@@ -648,11 +636,11 @@ func (p *brandingThemeResourceModel) toState(apiObject *management.BrandingTheme
 			p.UseDefaultBackground = types.BoolValue(false)
 		}
 
-		logo, d := toStateImageRef(v.GetLogoOk())
+		logo, d := service.ImageOkToTF(v.GetLogoOk())
 		diags.Append(d...)
 		p.Logo = logo
 
-		backgroundImage, d := toStateImageRef(v.GetBackgroundImageOk())
+		backgroundImage, d := service.ImageOkToTF(v.GetBackgroundImageOk())
 		diags.Append(d...)
 		p.BackgroundImage = backgroundImage
 

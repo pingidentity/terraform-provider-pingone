@@ -7,8 +7,10 @@ data "pingone_populations" "by_scim_filter" {
 data "pingone_populations" "by_data_filter" {
   environment_id = var.environment_id
 
-  data_filter {
-    name   = "name"
-    values = ["My first population", "My second population"]
-  }
+  data_filters = [
+    {
+      name   = "name"
+      values = ["My first population", "My second population"]
+    }
+  ]
 }

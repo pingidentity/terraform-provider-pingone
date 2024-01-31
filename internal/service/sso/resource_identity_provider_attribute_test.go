@@ -368,7 +368,7 @@ resource "pingone_identity_provider" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
 
-  google {
+  google = {
     client_id     = "testclientid"
     client_secret = "testclientsecret"
   }
@@ -392,7 +392,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  google {
+  google = {
     client_id     = "testclientid"
     client_secret = "testclientsecret"
   }
@@ -416,7 +416,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  google {
+  google = {
     client_id     = "testclientid"
     client_secret = "testclientsecret"
   }
@@ -439,7 +439,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  google {
+  google = {
     client_id     = "testclientid"
     client_secret = "testclientsecret"
   }
@@ -463,7 +463,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  google {
+  google = {
     client_id     = "testclientid"
     client_secret = "testclientsecret"
   }
@@ -487,7 +487,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  google {
+  google = {
     client_id     = "testclientid"
     client_secret = "testclientsecret"
   }
@@ -510,7 +510,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  google {
+  google = {
     client_id     = "testclientid"
     client_secret = "testclientsecret"
   }
@@ -533,7 +533,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  google {
+  google = {
     client_id     = "testclientid"
     client_secret = "testclientsecret"
   }
@@ -556,7 +556,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  google {
+  google = {
     client_id     = "testclientid"
     client_secret = "testclientsecret"
   }

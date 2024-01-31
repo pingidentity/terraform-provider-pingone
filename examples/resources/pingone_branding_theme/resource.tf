@@ -20,14 +20,14 @@ resource "pingone_branding_theme" "my_awesome_theme" {
   name     = "My Awesome Theme"
   template = "split"
 
-  logo {
+  logo = {
     id   = pingone_image.company_logo.id
-    href = pingone_image.company_logo.uploaded_image[0].href
+    href = pingone_image.company_logo.uploaded_image.href
   }
 
-  background_image {
+  background_image = {
     id   = pingone_image.theme_background.id
-    href = pingone_image.theme_background.uploaded_image[0].href
+    href = pingone_image.theme_background.uploaded_image.href
   }
 
   button_text_color  = "#FFFFFF"

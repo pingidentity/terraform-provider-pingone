@@ -95,9 +95,8 @@ func TestAccBrandingSettings_Full(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "company_name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "logo_image.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "logo_image.id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "logo_image.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 				),
 			},
 			// Test importing the resource
@@ -146,7 +145,7 @@ func TestAccBrandingSettings_Minimal1(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "company_name", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "logo_image.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "logo_image.%", "0"),
 				),
 			},
 		},
@@ -181,7 +180,7 @@ func TestAccBrandingSettings_Minimal2(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "company_name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "logo_image.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "logo_image.%", "0"),
 				),
 			},
 		},
@@ -217,9 +216,8 @@ func TestAccBrandingSettings_Minimal3(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "company_name", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "logo_image.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "logo_image.id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "logo_image.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 				),
 			},
 		},
@@ -257,9 +255,8 @@ func TestAccBrandingSettings_Change(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "company_name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "logo_image.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "logo_image.id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "logo_image.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 				),
 			},
 			{
@@ -268,7 +265,7 @@ func TestAccBrandingSettings_Change(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "company_name", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "logo_image.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "logo_image.%", "0"),
 				),
 			},
 			{
@@ -277,7 +274,7 @@ func TestAccBrandingSettings_Change(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "company_name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "logo_image.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "logo_image.%", "0"),
 				),
 			},
 			{
@@ -286,9 +283,8 @@ func TestAccBrandingSettings_Change(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "company_name", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "logo_image.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "logo_image.id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "logo_image.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 				),
 			},
 			{
@@ -297,9 +293,8 @@ func TestAccBrandingSettings_Change(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "company_name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "logo_image.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "logo_image.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "logo_image.id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "logo_image.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 				),
 			},
 		},
@@ -355,9 +350,9 @@ resource "pingone_branding_settings" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
   company_name = "%[4]s"
-  logo_image {
+  logo_image = {
     id   = pingone_image.%[3]s.id
-    href = pingone_image.%[3]s.uploaded_image[0].href
+    href = pingone_image.%[3]s.uploaded_image.href
   }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, image)
 }
@@ -395,9 +390,9 @@ resource "pingone_image" "%[3]s" {
 resource "pingone_branding_settings" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  logo_image {
+  logo_image = {
     id   = pingone_image.%[3]s.id
-    href = pingone_image.%[3]s.uploaded_image[0].href
+    href = pingone_image.%[3]s.uploaded_image.href
   }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, image)
 }

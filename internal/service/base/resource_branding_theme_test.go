@@ -136,12 +136,10 @@ func TestAccBrandingTheme_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "template", "split"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "logo.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "logo.0.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "logo.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "background_image.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "background_image.0.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "background_image.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "logo.id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "logo.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "background_image.id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "background_image.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckNoResourceAttr(resourceFullName, "background_color"),
 					resource.TestCheckResourceAttr(resourceFullName, "use_default_background", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "body_text_color", "#8620FF"),
@@ -198,8 +196,8 @@ func TestAccBrandingTheme_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "template", "split"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "logo.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "background_image.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "logo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "background_image.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "background_color", "#FF00F0"),
 					resource.TestCheckResourceAttr(resourceFullName, "use_default_background", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "body_text_color", "#8620FF"),
@@ -246,12 +244,10 @@ func TestAccBrandingTheme_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "template", "split"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "logo.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "logo.0.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "logo.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "background_image.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "background_image.0.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "background_image.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "logo.id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "logo.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "background_image.id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "background_image.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckNoResourceAttr(resourceFullName, "background_color"),
 					resource.TestCheckResourceAttr(resourceFullName, "use_default_background", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "body_text_color", "#8620FF"),
@@ -271,7 +267,7 @@ func TestAccBrandingTheme_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "template", "split"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "logo.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "logo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "background_image.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "background_color", "#FF00F0"),
 					resource.TestCheckResourceAttr(resourceFullName, "use_default_background", "false"),
@@ -292,12 +288,10 @@ func TestAccBrandingTheme_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "template", "split"),
 					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "logo.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "logo.0.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "logo.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
-					resource.TestCheckResourceAttr(resourceFullName, "background_image.#", "1"),
-					resource.TestMatchResourceAttr(resourceFullName, "background_image.0.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "background_image.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "logo.id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "logo.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "background_image.id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "background_image.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckNoResourceAttr(resourceFullName, "background_color"),
 					resource.TestCheckResourceAttr(resourceFullName, "use_default_background", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "body_text_color", "#8620FF"),
@@ -399,14 +393,14 @@ resource "pingone_branding_theme" "%[2]s" {
   name     = "%[3]s"
   template = "split"
 
-  logo {
+  logo = {
     id   = pingone_image.%[2]s-logo.id
-    href = pingone_image.%[2]s-logo.uploaded_image[0].href
+    href = pingone_image.%[2]s-logo.uploaded_image.href
   }
 
-  background_image {
+  background_image = {
     id   = pingone_image.%[2]s-background.id
-    href = pingone_image.%[2]s-background.uploaded_image[0].href
+    href = pingone_image.%[2]s-background.uploaded_image.href
   }
 
   button_text_color  = "#FF6C6C"
