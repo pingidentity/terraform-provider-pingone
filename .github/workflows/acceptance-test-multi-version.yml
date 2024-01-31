@@ -67,6 +67,7 @@ jobs:
       PINGONE_GOOGLE_FIREBASE_CREDENTIALS: ${{ secrets.PINGONE_GOOGLE_JSON_KEY }}
       PINGONE_TWILIO_TEST_SKIP: true
       PINGONE_SYNIVERSE_TEST_SKIP: true
+      PINGONE_EMAIL_DOMAIN_TEST_SKIP: true
 
     timeout-minutes: 180
     strategy:
