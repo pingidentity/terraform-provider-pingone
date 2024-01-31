@@ -1166,6 +1166,40 @@ data "pingone_groups" "example_by_data_filter" {
 }
 ```
 
+## Data Source: pingone_licenses
+
+### `data_filter` optional parameter renamed and data type changed
+
+This parameter has been renamed to `data_filters` and the data type changed.  The `data_filters` parameter is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+data "pingone_licenses" "example_by_data_filter" {
+  # ... other configuration parameters
+  
+  data_filter {
+    name   = "status"
+    values = ["ACTIVE"]
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+data "pingone_licenses" "example_by_data_filter" {
+  # ... other configuration parameters
+  
+  data_filters = [
+    {
+      name   = "status"
+      values = ["ACTIVE"]
+    }
+  ]
+}
+```
+
 ## Data Source: pingone_organization
 
 ### `base_url_agreement_management` computed attribute removed
