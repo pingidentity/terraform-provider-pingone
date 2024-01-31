@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -115,11 +114,6 @@ func TestAccPhoneDeliverySettings_Custom_Twilio(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	skipTwilio, err := strconv.ParseBool(os.Getenv("PINGONE_TWILIO_TEST_SKIP"))
-	if err != nil {
-		skipTwilio = false
-	}
-
 	twilioSID := os.Getenv("PINGONE_TWILIO_SID")
 	twilioAuthToken := os.Getenv("PINGONE_TWILIO_AUTH_TOKEN")
 	number := os.Getenv("PINGONE_TWILIO_NUMBER")
@@ -155,7 +149,7 @@ func TestAccPhoneDeliverySettings_Custom_Twilio(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckTwilio(t, skipTwilio)
+			acctest.PreCheckTwilio(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.PhoneDeliverySettings_CheckDestroy,
@@ -215,11 +209,6 @@ func TestAccPhoneDeliverySettings_Custom_Syniverse(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	skipSyniverse, err := strconv.ParseBool(os.Getenv("PINGONE_SYNIVERSE_TEST_SKIP"))
-	if err != nil {
-		skipSyniverse = false
-	}
-
 	syniverseAuthToken := os.Getenv("PINGONE_SYNIVERSE_AUTH_TOKEN")
 	number := os.Getenv("PINGONE_SYNIVERSE_NUMBER")
 
@@ -253,7 +242,7 @@ func TestAccPhoneDeliverySettings_Custom_Syniverse(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckSyniverse(t, skipSyniverse)
+			acctest.PreCheckSyniverse(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.PhoneDeliverySettings_CheckDestroy,

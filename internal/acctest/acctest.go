@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
@@ -144,6 +145,16 @@ func PreCheckNewEnvironment(t *testing.T) {
 }
 
 func PreCheckDomainVerification(t *testing.T) {
+
+	skipEmailDomainVerified, err := strconv.ParseBool(os.Getenv("PINGONE_EMAIL_DOMAIN_TEST_SKIP"))
+	if err != nil {
+		skipEmailDomainVerified = false
+	}
+
+	if skipEmailDomainVerified {
+		t.Skipf("Email domain verified integration tests are skipped")
+	}
+
 	if v := os.Getenv("PINGONE_VERIFIED_EMAIL_DOMAIN"); v == "" {
 		t.Fatal("PINGONE_VERIFIED_EMAIL_DOMAIN is missing and must be set")
 	}
@@ -225,7 +236,12 @@ func PreCheckCustomDomainSSL(t *testing.T) {
 	}
 }
 
-func PreCheckTwilio(t *testing.T, skipTwilio bool) {
+func PreCheckTwilio(t *testing.T) {
+
+	skipTwilio, err := strconv.ParseBool(os.Getenv("PINGONE_TWILIO_TEST_SKIP"))
+	if err != nil {
+		skipTwilio = false
+	}
 
 	if skipTwilio {
 		t.Skipf("Twilio integration tests are skipped")
@@ -244,7 +260,12 @@ func PreCheckTwilio(t *testing.T, skipTwilio bool) {
 	}
 }
 
-func PreCheckSyniverse(t *testing.T, skipSyniverse bool) {
+func PreCheckSyniverse(t *testing.T) {
+
+	skipSyniverse, err := strconv.ParseBool(os.Getenv("PINGONE_SYNIVERSE_TEST_SKIP"))
+	if err != nil {
+		skipSyniverse = false
+	}
 
 	if skipSyniverse {
 		t.Skipf("Syniverse integration tests are skipped")
