@@ -2,13 +2,21 @@
 
 NOTES:
 
+* `resource/pingone_notification_policy`: Corrected documentation HCL examples. ([#747](https://github.com/pingidentity/terraform-provider-pingone/issues/747))
+* `resource/pingone_sign_on_policy`: Migrated to plugin framework. ([#747](https://github.com/pingidentity/terraform-provider-pingone/issues/747))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.36.0 => 0.37.0 ([#746](https://github.com/pingidentity/terraform-provider-pingone/issues/746))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/risk` 0.12.2 => 0.13.0 ([#746](https://github.com/pingidentity/terraform-provider-pingone/issues/746))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` 0.11.5 => 0.11.6 ([#746](https://github.com/pingidentity/terraform-provider-pingone/issues/746))
 
 BUG FIXES:
 
+* `resource/pingone_key`: Fixed unnecessary replacement plan when certain properties are modified. ([#747](https://github.com/pingidentity/terraform-provider-pingone/issues/747))
+* `resource/pingone_mfa_fido2_policy`: Resource can now be modified with Terraform if the `default` property is modified to `true` in the console or by API directly. ([#747](https://github.com/pingidentity/terraform-provider-pingone/issues/747))
+* `resource/pingone_notification_policy`: The resource can now be modified with Terraform if the `default` property is modified to `true` in the console or by API directly. ([#747](https://github.com/pingidentity/terraform-provider-pingone/issues/747))
 * `resource/pingone_password_policy`: Updated the validation rule to allow the user's minimum password length to be set between 8 and 32 characters (inclusive) long. ([#740](https://github.com/pingidentity/terraform-provider-pingone/issues/740))
+* `resource/pingone_risk_policy`: Resource can now be modified with Terraform if the `default` property is modified to `true` in the console or by API directly. ([#747](https://github.com/pingidentity/terraform-provider-pingone/issues/747))
+* `resource/pingone_sign_on_policy`: Resource can now be modified with Terraform if the `default` property is modified to `true` in the console or by API directly. ([#747](https://github.com/pingidentity/terraform-provider-pingone/issues/747))
+* `resource/pingone_verify_policy`: Resource can now be modified with Terraform if the `default` property is modified to `true` in the console or by API directly. ([#747](https://github.com/pingidentity/terraform-provider-pingone/issues/747))
 
 ## 0.26.0 (31 January 2024)
 
