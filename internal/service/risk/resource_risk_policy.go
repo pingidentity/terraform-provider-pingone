@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -1045,6 +1046,8 @@ func (r *RiskPolicyResource) Update(ctx context.Context, req resource.UpdateRequ
 
 	// Create the state to save
 	state = plan
+
+	time.Sleep(60 * time.Second)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(state.toState(response)...)
