@@ -149,8 +149,8 @@ github.com/patrickcping/pingone-go-sdk-v2/management v0.36.0 h1:Cg+mUggtc29OTq6D
 github.com/patrickcping/pingone-go-sdk-v2/management v0.36.0/go.mod h1:5YMhQOKlAzBKK2y0md7GRj8JcBfTYdyMDidLiMxQCjA=
 github.com/patrickcping/pingone-go-sdk-v2/mfa v0.18.3 h1:D/BaiNQ3FHwQlpP2/RN4oYx0HgihumsR+wqkLTqoCjs=
 github.com/patrickcping/pingone-go-sdk-v2/mfa v0.18.3/go.mod h1:2fA7oR1PNCE+U1mYlLP9P2kRJLDjh98KqOn4eP8OZIE=
-github.com/patrickcping/pingone-go-sdk-v2/risk v0.12.2 h1:iXdI8H3e55Jhg6TkEKKls4BvVvvQcdUse1hSXNXxYkU=
-github.com/patrickcping/pingone-go-sdk-v2/risk v0.12.2/go.mod h1:bOWHYOWkAmJu8KxEsVf3l1XJB2+uFzgEyjk6z6BnjE4=
+github.com/patrickcping/pingone-go-sdk-v2/risk v0.13.0 h1:7jQNukUxNdLPIdcuxwQjvlE1Tw/6y796y7/UJ0b+rU8=
+github.com/patrickcping/pingone-go-sdk-v2/risk v0.13.0/go.mod h1:bOWHYOWkAmJu8KxEsVf3l1XJB2+uFzgEyjk6z6BnjE4=
 github.com/patrickcping/pingone-go-sdk-v2/verify v0.4.1 h1:1DIv2+BFCvjMSozrchvUBVLD0fbv+P5/+/jyoUdFl1Q=
 github.com/patrickcping/pingone-go-sdk-v2/verify v0.4.1/go.mod h1:CYnq6n5E8YDg3FYieSfldjjT/2EyMyYCgdoNAiqNZFc=
 github.com/pjbgf/sha1cd v0.3.0 h1:4D5XXmUUBUl/xQ6IjCkEAbqXskkq/4O7LmGn0AqMDs4=
