@@ -1,5 +1,11 @@
 ## 0.26.1 (Unreleased)
 
+NOTES:
+
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.36.0 => 0.37.0 ([#746](https://github.com/pingidentity/terraform-provider-pingone/issues/746))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` 0.12.2 => 0.13.0 ([#746](https://github.com/pingidentity/terraform-provider-pingone/issues/746))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.11.5 => 0.11.6 ([#746](https://github.com/pingidentity/terraform-provider-pingone/issues/746))
+
 BUG FIXES:
 
 * `resource/pingone_password_policy`: Updated the validation rule to allow the user's minimum password length to be set between 8 and 32 characters (inclusive) long. ([#740](https://github.com/pingidentity/terraform-provider-pingone/issues/740))
