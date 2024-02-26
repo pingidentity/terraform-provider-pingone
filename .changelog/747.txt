@@ -1,0 +1,31 @@
+```release-note:note
+`resource/pingone_sign_on_policy`: Migrated to plugin framework.
+```
+
+```release-note:note
+`resource/pingone_notification_policy`: Corrected documentation HCL examples.
+```
+
+```release-note:bug
+`resource/pingone_key`: Fixed unnecessary replacement plan when certain properties are modified.
+```
+
+```release-note:bug
+`resource/pingone_notification_policy`: The resource can now be modified with Terraform if the `default` property is modified to `true` in the console or by API directly.
+```
+
+```release-note:bug
+`resource/pingone_mfa_fido2_policy`: Resource can now be modified with Terraform if the `default` property is modified to `true` in the console or by API directly.
+```
+
+```release-note:bug
+`resource/pingone_risk_policy`: Resource can now be modified with Terraform if the `default` property is modified to `true` in the console or by API directly.
+```
+
+```release-note:bug
+`resource/pingone_sign_on_policy`: Resource can now be modified with Terraform if the `default` property is modified to `true` in the console or by API directly.
+```
+
+```release-note:bug
+`resource/pingone_verify_policy`: Resource can now be modified with Terraform if the `default` property is modified to `true` in the console or by API directly.
+```
