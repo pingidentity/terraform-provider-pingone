@@ -1,5 +1,9 @@
 ## 0.26.1 (Unreleased)
 
+BUG FIXES:
+
+* `resource/pingone_password_policy`: Updated the validation rule to allow the user's minimum password length to be set between 8 and 32 characters (inclusive) long. ([#740](https://github.com/pingidentity/terraform-provider-pingone/issues/740))
+
 ## 0.26.0 (31 January 2024)
 
 NOTES:
