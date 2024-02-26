@@ -855,7 +855,11 @@ func (p *FIDO2PolicyResourceModel) expand(ctx context.Context) (*mfa.FIDO2Policy
 		data.SetDescription(p.Description.ValueString())
 	}
 
-	data.SetDefault(false)
+	if !p.Default.IsNull() && !p.Default.IsUnknown() {
+		data.SetDefault(p.Default.ValueBool())
+	} else {
+		data.SetDefault(false)
+	}
 
 	return data, diags
 }

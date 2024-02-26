@@ -433,8 +433,6 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 				Description:         defaultDescription.Description,
 				MarkdownDescription: defaultDescription.MarkdownDescription,
 				Computed:            true,
-
-				Default: booldefault.StaticBool(false),
 			},
 
 			"description": schema.StringAttribute{
@@ -1665,9 +1663,12 @@ func (p *verifyPolicyResourceModel) expand(ctx context.Context) (*verify.VerifyP
 		data.SetDescription(p.Description.ValueString())
 	}
 
-	// Verify policies managed via TF currently cannot be set to the default policy due to a potential lock situation or state management problem.
 	// The verify policy will also have default set to false.
-	data.SetDefault(false)
+	if !p.Default.IsNull() && !p.Default.IsUnknown() {
+		data.SetDefault(p.Default.ValueBool())
+	} else {
+		data.SetDefault(false)
+	}
 
 	return data, diags
 }

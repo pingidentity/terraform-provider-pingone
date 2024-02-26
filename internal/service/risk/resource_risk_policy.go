@@ -1141,7 +1141,12 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 	var diags diag.Diagnostics
 
 	data := risk.NewRiskPolicySet(p.Name.ValueString())
-	data.SetDefault(false)
+
+	if !p.Default.IsNull() && !p.Default.IsUnknown() {
+		data.SetDefault(p.Default.ValueBool())
+	} else {
+		data.SetDefault(false)
+	}
 
 	if !p.DefaultResult.IsNull() && !p.DefaultResult.IsUnknown() {
 		var plan riskPolicyResourceDefaultResultModel

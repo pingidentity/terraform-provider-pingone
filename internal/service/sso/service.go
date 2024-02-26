@@ -29,6 +29,7 @@ func Resources() []func() resource.Resource {
 		NewResourceScopePingOneAPIResource,
 		NewResourceScopeResource,
 		NewSchemaAttributeResource,
+		NewSignOnPolicyResource,
 		NewUserGroupAssignmentResource,
 		NewUserResource,
 	}

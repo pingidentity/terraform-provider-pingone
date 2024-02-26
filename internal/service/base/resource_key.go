@@ -234,6 +234,7 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
+					stringplanmodifier.UseStateForUnknown(),
 				},
 
 				Validators: []validator.String{
@@ -286,6 +287,7 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
+					stringplanmodifier.UseStateForUnknown(),
 				},
 
 				Validators: []validator.String{
