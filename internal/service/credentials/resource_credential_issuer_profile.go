@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strconv"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -17,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -28,12 +31,13 @@ import (
 type CredentialIssuerProfileResource serviceClientType
 
 type CredentialIssuerProfileResourceModel struct {
-	Id                    types.String `tfsdk:"id"`
-	EnvironmentId         types.String `tfsdk:"environment_id"`
-	ApplicationInstanceId types.String `tfsdk:"application_instance_id"`
-	CreatedAt             types.String `tfsdk:"created_at"`
-	UpdatedAt             types.String `tfsdk:"updated_at"`
-	Name                  types.String `tfsdk:"name"`
+	Id                    types.String   `tfsdk:"id"`
+	EnvironmentId         types.String   `tfsdk:"environment_id"`
+	ApplicationInstanceId types.String   `tfsdk:"application_instance_id"`
+	CreatedAt             types.String   `tfsdk:"created_at"`
+	UpdatedAt             types.String   `tfsdk:"updated_at"`
+	Name                  types.String   `tfsdk:"name"`
+	Timeouts              timeouts.Value `tfsdk:"timeouts"`
 }
 
 // Framework interfaces
@@ -99,6 +103,10 @@ func (r *CredentialIssuerProfileResource) Schema(ctx context.Context, req resour
 					stringvalidator.LengthBetween(attrMinLength, attrMaxLength),
 				},
 			},
+
+			"timeouts": timeouts.Attributes(ctx, timeouts.Opts{
+				Create: true,
+			}),
 		},
 	}
 }
@@ -147,23 +155,45 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 
 	// Historical:  Pre-EA and initial-EA environments required creation of the issuer profile. Environments created after 2023.05.01 no longer have this requirement.
 	// On 'create' [adding to state], check to see if the profile exists, and if not, create it.  Otherwise, only update the profile, while still adding to TF state.
-	timeoutValue := 5
 
-	var readIssuerProfileResponse *credentials.CredentialIssuerProfile
-	resp.Diagnostics.Append(framework.ParseResponseWithCustomTimeout(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.CredentialsAPIClient.CredentialIssuersApi.ReadCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
-		},
-		"ReadCredentialIssuerProfile",
-		framework.CustomErrorResourceNotFoundWarning,
-		credentialIssuerRetryConditions,
-		&readIssuerProfileResponse,
-		time.Duration(timeoutValue)*time.Minute, // 5 mins
-	)...)
+	timeout, d := plan.Timeouts.Create(ctx, 10*time.Minute)
+	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	readStateConf := &retry.StateChangeConf{
+		Pending: []string{
+			"404",
+			"403",
+		},
+		Target: []string{
+			"200",
+		},
+		Refresh: func() (interface{}, string, error) {
+			base := 10
+
+			fO, fR, fErr := r.Client.CredentialsAPIClient.CredentialIssuersApi.ReadCredentialIssuerProfile(ctx, plan.EnvironmentId.ValueString()).Execute()
+			resp, r, err := framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+
+			if err != nil {
+				return nil, strconv.FormatInt(int64(r.StatusCode), base), err
+			}
+
+			return resp, strconv.FormatInt(int64(r.StatusCode), base), nil
+		},
+		Timeout:                   timeout,
+		Delay:                     5 * time.Second,
+		MinTimeout:                10 * time.Second,
+		ContinuousTargetOccurence: 3,
+	}
+	readIssuerProfileResponse, err := readStateConf.WaitForStateContext(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Credential Issuer Profile Create Error",
+			fmt.Sprintf("Error waiting for credential issuer profile (environment: %s) to be created: %s", plan.EnvironmentId.ValueString(), err),
+		)
+
 		return
 	}
 
