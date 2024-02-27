@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_credential_issuer_profile`: Fixed race condition leading to a "A resource with the specified name already exists" error when creating a credential issuer profile at the same time as creating a new environment.
+```
