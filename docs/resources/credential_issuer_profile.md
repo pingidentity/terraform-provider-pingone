@@ -35,12 +35,23 @@ resource "pingone_credential_issuer_profile" "my_credential_issuer" {
 - `environment_id` (String) The ID of the environment to create the credential issuer in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) The name of the credential issuer. The name is included in the metadata of an issued verifiable credential.
 
+### Optional
+
+- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
+
 ### Read-Only
 
 - `application_instance_id` (String) Identifier (UUID) of the application instance registered with the PingOne platform service. This enables the client to send messages to the service.
 - `created_at` (String) Date and time the issuer profile was created.
 - `id` (String) The ID of this resource.
 - `updated_at` (String) Date and time the issuer profile was last updated.
+
+<a id="nestedatt--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
 
 ## Import
 
