@@ -1,0 +1,7 @@
+```release-note:bug
+`resource/pingone_risk_policy`: Fixed "Cannot find risk predictor from compact name" error when applying a policy containing "bot detection", "new device" or "adversary in the middle" predictors.
+```
+
+```release-note:bug
+`resource/pingone_risk_policy`: Provider now waits for confirmation that, on destroy, the risk policy has been successfully removed in the environment.
+```
