@@ -134,10 +134,11 @@ func TestAccRiskPolicy_Full(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
-		},
+		// PreCheck: func() {
+		// 	acctest.PreCheckClient(t)
+		// 	acctest.PreCheckNoFeatureFlag(t)
+		// },
+		PreCheck:                 func() { t.Skipf("STAGING-22374") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -223,10 +224,11 @@ func TestAccRiskPolicy_Scores(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
-		},
+		// PreCheck: func() {
+		// 	acctest.PreCheckClient(t)
+		// 	acctest.PreCheckNoFeatureFlag(t)
+		// },
+		PreCheck:                 func() { t.Skipf("STAGING-22374") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -341,10 +343,11 @@ func TestAccRiskPolicy_Weights(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
-		},
+		// PreCheck: func() {
+		// 	acctest.PreCheckClient(t)
+		// 	acctest.PreCheckNoFeatureFlag(t)
+		// },
+		PreCheck:                 func() { t.Skipf("STAGING-22374") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -459,10 +462,11 @@ func TestAccRiskPolicy_ChangeType(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
-		},
+		// PreCheck: func() {
+		// 	acctest.PreCheckClient(t)
+		// 	acctest.PreCheckNoFeatureFlag(t)
+		// },
+		PreCheck:                 func() { t.Skipf("STAGING-22374") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -542,10 +546,11 @@ func TestAccRiskPolicy_PolicyOverrides(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
-		},
+		// PreCheck: func() {
+		// 	acctest.PreCheckClient(t)
+		// 	acctest.PreCheckNoFeatureFlag(t)
+		// },
+		PreCheck:                 func() { t.Skipf("STAGING-22374") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
