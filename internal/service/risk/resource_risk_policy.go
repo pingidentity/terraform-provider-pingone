@@ -1049,8 +1049,6 @@ func (r *RiskPolicyResource) Update(ctx context.Context, req resource.UpdateRequ
 	// Create the state to save
 	state = plan
 
-	time.Sleep(60 * time.Second)
-
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(state.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
