@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_risk_policy`: Fixed unconfigured predictors (predictors not configured in the policy) are included with a weight/score of 0.
+```
