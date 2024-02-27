@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -702,10 +703,32 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 		return
 	}
 
-	var plan riskPolicyResourceModel
+	var plan, state, config riskPolicyResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Evaluated Predictors
+	setEvaluatedPredictorsToUnknown := false
+
+	if !req.State.Raw.IsNull() && config.EvaluatedPredictors.IsNull() {
+		resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		// If the policy is different, set the evaluated predictors as unknown
+		if plan.PolicyScores.IsUnknown() || plan.PolicyWeights.IsUnknown() {
+			setEvaluatedPredictorsToUnknown = true
+		} else if (state.PolicyScores.IsNull() && !plan.PolicyScores.IsNull()) || (state.PolicyWeights.IsNull() && !plan.PolicyWeights.IsNull()) {
+			setEvaluatedPredictorsToUnknown = true
+		}
 	}
 
 	// Set the max threshold score
@@ -720,10 +743,19 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 		referenceValueFmt = "${details.aggregatedWeights.%s}"
 		predictorAttrType = policyWeightsPredictorTFObjectTypes
 
-		var predictorsPlan []riskPolicyResourcePolicyWeightsPredictorModel
+		var predictorsPlan, predictorsState []riskPolicyResourcePolicyWeightsPredictorModel
 		resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root(rootPath).AtName("predictors"), &predictorsPlan)...)
 		if resp.Diagnostics.HasError() {
 			return
+		}
+
+		resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root(rootPath).AtName("predictors"), &predictorsState)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		if !req.State.Raw.IsNull() && config.EvaluatedPredictors.IsNull() && len(predictorsState) != len(predictorsPlan) {
+			setEvaluatedPredictorsToUnknown = true
 		}
 
 		for _, predictor := range predictorsPlan {
@@ -731,6 +763,20 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 				"predictor_reference_value": framework.StringToTF(fmt.Sprintf(referenceValueFmt, predictor.CompactName.ValueString())),
 				"compact_name":              predictor.CompactName,
 				"weight":                    predictor.Weight,
+			}
+
+			if config.EvaluatedPredictors.IsNull() && !setEvaluatedPredictorsToUnknown {
+				found := false
+				for _, statePredictor := range predictorsState {
+					if statePredictor.CompactName.Equal(predictor.CompactName) {
+						found = true
+						break
+					}
+				}
+
+				if !found {
+					setEvaluatedPredictorsToUnknown = true
+				}
 			}
 
 			flattenedObj, d := types.ObjectValue(policyWeightsPredictorTFObjectTypes, predictorObj)
@@ -746,10 +792,19 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 		referenceValueFmt = "${details.%s.level}"
 		predictorAttrType = policyScoresPredictorTFObjectTypes
 
-		var predictorsPlan []riskPolicyResourcePolicyScoresPredictorModel
+		var predictorsPlan, predictorsState []riskPolicyResourcePolicyScoresPredictorModel
 		resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root(rootPath).AtName("predictors"), &predictorsPlan)...)
 		if resp.Diagnostics.HasError() {
 			return
+		}
+
+		resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root(rootPath).AtName("predictors"), &predictorsState)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		if !req.State.Raw.IsNull() && config.EvaluatedPredictors.IsNull() && len(predictorsState) != len(predictorsPlan) {
+			setEvaluatedPredictorsToUnknown = true
 		}
 
 		for _, predictor := range predictorsPlan {
@@ -757,6 +812,20 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 				"predictor_reference_value": framework.StringToTF(fmt.Sprintf(referenceValueFmt, predictor.CompactName.ValueString())),
 				"compact_name":              predictor.CompactName,
 				"score":                     predictor.Score,
+			}
+
+			if config.EvaluatedPredictors.IsNull() && !setEvaluatedPredictorsToUnknown {
+				found := false
+				for _, statePredictor := range predictorsState {
+					if statePredictor.CompactName.Equal(predictor.CompactName) {
+						found = true
+						break
+					}
+				}
+
+				if !found {
+					setEvaluatedPredictorsToUnknown = true
+				}
 			}
 
 			flattenedObj, d := types.ObjectValue(policyScoresPredictorTFObjectTypes, predictorObj)
@@ -864,6 +933,10 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 		plannedOverrides, d := types.ListValue(types.ObjectType{AttrTypes: overridesTFObjectTypes}, flattenedOverrideList)
 		resp.Diagnostics.Append(d...)
 		resp.Plan.SetAttribute(ctx, path.Root("overrides"), plannedOverrides)
+	}
+
+	if setEvaluatedPredictorsToUnknown {
+		resp.Plan.SetAttribute(ctx, path.Root("evaluated_predictors"), types.SetUnknown(types.StringType))
 	}
 }
 
@@ -1102,15 +1175,18 @@ func (r *RiskPolicyResource) Delete(ctx context.Context, req resource.DeleteRequ
 			resp, r, err := framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 
 			if err != nil {
+				if r.StatusCode == 404 {
+					return risk.RiskPolicySet{}, strconv.FormatInt(int64(r.StatusCode), base), nil
+				}
 				return nil, strconv.FormatInt(int64(r.StatusCode), base), err
 			}
 
 			return resp, strconv.FormatInt(int64(r.StatusCode), base), nil
 		},
 		Timeout:                   20 * time.Minute,
-		Delay:                     1 * time.Second,
-		MinTimeout:                5 * time.Second,
-		ContinuousTargetOccurence: 3,
+		Delay:                     5 * time.Second,
+		MinTimeout:                2 * time.Second,
+		ContinuousTargetOccurence: 5,
 	}
 	_, err := deleteStateConf.WaitForStateContext(ctx)
 	if err != nil {
@@ -1275,6 +1351,9 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 
 			if !conditionPlan.PredictorReferenceValue.IsNull() && !conditionPlan.PredictorReferenceValue.IsUnknown() {
 				condition.SetValue(conditionPlan.PredictorReferenceValue.ValueString())
+				if !slices.Contains(predictorCompactNames, conditionPlan.CompactName.ValueString()) {
+					predictorCompactNames = append(predictorCompactNames, conditionPlan.CompactName.ValueString())
+				}
 			}
 
 			if !conditionPlan.PredictorReferenceContains.IsNull() && !conditionPlan.PredictorReferenceContains.IsUnknown() {
@@ -1379,8 +1458,12 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 			return nil, diags
 		}
 
-		data.SetEvaluatedPredictors(evaluatedPredictors)
+	} else {
+		for _, predictorID := range riskPolicyPredictorsIDs {
+			evaluatedPredictors = append(evaluatedPredictors, *risk.NewRiskPolicySetEvaluatedPredictorsInner(predictorID))
+		}
 	}
+	data.SetEvaluatedPredictors(evaluatedPredictors)
 
 	return data, diags
 }
