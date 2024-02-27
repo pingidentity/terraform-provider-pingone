@@ -156,7 +156,9 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 	// Historical:  Pre-EA and initial-EA environments required creation of the issuer profile. Environments created after 2023.05.01 no longer have this requirement.
 	// On 'create' [adding to state], check to see if the profile exists, and if not, create it.  Otherwise, only update the profile, while still adding to TF state.
 
-	timeout, d := plan.Timeouts.Create(ctx, 10*time.Minute)
+	defaultTimeout := 10
+
+	timeout, d := plan.Timeouts.Create(ctx, time.Duration(defaultTimeout)*time.Minute)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
