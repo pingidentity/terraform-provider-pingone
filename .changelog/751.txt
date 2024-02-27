@@ -1,3 +1,3 @@
 ```release-note:bug
-`resource/pingone_risk_policy`: Fixed predictors, that are not configured in the policy, get included with a weight/score of 0.
+`resource/pingone_risk_policy`: Fix for predictors, that are not configured in the policy, get included with a weight/score of 0.
 ```
