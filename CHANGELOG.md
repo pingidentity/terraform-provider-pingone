@@ -2,6 +2,7 @@
 
 NOTES:
 
+* `resource/pingone_credential_issuer_profile`: Added customisable timeout for resource creation, used to tune the polling of a platform bootstrapped credential issuer profile, before one is forcefully created. ([#752](https://github.com/pingidentity/terraform-provider-pingone/issues/752))
 * `resource/pingone_notification_policy`: Corrected documentation HCL examples. ([#747](https://github.com/pingidentity/terraform-provider-pingone/issues/747))
 * `resource/pingone_sign_on_policy`: Migrated to plugin framework. ([#747](https://github.com/pingidentity/terraform-provider-pingone/issues/747))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.36.0 => 0.37.0 ([#746](https://github.com/pingidentity/terraform-provider-pingone/issues/746))
@@ -10,6 +11,7 @@ NOTES:
 
 BUG FIXES:
 
+* `resource/pingone_credential_issuer_profile`: Fixed race condition leading to a "A resource with the specified name already exists" error when creating a credential issuer profile at the same time as creating a new environment. ([#752](https://github.com/pingidentity/terraform-provider-pingone/issues/752))
 * `resource/pingone_key`: Fixed unnecessary replacement plan when certain properties are modified. ([#747](https://github.com/pingidentity/terraform-provider-pingone/issues/747))
 * `resource/pingone_mfa_fido2_policy`: Resource can now be modified with Terraform if the `default` property is modified to `true` in the console or by API directly. ([#747](https://github.com/pingidentity/terraform-provider-pingone/issues/747))
 * `resource/pingone_notification_policy`: The resource can now be modified with Terraform if the `default` property is modified to `true` in the console or by API directly. ([#747](https://github.com/pingidentity/terraform-provider-pingone/issues/747))
