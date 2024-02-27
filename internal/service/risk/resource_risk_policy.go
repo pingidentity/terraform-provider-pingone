@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,6 +28,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/risk"
@@ -1084,6 +1086,41 @@ func (r *RiskPolicyResource) Delete(ctx context.Context, req resource.DeleteRequ
 		nil,
 	)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	deleteStateConf := &retry.StateChangeConf{
+		Pending: []string{
+			"200",
+			"403",
+		},
+		Target: []string{
+			"404",
+		},
+		Refresh: func() (interface{}, string, error) {
+			base := 10
+
+			fO, fR, fErr := r.Client.RiskAPIClient.RiskPoliciesApi.ReadOneRiskPolicySet(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			resp, r, err := framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+
+			if err != nil {
+				return nil, strconv.FormatInt(int64(r.StatusCode), base), err
+			}
+
+			return resp, strconv.FormatInt(int64(r.StatusCode), base), nil
+		},
+		Timeout:                   20 * time.Minute,
+		Delay:                     1 * time.Second,
+		MinTimeout:                5 * time.Second,
+		ContinuousTargetOccurence: 3,
+	}
+	_, err := deleteStateConf.WaitForStateContext(ctx)
+	if err != nil {
+		resp.Diagnostics.AddWarning(
+			"Risk Policy Delete Timeout",
+			fmt.Sprintf("Error waiting for risk policy (%s) to be deleted: %s", data.Id.ValueString(), err),
+		)
+
 		return
 	}
 }
