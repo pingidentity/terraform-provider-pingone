@@ -122,6 +122,7 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.verify", "REQUIRED"),
+		resource.TestCheckResourceAttr(resourceFullName, "government_id.inspection_type", "AUTOMATIC"),
 
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.threshold", "HIGH"),
@@ -179,6 +180,7 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.verify", "REQUIRED"),
+		resource.TestCheckResourceAttr(resourceFullName, "government_id.inspection_type", "AUTOMATIC"),
 
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.verify", "DISABLED"),
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.threshold", "MEDIUM"),
@@ -385,6 +387,11 @@ func TestAccVerifyPolicy_ValidationChecks(t *testing.T) {
 				ExpectError: regexp.MustCompile("Error: Provided value is not valid"),
 				Destroy:     true,
 			},
+			{
+				Config:      testAccVerifyPolicy_GovernmentIdInspectionTypeNotAllowed(resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Match"),
+				Destroy:     true,
+			},
 		},
 	})
 }
@@ -465,7 +472,8 @@ resource "pingone_verify_policy" "%[2]s" {
   description    = "Description for %[3]s"
 
   government_id = {
-    verify = "REQUIRED"
+    verify          = "REQUIRED"
+    inspection_type = "AUTOMATIC"
   }
 
   facial_comparison = {
@@ -762,6 +770,42 @@ resource "pingone_verify_policy" "%[2]s" {
       timeout = {
         duration  = "20"
         time_unit = "MINUTES"
+      }
+    }
+  }
+
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccVerifyPolicy_GovernmentIdInspectionTypeNotAllowed(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+resource "pingone_verify_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "%[3]s"
+
+  government_id = {
+    verify    = "DISABLED"
+    threshold = "STEP_UP"
+  }
+
+  facial_comparison = {
+    verify    = "REQUIRED"
+    threshold = "HIGH"
+  }
+
+  transaction = {
+    timeout = {
+      duration  = "35"
+      time_unit = "MINUTES"
+    }
+
+    data_collection = {
+      timeout = {
+        duration  = "2000"
+        time_unit = "SECONDS"
       }
     }
   }
