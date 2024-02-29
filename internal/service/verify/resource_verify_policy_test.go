@@ -236,6 +236,7 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.verify", "DISABLED"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "government_id.inspection_type"),
 
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.threshold", "HIGH"),

@@ -37,6 +37,7 @@ func TestAccVerifyPolicyDataSource_All(t *testing.T) {
 		resource.TestCheckResourceAttr(dataSourceFullName, "default", "false"),
 
 		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.verify", "REQUIRED"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.inspection_type", "AUTOMATIC"),
 
 		resource.TestCheckResourceAttr(dataSourceFullName, "facial_comparison.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "facial_comparison.threshold", "HIGH"),
@@ -94,6 +95,7 @@ func TestAccVerifyPolicyDataSource_All(t *testing.T) {
 		resource.TestCheckResourceAttr(dataSourceFullName, "default", "false"),
 
 		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.verify", "DISABLED"),
+		resource.TestCheckNoResourceAttr(dataSourceFullName, "government_id.inspection_type"),
 
 		resource.TestCheckResourceAttr(dataSourceFullName, "facial_comparison.verify", "DISABLED"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "facial_comparison.threshold", "MEDIUM"),

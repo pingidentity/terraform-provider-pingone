@@ -1,3 +1,7 @@
 ```release-note:enhancement
 `resource/pingone_verify_policy`: Added support for `inspection_type` property in `government_id` configuration object.
 ```
+
+```release-note:enhancement
+`data_source/pingone_verify_policy`: Added support for `inspection_type` property in `government_id` configuration object.
+```
