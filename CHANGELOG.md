@@ -1,5 +1,10 @@
 ## 0.27.0 (Unreleased)
 
+ENHANCEMENTS:
+
+* `data_source/pingone_verify_policy`: Added support for `inspection_type` property in `government_id` configuration object. ([#754](https://github.com/pingidentity/terraform-provider-pingone/issues/754))
+* `resource/pingone_verify_policy`: Added support for `inspection_type` property in `government_id` configuration object. ([#754](https://github.com/pingidentity/terraform-provider-pingone/issues/754))
+
 ## 0.26.1 (28 February 2024)
 
 NOTES:
