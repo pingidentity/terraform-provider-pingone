@@ -193,6 +193,10 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 		"Controls Government ID verification requirements.",
 	).AllowedValuesEnum(verify.AllowedEnumVerifyEnumValues).DefaultValue(string(defaultVerify))
 
+	governmentIdInspectionTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Determine whether document authentication is automated, manual, or possibly both.",
+	).AllowedValuesEnum(verify.AllowedEnumInspectionTypeEnumValues)
+
 	facialComparisonVerifyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Controls Facial Comparison verification requirements.",
 	).AllowedValuesEnum(verify.AllowedEnumVerifyEnumValues).DefaultValue(string(defaultVerify))
@@ -370,8 +374,8 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 						Computed:            true,
 					},
 					"inspection_type": schema.StringAttribute{
-						Description:         governmentIdVerifyDescription.Description,
-						MarkdownDescription: governmentIdVerifyDescription.MarkdownDescription,
+						Description:         governmentIdInspectionTypeDescription.Description,
+						MarkdownDescription: governmentIdInspectionTypeDescription.MarkdownDescription,
 						Computed:            true,
 					},
 				},
