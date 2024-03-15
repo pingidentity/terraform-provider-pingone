@@ -1,5 +1,17 @@
 ## 0.27.0 (Unreleased)
 
+NOTES:
+
+* bump `github.com/hashicorp/terraform-plugin-framework` 1.5.0 => v1.6.1 ([#766](https://github.com/pingidentity/terraform-provider-pingone/issues/766))
+* bump `github.com/hashicorp/terraform-plugin-go` 0.21.0 => 0.22.1 ([#766](https://github.com/pingidentity/terraform-provider-pingone/issues/766))
+* bump `github.com/hashicorp/terraform-plugin-mux` 0.13.0 => 0.15.0 ([#766](https://github.com/pingidentity/terraform-provider-pingone/issues/766))
+* bump `github.com/hashicorp/terraform-plugin-sdk/v2` 2.31.0 => 2.33.0 ([#766](https://github.com/pingidentity/terraform-provider-pingone/issues/766))
+* bump `github.com/hashicorp/terraform-plugin-testing` 1.6.0 => 1.7.0 ([#766](https://github.com/pingidentity/terraform-provider-pingone/issues/766))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.37.0 => 0.38.0 ([#766](https://github.com/pingidentity/terraform-provider-pingone/issues/766))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` 0.13.0 => 0.14.0 ([#766](https://github.com/pingidentity/terraform-provider-pingone/issues/766))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.11.6 => 0.11.7 ([#766](https://github.com/pingidentity/terraform-provider-pingone/issues/766))
+* bump `google.golang.org/protobuf` 1.32.0 => 1.33.0 ([#766](https://github.com/pingidentity/terraform-provider-pingone/issues/766))
+
 ENHANCEMENTS:
 
 * `data_source/pingone_verify_policy`: Added support for `inspection_type` property in `government_id` configuration object. ([#754](https://github.com/pingidentity/terraform-provider-pingone/issues/754))
