@@ -411,7 +411,7 @@ resource "pingone_risk_predictor" "my_awesome_velocity_predictor_by_user" {
 - `deletable` (Boolean) A boolean that indicates the PingOne Risk predictor can be deleted or not.
 - `id` (String) The ID of this resource.
 - `licensed` (Boolean) A boolean that indicates whether PingOne Risk is licensed for the environment.
-- `type` (String) A string that specifies the type of the risk predictor.  Options are `ADVERSARY_IN_THE_MIDDLE`, `ANONYMOUS_NETWORK`, `BOT`, `COMPOSITE`, `DEVICE`, `GEO_VELOCITY`, `IP_REPUTATION`, `MAP`, `USER_LOCATION_ANOMALY`, `USER_RISK_BEHAVIOR`, `VELOCITY`.
+- `type` (String) A string that specifies the type of the risk predictor.  Options are `ADVERSARY_IN_THE_MIDDLE`, `ANONYMOUS_NETWORK`, `BOT`, `COMPOSITE`, `DEVICE`, `EMAIL_REPUTATION`, `GEO_VELOCITY`, `IP_REPUTATION`, `MAP`, `USER_LOCATION_ANOMALY`, `USER_RISK_BEHAVIOR`, `VELOCITY`.
 
 <a id="nestedatt--default"></a>
 ### Nested Schema for `default`
