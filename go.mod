@@ -4,20 +4,20 @@ go 1.21
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/hashicorp/terraform-plugin-framework v1.6.1
+	github.com/hashicorp/terraform-plugin-framework v1.7.0
 	github.com/hashicorp/terraform-plugin-framework-timeouts v0.4.1
 	github.com/hashicorp/terraform-plugin-framework-validators v0.12.0
 	github.com/hashicorp/terraform-plugin-go v0.22.1
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-mux v0.15.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.33.0
-	github.com/patrickcping/pingone-go-sdk-v2 v0.11.7
+	github.com/patrickcping/pingone-go-sdk-v2 v0.11.8
 	github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement v0.3.1
 	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.4.1
 	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.6.2
 	github.com/patrickcping/pingone-go-sdk-v2/management v0.38.0
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.18.3
-	github.com/patrickcping/pingone-go-sdk-v2/risk v0.14.0
+	github.com/patrickcping/pingone-go-sdk-v2/risk v0.14.1
 	github.com/patrickcping/pingone-go-sdk-v2/verify v0.4.1
 )
 
