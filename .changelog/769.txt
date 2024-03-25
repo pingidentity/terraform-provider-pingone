@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_application`: Added support for `PRIVATE_KEY_JWT` (with `oidc_options.jwks` and `oidc_options.jwks_url` optional properties) and `CLIENT_SECRET_JWT` token endpoint authentication methods for OIDC applications.
+```
+
+```release-note:enhancement
+`data-source/pingone_application`: Added support for `PRIVATE_KEY_JWT` (with `oidc_options.jwks` and `oidc_options.jwks_url` attributes) and `CLIENT_SECRET_JWT` token endpoint authentication methods for OIDC applications.
+```
