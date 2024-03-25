@@ -21,6 +21,10 @@ ENHANCEMENTS:
 * `resource/pingone_application`: Added support for the `saml_options.default_target_url` property for SAML applications. ([#768](https://github.com/pingidentity/terraform-provider-pingone/issues/768))
 * `resource/pingone_verify_policy`: Added support for `inspection_type` property in `government_id` configuration object. ([#754](https://github.com/pingidentity/terraform-provider-pingone/issues/754))
 
+BUG FIXES:
+
+* `resource/pingone_user`: Fixed error when attempting to move a user between populations by changing the `population_id` value. ([#770](https://github.com/pingidentity/terraform-provider-pingone/issues/770))
+
 ## 0.26.1 (28 February 2024)
 
 NOTES:
