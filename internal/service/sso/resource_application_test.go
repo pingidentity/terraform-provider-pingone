@@ -4412,7 +4412,7 @@ resource "pingone_application" "%[3]s" {
     slo_response_endpoint          = "https://www.pingidentity.com/sloresponseendpoint"
     slo_window                     = 3
 
-	default_target_url = "https://www.pingidentity.com/relaystate"
+    default_target_url = "https://www.pingidentity.com/relaystate"
 
     sp_verification {
       authn_request_signed = true

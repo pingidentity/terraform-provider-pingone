@@ -172,6 +172,10 @@ Read-Only:
 <a id="nestedatt--saml_options"></a>
 ### Nested Schema for `saml_options`
 
+Optional:
+
+- `default_target_url` (String) A string that specfies a default URL used as the `RelayState` parameter by the IdP to deep link into the application after authentication. This value can be overridden by the `applicationUrl` query parameter for [GET Identity Provider Initiated SSO](https://apidocs.pingidentity.com/pingone/platform/v1/api/#get-identity-provider-initiated-sso). Although both of these parameters are generally URLs, because they are used as deep links, this is not enforced. If neither `defaultTargetUrl` nor `applicationUrl` is specified during a SAML authentication flow, no `RelayState` value is supplied to the application. The `defaultTargetUrl` (or the `applicationUrl`) value is passed to the SAML application’s ACS URL as a separate `RelayState` key value (not within the SAMLResponse key value).
+
 Read-Only:
 
 - `acs_urls` (Set of String) A list of string that specifies the Assertion Consumer Service URLs. The first URL in the list is used as default (there must be at least one URL).
