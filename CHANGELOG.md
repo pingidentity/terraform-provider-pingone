@@ -14,7 +14,9 @@ NOTES:
 
 ENHANCEMENTS:
 
+* `data-source/pingone_application`: Added support for the `saml_options.default_target_url` property for SAML applications. ([#768](https://github.com/pingidentity/terraform-provider-pingone/issues/768))
 * `data_source/pingone_verify_policy`: Added support for `inspection_type` property in `government_id` configuration object. ([#754](https://github.com/pingidentity/terraform-provider-pingone/issues/754))
+* `resource/pingone_application`: Added support for the `saml_options.default_target_url` property for SAML applications. ([#768](https://github.com/pingidentity/terraform-provider-pingone/issues/768))
 * `resource/pingone_verify_policy`: Added support for `inspection_type` property in `government_id` configuration object. ([#754](https://github.com/pingidentity/terraform-provider-pingone/issues/754))
 
 ## 0.26.1 (28 February 2024)
