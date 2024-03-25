@@ -550,6 +550,11 @@ func ResourceApplication() *schema.Resource {
 							Optional:    true,
 							Default:     true,
 						},
+						"default_target_url": {
+							Description: "A string that specfies a default URL used as the `RelayState` parameter by the IdP to deep link into the application after authentication. This value can be overridden by the `applicationUrl` query parameter for [GET Identity Provider Initiated SSO](https://apidocs.pingidentity.com/pingone/platform/v1/api/#get-identity-provider-initiated-sso). Although both of these parameters are generally URLs, because they are used as deep links, this is not enforced. If neither `defaultTargetUrl` nor `applicationUrl` is specified during a SAML authentication flow, no `RelayState` value is supplied to the application. The `defaultTargetUrl` (or the `applicationUrl`) value is passed to the SAML application’s ACS URL as a separate `RelayState` key value (not within the SAMLResponse key value).",
+							Type:        schema.TypeString,
+							Optional:    true,
+						},
 						"idp_signing_key_id": {
 							Description:      "**Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `idp_signing_key` block going forward.  An ID for the certificate key pair to be used by the identity provider to sign assertions and responses. If this property is omitted, the default signing certificate for the environment is used.",
 							Type:             schema.TypeString,
@@ -1630,6 +1635,10 @@ func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML,
 			application.SetAssertionSigned(v1)
 		}
 
+		if v1, ok := samlOptions["default_target_url"].(string); ok && v1 != "" {
+			application.SetDefaultTargetUrl(v1)
+		}
+
 		if v1, ok := samlOptions["idp_signing_key_id"].(string); ok && v1 != "" {
 			application.SetIdpSigning(*management.NewApplicationSAMLAllOfIdpSigning(*management.NewApplicationSAMLAllOfIdpSigningKey(v1)))
 		}
@@ -2187,6 +2196,12 @@ func flattenSAMLOptions(application *management.ApplicationSAML) interface{} {
 		item["assertion_signed_enabled"] = v
 	} else {
 		item["assertion_signed_enabled"] = nil
+	}
+
+	if v, ok := application.GetDefaultTargetUrlOk(); ok {
+		item["default_target_url"] = v
+	} else {
+		item["default_target_url"] = nil
 	}
 
 	if v, ok := application.GetIdpSigningOk(); ok {

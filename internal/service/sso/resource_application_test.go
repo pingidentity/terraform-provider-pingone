@@ -2897,6 +2897,7 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.0.acs_urls.*", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_duration", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_signed_enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.default_target_url", "https://www.pingidentity.com/relaystate"),
 					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.algorithm", ""),
@@ -3001,6 +3002,7 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.0.acs_urls.*", "https://pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_duration", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_signed_enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.default_target_url", ""),
 					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.enable_requested_authn_context", "false"),
@@ -4409,6 +4411,8 @@ resource "pingone_application" "%[3]s" {
     slo_endpoint                   = "https://www.pingidentity.com/sloendpoint"
     slo_response_endpoint          = "https://www.pingidentity.com/sloresponseendpoint"
     slo_window                     = 3
+
+	default_target_url = "https://www.pingidentity.com/relaystate"
 
     sp_verification {
       authn_request_signed = true
