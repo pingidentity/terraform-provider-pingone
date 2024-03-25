@@ -572,7 +572,7 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						"default_target_url": schema.StringAttribute{
 							Description:         samlDefaultTargetUrlDescription.Description,
 							MarkdownDescription: samlDefaultTargetUrlDescription.MarkdownDescription,
-							Optional:            true,
+							Computed:            true,
 						},
 						"idp_signing_key": schema.ListNestedAttribute{
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("SAML application assertion/response signing key settings.").Description,
