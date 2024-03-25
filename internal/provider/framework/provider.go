@@ -8,13 +8,14 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/pingidentity/terraform-provider-pingone/internal/client"
 	pingone "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/agreementmanagement"
@@ -46,8 +47,22 @@ type pingOneProviderModel struct {
 	APIAccessToken                       types.String `tfsdk:"api_access_token"`
 	Region                               types.String `tfsdk:"region"`
 	ServiceEndpoints                     types.List   `tfsdk:"service_endpoints"`
+	GlobalOptions                        types.List   `tfsdk:"global_options"`
 	ForceDeleteProductionEnvironmentType types.Bool   `tfsdk:"force_delete_production_type"`
 	HTTPProxy                            types.String `tfsdk:"http_proxy"`
+}
+
+type pingOneProviderGlobalOptionsModel struct {
+	Environment types.List `tfsdk:"environment"`
+	Population  types.List `tfsdk:"population"`
+}
+
+type pingOneProviderGlobalOptionsEnvironmentModel struct {
+	ProductionTypeForceDelete types.Bool `tfsdk:"production_type_force_delete"`
+}
+
+type pingOneProviderGlobalOptionsPopulationModel struct {
+	ContainsUsersForceDelete types.Bool `tfsdk:"contains_users_force_delete"`
 }
 
 type pingOneProviderServiceEndpointsModel struct {
@@ -84,6 +99,26 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 
 	forceDeleteProductionTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Choose whether to force-delete any configuration that has a `PRODUCTION` type parameter.  The platform default is that `PRODUCTION` type configuration will not destroy without intervention to protect stored data.  By default this parameter is set to `false` and can be overridden with the `PINGONE_FORCE_DELETE_PRODUCTION_TYPE` environment variable.",
+	)
+
+	globalOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single block containing configuration items to override API behaviours in PingOne.",
+	)
+
+	globalOptionsEnvironmentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single block containing global configuration items to override environment resource settings in PingOne.",
+	)
+
+	globalOptionsEnvironmentProductionTypeForceDeleteDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Choose whether to force-delete any configuration that has a `PRODUCTION` type parameter.  The platform default is that `PRODUCTION` type configuration will not destroy without intervention to protect stored data.  By default this parameter is set to `false` and can be overridden with the `PINGONE_FORCE_DELETE_PRODUCTION_TYPE` environment variable.",
+	)
+
+	globalOptionsPopulationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single block containing configuration items to override population resource settings in PingOne.",
+	)
+
+	globalOptionsEnvironmentContainsUsersForceDeleteDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Choose whether to force-delete populations that contain users not managed by Terraform. Useful for development and testing use cases, and only applies if the environment that contains the population is of type `SANDBOX`. The platform default is that populations cannot be removed if they contain user data. By default this parameter is set to `false`.",
 	)
 
 	serviceEndpointsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -138,6 +173,7 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 				Description:         forceDeleteProductionTypeDescription.Description,
 				MarkdownDescription: forceDeleteProductionTypeDescription.MarkdownDescription,
 				Optional:            true,
+				DeprecationMessage:  "This parameter is deprecated and will be removed in the next major release. Use the `global_options.environment.production_type_force_delete` block going forward.",
 			},
 
 			"http_proxy": schema.StringAttribute{
@@ -148,6 +184,60 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 		},
 
 		Blocks: map[string]schema.Block{
+			"global_options": schema.ListNestedBlock{
+				Description:         globalOptionsDescription.Description,
+				MarkdownDescription: globalOptionsDescription.MarkdownDescription,
+
+				NestedObject: schema.NestedBlockObject{
+
+					Blocks: map[string]schema.Block{
+						"environment": schema.ListNestedBlock{
+							Description:         globalOptionsEnvironmentDescription.Description,
+							MarkdownDescription: globalOptionsEnvironmentDescription.MarkdownDescription,
+
+							NestedObject: schema.NestedBlockObject{
+
+								Attributes: map[string]schema.Attribute{
+									"production_type_force_delete": schema.BoolAttribute{
+										Description:         globalOptionsEnvironmentProductionTypeForceDeleteDescription.Description,
+										MarkdownDescription: globalOptionsEnvironmentProductionTypeForceDeleteDescription.MarkdownDescription,
+										Optional:            true,
+									},
+								},
+							},
+
+							Validators: []validator.List{
+								listvalidator.SizeAtMost(1),
+							},
+						},
+
+						"population": schema.ListNestedBlock{
+							Description:         globalOptionsPopulationDescription.Description,
+							MarkdownDescription: globalOptionsPopulationDescription.MarkdownDescription,
+
+							NestedObject: schema.NestedBlockObject{
+
+								Attributes: map[string]schema.Attribute{
+									"contains_users_force_delete": schema.BoolAttribute{
+										Description:         globalOptionsEnvironmentContainsUsersForceDeleteDescription.Description,
+										MarkdownDescription: globalOptionsEnvironmentContainsUsersForceDeleteDescription.MarkdownDescription,
+										Optional:            true,
+									},
+								},
+							},
+
+							Validators: []validator.List{
+								listvalidator.SizeAtMost(1),
+							},
+						},
+					},
+				},
+
+				Validators: []validator.List{
+					listvalidator.SizeAtMost(1),
+				},
+			},
+
 			"service_endpoints": schema.ListNestedBlock{
 				Description:         serviceEndpointsDescription.Description,
 				MarkdownDescription: serviceEndpointsDescription.MarkdownDescription,
@@ -171,7 +261,6 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 
 				Validators: []validator.List{
 					listvalidator.SizeAtMost(1),
-					listvalidator.SizeAtLeast(1),
 				},
 			},
 		},
@@ -191,16 +280,21 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 	tflog.Info(ctx, "[v6] Provider setting defaults..")
 	debugLogMessage := "[v6] Provider parameter %s missing, defaulting to environment variable"
 
-	if data.ForceDeleteProductionEnvironmentType.IsNull() {
-		v, err := strconv.ParseBool(os.Getenv("PINGONE_FORCE_DELETE_PRODUCTION_TYPE"))
-		if err != nil {
-			v = false
-		}
+	globalOptions := &client.GlobalOptions{
+		Environment: &client.EnvironmentOptions{
+			ProductionTypeForceDelete: false,
+		},
+		Population: &client.PopulationOptions{
+			ContainsUsersForceDelete: false,
+		},
+	}
+
+	if v, err := strconv.ParseBool(os.Getenv("PINGONE_FORCE_DELETE_PRODUCTION_TYPE")); err == nil && v {
 		tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "force_delete_production_type"), map[string]interface{}{
 			"env_var":       "PINGONE_FORCE_DELETE_PRODUCTION_TYPE",
 			"env_var_value": v,
 		})
-		data.ForceDeleteProductionEnvironmentType = basetypes.NewBoolValue(v)
+		globalOptions.Environment.ProductionTypeForceDelete = v
 	}
 
 	config := &pingone.Config{
@@ -209,12 +303,69 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		EnvironmentID: data.EnvironmentID.ValueString(),
 		AccessToken:   data.APIAccessToken.ValueString(),
 		Region:        data.Region.ValueString(),
-		ForceDelete:   data.ForceDeleteProductionEnvironmentType.ValueBool(),
+		GlobalOptions: globalOptions,
 	}
 
 	if !data.HTTPProxy.IsNull() {
 		v := data.HTTPProxy.ValueString()
 		config.ProxyURL = &v
+	}
+
+	deprecatedForceDeleteSet := false
+	if !data.ForceDeleteProductionEnvironmentType.IsNull() {
+		globalOptions.Environment.ProductionTypeForceDelete = data.ForceDeleteProductionEnvironmentType.ValueBool()
+		deprecatedForceDeleteSet = true
+	}
+
+	if !data.GlobalOptions.IsNull() {
+
+		var globalOptionsData []pingOneProviderGlobalOptionsModel
+		resp.Diagnostics.Append(data.GlobalOptions.ElementsAs(ctx, &globalOptionsData, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		if len(globalOptionsData) > 0 {
+			if !globalOptionsData[0].Environment.IsNull() {
+
+				var globalOptionsEnvironmentData []pingOneProviderGlobalOptionsEnvironmentModel
+				resp.Diagnostics.Append(globalOptionsData[0].Environment.ElementsAs(ctx, &globalOptionsEnvironmentData, false)...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+
+				if len(globalOptionsEnvironmentData) > 0 {
+					if !globalOptionsEnvironmentData[0].ProductionTypeForceDelete.IsNull() {
+						if deprecatedForceDeleteSet {
+							resp.Diagnostics.AddAttributeError(
+								path.Root("force_delete_production_type"),
+								fmt.Sprintf("Invalid provider configuration"),
+								fmt.Sprintf("Cannot set both `force_delete_production_type` and `global_options.environment.production_type_force_delete` in the PingOne provider configuration.  Please unset `force_delete_production_type` and use `global_options.environment.production_type_force_delete` going forward."),
+							)
+							return
+						}
+
+						globalOptions.Environment.ProductionTypeForceDelete = globalOptionsEnvironmentData[0].ProductionTypeForceDelete.ValueBool()
+					}
+				}
+			}
+
+			if !globalOptionsData[0].Population.IsNull() {
+
+				var globalOptionsPopulationData []pingOneProviderGlobalOptionsPopulationModel
+				resp.Diagnostics.Append(globalOptionsData[0].Population.ElementsAs(ctx, &globalOptionsPopulationData, false)...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+
+				if len(globalOptionsPopulationData) > 0 {
+					if !globalOptionsPopulationData[0].ContainsUsersForceDelete.IsNull() {
+						globalOptions.Population.ContainsUsersForceDelete = globalOptionsPopulationData[0].ContainsUsersForceDelete.ValueBool()
+					}
+				}
+			}
+		}
+
 	}
 
 	if !data.ServiceEndpoints.IsNull() {

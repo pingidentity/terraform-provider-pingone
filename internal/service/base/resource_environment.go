@@ -29,8 +29,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
+	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	stringdefaultinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringdefaultinternal"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -41,9 +41,9 @@ import (
 
 // Types
 type EnvironmentResource struct {
-	Client      *pingone.Client
-	region      model.RegionMapping
-	forceDelete bool
+	serviceClientType
+	region  model.RegionMapping
+	options client.EnvironmentOptions
 }
 
 type environmentResourceModel struct {
@@ -589,6 +589,10 @@ func (r *EnvironmentResource) Configure(ctx context.Context, req resource.Config
 		return
 	}
 	r.region = resourceConfig.Client.API.Region
+
+	if resourceConfig.Client.GlobalOptions != nil && resourceConfig.Client.GlobalOptions.Environment != nil {
+		r.options = *resourceConfig.Client.GlobalOptions.Environment
+	}
 }
 
 func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -1000,7 +1004,7 @@ func (r *EnvironmentResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 
 	// Run the API call
-	resp.Diagnostics.Append(deleteEnvironment(ctx, r.Client.ManagementAPIClient, data.Id.ValueString(), r.forceDelete)...)
+	resp.Diagnostics.Append(deleteEnvironment(ctx, r.Client.ManagementAPIClient, data.Id.ValueString(), r.options.ProductionTypeForceDelete)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
