@@ -76,8 +76,8 @@ github.com/hashicorp/terraform-exec v0.20.0 h1:DIZnPsqzPGuUnq6cH8jWcPunBfY+C+M8J
 github.com/hashicorp/terraform-exec v0.20.0/go.mod h1:ckKGkJWbsNqFKV1itgMnE0hY9IYf1HoiekpuN0eWoDw=
 github.com/hashicorp/terraform-json v0.21.0 h1:9NQxbLNqPbEMze+S6+YluEdXgJmhQykRyRNd+zTI05U=
 github.com/hashicorp/terraform-json v0.21.0/go.mod h1:qdeBs11ovMzo5puhrRibdD6d2Dq6TyE/28JiU4tIQxk=
-github.com/hashicorp/terraform-plugin-framework v1.6.1 h1:hw2XrmUu8d8jVL52ekxim2IqDc+2Kpekn21xZANARLU=
-github.com/hashicorp/terraform-plugin-framework v1.6.1/go.mod h1:aJI+n/hBPhz1J+77GdgNfk5svW12y7fmtxe/5L5IuwI=
+github.com/hashicorp/terraform-plugin-framework v1.7.0 h1:wOULbVmfONnJo9iq7/q+iBOBJul5vRovaYJIu2cY/Pw=
+github.com/hashicorp/terraform-plugin-framework v1.7.0/go.mod h1:jY9Id+3KbZ17OMpulgnWLSfwxNVYSoYBQFTgsx044CI=
 github.com/hashicorp/terraform-plugin-framework-timeouts v0.4.1 h1:gm5b1kHgFFhaKFhm4h2TgvMUlNzFAtUqlcOWnWPm+9E=
 github.com/hashicorp/terraform-plugin-framework-timeouts v0.4.1/go.mod h1:MsjL1sQ9L7wGwzJ5RjcI6FzEMdyoBnw+XK8ZnOvQOLY=
 github.com/hashicorp/terraform-plugin-framework-validators v0.12.0 h1:HOjBuMbOEzl7snOdOoUfE2Jgeto6JOjLVQ39Ls2nksc=
@@ -135,8 +135,8 @@ github.com/mitchellh/reflectwalk v1.0.2 h1:G2LzWKi524PWgd3mLHV8Y5k7s6XUvT0Gef6zx
 github.com/mitchellh/reflectwalk v1.0.2/go.mod h1:mSTlrgnPZtwu0c4WaC2kGObEpuNDbx0jmZXqmk4esnw=
 github.com/oklog/run v1.1.0 h1:GEenZ1cK0+q0+wsJew9qUg/DyD8k3JzYsZAi5gYi2mA=
 github.com/oklog/run v1.1.0/go.mod h1:sVPdnTZT1zYwAJeCMu2Th4T21pA3FPOQRfWjQlk7DVU=
-github.com/patrickcping/pingone-go-sdk-v2 v0.11.7 h1:12NZes5eKOJOpPRNVJhOXB4botqDI0//z6gS2NkPPv8=
-github.com/patrickcping/pingone-go-sdk-v2 v0.11.7/go.mod h1:DBERB9rTAL1vC7B7vuzpo+SKJ432xalVVOX+YIfiVaY=
+github.com/patrickcping/pingone-go-sdk-v2 v0.11.8 h1:Y2hDeiLEUK94s8IZs3H2wTl8pFko8s/zcdrIy/TNbNk=
+github.com/patrickcping/pingone-go-sdk-v2 v0.11.8/go.mod h1:vR0YIHg3aKpCd/a23k8kfRIRyWTEHtOCo+xrw4tY86U=
 github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement v0.3.1 h1:ewKD35ooojS/RDKfmtW20GDhYIeD5x/RnlcI4v2BFZs=
 github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement v0.3.1/go.mod h1:x/gbus62MUvvd7nBJo3Aprm2LTirRak6ZHwZXe8IW9s=
 github.com/patrickcping/pingone-go-sdk-v2/authorize v0.4.1 h1:6IM378rHWbrgr57bh0voVaglFti2ijAsply0JxZ7M38=
@@ -147,8 +147,8 @@ github.com/patrickcping/pingone-go-sdk-v2/management v0.38.0 h1:iCrvPsWLq+zUHoZ+
 github.com/patrickcping/pingone-go-sdk-v2/management v0.38.0/go.mod h1:5YMhQOKlAzBKK2y0md7GRj8JcBfTYdyMDidLiMxQCjA=
 github.com/patrickcping/pingone-go-sdk-v2/mfa v0.18.3 h1:D/BaiNQ3FHwQlpP2/RN4oYx0HgihumsR+wqkLTqoCjs=
 github.com/patrickcping/pingone-go-sdk-v2/mfa v0.18.3/go.mod h1:2fA7oR1PNCE+U1mYlLP9P2kRJLDjh98KqOn4eP8OZIE=
-github.com/patrickcping/pingone-go-sdk-v2/risk v0.14.0 h1:mHt5Nk/AOgF1/XD6PMeTaODpFML9MkVHsfoZcIZdxEQ=
-github.com/patrickcping/pingone-go-sdk-v2/risk v0.14.0/go.mod h1:bOWHYOWkAmJu8KxEsVf3l1XJB2+uFzgEyjk6z6BnjE4=
+github.com/patrickcping/pingone-go-sdk-v2/risk v0.14.1 h1:yqaEnu4m2X8UjCRWRcvk9+gwaE/kzgXxf0N63SCSbSc=
+github.com/patrickcping/pingone-go-sdk-v2/risk v0.14.1/go.mod h1:bOWHYOWkAmJu8KxEsVf3l1XJB2+uFzgEyjk6z6BnjE4=
 github.com/patrickcping/pingone-go-sdk-v2/verify v0.4.1 h1:1DIv2+BFCvjMSozrchvUBVLD0fbv+P5/+/jyoUdFl1Q=
 github.com/patrickcping/pingone-go-sdk-v2/verify v0.4.1/go.mod h1:CYnq6n5E8YDg3FYieSfldjjT/2EyMyYCgdoNAiqNZFc=
 github.com/pjbgf/sha1cd v0.3.0 h1:4D5XXmUUBUl/xQ6IjCkEAbqXskkq/4O7LmGn0AqMDs4=
