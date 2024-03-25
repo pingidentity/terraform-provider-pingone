@@ -51,22 +51,24 @@ var (
 	}
 
 	applicationOidcOptionsTFObjectTypes = map[string]attr.Type{
-		"type":                                        types.StringType,
-		"home_page_url":                               types.StringType,
-		"initiate_login_uri":                          types.StringType,
-		"target_link_uri":                             types.StringType,
-		"grant_types":                                 types.SetType{ElemType: types.StringType},
-		"response_types":                              types.SetType{ElemType: types.StringType},
-		"token_endpoint_authn_method":                 types.StringType,
-		"par_requirement":                             types.StringType,
-		"par_timeout":                                 types.Int64Type,
-		"pkce_enforcement":                            types.StringType,
-		"redirect_uris":                               types.SetType{ElemType: types.StringType},
-		"allow_wildcards_in_redirect_uris":            types.BoolType,
-		"post_logout_redirect_uris":                   types.SetType{ElemType: types.StringType},
-		"refresh_token_duration":                      types.Int64Type,
-		"refresh_token_rolling_duration":              types.Int64Type,
-		"refresh_token_rolling_grace_period_duration": types.Int64Type,
+		"type":                             types.StringType,
+		"home_page_url":                    types.StringType,
+		"initiate_login_uri":               types.StringType,
+		"jwks":                             types.StringType,
+		"jwks_url":                         types.StringType,
+		"target_link_uri":                  types.StringType,
+		"grant_types":                      types.SetType{ElemType: types.StringType},
+		"response_types":                   types.SetType{ElemType: types.StringType},
+		"token_endpoint_authn_method":      types.StringType,
+		"par_requirement":                  types.StringType,
+		"par_timeout":                      types.Int64Type,
+		"pkce_enforcement":                 types.StringType,
+		"redirect_uris":                    types.SetType{ElemType: types.StringType},
+		"allow_wildcards_in_redirect_uris": types.BoolType,
+		"post_logout_redirect_uris":        types.SetType{ElemType: types.StringType},
+		"refresh_token_duration":           types.Int64Type,
+		"refresh_token_rolling_duration":   types.Int64Type,
+		"refresh_token_rolling_grace_period_duration":        types.Int64Type,
 		"additional_refresh_token_replay_protection_enabled": types.BoolType,
 		"client_id":                        types.StringType,
 		"client_secret":                    types.StringType,
@@ -193,6 +195,14 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 
 	oidcHomePageURLDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The custom home page URL for the application.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.",
+	)
+
+	oidcJwksDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_authn_method`. This property is required when `token_endpoint_authn_method` is `PRIVATE_KEY_JWT` and the `jwks_url` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks_url` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).",
+	)
+
+	oidcJwksUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies a URL (supports `https://` only) that provides access to a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_authn_method`. This property is required when `token_endpoint_authn_method` is `PRIVATE_KEY_JWT` and the `jwks` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).",
 	)
 
 	oidcOptionsPKCEEnforcementDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -351,6 +361,16 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						"initiate_login_uri": schema.StringAttribute{
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the URI to use for third-parties to begin the sign-on process for the application.").Description,
 							Computed:    true,
+						},
+						"jwks": schema.StringAttribute{
+							Description:         oidcJwksDescription.Description,
+							MarkdownDescription: oidcJwksDescription.MarkdownDescription,
+							Computed:            true,
+						},
+						"jwks_url": schema.StringAttribute{
+							Description:         oidcJwksUrlDescription.Description,
+							MarkdownDescription: oidcJwksUrlDescription.MarkdownDescription,
+							Computed:            true,
 						},
 						"target_link_uri": schema.StringAttribute{
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("The URI for the application.").Description,
@@ -1048,6 +1068,8 @@ func (p *applicationDataSourceModel) toStateOIDCOptions(apiObject *management.Ap
 		"par_timeout":                      framework.Int32OkToTF(apiObject.GetParTimeoutOk()),
 		"home_page_url":                    framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
 		"initiate_login_uri":               framework.StringOkToTF(apiObject.GetInitiateLoginUriOk()),
+		"jwks":                             framework.StringOkToTF(apiObject.GetJwksOk()),
+		"jwks_url":                         framework.StringOkToTF(apiObject.GetJwksUrlOk()),
 		"target_link_uri":                  framework.StringOkToTF(apiObject.GetTargetLinkUriOk()),
 		"response_types":                   framework.EnumSetOkToTF(apiObject.GetResponseTypesOk()),
 		"pkce_enforcement":                 framework.EnumOkToTF(apiObject.GetPkceEnforcementOk()),
