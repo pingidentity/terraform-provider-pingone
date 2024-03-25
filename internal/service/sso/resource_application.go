@@ -179,6 +179,19 @@ func ResourceApplication() *schema.Resource {
 							Optional:         true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(https:\/\/).*)`), "Expected value to have a url with schema of \"https\".  \"http\" urls are permitted when using localhost hosts \"localhost\" and \"127.0.0.1\".")),
 						},
+						"jwks": {
+							Description:   "A string that specifies a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_authn_method`. This property is required when `token_endpoint_authn_method` is `PRIVATE_KEY_JWT` and the `jwks_url` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks_url` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).",
+							Type:          schema.TypeString,
+							Optional:      true,
+							ConflictsWith: []string{"oidc_options.0.jwks_url"},
+						},
+						"jwks_url": {
+							Description:      "A string that specifies a URL (supports `https://` only) that provides access to a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_authn_method`. This property is required when `token_endpoint_authn_method` is `PRIVATE_KEY_JWT` and the `jwks` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).",
+							Type:             schema.TypeString,
+							Optional:         true,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(regexp.MustCompile(`^(https:\/\/).*`), "Expected value to have a url with schema of \"https\".")),
+							ConflictsWith:    []string{"oidc_options.0.jwks"},
+						},
 						"target_link_uri": {
 							Description:      "The URI for the application. If specified, PingOne will redirect application users to this URI after a user is authenticated. In the PingOne admin console, this becomes the value of the `target_link_uri` parameter used for the Initiate Single Sign-On URL field.  Both `http://` and `https://` URLs are permitted as well as custom mobile native schema (e.g., `org.bxretail.app://target`).",
 							Type:             schema.TypeString,
@@ -204,10 +217,10 @@ func ResourceApplication() *schema.Resource {
 							Optional: true,
 						},
 						"token_endpoint_authn_method": {
-							Description:      fmt.Sprintf("A string that specifies the client authentication methods supported by the token endpoint.  Options are `%s`, `%s` and `%s`.", string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_NONE), string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_CLIENT_SECRET_BASIC), string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_CLIENT_SECRET_POST)),
+							Description:      fmt.Sprintf("A string that specifies the client authentication methods supported by the token endpoint.  Options are `%s`, `%s`, `%s`, `%s` and `%s`.  When `%s` is configured, either `jwks` or `jwks_url` must also be configured.", string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_NONE), string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_CLIENT_SECRET_BASIC), string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_CLIENT_SECRET_POST), string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_CLIENT_SECRET_JWT), string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_PRIVATE_KEY_JWT), string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_PRIVATE_KEY_JWT)),
 							Type:             schema.TypeString,
 							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_NONE), string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_CLIENT_SECRET_BASIC), string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_CLIENT_SECRET_POST)}, false)),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_NONE), string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_CLIENT_SECRET_BASIC), string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_CLIENT_SECRET_POST), string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_CLIENT_SECRET_JWT), string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_PRIVATE_KEY_JWT)}, false)),
 						},
 						"par_requirement": {
 							Description:      fmt.Sprintf("A string that specifies whether pushed authorization requests (PAR) are required.  Options are `%s` and `%s`.", string(management.ENUMAPPLICATIONOIDCPARREQUIREMENT_OPTIONAL), string(management.ENUMAPPLICATIONOIDCPARREQUIREMENT_REQUIRED)),
@@ -1244,6 +1257,14 @@ func expandApplicationOIDC(d *schema.ResourceData) (*management.ApplicationOIDC,
 			application.SetInitiateLoginUri(v1)
 		}
 
+		if v1, ok := oidcOptions["jwks"].(string); ok && v1 != "" {
+			application.SetJwks(v1)
+		}
+
+		if v1, ok := oidcOptions["jwks_url"].(string); ok && v1 != "" {
+			application.SetJwksUrl(v1)
+		}
+
 		if v1, ok := oidcOptions["target_link_uri"].(string); ok && v1 != "" {
 			application.SetTargetLinkUri(v1)
 		}
@@ -1878,6 +1899,18 @@ func flattenOIDCOptions(application *management.ApplicationOIDC, secret *managem
 		item["initiate_login_uri"] = v
 	} else {
 		item["initiate_login_uri"] = nil
+	}
+
+	if v, ok := application.GetJwksOk(); ok {
+		item["jwks"] = v
+	} else {
+		item["jwks"] = nil
+	}
+
+	if v, ok := application.GetJwksUrlOk(); ok {
+		item["jwks_url"] = v
+	} else {
+		item["jwks_url"] = nil
 	}
 
 	if v, ok := application.GetTargetLinkUriOk(); ok {
