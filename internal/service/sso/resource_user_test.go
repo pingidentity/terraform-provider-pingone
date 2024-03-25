@@ -868,11 +868,17 @@ resource "pingone_population" "%[2]s" {
   name = "%[3]s"
 }
 
+resource "pingone_population" "%[2]s-new" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s-new"
+}
+
 resource "pingone_user" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
   username      = "%[3]s"
   email         = "%[3]s@pingidentity.com"
-  population_id = pingone_population.%[2]s.id
+  population_id = pingone_population.%[2]s-new.id
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
