@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_application`: Added support for the `saml_options.default_target_url` property for SAML applications.
+```
+
+```release-note:enhancement
+`data-source/pingone_application`: Added support for the `saml_options.default_target_url` property for SAML applications.
+```
