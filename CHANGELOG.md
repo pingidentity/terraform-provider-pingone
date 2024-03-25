@@ -14,8 +14,10 @@ NOTES:
 
 ENHANCEMENTS:
 
+* `data-source/pingone_application`: Added support for `PRIVATE_KEY_JWT` (with `oidc_options.jwks` and `oidc_options.jwks_url` attributes) and `CLIENT_SECRET_JWT` token endpoint authentication methods for OIDC applications. ([#769](https://github.com/pingidentity/terraform-provider-pingone/issues/769))
 * `data-source/pingone_application`: Added support for the `saml_options.default_target_url` property for SAML applications. ([#768](https://github.com/pingidentity/terraform-provider-pingone/issues/768))
 * `data_source/pingone_verify_policy`: Added support for `inspection_type` property in `government_id` configuration object. ([#754](https://github.com/pingidentity/terraform-provider-pingone/issues/754))
+* `resource/pingone_application`: Added support for `PRIVATE_KEY_JWT` (with `oidc_options.jwks` and `oidc_options.jwks_url` optional properties) and `CLIENT_SECRET_JWT` token endpoint authentication methods for OIDC applications. ([#769](https://github.com/pingidentity/terraform-provider-pingone/issues/769))
 * `resource/pingone_application`: Added support for the `saml_options.default_target_url` property for SAML applications. ([#768](https://github.com/pingidentity/terraform-provider-pingone/issues/768))
 * `resource/pingone_verify_policy`: Added support for `inspection_type` property in `government_id` configuration object. ([#754](https://github.com/pingidentity/terraform-provider-pingone/issues/754))
 
