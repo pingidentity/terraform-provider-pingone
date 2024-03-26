@@ -15,7 +15,6 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/provider"
-	"github.com/pingidentity/terraform-provider-pingone/internal/provider/sdkv2"
 )
 
 // ProviderFactories is a static map containing only the main provider instance
@@ -37,23 +36,6 @@ var Provider *schema.Provider
 // to create a provider server to which the CLI can reattach.
 
 var ProtoV6ProviderFactories map[string]func() (tfprotov6.ProviderServer, error) = protoV6ProviderFactoriesInit(context.Background(), "pingone")
-
-func init() {
-	Provider = sdkv2.New(getProviderTestingVersion())()
-
-	// Always allocate a new provider instance each invocation, otherwise gRPC
-	// ProviderConfigure() can overwrite configuration during concurrent testing.
-	ProviderFactories = map[string]func() (*schema.Provider, error){
-		"pingone": func() (*schema.Provider, error) {
-			provider := sdkv2.New(getProviderTestingVersion())()
-
-			if provider == nil {
-				return nil, fmt.Errorf("Cannot initiate provider factory")
-			}
-			return provider, nil
-		},
-	}
-}
 
 func protoV6ProviderFactoriesInit(ctx context.Context, providerNames ...string) map[string]func() (tfprotov6.ProviderServer, error) {
 	factories := make(map[string]func() (tfprotov6.ProviderServer, error), len(providerNames))
@@ -305,7 +287,14 @@ func TestClient(ctx context.Context) (*client.Client, error) {
 		ClientSecret:  os.Getenv("PINGONE_CLIENT_SECRET"),
 		EnvironmentID: os.Getenv("PINGONE_ENVIRONMENT_ID"),
 		Region:        os.Getenv("PINGONE_REGION"),
-		ForceDelete:   false,
+		GlobalOptions: &client.GlobalOptions{
+			Environment: &client.EnvironmentOptions{
+				ProductionTypeForceDelete: false,
+			},
+			Population: &client.PopulationOptions{
+				ContainsUsersForceDelete: false,
+			},
+		},
 	}
 
 	return config.APIClient(ctx, getProviderTestingVersion())
@@ -335,11 +324,15 @@ func MinimalSandboxEnvironment(resourceName, licenseID string) string {
 }
 
 func MinimalSandboxEnvironmentNoPopulation(resourceName, licenseID string) string {
+	return MinimalEnvironmentNoPopulation(resourceName, licenseID, management.ENUMENVIRONMENTTYPE_SANDBOX)
+}
+
+func MinimalEnvironmentNoPopulation(resourceName, licenseID string, environmentType management.EnumEnvironmentType) string {
 	return fmt.Sprintf(`
 	resource "pingone_environment" "%[1]s" {
 		name = "%[1]s"
-		type = "SANDBOX"
 		license_id = "%[2]s"
+		type = "%[3]s"
 
 		service {
 			type = "SSO"
@@ -357,7 +350,7 @@ func MinimalSandboxEnvironmentNoPopulation(resourceName, licenseID string) strin
 			type = "Verify"
 		}
 	}
-`, resourceName, licenseID)
+`, resourceName, licenseID, string(environmentType))
 }
 
 func GenericSandboxEnvironment() string {

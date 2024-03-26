@@ -12,8 +12,6 @@ provider "pingone" {
   client_secret  = var.client_secret
   environment_id = var.environment_id
   region         = var.region
-
-  force_delete_production_type = false
 }
 
 resource "pingone_environment" "my_environment" {

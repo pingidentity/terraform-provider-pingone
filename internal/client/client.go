@@ -10,8 +10,8 @@ import (
 )
 
 type Client struct {
-	API         *pingone.Client
-	ForceDelete bool
+	API           *pingone.Client
+	GlobalOptions *GlobalOptions
 }
 
 func (c *Config) APIClient(ctx context.Context, version string) (*Client, error) {
@@ -40,8 +40,8 @@ func (c *Config) APIClient(ctx context.Context, version string) (*Client, error)
 	}
 
 	tfClient := &Client{
-		API:         client,
-		ForceDelete: c.ForceDelete,
+		API:           client,
+		GlobalOptions: c.GlobalOptions,
 	}
 
 	return tfClient, nil
