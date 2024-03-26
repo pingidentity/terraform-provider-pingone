@@ -2,6 +2,8 @@
 
 NOTES:
 
+* Deprecated the `force_delete_production_type` provider parameter.  This parameter will be removed in the next major release.  Please use the `global_options.population.contains_users_force_delete` provider parameter going forward.  Use of this provider option may result in loss of user data - use with caution. ([#773](https://github.com/pingidentity/terraform-provider-pingone/issues/773))
+* `resource/pingone_environment`: Code optimisation on plan modification. ([#773](https://github.com/pingidentity/terraform-provider-pingone/issues/773))
 * bump `github.com/hashicorp/terraform-plugin-framework` 1.5.0 => v1.6.1 ([#766](https://github.com/pingidentity/terraform-provider-pingone/issues/766))
 * bump `github.com/hashicorp/terraform-plugin-framework` 1.6.1 => 1.7.0 ([#771](https://github.com/pingidentity/terraform-provider-pingone/issues/771))
 * bump `github.com/hashicorp/terraform-plugin-go` 0.21.0 => 0.22.1 ([#766](https://github.com/pingidentity/terraform-provider-pingone/issues/766))
@@ -17,6 +19,8 @@ NOTES:
 
 ENHANCEMENTS:
 
+* Added `global_options` provider parameter block to be able to override specific API behaviours. ([#773](https://github.com/pingidentity/terraform-provider-pingone/issues/773))
+* Added the `global_options.population.contains_users_force_delete` provider parameter to be able to force-delete populations if they contain users in sandbox environments.  Use of this provider option may result in loss of user data - use with caution. ([#773](https://github.com/pingidentity/terraform-provider-pingone/issues/773))
 * `data-source/pingone_application`: Added support for `PRIVATE_KEY_JWT` (with `oidc_options.jwks` and `oidc_options.jwks_url` attributes) and `CLIENT_SECRET_JWT` token endpoint authentication methods for OIDC applications. ([#769](https://github.com/pingidentity/terraform-provider-pingone/issues/769))
 * `data-source/pingone_application`: Added support for the `saml_options.default_target_url` property for SAML applications. ([#768](https://github.com/pingidentity/terraform-provider-pingone/issues/768))
 * `data_source/pingone_verify_policy`: Added support for `inspection_type` property in `government_id` configuration object. ([#754](https://github.com/pingidentity/terraform-provider-pingone/issues/754))
