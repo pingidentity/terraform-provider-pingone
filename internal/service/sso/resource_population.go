@@ -3,7 +3,6 @@ package sso
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"regexp"
 
@@ -266,8 +265,6 @@ func (r *PopulationResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	log.Printf("HERE!!!!! 1")
-
 	hasUsersAssigned, d := r.hasUsersAssigned(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString())
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
@@ -275,15 +272,12 @@ func (r *PopulationResource) Delete(ctx context.Context, req resource.DeleteRequ
 	}
 
 	if hasUsersAssigned {
-		log.Printf("HERE!!!!! 2")
 		d := r.checkControlsAndDeletePopulationUsers(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString())
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
-		log.Printf("HERE!!!!! 3")
 	}
-	log.Printf("HERE!!!!! 4")
 
 	// Run the API call
 	resp.Diagnostics.Append(framework.ParseResponse(
@@ -480,20 +474,16 @@ func (r *PopulationResource) checkEnvironmentControls(ctx context.Context, envir
 func (r *PopulationResource) checkControlsAndDeletePopulationUsers(ctx context.Context, environmentID, populationID string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	log.Printf("HERE!!!!! 2.1")
 	environmentControlsOk, d := r.checkEnvironmentControls(ctx, environmentID, populationID)
 	diags.Append(d...)
 	if diags.HasError() {
 		return diags
 	}
-	log.Printf("HERE!!!!! 2.2")
 
 	if environmentControlsOk {
-		log.Printf("HERE!!!!! 2.3")
 
 		loopCounter := 1
 		for loopCounter > 0 {
-			log.Printf("HERE!!!!! 2.5")
 
 			users, d := r.readUsers(ctx, environmentID, populationID)
 			diags.Append(d...)
@@ -503,10 +493,8 @@ func (r *PopulationResource) checkControlsAndDeletePopulationUsers(ctx context.C
 
 			// DELETE USERS
 			if len(users) == 0 {
-				log.Printf("HERE!!!!! 2.6")
 				break
 			} else {
-				log.Printf("HERE!!!!! 2.7")
 				for _, user := range users {
 					var entityArray *management.EntityArray
 					diags.Append(framework.ParseResponse(
@@ -529,7 +517,6 @@ func (r *PopulationResource) checkControlsAndDeletePopulationUsers(ctx context.C
 			}
 		}
 	}
-	log.Printf("HERE!!!!! 2.8")
 
 	return diags
 }
