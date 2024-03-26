@@ -3,6 +3,7 @@ package sso
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"regexp"
 
@@ -23,8 +24,7 @@ import (
 // Types
 type PopulationResource struct {
 	serviceClientType
-	options            client.PopulationOptions
-	environmentOptions client.EnvironmentOptions
+	options client.GlobalOptions
 }
 
 type PopulationResourceModel struct {
@@ -120,13 +120,7 @@ func (r *PopulationResource) Configure(ctx context.Context, req resource.Configu
 	}
 
 	if resourceConfig.Client.GlobalOptions != nil {
-		if resourceConfig.Client.GlobalOptions.Environment != nil {
-			r.environmentOptions = *resourceConfig.Client.GlobalOptions.Environment
-		}
-
-		if resourceConfig.Client.GlobalOptions.Population != nil {
-			r.options = *resourceConfig.Client.GlobalOptions.Population
-		}
+		r.options = *resourceConfig.Client.GlobalOptions
 	}
 
 }
@@ -272,13 +266,24 @@ func (r *PopulationResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	if r.options.ContainsUsersForceDelete {
-		d := r.deletePopulationUsers(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString())
+	log.Printf("HERE!!!!! 1")
+
+	hasUsersAssigned, d := r.hasUsersAssigned(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString())
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if hasUsersAssigned {
+		log.Printf("HERE!!!!! 2")
+		d := r.checkControlsAndDeletePopulationUsers(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString())
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
+		log.Printf("HERE!!!!! 3")
 	}
+	log.Printf("HERE!!!!! 4")
 
 	// Run the API call
 	resp.Diagnostics.Append(framework.ParseResponse(
@@ -376,104 +381,155 @@ func (p *PopulationResourceModel) toState(apiObject *management.Population) diag
 	return diags
 }
 
-func (r *PopulationResource) checkEnvironmentControls(ctx context.Context, environmentID string) (bool, diag.Diagnostics) {
+func (r *PopulationResource) hasUsersAssigned(ctx context.Context, environmentID, populationID string) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	// If the environment options are to force delete production types, then return true, because this will delete the population anyway
-	if r.environmentOptions.ProductionTypeForceDelete {
-		return true, diags
-	}
-
-	// Check if the environment is a sandbox type.  We'll only delete users in sandbox environments
-	var environmentResponse *management.Environment
-	diags.Append(framework.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentID).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentID, fO, fR, fErr)
-		},
-		"ReadOneEnvironment-DeletePopulation",
-		framework.DefaultCustomError,
-		nil,
-		&environmentResponse,
-	)...)
+	users, d := r.readUsers(ctx, environmentID, populationID)
+	diags.Append(d...)
 	if diags.HasError() {
 		return false, diags
 	}
 
-	if v, ok := environmentResponse.GetTypeOk(); ok && *v == management.ENUMENVIRONMENTTYPE_SANDBOX {
+	if len(users) > 0 {
 		return true, diags
 	}
 
 	return false, diags
 }
 
-func (r *PopulationResource) deletePopulationUsers(ctx context.Context, environmentID, populationID string) diag.Diagnostics {
+func (r *PopulationResource) readUsers(ctx context.Context, environmentID, populationID string) ([]management.User, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	environmentControlsOk, d := r.checkEnvironmentControls(ctx, environmentID)
+	if m, err := regexp.MatchString(verify.P1ResourceIDRegexpFullString.String(), populationID); err == nil && m {
+
+		scimFilter := fmt.Sprintf(`population.id eq "%s"`, populationID)
+
+		// Run the API call
+		var entityArray *management.EntityArray
+		diags.Append(framework.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				fO, fR, fErr := r.Client.ManagementAPIClient.UsersApi.ReadAllUsers(ctx, environmentID).Filter(scimFilter).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentID, fO, fR, fErr)
+			},
+			"ReadAllUsers",
+			framework.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+			&entityArray,
+		)...)
+
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		return entityArray.Embedded.GetUsers(), nil
+	}
+
+	if r.options.Population.ContainsUsersForceDelete {
+		diags.AddError(
+			"Data protection notice",
+			fmt.Sprintf("For data protection reasons, it could not be determined whether users exist in the population %[2]s in environment %[1]s. Any users in this population will not be deleted.", environmentID, populationID),
+		)
+	}
+
+	return nil, diags
+}
+
+func (r *PopulationResource) checkEnvironmentControls(ctx context.Context, environmentID, populationID string) (bool, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if r.options.Population.ContainsUsersForceDelete {
+		// If the environment options are to force delete production types, then return true, because this will delete the population anyway
+		if r.options.Environment.ProductionTypeForceDelete {
+			return true, diags
+		}
+
+		// Check if the environment is a sandbox type.  We'll only delete users in sandbox environments
+		var environmentResponse *management.Environment
+		diags.Append(framework.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				fO, fR, fErr := r.Client.ManagementAPIClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentID).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentID, fO, fR, fErr)
+			},
+			"ReadOneEnvironment-DeletePopulation",
+			framework.DefaultCustomError,
+			nil,
+			&environmentResponse,
+		)...)
+		if diags.HasError() {
+			return false, diags
+		}
+
+		if v, ok := environmentResponse.GetTypeOk(); ok && *v == management.ENUMENVIRONMENTTYPE_SANDBOX {
+			return true, diags
+		} else {
+			diags.AddWarning(
+				"Data protection notice",
+				fmt.Sprintf("For data protection reasons, the provider configuration `global_options.population.contains_users_force_delete` has no effect on environment ID %[1]s as it has a type set to `PRODUCTION`.  Users in this population will not be deleted.\n"+
+					"If you wish to force delete population %[2]s in environment %[1]s, please set the environment type to \"SANDBOX\" or set the `global_options.environment.production_type_force_delete` provider setting to `true`.", environmentID, populationID),
+			)
+		}
+	}
+
+	return false, diags
+}
+
+func (r *PopulationResource) checkControlsAndDeletePopulationUsers(ctx context.Context, environmentID, populationID string) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	log.Printf("HERE!!!!! 2.1")
+	environmentControlsOk, d := r.checkEnvironmentControls(ctx, environmentID, populationID)
 	diags.Append(d...)
 	if diags.HasError() {
 		return diags
 	}
+	log.Printf("HERE!!!!! 2.2")
 
 	if environmentControlsOk {
+		log.Printf("HERE!!!!! 2.3")
 
-		// VALIDATE POPULATION ID REGEX, so populationID is not empty and is a valid UUID
-		if m, err := regexp.MatchString(verify.P1ResourceIDRegexpFullString.String(), populationID); err == nil && m {
+		loopCounter := 1
+		for loopCounter > 0 {
+			log.Printf("HERE!!!!! 2.5")
 
-			scimFilter := fmt.Sprintf(`population.id eq "%s"`, populationID)
+			users, d := r.readUsers(ctx, environmentID, populationID)
+			diags.Append(d...)
+			if diags.HasError() {
+				return diags
+			}
 
-			loopCounter := 1
-			for loopCounter > 0 {
+			// DELETE USERS
+			if len(users) == 0 {
+				log.Printf("HERE!!!!! 2.6")
+				break
+			} else {
+				log.Printf("HERE!!!!! 2.7")
+				for _, user := range users {
+					var entityArray *management.EntityArray
+					diags.Append(framework.ParseResponse(
+						ctx,
 
-				// Run the API call
-				var entityArray *management.EntityArray
-				diags.Append(framework.ParseResponse(
-					ctx,
+						func() (any, *http.Response, error) {
+							fR, fErr := r.Client.ManagementAPIClient.UsersApi.DeleteUser(ctx, environmentID, user.GetId()).Execute()
+							return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentID, nil, fR, fErr)
+						},
+						"DeleteUser-DeletePopulation",
+						framework.DefaultCustomError,
+						nil,
+						&entityArray,
+					)...)
 
-					func() (any, *http.Response, error) {
-						fO, fR, fErr := r.Client.ManagementAPIClient.UsersApi.ReadAllUsers(ctx, environmentID).Filter(scimFilter).Execute()
-						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentID, fO, fR, fErr)
-					},
-					"ReadAllUsers-DeletePopulation",
-					framework.DefaultCustomError,
-					sdk.DefaultCreateReadRetryable,
-					&entityArray,
-				)...)
-
-				if diags.HasError() {
-					return diags
-				}
-
-				// DELETE USERS
-				if len(entityArray.Embedded.GetUsers()) == 0 {
-					break
-				} else {
-					for _, user := range entityArray.Embedded.GetUsers() {
-						var entityArray *management.EntityArray
-						diags.Append(framework.ParseResponse(
-							ctx,
-
-							func() (any, *http.Response, error) {
-								fR, fErr := r.Client.ManagementAPIClient.UsersApi.DeleteUser(ctx, environmentID, user.GetId()).Execute()
-								return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentID, nil, fR, fErr)
-							},
-							"DeleteUser-DeletePopulation",
-							framework.DefaultCustomError,
-							nil,
-							&entityArray,
-						)...)
-
-						if diags.HasError() {
-							return diags
-						}
+					if diags.HasError() {
+						return diags
 					}
 				}
 			}
 		}
 	}
+	log.Printf("HERE!!!!! 2.8")
 
 	return diags
 }

@@ -43,7 +43,7 @@ import (
 type EnvironmentResource struct {
 	serviceClientType
 	region  model.RegionMapping
-	options client.EnvironmentOptions
+	options client.GlobalOptions
 }
 
 type environmentResourceModel struct {
@@ -104,10 +104,11 @@ var (
 
 // Framework interfaces
 var (
-	_ resource.Resource                = &EnvironmentResource{}
-	_ resource.ResourceWithConfigure   = &EnvironmentResource{}
-	_ resource.ResourceWithImportState = &EnvironmentResource{}
-	_ resource.ResourceWithModifyPlan  = &EnvironmentResource{}
+	_ resource.Resource                   = &EnvironmentResource{}
+	_ resource.ResourceWithConfigure      = &EnvironmentResource{}
+	_ resource.ResourceWithImportState    = &EnvironmentResource{}
+	_ resource.ResourceWithModifyPlan     = &EnvironmentResource{}
+	_ resource.ResourceWithValidateConfig = &EnvironmentResource{}
 )
 
 // New Object
@@ -455,27 +456,37 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 		return
 	}
 
+	var plan, state environmentResourceModel
+
+	// Read Terraform plan and state data into the model
+	resp.Diagnostics.Append(resp.Plan.Get(ctx, &plan)...)
+
+	if !req.State.Raw.IsNull() {
+		resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	///////////////////
 	// Deprecated start
-	var environmentID types.String
-	resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root("id"), &environmentID)...)
+
+	var defaultPopulationPlan []environmentDefaultPopulationModel
+	resp.Diagnostics.Append(plan.DefaultPopulation.ElementsAs(ctx, &defaultPopulationPlan, false)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	var plan []environmentDefaultPopulationModel
-	resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root("default_population"), &plan)...)
-	if resp.Diagnostics.HasError() {
-		return
+	var defaultPopulationState []environmentDefaultPopulationModel
+	if !req.State.Raw.IsNull() {
+		resp.Diagnostics.Append(state.DefaultPopulation.ElementsAs(ctx, &defaultPopulationState, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 	}
 
-	var state []environmentDefaultPopulationModel
-	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("default_population"), &state)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	if len(state) > 0 && len(plan) == 0 {
+	if len(defaultPopulationState) > 0 && len(defaultPopulationPlan) == 0 {
 		resp.Diagnostics.AddAttributeWarning(
 			path.Root("default_population"),
 			"State change warning",
@@ -489,7 +500,7 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 		)
 	}
 
-	if len(plan) > 0 && len(state) == 0 && !environmentID.IsNull() && !environmentID.IsUnknown() {
+	if len(defaultPopulationPlan) > 0 && len(defaultPopulationState) == 0 && !plan.Id.IsNull() && !plan.Id.IsUnknown() {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("default_population"),
 			"Invalid configuration",
@@ -498,19 +509,13 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 		return
 	}
 
-	if len(plan) == 0 {
+	if len(defaultPopulationPlan) == 0 {
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("default_population_id"), types.StringNull())...)
 	}
 	// Deprecated end
 	///////////////////
 
-	var regionPlan types.String
-	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("region"), &regionPlan)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	if regionPlan.IsUnknown() {
+	if plan.Region.IsUnknown() {
 
 		if r.region.Region == "" {
 			resp.Diagnostics.AddError(
@@ -523,8 +528,17 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("region"), types.StringValue(r.region.Region))...)
 	}
 
+	if !req.State.Raw.IsNull() && !state.Type.IsNull() && state.Type.Equal(types.StringValue(string(management.ENUMENVIRONMENTTYPE_PRODUCTION))) && !state.Type.Equal(plan.Type) {
+		if r.options.Population.ContainsUsersForceDelete && !r.options.Environment.ProductionTypeForceDelete {
+			resp.Diagnostics.AddWarning(
+				"Data protection notice",
+				fmt.Sprintf("The plan for environment %[1]s is to change the environment type away from \"PRODUCTION\", and the provider configuration is set to force delete populations if they contain users.  This may result in the loss of user data.  Please ensure this configuration is intentional and that you have a backup of any data you wish to retain.", plan.Id.ValueString()),
+			)
+		}
+	}
+
 	var servicePlan []environmentServiceModel
-	resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root("service"), &servicePlan)...)
+	resp.Diagnostics.Append(plan.Services.ElementsAs(ctx, &servicePlan, false)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -590,8 +604,8 @@ func (r *EnvironmentResource) Configure(ctx context.Context, req resource.Config
 	}
 	r.region = resourceConfig.Client.API.Region
 
-	if resourceConfig.Client.GlobalOptions != nil && resourceConfig.Client.GlobalOptions.Environment != nil {
-		r.options = *resourceConfig.Client.GlobalOptions.Environment
+	if resourceConfig.Client.GlobalOptions != nil {
+		r.options = *resourceConfig.Client.GlobalOptions
 	}
 }
 
@@ -1004,7 +1018,7 @@ func (r *EnvironmentResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 
 	// Run the API call
-	resp.Diagnostics.Append(deleteEnvironment(ctx, r.Client.ManagementAPIClient, data.Id.ValueString(), r.options.ProductionTypeForceDelete)...)
+	resp.Diagnostics.Append(deleteEnvironment(ctx, r.Client.ManagementAPIClient, data.Id.ValueString(), r.options.Environment.ProductionTypeForceDelete)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

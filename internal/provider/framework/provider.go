@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/client"
 	pingone "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -339,8 +340,8 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 						if deprecatedForceDeleteSet {
 							resp.Diagnostics.AddAttributeError(
 								path.Root("force_delete_production_type"),
-								fmt.Sprintf("Invalid provider configuration"),
-								fmt.Sprintf("Cannot set both `force_delete_production_type` and `global_options.environment.production_type_force_delete` in the PingOne provider configuration.  Please unset `force_delete_production_type` and use `global_options.environment.production_type_force_delete` going forward."),
+								"Invalid provider configuration",
+								"Cannot set both `force_delete_production_type` and `global_options.environment.production_type_force_delete` in the PingOne provider configuration.  Please unset `force_delete_production_type` and use `global_options.environment.production_type_force_delete` going forward.",
 							)
 							return
 						}
@@ -392,6 +393,22 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	if globalOptions.Environment.ProductionTypeForceDelete {
+		resp.Diagnostics.AddAttributeWarning(
+			path.Root("global_options").AtName("environment").AtListIndex(0).AtName("production_type_force_delete"),
+			"Data protection notice",
+			fmt.Sprintf("The provider is configured to force-delete environments if they are marked as a \"%s\" type, even if they contain users.  This may result in the loss of user data.  Please ensure this configuration is intentional and that you have a backup of any data you wish to retain.", string(management.ENUMENVIRONMENTTYPE_PRODUCTION)),
+		)
+	}
+
+	if globalOptions.Population.ContainsUsersForceDelete {
+		resp.Diagnostics.AddAttributeWarning(
+			path.Root("global_options").AtName("population").AtListIndex(0).AtName("contains_users_force_delete"),
+			"Data protection notice",
+			"The provider is configured to force-delete populations if they contain users.  This may result in the loss of user data.  Please ensure this configuration is intentional and that you have a backup of any data you wish to retain.",
+		)
 	}
 
 	apiClient, err := config.APIClient(ctx, p.version)

@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
@@ -183,6 +184,83 @@ func TestAccPopulation_Minimal(t *testing.T) {
 	})
 }
 
+func TestAccPopulation_DataProtection(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_population.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var p1Client *client.Client
+	var ctx = context.Background()
+
+	var populationID, environmentID, userID string
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+
+			p1Client = acctest.PreCheckTestClient(ctx, t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.Population_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccPopulationConfig_DataProtection_Sandbox(environmentName, licenseID, resourceName, name),
+				Check:  sso.Population_GetIDs(resourceFullName, &environmentID, &populationID),
+			},
+			{
+				Config: testAccPopulationConfig_DataProtection_Sandbox(environmentName, licenseID, resourceName, name),
+				PreConfig: func() {
+					sso.User_CreateUser_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, name, &userID, &populationID)
+				},
+				Destroy:     true,
+				ExpectError: regexp.MustCompile("Error when calling `DeletePopulation`: The request could not be completed"),
+			},
+			{
+				Config: testAccPopulationConfig_DataProtection_Sandbox(environmentName, licenseID, resourceName, name),
+				PreConfig: func() {
+					sso.User_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, userID)
+				},
+				Destroy: true,
+			},
+			{
+				Config: testAccPopulationConfig_DataProtection_Production(environmentName, licenseID, resourceName, name),
+				Check:  sso.Population_GetIDs(resourceFullName, &environmentID, &populationID),
+			},
+			{
+				Config: testAccPopulationConfig_DataProtection_Production(environmentName, licenseID, resourceName, name),
+				PreConfig: func() {
+					sso.User_CreateUser_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, name, &userID, &populationID)
+				},
+				Destroy:     true,
+				ExpectError: regexp.MustCompile("Error when calling `DeletePopulation`: The request could not be completed"),
+			},
+			{
+				Config: testAccPopulationConfig_DataProtection_Sandbox(environmentName, licenseID, resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+				),
+			},
+			{
+				Config: testAccPopulationConfig_DataProtection_Sandbox(environmentName, licenseID, resourceName, name),
+				PreConfig: func() {
+					sso.User_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, userID)
+				},
+				Destroy: true,
+			},
+		},
+	})
+}
+
 func TestAccPopulation_BadParameters(t *testing.T) {
 	t.Parallel()
 
@@ -261,4 +339,22 @@ resource "pingone_population" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccPopulationConfig_DataProtection_Sandbox(environmentName, licenseID, resourceName, name string) string {
+	return testAccPopulationConfig_DataProtection(environmentName, licenseID, resourceName, name, management.ENUMENVIRONMENTTYPE_SANDBOX)
+}
+
+func testAccPopulationConfig_DataProtection_Production(environmentName, licenseID, resourceName, name string) string {
+	return testAccPopulationConfig_DataProtection(environmentName, licenseID, resourceName, name, management.ENUMENVIRONMENTTYPE_PRODUCTION)
+}
+
+func testAccPopulationConfig_DataProtection(environmentName, licenseID, resourceName, name string, environmentType management.EnumEnvironmentType) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_population" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+}`, acctest.MinimalEnvironmentNoPopulation(environmentName, licenseID, environmentType), environmentName, resourceName, name)
 }
