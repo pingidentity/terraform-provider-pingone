@@ -102,16 +102,18 @@ func ResourcePasswordPolicy() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"max": {
-							Description:      "The maximum number of characters allowed for the password. Defaults to 255. This property is not enforced when not present.",
+							Description:      "The maximum number of characters allowed for the password. This property is not enforced when not present.",
 							Type:             schema.TypeInt,
 							Optional:         true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(255, 255)),
+							Default:          255,
 						},
 						"min": {
-							Description:      "The minimum number of characters required for the password. Defaults to 8 characters. This property is not enforced when not present.",
+							Description:      "The minimum number of characters required for the password. This can be from `8` to `32` (inclusive). This property is not enforced when not present.",
 							Type:             schema.TypeInt,
 							Optional:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(8, 8)),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(8, 32)),
+							Default:          8,
 						},
 					},
 				},

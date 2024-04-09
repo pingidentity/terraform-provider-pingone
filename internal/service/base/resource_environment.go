@@ -26,8 +26,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
+	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	stringdefaultinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringdefaultinternal"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -37,9 +37,9 @@ import (
 
 // Types
 type EnvironmentResource struct {
-	Client      *pingone.Client
-	region      model.RegionMapping
-	forceDelete bool
+	serviceClientType
+	region  model.RegionMapping
+	options client.GlobalOptions
 }
 
 type environmentResourceModel struct {
@@ -82,10 +82,11 @@ var (
 
 // Framework interfaces
 var (
-	_ resource.Resource                = &EnvironmentResource{}
-	_ resource.ResourceWithConfigure   = &EnvironmentResource{}
-	_ resource.ResourceWithImportState = &EnvironmentResource{}
-	_ resource.ResourceWithModifyPlan  = &EnvironmentResource{}
+	_ resource.Resource                   = &EnvironmentResource{}
+	_ resource.ResourceWithConfigure      = &EnvironmentResource{}
+	_ resource.ResourceWithImportState    = &EnvironmentResource{}
+	_ resource.ResourceWithModifyPlan     = &EnvironmentResource{}
+	_ resource.ResourceWithValidateConfig = &EnvironmentResource{}
 )
 
 // New Object
@@ -367,13 +368,7 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 		return
 	}
 
-	var regionPlan types.String
-	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("region"), &regionPlan)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	if regionPlan.IsUnknown() {
+	if plan.Region.IsUnknown() {
 
 		if r.region.Region == "" {
 			resp.Diagnostics.AddError(
@@ -385,6 +380,47 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("region"), types.StringValue(r.region.Region))...)
 	}
+
+	if !req.State.Raw.IsNull() && !state.Type.IsNull() && state.Type.Equal(types.StringValue(string(management.ENUMENVIRONMENTTYPE_PRODUCTION))) && !state.Type.Equal(plan.Type) {
+		if r.options.Population.ContainsUsersForceDelete && !r.options.Environment.ProductionTypeForceDelete {
+			resp.Diagnostics.AddWarning(
+				"Data protection notice",
+				fmt.Sprintf("The plan for environment %[1]s is to change the environment type away from \"PRODUCTION\", and the provider configuration is set to force delete populations if they contain users.  This may result in the loss of user data.  Please ensure this configuration is intentional and that you have a backup of any data you wish to retain.", plan.Id.ValueString()),
+			)
+		}
+	}
+
+	var servicePlan []environmentServiceModel
+	resp.Diagnostics.Append(plan.Services.ElementsAs(ctx, &servicePlan, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if len(servicePlan) == 0 {
+
+		serviceDefaultMap := map[string]attr.Value{
+			"type":        framework.StringToTF("SSO"),
+			"console_url": types.StringNull(),
+			"bookmark":    types.SetNull(types.ObjectType{AttrTypes: environmentServiceBookmarkTFObjectTypes}),
+			"tags":        types.SetNull(types.StringType),
+		}
+
+		serviceDefault, d := types.SetValue(
+			types.ObjectType{AttrTypes: environmentServiceTFObjectTypes},
+			append(
+				make([]attr.Value, 0),
+				types.ObjectValueMust(environmentServiceTFObjectTypes, serviceDefaultMap),
+			),
+		)
+
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("service"), serviceDefault)...)
+	}
+
 }
 
 func (r *EnvironmentResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
@@ -420,6 +456,10 @@ func (r *EnvironmentResource) Configure(ctx context.Context, req resource.Config
 		return
 	}
 	r.region = resourceConfig.Client.API.Region
+
+	if resourceConfig.Client.GlobalOptions != nil {
+		r.options = *resourceConfig.Client.GlobalOptions
+	}
 }
 
 func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -679,7 +719,7 @@ func (r *EnvironmentResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 
 	// Run the API call
-	resp.Diagnostics.Append(deleteEnvironment(ctx, r.Client.ManagementAPIClient, data.Id.ValueString(), r.forceDelete)...)
+	resp.Diagnostics.Append(deleteEnvironment(ctx, r.Client.ManagementAPIClient, data.Id.ValueString(), r.options.Environment.ProductionTypeForceDelete)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

@@ -9,5 +9,18 @@ type Config struct {
 	APIHostnameOverride  *string
 	AuthHostnameOverride *string
 	ProxyURL             *string
-	ForceDelete          bool
+	GlobalOptions        *GlobalOptions
+}
+
+type GlobalOptions struct {
+	Environment *EnvironmentOptions
+	Population  *PopulationOptions
+}
+
+type EnvironmentOptions struct {
+	ProductionTypeForceDelete bool
+}
+
+type PopulationOptions struct {
+	ContainsUsersForceDelete bool
 }

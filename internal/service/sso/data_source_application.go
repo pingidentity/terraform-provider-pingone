@@ -52,22 +52,24 @@ var (
 	}
 
 	applicationOidcOptionsTFObjectTypes = map[string]attr.Type{
-		"type":                                        types.StringType,
-		"home_page_url":                               types.StringType,
-		"initiate_login_uri":                          types.StringType,
-		"target_link_uri":                             types.StringType,
-		"grant_types":                                 types.SetType{ElemType: types.StringType},
-		"response_types":                              types.SetType{ElemType: types.StringType},
-		"token_endpoint_authn_method":                 types.StringType,
-		"par_requirement":                             types.StringType,
-		"par_timeout":                                 types.Int64Type,
-		"pkce_enforcement":                            types.StringType,
-		"redirect_uris":                               types.SetType{ElemType: types.StringType},
-		"allow_wildcards_in_redirect_uris":            types.BoolType,
-		"post_logout_redirect_uris":                   types.SetType{ElemType: types.StringType},
-		"refresh_token_duration":                      types.Int64Type,
-		"refresh_token_rolling_duration":              types.Int64Type,
-		"refresh_token_rolling_grace_period_duration": types.Int64Type,
+		"type":                             types.StringType,
+		"home_page_url":                    types.StringType,
+		"initiate_login_uri":               types.StringType,
+		"jwks":                             types.StringType,
+		"jwks_url":                         types.StringType,
+		"target_link_uri":                  types.StringType,
+		"grant_types":                      types.SetType{ElemType: types.StringType},
+		"response_types":                   types.SetType{ElemType: types.StringType},
+		"token_endpoint_authn_method":      types.StringType,
+		"par_requirement":                  types.StringType,
+		"par_timeout":                      types.Int64Type,
+		"pkce_enforcement":                 types.StringType,
+		"redirect_uris":                    types.SetType{ElemType: types.StringType},
+		"allow_wildcards_in_redirect_uris": types.BoolType,
+		"post_logout_redirect_uris":        types.SetType{ElemType: types.StringType},
+		"refresh_token_duration":           types.Int64Type,
+		"refresh_token_rolling_duration":   types.Int64Type,
+		"refresh_token_rolling_grace_period_duration":        types.Int64Type,
 		"additional_refresh_token_replay_protection_enabled": types.BoolType,
 		"client_id":                        types.StringType,
 		"client_secret":                    types.StringType,
@@ -112,22 +114,24 @@ var (
 	}
 
 	applicationSamlOptionsTFObjectTypes = map[string]attr.Type{
-		"home_page_url":                  types.StringType,
-		"type":                           types.StringType,
-		"acs_urls":                       types.SetType{ElemType: types.StringType},
-		"assertion_duration":             types.Int64Type,
-		"assertion_signed_enabled":       types.BoolType,
-		"idp_signing_key":                types.ObjectType{AttrTypes: applicationSamlOptionsIdpSigningKeyTFObjectTypes},
-		"enable_requested_authn_context": types.BoolType,
-		"nameid_format":                  types.StringType,
-		"response_is_signed":             types.BoolType,
-		"slo_binding":                    types.StringType,
-		"slo_endpoint":                   types.StringType,
-		"slo_response_endpoint":          types.StringType,
-		"slo_window":                     types.Int64Type,
-		"sp_entity_id":                   types.StringType,
-		"sp_verification":                types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes},
-		"cors_settings":                  types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
+		"home_page_url":                   types.StringType,
+		"type":                            types.StringType,
+		"acs_urls":                        types.SetType{ElemType: types.StringType},
+		"assertion_duration":              types.Int64Type,
+		"assertion_signed_enabled":        types.BoolType,
+		"default_target_url":              types.StringType,
+		"idp_signing_key":                 types.ListType{ElemType: types.ObjectType{AttrTypes: applicationSamlOptionsIdpSigningKeyTFObjectTypes}},
+		"enable_requested_authn_context":  types.BoolType,
+		"nameid_format":                   types.StringType,
+		"response_is_signed":              types.BoolType,
+		"slo_binding":                     types.StringType,
+		"slo_endpoint":                    types.StringType,
+		"slo_response_endpoint":           types.StringType,
+		"slo_window":                      types.Int64Type,
+		"sp_entity_id":                    types.StringType,
+		"sp_verification_certificate_ids": types.SetType{ElemType: types.StringType},
+		"sp_verification":                 types.ListType{ElemType: types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes}},
+		"cors_settings":                   types.ListType{ElemType: types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes}},
 	}
 
 	applicationSamlOptionsIdpSigningKeyTFObjectTypes = map[string]attr.Type{
@@ -189,6 +193,14 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 		"The custom home page URL for the application.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.",
 	)
 
+	oidcJwksDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_authn_method`. This property is required when `token_endpoint_authn_method` is `PRIVATE_KEY_JWT` and the `jwks_url` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks_url` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).",
+	)
+
+	oidcJwksUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies a URL (supports `https://` only) that provides access to a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_authn_method`. This property is required when `token_endpoint_authn_method` is `PRIVATE_KEY_JWT` and the `jwks` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).",
+	)
+
 	oidcOptionsPKCEEnforcementDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies how `PKCE` request parameters are handled on the authorize request.",
 	)
@@ -215,6 +227,10 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 
 	samlEnableRequestedAuthnContextDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether `requestedAuthnContext` is taken into account in policy decision-making.",
+	)
+
+	samlDefaultTargetUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specfies a default URL used as the `RelayState` parameter by the IdP to deep link into the application after authentication. This value can be overridden by the `applicationUrl` query parameter for [GET Identity Provider Initiated SSO](https://apidocs.pingidentity.com/pingone/platform/v1/api/#get-identity-provider-initiated-sso). Although both of these parameters are generally URLs, because they are used as deep links, this is not enforced. If neither `defaultTargetUrl` nor `applicationUrl` is specified during a SAML authentication flow, no `RelayState` value is supplied to the application. The `defaultTargetUrl` (or the `applicationUrl`) value is passed to the SAML application’s ACS URL as a separate `RelayState` key value (not within the SAMLResponse key value).",
 	)
 
 	resp.Schema = schema.Schema{
@@ -334,6 +350,16 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 					"initiate_login_uri": schema.StringAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the URI to use for third-parties to begin the sign-on process for the application.").Description,
 						Computed:    true,
+					},
+					"jwks": schema.StringAttribute{
+						Description:         oidcJwksDescription.Description,
+						MarkdownDescription: oidcJwksDescription.MarkdownDescription,
+						Computed:            true,
+					},
+					"jwks_url": schema.StringAttribute{
+						Description:         oidcJwksUrlDescription.Description,
+						MarkdownDescription: oidcJwksUrlDescription.MarkdownDescription,
+						Computed:            true,
 					},
 					"target_link_uri": schema.StringAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("The URI for the application.").Description,
@@ -545,6 +571,11 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 					"assertion_signed_enabled": schema.BoolAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the SAML assertion itself should be signed.").Description,
 						Computed:    true,
+					},
+					"default_target_url": schema.StringAttribute{
+						Description:         samlDefaultTargetUrlDescription.Description,
+						MarkdownDescription: samlDefaultTargetUrlDescription.MarkdownDescription,
+						Computed:            true,
 					},
 					"idp_signing_key": schema.SingleNestedAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("SAML application assertion/response signing key settings.").Description,
@@ -973,6 +1004,8 @@ func (p *applicationDataSourceModel) toStateOIDCOptions(apiObject *management.Ap
 		"par_timeout":                      framework.Int32OkToTF(apiObject.GetParTimeoutOk()),
 		"home_page_url":                    framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
 		"initiate_login_uri":               framework.StringOkToTF(apiObject.GetInitiateLoginUriOk()),
+		"jwks":                             framework.StringOkToTF(apiObject.GetJwksOk()),
+		"jwks_url":                         framework.StringOkToTF(apiObject.GetJwksUrlOk()),
 		"target_link_uri":                  framework.StringOkToTF(apiObject.GetTargetLinkUriOk()),
 		"response_types":                   framework.EnumSetOkToTF(apiObject.GetResponseTypesOk()),
 		"pkce_enforcement":                 framework.EnumOkToTF(apiObject.GetPkceEnforcementOk()),
@@ -1185,6 +1218,7 @@ func (p *applicationDataSourceModel) toStateSAMLOptions(apiObject *management.Ap
 		"sp_entity_id":                   framework.StringOkToTF(apiObject.GetSpEntityIdOk()),
 		"home_page_url":                  framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
 		"assertion_signed_enabled":       framework.BoolOkToTF(apiObject.GetAssertionSignedOk()),
+		"default_target_url":             framework.StringOkToTF(apiObject.GetDefaultTargetUrlOk()),
 		"idp_signing_key":                idpSigningKeyObj,
 		"enable_requested_authn_context": framework.BoolOkToTF(apiObject.GetEnableRequestedAuthnContextOk()),
 		"nameid_format":                  framework.StringOkToTF(apiObject.GetNameIdFormatOk()),

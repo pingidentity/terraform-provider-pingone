@@ -648,7 +648,12 @@ func (p *NotificationPolicyResourceModel) expand(ctx context.Context) (*manageme
 	}
 
 	data := management.NewNotificationsPolicy(p.Name.ValueString(), quotas)
-	data.SetDefault(false)
+
+	if !p.Default.IsNull() && !p.Default.IsUnknown() {
+		data.SetDefault(p.Default.ValueBool())
+	} else {
+		data.SetDefault(false)
+	}
 
 	if !p.CountryLimit.IsNull() && !p.CountryLimit.IsUnknown() {
 		var countryLimitPlan NotificationPolicyCountryLimitResourceModel

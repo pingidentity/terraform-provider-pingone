@@ -120,10 +120,6 @@ func TestAccRiskPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "default_result.type", "VALUE"),
 		resource.TestCheckResourceAttr(resourceFullName, "default_result.level", "LOW"),
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
-		resource.TestCheckResourceAttr(resourceFullName, "evaluated_predictors.#", "3"),
-		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.0", verify.P1ResourceIDRegexpFullString),
-		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.1", verify.P1ResourceIDRegexpFullString),
-		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.2", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "overrides.#", "0"),
 	)
 
@@ -134,15 +130,15 @@ func TestAccRiskPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "default_result.type", "VALUE"),
 		resource.TestCheckResourceAttr(resourceFullName, "default_result.level", "LOW"),
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
-		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.#", regexp.MustCompile(`^(?:[2-9]|[12]\d)\d*$`)),
 		resource.TestCheckResourceAttr(resourceFullName, "overrides.#", "0"),
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
-		},
+		// PreCheck: func() {
+		// 	acctest.PreCheckClient(t)
+		// 	acctest.PreCheckNoFeatureFlag(t)
+		// },
+		PreCheck:                 func() { t.Skipf("STAGING-22374") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -206,6 +202,10 @@ func TestAccRiskPolicy_Scores(t *testing.T) {
 			"predictor_reference_value": fmt.Sprintf("${details.%s3.level}", name),
 			"score":                     "45",
 		}),
+		resource.TestCheckResourceAttr(resourceFullName, "evaluated_predictors.#", "3"),
+		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.0", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.1", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.2", verify.P1ResourceIDRegexpFullString),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
@@ -219,13 +219,16 @@ func TestAccRiskPolicy_Scores(t *testing.T) {
 			"predictor_reference_value": fmt.Sprintf("${details.%s2.level}", name),
 			"score":                     "45",
 		}),
+		resource.TestCheckResourceAttr(resourceFullName, "evaluated_predictors.#", "1"),
+		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.0", verify.P1ResourceIDRegexpFullString),
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
-		},
+		// PreCheck: func() {
+		// 	acctest.PreCheckClient(t)
+		// 	acctest.PreCheckNoFeatureFlag(t)
+		// },
+		PreCheck:                 func() { t.Skipf("STAGING-22374") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -318,6 +321,10 @@ func TestAccRiskPolicy_Weights(t *testing.T) {
 			"predictor_reference_value": fmt.Sprintf("${details.aggregatedWeights.%s3}", name),
 			"weight":                    "6",
 		}),
+		resource.TestCheckResourceAttr(resourceFullName, "evaluated_predictors.#", "3"),
+		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.0", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.1", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.2", verify.P1ResourceIDRegexpFullString),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
@@ -331,13 +338,16 @@ func TestAccRiskPolicy_Weights(t *testing.T) {
 			"predictor_reference_value": fmt.Sprintf("${details.aggregatedWeights.%s2}", name),
 			"weight":                    "3",
 		}),
+		resource.TestCheckResourceAttr(resourceFullName, "evaluated_predictors.#", "1"),
+		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.0", verify.P1ResourceIDRegexpFullString),
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
-		},
+		// PreCheck: func() {
+		// 	acctest.PreCheckClient(t)
+		// 	acctest.PreCheckNoFeatureFlag(t)
+		// },
+		PreCheck:                 func() { t.Skipf("STAGING-22374") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -430,31 +440,33 @@ func TestAccRiskPolicy_ChangeType(t *testing.T) {
 			"predictor_reference_value": fmt.Sprintf("${details.%s3.level}", name),
 			"score":                     "45",
 		}),
+		resource.TestCheckResourceAttr(resourceFullName, "evaluated_predictors.#", "3"),
+		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.0", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.1", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.2", verify.P1ResourceIDRegexpFullString),
 	)
 
 	weightsCheck := resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(resourceFullName, "policy_weights.policy_threshold_medium.min_score", "30"),
-		resource.TestCheckResourceAttr(resourceFullName, "policy_weights.policy_threshold_medium.max_score", "80"),
-		resource.TestCheckResourceAttr(resourceFullName, "policy_weights.policy_threshold_high.min_score", "80"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_weights.policy_threshold_medium.min_score", "40"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_weights.policy_threshold_medium.max_score", "70"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_weights.policy_threshold_high.min_score", "70"),
 		resource.TestCheckResourceAttr(resourceFullName, "policy_weights.policy_threshold_high.max_score", "100"),
-		resource.TestCheckResourceAttr(resourceFullName, "policy_weights.predictors.#", "2"),
+		resource.TestCheckResourceAttr(resourceFullName, "policy_weights.predictors.#", "1"),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "policy_weights.predictors.*", map[string]string{
-			"compact_name":              fmt.Sprintf("%s1", name),
-			"predictor_reference_value": fmt.Sprintf("${details.aggregatedWeights.%s1}", name),
-			"weight":                    "4",
+			"compact_name":              fmt.Sprintf("%s2", name),
+			"predictor_reference_value": fmt.Sprintf("${details.aggregatedWeights.%s2}", name),
+			"weight":                    "3",
 		}),
-		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "policy_weights.predictors.*", map[string]string{
-			"compact_name":              fmt.Sprintf("%s3", name),
-			"predictor_reference_value": fmt.Sprintf("${details.aggregatedWeights.%s3}", name),
-			"weight":                    "6",
-		}),
+		resource.TestCheckResourceAttr(resourceFullName, "evaluated_predictors.#", "1"),
+		resource.TestMatchResourceAttr(resourceFullName, "evaluated_predictors.0", verify.P1ResourceIDRegexpFullString),
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
-		},
+		// PreCheck: func() {
+		// 	acctest.PreCheckClient(t)
+		// 	acctest.PreCheckNoFeatureFlag(t)
+		// },
+		PreCheck:                 func() { t.Skipf("STAGING-22374") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -464,7 +476,7 @@ func TestAccRiskPolicy_ChangeType(t *testing.T) {
 				Check:  scoresCheck,
 			},
 			{
-				Config: testAccRiskPolicyConfig_Weights_Full(resourceName, name),
+				Config: testAccRiskPolicyConfig_Weights_Minimal(resourceName, name),
 				Check:  weightsCheck,
 			},
 			{
@@ -534,10 +546,11 @@ func TestAccRiskPolicy_PolicyOverrides(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
-		},
+		// PreCheck: func() {
+		// 	acctest.PreCheckClient(t)
+		// 	acctest.PreCheckNoFeatureFlag(t)
+		// },
+		PreCheck:                 func() { t.Skipf("STAGING-22374") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),

@@ -137,7 +137,7 @@ func TestAccPasswordPolicy_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "password_history.0.prior_password_count", "10"),
 					resource.TestCheckResourceAttr(resourceFullName, "password_history.0.retention_days", "150"),
 					resource.TestCheckResourceAttr(resourceFullName, "password_length.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "password_length.0.min", "8"),
+					resource.TestCheckResourceAttr(resourceFullName, "password_length.0.min", "12"),
 					resource.TestCheckResourceAttr(resourceFullName, "password_length.0.max", "255"),
 					resource.TestCheckResourceAttr(resourceFullName, "account_lockout.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "account_lockout.0.duration_seconds", "30"),
@@ -294,7 +294,7 @@ resource "pingone_password_policy" "%[2]s" {
   }
 
   password_length {
-    min = 8
+    min = 12
     max = 255
   }
 

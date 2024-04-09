@@ -269,6 +269,10 @@ Required:
 
 - `verify` (String) Controls Government ID verification requirements.  Options are `DISABLED`, `OPTIONAL`, `REQUIRED`.  Defaults to `DISABLED`.
 
+Optional:
+
+- `inspection_type` (String) Determine whether document authentication is automated, manual, or possibly both.  Options are `AUTOMATIC`, `MANUAL`, `STEP_UP`.
+
 
 <a id="nestedatt--liveness"></a>
 ### Nested Schema for `liveness`

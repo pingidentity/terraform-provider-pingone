@@ -1,4 +1,70 @@
-## 0.26.0 (Unreleased)
+## 0.27.1 (Unreleased)
+
+BUG FIXES:
+
+* `resource/pingone_notification_template_content`: Fixed `Invalid import ID specified` error when attempting to import `credential_issued` and `verification_code_template` templates. ([#778](https://github.com/pingidentity/terraform-provider-pingone/issues/778))
+* `resource/pingone_notification_template_content`: Fixed `expected length of content to be in the range (1 - 153)` error when attempting to import longer length SMS templates configured in the console. ([#780](https://github.com/pingidentity/terraform-provider-pingone/issues/780))
+
+## 0.27.0 (26 March 2024)
+
+NOTES:
+
+* Deprecated the `force_delete_production_type` provider parameter.  This parameter will be removed in the next major release.  Please use the `global_options.population.contains_users_force_delete` provider parameter going forward.  Use of this provider option may result in loss of user data - use with caution. ([#773](https://github.com/pingidentity/terraform-provider-pingone/issues/773))
+* `resource/pingone_environment`: Code optimisation on plan modification. ([#773](https://github.com/pingidentity/terraform-provider-pingone/issues/773))
+* bump `github.com/hashicorp/terraform-plugin-framework` 1.5.0 => v1.6.1 ([#766](https://github.com/pingidentity/terraform-provider-pingone/issues/766))
+* bump `github.com/hashicorp/terraform-plugin-framework` 1.6.1 => 1.7.0 ([#771](https://github.com/pingidentity/terraform-provider-pingone/issues/771))
+* bump `github.com/hashicorp/terraform-plugin-go` 0.21.0 => 0.22.1 ([#766](https://github.com/pingidentity/terraform-provider-pingone/issues/766))
+* bump `github.com/hashicorp/terraform-plugin-mux` 0.13.0 => 0.15.0 ([#766](https://github.com/pingidentity/terraform-provider-pingone/issues/766))
+* bump `github.com/hashicorp/terraform-plugin-sdk/v2` 2.31.0 => 2.33.0 ([#766](https://github.com/pingidentity/terraform-provider-pingone/issues/766))
+* bump `github.com/hashicorp/terraform-plugin-testing` 1.6.0 => 1.7.0 ([#766](https://github.com/pingidentity/terraform-provider-pingone/issues/766))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.37.0 => 0.38.0 ([#766](https://github.com/pingidentity/terraform-provider-pingone/issues/766))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` 0.13.0 => 0.14.0 ([#766](https://github.com/pingidentity/terraform-provider-pingone/issues/766))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` 0.14.0 => 0.14.1 ([#771](https://github.com/pingidentity/terraform-provider-pingone/issues/771))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.11.6 => 0.11.7 ([#766](https://github.com/pingidentity/terraform-provider-pingone/issues/766))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.11.7 => 0.11.8 ([#771](https://github.com/pingidentity/terraform-provider-pingone/issues/771))
+* bump `google.golang.org/protobuf` 1.32.0 => 1.33.0 ([#766](https://github.com/pingidentity/terraform-provider-pingone/issues/766))
+
+ENHANCEMENTS:
+
+* Added `global_options` provider parameter block to be able to override specific API behaviours. ([#773](https://github.com/pingidentity/terraform-provider-pingone/issues/773))
+* Added the `global_options.population.contains_users_force_delete` provider parameter to be able to force-delete populations if they contain users in sandbox environments.  Use of this provider option may result in loss of user data - use with caution. ([#773](https://github.com/pingidentity/terraform-provider-pingone/issues/773))
+* `data-source/pingone_application`: Added support for `PRIVATE_KEY_JWT` (with `oidc_options.jwks` and `oidc_options.jwks_url` attributes) and `CLIENT_SECRET_JWT` token endpoint authentication methods for OIDC applications. ([#769](https://github.com/pingidentity/terraform-provider-pingone/issues/769))
+* `data-source/pingone_application`: Added support for the `saml_options.default_target_url` property for SAML applications. ([#768](https://github.com/pingidentity/terraform-provider-pingone/issues/768))
+* `data_source/pingone_verify_policy`: Added support for `inspection_type` property in `government_id` configuration object. ([#754](https://github.com/pingidentity/terraform-provider-pingone/issues/754))
+* `resource/pingone_application`: Added support for `PRIVATE_KEY_JWT` (with `oidc_options.jwks` and `oidc_options.jwks_url` optional properties) and `CLIENT_SECRET_JWT` token endpoint authentication methods for OIDC applications. ([#769](https://github.com/pingidentity/terraform-provider-pingone/issues/769))
+* `resource/pingone_application`: Added support for the `saml_options.default_target_url` property for SAML applications. ([#768](https://github.com/pingidentity/terraform-provider-pingone/issues/768))
+* `resource/pingone_verify_policy`: Added support for `inspection_type` property in `government_id` configuration object. ([#754](https://github.com/pingidentity/terraform-provider-pingone/issues/754))
+
+BUG FIXES:
+
+* `resource/pingone_user`: Fixed error when attempting to move a user between populations by changing the `population_id` value. ([#770](https://github.com/pingidentity/terraform-provider-pingone/issues/770))
+
+## 0.26.1 (28 February 2024)
+
+NOTES:
+
+* `resource/pingone_credential_issuer_profile`: Added customisable timeout for resource creation, used to tune the polling of a platform bootstrapped credential issuer profile, before one is forcefully created. ([#752](https://github.com/pingidentity/terraform-provider-pingone/issues/752))
+* `resource/pingone_notification_policy`: Corrected documentation HCL examples. ([#747](https://github.com/pingidentity/terraform-provider-pingone/issues/747))
+* `resource/pingone_sign_on_policy`: Migrated to plugin framework. ([#747](https://github.com/pingidentity/terraform-provider-pingone/issues/747))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.36.0 => 0.37.0 ([#746](https://github.com/pingidentity/terraform-provider-pingone/issues/746))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` 0.12.2 => 0.13.0 ([#746](https://github.com/pingidentity/terraform-provider-pingone/issues/746))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.11.5 => 0.11.6 ([#746](https://github.com/pingidentity/terraform-provider-pingone/issues/746))
+
+BUG FIXES:
+
+* `resource/pingone_credential_issuer_profile`: Fixed race condition leading to a "A resource with the specified name already exists" error when creating a credential issuer profile at the same time as creating a new environment. ([#752](https://github.com/pingidentity/terraform-provider-pingone/issues/752))
+* `resource/pingone_key`: Fixed unnecessary replacement plan when certain properties are modified. ([#747](https://github.com/pingidentity/terraform-provider-pingone/issues/747))
+* `resource/pingone_mfa_fido2_policy`: Resource can now be modified with Terraform if the `default` property is modified to `true` in the console or by API directly. ([#747](https://github.com/pingidentity/terraform-provider-pingone/issues/747))
+* `resource/pingone_notification_policy`: The resource can now be modified with Terraform if the `default` property is modified to `true` in the console or by API directly. ([#747](https://github.com/pingidentity/terraform-provider-pingone/issues/747))
+* `resource/pingone_password_policy`: Updated the validation rule to allow the user's minimum password length to be set between 8 and 32 characters (inclusive) long. ([#740](https://github.com/pingidentity/terraform-provider-pingone/issues/740))
+* `resource/pingone_risk_policy`: Fix for predictors, that are not configured in the policy, get included with a weight/score of 0. ([#751](https://github.com/pingidentity/terraform-provider-pingone/issues/751))
+* `resource/pingone_risk_policy`: Fixed "Cannot find risk predictor from compact name" error when applying a policy containing "bot detection", "new device" or "adversary in the middle" predictors. ([#748](https://github.com/pingidentity/terraform-provider-pingone/issues/748))
+* `resource/pingone_risk_policy`: Provider now waits for confirmation that, on destroy, the risk policy has been successfully removed in the environment. ([#748](https://github.com/pingidentity/terraform-provider-pingone/issues/748))
+* `resource/pingone_risk_policy`: Resource can now be modified with Terraform if the `default` property is modified to `true` in the console or by API directly. ([#747](https://github.com/pingidentity/terraform-provider-pingone/issues/747))
+* `resource/pingone_sign_on_policy`: Resource can now be modified with Terraform if the `default` property is modified to `true` in the console or by API directly. ([#747](https://github.com/pingidentity/terraform-provider-pingone/issues/747))
+* `resource/pingone_verify_policy`: Resource can now be modified with Terraform if the `default` property is modified to `true` in the console or by API directly. ([#747](https://github.com/pingidentity/terraform-provider-pingone/issues/747))
+
+## 0.26.0 (31 January 2024)
 
 NOTES:
 
