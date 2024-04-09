@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_sign_on_policy_action`: Corrected the "login" sign on policy action error messages when configuring a gateway with missing configuration.
+```

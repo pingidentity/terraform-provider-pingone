@@ -1,0 +1,7 @@
+```release-note:note
+`data-source/pingone_licenses`: Migrated to plugin framework.
+```
+
+```release-note:bug
+`data-source/pingone_licenses`: Fixed `data_filter.name` defined as an optional parameter.  The `data_filter.name` parameter is now required when defining the `data_filter` block.
+```

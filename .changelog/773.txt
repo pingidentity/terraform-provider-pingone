@@ -1,0 +1,15 @@
+```release-note:enhancement
+Added `global_options` provider parameter block to be able to override specific API behaviours.
+```
+
+```release-note:enhancement
+Added the `global_options.population.contains_users_force_delete` provider parameter to be able to force-delete populations if they contain users in sandbox environments.  Use of this provider option may result in loss of user data - use with caution.
+```
+
+```release-note:note
+Deprecated the `force_delete_production_type` provider parameter.  This parameter will be removed in the next major release.  Please use the `global_options.population.contains_users_force_delete` provider parameter going forward.  Use of this provider option may result in loss of user data - use with caution.
+```
+
+```release-note:note
+`resource/pingone_environment`: Code optimisation on plan modification.
+```

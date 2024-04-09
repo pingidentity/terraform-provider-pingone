@@ -27,7 +27,14 @@ func SweepClient(ctx context.Context) (*client.Client, error) {
 		ClientSecret:  os.Getenv("PINGONE_CLIENT_SECRET"),
 		EnvironmentID: os.Getenv("PINGONE_ENVIRONMENT_ID"),
 		Region:        os.Getenv("PINGONE_REGION"),
-		ForceDelete:   true,
+		GlobalOptions: &client.GlobalOptions{
+			Environment: &client.EnvironmentOptions{
+				ProductionTypeForceDelete: true,
+			},
+			Population: &client.PopulationOptions{
+				ContainsUsersForceDelete: true,
+			},
+		},
 	}
 
 	return config.APIClient(ctx, getProviderTestingVersion())
@@ -97,7 +104,7 @@ func FetchTaggedEnvironmentsByPrefix(ctx context.Context, apiClient *management.
 
 }
 
-func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient, region management.EnumRegionCode, index string) error {
+func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient, region management.EnvironmentRegion, index string) error {
 
 	environmentLicense := os.Getenv("PINGONE_LICENSE_ID")
 
@@ -106,7 +113,7 @@ func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient,
 		fmt.Sprintf("%sdynamic-%s", EnvironmentNamePrefix, index),
 		region,
 		management.ENUMENVIRONMENTTYPE_SANDBOX,
-	) // Environment |  (optional)
+	)
 
 	productBOMItems := make([]management.BillOfMaterialsProductsInner, 0)
 
@@ -135,7 +142,7 @@ func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient,
 					for _, allowedRegion := range details[0].GetInnerError().AllowedValues {
 						allowedRegions = append(allowedRegions, model.FindRegionByAPICode(management.EnumRegionCode(allowedRegion)).Region)
 					}
-					diags := diag.FromErr(fmt.Errorf("Incompatible environment region for the organization tenant.  Expecting regions %v, region provided: %s", allowedRegions, region))
+					diags := diag.FromErr(fmt.Errorf("Incompatible environment region for the organization tenant.  Expecting regions %v, region provided: %+v", allowedRegions, region))
 
 					return diags
 				}

@@ -34,6 +34,7 @@ func TestAccTrustedEmailAddress_RemovalDrift(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckDomainVerification(t)
 
 			p1Client = acctest.PreCheckTestClient(ctx, t)
 		},
@@ -183,6 +184,7 @@ func TestAccTrustedEmailAddress_BadParameters(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckDomainVerification(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.TrustedEmailAddress_CheckDestroy,

@@ -25,6 +25,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	int64validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int64validator"
+	customstringvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -51,7 +52,8 @@ type verifyPolicyResourceModel struct {
 }
 
 type governmentIdModel struct {
-	Verify types.String `tfsdk:"verify"`
+	Verify         types.String `tfsdk:"verify"`
+	InspectionType types.String `tfsdk:"inspection_type"`
 }
 
 type facialComparisonModel struct {
@@ -133,7 +135,8 @@ var (
 	}
 
 	governmentIdServiceTFObjectTypes = map[string]attr.Type{
-		"verify": types.StringType,
+		"verify":          types.StringType,
+		"inspection_type": types.StringType,
 	}
 
 	facialComparisonServiceTFObjectTypes = map[string]attr.Type{
@@ -286,6 +289,10 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 		"Controls Government ID verification requirements.",
 	).AllowedValuesEnum(verify.AllowedEnumVerifyEnumValues).DefaultValue(string(defaultVerify))
 
+	governmentIdInspectionTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Determine whether document authentication is automated, manual, or possibly both.",
+	).AllowedValuesEnum(verify.AllowedEnumInspectionTypeEnumValues)
+
 	facialComparisonVerifyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Controls Facial Comparison verification requirements.",
 	).AllowedValuesEnum(verify.AllowedEnumVerifyEnumValues).DefaultValue(string(defaultVerify))
@@ -433,8 +440,6 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 				Description:         defaultDescription.Description,
 				MarkdownDescription: defaultDescription.MarkdownDescription,
 				Computed:            true,
-
-				Default: booldefault.StaticBool(false),
 			},
 
 			"description": schema.StringAttribute{
@@ -453,7 +458,8 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 				Default: objectdefault.StaticValue(types.ObjectValueMust(
 					governmentIdServiceTFObjectTypes,
 					map[string]attr.Value{
-						"verify": types.StringValue(string(defaultVerify)),
+						"verify":          types.StringValue(string(defaultVerify)),
+						"inspection_type": types.StringNull(),
 					},
 				)),
 
@@ -464,6 +470,23 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 						Required:            true,
 						Validators: []validator.String{
 							stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumVerifyEnumValues)...),
+						},
+					},
+					"inspection_type": schema.StringAttribute{
+						Description:         governmentIdInspectionTypeDescription.Description,
+						MarkdownDescription: governmentIdInspectionTypeDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Validators: []validator.String{
+							stringvalidator.All(
+								customstringvalidator.RegexMatchesPathValue(
+									regexp.MustCompile(`REQUIRED|OPTIONAL`),
+									fmt.Sprintf("The `government_id.inspection_type` argument is only applicable when `government_id.verify` does not have a value of %s.", string(verify.ENUMVERIFY_DISABLED)),
+									path.MatchRelative().AtParent().AtName("verify"),
+								),
+								stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumInspectionTypeEnumValues)...),
+							),
 						},
 					},
 				},
@@ -1665,9 +1688,12 @@ func (p *verifyPolicyResourceModel) expand(ctx context.Context) (*verify.VerifyP
 		data.SetDescription(p.Description.ValueString())
 	}
 
-	// Verify policies managed via TF currently cannot be set to the default policy due to a potential lock situation or state management problem.
 	// The verify policy will also have default set to false.
-	data.SetDefault(false)
+	if !p.Default.IsNull() && !p.Default.IsUnknown() {
+		data.SetDefault(p.Default.ValueBool())
+	} else {
+		data.SetDefault(false)
+	}
 
 	return data, diags
 }
@@ -1678,6 +1704,10 @@ func (p *governmentIdModel) expandgovernmentIdModel() (*verify.GovernmentIdConfi
 	verifyGovernmentId := verify.NewGovernmentIdConfigurationWithDefaults()
 	if !p.Verify.IsNull() && !p.Verify.IsUnknown() {
 		verifyGovernmentId.SetVerify(verify.EnumVerify(p.Verify.ValueString()))
+	}
+
+	if !p.InspectionType.IsNull() && !p.InspectionType.IsUnknown() {
+		verifyGovernmentId.SetInspectionType(verify.EnumInspectionType(p.InspectionType.ValueString()))
 	}
 
 	if verifyGovernmentId == nil {
@@ -2071,11 +2101,12 @@ func (p *verifyPolicyResourceModel) toStateGovernmentId(apiObject *verify.Govern
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
-		return types.ObjectNull(governmentIdDataSourceServiceTFObjectTypes), diags
+		return types.ObjectNull(governmentIdServiceTFObjectTypes), diags
 	}
 
 	objValue, d := types.ObjectValue(governmentIdServiceTFObjectTypes, map[string]attr.Value{
-		"verify": framework.EnumOkToTF(apiObject.GetVerifyOk()),
+		"verify":          framework.EnumOkToTF(apiObject.GetVerifyOk()),
+		"inspection_type": framework.EnumOkToTF(apiObject.GetInspectionTypeOk()),
 	})
 	diags.Append(d...)
 

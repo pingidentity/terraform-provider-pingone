@@ -2,12 +2,12 @@
 page_title: "pingone_sign_on_policy Resource - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Resource to create and manage PingOne sign on policies
+  Resource to create and manage PingOne sign-on policies in an environment.
 ---
 
 # pingone_sign_on_policy (Resource)
 
-Resource to create and manage PingOne sign on policies
+Resource to create and manage PingOne sign-on policies in an environment.
 
 ~> A warning will be issued following `terraform apply` when attempting to remove the final sign-on policy action from an associated sign-on policy.  When removing the final sign-on policy action from a sign-on policy, it's recommended to also remove the associated sign-on policy at the same time.  Further information can be found [here](https://github.com/pingidentity/terraform-provider-pingone/issues/68).
 
@@ -76,15 +76,16 @@ resource "pingone_sign_on_policy_action" "my_policy_mfa" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to create the sign on policy in.
-- `name` (String) A string that specifies the resource name. The name must be unique within the environment, and can consist of either a string of alphanumeric letters, underscore, hyphen, period `^[a-zA-Z0-9_.-]+$` or an absolute URI if the string contains a `:` character.
+- `environment_id` (String) The ID of the environment to manage the sign-on policy in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `name` (String) A string that specifies the sign on policy name, that is also used as the authentication context when initiating sign-on. The name must be unique within the environment, and can consist of either a string of alphanumeric letters, underscore, hyphen, period (regex `^[a-zA-Z0-9_.-]+$`) or an absolute URI if the string contains a `:` character.
 
 ### Optional
 
-- `description` (String) A string that specifies the description of the sign-on policy.
+- `description` (String) A string that specifies the description to apply to the sign-on policy.
 
 ### Read-Only
 
+- `default` (Boolean) A boolean that describes whether this policy should serve as the default sign-on policy for the environment.
 - `id` (String) The ID of this resource.
 
 ## Import

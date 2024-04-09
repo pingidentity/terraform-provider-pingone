@@ -2,6 +2,7 @@ package risk
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -42,41 +43,33 @@ func riskPredictorFetchIDsFromCompactNames(ctx context.Context, apiClient *risk.
 
 			riskPredictorActualInstance := riskPredictor.GetActualInstance()
 
-			var id string
-			var compactName string
-			switch v := riskPredictorActualInstance.(type) {
-			case *risk.RiskPredictorAnonymousNetwork:
-				id = v.GetId()
-				compactName = v.GetCompactName()
-			case *risk.RiskPredictorComposite:
-				id = v.GetId()
-				compactName = v.GetCompactName()
-			case *risk.RiskPredictorCustom:
-				id = v.GetId()
-				compactName = v.GetCompactName()
-			case *risk.RiskPredictorDevice:
-				id = v.GetId()
-				compactName = v.GetCompactName()
-			case *risk.RiskPredictorGeovelocity:
-				id = v.GetId()
-				compactName = v.GetCompactName()
-			case *risk.RiskPredictorIPReputation:
-				id = v.GetId()
-				compactName = v.GetCompactName()
-			case *risk.RiskPredictorUserLocationAnomaly:
-				id = v.GetId()
-				compactName = v.GetCompactName()
-			case *risk.RiskPredictorUserRiskBehavior:
-				id = v.GetId()
-				compactName = v.GetCompactName()
-			case *risk.RiskPredictorVelocity:
-				id = v.GetId()
-				compactName = v.GetCompactName()
+			// Get the ID and compact name of the risk predictor
+			var predictor struct {
+				ID          string `json:"id"`
+				CompactName string `json:"compactName"`
+			}
+
+			predictorBytes, err := json.Marshal(riskPredictorActualInstance)
+			if err != nil {
+				diags.AddError(
+					"Cannot marshal risk predictor",
+					fmt.Sprintf("Error marshalling risk predictor: %s", err),
+				)
+				return nil, diags
+			}
+
+			err = json.Unmarshal(predictorBytes, &predictor)
+			if err != nil {
+				diags.AddError(
+					"Cannot unmarshal risk predictor",
+					fmt.Sprintf("Error unmarshalling risk predictor: %s", err),
+				)
+				return nil, diags
 			}
 
 			// Add the ID to the map of all risk predictors
-			if id != "" && compactName != "" {
-				riskPredictorIDs[compactName] = id
+			if predictor.ID != "" && predictor.CompactName != "" {
+				riskPredictorIDs[predictor.CompactName] = predictor.ID
 			}
 		}
 	}

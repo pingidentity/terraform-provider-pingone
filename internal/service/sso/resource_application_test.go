@@ -2834,6 +2834,136 @@ func TestAccApplication_OIDC_NativeAppAddresses(t *testing.T) {
 	})
 }
 
+func TestAccApplication_OIDC_JwtTokenAuth(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+
+	name := resourceName
+
+	clientSecretBasic := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_MinimalWeb(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.jwks", ""),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.jwks_url", ""),
+		),
+	}
+
+	privateKeyJwtJWKS := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_MinimalWeb_PrivateKeyJWT_JWKS(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "PRIVATE_KEY_JWT"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.jwks", "{\n\t\"keys\": [\n\t  {\n\t\t\"kty\": \"RSA\",\n\t\t\"e\": \"AQAB\",\n\t\t\"use\": \"sig\",\n\t\t\"kid\": \"12345\",\n\t\t\"alg\": \"RS256\",\n\t\t\"n\": \"0vx7agoebGcQSuuPiLJXZptN9nndrQmbXEPCR0VH7jhV1JvKFvVsenY4rz5BnCNRS7U2mFF9K2BWXTZiaF4f3hjd4J0AOnHZV9KbV7L5Cp-1PEXF12R3HCkcqsn9b2I0xEs5OYLQaGbhV8v1FwTD2jZX0tAiw4i+SN9GJkPV2ZCOnF-8RPZCVDG9LZGFq4c9-YNPvRwT7B9-EN0kDYEKsOmGiJ0PVPAVTPZ9EVZVdLg7SwamytKcP4fz_BLTjCojz2W9KIL5UZGenQR5S7KAZxJ0T0DO8Q4kqNVdF7OOrBizX6-qQ9ZC1l6HJ6Sq9ye0oW2jTiMlNQxgc5vNRgHFAmb4DNA\"\n\t  }\n\t]\n}\n"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.jwks_url", ""),
+		),
+	}
+
+	privateKeyJwtJWKSURL := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_MinimalWeb_PrivateKeyJWT_JWKSURL(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "PRIVATE_KEY_JWT"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.jwks", ""),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.jwks_url", "https://pingidentity.com/jwks"),
+		),
+	}
+
+	clientSecretJWT := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_MinimalWeb_ClientSecretJWT(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.token_endpoint_authn_method", "CLIENT_SECRET_JWT"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.jwks", ""),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.jwks_url", ""),
+		),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.Application_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Private key jwt jwks
+			privateKeyJwtJWKS,
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				Config:  testAccApplicationConfig_OIDC_MinimalWeb_PrivateKeyJWT_JWKS(resourceName, name),
+				Destroy: true,
+			},
+			// Private key jwt jwks_url
+			privateKeyJwtJWKSURL,
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				Config:  testAccApplicationConfig_OIDC_MinimalWeb_PrivateKeyJWT_JWKSURL(resourceName, name),
+				Destroy: true,
+			},
+			// Client secret jwt
+			clientSecretJWT,
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				Config:  testAccApplicationConfig_OIDC_MinimalWeb_ClientSecretJWT(resourceName, name),
+				Destroy: true,
+			},
+			// Update
+			clientSecretBasic,
+			privateKeyJwtJWKS,
+			privateKeyJwtJWKSURL,
+			clientSecretJWT,
+			clientSecretBasic,
+		},
+	})
+}
+
 // SAML
 func TestAccApplication_SAMLFull(t *testing.T) {
 	t.Parallel()
@@ -2897,6 +3027,7 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.0.acs_urls.*", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_duration", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_signed_enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.default_target_url", "https://www.pingidentity.com/relaystate"),
 					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "1"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.algorithm"),
@@ -3001,6 +3132,7 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.0.acs_urls.*", "https://pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_duration", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_signed_enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.default_target_url", ""),
 					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.enable_requested_authn_context", "false"),
@@ -3393,6 +3525,80 @@ resource "pingone_application" "%[2]s" {
     grant_types                 = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+func testAccApplicationConfig_OIDC_MinimalWeb_PrivateKeyJWT_JWKS(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "WEB_APP"
+    grant_types                 = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    token_endpoint_authn_method = "PRIVATE_KEY_JWT"
+    redirect_uris               = ["https://www.pingidentity.com"]
+
+    jwks = <<EOF
+{
+	"keys": [
+	  {
+		"kty": "RSA",
+		"e": "AQAB",
+		"use": "sig",
+		"kid": "12345",
+		"alg": "RS256",
+		"n": "0vx7agoebGcQSuuPiLJXZptN9nndrQmbXEPCR0VH7jhV1JvKFvVsenY4rz5BnCNRS7U2mFF9K2BWXTZiaF4f3hjd4J0AOnHZV9KbV7L5Cp-1PEXF12R3HCkcqsn9b2I0xEs5OYLQaGbhV8v1FwTD2jZX0tAiw4i+SN9GJkPV2ZCOnF-8RPZCVDG9LZGFq4c9-YNPvRwT7B9-EN0kDYEKsOmGiJ0PVPAVTPZ9EVZVdLg7SwamytKcP4fz_BLTjCojz2W9KIL5UZGenQR5S7KAZxJ0T0DO8Q4kqNVdF7OOrBizX6-qQ9ZC1l6HJ6Sq9ye0oW2jTiMlNQxgc5vNRgHFAmb4DNA"
+	  }
+	]
+}
+EOF
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+func testAccApplicationConfig_OIDC_MinimalWeb_PrivateKeyJWT_JWKSURL(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "WEB_APP"
+    grant_types                 = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    token_endpoint_authn_method = "PRIVATE_KEY_JWT"
+    redirect_uris               = ["https://www.pingidentity.com"]
+
+    jwks_url = "https://pingidentity.com/jwks"
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+func testAccApplicationConfig_OIDC_MinimalWeb_ClientSecretJWT(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "WEB_APP"
+    grant_types                 = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    token_endpoint_authn_method = "CLIENT_SECRET_JWT"
     redirect_uris               = ["https://www.pingidentity.com"]
   }
 }
@@ -4403,6 +4609,8 @@ resource "pingone_application" "%[3]s" {
     slo_endpoint                   = "https://www.pingidentity.com/sloendpoint"
     slo_response_endpoint          = "https://www.pingidentity.com/sloresponseendpoint"
     slo_window                     = 3
+
+    default_target_url = "https://www.pingidentity.com/relaystate"
 
     sp_verification {
       authn_request_signed = true

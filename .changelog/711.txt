@@ -1,0 +1,3 @@
+```release-note:note
+bump `github.com/cloudflare/circl` 1.3.6 => 1.3.7
+```

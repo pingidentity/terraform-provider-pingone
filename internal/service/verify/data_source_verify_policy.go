@@ -49,7 +49,8 @@ var (
 	}
 
 	governmentIdDataSourceServiceTFObjectTypes = map[string]attr.Type{
-		"verify": types.StringType,
+		"verify":          types.StringType,
+		"inspection_type": types.StringType,
 	}
 
 	facialComparisonDataSourceServiceTFObjectTypes = map[string]attr.Type{
@@ -191,6 +192,10 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 	governmentIdVerifyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Controls Government ID verification requirements.",
 	).AllowedValuesEnum(verify.AllowedEnumVerifyEnumValues).DefaultValue(string(defaultVerify))
+
+	governmentIdInspectionTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Determine whether document authentication is automated, manual, or possibly both.",
+	).AllowedValuesEnum(verify.AllowedEnumInspectionTypeEnumValues)
 
 	facialComparisonVerifyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Controls Facial Comparison verification requirements.",
@@ -366,6 +371,11 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 					"verify": schema.StringAttribute{
 						Description:         governmentIdVerifyDescription.Description,
 						MarkdownDescription: governmentIdVerifyDescription.MarkdownDescription,
+						Computed:            true,
+					},
+					"inspection_type": schema.StringAttribute{
+						Description:         governmentIdInspectionTypeDescription.Description,
+						MarkdownDescription: governmentIdInspectionTypeDescription.MarkdownDescription,
 						Computed:            true,
 					},
 				},
@@ -932,7 +942,8 @@ func (p *verifyPolicyDataSourceModel) toStateGovernmentId(apiObject *verify.Gove
 	}
 
 	objValue, d := types.ObjectValue(governmentIdDataSourceServiceTFObjectTypes, map[string]attr.Value{
-		"verify": framework.EnumOkToTF(apiObject.GetVerifyOk()),
+		"verify":          framework.EnumOkToTF(apiObject.GetVerifyOk()),
+		"inspection_type": framework.EnumOkToTF(apiObject.GetInspectionTypeOk()),
 	})
 	diags.Append(d...)
 

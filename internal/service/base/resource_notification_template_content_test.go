@@ -5,13 +5,16 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -230,7 +233,7 @@ func TestAccNotificationTemplateContent_NewVariant(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	name := "strong_authentication"
+	name := "verification_code_template"
 	locale := "en"
 	variant := "My New Variant"
 
@@ -241,8 +244,8 @@ func TestAccNotificationTemplateContent_NewVariant(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "locale", locale),
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 		resource.TestCheckResourceAttr(resourceFullName, "variant", variant),
-		resource.TestCheckResourceAttr(resourceFullName, "email.#", "0"),
-		resource.TestCheckResourceAttr(resourceFullName, "push.#", "1"),
+		resource.TestCheckResourceAttr(resourceFullName, "email.#", "1"),
+		resource.TestCheckResourceAttr(resourceFullName, "push.#", "0"),
 		resource.TestCheckResourceAttr(resourceFullName, "sms.#", "0"),
 		resource.TestCheckResourceAttr(resourceFullName, "voice.#", "0"),
 	)
@@ -300,7 +303,7 @@ func TestAccNotificationTemplateContent_ChangeVariant(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	name := "strong_authentication"
+	name := "verification_code_template"
 	locale := "en"
 
 	variant1 := "My New Variant"
@@ -338,7 +341,7 @@ func TestAccNotificationTemplateContent_ChangeVariant(t *testing.T) {
 			},
 			// From no variant, to variant
 			{
-				Config: testAccNotificationTemplateContentConfig_DefaultVariant_Push_Minimal(environmentName, licenseID, resourceName, name, locale),
+				Config: testAccNotificationTemplateContentConfig_NoVariant_Minimal(environmentName, licenseID, resourceName, name, locale),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "variant", ""),
 				),
@@ -380,7 +383,7 @@ func TestAccNotificationTemplateContent_InvalidData(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccNotificationTemplateContentConfig_DefaultVariant_Push_Minimal(environmentName, licenseID, resourceName, name.Invalid, locale.Valid),
-				ExpectError: regexp.MustCompile(`expected template_name to be one of \["email_verification_admin" "email_verification_user" "general" "transaction" "verification_code_template" "recovery_code_template" "device_pairing" "strong_authentication" "email_phone_verification" "id_verification" "credential_issued" "credential_updated" "digital_wallet_pairing" "credential_revoked"\], got strong_authentication_doesnotexist`),
+				ExpectError: regexp.MustCompile(fmt.Sprintf(`expected template_name to be one of \["%s"\], got strong_authentication_doesnotexist`, strings.Join(utils.EnumSliceToStringSlice(management.AllowedEnumTemplateNameEnumValues), "\" \""))),
 			},
 			{
 				Config:      testAccNotificationTemplateContentConfig_DefaultVariant_Push_Minimal(environmentName, licenseID, resourceName, name.Valid, locale.Invalid),
@@ -860,11 +863,31 @@ resource "pingone_notification_template_content" "%[3]s" {
   locale         = "%[5]s"
   variant        = "%[6]s"
 
-  push {
-    body  = "Min - Please approve this transaction."
-    title = "Min - BX Retail Transaction Request"
+  email {
+    body    = <<EOT
+Test $${code.value}
+EOT
+    subject = "Test"
   }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale, variant)
+}
+
+func testAccNotificationTemplateContentConfig_NoVariant_Minimal(environmentName, licenseID, resourceName, name, locale string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_notification_template_content" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  template_name  = "%[4]s"
+  locale         = "%[5]s"
+
+  email {
+    body    = <<EOT
+Test $${code.value}
+EOT
+    subject = "Test"
+  }
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
 }
 
 func testAccNotificationTemplateContentConfig_DuplicateLocale(environmentName, licenseID, resourceName, name, locale string) string {

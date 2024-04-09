@@ -1230,7 +1230,28 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	// Run the API call
+	// Run the API calls
+	if state.PopulationId.ValueString() != plan.PopulationId.ValueString() {
+
+		userPopulation := management.NewUserPopulation(plan.PopulationId.ValueString())
+
+		resp.Diagnostics.Append(framework.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				fO, fR, fErr := r.Client.ManagementAPIClient.UserPopulationsApi.UpdateUserPopulation(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).UserPopulation(*userPopulation).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			},
+			"UpdateUserPopulation",
+			framework.DefaultCustomError,
+			userAccountEnabledRetryable,
+			nil,
+		)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 

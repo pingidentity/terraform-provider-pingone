@@ -1,0 +1,11 @@
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-framework` 1.6.1 => 1.7.0
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` 0.11.7 => 0.11.8
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/risk` 0.14.0 => 0.14.1
+```

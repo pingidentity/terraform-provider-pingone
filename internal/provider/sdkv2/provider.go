@@ -67,12 +67,53 @@ func New(version string) func() *schema.Provider {
 				"force_delete_production_type": {
 					Type:        schema.TypeBool,
 					Optional:    true,
+					Deprecated:  "This parameter is deprecated and will be removed in the next major release. Use the `global_options.environment.production_type_force_delete` block going forward.",
 					Description: "Choose whether to force-delete any configuration that has a `PRODUCTION` type parameter.  The platform default is that `PRODUCTION` type configuration will not destroy without intervention to protect stored data.  By default this parameter is set to `false` and can be overridden with the `PINGONE_FORCE_DELETE_PRODUCTION_TYPE` environment variable.",
 				},
 				"http_proxy": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "Full URL for the http/https proxy service, for example `http://127.0.0.1:8090`.  Default value can be set with the `HTTP_PROXY` or `HTTPS_PROXY` environment variables.",
+				},
+				"global_options": {
+					Type:        schema.TypeList,
+					Optional:    true,
+					MaxItems:    1,
+					Description: "A single block containing configuration items to override API behaviours in PingOne.",
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"environment": {
+								Type:        schema.TypeList,
+								Optional:    true,
+								MaxItems:    1,
+								Description: "A single block containing global configuration items to override environment resource settings in PingOne.",
+								Elem: &schema.Resource{
+									Schema: map[string]*schema.Schema{
+										"production_type_force_delete": {
+											Type:        schema.TypeBool,
+											Optional:    true,
+											Description: "Choose whether to force-delete any configuration that has a `PRODUCTION` type parameter.  The platform default is that `PRODUCTION` type configuration will not destroy without intervention to protect stored data.  By default this parameter is set to `false` and can be overridden with the `PINGONE_FORCE_DELETE_PRODUCTION_TYPE` environment variable.",
+										},
+									},
+								},
+							},
+							"population": {
+								Type:        schema.TypeList,
+								Optional:    true,
+								MaxItems:    1,
+								Description: "A single block containing configuration items to override population resource settings in PingOne.",
+								Elem: &schema.Resource{
+									Schema: map[string]*schema.Schema{
+										"contains_users_force_delete": {
+											Type:        schema.TypeBool,
+											Optional:    true,
+											Description: "Choose whether to force-delete populations that contain users not managed by Terraform. Useful for development and testing use cases, and only applies if the environment that contains the population is of type `SANDBOX`. The platform default is that populations cannot be removed if they contain user data. By default this parameter is set to `false`.",
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 				"service_endpoints": {
 					Type:        schema.TypeList,
@@ -102,7 +143,6 @@ func New(version string) func() *schema.Provider {
 				"pingone_certificate_signing_request":    base.DatasourceCertificateSigningRequest(),
 				"pingone_language":                       base.DatasourceLanguage(),
 				"pingone_license":                        base.DatasourceLicense(),
-				"pingone_licenses":                       base.DatasourceLicenses(),
 				"pingone_trusted_email_domain_dkim":      base.DatasourceTrustedEmailDomainDKIM(),
 				"pingone_trusted_email_domain_ownership": base.DatasourceTrustedEmailDomainOwnership(),
 				"pingone_trusted_email_domain_spf":       base.DatasourceTrustedEmailDomainSPF(),
@@ -126,7 +166,6 @@ func New(version string) func() *schema.Provider {
 				"pingone_application_sign_on_policy_assignment": sso.ResourceApplicationSignOnPolicyAssignment(),
 				"pingone_password_policy":                       sso.ResourcePasswordPolicy(),
 				"pingone_resource":                              sso.ResourceResource(),
-				"pingone_sign_on_policy":                        sso.ResourceSignOnPolicy(),
 				"pingone_sign_on_policy_action":                 sso.ResourceSignOnPolicyAction(),
 
 				"pingone_mfa_fido_policy": mfa.ResourceFIDOPolicy(),
@@ -168,18 +207,26 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 			config.Region = v
 		}
 
-		if v, ok := d.Get("force_delete_production_type").(bool); ok {
-			config.ForceDelete = v
-		} else {
-			forceDelete, err := strconv.ParseBool(os.Getenv("PINGONE_FORCE_DELETE_PRODUCTION_TYPE"))
-			if err != nil {
-				forceDelete = false
-			}
+		config.GlobalOptions = &client.GlobalOptions{
+			Environment: &client.EnvironmentOptions{
+				ProductionTypeForceDelete: false,
+			},
+			Population: &client.PopulationOptions{
+				ContainsUsersForceDelete: false,
+			},
+		}
+		if v, err := strconv.ParseBool(os.Getenv("PINGONE_FORCE_DELETE_PRODUCTION_TYPE")); err == nil && v {
 			tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "force_delete_production_type"), map[string]interface{}{
 				"env_var":       "PINGONE_FORCE_DELETE_PRODUCTION_TYPE",
-				"env_var_value": forceDelete,
+				"env_var_value": v,
 			})
-			config.ForceDelete = forceDelete
+			config.GlobalOptions.Environment.ProductionTypeForceDelete = v
+		}
+
+		deprecatedForceDeleteSet := false
+		if v, ok := d.Get("force_delete_production_type").(bool); ok {
+			config.GlobalOptions.Environment.ProductionTypeForceDelete = v
+			deprecatedForceDeleteSet = true
 		}
 
 		if v, ok := d.Get("http_proxy").(string); ok && v != "" {
@@ -193,6 +240,26 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 
 			if v, ok := d.Get("api_hostname").(string); ok && v != "" {
 				config.APIHostnameOverride = &v
+			}
+		}
+
+		if v, ok := d.Get("global_options").([]interface{}); ok && len(v) > 0 && v[0] != nil {
+
+			if v, ok := d.Get("environment").([]interface{}); ok && len(v) > 0 && v[0] != nil {
+				if v, ok := d.Get("production_type_force_delete").(bool); ok {
+
+					if deprecatedForceDeleteSet {
+						return nil, diag.FromErr(fmt.Errorf("Cannot set both `force_delete_production_type` and `global_options.environment.production_type_force_delete`"))
+					}
+
+					config.GlobalOptions.Environment.ProductionTypeForceDelete = v
+				}
+			}
+
+			if v, ok := d.Get("population").([]interface{}); ok && len(v) > 0 && v[0] != nil {
+				if v, ok := d.Get("contains_users_force_delete").(bool); ok {
+					config.GlobalOptions.Population.ContainsUsersForceDelete = v
+				}
 			}
 		}
 

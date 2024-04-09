@@ -78,3 +78,26 @@ func User_RemovalDrift_PreConfig(ctx context.Context, apiClient *management.APIC
 		t.Fatalf("Failed to delete user: %v", err)
 	}
 }
+
+func User_CreateUser_PreConfig(ctx context.Context, apiClient *management.APIClient, t *testing.T, environmentID, name string, resourceID, populationID *string) {
+	if environmentID == "" || name == "" {
+		t.Fatalf("One of environment ID or user name cannot be determined. Environment ID: %s, User name: %s", environmentID, name)
+	}
+
+	userData := management.NewUser(
+		fmt.Sprintf("%s@ping-eng.com", name),
+		name,
+	)
+
+	if populationID != nil {
+		population := *management.NewUserPopulation(*populationID)
+		userData.SetPopulation(population)
+	}
+
+	fO, _, fErr := apiClient.UsersApi.CreateUser(context.Background(), environmentID).ContentType("application/vnd.pingidentity.user.import+json").User(*userData).Execute()
+	if fErr != nil {
+		t.Fatalf("Failed to create user: %v", fErr)
+	}
+
+	*resourceID = fO.GetId()
+}
