@@ -482,7 +482,7 @@ func resourceNotificationTemplateContentImport(ctx context.Context, d *schema.Re
 		},
 		{
 			Label:  "template_name",
-			Regexp: regexp.MustCompile(fmt.Sprintf("`%s`", strings.Join(utils.EnumSliceToStringSlice(management.AllowedEnumTemplateNameEnumValues), "|"))),
+			Regexp: regexp.MustCompile(fmt.Sprintf("(%s)", strings.Join(utils.EnumSliceToStringSlice(management.AllowedEnumTemplateNameEnumValues), "|"))),
 		},
 		{
 			Label:  "notification_template_content_id",
