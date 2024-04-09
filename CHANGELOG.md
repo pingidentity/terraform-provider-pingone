@@ -1,5 +1,9 @@
 ## 0.27.1 (Unreleased)
 
+BUG FIXES:
+
+* `resource/pingone_notification_template_content`: Fixed `Invalid import ID specified` error when attempting to import `credential_issued` and `verification_code_template` templates. ([#778](https://github.com/pingidentity/terraform-provider-pingone/issues/778))
+
 ## 0.27.0 (26 March 2024)
 
 NOTES:
