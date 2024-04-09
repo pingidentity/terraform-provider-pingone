@@ -1,0 +1,19 @@
+```release-note:breaking-change
+`data-source/pingone_environment`: Changed the `service` parameter data type and renamed to `services`.
+```
+
+```release-note:breaking-change
+`data-source/pingone_environment`: Changed the `service.bookmark` parameter data type and renamed to `services.bookmarks`.
+```
+
+```release-note:breaking-change
+`resource/pingone_environment`: Changed the `service` parameter data type, renamed to `services` and made a required parameter.
+```
+
+```release-note:breaking-change
+`resource/pingone_environment`: Moved `service.type` to `services.type` and made a required parameter.
+```
+
+```release-note:breaking-change
+`resource/pingone_environment`: Changed the `service.bookmark` parameter data type and renamed to `services.bookmarks`.
+```

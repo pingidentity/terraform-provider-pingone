@@ -332,7 +332,7 @@ resource "pingone_application" "%[2]s" {
 
   icon {
     id   = pingone_image.%[2]s.id
-    href = pingone_image.%[2]s.uploaded_image[0].href
+    href = pingone_image.%[2]s.uploaded_image.href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
@@ -416,7 +416,7 @@ resource "pingone_application" "%[2]s" {
 
   icon {
     id   = pingone_image.%[2]s.id
-    href = pingone_image.%[2]s.uploaded_image[0].href
+    href = pingone_image.%[2]s.uploaded_image.href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
@@ -504,7 +504,7 @@ resource "pingone_application" "%[2]s" {
 
   icon {
     id   = pingone_image.%[2]s.id
-    href = pingone_image.%[2]s.uploaded_image[0].href
+    href = pingone_image.%[2]s.uploaded_image.href
   }
 
   access_control_group_options {
@@ -635,7 +635,7 @@ resource "pingone_application" "%[3]s" {
 
   icon {
     id   = pingone_image.%[3]s.id
-    href = pingone_image.%[3]s.uploaded_image[0].href
+    href = pingone_image.%[3]s.uploaded_image.href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
@@ -660,8 +660,8 @@ resource "pingone_application" "%[3]s" {
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:%[3]s"
 
-    assertion_signed_enabled       = false
-    idp_signing_key_id             = pingone_key.%[3]s.id
+    assertion_signed_enabled = false
+
     enable_requested_authn_context = true
     nameid_format                  = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
     response_is_signed             = true
@@ -726,7 +726,10 @@ resource "pingone_application" "%[2]s" {
     acs_urls           = ["https://pingidentity.com"]
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:%[2]s"
-    idp_signing_key_id = pingone_key.%[2]s.id
+    idp_signing_key {
+      key_id    = pingone_key.%[2]s.id
+      algorithm = pingone_key.%[2]s.signature_algorithm
+    }
   }
 }
 data "pingone_application" "%[2]s" {

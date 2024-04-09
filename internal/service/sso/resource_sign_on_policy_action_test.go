@@ -1757,7 +1757,7 @@ resource "pingone_identity_provider" "%[2]s-1" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-1"
 
-  google {
+  google = {
     client_id     = "testclientid"
     client_secret = "testclientsecret"
   }
@@ -1767,7 +1767,7 @@ resource "pingone_identity_provider" "%[2]s-2" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-2"
 
-  facebook {
+  facebook = {
     app_id     = "testclientid"
     app_secret = "testclientsecret"
   }
@@ -1810,7 +1810,7 @@ resource "pingone_identity_provider" "%[2]s-1" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-1"
 
-  google {
+  google = {
     client_id     = "testclientid"
     client_secret = "testclientsecret"
   }
@@ -1820,7 +1820,7 @@ resource "pingone_identity_provider" "%[2]s-2" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-2"
 
-  facebook {
+  facebook = {
     app_id     = "testclientid"
     app_secret = "testclientsecret"
   }
@@ -2171,7 +2171,7 @@ resource "pingone_identity_provider" "%[2]s-1" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-1"
 
-  google {
+  google = {
     client_id     = "testclientid"
     client_secret = "testclientsecret"
   }
@@ -2181,7 +2181,7 @@ resource "pingone_identity_provider" "%[2]s-2" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-2"
 
-  facebook {
+  facebook = {
     app_id     = "testclientid"
     app_secret = "testclientsecret"
   }
@@ -2231,7 +2231,7 @@ resource "pingone_identity_provider" "%[2]s-1" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-1"
 
-  google {
+  google = {
     client_id     = "testclientid"
     client_secret = "testclientsecret"
   }
@@ -2241,7 +2241,7 @@ resource "pingone_identity_provider" "%[2]s-2" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-2"
 
-  facebook {
+  facebook = {
     app_id     = "testclientid"
     app_secret = "testclientsecret"
   }
@@ -2322,7 +2322,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  openid_connect {
+  openid_connect = {
     client_id     = "testclientid"
     client_secret = "testclientsecret"
 
@@ -2368,7 +2368,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  openid_connect {
+  openid_connect = {
     client_id     = "testclientid"
     client_secret = "testclientsecret"
 

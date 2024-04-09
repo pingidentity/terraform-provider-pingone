@@ -233,22 +233,27 @@ resource "pingone_environment" "%[1]s" {
   region      = "%[5]s"
   license_id  = "%[6]s"
 
-  service {
-    type = "%[8]s"
-  }
-  service {
-    type        = "%[9]s"
-    console_url = "%[10]s"
-    bookmark {
-      name = "%[11]s"
-      url  = "%[12]s"
+  services = [
+    {
+      type = "%[8]s"
+    },
+    {
+      type        = "%[9]s"
+      console_url = "%[10]s"
+      bookmarks = [
+        {
+          name = "%[11]s"
+          url  = "%[12]s"
+        },
+        {
+          name = "%[13]s"
+          url  = "%[14]s"
+        }
+      ]
     }
-    bookmark {
-      name = "%[13]s"
-      url  = "%[14]s"
-    }
-  }
+  ]
 }
+
 data "pingone_environment" "%[1]s" {
   name = "%[2]s"
 
@@ -266,7 +271,11 @@ resource "pingone_environment" "%[1]s" {
   region     = "%[4]s"
   license_id = "%[5]s"
 
-  service {}
+  services = [
+    {
+      type = "SSO"
+    }
+  ]
 }
 data "pingone_environment" "%[1]s" {
   name = "%[2]s"
@@ -287,21 +296,25 @@ resource "pingone_environment" "%[1]s" {
   region      = "%[5]s"
   license_id  = "%[6]s"
 
-  service {
-    type = "%[8]s"
-  }
-  service {
-    type        = "%[9]s"
-    console_url = "%[10]s"
-    bookmark {
-      name = "%[11]s"
-      url  = "%[12]s"
+  services = [
+    {
+      type = "%[8]s"
+    },
+    {
+      type        = "%[9]s"
+      console_url = "%[10]s"
+      bookmarks = [
+        {
+          name = "%[11]s"
+          url  = "%[12]s"
+        },
+        {
+          name = "%[13]s"
+          url  = "%[14]s"
+        }
+      ]
     }
-    bookmark {
-      name = "%[13]s"
-      url  = "%[14]s"
-    }
-  }
+  ]
 }
 data "pingone_environment" "%[1]s" {
   environment_id = pingone_environment.%[1]s.id
@@ -316,7 +329,11 @@ resource "pingone_environment" "%[1]s" {
   region     = "%[4]s"
   license_id = "%[5]s"
 
-  service {}
+  services = [
+    {
+      type = "SSO"
+    }
+  ]
 }
 data "pingone_environment" "%[1]s" {
   environment_id = pingone_environment.%[1]s.id

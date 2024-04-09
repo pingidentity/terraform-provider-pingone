@@ -1,0 +1,3 @@
+```release-note:breaking-change
+`resource/pingone_mfa_application_push_credential`: Removal of deprecated parameter `fcm.key`.  Use the `fcm.google_service_account_credentials` parameter going forward.
+```

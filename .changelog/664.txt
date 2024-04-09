@@ -1,0 +1,11 @@
+```release-note:breaking-change
+`data-source/pingone_flow_policies`: Changed the `data_filter` parameter data type and renamed to `data_filters`.
+```
+
+```release-note:breaking-change
+`data-source/pingone_populations`: Changed the `data_filter` parameter data type and renamed to `data_filters`.
+```
+
+```release-note:breaking-change
+`data-source/pingone_users`: Changed the `data_filter` parameter data type and renamed to `data_filters`.
+```

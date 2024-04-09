@@ -2,13 +2,10 @@ package base
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -16,9 +13,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -29,20 +28,13 @@ type brandingSettingsResourceModel struct {
 	Id            types.String `tfsdk:"id"`
 	EnvironmentId types.String `tfsdk:"environment_id"`
 	CompanyName   types.String `tfsdk:"company_name"`
-	LogoImage     types.List   `tfsdk:"logo_image"`
+	LogoImage     types.Object `tfsdk:"logo_image"`
 }
 
 type imageResourceModel struct {
 	Id   types.String `tfsdk:"id"`
 	Href types.String `tfsdk:"href"`
 }
-
-var (
-	logoTFObjectTypes = map[string]attr.Type{
-		"id":   types.StringType,
-		"href": types.StringType,
-	}
-)
 
 // Framework interfaces
 var (
@@ -71,7 +63,7 @@ func (r *BrandingSettingsResource) Schema(ctx context.Context, req resource.Sche
 	)
 
 	logoHrefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The URL or fully qualified path to the logo file used for branding.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.",
+		"The URL or fully qualified path to the logo file used for branding.  This can be retrieved from the `uploaded_image.href` parameter of the `pingone_image` resource.",
 	)
 
 	resp.Schema = schema.Schema{
@@ -92,39 +84,31 @@ func (r *BrandingSettingsResource) Schema(ctx context.Context, req resource.Sche
 
 				Default: stringdefault.StaticString(""),
 			},
-		},
 
-		Blocks: map[string]schema.Block{
+			"logo_image": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the HREF and ID for the company logo.").Description,
+				Optional:    true,
+				Computed:    true,
 
-			"logo_image": schema.ListNestedBlock{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies the HREF and ID for the company logo.").Description,
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description:         logoIdDescription.Description,
+						MarkdownDescription: logoIdDescription.MarkdownDescription,
+						Required:            true,
 
-				NestedObject: schema.NestedBlockObject{
-
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Description:         logoIdDescription.Description,
-							MarkdownDescription: logoIdDescription.MarkdownDescription,
-							Required:            true,
-
-							Validators: []validator.String{
-								verify.P1ResourceIDValidator(),
-							},
-						},
-
-						"href": schema.StringAttribute{
-							Description:         logoHrefDescription.Description,
-							MarkdownDescription: logoHrefDescription.MarkdownDescription,
-							Required:            true,
-							Validators: []validator.String{
-								stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
-							},
+						Validators: []validator.String{
+							verify.P1ResourceIDValidator(),
 						},
 					},
-				},
 
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
+					"href": schema.StringAttribute{
+						Description:         logoHrefDescription.Description,
+						MarkdownDescription: logoHrefDescription.MarkdownDescription,
+						Required:            true,
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+						},
+					},
 				},
 			},
 		},
@@ -373,13 +357,16 @@ func (p *brandingSettingsResourceModel) expand(ctx context.Context) (*management
 
 	if !p.LogoImage.IsNull() && !p.LogoImage.IsUnknown() {
 
-		var plan []imageResourceModel
-		diags.Append(p.LogoImage.ElementsAs(ctx, &plan, false)...)
+		var plan imageResourceModel
+		diags.Append(p.LogoImage.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		data.SetLogo(*management.NewBrandingSettingsLogo(plan[0].Href.ValueString(), plan[0].Id.ValueString()))
+		data.SetLogo(*management.NewBrandingSettingsLogo(plan.Href.ValueString(), plan.Id.ValueString()))
 	}
 
 	return data, diags
@@ -400,60 +387,9 @@ func (p *brandingSettingsResourceModel) toState(apiObject *management.BrandingSe
 	p.Id = framework.StringToTF(apiObject.GetId())
 	p.CompanyName = framework.EnumOkToTF(apiObject.GetCompanyNameOk())
 
-	logoImage, d := toStateImageRef(apiObject.GetLogoOk())
+	logoImage, d := service.ImageOkToTF(apiObject.GetLogoOk())
 	diags.Append(d...)
 	p.LogoImage = logoImage
 
 	return diags
-}
-
-func toStateImageRef(logo interface{}, ok bool) (types.List, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	tfObjType := types.ObjectType{AttrTypes: logoTFObjectTypes}
-
-	if !ok || logo == nil {
-		return types.ListNull(tfObjType), diags
-	}
-
-	b, e := json.Marshal(logo)
-	if e != nil {
-		diags.AddError(
-			"Invalid data object",
-			fmt.Sprintf("Cannot remap the data object to JSON: %s.  Please report this to the provider maintainers.", e),
-		)
-		return types.ListNull(tfObjType), diags
-	}
-
-	var s map[string]string
-	e = json.Unmarshal(b, &s)
-	if e != nil {
-		diags.AddError(
-			"Invalid data object",
-			fmt.Sprintf("Cannot remap the data object to map: %s.  Please report this to the provider maintainers.", e),
-		)
-		return types.ListNull(tfObjType), diags
-	}
-
-	logoMap := map[string]attr.Value{}
-
-	if s["href"] != "" {
-		logoMap["href"] = framework.StringToTF(s["href"])
-	} else {
-		logoMap["href"] = types.StringNull()
-	}
-
-	if s["id"] != "" {
-		logoMap["id"] = framework.StringToTF(s["id"])
-	} else {
-		logoMap["id"] = types.StringNull()
-	}
-
-	flattenedObj, d := types.ObjectValue(logoTFObjectTypes, logoMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
-	diags.Append(d...)
-
-	return returnVar, diags
 }

@@ -189,8 +189,6 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
@@ -272,8 +270,6 @@ func TestAccApplication_OIDCMinimalWeb(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
@@ -342,8 +338,6 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
@@ -401,8 +395,6 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.support_unsigned_request_object", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.behavior", "ALLOW_SPECIFIC_ORIGINS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.#", "8"),
@@ -458,8 +450,6 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
@@ -554,9 +544,7 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_type", "INTERNAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_key", "DUMMY_SUPPRESS_VALUE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.decryption_key", "DUMMY_SUPPRESS_VALUE"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.service_account_credentials_json"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.service_account_credentials_json", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
@@ -644,8 +632,6 @@ func TestAccApplication_OIDCMinimalNative(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.excluded_platforms.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.passcode_refresh_seconds", "30"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
@@ -740,9 +726,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_type", "INTERNAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_key", "DUMMY_SUPPRESS_VALUE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.decryption_key", "DUMMY_SUPPRESS_VALUE"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.service_account_credentials_json"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.service_account_credentials_json", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
@@ -793,8 +777,6 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.excluded_platforms.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.passcode_refresh_seconds", "30"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
@@ -865,9 +847,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_type", "INTERNAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_key", "DUMMY_SUPPRESS_VALUE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.decryption_key", "DUMMY_SUPPRESS_VALUE"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.service_account_credentials_json"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.service_account_credentials_json", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
@@ -987,9 +967,7 @@ func TestAccApplication_NativeMobile(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_type", "INTERNAL"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.verification_key", "DUMMY_SUPPRESS_VALUE"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.decryption_key", "DUMMY_SUPPRESS_VALUE"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.service_account_credentials_json"),
-			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.bundle_id", fmt.Sprintf("com.%s.bundle", resourceName)),
-			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.package_name", fmt.Sprintf("com.%s.package", resourceName)),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.google_play.0.service_account_credentials_json", ""),
 		),
 	}
 
@@ -1005,8 +983,6 @@ func TestAccApplication_NativeMobile(t *testing.T) {
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.universal_app_link"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.#", "1"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.0.integrity_detection.0.enabled", "false"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 		),
 	}
 
@@ -1296,8 +1272,6 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
@@ -1376,8 +1350,6 @@ func TestAccApplication_OIDCMinimalCustom(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
@@ -1474,8 +1446,6 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
@@ -1517,8 +1487,6 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
@@ -1591,8 +1559,6 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
@@ -1689,8 +1655,6 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
@@ -1772,8 +1736,6 @@ func TestAccApplication_OIDCMinimalService(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
@@ -1870,8 +1832,6 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
@@ -1916,8 +1876,6 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
@@ -1990,8 +1948,6 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
@@ -2083,8 +2039,6 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
@@ -2165,8 +2119,6 @@ func TestAccApplication_OIDCMinimalSPA(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
@@ -2234,8 +2186,6 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
@@ -2303,8 +2253,6 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
@@ -2348,8 +2296,6 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
@@ -2437,8 +2383,6 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
@@ -2519,8 +2463,6 @@ func TestAccApplication_OIDCMinimalWorker(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
@@ -2588,8 +2530,6 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
@@ -2653,8 +2593,6 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "http://192.168.1.1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.0.cors_settings.0.origins.*", "https://192.168.1.1"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
@@ -2698,8 +2636,6 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.require_signed_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.0.mobile_app.#", "0"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.bundle_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.0.package_name"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
@@ -3028,9 +2964,8 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_duration", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_signed_enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.default_target_url", "https://www.pingidentity.com/relaystate"),
-					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "1"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.algorithm"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.algorithm", "SHA384withECDSA"),
 					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.key_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.enable_requested_authn_context", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.nameid_format", "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"),
@@ -3040,9 +2975,6 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_response_endpoint", "https://www.pingidentity.com/sloresponseendpoint"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_window", "3"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_entity_id", fmt.Sprintf("sp:entity:%s", resourceName)),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification_certificate_ids.#", "2"),
-					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.sp_verification_certificate_ids.0", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.sp_verification_certificate_ids.1", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification.0.authn_request_signed", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification.0.certificate_ids.#", "2"),
@@ -3133,8 +3065,8 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_duration", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.assertion_signed_enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.default_target_url", ""),
-					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.key_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.enable_requested_authn_context", "false"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options.0.nameid_format"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.response_is_signed", "false"),
@@ -3143,7 +3075,6 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options.0.slo_response_endpoint"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_window", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_entity_id", fmt.Sprintf("sp:entity:%s", resourceName)),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification_certificate_ids.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
@@ -3164,17 +3095,8 @@ func TestAccApplication_SAMLSigningKey(t *testing.T) {
 	signingKeyNotSet := resource.TestStep{
 		Config: testAccApplicationConfig_SAML_SigningKeyNotSet(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "1"),
-		),
-	}
-
-	signingKeyIDAttr := resource.TestStep{
-		Config: testAccApplicationConfig_SAML_SigningKeyIDAttr(resourceName, name),
-		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "1"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.algorithm"),
+			resource.TestCheckResourceAttrSet(resourceFullName, "saml_options.0.idp_signing_key.0.algorithm"),
 			resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.key_id", verify.P1ResourceIDRegexpFullString),
 		),
 	}
@@ -3182,7 +3104,6 @@ func TestAccApplication_SAMLSigningKey(t *testing.T) {
 	signingKeyBlock := resource.TestStep{
 		Config: testAccApplicationConfig_SAML_SigningKeyBlock(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.#", "1"),
 			resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.algorithm", "SHA384withECDSA"),
 			resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.idp_signing_key.0.key_id", verify.P1ResourceIDRegexpFullString),
@@ -3199,11 +3120,6 @@ func TestAccApplication_SAMLSigningKey(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Create
-			signingKeyIDAttr,
-			{
-				Config:  testAccApplicationConfig_SAML_SigningKeyIDAttr(resourceName, name),
-				Destroy: true,
-			},
 			signingKeyNotSet,
 			{
 				Config:  testAccApplicationConfig_SAML_SigningKeyNotSet(resourceName, name),
@@ -3215,7 +3131,6 @@ func TestAccApplication_SAMLSigningKey(t *testing.T) {
 				Destroy: true,
 			},
 			// Update
-			signingKeyIDAttr,
 			signingKeyNotSet,
 			signingKeyBlock,
 		},
@@ -3451,7 +3366,7 @@ resource "pingone_application" "%[2]s" {
 
   icon {
     id   = pingone_image.%[2]s.id
-    href = pingone_image.%[2]s.uploaded_image[0].href
+    href = pingone_image.%[2]s.uploaded_image.href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
@@ -3628,7 +3543,7 @@ resource "pingone_application" "%[2]s" {
 
   icon {
     id   = pingone_image.%[2]s.id
-    href = pingone_image.%[2]s.uploaded_image[0].href
+    href = pingone_image.%[2]s.uploaded_image.href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
@@ -4069,7 +3984,7 @@ resource "pingone_application" "%[2]s" {
 
   icon {
     id   = pingone_image.%[2]s.id
-    href = pingone_image.%[2]s.uploaded_image[0].href
+    href = pingone_image.%[2]s.uploaded_image.href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
@@ -4178,7 +4093,7 @@ resource "pingone_application" "%[2]s" {
 
   icon {
     id   = pingone_image.%[2]s.id
-    href = pingone_image.%[2]s.uploaded_image[0].href
+    href = pingone_image.%[2]s.uploaded_image.href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
@@ -4284,7 +4199,7 @@ resource "pingone_application" "%[2]s" {
 
   icon {
     id   = pingone_image.%[2]s.id
-    href = pingone_image.%[2]s.uploaded_image[0].href
+    href = pingone_image.%[2]s.uploaded_image.href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
@@ -4383,7 +4298,7 @@ resource "pingone_application" "%[2]s" {
 
   icon {
     id   = pingone_image.%[2]s.id
-    href = pingone_image.%[2]s.uploaded_image[0].href
+    href = pingone_image.%[2]s.uploaded_image.href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
@@ -4575,7 +4490,7 @@ resource "pingone_application" "%[3]s" {
 
   icon {
     id   = pingone_image.%[3]s.id
-    href = pingone_image.%[3]s.uploaded_image[0].href
+    href = pingone_image.%[3]s.uploaded_image.href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
@@ -4600,8 +4515,11 @@ resource "pingone_application" "%[3]s" {
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:%[3]s"
 
-    assertion_signed_enabled       = false
-    idp_signing_key_id             = pingone_key.%[3]s.id
+    assertion_signed_enabled = false
+    idp_signing_key {
+      key_id    = pingone_key.%[3]s.id
+      algorithm = pingone_key.%[3]s.signature_algorithm
+    }
     enable_requested_authn_context = true
     nameid_format                  = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
     response_is_signed             = true
@@ -4640,7 +4558,6 @@ resource "pingone_application" "%[3]s" {
 func testAccApplicationConfig_SAML_Minimal(environmentName, licenseID, resourceName, name, image, pkcs7_cert, pem_cert string) string {
 	return fmt.Sprintf(`
 		%[1]s
-
 
 resource "pingone_group" "%[3]s-1" {
   environment_id = pingone_environment.%[2]s.id
@@ -4733,36 +4650,6 @@ resource "pingone_application" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationConfig_SAML_SigningKeyIDAttr(resourceName, name string) string {
-	return fmt.Sprintf(`
-		%[1]s
-
-resource "pingone_key" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name                = "%[3]s"
-  algorithm           = "EC"
-  key_length          = 256
-  signature_algorithm = "SHA384withECDSA"
-  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
-  usage_type          = "SIGNING"
-  validity_period     = 365
-}
-
-resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
-  enabled        = true
-
-  saml_options {
-    acs_urls           = ["https://pingidentity.com"]
-    assertion_duration = 3600
-    sp_entity_id       = "sp:entity:%[2]s"
-    idp_signing_key_id = pingone_key.%[2]s.id
-  }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
-}
-
 func testAccApplicationConfig_SAML_SigningKeyBlock(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -4823,7 +4710,7 @@ resource "pingone_application" "%[2]s" {
 
   icon {
     id   = pingone_image.%[2]s.id
-    href = pingone_image.%[2]s.uploaded_image[0].href
+    href = pingone_image.%[2]s.uploaded_image.href
   }
 
   access_control_group_options {

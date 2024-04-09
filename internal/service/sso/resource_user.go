@@ -41,7 +41,6 @@ type UserResourceModel struct {
 	Username      types.String `tfsdk:"username"`
 	Email         types.String `tfsdk:"email"`
 	//EmailVerified     types.Bool   `tfsdk:"email_verified"`
-	Status            types.String `tfsdk:"status"`
 	Enabled           types.Bool   `tfsdk:"enabled"`
 	PopulationId      types.String `tfsdk:"population_id"`
 	Account           types.Object `tfsdk:"account"`
@@ -227,10 +226,6 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		"A string that specifies the user's email address, which must be provided and valid. For more information about email address formatting, see section 3.4 of [RFC 2822, Internet Message Format](http://www.faqs.org/rfcs/rfc2822.html).",
 	)
 
-	statusDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"**Deprecation notice**: This attribute is deprecated and will be removed in a future release. Please use the `enabled` attribute instead.  The enabled status of the user.",
-	).AllowedValues("ENABLED", "DISABLED").DefaultValue("ENABLED")
-
 	enabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the user is enabled. This attribute is set to `true` by default when the user is created.",
 	)
@@ -392,22 +387,6 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			// 		boolplanmodifier.UseStateForUnknown(),
 			// 	},
 			// },
-
-			"status": schema.StringAttribute{
-				Description:         statusDescription.Description,
-				MarkdownDescription: statusDescription.MarkdownDescription,
-				Optional:            true,
-				Computed:            true,
-				DeprecationMessage:  "This attribute is deprecated and will be removed in a future release. Please use the `enabled` attribute instead.",
-
-				Validators: []validator.String{
-					stringvalidator.OneOf("ENABLED", "DISABLED"),
-				},
-
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
 
 			"enabled": schema.BoolAttribute{
 				Description:         enabledDescription.Description,
@@ -947,18 +926,6 @@ func (r *UserResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 	// 	resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("email_verified"), types.BoolNull())...)
 	// }
 
-	// Deprecated start
-	if !plan.Enabled.IsNull() && !plan.Enabled.IsUnknown() {
-		var statusValue types.String
-		if plan.Enabled.ValueBool() {
-			statusValue = framework.StringToTF("ENABLED")
-		} else {
-			statusValue = framework.StringToTF("DISABLED")
-		}
-		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("status"), statusValue)...)
-	}
-	// Deprecated end
-
 	if plan.Account.IsNull() || plan.Account.IsUnknown() {
 
 		o := map[string]attr.Value{
@@ -1444,12 +1411,6 @@ func (p *UserResourceModel) expand(ctx context.Context, isUpdate bool) (*managem
 	userData.SetPopulation(population)
 
 	userEnabledData := management.NewUserEnabled()
-	if p.Status.ValueString() == "ENABLED" {
-		userEnabledData.SetEnabled(true)
-	} else {
-		userEnabledData.SetEnabled(false)
-	}
-
 	if !p.Enabled.IsNull() && !p.Enabled.IsUnknown() {
 		userEnabledData.SetEnabled(p.Enabled.ValueBool())
 	}
@@ -1694,14 +1655,6 @@ func (p *UserResourceModel) toState(ctx context.Context, apiObject *management.U
 	p.Email = framework.StringOkToTF(apiObject.GetEmailOk())
 	//p.EmailVerified = framework.BoolOkToTF(apiObject.GetEmailVerifiedOk())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
-
-	// deprecated start
-	if v, ok := apiObject.GetEnabledOk(); ok && *v {
-		p.Status = framework.StringToTF("ENABLED")
-	} else {
-		p.Status = framework.StringToTF("DISABLED")
-	}
-	// deprecated end
 
 	var d diag.Diagnostics
 

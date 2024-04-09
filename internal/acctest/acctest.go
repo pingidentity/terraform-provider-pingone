@@ -334,22 +334,24 @@ func MinimalEnvironmentNoPopulation(resourceName, licenseID string, environmentT
 		license_id = "%[2]s"
 		type = "%[3]s"
 
-		service {
+	services = [
+		{
 			type = "SSO"
-		}
-		service {
+		},
+		{
 			type = "MFA"
-		}
-		service {
+		},
+		{
 			type = "Risk"
-		}
-		service {
+		},
+		{
 			type = "Credentials"
-		}
-		service {
+		},
+		{
 			type = "Verify"
 		}
-	}
+	]
+}
 `, resourceName, licenseID, string(environmentType))
 }
 

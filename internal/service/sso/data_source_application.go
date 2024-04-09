@@ -36,13 +36,13 @@ type applicationDataSourceModel struct {
 	Enabled                   types.Bool   `tfsdk:"enabled"`
 	Tags                      types.Set    `tfsdk:"tags"`
 	LoginPageUrl              types.String `tfsdk:"login_page_url"`
-	Icon                      types.List   `tfsdk:"icon"`
+	Icon                      types.Object `tfsdk:"icon"`
 	AccessControlRoleType     types.String `tfsdk:"access_control_role_type"`
-	AccessControlGroupOptions types.List   `tfsdk:"access_control_group_options"`
+	AccessControlGroupOptions types.Object `tfsdk:"access_control_group_options"`
 	HiddenFromAppPortal       types.Bool   `tfsdk:"hidden_from_app_portal"`
-	ExternalLinkOptions       types.List   `tfsdk:"external_link_options"`
-	OIDCOptions               types.List   `tfsdk:"oidc_options"`
-	SAMLOptions               types.List   `tfsdk:"saml_options"`
+	ExternalLinkOptions       types.Object `tfsdk:"external_link_options"`
+	OIDCOptions               types.Object `tfsdk:"oidc_options"`
+	SAMLOptions               types.Object `tfsdk:"saml_options"`
 }
 
 // Framework interfaces
@@ -82,6 +82,14 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 
 	oidcHomePageURLDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The custom home page URL for the application.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.",
+	)
+
+	oidcJwksDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_authn_method`. This property is required when `token_endpoint_authn_method` is `PRIVATE_KEY_JWT` and the `jwks_url` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks_url` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).",
+	)
+
+	oidcJwksUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies a URL (supports `https://` only) that provides access to a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_authn_method`. This property is required when `token_endpoint_authn_method` is `PRIVATE_KEY_JWT` and the `jwks` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).",
 	)
 
 	oidcJwksDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -176,19 +184,18 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the custom login page URL for the application.").Description,
 				Computed:    true,
 			},
-			"icon": schema.ListNestedAttribute{
+			"icon": schema.SingleNestedAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("The HREF and the ID for the application icon.").Description,
 				Computed:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("The ID for the application icon.").Description,
-							Computed:    true,
-						},
-						"href": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("The HREF for the application icon.").Description,
-							Computed:    true,
-						},
+
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("The ID for the application icon.").Description,
+						Computed:    true,
+					},
+					"href": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("The HREF for the application icon.").Description,
+						Computed:    true,
 					},
 				},
 			},
@@ -197,20 +204,19 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 				MarkdownDescription: accessControlRoleTypeDescription.MarkdownDescription,
 				Computed:            true,
 			},
-			"access_control_group_options": schema.ListNestedAttribute{
+			"access_control_group_options": schema.SingleNestedAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("Group access control settings.").Description,
 				Computed:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"type": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the group type required to access the application.").Description,
-							Computed:    true,
-						},
-						"groups": schema.SetAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A set that specifies the group IDs for the groups the actor must belong to for access to the application.").Description,
-							ElementType: types.StringType,
-							Computed:    true,
-						},
+
+				Attributes: map[string]schema.Attribute{
+					"type": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the group type required to access the application.").Description,
+						Computed:    true,
+					},
+					"groups": schema.SetAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A set that specifies the group IDs for the groups the actor must belong to for access to the application.").Description,
+						ElementType: types.StringType,
+						Computed:    true,
 					},
 				},
 			},
@@ -218,20 +224,19 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean to specify whether the application is hidden in the application portal despite the configured group access policy.").Description,
 				Computed:    true,
 			},
-			"external_link_options": schema.ListNestedAttribute{
+			"external_link_options": schema.SingleNestedAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("External link application specific settings.").Description,
 				Computed:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"home_page_url": schema.StringAttribute{
-							Description:         externalLinkHomePageURLDescription.Description,
-							MarkdownDescription: externalLinkHomePageURLDescription.MarkdownDescription,
-							Computed:            true,
-						},
+
+				Attributes: map[string]schema.Attribute{
+					"home_page_url": schema.StringAttribute{
+						Description:         externalLinkHomePageURLDescription.Description,
+						MarkdownDescription: externalLinkHomePageURLDescription.MarkdownDescription,
+						Computed:            true,
 					},
 				},
 			},
-			"oidc_options": schema.ListNestedAttribute{
+			"oidc_options": schema.SingleNestedAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("OIDC/OAuth application specific settings.").Description,
 				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
@@ -562,10 +567,10 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 	}
 }
 
-func datasourceApplicationSchemaCorsSettings() schema.ListNestedAttribute {
+func datasourceApplicationSchemaCorsSettings() schema.SingleNestedAttribute {
 
 	listDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single block that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings.",
+		"A single object that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings.",
 	)
 
 	behaviorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -579,24 +584,23 @@ func datasourceApplicationSchemaCorsSettings() schema.ListNestedAttribute {
 		"A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value will be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 address.  Subdomains may use the wildcard (`*`) to match any string.  Is expected to be non-empty when `behavior` is `ALLOW_SPECIFIC_ORIGINS` and is expected to be omitted or empty when `behavior` is `ALLOW_NO_ORIGINS`.  Limited to 20 values.",
 	)
 
-	return schema.ListNestedAttribute{
+	return schema.SingleNestedAttribute{
 		Description:         listDescription.Description,
 		MarkdownDescription: listDescription.MarkdownDescription,
 		Computed:            true,
-		NestedObject: schema.NestedAttributeObject{
-			Attributes: map[string]schema.Attribute{
-				"behavior": schema.StringAttribute{
-					Description:         behaviorDescription.Description,
-					MarkdownDescription: behaviorDescription.MarkdownDescription,
-					Computed:            true,
-				},
-				"origins": schema.SetAttribute{
-					Description:         originsDescription.Description,
-					MarkdownDescription: originsDescription.MarkdownDescription,
-					Computed:            true,
 
-					ElementType: types.StringType,
-				},
+		Attributes: map[string]schema.Attribute{
+			"behavior": schema.StringAttribute{
+				Description:         behaviorDescription.Description,
+				MarkdownDescription: behaviorDescription.MarkdownDescription,
+				Computed:            true,
+			},
+			"origins": schema.SetAttribute{
+				Description:         originsDescription.Description,
+				MarkdownDescription: originsDescription.MarkdownDescription,
+				Computed:            true,
+
+				ElementType: types.StringType,
 			},
 		},
 	}
@@ -779,7 +783,7 @@ func (p *applicationDataSourceModel) toState(apiObject *management.ReadOneApplic
 
 		var d diag.Diagnostics
 
-		p.Icon, d = p.iconOkToTF(v.GetIconOk())
+		p.Icon, d = service.ImageOkToTF(v.GetIconOk())
 		diags.Append(d...)
 
 		p.AccessControlRoleType, p.AccessControlGroupOptions, d = p.accessControlOkToTF(v.GetAccessControlOk())
@@ -801,7 +805,7 @@ func (p *applicationDataSourceModel) toState(apiObject *management.ReadOneApplic
 
 		var d diag.Diagnostics
 
-		p.Icon, d = p.iconOkToTF(v.GetIconOk())
+		p.Icon, d = service.ImageOkToTF(v.GetIconOk())
 		diags.Append(d...)
 
 		p.AccessControlRoleType, p.AccessControlGroupOptions, d = p.accessControlOkToTF(v.GetAccessControlOk())
@@ -822,7 +826,7 @@ func (p *applicationDataSourceModel) toState(apiObject *management.ReadOneApplic
 
 		var d diag.Diagnostics
 
-		p.Icon, d = p.iconOkToTF(v.GetIconOk())
+		p.Icon, d = service.ImageOkToTF(v.GetIconOk())
 		diags.Append(d...)
 
 		p.AccessControlRoleType, p.AccessControlGroupOptions, d = p.accessControlOkToTF(v.GetAccessControlOk())
@@ -835,28 +839,24 @@ func (p *applicationDataSourceModel) toState(apiObject *management.ReadOneApplic
 	return diags
 }
 
-func (p *applicationDataSourceModel) toStateExternalLinkOptions(apiObject *management.ApplicationExternalLink) (basetypes.ListValue, diag.Diagnostics) {
+func (p *applicationDataSourceModel) toStateExternalLinkOptions(apiObject *management.ApplicationExternalLink) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	tfObjType := types.ObjectType{AttrTypes: applicationExternalLinkOptionsTFObjectTypes}
 
 	if apiObject == nil {
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes), diags
 	}
 
 	externalLinkOptions := map[string]attr.Value{
 		"home_page_url": framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
 	}
 
-	flattenedObj, d := types.ObjectValue(applicationExternalLinkOptionsTFObjectTypes, externalLinkOptions)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(applicationExternalLinkOptionsTFObjectTypes, externalLinkOptions)
 	diags.Append(d...)
 
 	return returnVar, diags
 }
 
-func (p *applicationDataSourceModel) iconOkToTF(apiObject *management.ApplicationIcon, ok bool) (basetypes.ListValue, diag.Diagnostics) {
+func (p *applicationDataSourceModel) accessControlOkToTF(apiObject *management.ApplicationAccessControl, ok bool) (basetypes.StringValue, basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	tfObjType := types.ObjectType{AttrTypes: service.ImageTFObjectTypes}
 
@@ -883,7 +883,6 @@ func (p *applicationDataSourceModel) accessControlOkToTF(apiObject *management.A
 
 	objAccessControlGroupOptions := types.ListNull(types.ObjectType{AttrTypes: applicationAccessControlGroupOptionsTFObjectTypes})
 	accessControlRoleType := types.StringNull()
-	accessControlGroupOption := []attr.Value{}
 
 	if !ok || apiObject == nil {
 		return accessControlRoleType, objAccessControlGroupOptions, diags
@@ -903,12 +902,7 @@ func (p *applicationDataSourceModel) accessControlOkToTF(apiObject *management.A
 			"groups": framework.StringSetToTF(groups),
 		}
 
-		groupsObj, d := types.ObjectValue(applicationAccessControlGroupOptionsTFObjectTypes, groupObj)
-		diags.Append(d...)
-
-		accessControlGroupOption = append(accessControlGroupOption, groupsObj)
-
-		objAccessControlGroupOptions, d = types.ListValue(types.ObjectType{AttrTypes: applicationAccessControlGroupOptionsTFObjectTypes}, accessControlGroupOption)
+		objAccessControlGroupOptions, d = types.ObjectValue(applicationAccessControlGroupOptionsTFObjectTypes, groupObj)
 		diags.Append(d...)
 	}
 
@@ -916,29 +910,25 @@ func (p *applicationDataSourceModel) accessControlOkToTF(apiObject *management.A
 
 }
 
-func (p *applicationDataSourceModel) toStateOIDCOptions(apiObject *management.ApplicationOIDC, secret *management.ApplicationSecret) (basetypes.ListValue, diag.Diagnostics) {
+func (p *applicationDataSourceModel) toStateOIDCOptions(apiObject *management.ApplicationOIDC, secret *management.ApplicationSecret) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	objOIDCOptions := []attr.Value{}
 
 	if apiObject == nil {
-		return types.ListNull(types.ObjectType{AttrTypes: applicationOidcOptionsTFObjectTypes}), diags
+		return types.ObjectNull(applicationOidcOptionsTFObjectTypes), diags
 	}
 
 	kerberoObj, d := p.applicationOidcKerberosOkToTF(apiObject.GetKerberosOk())
 	diags.Append(d...)
 
 	// CORS Settings
-	corsSettingsObj := types.ListNull(types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes})
+	corsSettingsObj := types.ObjectNull(applicationCorsSettingsTFObjectTypes)
 	if v, ok := apiObject.GetCorsSettingsOk(); ok {
 		corsSettings := map[string]attr.Value{
 			"behavior": framework.EnumOkToTF(v.GetBehaviorOk()),
 			"origins":  framework.StringSetOkToTF(v.GetOriginsOk()),
 		}
 
-		corsSettingsFlattenedObj, d := types.ObjectValue(applicationCorsSettingsTFObjectTypes, corsSettings)
-		diags.Append(d...)
-
-		corsSettingsObj, d = types.ListValue(types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes}, append([]attr.Value{}, corsSettingsFlattenedObj))
+		corsSettingsObj, d = types.ObjectValue(applicationCorsSettingsTFObjectTypes, corsSettings)
 		diags.Append(d...)
 	}
 
@@ -955,6 +945,8 @@ func (p *applicationDataSourceModel) toStateOIDCOptions(apiObject *management.Ap
 		"par_timeout":                      framework.Int32OkToTF(apiObject.GetParTimeoutOk()),
 		"home_page_url":                    framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
 		"initiate_login_uri":               framework.StringOkToTF(apiObject.GetInitiateLoginUriOk()),
+		"jwks":                             framework.StringOkToTF(apiObject.GetJwksOk()),
+		"jwks_url":                         framework.StringOkToTF(apiObject.GetJwksUrlOk()),
 		"jwks":                             framework.StringOkToTF(apiObject.GetJwksOk()),
 		"jwks_url":                         framework.StringOkToTF(apiObject.GetJwksUrlOk()),
 		"target_link_uri":                  framework.StringOkToTF(apiObject.GetTargetLinkUriOk()),
@@ -975,23 +967,17 @@ func (p *applicationDataSourceModel) toStateOIDCOptions(apiObject *management.Ap
 		"mobile_app":                       mobileObj,
 	}
 
-	oidcObject, d := types.ObjectValue(applicationOidcOptionsTFObjectTypes, oidcOptions)
-	diags.Append(d...)
-
-	objOIDCOptions = append(objOIDCOptions, oidcObject)
-
-	returnVar, d := types.ListValue(types.ObjectType{AttrTypes: applicationOidcOptionsTFObjectTypes}, objOIDCOptions)
+	returnVar, d := types.ObjectValue(applicationOidcOptionsTFObjectTypes, oidcOptions)
 	diags.Append(d...)
 
 	return returnVar, diags
 }
 
-func (p *applicationDataSourceModel) applicationOidcKerberosOkToTF(apiObject *management.ApplicationOIDCAllOfKerberos, ok bool) (basetypes.ListValue, diag.Diagnostics) {
+func (p *applicationDataSourceModel) applicationOidcKerberosOkToTF(apiObject *management.ApplicationOIDCAllOfKerberos, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	tfObjType := types.ObjectType{AttrTypes: applicationOidcOptionsCertificateAuthenticationTFObjectTypes}
 
 	if !ok || apiObject == nil {
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(applicationOidcOptionsCertificateAuthenticationTFObjectTypes), diags
 	}
 
 	kerberos := map[string]attr.Value{}
@@ -1001,21 +987,17 @@ func (p *applicationDataSourceModel) applicationOidcKerberosOkToTF(apiObject *ma
 		kerberos["key_id"] = types.StringNull()
 	}
 
-	flattenedObj, d := types.ObjectValue(applicationOidcOptionsCertificateAuthenticationTFObjectTypes, kerberos)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(applicationOidcOptionsCertificateAuthenticationTFObjectTypes, kerberos)
 	diags.Append(d...)
 
 	return returnVar, diags
 }
 
-func (p *applicationDataSourceModel) applicationOidcMobileOkToTF(apiObject *management.ApplicationOIDCAllOfMobile, ok bool) (basetypes.ListValue, diag.Diagnostics) {
+func (p *applicationDataSourceModel) applicationOidcMobileOkToTF(apiObject *management.ApplicationOIDCAllOfMobile, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	tfObjType := types.ObjectType{AttrTypes: applicationOidcMobileAppTFObjectTypes}
 
 	if !ok || apiObject == nil {
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(applicationOidcMobileAppTFObjectTypes), diags
 	}
 
 	passcodeRefreshSeconds := types.Int64Null()
@@ -1028,7 +1010,7 @@ func (p *applicationDataSourceModel) applicationOidcMobileOkToTF(apiObject *mana
 				fmt.Sprintf("Expecting time unit of %s for attribute `passcode_refresh_seconds`, got %v", management.ENUMPASSCODEREFRESHTIMEUNIT_SECONDS, j),
 			)
 
-			return types.ListNull(tfObjType), diags
+			return types.ObjectNull(applicationOidcMobileAppTFObjectTypes), diags
 		}
 	}
 
@@ -1045,21 +1027,17 @@ func (p *applicationDataSourceModel) applicationOidcMobileOkToTF(apiObject *mana
 		"integrity_detection":      integrityDetection,
 	}
 
-	flattenedObj, d := types.ObjectValue(applicationOidcMobileAppTFObjectTypes, mobileApp)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(applicationOidcMobileAppTFObjectTypes, mobileApp)
 	diags.Append(d...)
 
 	return returnVar, diags
 }
 
-func (p *applicationDataSourceModel) applicationOidcMobileIntegrityDetectionOkToTF(apiObject *management.ApplicationOIDCAllOfMobileIntegrityDetection, ok bool) (basetypes.ListValue, diag.Diagnostics) {
+func (p *applicationDataSourceModel) applicationOidcMobileIntegrityDetectionOkToTF(apiObject *management.ApplicationOIDCAllOfMobileIntegrityDetection, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	tfObjType := types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionTFObjectTypes}
 
 	if !ok || apiObject == nil {
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(applicationOidcMobileAppIntegrityDetectionTFObjectTypes), diags
 	}
 
 	// Cache Duration
@@ -1070,12 +1048,7 @@ func (p *applicationDataSourceModel) applicationOidcMobileIntegrityDetectionOkTo
 			"units":  framework.EnumOkToTF(v.GetUnitsOk()),
 		}
 	}
-	flattenedObj, d := types.ObjectValue(applicationOidcMobileAppIntegrityDetectionCacheDurationTFObjectTypes, cacheDuration)
-	diags.Append(d...)
-
-	cacheDurationObj, d := types.ListValue(
-		types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionCacheDurationTFObjectTypes},
-		append([]attr.Value{}, flattenedObj))
+	cacheDurationObj, d := types.ObjectValue(applicationOidcMobileAppIntegrityDetectionCacheDurationTFObjectTypes, cacheDuration)
 	diags.Append(d...)
 
 	// Google Play
@@ -1099,12 +1072,7 @@ func (p *applicationDataSourceModel) applicationOidcMobileIntegrityDetectionOkTo
 		}
 	}
 
-	flattenedObj, d = types.ObjectValue(applicationOidcMobileAppIntegrityDetectionGooglePlayTFObjectTypes, googlePlay)
-	diags.Append(d...)
-
-	googlePlayObj, d := types.ListValue(
-		types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionGooglePlayTFObjectTypes},
-		append([]attr.Value{}, flattenedObj))
+	googlePlayObj, d := types.ObjectValue(applicationOidcMobileAppIntegrityDetectionGooglePlayTFObjectTypes, googlePlay)
 	diags.Append(d...)
 
 	// Enabled
@@ -1123,21 +1091,17 @@ func (p *applicationDataSourceModel) applicationOidcMobileIntegrityDetectionOkTo
 		"google_play":        googlePlayObj,
 	}
 
-	flattenedObj, d = types.ObjectValue(applicationOidcMobileAppIntegrityDetectionTFObjectTypes, integrityDetection)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(applicationOidcMobileAppIntegrityDetectionTFObjectTypes, integrityDetection)
 	diags.Append(d...)
 
 	return returnVar, diags
 }
 
-func (p *applicationDataSourceModel) toStateSAMLOptions(apiObject *management.ApplicationSAML) (basetypes.ListValue, diag.Diagnostics) {
+func (p *applicationDataSourceModel) toStateSAMLOptions(apiObject *management.ApplicationSAML) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	objSAMLOptions := []attr.Value{}
 
 	if apiObject == nil {
-		return types.ListNull(types.ObjectType{AttrTypes: applicationSamlOptionsTFObjectTypes}), diags
+		return types.ObjectNull(applicationSamlOptionsTFObjectTypes), diags
 	}
 
 	// IdP Signing Key
@@ -1152,49 +1116,40 @@ func (p *applicationDataSourceModel) toStateSAMLOptions(apiObject *management.Ap
 		idpSigningKey["algorithm"] = types.StringNull()
 		idpSigningKey["key_id"] = types.StringNull()
 	}
-	flattenedObj, d := types.ObjectValue(applicationSamlOptionsIdpSigningKeyTFObjectTypes, idpSigningKey)
-	diags.Append(d...)
-
-	idpSigningKeyObj, d := types.ListValue(types.ObjectType{AttrTypes: applicationSamlOptionsIdpSigningKeyTFObjectTypes}, append([]attr.Value{}, flattenedObj))
+	idpSigningKeyObj, d := types.ObjectValue(applicationSamlOptionsIdpSigningKeyTFObjectTypes, idpSigningKey)
 	diags.Append(d...)
 
 	// SP Verification
-	var idList []string
 	spVerification := map[string]attr.Value{}
 	if v, ok := apiObject.GetSpVerificationOk(); ok {
 		spVerification["authn_request_signed"] = framework.BoolOkToTF(v.GetAuthnRequestSignedOk())
 
 		if v1, ok := v.GetCertificatesOk(); ok {
+			var idList []string
 
 			idList = make([]string, 0)
 			for _, j := range v1 {
 				idList = append(idList, j.GetId())
 			}
+			spVerification["certificate_ids"] = framework.StringSetToTF(idList)
 		}
 
-		spVerification["certificate_ids"] = framework.StringSetToTF(idList)
 	} else {
 		spVerification["authn_request_signed"] = types.BoolNull()
 		spVerification["certificate_ids"] = types.SetNull(types.StringType)
 	}
-	spVerificationFlattenedObj, d := types.ObjectValue(applicationSamlOptionsSpVerificationTFObjectTypes, spVerification)
-	diags.Append(d...)
-
-	spVerificationObj, d := types.ListValue(types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes}, append([]attr.Value{}, spVerificationFlattenedObj))
+	spVerificationObj, d := types.ObjectValue(applicationSamlOptionsSpVerificationTFObjectTypes, spVerification)
 	diags.Append(d...)
 
 	// CORS Settings
-	corsSettingsObj := types.ListNull(types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes})
+	corsSettingsObj := types.ObjectNull(applicationCorsSettingsTFObjectTypes)
 	if v, ok := apiObject.GetCorsSettingsOk(); ok {
 		corsSettings := map[string]attr.Value{
 			"behavior": framework.EnumOkToTF(v.GetBehaviorOk()),
 			"origins":  framework.StringSetOkToTF(v.GetOriginsOk()),
 		}
 
-		corsSettingsFlattenedObj, d := types.ObjectValue(applicationCorsSettingsTFObjectTypes, corsSettings)
-		diags.Append(d...)
-
-		corsSettingsObj, d = types.ListValue(types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes}, append([]attr.Value{}, corsSettingsFlattenedObj))
+		corsSettingsObj, d = types.ObjectValue(applicationCorsSettingsTFObjectTypes, corsSettings)
 		diags.Append(d...)
 	}
 
@@ -1220,12 +1175,7 @@ func (p *applicationDataSourceModel) toStateSAMLOptions(apiObject *management.Ap
 		"cors_settings":                   corsSettingsObj,
 	}
 
-	samlObject, d := types.ObjectValue(applicationSamlOptionsTFObjectTypes, samlOptions)
-	diags.Append(d...)
-
-	objSAMLOptions = append(objSAMLOptions, samlObject)
-
-	returnVar, d := types.ListValue(types.ObjectType{AttrTypes: applicationSamlOptionsTFObjectTypes}, objSAMLOptions)
+	returnVar, d := types.ObjectValue(applicationSamlOptionsTFObjectTypes, samlOptions)
 	diags.Append(d...)
 
 	return returnVar, diags

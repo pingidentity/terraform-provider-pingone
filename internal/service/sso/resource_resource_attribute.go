@@ -77,12 +77,12 @@ func (r *ResourceAttributeResource) Schema(ctx context.Context, req resource.Sch
 	const attrMinLength = 1
 
 	resourceIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"**Deprecation Notice**: This parameter is deprecated and will be made read-only in a future release.  This attribute should be replaced with the `resource_name` parameter instead.  The ID of the resource to assign the resource attribute to.",
-	).ExactlyOneOf([]string{"resource_id", "resource_name"}).AppendMarkdownString("Must be a valid PingOne resource ID.").RequiresReplace()
+		"The ID of the resource that the attribute is assigned to.",
+	)
 
 	resourceNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The name of the resource to assign the resource attribute to.  The built-in OpenID Connect resource name is `openid`.",
-	).ExactlyOneOf([]string{"resource_id", "resource_name"}).RequiresReplace()
+	).RequiresReplace()
 
 	nameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A string that specifies the name of the resource attribute to map a value for. When the resource's type property is `OPENID_CONNECT`, the following are reserved names and cannot be used: %s.  The resource will also override the default configured values for a resource, rather than creating new attributes.  For resources of type `CUSTOM`, the `sub` name is overridden.  For resources of type `OPENID_CONNECT`, the following names are overridden: %s.", verify.IllegalOIDCAttributeNameString(), verify.OverrideOIDCAttributeNameString()),
@@ -118,38 +118,20 @@ func (r *ResourceAttributeResource) Schema(ctx context.Context, req resource.Sch
 			"resource_id": schema.StringAttribute{
 				Description:         resourceIdDescription.Description,
 				MarkdownDescription: resourceIdDescription.MarkdownDescription,
-				DeprecationMessage:  "This parameter is deprecated and will be made read-only in a future release.  This attribute should be replaced with the `resource_name` parameter instead.",
-				Optional:            true,
 				Computed:            true,
 
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-
-				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
-					stringvalidator.ExactlyOneOf(
-						path.MatchRoot("resource_id"),
-						path.MatchRoot("resource_name"),
-					),
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 
 			"resource_name": schema.StringAttribute{
 				Description:         resourceNameDescription.Description,
 				MarkdownDescription: resourceNameDescription.MarkdownDescription,
-				Optional:            true,
-				Computed:            true,
+				Required:            true,
 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
-				},
-
-				Validators: []validator.String{
-					stringvalidator.ExactlyOneOf(
-						path.MatchRoot("resource_id"),
-						path.MatchRoot("resource_name"),
-					),
 				},
 			},
 
@@ -256,15 +238,7 @@ func (r *ResourceAttributeResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	var resourceResponse *management.Resource
-	var d diag.Diagnostics
-	if !plan.ResourceId.IsNull() && !plan.ResourceId.IsUnknown() {
-		resourceResponse, d = fetchResourceFromID(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), plan.ResourceId.ValueString(), false)
-	}
-
-	if !plan.ResourceName.IsNull() && !plan.ResourceName.IsUnknown() {
-		resourceResponse, d = fetchResourceFromName(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), plan.ResourceName.ValueString(), false)
-	}
+	resourceResponse, d := fetchResourceFromName(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), plan.ResourceName.ValueString(), false)
 
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
@@ -349,9 +323,7 @@ func (r *ResourceAttributeResource) Read(ctx context.Context, req resource.ReadR
 	var d diag.Diagnostics
 	if !data.ResourceId.IsNull() && !data.ResourceId.IsUnknown() {
 		resourceResponse, d = fetchResourceFromID(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), true)
-	}
-
-	if !data.ResourceName.IsNull() && !data.ResourceName.IsUnknown() {
+	} else {
 		resourceResponse, d = fetchResourceFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), data.ResourceName.ValueString(), true)
 	}
 
@@ -415,9 +387,7 @@ func (r *ResourceAttributeResource) Update(ctx context.Context, req resource.Upd
 	var d diag.Diagnostics
 	if !plan.ResourceId.IsNull() && !plan.ResourceId.IsUnknown() {
 		resourceResponse, d = fetchResourceFromID(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), plan.ResourceId.ValueString(), false)
-	}
-
-	if !plan.ResourceName.IsNull() && !plan.ResourceName.IsUnknown() {
+	} else {
 		resourceResponse, d = fetchResourceFromName(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), plan.ResourceName.ValueString(), false)
 	}
 
@@ -487,9 +457,7 @@ func (r *ResourceAttributeResource) Delete(ctx context.Context, req resource.Del
 	var d diag.Diagnostics
 	if !data.ResourceId.IsNull() && !data.ResourceId.IsUnknown() {
 		resource, d = fetchResourceFromID(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), true)
-	}
-
-	if !data.ResourceName.IsNull() && !data.ResourceName.IsUnknown() {
+	} else {
 		resource, d = fetchResourceFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), data.ResourceName.ValueString(), true)
 	}
 

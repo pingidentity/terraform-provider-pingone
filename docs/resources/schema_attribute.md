@@ -83,8 +83,7 @@ resource "pingone_schema_attribute" "my_awesome_regex_attribute" {
 - `enumerated_values` (Attributes Set) A set of one or more enumerated values for the attribute. If provided, it must not be an empty set.  Can only be set where the attribute type is `STRING` and cannot be set alongside `regex_validation`.  If the attribute has been created without enumerated values and this parameter is added later, this will trigger a replacement plan of the attribute resource.  If the attribute has been created with enumerated values that are subsequently removed, this will update without needing to replace the attribute resource. (see [below for nested schema](#nestedatt--enumerated_values))
 - `multivalued` (Boolean) Indicates whether the attribute has multiple values or a single one. Maximum number of values stored is 1,000.  This field is immutable and will trigger a replace plan if changed.  Defaults to `false`.
 - `regex_validation` (Attributes) A single object representation of the optional regular expression representation of this attribute.  Can only be set where the attribute type is `STRING` and cannot be set alongside `enumerated_values`. (see [below for nested schema](#nestedatt--regex_validation))
-- `schema_id` (String, Deprecated) **Deprecation Notice**: This parameter is deprecated and will be made read-only in a future release.  This attribute can be removed (the resource will default to the `User` schema), or the `schema_name` parameter can be defined instead.  The ID of the schema to apply the schema attribute to.  Must be a valid PingOne resource ID.  Conflicts with `schema_name`.
-- `schema_name` (String) The name of the schema to apply the schema attribute to.  Options are `User`.  Defaults to `User`.  Conflicts with `schema_id`.
+- `schema_name` (String) The name of the schema to apply the schema attribute to.  Options are `User`.  Defaults to `User`.
 - `type` (String) The type of the attribute.  Options are `BOOLEAN`, `COMPLEX`, `JSON`, `STRING`.  `COMPLEX` and `BOOLEAN` attributes cannot be created, but standard attributes of those types may be updated. `JSON` attributes are limited by size (total size must not exceed 16KB).  This field is immutable and will trigger a replace plan if changed.  Defaults to `STRING`.
 - `unique` (Boolean) Indicates whether or not the attribute must have a unique value within the PingOne environment.  This field is immutable and will trigger a replace plan if changed.  Defaults to `false`.
 
@@ -93,6 +92,7 @@ resource "pingone_schema_attribute" "my_awesome_regex_attribute" {
 - `id` (String) The ID of this resource.
 - `ldap_attribute` (String) The unique identifier for the LDAP attribute.
 - `required` (Boolean) Indicates whether or not the attribute is required.
+- `schema_id` (String) The ID of the schema the schema attribute is applied to.
 - `schema_type` (String) The schema type of the attribute.  Options are `CORE`, `CUSTOM`, `STANDARD`.  `CORE` and `STANDARD` attributes are supplied by default. `CORE` attributes cannot be updated or deleted. `STANDARD` attributes cannot be deleted, but their mutable properties can be updated. `CUSTOM` attributes can be deleted, and their mutable properties can be updated. New attributes are created with a schema type of `CUSTOM`.
 
 <a id="nestedatt--enumerated_values"></a>

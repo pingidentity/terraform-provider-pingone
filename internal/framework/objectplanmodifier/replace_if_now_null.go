@@ -1,14 +1,14 @@
-package listplanmodifier
+package objectplanmodifier
 
 import (
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 )
 
-func RequiresReplaceIfNowNull() listplanmodifier.RequiresReplaceIfFunc {
-	return func(ctx context.Context, req planmodifier.ListRequest, resp *listplanmodifier.RequiresReplaceIfFuncResponse) {
+func RequiresReplaceIfNowNull() objectplanmodifier.RequiresReplaceIfFunc {
+	return func(ctx context.Context, req planmodifier.ObjectRequest, resp *objectplanmodifier.RequiresReplaceIfFuncResponse) {
 		// If the configuration is unknown, this cannot be sure what to do yet.
 		if req.ConfigValue.IsUnknown() {
 			resp.RequiresReplace = false

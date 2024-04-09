@@ -108,12 +108,12 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 	const schemaName = "User"
 
 	schemaIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"**Deprecation Notice**: This parameter is deprecated and will be made read-only in a future release.  This attribute can be removed (the resource will default to the `User` schema), or the `schema_name` parameter can be defined instead.  The ID of the schema to apply the schema attribute to.",
-	).AppendMarkdownString("Must be a valid PingOne resource ID.").ConflictsWith([]string{"schema_name"})
+		"The ID of the schema the schema attribute is applied to.",
+	)
 
 	schemaNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The name of the schema to apply the schema attribute to.",
-	).AllowedValues(schemaName).DefaultValue(schemaName).ConflictsWith([]string{"schema_id"})
+	).AllowedValues(schemaName).DefaultValue(schemaName)
 
 	enabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Indicates whether or not the attribute is enabled.",
@@ -164,20 +164,10 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 			"schema_id": schema.StringAttribute{
 				Description:         schemaIdDescription.Description,
 				MarkdownDescription: schemaIdDescription.MarkdownDescription,
-				DeprecationMessage:  "This parameter is deprecated and will be made read-only in a future release.  This attribute can be removed (the resource will default to the `User` schema), or the `schema_name` parameter can be defined instead.",
-				Optional:            true,
 				Computed:            true,
 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
-				},
-
-				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
-					stringvalidator.ConflictsWith(
-						path.MatchRoot("schema_id"),
-						path.MatchRoot("schema_name"),
-					),
 				},
 			},
 
@@ -195,10 +185,6 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 
 				Validators: []validator.String{
 					stringvalidator.OneOf(schemaName),
-					stringvalidator.ConflictsWith(
-						path.MatchRoot("schema_id"),
-						path.MatchRoot("schema_name"),
-					),
 				},
 			},
 

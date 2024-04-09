@@ -1,0 +1,55 @@
+```release-note:breaking-change
+`data-source/pingone_application`: Changed the `access_control_group_options` attribute data type.
+```
+
+```release-note:breaking-change
+`data-source/pingone_application`: Changed the `external_link_options` attribute data type.
+```
+
+```release-note:breaking-change
+`data-source/pingone_application`: Changed the `icon` attribute data type.
+```
+
+```release-note:breaking-change
+`data-source/pingone_application`: Changed the `oidc_options` attribute data type.
+```
+
+```release-note:breaking-change
+`data-source/pingone_application`: Changed the `oidc_options.certificate_based_authentication` attribute data type.
+```
+
+```release-note:breaking-change
+`data-source/pingone_application`: Changed the `oidc_options.cors_settings` attribute data type.
+```
+
+```release-note:breaking-change
+`data-source/pingone_application`: Changed the `oidc_options.mobile_app` attribute data type.
+```
+
+```release-note:breaking-change
+`data-source/pingone_application`: Changed the `oidc_options.mobile_app.integrity_detection` attribute data type.
+```
+
+```release-note:breaking-change
+`data-source/pingone_application`: Changed the `oidc_options.mobile_app.integrity_detection.cache_duration` attribute data type.
+```
+
+```release-note:breaking-change
+`data-source/pingone_application`: Changed the `oidc_options.mobile_app.integrity_detection.google_play` attribute data type.
+```
+
+```release-note:breaking-change
+`data-source/pingone_application`: Changed the `saml_options` attribute data type.
+```
+
+```release-note:breaking-change
+`data-source/pingone_application`: Changed the `saml_options.cors_settings` attribute data type.
+```
+
+```release-note:breaking-change
+`data-source/pingone_application`: Changed the `saml_options.idp_signing_key` attribute data type.
+```
+
+```release-note:breaking-change
+`data-source/pingone_application`: Changed the `saml_options.sp_verification`
+```

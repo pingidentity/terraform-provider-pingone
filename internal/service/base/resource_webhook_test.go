@@ -136,22 +136,21 @@ func TestAccWebhook_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "verify_tls_certificates", "false"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "tls_client_auth_key_pair_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "format", "ACTIVITY"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_action_types.#", "2"),
-					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_action_types.*", "ACCOUNT.LINKED"),
-					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_action_types.*", "ACCOUNT.UNLINKED"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_application_ids.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.2", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_population_ids.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.2", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_tags.#", "1"),
-					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_tags.*", "adminIdentityEvent"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.ip_address_exposed", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.useragent_exposed", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_action_types.#", "2"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.included_action_types.*", "ACCOUNT.LINKED"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.included_action_types.*", "ACCOUNT.UNLINKED"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_application_ids.#", "3"),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_application_ids.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_application_ids.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_application_ids.2", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_population_ids.#", "3"),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_population_ids.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_population_ids.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_population_ids.2", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_tags.#", "1"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.included_tags.*", "adminIdentityEvent"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.ip_address_exposed", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.useragent_exposed", "true"),
 				),
 			},
 			{
@@ -202,15 +201,14 @@ func TestAccWebhook_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "verify_tls_certificates", "true"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "tls_client_auth_key_pair_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "format", "SPLUNK"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_action_types.#", "2"),
-					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_action_types.*", "ACCOUNT.LINKED"),
-					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_action_types.*", "ACCOUNT.UNLINKED"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_application_ids.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_population_ids.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_tags.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.ip_address_exposed", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.useragent_exposed", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_action_types.#", "2"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.included_action_types.*", "ACCOUNT.LINKED"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.included_action_types.*", "ACCOUNT.UNLINKED"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_application_ids.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_population_ids.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_tags.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.ip_address_exposed", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.useragent_exposed", "false"),
 				),
 			},
 		},
@@ -248,22 +246,21 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "verify_tls_certificates", "false"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "tls_client_auth_key_pair_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "format", "ACTIVITY"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_action_types.#", "2"),
-					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_action_types.*", "ACCOUNT.LINKED"),
-					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_action_types.*", "ACCOUNT.UNLINKED"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_application_ids.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.2", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_population_ids.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.2", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_tags.#", "1"),
-					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_tags.*", "adminIdentityEvent"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.ip_address_exposed", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.useragent_exposed", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_action_types.#", "2"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.included_action_types.*", "ACCOUNT.LINKED"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.included_action_types.*", "ACCOUNT.UNLINKED"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_application_ids.#", "3"),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_application_ids.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_application_ids.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_application_ids.2", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_population_ids.#", "3"),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_population_ids.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_population_ids.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_population_ids.2", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_tags.#", "1"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.included_tags.*", "adminIdentityEvent"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.ip_address_exposed", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.useragent_exposed", "true"),
 				),
 			},
 			{
@@ -278,15 +275,14 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "verify_tls_certificates", "true"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "tls_client_auth_key_pair_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "format", "SPLUNK"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_action_types.#", "2"),
-					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_action_types.*", "ACCOUNT.LINKED"),
-					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_action_types.*", "ACCOUNT.UNLINKED"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_application_ids.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_population_ids.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_tags.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.ip_address_exposed", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.useragent_exposed", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_action_types.#", "2"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.included_action_types.*", "ACCOUNT.LINKED"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.included_action_types.*", "ACCOUNT.UNLINKED"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_application_ids.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_population_ids.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_tags.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.ip_address_exposed", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.useragent_exposed", "false"),
 				),
 			},
 			{
@@ -303,22 +299,21 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "verify_tls_certificates", "false"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "tls_client_auth_key_pair_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "format", "ACTIVITY"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_action_types.#", "2"),
-					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_action_types.*", "ACCOUNT.LINKED"),
-					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_action_types.*", "ACCOUNT.UNLINKED"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_application_ids.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.2", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_population_ids.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.2", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_tags.#", "1"),
-					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.0.included_tags.*", "adminIdentityEvent"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.ip_address_exposed", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.useragent_exposed", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_action_types.#", "2"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.included_action_types.*", "ACCOUNT.LINKED"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.included_action_types.*", "ACCOUNT.UNLINKED"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_application_ids.#", "3"),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_application_ids.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_application_ids.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_application_ids.2", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_population_ids.#", "3"),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_population_ids.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_population_ids.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_population_ids.2", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_tags.#", "1"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.included_tags.*", "adminIdentityEvent"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.ip_address_exposed", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.useragent_exposed", "true"),
 				),
 			},
 		},
@@ -407,18 +402,18 @@ func TestAccWebhook_Applications(t *testing.T) {
 			{
 				Config: testAccWebhookConfig_Profile1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_application_ids.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.2", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_application_ids.#", "3"),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_application_ids.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_application_ids.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_application_ids.2", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 			{
 				Config: testAccWebhookConfig_Profile2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_application_ids.#", "2"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.0", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_application_ids.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_application_ids.#", "2"),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_application_ids.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_application_ids.1", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -445,18 +440,18 @@ func TestAccWebhook_Populations(t *testing.T) {
 			{
 				Config: testAccWebhookConfig_Profile1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_population_ids.#", "3"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.2", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_population_ids.#", "3"),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_population_ids.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_population_ids.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_population_ids.2", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 			{
 				Config: testAccWebhookConfig_Profile2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "filter_options.0.included_population_ids.#", "2"),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.0", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "filter_options.0.included_population_ids.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_population_ids.#", "2"),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_population_ids.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "filter_options.included_population_ids.1", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -519,7 +514,7 @@ resource "pingone_webhook" "%[3]s" {
 
   format = "ACTIVITY"
 
-  filter_options {
+  filter_options = {
     included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
   }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
@@ -608,7 +603,7 @@ resource "pingone_webhook" "%[2]s" {
 
   format = "ACTIVITY"
 
-  filter_options {
+  filter_options = {
     included_action_types    = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
     included_application_ids = [pingone_application.%[3]s-2.id, pingone_application.%[3]s-3.id, pingone_application.%[3]s-1.id]
     included_population_ids  = [pingone_population.%[3]s-2.id, pingone_population.%[3]s-3.id, pingone_population.%[3]s-1.id]
@@ -631,7 +626,7 @@ resource "pingone_webhook" "%[2]s" {
 
   format = "SPLUNK"
 
-  filter_options {
+  filter_options = {
     included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -777,7 +772,7 @@ resource "pingone_webhook" "%[2]s" {
 
   format = "ACTIVITY"
 
-  filter_options {
+  filter_options = {
     included_action_types    = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
     included_application_ids = [pingone_application.%[3]s-2.id, pingone_application.%[3]s-3.id, pingone_application.%[3]s-1.id]
     included_population_ids  = [pingone_population.%[3]s-2.id, pingone_population.%[3]s-3.id, pingone_population.%[3]s-1.id]
@@ -842,7 +837,7 @@ resource "pingone_webhook" "%[2]s" {
 
   format = "ACTIVITY"
 
-  filter_options {
+  filter_options = {
     included_action_types    = ["ACCOUNT.LINKED"]
     included_application_ids = [pingone_application.%[3]s-new.id, pingone_application.%[3]s-1.id]
     included_population_ids  = [pingone_population.%[3]s-new.id, pingone_population.%[3]s-1.id]
