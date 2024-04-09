@@ -138,6 +138,7 @@ type ApplicationSAMLOptionsResourceModel struct {
 	HomePageUrl                  types.String `tfsdk:"home_page_url"`
 	IdpSigningKey                types.List   `tfsdk:"idp_signing_key"`
 	IdpSigningKeyId              types.String `tfsdk:"idp_signing_key_id"`
+	DefaultTargetUrl             types.String `tfsdk:"default_target_url"`
 	NameIdFormat                 types.String `tfsdk:"nameid_format"`
 	ResponseIsSigned             types.Bool   `tfsdk:"response_is_signed"`
 	SloBinding                   types.String `tfsdk:"slo_binding"`
@@ -237,6 +238,7 @@ var (
 		"home_page_url":                   types.StringType,
 		"idp_signing_key_id":              types.StringType,
 		"idp_signing_key":                 types.ListType{ElemType: types.ObjectType{AttrTypes: applicationSamlOptionsIdpSigningKeyTFObjectTypes}},
+		"default_target_url":              types.StringType,
 		"nameid_format":                   types.StringType,
 		"response_is_signed":              types.BoolType,
 		"slo_binding":                     types.StringType,
@@ -538,6 +540,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 	samlOptionsIdpSigningKeyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"**Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `idp_signing_key` block going forward.  An ID for the certificate key pair to be used by the identity provider to sign assertions and responses. If this property is omitted, the default signing certificate for the environment is used.",
+	)
+
+	samlOptionsDefaultTargetUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specfies a default URL used as the `RelayState` parameter by the IdP to deep link into the application after authentication. This value can be overridden by the `applicationUrl` query parameter for [GET Identity Provider Initiated SSO](https://apidocs.pingidentity.com/pingone/platform/v1/api/#get-identity-provider-initiated-sso). Although both of these parameters are generally URLs, because they are used as deep links, this is not enforced. If neither `defaultTargetUrl` nor `applicationUrl` is specified during a SAML authentication flow, no `RelayState` value is supplied to the application. The `defaultTargetUrl` (or the `applicationUrl`) value is passed to the SAML application’s ACS URL as a separate `RelayState` key value (not within the SAMLResponse key value).",
 	)
 
 	samlOptionsEnableRequestedAuthnContextDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -1389,6 +1395,12 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 									path.MatchRelative().AtParent().AtName("idp_signing_key"),
 								),
 							},
+						},
+
+						"default_target_url": schema.StringAttribute{
+							Description:         samlOptionsDefaultTargetUrlDescription.Description,
+							MarkdownDescription: samlOptionsDefaultTargetUrlDescription.MarkdownDescription,
+							Optional:            true,
 						},
 
 						"enable_requested_authn_context": schema.BoolAttribute{
@@ -2692,6 +2704,10 @@ func (p *ApplicationResourceModel) expandApplicationSAML(ctx context.Context) (*
 			data.SetEnableRequestedAuthnContext(planItem.EnableRequestedAuthnContext.ValueBool())
 		}
 
+		if !planItem.DefaultTargetUrl.IsNull() && !planItem.DefaultTargetUrl.IsUnknown() {
+			data.SetDefaultTargetUrl(planItem.DefaultTargetUrl.ValueString())
+		}
+
 		if !planItem.NameIdFormat.IsNull() && !planItem.NameIdFormat.IsUnknown() {
 			data.SetNameIdFormat(planItem.NameIdFormat.ValueString())
 		}
@@ -2901,7 +2917,7 @@ func (p *ApplicationResourceModel) expandApplicationCommon(ctx context.Context) 
 		}
 
 		accessControl.SetGroup(*management.NewApplicationAccessControlGroup(
-			management.EnumApplicationAccessControlGroupType(obj["type"].(string)),
+			management.EnumApplicationAccessControlGroupType(planItem.Type.ValueString()),
 			groups,
 		))
 
@@ -3364,6 +3380,7 @@ func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Li
 		"home_page_url":                   framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
 		"idp_signing_key_id":              idpSigningKeyId,
 		"idp_signing_key":                 idpSigningKey,
+		"default_target_url":              framework.StringOkToTF(apiObject.GetDefaultTargetUrlOk()),
 		"nameid_format":                   framework.StringOkToTF(apiObject.GetNameIdFormatOk()),
 		"response_is_signed":              framework.BoolOkToTF(apiObject.GetResponseSignedOk()),
 		"slo_binding":                     framework.EnumOkToTF(apiObject.GetSloBindingOk()),
