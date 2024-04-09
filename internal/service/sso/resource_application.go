@@ -86,6 +86,8 @@ type ApplicationOIDCOptionsResourceModel struct {
 	RequireSignedRequestObject                    types.Bool   `tfsdk:"require_signed_request_object"`
 	ResponseTypes                                 types.Set    `tfsdk:"response_types"`
 	SupportUnsignedRequestObject                  types.Bool   `tfsdk:"support_unsigned_request_object"`
+	Jwks                                          types.String `tfsdk:"jwks"`
+	JwksUrl                                       types.String `tfsdk:"jwks_url"`
 	TargetLinkUri                                 types.String `tfsdk:"target_link_uri"`
 	TokenEndpointAuthnMethod                      types.String `tfsdk:"token_endpoint_authn_method"`
 	Type                                          types.String `tfsdk:"type"`
@@ -191,6 +193,8 @@ var (
 		"require_signed_request_object":                      types.BoolType,
 		"response_types":                                     types.SetType{ElemType: types.StringType},
 		"support_unsigned_request_object":                    types.BoolType,
+		"jwks":                                               types.StringType,
+		"jwks_url":                                           types.StringType,
 		"target_link_uri":                                    types.StringType,
 		"token_endpoint_authn_method":                        types.StringType,
 		"type":                                               types.StringType,
@@ -361,13 +365,26 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 		"A string that specifies the URI to use for third-parties to begin the sign-on process for the application. If specified, PingOne redirects users to this URI to initiate SSO to PingOne. The application is responsible for implementing the relevant OIDC flow when the initiate login URI is requested. This property is required if you want the application to appear in the PingOne Application Portal. See the OIDC specification section of [Initiating Login from a Third Party](https://openid.net/specs/openid-connect-core-1_0.html#ThirdPartyInitiatedLogin) for more information.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.",
 	)
 
+	oidcOptionsJwksDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_authn_method`. This property is required when `token_endpoint_authn_method` is `PRIVATE_KEY_JWT` and the `jwks_url` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks_url` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).",
+	).ConflictsWith([]string{"jwks_url"})
+
+	oidcOptionsJwksUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies a URL (supports `https://` only) that provides access to a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_authn_method`. This property is required when `token_endpoint_authn_method` is `PRIVATE_KEY_JWT` and the `jwks` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).",
+	).ConflictsWith([]string{"jwks"})
+
 	oidcOptionsTargetLinkUriDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The URI for the application. If specified, PingOne will redirect application users to this URI after a user is authenticated. In the PingOne admin console, this becomes the value of the `target_link_uri` parameter used for the Initiate Single Sign-On URL field.  Both `http://` and `https://` URLs are permitted as well as custom mobile native schema (e.g., `org.bxretail.app://target`).",
 	)
 
 	oidcOptionsGrantTypesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A list that specifies the grant type for the authorization request.",
-	).AllowedValuesEnum(management.AllowedEnumApplicationOIDCGrantTypeEnumValues)
+	).AllowedValuesEnum([]string{
+		string(management.ENUMAPPLICATIONOIDCGRANTTYPE_AUTHORIZATION_CODE),
+		string(management.ENUMAPPLICATIONOIDCGRANTTYPE_IMPLICIT),
+		string(management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN),
+		string(management.ENUMAPPLICATIONOIDCGRANTTYPE_CLIENT_CREDENTIALS),
+	})
 
 	oidcOptionsResponseTypesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A list that specifies the code or token type returned by an authorization request.",
@@ -377,7 +394,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 	oidcOptionsTokenEndpointAuthnMethod := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the client authentication methods supported by the token endpoint.",
-	).AllowedValuesEnum(management.AllowedEnumApplicationOIDCTokenAuthMethodEnumValues)
+	).AllowedValuesEnum(management.AllowedEnumApplicationOIDCTokenAuthMethodEnumValues).AppendMarkdownString(fmt.Sprintf("When `%s` is configured, either `jwks` or `jwks_url` must also be configured.", string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_PRIVATE_KEY_JWT)))
 
 	oidcOptionsParRequirementDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies whether pushed authorization requests (PAR) are required.",
@@ -429,6 +446,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	oidcOptionsAdditionalRefreshTokenReplayProtectionEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true` (the default), if you attempt to reuse the refresh token, the authorization server immediately revokes the reused refresh token, as well as all descendant tokens. Setting this to null equates to a `false` setting.",
 	).DefaultValue(true)
+
+	oidcOptionsClientSecretDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the application secret ID used to authenticate to the authorization server.\n\n~> The `client_secret` cannot be rotated in this resource.  The `pingone_application_secret` resource should be used to control rotation of the `client_secret` value.  If using the `pingone_application_secret` resource, use of this attribute is likely to conflict with that resource.  In this case, the `pingone_application_secret.secret` attribute should be used instead.",
+	)
 
 	oidcOptionsSupportUnsignedRequestObjectDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the request query parameter JWT is allowed to be unsigned. If `false` or null, an unsigned request object is not allowed.",
@@ -822,6 +843,33 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							},
 						},
 
+						"jwks": schema.StringAttribute{
+							Description:         oidcOptionsJwksDescription.Description,
+							MarkdownDescription: oidcOptionsJwksDescription.MarkdownDescription,
+							Optional:            true,
+
+							Validators: []validator.String{
+								stringvalidator.ConflictsWith(
+									path.MatchRelative().AtParent().AtName("jwks_url"),
+									path.MatchRelative().AtParent().AtName("jwks"),
+								),
+							},
+						},
+
+						"jwks_url": schema.StringAttribute{
+							Description:         oidcOptionsJwksUrlDescription.Description,
+							MarkdownDescription: oidcOptionsJwksUrlDescription.MarkdownDescription,
+							Optional:            true,
+
+							Validators: []validator.String{
+								stringvalidator.ConflictsWith(
+									path.MatchRelative().AtParent().AtName("jwks_url"),
+									path.MatchRelative().AtParent().AtName("jwks"),
+								),
+								stringvalidator.RegexMatches(regexp.MustCompile(`^(https:\/\/).*`), "Expected value to have a url with schema of \"https\"."),
+							},
+						},
+
 						"target_link_uri": schema.StringAttribute{
 							Description:         oidcOptionsTargetLinkUriDescription.Description,
 							MarkdownDescription: oidcOptionsTargetLinkUriDescription.MarkdownDescription,
@@ -1001,9 +1049,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						},
 
 						"client_secret": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application secret ID used to authenticate to the authorization server.").Description,
-							Computed:    true,
-							Sensitive:   true,
+							Description:         oidcOptionsClientSecretDescription.Description,
+							MarkdownDescription: oidcOptionsClientSecretDescription.MarkdownDescription,
+							Computed:            true,
+							Sensitive:           true,
 
 							PlanModifiers: []planmodifier.String{
 								stringplanmodifier.UseStateForUnknown(),
@@ -2255,6 +2304,14 @@ func (p *ApplicationResourceModel) expandApplicationOIDC(ctx context.Context) (*
 			data.SetInitiateLoginUri(planItem.InitiateLoginUri.ValueString())
 		}
 
+		if !planItem.Jwks.IsNull() && !planItem.Jwks.IsUnknown() {
+			data.SetJwks(planItem.Jwks.ValueString())
+		}
+
+		if !planItem.JwksUrl.IsNull() && !planItem.JwksUrl.IsUnknown() {
+			data.SetJwksUrl(planItem.JwksUrl.ValueString())
+		}
+
 		if !planItem.TargetLinkUri.IsNull() && !planItem.TargetLinkUri.IsUnknown() {
 			data.SetTargetLinkUri(planItem.TargetLinkUri.ValueString())
 		}
@@ -3177,6 +3234,8 @@ func applicationOidcOptionsToTF(apiObject *management.ApplicationOIDC, apiObject
 		"require_signed_request_object":                      framework.BoolOkToTF(apiObject.GetRequireSignedRequestObjectOk()),
 		"response_types":                                     framework.EnumSetOkToTF(apiObject.GetResponseTypesOk()),
 		"support_unsigned_request_object":                    framework.BoolOkToTF(apiObject.GetSupportUnsignedRequestObjectOk()),
+		"jwks":                                               framework.StringOkToTF(apiObject.GetJwksOk()),
+		"jwks_url":                                           framework.StringOkToTF(apiObject.GetJwksUrlOk()),
 		"target_link_uri":                                    framework.StringOkToTF(apiObject.GetTargetLinkUriOk()),
 		"token_endpoint_authn_method":                        framework.EnumOkToTF(apiObject.GetTokenEndpointAuthMethodOk()),
 		"type":                                               framework.EnumOkToTF(apiObject.GetTypeOk()),

@@ -84,6 +84,14 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 		"The custom home page URL for the application.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.",
 	)
 
+	oidcJwksDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_authn_method`. This property is required when `token_endpoint_authn_method` is `PRIVATE_KEY_JWT` and the `jwks_url` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks_url` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).",
+	)
+
+	oidcJwksUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies a URL (supports `https://` only) that provides access to a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_authn_method`. This property is required when `token_endpoint_authn_method` is `PRIVATE_KEY_JWT` and the `jwks` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).",
+	)
+
 	oidcOptionsPKCEEnforcementDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies how `PKCE` request parameters are handled on the authorize request.",
 	)
@@ -240,6 +248,16 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						"initiate_login_uri": schema.StringAttribute{
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the URI to use for third-parties to begin the sign-on process for the application.").Description,
 							Computed:    true,
+						},
+						"jwks": schema.StringAttribute{
+							Description:         oidcJwksDescription.Description,
+							MarkdownDescription: oidcJwksDescription.MarkdownDescription,
+							Computed:            true,
+						},
+						"jwks_url": schema.StringAttribute{
+							Description:         oidcJwksUrlDescription.Description,
+							MarkdownDescription: oidcJwksUrlDescription.MarkdownDescription,
+							Computed:            true,
 						},
 						"target_link_uri": schema.StringAttribute{
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("The URI for the application.").Description,
@@ -937,6 +955,8 @@ func (p *applicationDataSourceModel) toStateOIDCOptions(apiObject *management.Ap
 		"par_timeout":                      framework.Int32OkToTF(apiObject.GetParTimeoutOk()),
 		"home_page_url":                    framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
 		"initiate_login_uri":               framework.StringOkToTF(apiObject.GetInitiateLoginUriOk()),
+		"jwks":                             framework.StringOkToTF(apiObject.GetJwksOk()),
+		"jwks_url":                         framework.StringOkToTF(apiObject.GetJwksUrlOk()),
 		"target_link_uri":                  framework.StringOkToTF(apiObject.GetTargetLinkUriOk()),
 		"response_types":                   framework.EnumSetOkToTF(apiObject.GetResponseTypesOk()),
 		"pkce_enforcement":                 framework.EnumOkToTF(apiObject.GetPkceEnforcementOk()),
