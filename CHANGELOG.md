@@ -3,6 +3,7 @@
 BUG FIXES:
 
 * `resource/pingone_notification_template_content`: Fixed `Invalid import ID specified` error when attempting to import `credential_issued` and `verification_code_template` templates. ([#778](https://github.com/pingidentity/terraform-provider-pingone/issues/778))
+* `resource/pingone_notification_template_content`: Fixed `expected length of content to be in the range (1 - 153)` error when attempting to import longer length SMS templates configured in the console. ([#780](https://github.com/pingidentity/terraform-provider-pingone/issues/780))
 
 ## 0.27.0 (26 March 2024)
 
