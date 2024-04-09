@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_notification_template_content`: Fixed `Invalid import ID specified` error when attempting to import `credential_issued` and `verification_code_template` templates.
+```

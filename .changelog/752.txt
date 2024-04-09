@@ -1,0 +1,7 @@
+```release-note:bug
+`resource/pingone_credential_issuer_profile`: Fixed race condition leading to a "A resource with the specified name already exists" error when creating a credential issuer profile at the same time as creating a new environment.
+```
+
+```release-note:note
+`resource/pingone_credential_issuer_profile`: Added customisable timeout for resource creation, used to tune the polling of a platform bootstrapped credential issuer profile, before one is forcefully created.
+```
