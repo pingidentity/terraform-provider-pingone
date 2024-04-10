@@ -63,26 +63,26 @@ resource "pingone_application" "my_mobile_application" {
 
   enabled = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-    mobile_app {
+    mobile_app = {
       bundle_id    = "org.bxretail.mobileapp"
       package_name = "org.bxretail.mobileapp"
 
       passcode_refresh_seconds = 45
 
-      integrity_detection {
+      integrity_detection = {
         enabled = true
 
-        cache_duration {
+        cache_duration = {
           amount = 30
           units  = "HOURS"
         }
 
-        google_play {
+        google_play = {
           verification_type = "INTERNAL"
           decryption_key    = var.google_play_integrity_api_decryption_key
           verification_key  = var.google_play_integrity_api_verification_key

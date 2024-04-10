@@ -395,28 +395,28 @@ resource "pingone_application" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
   description    = "My test OIDC app for MFA Policy"
-  tags           = []
+
   login_page_url = "https://www.pingidentity.com"
 
   enabled = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-    mobile_app {
+    mobile_app = {
       package_name = "com.%[4]s.package"
 
       passcode_refresh_seconds = 45
 
-      integrity_detection {
+      integrity_detection = {
         enabled = true
-        cache_duration {
+        cache_duration = {
           amount = 30
           units  = "HOURS"
         }
-        google_play {
+        google_play = {
           verification_type = "INTERNAL"
           decryption_key    = "dummykeydoesnotexist"
           verification_key  = "dummykeydoesnotexist"
@@ -446,28 +446,28 @@ resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "My test OIDC app for MFA Policy"
-  tags           = []
+
   login_page_url = "https://www.pingidentity.com"
 
   enabled = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-    mobile_app {
+    mobile_app = {
       package_name = "com.%[2]s.package"
 
       passcode_refresh_seconds = 45
 
-      integrity_detection {
+      integrity_detection = {
         enabled = true
-        cache_duration {
+        cache_duration = {
           amount = 30
           units  = "HOURS"
         }
-        google_play {
+        google_play = {
           verification_type = "INTERNAL"
           decryption_key    = "dummykeydoesnotexist"
           verification_key  = "dummykeydoesnotexist"
@@ -497,28 +497,28 @@ resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "My test OIDC app for MFA Policy"
-  tags           = []
+
   login_page_url = "https://www.pingidentity.com"
 
   enabled = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-    mobile_app {
+    mobile_app = {
       bundle_id = "com.%[2]s.bundle"
 
       passcode_refresh_seconds = 45
 
-      integrity_detection {
+      integrity_detection = {
         enabled = true
-        cache_duration {
+        cache_duration = {
           amount = 30
           units  = "HOURS"
         }
-        google_play {
+        google_play = {
           verification_type = "INTERNAL"
           decryption_key    = "dummykeydoesnotexist"
           verification_key  = "dummykeydoesnotexist"
@@ -548,29 +548,29 @@ resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "My test OIDC app for MFA Policy"
-  tags           = []
+
   login_page_url = "https://www.pingidentity.com"
 
   enabled = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-    mobile_app {
+    mobile_app = {
       huawei_app_id       = "%[2]s"
       huawei_package_name = "com.%[2]s.huaweipackage"
 
       passcode_refresh_seconds = 45
 
-      integrity_detection {
+      integrity_detection = {
         enabled = true
-        cache_duration {
+        cache_duration = {
           amount = 30
           units  = "HOURS"
         }
-        google_play {
+        google_play = {
           verification_type = "INTERNAL"
           decryption_key    = "dummykeydoesnotexist"
           verification_key  = "dummykeydoesnotexist"

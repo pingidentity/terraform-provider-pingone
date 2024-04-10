@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -23,6 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
@@ -44,13 +45,13 @@ type ApplicationResourceModel struct {
 	Enabled                   types.Bool   `tfsdk:"enabled"`
 	Tags                      types.Set    `tfsdk:"tags"`
 	LoginPageUrl              types.String `tfsdk:"login_page_url"`
-	Icon                      types.List   `tfsdk:"icon"`
+	Icon                      types.Object `tfsdk:"icon"`
 	AccessControlRoleType     types.String `tfsdk:"access_control_role_type"`
-	AccessControlGroupOptions types.List   `tfsdk:"access_control_group_options"`
+	AccessControlGroupOptions types.Object `tfsdk:"access_control_group_options"`
 	HiddenFromAppPortal       types.Bool   `tfsdk:"hidden_from_app_portal"`
-	ExternalLinkOptions       types.List   `tfsdk:"external_link_options"`
-	OIDCOptions               types.List   `tfsdk:"oidc_options"`
-	SAMLOptions               types.List   `tfsdk:"saml_options"`
+	ExternalLinkOptions       types.Object `tfsdk:"external_link_options"`
+	OIDCOptions               types.Object `tfsdk:"oidc_options"`
+	SAMLOptions               types.Object `tfsdk:"saml_options"`
 }
 
 type ApplicationAccessControlGroupOptionsResourceModel struct {
@@ -65,16 +66,14 @@ type ApplicationExternalLinkOptionsResourceModel struct {
 type ApplicationOIDCOptionsResourceModel struct {
 	AdditionalRefreshTokenReplayProtectionEnabled types.Bool   `tfsdk:"additional_refresh_token_replay_protection_enabled"`
 	AllowWildcardsInRedirectUris                  types.Bool   `tfsdk:"allow_wildcards_in_redirect_uris"`
-	BundleId                                      types.String `tfsdk:"bundle_id"`
-	CertificateBasedAuthentication                types.List   `tfsdk:"certificate_based_authentication"`
+	CertificateBasedAuthentication                types.Object `tfsdk:"certificate_based_authentication"`
 	ClientId                                      types.String `tfsdk:"client_id"`
 	ClientSecret                                  types.String `tfsdk:"client_secret"`
-	CorsSettings                                  types.List   `tfsdk:"cors_settings"`
+	CorsSettings                                  types.Object `tfsdk:"cors_settings"`
 	GrantTypes                                    types.Set    `tfsdk:"grant_types"`
 	HomePageUrl                                   types.String `tfsdk:"home_page_url"`
 	InitiateLoginUri                              types.String `tfsdk:"initiate_login_uri"`
-	MobileApp                                     types.List   `tfsdk:"mobile_app"`
-	PackageName                                   types.String `tfsdk:"package_name"`
+	MobileApp                                     types.Object `tfsdk:"mobile_app"`
 	ParRequirement                                types.String `tfsdk:"par_requirement"`
 	ParTimeout                                    types.Int64  `tfsdk:"par_timeout"`
 	PKCEEnforcement                               types.String `tfsdk:"pkce_enforcement"`
@@ -106,17 +105,17 @@ type ApplicationOIDCMobileAppResourceModel struct {
 	BundleId               types.String `tfsdk:"bundle_id"`
 	HuaweiAppId            types.String `tfsdk:"huawei_app_id"`
 	HuaweiPackageName      types.String `tfsdk:"huawei_package_name"`
-	IntegrityDetection     types.List   `tfsdk:"integrity_detection"`
+	IntegrityDetection     types.Object `tfsdk:"integrity_detection"`
 	PackageName            types.String `tfsdk:"package_name"`
 	PasscodeRefreshSeconds types.Int64  `tfsdk:"passcode_refresh_seconds"`
 	UniversalAppLink       types.String `tfsdk:"universal_app_link"`
 }
 
 type ApplicationOIDCMobileAppIntegrityDetectionResourceModel struct {
-	CacheDuration     types.List `tfsdk:"cache_duration"`
-	Enabled           types.Bool `tfsdk:"enabled"`
-	ExcludedPlatforms types.Set  `tfsdk:"excluded_platforms"`
-	GooglePlay        types.List `tfsdk:"google_play"`
+	CacheDuration     types.Object `tfsdk:"cache_duration"`
+	Enabled           types.Bool   `tfsdk:"enabled"`
+	ExcludedPlatforms types.Set    `tfsdk:"excluded_platforms"`
+	GooglePlay        types.Object `tfsdk:"google_play"`
 }
 
 type ApplicationOIDCMobileAppIntegrityDetectionCacheDurationResourceModel struct {
@@ -132,25 +131,23 @@ type ApplicationOIDCMobileAppIntegrityDetectionGooglePlayResourceModel struct {
 }
 
 type ApplicationSAMLOptionsResourceModel struct {
-	AcsUrls                      types.Set    `tfsdk:"acs_urls"`
-	AssertionDuration            types.Int64  `tfsdk:"assertion_duration"`
-	AssertionSignedEnabled       types.Bool   `tfsdk:"assertion_signed_enabled"`
-	CorsSettings                 types.List   `tfsdk:"cors_settings"`
-	EnableRequestedAuthnContext  types.Bool   `tfsdk:"enable_requested_authn_context"`
-	HomePageUrl                  types.String `tfsdk:"home_page_url"`
-	IdpSigningKey                types.List   `tfsdk:"idp_signing_key"`
-	IdpSigningKeyId              types.String `tfsdk:"idp_signing_key_id"`
-	DefaultTargetUrl             types.String `tfsdk:"default_target_url"`
-	NameIdFormat                 types.String `tfsdk:"nameid_format"`
-	ResponseIsSigned             types.Bool   `tfsdk:"response_is_signed"`
-	SloBinding                   types.String `tfsdk:"slo_binding"`
-	SloEndpoint                  types.String `tfsdk:"slo_endpoint"`
-	SloResponseEndpoint          types.String `tfsdk:"slo_response_endpoint"`
-	SloWindow                    types.Int64  `tfsdk:"slo_window"`
-	SpEntityId                   types.String `tfsdk:"sp_entity_id"`
-	SpVerification               types.List   `tfsdk:"sp_verification"`
-	SpVerificationCertificateIds types.Set    `tfsdk:"sp_verification_certificate_ids"`
-	Type                         types.String `tfsdk:"type"`
+	AcsUrls                     types.Set    `tfsdk:"acs_urls"`
+	AssertionDuration           types.Int64  `tfsdk:"assertion_duration"`
+	AssertionSignedEnabled      types.Bool   `tfsdk:"assertion_signed_enabled"`
+	CorsSettings                types.Object `tfsdk:"cors_settings"`
+	EnableRequestedAuthnContext types.Bool   `tfsdk:"enable_requested_authn_context"`
+	HomePageUrl                 types.String `tfsdk:"home_page_url"`
+	IdpSigningKey               types.Object `tfsdk:"idp_signing_key"`
+	DefaultTargetUrl            types.String `tfsdk:"default_target_url"`
+	NameIdFormat                types.String `tfsdk:"nameid_format"`
+	ResponseIsSigned            types.Bool   `tfsdk:"response_is_signed"`
+	SloBinding                  types.String `tfsdk:"slo_binding"`
+	SloEndpoint                 types.String `tfsdk:"slo_endpoint"`
+	SloResponseEndpoint         types.String `tfsdk:"slo_response_endpoint"`
+	SloWindow                   types.Int64  `tfsdk:"slo_window"`
+	SpEntityId                  types.String `tfsdk:"sp_entity_id"`
+	SpVerification              types.Object `tfsdk:"sp_verification"`
+	Type                        types.String `tfsdk:"type"`
 }
 
 type ApplicationSAMLOptionsIdpSigningKeyResourceModel struct {
@@ -172,16 +169,14 @@ var (
 	applicationOidcOptionsTFObjectTypes = map[string]attr.Type{
 		"additional_refresh_token_replay_protection_enabled": types.BoolType,
 		"allow_wildcards_in_redirect_uris":                   types.BoolType,
-		"bundle_id":                                          types.StringType,
-		"certificate_based_authentication":                   types.ListType{ElemType: types.ObjectType{AttrTypes: applicationOidcOptionsCertificateAuthenticationTFObjectTypes}},
+		"certificate_based_authentication":                   types.ObjectType{AttrTypes: applicationOidcOptionsCertificateAuthenticationTFObjectTypes},
 		"client_id":                                          types.StringType,
 		"client_secret":                                      types.StringType,
-		"cors_settings":                                      types.ListType{ElemType: types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes}},
+		"cors_settings":                                      types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
 		"grant_types":                                        types.SetType{ElemType: types.StringType},
 		"home_page_url":                                      types.StringType,
 		"initiate_login_uri":                                 types.StringType,
-		"mobile_app":                                         types.ListType{ElemType: types.ObjectType{AttrTypes: applicationOidcMobileAppTFObjectTypes}},
-		"package_name":                                       types.StringType,
+		"mobile_app":                                         types.ObjectType{AttrTypes: applicationOidcMobileAppTFObjectTypes},
 		"par_requirement":                                    types.StringType,
 		"par_timeout":                                        types.Int64Type,
 		"pkce_enforcement":                                   types.StringType,
@@ -204,17 +199,17 @@ var (
 		"bundle_id":                types.StringType,
 		"huawei_app_id":            types.StringType,
 		"huawei_package_name":      types.StringType,
-		"integrity_detection":      types.ListType{ElemType: types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionTFObjectTypes}},
+		"integrity_detection":      types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionTFObjectTypes},
 		"package_name":             types.StringType,
 		"passcode_refresh_seconds": types.Int64Type,
 		"universal_app_link":       types.StringType,
 	}
 
 	applicationOidcMobileAppIntegrityDetectionTFObjectTypes = map[string]attr.Type{
-		"cache_duration":     types.ListType{ElemType: types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionCacheDurationTFObjectTypes}},
+		"cache_duration":     types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionCacheDurationTFObjectTypes},
 		"enabled":            types.BoolType,
 		"excluded_platforms": types.SetType{ElemType: types.StringType},
-		"google_play":        types.ListType{ElemType: types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionGooglePlayTFObjectTypes}},
+		"google_play":        types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionGooglePlayTFObjectTypes},
 	}
 
 	applicationOidcMobileAppIntegrityDetectionCacheDurationTFObjectTypes = map[string]attr.Type{
@@ -234,25 +229,23 @@ var (
 	}
 
 	applicationSamlOptionsTFObjectTypes = map[string]attr.Type{
-		"acs_urls":                        types.SetType{ElemType: types.StringType},
-		"assertion_duration":              types.Int64Type,
-		"assertion_signed_enabled":        types.BoolType,
-		"cors_settings":                   types.ListType{ElemType: types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes}},
-		"enable_requested_authn_context":  types.BoolType,
-		"home_page_url":                   types.StringType,
-		"idp_signing_key_id":              types.StringType,
-		"idp_signing_key":                 types.ListType{ElemType: types.ObjectType{AttrTypes: applicationSamlOptionsIdpSigningKeyTFObjectTypes}},
-		"default_target_url":              types.StringType,
-		"nameid_format":                   types.StringType,
-		"response_is_signed":              types.BoolType,
-		"slo_binding":                     types.StringType,
-		"slo_endpoint":                    types.StringType,
-		"slo_response_endpoint":           types.StringType,
-		"slo_window":                      types.Int64Type,
-		"sp_entity_id":                    types.StringType,
-		"sp_verification_certificate_ids": types.SetType{ElemType: types.StringType},
-		"sp_verification":                 types.ListType{ElemType: types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes}},
-		"type":                            types.StringType,
+		"acs_urls":                       types.SetType{ElemType: types.StringType},
+		"assertion_duration":             types.Int64Type,
+		"assertion_signed_enabled":       types.BoolType,
+		"cors_settings":                  types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
+		"enable_requested_authn_context": types.BoolType,
+		"home_page_url":                  types.StringType,
+		"idp_signing_key":                types.ObjectType{AttrTypes: applicationSamlOptionsIdpSigningKeyTFObjectTypes},
+		"default_target_url":             types.StringType,
+		"nameid_format":                  types.StringType,
+		"response_is_signed":             types.BoolType,
+		"slo_binding":                    types.StringType,
+		"slo_endpoint":                   types.StringType,
+		"slo_response_endpoint":          types.StringType,
+		"slo_window":                     types.Int64Type,
+		"sp_entity_id":                   types.StringType,
+		"sp_verification":                types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes},
+		"type":                           types.StringType,
 	}
 
 	applicationSamlOptionsIdpSigningKeyTFObjectTypes = map[string]attr.Type{
@@ -335,7 +328,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	appTypesExactlyOneOf := []string{"external_link_options", "oidc_options", "saml_options"}
 
 	externalLinkOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single block that specifies External link application specific settings.",
+		"A single object that specifies External link application specific settings.",
 	).ExactlyOneOf(appTypesExactlyOneOf)
 
 	externalLinkOptionsHomePageURLDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -343,7 +336,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	)
 
 	oidcOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single block that specifies OIDC/OAuth application specific settings.",
+		"A single object that specifies OIDC/OAuth application specific settings.",
 	).ExactlyOneOf(appTypesExactlyOneOf)
 
 	oidcOptionsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -459,16 +452,8 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 		"A boolean that indicates that the Java Web Token (JWT) for the [request query](https://openid.net/specs/openid-connect-core-1_0.html#RequestObject) parameter is required to be signed. If `false` or null, a signed request object is not required. Both `support_unsigned_request_object` and this property cannot be set to `true`.",
 	).DefaultValue(false)
 
-	oidcOptionsBundleIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"**Deprecation Notice** This field is deprecated and will be removed in a future release. Use `oidc_options.mobile_app.bundle_id` instead. A string that specifies the bundle associated with the application, for push notifications in native apps. The value of the `bundle_id` property is unique per environment, and once defined, is immutable; any change will force recreation of the application resource.",
-	)
-
-	oidcOptionsPackageNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"**Deprecation Notice** This field is deprecated and will be removed in a future release. Use `oidc_options.mobile_app.package_name` instead. A string that specifies the package name associated with the application, for push notifications in native apps. The value of the `package_name` property is unique per environment, and once defined, is immutable; any change will force recreation of the application resource.",
-	)
-
 	oidcOptionsCertificateBasedAuthenticationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A single block that specifies Certificate based authentication settings. This parameter block can only be set where the application's `type` parameter is set to `%s`.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
+		fmt.Sprintf("A single object that specifies Certificate based authentication settings. This parameter block can only be set where the application's `type` parameter is set to `%s`.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
 	)
 
 	oidcOptionsCertificateBasedAuthenticationKeyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -476,7 +461,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	)
 
 	oidcOptionsMobileAppDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A single block that specifies Mobile application integration settings for `%s` type applications.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
+		fmt.Sprintf("A single object that specifies Mobile application integration settings for `%s` type applications.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
 	)
 
 	oidcOptionsMobileAppBundleIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -515,7 +500,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	)
 
 	oidcOptionsMobileAppIntegrityDetectionCacheDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single block that specifies settings for the caching duration of successful integrity detection calls.  Every attestation request entails a certain time tradeoff. You can choose to cache successful integrity detection calls for a predefined duration, between a minimum of 1 minute and a maximum of 48 hours. If integrity detection is ENABLED, the cache duration must be set.",
+		"A single object that specifies settings for the caching duration of successful integrity detection calls.  Every attestation request entails a certain time tradeoff. You can choose to cache successful integrity detection calls for a predefined duration, between a minimum of 1 minute and a maximum of 48 hours. If integrity detection is ENABLED, the cache duration must be set.",
 	)
 
 	oidcOptionsMobileAppIntegrityDetectionCacheDurationUnitsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -523,7 +508,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	).AllowedValuesEnum(management.AllowedEnumDurationUnitMinsHoursEnumValues).DefaultValue(string(management.ENUMDURATIONUNITMINSHOURS_MINUTES))
 
 	oidcOptionsMobileAppIntegrityDetectionGooglePlayDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A single block that describes Google Play Integrity API credential settings for Android device integrity detection.  Required when `excluded_platforms` is unset or does not include `%s`.", management.ENUMMOBILEINTEGRITYDETECTIONPLATFORM_GOOGLE),
+		fmt.Sprintf("A single object that describes Google Play Integrity API credential settings for Android device integrity detection.  Required when `excluded_platforms` is unset or does not include `%s`.", management.ENUMMOBILEINTEGRITYDETECTIONPLATFORM_GOOGLE),
 	)
 
 	oidcOptionsMobileAppIntegrityDetectionGooglePlayDecryptionKeyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -545,7 +530,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	)
 
 	samlOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single block that specifies SAML application specific settings.",
+		"A single object that specifies SAML application specific settings.",
 	).ExactlyOneOf(appTypesExactlyOneOf)
 
 	samlOptionsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -558,10 +543,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	samlOptionsAssertionSignedEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the SAML assertion itself should be signed.",
 	).DefaultValue(true)
-
-	samlOptionsIdpSigningKeyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"**Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `idp_signing_key` block going forward.  An ID for the certificate key pair to be used by the identity provider to sign assertions and responses. If this property is omitted, the default signing certificate for the environment is used.",
-	)
 
 	samlOptionsDefaultTargetUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specfies a default URL used as the `RelayState` parameter by the IdP to deep link into the application after authentication. This value can be overridden by the `applicationUrl` query parameter for [GET Identity Provider Initiated SSO](https://apidocs.pingidentity.com/pingone/platform/v1/api/#get-identity-provider-initiated-sso). Although both of these parameters are generally URLs, because they are used as deep links, this is not enforced. If neither `defaultTargetUrl` nor `applicationUrl` is specified during a SAML authentication flow, no `RelayState` value is supplied to the application. The `defaultTargetUrl` (or the `applicationUrl`) value is passed to the SAML application’s ACS URL as a separate `RelayState` key value (not within the SAMLResponse key value).",
@@ -589,10 +570,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	const samlOptionsSloWindowMax = 24
 	samlOptionsSloWindowDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request.  The minimum value is `%d` hour and the maximum is `%d` hours.", samlOptionsSloWindowMin, samlOptionsSloWindowMax),
-	)
-
-	samlOptionsSpVerificationCertificateIds := framework.SchemaAttributeDescriptionFromMarkdown(
-		"**Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `sp_verification.certificate_ids` parameter going forward.  A list that specifies the certificate IDs used to verify the service provider signature.",
 	)
 
 	samlOptionsIdpSigningKeyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -699,96 +676,82 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 				Default: booldefault.StaticBool(false),
 			},
-		},
 
-		Blocks: map[string]schema.Block{
-			"icon": schema.ListNestedBlock{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies settings for the application icon.").Description,
+			"icon": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies settings for the application icon.").Description,
+				Optional:    true,
 
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID for the application icon.  Must be a valid PingOne Resource ID.").Description,
-							Required:    true,
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID for the application icon.  Must be a valid PingOne Resource ID.").Description,
+						Required:    true,
 
-							Validators: []validator.String{
+						Validators: []validator.String{
+							verify.P1ResourceIDValidator(),
+						},
+					},
+
+					"href": schema.StringAttribute{
+						Description:         iconHrefDescription.Description,
+						MarkdownDescription: iconHrefDescription.MarkdownDescription,
+						Required:            true,
+
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Value must be a valid URL with `http://` or `https://` prefix."),
+						},
+					},
+				},
+			},
+
+			"access_control_group_options": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies group access control settings.").Description,
+				Optional:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"type": schema.StringAttribute{
+						Description:         accessControlGroupOptionsTypeDescription.Description,
+						MarkdownDescription: accessControlGroupOptionsTypeDescription.MarkdownDescription,
+						Required:            true,
+
+						Validators: []validator.String{
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationAccessControlGroupTypeEnumValues)...),
+						},
+					},
+
+					"groups": schema.SetAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A set that specifies the group IDs for the groups the actor must belong to for access to the application.  Values must be valid PingOne Resource IDs.").Description,
+						Required:    true,
+
+						ElementType: types.StringType,
+
+						Validators: []validator.Set{
+							setvalidator.ValueStringsAre(
 								verify.P1ResourceIDValidator(),
-							},
-						},
-
-						"href": schema.StringAttribute{
-							Description:         iconHrefDescription.Description,
-							MarkdownDescription: iconHrefDescription.MarkdownDescription,
-							Required:            true,
-
-							Validators: []validator.String{
-								stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Value must be a valid URL with `http://` or `https://` prefix."),
-							},
+							),
 						},
 					},
 				},
-
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-				},
 			},
 
-			"access_control_group_options": schema.ListNestedBlock{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies group access control settings.").Description,
-
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"type": schema.StringAttribute{
-							Description:         accessControlGroupOptionsTypeDescription.Description,
-							MarkdownDescription: accessControlGroupOptionsTypeDescription.MarkdownDescription,
-							Required:            true,
-
-							Validators: []validator.String{
-								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationAccessControlGroupTypeEnumValues)...),
-							},
-						},
-
-						"groups": schema.SetAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A set that specifies the group IDs for the groups the actor must belong to for access to the application.  Values must be valid PingOne Resource IDs.").Description,
-							Required:    true,
-
-							ElementType: types.StringType,
-
-							Validators: []validator.Set{
-								setvalidator.ValueStringsAre(
-									verify.P1ResourceIDValidator(),
-								),
-							},
-						},
-					},
-				},
-
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-				},
-			},
-
-			"external_link_options": schema.ListNestedBlock{
+			"external_link_options": schema.SingleNestedAttribute{
 				Description:         externalLinkOptionsDescription.Description,
 				MarkdownDescription: externalLinkOptionsDescription.MarkdownDescription,
+				Optional:            true,
 
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"home_page_url": schema.StringAttribute{
-							Description:         externalLinkOptionsHomePageURLDescription.Description,
-							MarkdownDescription: externalLinkOptionsHomePageURLDescription.MarkdownDescription,
-							Required:            true,
+				Attributes: map[string]schema.Attribute{
+					"home_page_url": schema.StringAttribute{
+						Description:         externalLinkOptionsHomePageURLDescription.Description,
+						MarkdownDescription: externalLinkOptionsHomePageURLDescription.MarkdownDescription,
+						Required:            true,
 
-							Validators: []validator.String{
-								stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Value must be a valid URL with `http://` or `https://` prefix."),
-							},
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Value must be a valid URL with `http://` or `https://` prefix."),
 						},
 					},
 				},
 
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-					listvalidator.ExactlyOneOf(
+				Validators: []validator.Object{
+					objectvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("external_link_options"),
 						path.MatchRelative().AtParent().AtName("oidc_options"),
 						path.MatchRelative().AtParent().AtName("saml_options"),
@@ -796,826 +759,716 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 				},
 			},
 
-			"oidc_options": schema.ListNestedBlock{
+			"oidc_options": schema.SingleNestedAttribute{
 				Description:         oidcOptionsDescription.Description,
 				MarkdownDescription: oidcOptionsDescription.MarkdownDescription,
+				Optional:            true,
 
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"type": schema.StringAttribute{
-							Description:         oidcOptionsTypeDescription.Description,
-							MarkdownDescription: oidcOptionsTypeDescription.MarkdownDescription,
-							Required:            true,
+				Attributes: map[string]schema.Attribute{
+					"type": schema.StringAttribute{
+						Description:         oidcOptionsTypeDescription.Description,
+						MarkdownDescription: oidcOptionsTypeDescription.MarkdownDescription,
+						Required:            true,
 
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.RequiresReplace(),
-							},
-
-							Validators: []validator.String{
-								stringvalidator.OneOf(
-									string(management.ENUMAPPLICATIONTYPE_WEB_APP),
-									string(management.ENUMAPPLICATIONTYPE_NATIVE_APP),
-									string(management.ENUMAPPLICATIONTYPE_SINGLE_PAGE_APP),
-									string(management.ENUMAPPLICATIONTYPE_WORKER),
-									string(management.ENUMAPPLICATIONTYPE_CUSTOM_APP),
-									string(management.ENUMAPPLICATIONTYPE_SERVICE),
-								),
-							},
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.RequiresReplace(),
 						},
 
-						"home_page_url": schema.StringAttribute{
-							Description:         oidcOptionsHomePageURLDescription.Description,
-							MarkdownDescription: oidcOptionsHomePageURLDescription.MarkdownDescription,
-							Optional:            true,
-
-							Validators: []validator.String{
-								stringvalidator.RegexMatches(regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(https:\/\/).*)`), "Expected value to have a url with schema of \"https\".  \"http\" urls are permitted when using localhost hosts \"localhost\" and \"127.0.0.1\"."),
-							},
-						},
-
-						"initiate_login_uri": schema.StringAttribute{
-							Description:         oidcOptionsInitiateLoginUriDescription.Description,
-							MarkdownDescription: oidcOptionsInitiateLoginUriDescription.MarkdownDescription,
-							Optional:            true,
-
-							Validators: []validator.String{
-								stringvalidator.RegexMatches(regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(https:\/\/).*)`), "Expected value to have a url with schema of \"https\".  \"http\" urls are permitted when using localhost hosts \"localhost\" and \"127.0.0.1\"."),
-							},
-						},
-
-						"jwks": schema.StringAttribute{
-							Description:         oidcOptionsJwksDescription.Description,
-							MarkdownDescription: oidcOptionsJwksDescription.MarkdownDescription,
-							Optional:            true,
-
-							Validators: []validator.String{
-								stringvalidator.ConflictsWith(
-									path.MatchRelative().AtParent().AtName("jwks_url"),
-									path.MatchRelative().AtParent().AtName("jwks"),
-								),
-							},
-						},
-
-						"jwks_url": schema.StringAttribute{
-							Description:         oidcOptionsJwksUrlDescription.Description,
-							MarkdownDescription: oidcOptionsJwksUrlDescription.MarkdownDescription,
-							Optional:            true,
-
-							Validators: []validator.String{
-								stringvalidator.ConflictsWith(
-									path.MatchRelative().AtParent().AtName("jwks_url"),
-									path.MatchRelative().AtParent().AtName("jwks"),
-								),
-								stringvalidator.RegexMatches(regexp.MustCompile(`^(https:\/\/).*`), "Expected value to have a url with schema of \"https\"."),
-							},
-						},
-
-						"target_link_uri": schema.StringAttribute{
-							Description:         oidcOptionsTargetLinkUriDescription.Description,
-							MarkdownDescription: oidcOptionsTargetLinkUriDescription.MarkdownDescription,
-							Optional:            true,
-
-							Validators: []validator.String{
-								stringvalidator.RegexMatches(regexp.MustCompile(`^(\S+:\/\/).+`), "Expected value to have a url with schema of \"https\", \"http\" or a custom mobile native schema (e.g., `org.bxretail.app://target`)."),
-							},
-						},
-
-						"grant_types": schema.SetAttribute{
-							Description:         oidcOptionsGrantTypesDescription.Description,
-							MarkdownDescription: oidcOptionsGrantTypesDescription.MarkdownDescription,
-							Required:            true,
-
-							ElementType: types.StringType,
-
-							Validators: []validator.Set{
-								setvalidator.ValueStringsAre(
-									stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCGrantTypeEnumValues)...),
-								),
-							},
-						},
-
-						"response_types": schema.SetAttribute{
-							Description:         oidcOptionsResponseTypesDescription.Description,
-							MarkdownDescription: oidcOptionsResponseTypesDescription.MarkdownDescription,
-							Optional:            true,
-
-							ElementType: types.StringType,
-
-							Validators: []validator.Set{
-								setvalidator.ValueStringsAre(
-									stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCResponseTypeEnumValues)...),
-								),
-							},
-						},
-
-						"token_endpoint_authn_method": schema.StringAttribute{
-							Description:         oidcOptionsTokenEndpointAuthnMethod.Description,
-							MarkdownDescription: oidcOptionsTokenEndpointAuthnMethod.MarkdownDescription,
-							Required:            true,
-
-							Validators: []validator.String{
-								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCTokenAuthMethodEnumValues)...),
-							},
-						},
-
-						"par_requirement": schema.StringAttribute{
-							Description:         oidcOptionsParRequirementDescription.Description,
-							MarkdownDescription: oidcOptionsParRequirementDescription.MarkdownDescription,
-							Optional:            true,
-							Computed:            true,
-
-							Default: stringdefault.StaticString(string(management.ENUMAPPLICATIONOIDCPARREQUIREMENT_OPTIONAL)),
-
-							Validators: []validator.String{
-								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCPARRequirementEnumValues)...),
-							},
-						},
-
-						"par_timeout": schema.Int64Attribute{
-							Description:         oidcOptionsParTimeoutDescription.Description,
-							MarkdownDescription: oidcOptionsParTimeoutDescription.MarkdownDescription,
-							Optional:            true,
-							Computed:            true,
-
-							Default: int64default.StaticInt64(oidcOptionsParTimeoutDefault),
-
-							Validators: []validator.Int64{
-								int64validator.Between(oidcOptionsParTimeoutMin, oidcOptionsParTimeoutMax),
-							},
-						},
-
-						"pkce_enforcement": schema.StringAttribute{
-							Description:         oidcOptionsPKCEEnforcementDescription.Description,
-							MarkdownDescription: oidcOptionsPKCEEnforcementDescription.MarkdownDescription,
-							Optional:            true,
-							Computed:            true,
-
-							Default: stringdefault.StaticString(string(management.ENUMAPPLICATIONOIDCPKCEOPTION_OPTIONAL)),
-
-							Validators: []validator.String{
-								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCPKCEOptionEnumValues)...),
-							},
-						},
-
-						"redirect_uris": schema.SetAttribute{
-							Description:         oidcOptionsRedirectUrisDescription.Description,
-							MarkdownDescription: oidcOptionsRedirectUrisDescription.MarkdownDescription,
-							Optional:            true,
-
-							ElementType: types.StringType,
-
-							Validators: []validator.Set{
-								setvalidator.ValueStringsAre(
-									stringvalidator.RegexMatches(regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(\S+:\/\/).+)`), "Expected value to have a url with schema of \"https\" or a custom mobile native schema (e.g., `org.bxretail.app://callback`).  \"http\" urls are permitted when using localhost hosts \"localhost\" and \"127.0.0.1\"."),
-								),
-							},
-						},
-
-						"allow_wildcards_in_redirect_uris": schema.BoolAttribute{
-							Description:         oidcOptionsAllowWildcardsInRedirectUrisDescription.Description,
-							MarkdownDescription: oidcOptionsAllowWildcardsInRedirectUrisDescription.MarkdownDescription,
-							Optional:            true,
-							Computed:            true,
-
-							Default: booldefault.StaticBool(false),
-						},
-
-						"post_logout_redirect_uris": schema.SetAttribute{
-							Description:         oidcOptionsPostLogoutRedirectUrisDescription.Description,
-							MarkdownDescription: oidcOptionsPostLogoutRedirectUrisDescription.MarkdownDescription,
-							Optional:            true,
-
-							ElementType: types.StringType,
-
-							Validators: []validator.Set{
-								setvalidator.ValueStringsAre(
-									stringvalidator.RegexMatches(regexp.MustCompile(`^(\S+:\/\/).+`), "Expected value to have a url with schema of \"https\", \"http\" or a custom mobile native schema (e.g., `org.bxretail.app://logout`)."),
-								),
-							},
-						},
-
-						"refresh_token_duration": schema.Int64Attribute{
-							Description:         oidcOptionsRefreshTokenDurationDescription.Description,
-							MarkdownDescription: oidcOptionsRefreshTokenDurationDescription.MarkdownDescription,
-							Optional:            true,
-							Computed:            true,
-
-							Default: int64default.StaticInt64(oidcOptionsRefreshTokenDurationDefault),
-
-							Validators: []validator.Int64{
-								int64validator.Between(oidcOptionsRefreshTokenDurationMin, oidcOptionsRefreshTokenDurationMax),
-							},
-						},
-
-						"refresh_token_rolling_duration": schema.Int64Attribute{
-							Description:         oidcOptionsRefreshTokenRollingDurationDescription.Description,
-							MarkdownDescription: oidcOptionsRefreshTokenRollingDurationDescription.MarkdownDescription,
-							Optional:            true,
-							Computed:            true,
-
-							Default: int64default.StaticInt64(oidcOptionsRefreshTokenRollingDurationDefault),
-
-							Validators: []validator.Int64{
-								int64validator.Between(oidcOptionsRefreshTokenRollingDurationMin, oidcOptionsRefreshTokenRollingDurationMax),
-							},
-						},
-
-						"refresh_token_rolling_grace_period_duration": schema.Int64Attribute{
-							Description:         oidcOptionsRefreshTokenRollingGracePeriodDurationDescription.Description,
-							MarkdownDescription: oidcOptionsRefreshTokenRollingGracePeriodDurationDescription.MarkdownDescription,
-							Optional:            true,
-
-							Validators: []validator.Int64{
-								int64validator.Between(oidcOptionsRefreshTokenRollingGracePeriodDurationMin, oidcOptionsRefreshTokenRollingGracePeriodDurationMax),
-							},
-						},
-
-						"additional_refresh_token_replay_protection_enabled": schema.BoolAttribute{
-							Description:         oidcOptionsAdditionalRefreshTokenReplayProtectionEnabledDescription.Description,
-							MarkdownDescription: oidcOptionsAdditionalRefreshTokenReplayProtectionEnabledDescription.MarkdownDescription,
-							Optional:            true,
-							Computed:            true,
-
-							Default: booldefault.StaticBool(true),
-						},
-
-						"client_id": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application ID used to authenticate to the authorization server.").Description,
-							Computed:    true,
-
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-
-						"client_secret": schema.StringAttribute{
-							Description:         oidcOptionsClientSecretDescription.Description,
-							MarkdownDescription: oidcOptionsClientSecretDescription.MarkdownDescription,
-							Computed:            true,
-							Sensitive:           true,
-
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-
-						"support_unsigned_request_object": schema.BoolAttribute{
-							Description:         oidcOptionsSupportUnsignedRequestObjectDescription.Description,
-							MarkdownDescription: oidcOptionsSupportUnsignedRequestObjectDescription.MarkdownDescription,
-							Optional:            true,
-							Computed:            true,
-
-							Default: booldefault.StaticBool(false),
-						},
-
-						"require_signed_request_object": schema.BoolAttribute{
-							Description:         oidcOptionsRequireSignedRequestObjectDescription.Description,
-							MarkdownDescription: oidcOptionsRequireSignedRequestObjectDescription.MarkdownDescription,
-							Optional:            true,
-							Computed:            true,
-
-							Default: booldefault.StaticBool(false),
-						},
-
-						"bundle_id": schema.StringAttribute{
-							Description:         oidcOptionsBundleIdDescription.Description,
-							MarkdownDescription: oidcOptionsBundleIdDescription.MarkdownDescription,
-							DeprecationMessage:  "This field is deprecated and will be removed in a future release. Use `oidc_options.mobile_app.bundle_id` instead.",
-							Optional:            true,
-							Computed:            true,
-
-							Validators: []validator.String{
-								stringvalidator.LengthAtLeast(attrMinLength),
-							},
-						},
-
-						"package_name": schema.StringAttribute{
-							Description:         oidcOptionsPackageNameDescription.Description,
-							MarkdownDescription: oidcOptionsPackageNameDescription.MarkdownDescription,
-							DeprecationMessage:  "This field is deprecated and will be removed in a future release. Use `oidc_options.mobile_app.package_name` instead.",
-							Optional:            true,
-							Computed:            true,
-
-							Validators: []validator.String{
-								stringvalidator.LengthAtLeast(attrMinLength),
-							},
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								string(management.ENUMAPPLICATIONTYPE_WEB_APP),
+								string(management.ENUMAPPLICATIONTYPE_NATIVE_APP),
+								string(management.ENUMAPPLICATIONTYPE_SINGLE_PAGE_APP),
+								string(management.ENUMAPPLICATIONTYPE_WORKER),
+								string(management.ENUMAPPLICATIONTYPE_CUSTOM_APP),
+								string(management.ENUMAPPLICATIONTYPE_SERVICE),
+							),
 						},
 					},
 
-					Blocks: map[string]schema.Block{
-						"certificate_based_authentication": schema.ListNestedBlock{
-							Description:         oidcOptionsCertificateBasedAuthenticationDescription.Description,
-							MarkdownDescription: oidcOptionsCertificateBasedAuthenticationDescription.MarkdownDescription,
+					"home_page_url": schema.StringAttribute{
+						Description:         oidcOptionsHomePageURLDescription.Description,
+						MarkdownDescription: oidcOptionsHomePageURLDescription.MarkdownDescription,
+						Optional:            true,
 
-							NestedObject: schema.NestedBlockObject{
-								Attributes: map[string]schema.Attribute{
-									"key_id": schema.StringAttribute{
-										Description:         oidcOptionsCertificateBasedAuthenticationKeyIdDescription.Description,
-										MarkdownDescription: oidcOptionsCertificateBasedAuthenticationKeyIdDescription.MarkdownDescription,
-										Required:            true,
-
-										Validators: []validator.String{
-											verify.P1ResourceIDValidator(),
-										},
-									},
-								},
-							},
-
-							Validators: []validator.List{
-								listvalidator.SizeAtMost(1),
-							},
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(https:\/\/).*)`), "Expected value to have a url with schema of \"https\".  \"http\" urls are permitted when using localhost hosts \"localhost\" and \"127.0.0.1\"."),
 						},
-
-						"mobile_app": schema.ListNestedBlock{
-							Description:         oidcOptionsMobileAppDescription.Description,
-							MarkdownDescription: oidcOptionsMobileAppDescription.MarkdownDescription,
-
-							NestedObject: schema.NestedBlockObject{
-								Attributes: map[string]schema.Attribute{
-									"bundle_id": schema.StringAttribute{
-										Description:         oidcOptionsMobileAppBundleIdDescription.Description,
-										MarkdownDescription: oidcOptionsMobileAppBundleIdDescription.MarkdownDescription,
-										Optional:            true,
-
-										PlanModifiers: []planmodifier.String{
-											stringplanmodifier.RequiresReplace(),
-										},
-
-										Validators: []validator.String{
-											stringvalidator.LengthAtLeast(1),
-										},
-									},
-
-									"package_name": schema.StringAttribute{
-										Description:         oidcOptionsMobileAppPackageNameDescription.Description,
-										MarkdownDescription: oidcOptionsMobileAppPackageNameDescription.MarkdownDescription,
-										Optional:            true,
-
-										PlanModifiers: []planmodifier.String{
-											stringplanmodifier.RequiresReplace(),
-										},
-
-										Validators: []validator.String{
-											stringvalidator.LengthAtLeast(1),
-										},
-									},
-
-									"huawei_app_id": schema.StringAttribute{
-										Description:         oidcOptionsMobileAppHuaweiAppIdDescription.Description,
-										MarkdownDescription: oidcOptionsMobileAppHuaweiAppIdDescription.MarkdownDescription,
-										Optional:            true,
-
-										PlanModifiers: []planmodifier.String{
-											stringplanmodifier.RequiresReplace(),
-										},
-
-										Validators: []validator.String{
-											stringvalidator.LengthAtLeast(1),
-											stringvalidator.AlsoRequires(
-												path.MatchRelative().AtParent().AtName("huawei_app_id"),
-												path.MatchRelative().AtParent().AtName("huawei_package_name"),
-											),
-										},
-									},
-
-									"huawei_package_name": schema.StringAttribute{
-										Description:         oidcOptionsMobileAppHuaweiPackageNameDescription.Description,
-										MarkdownDescription: oidcOptionsMobileAppHuaweiPackageNameDescription.MarkdownDescription,
-										Optional:            true,
-
-										PlanModifiers: []planmodifier.String{
-											stringplanmodifier.RequiresReplace(),
-										},
-
-										Validators: []validator.String{
-											stringvalidator.LengthAtLeast(1),
-											stringvalidator.AlsoRequires(
-												path.MatchRelative().AtParent().AtName("huawei_app_id"),
-												path.MatchRelative().AtParent().AtName("huawei_package_name"),
-											),
-										},
-									},
-
-									"passcode_refresh_seconds": schema.Int64Attribute{
-										Description:         oidcOptionsMobileAppPasscodeRefreshSecondsDescription.Description,
-										MarkdownDescription: oidcOptionsMobileAppPasscodeRefreshSecondsDescription.MarkdownDescription,
-										Optional:            true,
-										Computed:            true,
-
-										Default: int64default.StaticInt64(oidcOptionsMobileAppPasscodeRefreshSecondsDefault),
-
-										Validators: []validator.Int64{
-											int64validator.Between(oidcOptionsMobileAppPasscodeRefreshSecondsMin, oidcOptionsMobileAppPasscodeRefreshSecondsMax),
-										},
-									},
-
-									"universal_app_link": schema.StringAttribute{
-										Description:         oidcOptionsMobileAppUniversalAppLinkDescription.Description,
-										MarkdownDescription: oidcOptionsMobileAppUniversalAppLinkDescription.MarkdownDescription,
-										Optional:            true,
-
-										Validators: []validator.String{
-											stringvalidator.LengthAtLeast(1),
-										},
-									},
-								},
-
-								Blocks: map[string]schema.Block{
-									"integrity_detection": schema.ListNestedBlock{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies mobile application integrity detection settings.").Description,
-
-										NestedObject: schema.NestedBlockObject{
-											Attributes: map[string]schema.Attribute{
-												"enabled": schema.BoolAttribute{
-													Description:         oidcOptionsMobileAppIntegrityDetectionEnabledDescription.Description,
-													MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionEnabledDescription.MarkdownDescription,
-													Optional:            true,
-													Computed:            true,
-
-													Default: booldefault.StaticBool(false),
-												},
-
-												"excluded_platforms": schema.SetAttribute{
-													Description:         oidcOptionsMobileAppIntegrityDetectionExcludedPlatformsDescription.Description,
-													MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionExcludedPlatformsDescription.MarkdownDescription,
-													Optional:            true,
-
-													ElementType: types.StringType,
-
-													Validators: []validator.Set{
-														setvalidator.SizeAtMost(1),
-														setvalidator.ValueStringsAre(
-															stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumMobileIntegrityDetectionPlatformEnumValues)...),
-														),
-													},
-												},
-											},
-
-											Blocks: map[string]schema.Block{
-												"cache_duration": schema.ListNestedBlock{
-													Description:         oidcOptionsMobileAppIntegrityDetectionCacheDurationDescription.Description,
-													MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionCacheDurationDescription.MarkdownDescription,
-
-													NestedObject: schema.NestedBlockObject{
-														Attributes: map[string]schema.Attribute{
-															"amount": schema.Int64Attribute{
-																Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of minutes or hours that specify the duration between successful integrity detection calls.").Description,
-																Required:    true,
-															},
-
-															"units": schema.StringAttribute{
-																Description:         oidcOptionsMobileAppIntegrityDetectionCacheDurationUnitsDescription.Description,
-																MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionCacheDurationUnitsDescription.MarkdownDescription,
-																Optional:            true,
-																Computed:            true,
-
-																Default: stringdefault.StaticString(string(management.ENUMDURATIONUNITMINSHOURS_MINUTES)),
-
-																Validators: []validator.String{
-																	stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumDurationUnitMinsHoursEnumValues)...),
-																},
-															},
-														},
-													},
-
-													Validators: []validator.List{
-														listvalidator.SizeAtMost(1),
-													},
-												},
-
-												"google_play": schema.ListNestedBlock{
-													Description:         oidcOptionsMobileAppIntegrityDetectionGooglePlayDescription.Description,
-													MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionGooglePlayDescription.MarkdownDescription,
-
-													NestedObject: schema.NestedBlockObject{
-														Attributes: map[string]schema.Attribute{
-															"decryption_key": schema.StringAttribute{
-																Description:         oidcOptionsMobileAppIntegrityDetectionGooglePlayDecryptionKeyDescription.Description,
-																MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionGooglePlayDecryptionKeyDescription.MarkdownDescription,
-																Optional:            true,
-																Sensitive:           true,
-
-																Validators: []validator.String{
-																	stringvalidator.ConflictsWith(
-																		path.MatchRelative().AtParent().AtName("service_account_credentials_json"),
-																	),
-																},
-															},
-
-															"service_account_credentials_json": schema.StringAttribute{
-																Description:         oidcOptionsMobileAppIntegrityDetectionGooglePlayServiceAccountCredentialsJsonDescription.Description,
-																MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionGooglePlayServiceAccountCredentialsJsonDescription.MarkdownDescription,
-																Optional:            true,
-																Sensitive:           true,
-
-																Validators: []validator.String{
-																	stringvalidator.ConflictsWith(
-																		path.MatchRelative().AtParent().AtName("decryption_key"),
-																		path.MatchRelative().AtParent().AtName("verification_key"),
-																	),
-																},
-															},
-
-															"verification_key": schema.StringAttribute{
-																Description:         oidcOptionsMobileAppIntegrityDetectionGooglePlayVerificationKeyDescription.Description,
-																MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionGooglePlayVerificationKeyDescription.MarkdownDescription,
-																Optional:            true,
-																Sensitive:           true,
-
-																Validators: []validator.String{
-																	stringvalidator.ConflictsWith(
-																		path.MatchRelative().AtParent().AtName("service_account_credentials_json"),
-																	),
-																},
-															},
-
-															"verification_type": schema.StringAttribute{
-																Description:         oidcOptionsMobileAppIntegrityDetectionGooglePlayVerificationTypeDescription.Description,
-																MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionGooglePlayVerificationTypeDescription.MarkdownDescription,
-																Required:            true,
-
-																Validators: []validator.String{
-																	stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationNativeGooglePlayVerificationTypeEnumValues)...),
-																},
-															},
-														},
-													},
-
-													Validators: []validator.List{
-														listvalidator.SizeAtMost(1),
-													},
-												},
-											},
-										},
-
-										Validators: []validator.List{
-											listvalidator.SizeAtMost(1),
-										},
-									},
-								},
-							},
-
-							Validators: []validator.List{
-								listvalidator.SizeAtMost(1),
-							},
-						},
-
-						"cors_settings": resourceApplicationSchemaCorsSettings(),
 					},
-				},
 
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-					listvalidator.ExactlyOneOf(
-						path.MatchRelative().AtParent().AtName("external_link_options"),
-						path.MatchRelative().AtParent().AtName("oidc_options"),
-						path.MatchRelative().AtParent().AtName("saml_options"),
-					),
-				},
-			},
+					"initiate_login_uri": schema.StringAttribute{
+						Description:         oidcOptionsInitiateLoginUriDescription.Description,
+						MarkdownDescription: oidcOptionsInitiateLoginUriDescription.MarkdownDescription,
+						Optional:            true,
 
-			"saml_options": schema.ListNestedBlock{
-				Description:         samlOptionsDescription.Description,
-				MarkdownDescription: samlOptionsDescription.MarkdownDescription,
-
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"home_page_url": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the custom home page URL for the application.").Description,
-							Optional:    true,
-
-							Validators: []validator.String{
-								stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Expected value to have a url with schema of \"https\"."),
-							},
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(https:\/\/).*)`), "Expected value to have a url with schema of \"https\".  \"http\" urls are permitted when using localhost hosts \"localhost\" and \"127.0.0.1\"."),
 						},
+					},
 
-						"type": schema.StringAttribute{
-							Description:         samlOptionsTypeDescription.Description,
-							MarkdownDescription: samlOptionsTypeDescription.MarkdownDescription,
-							Optional:            true,
-							Computed:            true,
+					"jwks": schema.StringAttribute{
+						Description:         oidcOptionsJwksDescription.Description,
+						MarkdownDescription: oidcOptionsJwksDescription.MarkdownDescription,
+						Optional:            true,
 
-							Default: stringdefault.StaticString(string(management.ENUMAPPLICATIONTYPE_WEB_APP)),
-
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.RequiresReplace(),
-							},
-
-							Validators: []validator.String{
-								stringvalidator.OneOf(
-									string(management.ENUMAPPLICATIONTYPE_WEB_APP),
-									string(management.ENUMAPPLICATIONTYPE_CUSTOM_APP),
-								),
-							},
+						Validators: []validator.String{
+							stringvalidator.ConflictsWith(
+								path.MatchRelative().AtParent().AtName("jwks_url"),
+								path.MatchRelative().AtParent().AtName("jwks"),
+							),
 						},
+					},
 
-						"acs_urls": schema.SetAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A list of string that specifies the Assertion Consumer Service URLs. The first URL in the list is used as default (there must be at least one URL).").Description,
-							Required:    true,
+					"jwks_url": schema.StringAttribute{
+						Description:         oidcOptionsJwksUrlDescription.Description,
+						MarkdownDescription: oidcOptionsJwksUrlDescription.MarkdownDescription,
+						Optional:            true,
 
-							ElementType: types.StringType,
+						Validators: []validator.String{
+							stringvalidator.ConflictsWith(
+								path.MatchRelative().AtParent().AtName("jwks_url"),
+								path.MatchRelative().AtParent().AtName("jwks"),
+							),
+							stringvalidator.RegexMatches(regexp.MustCompile(`^(https:\/\/).*`), "Expected value to have a url with schema of \"https\"."),
 						},
+					},
 
-						"assertion_duration": schema.Int64Attribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the assertion validity duration in seconds.").Description,
-							Required:    true,
+					"target_link_uri": schema.StringAttribute{
+						Description:         oidcOptionsTargetLinkUriDescription.Description,
+						MarkdownDescription: oidcOptionsTargetLinkUriDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(regexp.MustCompile(`^(\S+:\/\/).+`), "Expected value to have a url with schema of \"https\", \"http\" or a custom mobile native schema (e.g., `org.bxretail.app://target`)."),
 						},
+					},
 
-						"assertion_signed_enabled": schema.BoolAttribute{
-							Description:         samlOptionsAssertionSignedEnabledDescription.Description,
-							MarkdownDescription: samlOptionsAssertionSignedEnabledDescription.MarkdownDescription,
-							Optional:            true,
-							Computed:            true,
+					"grant_types": schema.SetAttribute{
+						Description:         oidcOptionsGrantTypesDescription.Description,
+						MarkdownDescription: oidcOptionsGrantTypesDescription.MarkdownDescription,
+						Required:            true,
 
-							Default: booldefault.StaticBool(true),
+						ElementType: types.StringType,
+
+						Validators: []validator.Set{
+							setvalidator.ValueStringsAre(
+								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCGrantTypeEnumValues)...),
+							),
 						},
+					},
 
-						"idp_signing_key_id": schema.StringAttribute{
-							Description:         samlOptionsIdpSigningKeyIdDescription.Description,
-							MarkdownDescription: samlOptionsIdpSigningKeyIdDescription.MarkdownDescription,
-							Optional:            true,
-							Computed:            true,
+					"response_types": schema.SetAttribute{
+						Description:         oidcOptionsResponseTypesDescription.Description,
+						MarkdownDescription: oidcOptionsResponseTypesDescription.MarkdownDescription,
+						Optional:            true,
 
-							DeprecationMessage: "The `idp_signing_key_id` attribute is deprecated and will be removed in the next major release.  Please use the `idp_signing_key` block going forward.",
+						ElementType: types.StringType,
 
-							Validators: []validator.String{
-								verify.P1ResourceIDValidator(),
-								stringvalidator.ConflictsWith(
-									path.MatchRelative().AtParent().AtName("idp_signing_key"),
-								),
-							},
+						Validators: []validator.Set{
+							setvalidator.ValueStringsAre(
+								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCResponseTypeEnumValues)...),
+							),
 						},
+					},
 
-						"default_target_url": schema.StringAttribute{
-							Description:         samlOptionsDefaultTargetUrlDescription.Description,
-							MarkdownDescription: samlOptionsDefaultTargetUrlDescription.MarkdownDescription,
-							Optional:            true,
+					"token_endpoint_authn_method": schema.StringAttribute{
+						Description:         oidcOptionsTokenEndpointAuthnMethod.Description,
+						MarkdownDescription: oidcOptionsTokenEndpointAuthnMethod.MarkdownDescription,
+						Required:            true,
+
+						Validators: []validator.String{
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCTokenAuthMethodEnumValues)...),
 						},
+					},
 
-						"enable_requested_authn_context": schema.BoolAttribute{
-							Description:         samlOptionsEnableRequestedAuthnContextDescription.Description,
-							MarkdownDescription: samlOptionsEnableRequestedAuthnContextDescription.MarkdownDescription,
-							Optional:            true,
+					"par_requirement": schema.StringAttribute{
+						Description:         oidcOptionsParRequirementDescription.Description,
+						MarkdownDescription: oidcOptionsParRequirementDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: stringdefault.StaticString(string(management.ENUMAPPLICATIONOIDCPARREQUIREMENT_OPTIONAL)),
+
+						Validators: []validator.String{
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCPARRequirementEnumValues)...),
 						},
+					},
 
-						"nameid_format": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the format of the Subject NameID attibute in the SAML assertion.").Description,
-							Optional:    true,
+					"par_timeout": schema.Int64Attribute{
+						Description:         oidcOptionsParTimeoutDescription.Description,
+						MarkdownDescription: oidcOptionsParTimeoutDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: int64default.StaticInt64(oidcOptionsParTimeoutDefault),
+
+						Validators: []validator.Int64{
+							int64validator.Between(oidcOptionsParTimeoutMin, oidcOptionsParTimeoutMax),
 						},
+					},
 
-						"response_is_signed": schema.BoolAttribute{
-							Description:         samlOptionsResponseIsSignedDescription.Description,
-							MarkdownDescription: samlOptionsResponseIsSignedDescription.MarkdownDescription,
-							Optional:            true,
-							Computed:            true,
+					"pkce_enforcement": schema.StringAttribute{
+						Description:         oidcOptionsPKCEEnforcementDescription.Description,
+						MarkdownDescription: oidcOptionsPKCEEnforcementDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
 
-							Default: booldefault.StaticBool(false),
+						Default: stringdefault.StaticString(string(management.ENUMAPPLICATIONOIDCPKCEOPTION_OPTIONAL)),
+
+						Validators: []validator.String{
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCPKCEOptionEnumValues)...),
 						},
+					},
 
-						"slo_binding": schema.StringAttribute{
-							Description:         samlOptionsSloBindingDescription.Description,
-							MarkdownDescription: samlOptionsSloBindingDescription.MarkdownDescription,
-							Optional:            true,
-							Computed:            true,
+					"redirect_uris": schema.SetAttribute{
+						Description:         oidcOptionsRedirectUrisDescription.Description,
+						MarkdownDescription: oidcOptionsRedirectUrisDescription.MarkdownDescription,
+						Optional:            true,
 
-							Default: stringdefault.StaticString(string(management.ENUMAPPLICATIONSAMLSLOBINDING_POST)),
+						ElementType: types.StringType,
 
-							Validators: []validator.String{
-								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationSAMLSloBindingEnumValues)...),
-							},
+						Validators: []validator.Set{
+							setvalidator.ValueStringsAre(
+								stringvalidator.RegexMatches(regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(\S+:\/\/).+)`), "Expected value to have a url with schema of \"https\" or a custom mobile native schema (e.g., `org.bxretail.app://callback`).  \"http\" urls are permitted when using localhost hosts \"localhost\" and \"127.0.0.1\"."),
+							),
 						},
+					},
 
-						"slo_endpoint": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the logout endpoint URL. This is an optional property. However, if a logout endpoint URL is not defined, logout actions result in an error.").Description,
-							Optional:    true,
+					"allow_wildcards_in_redirect_uris": schema.BoolAttribute{
+						Description:         oidcOptionsAllowWildcardsInRedirectUrisDescription.Description,
+						MarkdownDescription: oidcOptionsAllowWildcardsInRedirectUrisDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
 
-							Validators: []validator.String{
-								stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Expected value to have a url with schema of \"http\" or \"https\"."),
-							},
+						Default: booldefault.StaticBool(false),
+					},
+
+					"post_logout_redirect_uris": schema.SetAttribute{
+						Description:         oidcOptionsPostLogoutRedirectUrisDescription.Description,
+						MarkdownDescription: oidcOptionsPostLogoutRedirectUrisDescription.MarkdownDescription,
+						Optional:            true,
+
+						ElementType: types.StringType,
+
+						Validators: []validator.Set{
+							setvalidator.ValueStringsAre(
+								stringvalidator.RegexMatches(regexp.MustCompile(`^(\S+:\/\/).+`), "Expected value to have a url with schema of \"https\", \"http\" or a custom mobile native schema (e.g., `org.bxretail.app://logout`)."),
+							),
 						},
+					},
 
-						"slo_response_endpoint": schema.StringAttribute{
-							Description:         samlOptionsSloResponseEndpointDescription.Description,
-							MarkdownDescription: samlOptionsSloResponseEndpointDescription.MarkdownDescription,
-							Optional:            true,
+					"refresh_token_duration": schema.Int64Attribute{
+						Description:         oidcOptionsRefreshTokenDurationDescription.Description,
+						MarkdownDescription: oidcOptionsRefreshTokenDurationDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
 
-							Validators: []validator.String{
-								stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Expected value to have a url with schema of \"http\" or \"https\"."),
-							},
+						Default: int64default.StaticInt64(oidcOptionsRefreshTokenDurationDefault),
+
+						Validators: []validator.Int64{
+							int64validator.Between(oidcOptionsRefreshTokenDurationMin, oidcOptionsRefreshTokenDurationMax),
 						},
+					},
 
-						"slo_window": schema.Int64Attribute{
-							Description:         samlOptionsSloWindowDescription.Description,
-							MarkdownDescription: samlOptionsSloWindowDescription.MarkdownDescription,
-							Optional:            true,
+					"refresh_token_rolling_duration": schema.Int64Attribute{
+						Description:         oidcOptionsRefreshTokenRollingDurationDescription.Description,
+						MarkdownDescription: oidcOptionsRefreshTokenRollingDurationDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
 
-							Validators: []validator.Int64{
-								int64validator.Between(samlOptionsSloWindowMin, samlOptionsSloWindowMax),
-							},
+						Default: int64default.StaticInt64(oidcOptionsRefreshTokenRollingDurationDefault),
+
+						Validators: []validator.Int64{
+							int64validator.Between(oidcOptionsRefreshTokenRollingDurationMin, oidcOptionsRefreshTokenRollingDurationMax),
 						},
+					},
 
-						"sp_entity_id": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the service provider entity ID used to lookup the application. This is a required property and is unique within the environment.").Description,
-							Required:    true,
+					"refresh_token_rolling_grace_period_duration": schema.Int64Attribute{
+						Description:         oidcOptionsRefreshTokenRollingGracePeriodDurationDescription.Description,
+						MarkdownDescription: oidcOptionsRefreshTokenRollingGracePeriodDurationDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.Int64{
+							int64validator.Between(oidcOptionsRefreshTokenRollingGracePeriodDurationMin, oidcOptionsRefreshTokenRollingGracePeriodDurationMax),
 						},
+					},
 
-						"sp_verification_certificate_ids": schema.SetAttribute{
-							Description:         samlOptionsSpVerificationCertificateIds.Description,
-							MarkdownDescription: samlOptionsSpVerificationCertificateIds.MarkdownDescription,
-							Optional:            true,
-							Computed:            true,
+					"additional_refresh_token_replay_protection_enabled": schema.BoolAttribute{
+						Description:         oidcOptionsAdditionalRefreshTokenReplayProtectionEnabledDescription.Description,
+						MarkdownDescription: oidcOptionsAdditionalRefreshTokenReplayProtectionEnabledDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
 
-							DeprecationMessage: "The `sp_verification_certificate_ids` parameter is deprecated and will be removed in the next major release.  Please use the `sp_verification.certificate_ids` parameter going forward.",
+						Default: booldefault.StaticBool(true),
+					},
 
-							ElementType: types.StringType,
+					"client_id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application ID used to authenticate to the authorization server.").Description,
+						Computed:    true,
 
-							Validators: []validator.Set{
-								setvalidator.ValueStringsAre(
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+					},
+
+					"client_secret": schema.StringAttribute{
+						Description:         oidcOptionsClientSecretDescription.Description,
+						MarkdownDescription: oidcOptionsClientSecretDescription.MarkdownDescription,
+						Computed:            true,
+						Sensitive:           true,
+
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+					},
+
+					"support_unsigned_request_object": schema.BoolAttribute{
+						Description:         oidcOptionsSupportUnsignedRequestObjectDescription.Description,
+						MarkdownDescription: oidcOptionsSupportUnsignedRequestObjectDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: booldefault.StaticBool(false),
+					},
+
+					"require_signed_request_object": schema.BoolAttribute{
+						Description:         oidcOptionsRequireSignedRequestObjectDescription.Description,
+						MarkdownDescription: oidcOptionsRequireSignedRequestObjectDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: booldefault.StaticBool(false),
+					},
+
+					"certificate_based_authentication": schema.SingleNestedAttribute{
+						Description:         oidcOptionsCertificateBasedAuthenticationDescription.Description,
+						MarkdownDescription: oidcOptionsCertificateBasedAuthenticationDescription.MarkdownDescription,
+						Optional:            true,
+
+						Attributes: map[string]schema.Attribute{
+							"key_id": schema.StringAttribute{
+								Description:         oidcOptionsCertificateBasedAuthenticationKeyIdDescription.Description,
+								MarkdownDescription: oidcOptionsCertificateBasedAuthenticationKeyIdDescription.MarkdownDescription,
+								Required:            true,
+
+								Validators: []validator.String{
 									verify.P1ResourceIDValidator(),
-								),
-								setvalidator.ConflictsWith(
-									path.MatchRelative().AtParent().AtName("sp_verification"),
-								),
+								},
 							},
 						},
 					},
 
-					Blocks: map[string]schema.Block{
-						"idp_signing_key": schema.ListNestedBlock{
-							Description:         samlOptionsIdpSigningKeyDescription.Description,
-							MarkdownDescription: samlOptionsIdpSigningKeyDescription.MarkdownDescription,
+					"mobile_app": schema.SingleNestedAttribute{
+						Description:         oidcOptionsMobileAppDescription.Description,
+						MarkdownDescription: oidcOptionsMobileAppDescription.MarkdownDescription,
+						Optional:            true,
 
-							NestedObject: schema.NestedBlockObject{
-								Attributes: map[string]schema.Attribute{
-									"algorithm": schema.StringAttribute{
-										Description:         samlOptionsIdpSigningKeyAlgorithmDescription.Description,
-										MarkdownDescription: samlOptionsIdpSigningKeyAlgorithmDescription.MarkdownDescription,
-										Required:            true,
+						Attributes: map[string]schema.Attribute{
+							"bundle_id": schema.StringAttribute{
+								Description:         oidcOptionsMobileAppBundleIdDescription.Description,
+								MarkdownDescription: oidcOptionsMobileAppBundleIdDescription.MarkdownDescription,
+								Optional:            true,
 
-										Validators: []validator.String{
-											stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumCertificateKeySignagureAlgorithmEnumValues)...),
-										},
-									},
+								PlanModifiers: []planmodifier.String{
+									stringplanmodifier.RequiresReplace(),
+								},
 
-									"key_id": schema.StringAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.  Must be a valid PingOne resource ID.").Description,
-										Required:    true,
-
-										Validators: []validator.String{
-											verify.P1ResourceIDValidator(),
-										},
-									},
+								Validators: []validator.String{
+									stringvalidator.LengthAtLeast(1),
 								},
 							},
 
-							Validators: []validator.List{
-								listvalidator.SizeAtMost(1),
-								listvalidator.ConflictsWith(
-									path.MatchRelative().AtParent().AtName("idp_signing_key_id"),
-								),
+							"package_name": schema.StringAttribute{
+								Description:         oidcOptionsMobileAppPackageNameDescription.Description,
+								MarkdownDescription: oidcOptionsMobileAppPackageNameDescription.MarkdownDescription,
+								Optional:            true,
+
+								PlanModifiers: []planmodifier.String{
+									stringplanmodifier.RequiresReplace(),
+								},
+
+								Validators: []validator.String{
+									stringvalidator.LengthAtLeast(1),
+								},
 							},
-						},
 
-						"sp_verification": schema.ListNestedBlock{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A single block item that specifies SP signature verification settings.").Description,
+							"huawei_app_id": schema.StringAttribute{
+								Description:         oidcOptionsMobileAppHuaweiAppIdDescription.Description,
+								MarkdownDescription: oidcOptionsMobileAppHuaweiAppIdDescription.MarkdownDescription,
+								Optional:            true,
 
-							NestedObject: schema.NestedBlockObject{
+								PlanModifiers: []planmodifier.String{
+									stringplanmodifier.RequiresReplace(),
+								},
+
+								Validators: []validator.String{
+									stringvalidator.LengthAtLeast(1),
+									stringvalidator.AlsoRequires(
+										path.MatchRelative().AtParent().AtName("huawei_app_id"),
+										path.MatchRelative().AtParent().AtName("huawei_package_name"),
+									),
+								},
+							},
+
+							"huawei_package_name": schema.StringAttribute{
+								Description:         oidcOptionsMobileAppHuaweiPackageNameDescription.Description,
+								MarkdownDescription: oidcOptionsMobileAppHuaweiPackageNameDescription.MarkdownDescription,
+								Optional:            true,
+
+								PlanModifiers: []planmodifier.String{
+									stringplanmodifier.RequiresReplace(),
+								},
+
+								Validators: []validator.String{
+									stringvalidator.LengthAtLeast(1),
+									stringvalidator.AlsoRequires(
+										path.MatchRelative().AtParent().AtName("huawei_app_id"),
+										path.MatchRelative().AtParent().AtName("huawei_package_name"),
+									),
+								},
+							},
+
+							"passcode_refresh_seconds": schema.Int64Attribute{
+								Description:         oidcOptionsMobileAppPasscodeRefreshSecondsDescription.Description,
+								MarkdownDescription: oidcOptionsMobileAppPasscodeRefreshSecondsDescription.MarkdownDescription,
+								Optional:            true,
+								Computed:            true,
+
+								Default: int64default.StaticInt64(oidcOptionsMobileAppPasscodeRefreshSecondsDefault),
+
+								Validators: []validator.Int64{
+									int64validator.Between(oidcOptionsMobileAppPasscodeRefreshSecondsMin, oidcOptionsMobileAppPasscodeRefreshSecondsMax),
+								},
+							},
+
+							"universal_app_link": schema.StringAttribute{
+								Description:         oidcOptionsMobileAppUniversalAppLinkDescription.Description,
+								MarkdownDescription: oidcOptionsMobileAppUniversalAppLinkDescription.MarkdownDescription,
+								Optional:            true,
+
+								Validators: []validator.String{
+									stringvalidator.LengthAtLeast(1),
+								},
+							},
+
+							"integrity_detection": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies mobile application integrity detection settings.").Description,
+								Optional:    true,
+
 								Attributes: map[string]schema.Attribute{
-									"authn_request_signed": schema.BoolAttribute{
-										Description:         samlOptionsSpVerificationAuthnRequestSignedDescription.Description,
-										MarkdownDescription: samlOptionsSpVerificationAuthnRequestSignedDescription.MarkdownDescription,
+									"enabled": schema.BoolAttribute{
+										Description:         oidcOptionsMobileAppIntegrityDetectionEnabledDescription.Description,
+										MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionEnabledDescription.MarkdownDescription,
 										Optional:            true,
 										Computed:            true,
 
 										Default: booldefault.StaticBool(false),
 									},
 
-									"certificate_ids": schema.SetAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("A list that specifies the certificate IDs used to verify the service provider signature.  Values must be valid PingOne resource IDs.").Description,
+									"excluded_platforms": schema.SetAttribute{
+										Description:         oidcOptionsMobileAppIntegrityDetectionExcludedPlatformsDescription.Description,
+										MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionExcludedPlatformsDescription.MarkdownDescription,
+										Optional:            true,
+
 										ElementType: types.StringType,
-										Required:    true,
 
 										Validators: []validator.Set{
+											setvalidator.SizeAtMost(1),
 											setvalidator.ValueStringsAre(
-												verify.P1ResourceIDValidator(),
+												stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumMobileIntegrityDetectionPlatformEnumValues)...),
 											),
+										},
+									},
+
+									"cache_duration": schema.SingleNestedAttribute{
+										Description:         oidcOptionsMobileAppIntegrityDetectionCacheDurationDescription.Description,
+										MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionCacheDurationDescription.MarkdownDescription,
+										Optional:            true,
+
+										Attributes: map[string]schema.Attribute{
+											"amount": schema.Int64Attribute{
+												Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of minutes or hours that specify the duration between successful integrity detection calls.").Description,
+												Required:    true,
+											},
+
+											"units": schema.StringAttribute{
+												Description:         oidcOptionsMobileAppIntegrityDetectionCacheDurationUnitsDescription.Description,
+												MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionCacheDurationUnitsDescription.MarkdownDescription,
+												Optional:            true,
+												Computed:            true,
+
+												Default: stringdefault.StaticString(string(management.ENUMDURATIONUNITMINSHOURS_MINUTES)),
+
+												Validators: []validator.String{
+													stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumDurationUnitMinsHoursEnumValues)...),
+												},
+											},
+										},
+									},
+
+									"google_play": schema.SingleNestedAttribute{
+										Description:         oidcOptionsMobileAppIntegrityDetectionGooglePlayDescription.Description,
+										MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionGooglePlayDescription.MarkdownDescription,
+										Optional:            true,
+
+										Attributes: map[string]schema.Attribute{
+											"decryption_key": schema.StringAttribute{
+												Description:         oidcOptionsMobileAppIntegrityDetectionGooglePlayDecryptionKeyDescription.Description,
+												MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionGooglePlayDecryptionKeyDescription.MarkdownDescription,
+												Optional:            true,
+												Sensitive:           true,
+
+												Validators: []validator.String{
+													stringvalidator.ConflictsWith(
+														path.MatchRelative().AtParent().AtName("service_account_credentials_json"),
+													),
+												},
+											},
+
+											"service_account_credentials_json": schema.StringAttribute{
+												Description:         oidcOptionsMobileAppIntegrityDetectionGooglePlayServiceAccountCredentialsJsonDescription.Description,
+												MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionGooglePlayServiceAccountCredentialsJsonDescription.MarkdownDescription,
+												Optional:            true,
+												Sensitive:           true,
+
+												Validators: []validator.String{
+													stringvalidator.ConflictsWith(
+														path.MatchRelative().AtParent().AtName("decryption_key"),
+														path.MatchRelative().AtParent().AtName("verification_key"),
+													),
+												},
+											},
+
+											"verification_key": schema.StringAttribute{
+												Description:         oidcOptionsMobileAppIntegrityDetectionGooglePlayVerificationKeyDescription.Description,
+												MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionGooglePlayVerificationKeyDescription.MarkdownDescription,
+												Optional:            true,
+												Sensitive:           true,
+
+												Validators: []validator.String{
+													stringvalidator.ConflictsWith(
+														path.MatchRelative().AtParent().AtName("service_account_credentials_json"),
+													),
+												},
+											},
+
+											"verification_type": schema.StringAttribute{
+												Description:         oidcOptionsMobileAppIntegrityDetectionGooglePlayVerificationTypeDescription.Description,
+												MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionGooglePlayVerificationTypeDescription.MarkdownDescription,
+												Required:            true,
+
+												Validators: []validator.String{
+													stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationNativeGooglePlayVerificationTypeEnumValues)...),
+												},
+											},
 										},
 									},
 								},
 							},
-
-							Validators: []validator.List{
-								listvalidator.SizeAtMost(1),
-							},
 						},
-
-						"cors_settings": resourceApplicationSchemaCorsSettings(),
 					},
+
+					"cors_settings": resourceApplicationSchemaCorsSettings(),
 				},
 
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-					listvalidator.ExactlyOneOf(
+				Validators: []validator.Object{
+					objectvalidator.ExactlyOneOf(
+						path.MatchRelative().AtParent().AtName("external_link_options"),
+						path.MatchRelative().AtParent().AtName("oidc_options"),
+						path.MatchRelative().AtParent().AtName("saml_options"),
+					),
+				},
+			},
+
+			"saml_options": schema.SingleNestedAttribute{
+				Description:         samlOptionsDescription.Description,
+				MarkdownDescription: samlOptionsDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"home_page_url": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the custom home page URL for the application.").Description,
+						Optional:    true,
+
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Expected value to have a url with schema of \"https\"."),
+						},
+					},
+
+					"type": schema.StringAttribute{
+						Description:         samlOptionsTypeDescription.Description,
+						MarkdownDescription: samlOptionsTypeDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: stringdefault.StaticString(string(management.ENUMAPPLICATIONTYPE_WEB_APP)),
+
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.RequiresReplace(),
+						},
+
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								string(management.ENUMAPPLICATIONTYPE_WEB_APP),
+								string(management.ENUMAPPLICATIONTYPE_CUSTOM_APP),
+							),
+						},
+					},
+
+					"acs_urls": schema.SetAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A list of string that specifies the Assertion Consumer Service URLs. The first URL in the list is used as default (there must be at least one URL).").Description,
+						Required:    true,
+
+						ElementType: types.StringType,
+					},
+
+					"assertion_duration": schema.Int64Attribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the assertion validity duration in seconds.").Description,
+						Required:    true,
+					},
+
+					"assertion_signed_enabled": schema.BoolAttribute{
+						Description:         samlOptionsAssertionSignedEnabledDescription.Description,
+						MarkdownDescription: samlOptionsAssertionSignedEnabledDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: booldefault.StaticBool(true),
+					},
+
+					"default_target_url": schema.StringAttribute{
+						Description:         samlOptionsDefaultTargetUrlDescription.Description,
+						MarkdownDescription: samlOptionsDefaultTargetUrlDescription.MarkdownDescription,
+						Optional:            true,
+					},
+
+					"enable_requested_authn_context": schema.BoolAttribute{
+						Description:         samlOptionsEnableRequestedAuthnContextDescription.Description,
+						MarkdownDescription: samlOptionsEnableRequestedAuthnContextDescription.MarkdownDescription,
+						Optional:            true,
+					},
+
+					"nameid_format": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the format of the Subject NameID attibute in the SAML assertion.").Description,
+						Optional:    true,
+					},
+
+					"response_is_signed": schema.BoolAttribute{
+						Description:         samlOptionsResponseIsSignedDescription.Description,
+						MarkdownDescription: samlOptionsResponseIsSignedDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: booldefault.StaticBool(false),
+					},
+
+					"slo_binding": schema.StringAttribute{
+						Description:         samlOptionsSloBindingDescription.Description,
+						MarkdownDescription: samlOptionsSloBindingDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: stringdefault.StaticString(string(management.ENUMAPPLICATIONSAMLSLOBINDING_POST)),
+
+						Validators: []validator.String{
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationSAMLSloBindingEnumValues)...),
+						},
+					},
+
+					"slo_endpoint": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the logout endpoint URL. This is an optional property. However, if a logout endpoint URL is not defined, logout actions result in an error.").Description,
+						Optional:    true,
+
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Expected value to have a url with schema of \"http\" or \"https\"."),
+						},
+					},
+
+					"slo_response_endpoint": schema.StringAttribute{
+						Description:         samlOptionsSloResponseEndpointDescription.Description,
+						MarkdownDescription: samlOptionsSloResponseEndpointDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Expected value to have a url with schema of \"http\" or \"https\"."),
+						},
+					},
+
+					"slo_window": schema.Int64Attribute{
+						Description:         samlOptionsSloWindowDescription.Description,
+						MarkdownDescription: samlOptionsSloWindowDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.Int64{
+							int64validator.Between(samlOptionsSloWindowMin, samlOptionsSloWindowMax),
+						},
+					},
+
+					"sp_entity_id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the service provider entity ID used to lookup the application. This is a required property and is unique within the environment.").Description,
+						Required:    true,
+					},
+
+					"idp_signing_key": schema.SingleNestedAttribute{
+						Description:         samlOptionsIdpSigningKeyDescription.Description,
+						MarkdownDescription: samlOptionsIdpSigningKeyDescription.MarkdownDescription,
+						Required:            true,
+
+						Attributes: map[string]schema.Attribute{
+							"algorithm": schema.StringAttribute{
+								Description:         samlOptionsIdpSigningKeyAlgorithmDescription.Description,
+								MarkdownDescription: samlOptionsIdpSigningKeyAlgorithmDescription.MarkdownDescription,
+								Required:            true,
+
+								Validators: []validator.String{
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumCertificateKeySignagureAlgorithmEnumValues)...),
+								},
+							},
+
+							"key_id": schema.StringAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.  Must be a valid PingOne resource ID.").Description,
+								Required:    true,
+
+								Validators: []validator.String{
+									verify.P1ResourceIDValidator(),
+								},
+							},
+						},
+					},
+
+					"sp_verification": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object item that specifies SP signature verification settings.").Description,
+						Optional:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"authn_request_signed": schema.BoolAttribute{
+								Description:         samlOptionsSpVerificationAuthnRequestSignedDescription.Description,
+								MarkdownDescription: samlOptionsSpVerificationAuthnRequestSignedDescription.MarkdownDescription,
+								Optional:            true,
+								Computed:            true,
+
+								Default: booldefault.StaticBool(false),
+							},
+
+							"certificate_ids": schema.SetAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A list that specifies the certificate IDs used to verify the service provider signature.  Values must be valid PingOne resource IDs.").Description,
+								ElementType: types.StringType,
+								Required:    true,
+
+								Validators: []validator.Set{
+									setvalidator.ValueStringsAre(
+										verify.P1ResourceIDValidator(),
+									),
+								},
+							},
+						},
+					},
+
+					"cors_settings": resourceApplicationSchemaCorsSettings(),
+				},
+
+				Validators: []validator.Object{
+					objectvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("external_link_options"),
 						path.MatchRelative().AtParent().AtName("oidc_options"),
 						path.MatchRelative().AtParent().AtName("saml_options"),
@@ -1626,10 +1479,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	}
 }
 
-func resourceApplicationSchemaCorsSettings() schema.ListNestedBlock {
+func resourceApplicationSchemaCorsSettings() schema.SingleNestedAttribute {
 
 	listDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single block that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings.",
+		"A single object that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings.",
 	)
 
 	behaviorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -1644,44 +1497,39 @@ func resourceApplicationSchemaCorsSettings() schema.ListNestedBlock {
 		fmt.Sprintf("A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value must be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 address.  Subdomains may use the wildcard (`*`) to match any string.  Must be non-empty when `behavior` is `%s` and must be omitted or empty when `behavior` is `%s`.  Limited to %d values.", string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_SPECIFIC_ORIGINS), string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_NO_ORIGINS), originsMax),
 	)
 
-	return schema.ListNestedBlock{
+	return schema.SingleNestedAttribute{
 		Description:         listDescription.Description,
 		MarkdownDescription: listDescription.MarkdownDescription,
+		Optional:            true,
 
-		NestedObject: schema.NestedBlockObject{
-			Attributes: map[string]schema.Attribute{
-				"behavior": schema.StringAttribute{
-					Description:         behaviorDescription.Description,
-					MarkdownDescription: behaviorDescription.MarkdownDescription,
-					Required:            true,
+		Attributes: map[string]schema.Attribute{
+			"behavior": schema.StringAttribute{
+				Description:         behaviorDescription.Description,
+				MarkdownDescription: behaviorDescription.MarkdownDescription,
+				Required:            true,
 
-					Validators: []validator.String{
-						stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationCorsSettingsBehaviorEnumValues)...),
-					},
-				},
-
-				"origins": schema.SetAttribute{
-					Description:         originsDescription.Description,
-					MarkdownDescription: originsDescription.MarkdownDescription,
-					Optional:            true,
-
-					ElementType: types.StringType,
-
-					Validators: []validator.Set{
-						setvalidator.SizeAtMost(originsMax),
-						setvalidator.ValueStringsAre(
-							stringvalidator.RegexMatches(
-								regexp.MustCompile(`^(https?:\/\/)?(localhost|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|([\*a-zA-Z0-9-]+\.)+[a-zA-Z]{2,})(:\d{1,5})?$`),
-								"Expected value to be a URL (with schema of \"http\" or \"https\") without a path.  Subdomains may use a wildcard to match any string",
-							),
-						),
-					},
+				Validators: []validator.String{
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationCorsSettingsBehaviorEnumValues)...),
 				},
 			},
-		},
 
-		Validators: []validator.List{
-			listvalidator.SizeAtMost(1),
+			"origins": schema.SetAttribute{
+				Description:         originsDescription.Description,
+				MarkdownDescription: originsDescription.MarkdownDescription,
+				Optional:            true,
+
+				ElementType: types.StringType,
+
+				Validators: []validator.Set{
+					setvalidator.SizeAtMost(originsMax),
+					setvalidator.ValueStringsAre(
+						stringvalidator.RegexMatches(
+							regexp.MustCompile(`^(https?:\/\/)?(localhost|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|([\*a-zA-Z0-9-]+\.)+[a-zA-Z]{2,})(:\d{1,5})?$`),
+							"Expected value to be a URL (with schema of \"http\" or \"https\") without a path.  Subdomains may use a wildcard to match any string",
+						),
+					),
+				},
+			},
 		},
 	}
 }
@@ -1718,45 +1566,46 @@ func (r *ApplicationResource) ValidateConfig(ctx context.Context, req resource.V
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
 	if !data.OIDCOptions.IsNull() && !data.OIDCOptions.IsUnknown() {
-		var plan []ApplicationOIDCOptionsResourceModel
-		resp.Diagnostics.Append(data.OIDCOptions.ElementsAs(ctx, &plan, false)...)
+		var plan ApplicationOIDCOptionsResourceModel
+		resp.Diagnostics.Append(data.OIDCOptions.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		if len(plan) > 0 {
-			// Certificate based authentication
-			if !plan[0].CertificateBasedAuthentication.IsNull() && !plan[0].CertificateBasedAuthentication.IsUnknown() {
-				if !plan[0].Type.Equal(types.StringValue(string(management.ENUMAPPLICATIONTYPE_NATIVE_APP))) {
-					resp.Diagnostics.AddAttributeError(
-						path.Root("oidc_options").AtName("certificate_based_authentication"),
-						"Invalid configuration",
-						fmt.Sprintf("`certificate_based_authentication` can only be set with OIDC applications that have a `type` value of `%s`.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
-					)
-				}
+		// Certificate based authentication
+		if !plan.CertificateBasedAuthentication.IsNull() && !plan.CertificateBasedAuthentication.IsUnknown() {
+			if !plan.Type.Equal(types.StringValue(string(management.ENUMAPPLICATIONTYPE_NATIVE_APP))) {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("oidc_options").AtName("certificate_based_authentication"),
+					"Invalid configuration",
+					fmt.Sprintf("`certificate_based_authentication` can only be set with OIDC applications that have a `type` value of `%s`.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
+				)
+			}
+		}
+
+		// Wildcards in redirect URIs
+		if !plan.RedirectUris.IsNull() && !plan.RedirectUris.IsUnknown() {
+			var uris []string
+			resp.Diagnostics.Append(plan.RedirectUris.ElementsAs(ctx, &uris, false)...)
+
+			if resp.Diagnostics.HasError() {
+				return
 			}
 
-			// Wildcards in redirect URIs
-			if !plan[0].RedirectUris.IsNull() && !plan[0].RedirectUris.IsUnknown() {
-				var uris []string
-				resp.Diagnostics.Append(plan[0].RedirectUris.ElementsAs(ctx, &uris, false)...)
-
-				if resp.Diagnostics.HasError() {
-					return
-				}
-
-				for _, uri := range uris {
-					if strings.Contains(uri, "*") {
-						if plan[0].AllowWildcardsInRedirectUris.IsNull() || plan[0].AllowWildcardsInRedirectUris.Equal(types.BoolValue(false)) {
-							resp.Diagnostics.AddAttributeError(
-								path.Root("oidc_options").AtName("redirect_uris"),
-								"Invalid configuration",
-								"Current configuration is invalid as wildcards are not allowed in redirect URIs.  Wildcards can be enabled by setting `allow_wildcards_in_redirect_uris` to `true`.",
-							)
-							break
-						}
-
+			for _, uri := range uris {
+				if strings.Contains(uri, "*") {
+					if plan.AllowWildcardsInRedirectUris.IsNull() || plan.AllowWildcardsInRedirectUris.Equal(types.BoolValue(false)) {
+						resp.Diagnostics.AddAttributeError(
+							path.Root("oidc_options").AtName("redirect_uris"),
+							"Invalid configuration",
+							"Current configuration is invalid as wildcards are not allowed in redirect URIs.  Wildcards can be enabled by setting `allow_wildcards_in_redirect_uris` to `true`.",
+						)
+						break
 					}
+
 				}
 			}
 		}
@@ -1882,7 +1731,7 @@ func (r *ApplicationResource) Create(ctx context.Context, req resource.CreateReq
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response, secretResponse)...)
+	resp.Diagnostics.Append(state.toState(ctx, response, secretResponse)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -1970,7 +1819,7 @@ func (r *ApplicationResource) Read(ctx context.Context, req resource.ReadRequest
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response, secretResponse)...)
+	resp.Diagnostics.Append(data.toState(ctx, response, secretResponse)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -2062,7 +1911,7 @@ func (r *ApplicationResource) Update(ctx context.Context, req resource.UpdateReq
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response, secretResponse)...)
+	resp.Diagnostics.Append(state.toState(ctx, response, secretResponse)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -2223,27 +2072,21 @@ func (p *ApplicationResourceModel) expandApplicationOIDC(ctx context.Context) (*
 	var data *management.ApplicationOIDC
 
 	if !p.OIDCOptions.IsNull() && !p.OIDCOptions.IsUnknown() {
-		var plan []ApplicationOIDCOptionsResourceModel
-		d := p.OIDCOptions.ElementsAs(ctx, &plan, false)
+		var plan ApplicationOIDCOptionsResourceModel
+		d := p.OIDCOptions.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		if len(plan) == 0 {
-			diags.AddError(
-				"Invalid configuration",
-				"The `oidc_options` block is declared but has no configuration.  Please report this to the provider maintainers.",
-			)
-		}
-
-		planItem := plan[0]
-
 		grantTypes := make([]management.EnumApplicationOIDCGrantType, 0)
 
 		var grantTypesPlan []string
 
-		diags.Append(planItem.GrantTypes.ElementsAs(ctx, &grantTypesPlan, false)...)
+		diags.Append(plan.GrantTypes.ElementsAs(ctx, &grantTypesPlan, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
@@ -2256,9 +2099,9 @@ func (p *ApplicationResourceModel) expandApplicationOIDC(ctx context.Context) (*
 			p.Enabled.ValueBool(),
 			p.Name.ValueString(),
 			management.ENUMAPPLICATIONPROTOCOL_OPENID_CONNECT,
-			management.EnumApplicationType(planItem.Type.ValueString()),
+			management.EnumApplicationType(plan.Type.ValueString()),
 			grantTypes,
-			management.EnumApplicationOIDCTokenAuthMethod(planItem.TokenEndpointAuthnMethod.ValueString()),
+			management.EnumApplicationOIDCTokenAuthMethod(plan.TokenEndpointAuthnMethod.ValueString()),
 		)
 
 		applicationCommon, d := p.expandApplicationCommon(ctx)
@@ -2273,22 +2116,18 @@ func (p *ApplicationResourceModel) expandApplicationOIDC(ctx context.Context) (*
 		data.AccessControl = applicationCommon.AccessControl
 		data.HiddenFromAppPortal = applicationCommon.HiddenFromAppPortal
 
-		if !planItem.CorsSettings.IsNull() && !planItem.CorsSettings.IsUnknown() {
-			var corsPlan []ApplicationCorsSettingsResourceModel
+		if !plan.CorsSettings.IsNull() && !plan.CorsSettings.IsUnknown() {
+			var corsPlan ApplicationCorsSettingsResourceModel
 
-			diags.Append(planItem.CorsSettings.ElementsAs(ctx, &corsPlan, false)...)
+			diags.Append(plan.CorsSettings.As(ctx, &corsPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
 			if diags.HasError() {
 				return nil, diags
 			}
 
-			if len(corsPlan) == 0 {
-				diags.AddError(
-					"Invalid configuration",
-					"The `oidc_options.cors_settings` block is declared but has no configuration.  Please report this to the provider maintainers.",
-				)
-			}
-
-			corsSettings, d := corsPlan[0].expand()
+			corsSettings, d := corsPlan.expand()
 			diags = append(diags, d...)
 			if diags.HasError() {
 				return nil, diags
@@ -2296,30 +2135,30 @@ func (p *ApplicationResourceModel) expandApplicationOIDC(ctx context.Context) (*
 			data.SetCorsSettings(*corsSettings)
 		}
 
-		if !planItem.HomePageUrl.IsNull() && !planItem.HomePageUrl.IsUnknown() {
-			data.SetHomePageUrl(planItem.HomePageUrl.ValueString())
+		if !plan.HomePageUrl.IsNull() && !plan.HomePageUrl.IsUnknown() {
+			data.SetHomePageUrl(plan.HomePageUrl.ValueString())
 		}
 
-		if !planItem.InitiateLoginUri.IsNull() && !planItem.InitiateLoginUri.IsUnknown() {
-			data.SetInitiateLoginUri(planItem.InitiateLoginUri.ValueString())
+		if !plan.InitiateLoginUri.IsNull() && !plan.InitiateLoginUri.IsUnknown() {
+			data.SetInitiateLoginUri(plan.InitiateLoginUri.ValueString())
 		}
 
-		if !planItem.Jwks.IsNull() && !planItem.Jwks.IsUnknown() {
-			data.SetJwks(planItem.Jwks.ValueString())
+		if !plan.Jwks.IsNull() && !plan.Jwks.IsUnknown() {
+			data.SetJwks(plan.Jwks.ValueString())
 		}
 
-		if !planItem.JwksUrl.IsNull() && !planItem.JwksUrl.IsUnknown() {
-			data.SetJwksUrl(planItem.JwksUrl.ValueString())
+		if !plan.JwksUrl.IsNull() && !plan.JwksUrl.IsUnknown() {
+			data.SetJwksUrl(plan.JwksUrl.ValueString())
 		}
 
-		if !planItem.TargetLinkUri.IsNull() && !planItem.TargetLinkUri.IsUnknown() {
-			data.SetTargetLinkUri(planItem.TargetLinkUri.ValueString())
+		if !plan.TargetLinkUri.IsNull() && !plan.TargetLinkUri.IsUnknown() {
+			data.SetTargetLinkUri(plan.TargetLinkUri.ValueString())
 		}
 
-		if !planItem.ResponseTypes.IsNull() && !planItem.ResponseTypes.IsUnknown() {
+		if !plan.ResponseTypes.IsNull() && !plan.ResponseTypes.IsUnknown() {
 			var responseTypesPlan []string
 
-			diags.Append(planItem.ResponseTypes.ElementsAs(ctx, &responseTypesPlan, false)...)
+			diags.Append(plan.ResponseTypes.ElementsAs(ctx, &responseTypesPlan, false)...)
 			if diags.HasError() {
 				return nil, diags
 			}
@@ -2332,22 +2171,22 @@ func (p *ApplicationResourceModel) expandApplicationOIDC(ctx context.Context) (*
 			data.SetResponseTypes(obj)
 		}
 
-		if !planItem.ParRequirement.IsNull() && !planItem.ParRequirement.IsUnknown() {
-			data.SetParRequirement(management.EnumApplicationOIDCPARRequirement(planItem.ParRequirement.ValueString()))
+		if !plan.ParRequirement.IsNull() && !plan.ParRequirement.IsUnknown() {
+			data.SetParRequirement(management.EnumApplicationOIDCPARRequirement(plan.ParRequirement.ValueString()))
 		}
 
-		if !planItem.ParTimeout.IsNull() && !planItem.ParTimeout.IsUnknown() {
-			data.SetParTimeout(int32(planItem.ParTimeout.ValueInt64()))
+		if !plan.ParTimeout.IsNull() && !plan.ParTimeout.IsUnknown() {
+			data.SetParTimeout(int32(plan.ParTimeout.ValueInt64()))
 		}
 
-		if !planItem.PKCEEnforcement.IsNull() && !planItem.PKCEEnforcement.IsUnknown() {
-			data.SetPkceEnforcement(management.EnumApplicationOIDCPKCEOption(planItem.PKCEEnforcement.ValueString()))
+		if !plan.PKCEEnforcement.IsNull() && !plan.PKCEEnforcement.IsUnknown() {
+			data.SetPkceEnforcement(management.EnumApplicationOIDCPKCEOption(plan.PKCEEnforcement.ValueString()))
 		}
 
-		if !planItem.RedirectUris.IsNull() && !planItem.RedirectUris.IsUnknown() {
+		if !plan.RedirectUris.IsNull() && !plan.RedirectUris.IsUnknown() {
 			var redirectUrisPlan []string
 
-			diags.Append(planItem.RedirectUris.ElementsAs(ctx, &redirectUrisPlan, false)...)
+			diags.Append(plan.RedirectUris.ElementsAs(ctx, &redirectUrisPlan, false)...)
 			if diags.HasError() {
 				return nil, diags
 			}
@@ -2355,14 +2194,14 @@ func (p *ApplicationResourceModel) expandApplicationOIDC(ctx context.Context) (*
 			data.SetRedirectUris(redirectUrisPlan)
 		}
 
-		if !planItem.AllowWildcardsInRedirectUris.IsNull() && !planItem.AllowWildcardsInRedirectUris.IsUnknown() {
-			data.SetAllowWildcardInRedirectUris(planItem.AllowWildcardsInRedirectUris.ValueBool())
+		if !plan.AllowWildcardsInRedirectUris.IsNull() && !plan.AllowWildcardsInRedirectUris.IsUnknown() {
+			data.SetAllowWildcardInRedirectUris(plan.AllowWildcardsInRedirectUris.ValueBool())
 		}
 
-		if !planItem.PostLogoutRedirectUris.IsNull() && !planItem.PostLogoutRedirectUris.IsUnknown() {
+		if !plan.PostLogoutRedirectUris.IsNull() && !plan.PostLogoutRedirectUris.IsUnknown() {
 			var postLogoutRedirectUrisPlan []string
 
-			diags.Append(planItem.PostLogoutRedirectUris.ElementsAs(ctx, &postLogoutRedirectUrisPlan, false)...)
+			diags.Append(plan.PostLogoutRedirectUris.ElementsAs(ctx, &postLogoutRedirectUrisPlan, false)...)
 			if diags.HasError() {
 				return nil, diags
 			}
@@ -2370,20 +2209,20 @@ func (p *ApplicationResourceModel) expandApplicationOIDC(ctx context.Context) (*
 			data.SetPostLogoutRedirectUris(postLogoutRedirectUrisPlan)
 		}
 
-		if !planItem.RefreshTokenDuration.IsNull() && !planItem.RefreshTokenDuration.IsUnknown() {
-			data.SetRefreshTokenDuration(int32(planItem.RefreshTokenDuration.ValueInt64()))
+		if !plan.RefreshTokenDuration.IsNull() && !plan.RefreshTokenDuration.IsUnknown() {
+			data.SetRefreshTokenDuration(int32(plan.RefreshTokenDuration.ValueInt64()))
 		}
 
-		if !planItem.RefreshTokenRollingDuration.IsNull() && !planItem.RefreshTokenRollingDuration.IsUnknown() {
-			data.SetRefreshTokenRollingDuration(int32(planItem.RefreshTokenRollingDuration.ValueInt64()))
+		if !plan.RefreshTokenRollingDuration.IsNull() && !plan.RefreshTokenRollingDuration.IsUnknown() {
+			data.SetRefreshTokenRollingDuration(int32(plan.RefreshTokenRollingDuration.ValueInt64()))
 		}
 
-		if !planItem.RefreshTokenRollingGracePeriodDuration.IsNull() && !planItem.RefreshTokenRollingGracePeriodDuration.IsUnknown() {
-			data.SetRefreshTokenRollingGracePeriodDuration(int32(planItem.RefreshTokenRollingGracePeriodDuration.ValueInt64()))
+		if !plan.RefreshTokenRollingGracePeriodDuration.IsNull() && !plan.RefreshTokenRollingGracePeriodDuration.IsUnknown() {
+			data.SetRefreshTokenRollingGracePeriodDuration(int32(plan.RefreshTokenRollingGracePeriodDuration.ValueInt64()))
 		}
 
-		if !planItem.AdditionalRefreshTokenReplayProtectionEnabled.IsNull() && !planItem.AdditionalRefreshTokenReplayProtectionEnabled.IsUnknown() {
-			data.SetAdditionalRefreshTokenReplayProtectionEnabled(planItem.AdditionalRefreshTokenReplayProtectionEnabled.ValueBool())
+		if !plan.AdditionalRefreshTokenReplayProtectionEnabled.IsNull() && !plan.AdditionalRefreshTokenReplayProtectionEnabled.IsUnknown() {
+			data.SetAdditionalRefreshTokenReplayProtectionEnabled(plan.AdditionalRefreshTokenReplayProtectionEnabled.ValueBool())
 		}
 
 		if !p.Tags.IsNull() && !p.Tags.IsUnknown() {
@@ -2406,8 +2245,8 @@ func (p *ApplicationResourceModel) expandApplicationOIDC(ctx context.Context) (*
 
 		data.SetAssignActorRoles(false)
 
-		if !planItem.CertificateBasedAuthentication.IsNull() && !planItem.CertificateBasedAuthentication.IsUnknown() {
-			if !planItem.Type.Equal(types.StringValue(string(management.ENUMAPPLICATIONTYPE_NATIVE_APP))) {
+		if !plan.CertificateBasedAuthentication.IsNull() && !plan.CertificateBasedAuthentication.IsUnknown() {
+			if !plan.Type.Equal(types.StringValue(string(management.ENUMAPPLICATIONTYPE_NATIVE_APP))) {
 				diags.AddError(
 					"Invalid configuration",
 					fmt.Sprintf("`certificate_based_authentication` can only be set with applications that have a `type` value of `%s`.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
@@ -2416,61 +2255,45 @@ func (p *ApplicationResourceModel) expandApplicationOIDC(ctx context.Context) (*
 				return nil, diags
 			}
 
-			var kerberosPlan []ApplicationOIDCCertificateBasedAuthenticationResourceModel
+			var kerberosPlan ApplicationOIDCCertificateBasedAuthenticationResourceModel
 
-			diags.Append(planItem.CertificateBasedAuthentication.ElementsAs(ctx, &kerberosPlan, false)...)
+			diags.Append(plan.CertificateBasedAuthentication.As(ctx, &kerberosPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
 			if diags.HasError() {
 				return nil, diags
 			}
 
-			if len(kerberosPlan) == 0 {
-				diags.AddError(
-					"Invalid configuration",
-					"The `oidc_options.certificate_based_authentication` block is declared but has no configuration.  Please report this to the provider maintainers.",
-				)
-			}
-
-			data.SetKerberos(*management.NewApplicationOIDCAllOfKerberos(*management.NewApplicationOIDCAllOfKerberosKey(kerberosPlan[0].KeyId.ValueString())))
+			data.SetKerberos(*management.NewApplicationOIDCAllOfKerberos(*management.NewApplicationOIDCAllOfKerberosKey(kerberosPlan.KeyId.ValueString())))
 		}
 
-		if !planItem.SupportUnsignedRequestObject.IsNull() && !planItem.SupportUnsignedRequestObject.IsUnknown() {
-			data.SetSupportUnsignedRequestObject(planItem.SupportUnsignedRequestObject.ValueBool())
+		if !plan.SupportUnsignedRequestObject.IsNull() && !plan.SupportUnsignedRequestObject.IsUnknown() {
+			data.SetSupportUnsignedRequestObject(plan.SupportUnsignedRequestObject.ValueBool())
 		}
 
-		if !planItem.RequireSignedRequestObject.IsNull() && !planItem.RequireSignedRequestObject.IsUnknown() {
-			data.SetRequireSignedRequestObject(planItem.RequireSignedRequestObject.ValueBool())
+		if !plan.RequireSignedRequestObject.IsNull() && !plan.RequireSignedRequestObject.IsUnknown() {
+			data.SetRequireSignedRequestObject(plan.RequireSignedRequestObject.ValueBool())
 		}
 
-		if !planItem.MobileApp.IsNull() && !planItem.MobileApp.IsUnknown() {
-			var mobileAppPlan []ApplicationOIDCMobileAppResourceModel
+		if !plan.MobileApp.IsNull() && !plan.MobileApp.IsUnknown() {
+			var mobileAppPlan ApplicationOIDCMobileAppResourceModel
 
-			diags.Append(planItem.MobileApp.ElementsAs(ctx, &mobileAppPlan, false)...)
+			diags.Append(plan.MobileApp.As(ctx, &mobileAppPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
 			if diags.HasError() {
 				return nil, diags
 			}
 
-			if len(mobileAppPlan) == 0 {
-				diags.AddError(
-					"Invalid configuration",
-					"The `oidc_options.mobile_app` block is declared but has no configuration.  Please report this to the provider maintainers.",
-				)
-			}
-
-			mobile, d := mobileAppPlan[0].expand(ctx)
+			mobile, d := mobileAppPlan.expand(ctx)
 			diags = append(diags, d...)
 			if diags.HasError() {
 				return nil, diags
 			}
 
 			data.SetMobile(*mobile)
-		}
-
-		if !planItem.BundleId.IsNull() && !planItem.BundleId.IsUnknown() {
-			data.SetBundleId(planItem.BundleId.ValueString())
-		}
-
-		if !planItem.PackageName.IsNull() && !planItem.PackageName.IsUnknown() {
-			data.SetPackageName(planItem.PackageName.ValueString())
 		}
 	}
 
@@ -2496,20 +2319,16 @@ func (p *ApplicationOIDCMobileAppResourceModel) expand(ctx context.Context) (*ma
 
 	if !p.IntegrityDetection.IsNull() && !p.IntegrityDetection.IsUnknown() {
 
-		var integrityDetectionPlan []ApplicationOIDCMobileAppIntegrityDetectionResourceModel
-		diags.Append(p.IntegrityDetection.ElementsAs(ctx, &integrityDetectionPlan, false)...)
+		var integrityDetectionPlan ApplicationOIDCMobileAppIntegrityDetectionResourceModel
+		diags.Append(p.IntegrityDetection.As(ctx, &integrityDetectionPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		if len(integrityDetectionPlan) == 0 {
-			diags.AddError(
-				"Invalid configuration",
-				"The `oidc_options.mobile_app` block is declared but has no configuration.  Please report this to the provider maintainers.",
-			)
-		}
-
-		integrityDetection, d := integrityDetectionPlan[0].expand(ctx)
+		integrityDetection, d := integrityDetectionPlan.expand(ctx)
 		diags = append(diags, d...)
 		if diags.HasError() {
 			return nil, diags
@@ -2575,35 +2394,31 @@ func (p *ApplicationOIDCMobileAppIntegrityDetectionResourceModel) expand(ctx con
 
 	if !p.GooglePlay.IsNull() && !p.GooglePlay.IsUnknown() {
 
-		var googlePlayPlan []ApplicationOIDCMobileAppIntegrityDetectionGooglePlayResourceModel
-		diags.Append(p.GooglePlay.ElementsAs(ctx, &googlePlayPlan, false)...)
+		var googlePlayPlan ApplicationOIDCMobileAppIntegrityDetectionGooglePlayResourceModel
+		diags.Append(p.GooglePlay.As(ctx, &googlePlayPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		if len(googlePlayPlan) == 0 {
-			diags.AddError(
-				"Invalid configuration",
-				"The `oidc_options.mobile_app.integrity_detection.google_play` block is declared but has no configuration.  Please report this to the provider maintainers.",
-			)
-		}
-
 		googlePlay := management.NewApplicationOIDCAllOfMobileIntegrityDetectionGooglePlay()
 
-		if !googlePlayPlan[0].DecryptionKey.IsNull() && !googlePlayPlan[0].DecryptionKey.IsUnknown() {
-			googlePlay.SetDecryptionKey(googlePlayPlan[0].DecryptionKey.ValueString())
+		if !googlePlayPlan.DecryptionKey.IsNull() && !googlePlayPlan.DecryptionKey.IsUnknown() {
+			googlePlay.SetDecryptionKey(googlePlayPlan.DecryptionKey.ValueString())
 		}
 
-		if !googlePlayPlan[0].ServiceAccountCredentialsJson.IsNull() && !googlePlayPlan[0].ServiceAccountCredentialsJson.IsUnknown() {
-			googlePlay.SetServiceAccountCredentials(googlePlayPlan[0].ServiceAccountCredentialsJson.ValueString())
+		if !googlePlayPlan.ServiceAccountCredentialsJson.IsNull() && !googlePlayPlan.ServiceAccountCredentialsJson.IsUnknown() {
+			googlePlay.SetServiceAccountCredentials(googlePlayPlan.ServiceAccountCredentialsJson.ValueString())
 		}
 
-		if !googlePlayPlan[0].VerificationKey.IsNull() && !googlePlayPlan[0].VerificationKey.IsUnknown() {
-			googlePlay.SetVerificationKey(googlePlayPlan[0].VerificationKey.ValueString())
+		if !googlePlayPlan.VerificationKey.IsNull() && !googlePlayPlan.VerificationKey.IsUnknown() {
+			googlePlay.SetVerificationKey(googlePlayPlan.VerificationKey.ValueString())
 		}
 
-		if !googlePlayPlan[0].VerificationType.IsNull() && !googlePlayPlan[0].VerificationType.IsUnknown() {
-			googlePlay.SetVerificationType(management.EnumApplicationNativeGooglePlayVerificationType(googlePlayPlan[0].VerificationType.ValueString()))
+		if !googlePlayPlan.VerificationType.IsNull() && !googlePlayPlan.VerificationType.IsUnknown() {
+			googlePlay.SetVerificationType(management.EnumApplicationNativeGooglePlayVerificationType(googlePlayPlan.VerificationType.ValueString()))
 		}
 
 		data.SetGooglePlay(*googlePlay)
@@ -2619,27 +2434,23 @@ func (p *ApplicationOIDCMobileAppIntegrityDetectionResourceModel) expand(ctx con
 
 	if !p.CacheDuration.IsNull() && !p.CacheDuration.IsUnknown() {
 
-		var cacheDurationPlan []ApplicationOIDCMobileAppIntegrityDetectionCacheDurationResourceModel
-		diags.Append(p.CacheDuration.ElementsAs(ctx, &cacheDurationPlan, false)...)
+		var cacheDurationPlan ApplicationOIDCMobileAppIntegrityDetectionCacheDurationResourceModel
+		diags.Append(p.CacheDuration.As(ctx, &cacheDurationPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		if len(cacheDurationPlan) == 0 {
-			diags.AddError(
-				"Invalid configuration",
-				"The `oidc_options.mobile_app.integrity_detection.cache_duration` block is declared but has no configuration.  Please report this to the provider maintainers.",
-			)
-		}
-
 		cacheDuration := management.NewApplicationOIDCAllOfMobileIntegrityDetectionCacheDuration()
 
-		if !cacheDurationPlan[0].Amount.IsNull() && !cacheDurationPlan[0].Amount.IsUnknown() {
-			cacheDuration.SetAmount(int32(cacheDurationPlan[0].Amount.ValueInt64()))
+		if !cacheDurationPlan.Amount.IsNull() && !cacheDurationPlan.Amount.IsUnknown() {
+			cacheDuration.SetAmount(int32(cacheDurationPlan.Amount.ValueInt64()))
 		}
 
-		if !cacheDurationPlan[0].Units.IsNull() && !cacheDurationPlan[0].Units.IsUnknown() {
-			cacheDuration.SetUnits(management.EnumDurationUnitMinsHours(cacheDurationPlan[0].Units.ValueString()))
+		if !cacheDurationPlan.Units.IsNull() && !cacheDurationPlan.Units.IsUnknown() {
+			cacheDuration.SetUnits(management.EnumDurationUnitMinsHours(cacheDurationPlan.Units.ValueString()))
 		}
 
 		data.SetCacheDuration(*cacheDuration)
@@ -2654,25 +2465,19 @@ func (p *ApplicationResourceModel) expandApplicationSAML(ctx context.Context) (*
 	var data *management.ApplicationSAML
 
 	if !p.SAMLOptions.IsNull() && !p.SAMLOptions.IsUnknown() {
-		var plan []ApplicationSAMLOptionsResourceModel
-		d := p.SAMLOptions.ElementsAs(ctx, &plan, false)
+		var plan ApplicationSAMLOptionsResourceModel
+		d := p.SAMLOptions.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		if len(plan) == 0 {
-			diags.AddError(
-				"Invalid configuration",
-				"The `saml_options` block is declared but has no configuration.  Please report this to the provider maintainers.",
-			)
-		}
-
-		planItem := plan[0]
-
 		var acsUrls []string
 
-		diags.Append(planItem.AcsUrls.ElementsAs(ctx, &acsUrls, false)...)
+		diags.Append(plan.AcsUrls.ElementsAs(ctx, &acsUrls, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
@@ -2681,10 +2486,10 @@ func (p *ApplicationResourceModel) expandApplicationSAML(ctx context.Context) (*
 			p.Enabled.ValueBool(),
 			p.Name.ValueString(),
 			management.ENUMAPPLICATIONPROTOCOL_SAML,
-			management.EnumApplicationType(planItem.Type.ValueString()),
+			management.EnumApplicationType(plan.Type.ValueString()),
 			acsUrls,
-			int32(planItem.AssertionDuration.ValueInt64()),
-			planItem.SpEntityId.ValueString(),
+			int32(plan.AssertionDuration.ValueInt64()),
+			plan.SpEntityId.ValueString(),
 		)
 
 		applicationCommon, d := p.expandApplicationCommon(ctx)
@@ -2700,22 +2505,18 @@ func (p *ApplicationResourceModel) expandApplicationSAML(ctx context.Context) (*
 		data.HiddenFromAppPortal = applicationCommon.HiddenFromAppPortal
 
 		// SAML specific options
-		if !planItem.CorsSettings.IsNull() && !planItem.CorsSettings.IsUnknown() {
-			var corsPlan []ApplicationCorsSettingsResourceModel
+		if !plan.CorsSettings.IsNull() && !plan.CorsSettings.IsUnknown() {
+			var corsPlan ApplicationCorsSettingsResourceModel
 
-			diags.Append(planItem.CorsSettings.ElementsAs(ctx, &corsPlan, false)...)
+			diags.Append(plan.CorsSettings.As(ctx, &corsPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
 			if diags.HasError() {
 				return nil, diags
 			}
 
-			if len(corsPlan) == 0 {
-				diags.AddError(
-					"Invalid configuration",
-					"The `saml_options.cors_settings` block is declared but has no configuration.  Please report this to the provider maintainers.",
-				)
-			}
-
-			corsSettings, d := corsPlan[0].expand()
+			corsSettings, d := corsPlan.expand()
 			diags = append(diags, d...)
 			if diags.HasError() {
 				return nil, diags
@@ -2723,109 +2524,80 @@ func (p *ApplicationResourceModel) expandApplicationSAML(ctx context.Context) (*
 			data.SetCorsSettings(*corsSettings)
 		}
 
-		if !planItem.HomePageUrl.IsNull() && !planItem.HomePageUrl.IsUnknown() {
-			data.SetHomePageUrl(planItem.HomePageUrl.ValueString())
+		if !plan.HomePageUrl.IsNull() && !plan.HomePageUrl.IsUnknown() {
+			data.SetHomePageUrl(plan.HomePageUrl.ValueString())
 		}
 
-		if !planItem.AssertionSignedEnabled.IsNull() && !planItem.AssertionSignedEnabled.IsUnknown() {
-			data.SetAssertionSigned(planItem.AssertionSignedEnabled.ValueBool())
+		if !plan.AssertionSignedEnabled.IsNull() && !plan.AssertionSignedEnabled.IsUnknown() {
+			data.SetAssertionSigned(plan.AssertionSignedEnabled.ValueBool())
 		}
 
-		if !planItem.IdpSigningKeyId.IsNull() && !planItem.IdpSigningKeyId.IsUnknown() {
-			data.SetIdpSigning(*management.NewApplicationSAMLAllOfIdpSigning(*management.NewApplicationSAMLAllOfIdpSigningKey(planItem.IdpSigningKeyId.ValueString())))
-		}
+		if !plan.IdpSigningKey.IsNull() && !plan.IdpSigningKey.IsUnknown() {
 
-		if !planItem.IdpSigningKey.IsNull() && !planItem.IdpSigningKey.IsUnknown() {
+			var idpSigningOptionsPlan ApplicationSAMLOptionsIdpSigningKeyResourceModel
 
-			var idpSigningOptionsPlan []ApplicationSAMLOptionsIdpSigningKeyResourceModel
-
-			diags.Append(planItem.IdpSigningKey.ElementsAs(ctx, &idpSigningOptionsPlan, false)...)
+			diags.Append(plan.IdpSigningKey.As(ctx, &idpSigningOptionsPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
 			if diags.HasError() {
 				return nil, diags
 			}
 
-			if len(idpSigningOptionsPlan) == 0 {
-				diags.AddError(
-					"Invalid configuration",
-					"The `saml_options.idp_signing_key` block is declared but has no configuration.  Please report this to the provider maintainers.",
-				)
-			}
-
-			idpSigning := *management.NewApplicationSAMLAllOfIdpSigning(*management.NewApplicationSAMLAllOfIdpSigningKey(idpSigningOptionsPlan[0].KeyId.ValueString()))
-			idpSigning.SetAlgorithm(management.EnumCertificateKeySignagureAlgorithm(idpSigningOptionsPlan[0].Algorithm.ValueString()))
+			idpSigning := *management.NewApplicationSAMLAllOfIdpSigning(*management.NewApplicationSAMLAllOfIdpSigningKey(idpSigningOptionsPlan.KeyId.ValueString()))
+			idpSigning.SetAlgorithm(management.EnumCertificateKeySignagureAlgorithm(idpSigningOptionsPlan.Algorithm.ValueString()))
 
 			data.SetIdpSigning(idpSigning)
 		}
 
-		if !planItem.EnableRequestedAuthnContext.IsNull() && !planItem.EnableRequestedAuthnContext.IsUnknown() {
-			data.SetEnableRequestedAuthnContext(planItem.EnableRequestedAuthnContext.ValueBool())
+		if !plan.EnableRequestedAuthnContext.IsNull() && !plan.EnableRequestedAuthnContext.IsUnknown() {
+			data.SetEnableRequestedAuthnContext(plan.EnableRequestedAuthnContext.ValueBool())
 		}
 
-		if !planItem.DefaultTargetUrl.IsNull() && !planItem.DefaultTargetUrl.IsUnknown() {
-			data.SetDefaultTargetUrl(planItem.DefaultTargetUrl.ValueString())
+		if !plan.DefaultTargetUrl.IsNull() && !plan.DefaultTargetUrl.IsUnknown() {
+			data.SetDefaultTargetUrl(plan.DefaultTargetUrl.ValueString())
 		}
 
-		if !planItem.NameIdFormat.IsNull() && !planItem.NameIdFormat.IsUnknown() {
-			data.SetNameIdFormat(planItem.NameIdFormat.ValueString())
+		if !plan.NameIdFormat.IsNull() && !plan.NameIdFormat.IsUnknown() {
+			data.SetNameIdFormat(plan.NameIdFormat.ValueString())
 		}
 
-		if !planItem.ResponseIsSigned.IsNull() && !planItem.ResponseIsSigned.IsUnknown() {
-			data.SetResponseSigned(planItem.ResponseIsSigned.ValueBool())
+		if !plan.ResponseIsSigned.IsNull() && !plan.ResponseIsSigned.IsUnknown() {
+			data.SetResponseSigned(plan.ResponseIsSigned.ValueBool())
 		}
 
-		if !planItem.SloBinding.IsNull() && !planItem.SloBinding.IsUnknown() {
-			data.SetSloBinding(management.EnumApplicationSAMLSloBinding(planItem.SloBinding.ValueString()))
+		if !plan.SloBinding.IsNull() && !plan.SloBinding.IsUnknown() {
+			data.SetSloBinding(management.EnumApplicationSAMLSloBinding(plan.SloBinding.ValueString()))
 		}
 
-		if !planItem.SloEndpoint.IsNull() && !planItem.SloEndpoint.IsUnknown() {
-			data.SetSloEndpoint(planItem.SloEndpoint.ValueString())
+		if !plan.SloEndpoint.IsNull() && !plan.SloEndpoint.IsUnknown() {
+			data.SetSloEndpoint(plan.SloEndpoint.ValueString())
 		}
 
-		if !planItem.SloResponseEndpoint.IsNull() && !planItem.SloResponseEndpoint.IsUnknown() {
-			data.SetSloResponseEndpoint(planItem.SloResponseEndpoint.ValueString())
+		if !plan.SloResponseEndpoint.IsNull() && !plan.SloResponseEndpoint.IsUnknown() {
+			data.SetSloResponseEndpoint(plan.SloResponseEndpoint.ValueString())
 		}
 
-		if !planItem.SloWindow.IsNull() && !planItem.SloWindow.IsUnknown() {
-			data.SetSloWindow(int32(planItem.SloWindow.ValueInt64()))
+		if !plan.SloWindow.IsNull() && !plan.SloWindow.IsUnknown() {
+			data.SetSloWindow(int32(plan.SloWindow.ValueInt64()))
 		}
 
-		if !planItem.SpVerificationCertificateIds.IsNull() && !planItem.SpVerificationCertificateIds.IsUnknown() {
-			var certificateIdsPlan []string
+		if !plan.SpVerification.IsNull() && !plan.SpVerification.IsUnknown() {
+			var spVerificationPlan ApplicationSAMLOptionsSpVerificationResourceModel
 
-			diags.Append(planItem.SpVerificationCertificateIds.ElementsAs(ctx, &certificateIdsPlan, false)...)
+			diags.Append(plan.SpVerification.As(ctx, &spVerificationPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
 			if diags.HasError() {
 				return nil, diags
 			}
 
 			certificates := make([]management.ApplicationSAMLAllOfSpVerificationCertificates, 0)
-			for _, v := range certificateIdsPlan {
-				certificate := *management.NewApplicationSAMLAllOfSpVerificationCertificates(v)
-				certificates = append(certificates, certificate)
-			}
-
-			data.SetSpVerification(*management.NewApplicationSAMLAllOfSpVerification(certificates))
-		}
-
-		if !planItem.SpVerification.IsNull() && !planItem.SpVerification.IsUnknown() {
-			var spVerificationPlan []ApplicationSAMLOptionsSpVerificationResourceModel
-
-			diags.Append(planItem.SpVerification.ElementsAs(ctx, &spVerificationPlan, false)...)
-			if diags.HasError() {
-				return nil, diags
-			}
-
-			if len(spVerificationPlan) == 0 {
-				diags.AddError(
-					"Invalid configuration",
-					"The `saml_options.sp_verification` block is declared but has no configuration.  Please report this to the provider maintainers.",
-				)
-			}
-
-			certificates := make([]management.ApplicationSAMLAllOfSpVerificationCertificates, 0)
-			if !spVerificationPlan[0].CertificateIds.IsNull() && !spVerificationPlan[0].CertificateIds.IsUnknown() {
+			if !spVerificationPlan.CertificateIds.IsNull() && !spVerificationPlan.CertificateIds.IsUnknown() {
 				var certificateIdsPlan []string
 
-				diags.Append(spVerificationPlan[0].CertificateIds.ElementsAs(ctx, &certificateIdsPlan, false)...)
+				diags.Append(spVerificationPlan.CertificateIds.ElementsAs(ctx, &certificateIdsPlan, false)...)
 				if diags.HasError() {
 					return nil, diags
 				}
@@ -2837,8 +2609,8 @@ func (p *ApplicationResourceModel) expandApplicationSAML(ctx context.Context) (*
 
 			spVerification := management.NewApplicationSAMLAllOfSpVerification(certificates)
 
-			if !spVerificationPlan[0].AuthnRequestSigned.IsNull() && !spVerificationPlan[0].AuthnRequestSigned.IsUnknown() {
-				spVerification.SetAuthnRequestSigned(spVerificationPlan[0].AuthnRequestSigned.ValueBool())
+			if !spVerificationPlan.AuthnRequestSigned.IsNull() && !spVerificationPlan.AuthnRequestSigned.IsUnknown() {
+				spVerification.SetAuthnRequestSigned(spVerificationPlan.AuthnRequestSigned.ValueBool())
 			}
 
 			data.SetSpVerification(*spVerification)
@@ -2854,28 +2626,22 @@ func (p *ApplicationResourceModel) expandApplicationExternalLink(ctx context.Con
 	var data *management.ApplicationExternalLink
 
 	if !p.ExternalLinkOptions.IsNull() && !p.ExternalLinkOptions.IsUnknown() {
-		var plan []ApplicationExternalLinkOptionsResourceModel
-		d := p.ExternalLinkOptions.ElementsAs(ctx, &plan, false)
+		var plan ApplicationExternalLinkOptionsResourceModel
+		d := p.ExternalLinkOptions.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
-
-		if len(plan) == 0 {
-			diags.AddError(
-				"Invalid configuration",
-				"The `external_link_options` block is declared but has no configuration.  Please report this to the provider maintainers.",
-			)
-		}
-
-		planItem := plan[0]
 
 		data = management.NewApplicationExternalLink(
 			p.Enabled.ValueBool(),
 			p.Name.ValueString(),
 			management.ENUMAPPLICATIONPROTOCOL_EXTERNAL_LINK,
 			management.ENUMAPPLICATIONTYPE_PORTAL_LINK_APP,
-			planItem.HomePageUrl.ValueString(),
+			plan.HomePageUrl.ValueString(),
 		)
 
 		applicationCommon, d := p.expandApplicationCommon(ctx)
@@ -2909,23 +2675,17 @@ func (p *ApplicationResourceModel) expandApplicationCommon(ctx context.Context) 
 	}
 
 	if !p.Icon.IsNull() && !p.Icon.IsUnknown() {
-		var plan []service.ImageResourceModel
-		d := p.Icon.ElementsAs(ctx, &plan, false)
+		var plan service.ImageResourceModel
+		d := p.Icon.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		if len(plan) == 0 {
-			diags.AddError(
-				"Invalid configuration",
-				"The `icon` block is declared but has no configuration.  Please report this to the provider maintainers.",
-			)
-
-			return nil, diags
-		}
-
-		iconPlanItem := plan[0]
+		iconPlanItem := plan
 
 		data.SetIcon(*management.NewApplicationIcon(
 			iconPlanItem.Id.ValueString(),
@@ -2942,29 +2702,21 @@ func (p *ApplicationResourceModel) expandApplicationCommon(ctx context.Context) 
 	}
 
 	if !p.AccessControlGroupOptions.IsNull() && !p.AccessControlGroupOptions.IsUnknown() {
-		var plan []ApplicationAccessControlGroupOptionsResourceModel
-		d := p.AccessControlGroupOptions.ElementsAs(ctx, &plan, false)
+		var plan ApplicationAccessControlGroupOptionsResourceModel
+		d := p.AccessControlGroupOptions.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		if len(plan) == 0 {
-			diags.AddError(
-				"Invalid configuration",
-				"The `access_control_group_options` block is declared but has no configuration.  Please report this to the provider maintainers.",
-			)
-
-			return nil, diags
-		}
-
-		planItem := plan[0]
-
 		groups := make([]management.ApplicationAccessControlGroupGroupsInner, 0)
 
 		var groupsPlan []string
 
-		diags.Append(planItem.Groups.ElementsAs(ctx, &groupsPlan, false)...)
+		diags.Append(plan.Groups.ElementsAs(ctx, &groupsPlan, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
@@ -2974,7 +2726,7 @@ func (p *ApplicationResourceModel) expandApplicationCommon(ctx context.Context) 
 		}
 
 		accessControl.SetGroup(*management.NewApplicationAccessControlGroup(
-			management.EnumApplicationAccessControlGroupType(planItem.Type.ValueString()),
+			management.EnumApplicationAccessControlGroupType(plan.Type.ValueString()),
 			groups,
 		))
 
@@ -2992,7 +2744,7 @@ func (p *ApplicationResourceModel) expandApplicationCommon(ctx context.Context) 
 	return &data, diags
 }
 
-func (p *ApplicationResourceModel) toState(apiObject *management.ReadOneApplication200Response, apiSecretObject *management.ApplicationSecret) diag.Diagnostics {
+func (p *ApplicationResourceModel) toState(ctx context.Context, apiObject *management.ReadOneApplication200Response, apiSecretObject *management.ApplicationSecret) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -3014,7 +2766,7 @@ func (p *ApplicationResourceModel) toState(apiObject *management.ReadOneApplicat
 		p.LoginPageUrl = framework.StringOkToTF(v.GetLoginPageUrlOk())
 
 		p.AccessControlRoleType = types.StringNull()
-		p.AccessControlGroupOptions = types.ListNull(types.ObjectType{AttrTypes: applicationAccessControlGroupOptionsTFObjectTypes})
+		p.AccessControlGroupOptions = types.ObjectNull(applicationAccessControlGroupOptionsTFObjectTypes)
 		if vA, ok := v.GetAccessControlOk(); ok {
 			if vR, ok := vA.GetRoleOk(); ok {
 				p.AccessControlRoleType = framework.EnumOkToTF(vR.GetTypeOk())
@@ -3033,8 +2785,8 @@ func (p *ApplicationResourceModel) toState(apiObject *management.ReadOneApplicat
 
 		// Service specific attributes
 		p.Tags = types.SetNull(types.StringType)
-		p.OIDCOptions = types.ListNull(types.ObjectType{AttrTypes: applicationOidcOptionsTFObjectTypes})
-		p.SAMLOptions = types.ListNull(types.ObjectType{AttrTypes: applicationSamlOptionsTFObjectTypes})
+		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsTFObjectTypes)
+		p.SAMLOptions = types.ObjectNull(applicationSamlOptionsTFObjectTypes)
 
 		p.ExternalLinkOptions, d = applicationExternalLinkOptionsToTF(v)
 		diags = append(diags, d...)
@@ -3049,7 +2801,7 @@ func (p *ApplicationResourceModel) toState(apiObject *management.ReadOneApplicat
 		p.LoginPageUrl = framework.StringOkToTF(v.GetLoginPageUrlOk())
 
 		p.AccessControlRoleType = types.StringNull()
-		p.AccessControlGroupOptions = types.ListNull(types.ObjectType{AttrTypes: applicationAccessControlGroupOptionsTFObjectTypes})
+		p.AccessControlGroupOptions = types.ObjectNull(applicationAccessControlGroupOptionsTFObjectTypes)
 		if vA, ok := v.GetAccessControlOk(); ok {
 			if vR, ok := vA.GetRoleOk(); ok {
 				p.AccessControlRoleType = framework.EnumOkToTF(vR.GetTypeOk())
@@ -3069,11 +2821,22 @@ func (p *ApplicationResourceModel) toState(apiObject *management.ReadOneApplicat
 		// Service specific attributes
 		p.Tags = framework.EnumSetOkToTF(v.GetTagsOk())
 
-		p.OIDCOptions, d = applicationOidcOptionsToTF(v, apiSecretObject)
+		var oidcOptionsState ApplicationOIDCOptionsResourceModel
+		if !p.OIDCOptions.IsNull() && !p.OIDCOptions.IsUnknown() {
+			d := p.OIDCOptions.As(ctx, &oidcOptionsState, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})
+			diags.Append(d...)
+			if diags.HasError() {
+				return diags
+			}
+		}
+		p.OIDCOptions, d = applicationOidcOptionsToTF(ctx, v, apiSecretObject, oidcOptionsState)
 		diags = append(diags, d...)
 
-		p.SAMLOptions = types.ListNull(types.ObjectType{AttrTypes: applicationSamlOptionsTFObjectTypes})
-		p.ExternalLinkOptions = types.ListNull(types.ObjectType{AttrTypes: applicationExternalLinkOptionsTFObjectTypes})
+		p.SAMLOptions = types.ObjectNull(applicationSamlOptionsTFObjectTypes)
+		p.ExternalLinkOptions = types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes)
 	}
 
 	if v := apiObject.ApplicationSAML; v != nil {
@@ -3085,7 +2848,7 @@ func (p *ApplicationResourceModel) toState(apiObject *management.ReadOneApplicat
 		p.LoginPageUrl = framework.StringOkToTF(v.GetLoginPageUrlOk())
 
 		p.AccessControlRoleType = types.StringNull()
-		p.AccessControlGroupOptions = types.ListNull(types.ObjectType{AttrTypes: applicationAccessControlGroupOptionsTFObjectTypes})
+		p.AccessControlGroupOptions = types.ObjectNull(applicationAccessControlGroupOptionsTFObjectTypes)
 		if vA, ok := v.GetAccessControlOk(); ok {
 			if vR, ok := vA.GetRoleOk(); ok {
 				p.AccessControlRoleType = framework.EnumOkToTF(vR.GetTypeOk())
@@ -3104,46 +2867,39 @@ func (p *ApplicationResourceModel) toState(apiObject *management.ReadOneApplicat
 
 		// Service specific attributes
 		p.Tags = types.SetNull(types.StringType)
-		p.OIDCOptions = types.ListNull(types.ObjectType{AttrTypes: applicationOidcOptionsTFObjectTypes})
+		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsTFObjectTypes)
 
 		p.SAMLOptions, d = applicationSamlOptionsToTF(v)
 		diags = append(diags, d...)
 
-		p.ExternalLinkOptions = types.ListNull(types.ObjectType{AttrTypes: applicationExternalLinkOptionsTFObjectTypes})
+		p.ExternalLinkOptions = types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes)
 	}
 
 	return diags
 }
 
-func applicationExternalLinkOptionsToTF(apiObject *management.ApplicationExternalLink) (types.List, diag.Diagnostics) {
+func applicationExternalLinkOptionsToTF(apiObject *management.ApplicationExternalLink) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	tfObjType := types.ObjectType{AttrTypes: applicationExternalLinkOptionsTFObjectTypes}
-
 	if apiObject == nil || apiObject.GetId() == "" {
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes), diags
 	}
 
 	attributesMap := map[string]attr.Value{
 		"home_page_url": framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
 	}
 
-	flattenedObj, d := types.ObjectValue(applicationExternalLinkOptionsTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(applicationExternalLinkOptionsTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags
 }
 
-func applicationAccessControlGroupOptionsToTF(apiObject *management.ApplicationAccessControlGroup, ok bool) (types.List, diag.Diagnostics) {
+func applicationAccessControlGroupOptionsToTF(apiObject *management.ApplicationAccessControlGroup, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	tfObjType := types.ObjectType{AttrTypes: applicationAccessControlGroupOptionsTFObjectTypes}
-
 	if !ok && apiObject == nil {
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(applicationAccessControlGroupOptionsTFObjectTypes), diags
 	}
 
 	attributesMap := map[string]attr.Value{
@@ -3160,22 +2916,17 @@ func applicationAccessControlGroupOptionsToTF(apiObject *management.ApplicationA
 		attributesMap["groups"] = framework.StringSetToTF(groups)
 	}
 
-	flattenedObj, d := types.ObjectValue(applicationAccessControlGroupOptionsTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(applicationAccessControlGroupOptionsTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags
 }
 
-func applicationCorsSettingsOkToTF(apiObject *management.ApplicationCorsSettings, ok bool) (types.List, diag.Diagnostics) {
+func applicationCorsSettingsOkToTF(apiObject *management.ApplicationCorsSettings, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	tfObjType := types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes}
-
 	if !ok || apiObject == nil {
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(applicationCorsSettingsTFObjectTypes), diags
 	}
 
 	attributesMap := map[string]attr.Value{
@@ -3183,22 +2934,17 @@ func applicationCorsSettingsOkToTF(apiObject *management.ApplicationCorsSettings
 		"origins":  framework.StringSetOkToTF(apiObject.GetOriginsOk()),
 	}
 
-	flattenedObj, d := types.ObjectValue(applicationCorsSettingsTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(applicationCorsSettingsTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags
 }
 
-func applicationOidcOptionsToTF(apiObject *management.ApplicationOIDC, apiObjectSecret *management.ApplicationSecret) (types.List, diag.Diagnostics) {
+func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.ApplicationOIDC, apiObjectSecret *management.ApplicationSecret, stateValue ApplicationOIDCOptionsResourceModel) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	tfObjType := types.ObjectType{AttrTypes: applicationOidcOptionsTFObjectTypes}
-
 	if apiObject == nil || apiObject.GetId() == "" {
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(applicationOidcOptionsTFObjectTypes), diags
 	}
 
 	kerberos, d := applicationOidcOptionsCertificateBasedAuthenticationToTF(apiObject.GetKerberosOk())
@@ -3207,13 +2953,24 @@ func applicationOidcOptionsToTF(apiObject *management.ApplicationOIDC, apiObject
 	corsSettings, d := applicationCorsSettingsOkToTF(apiObject.GetCorsSettingsOk())
 	diags.Append(d...)
 
-	mobileApp, d := applicationMobileAppOkToTF(apiObject.GetMobileOk())
+	mobileAppObject, ok := apiObject.GetMobileOk()
+	var mobileAppState ApplicationOIDCMobileAppResourceModel
+	if !stateValue.MobileApp.IsNull() && !stateValue.MobileApp.IsUnknown() {
+		d := stateValue.MobileApp.As(ctx, &mobileAppState, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return types.ObjectNull(applicationOidcOptionsTFObjectTypes), diags
+		}
+	}
+	mobileApp, d := applicationMobileAppOkToTF(ctx, mobileAppObject, ok, mobileAppState)
 	diags.Append(d...)
 
 	attributesMap := map[string]attr.Value{
 		"additional_refresh_token_replay_protection_enabled": framework.BoolOkToTF(apiObject.GetAdditionalRefreshTokenReplayProtectionEnabledOk()),
 		"allow_wildcards_in_redirect_uris":                   framework.BoolOkToTF(apiObject.GetAllowWildcardInRedirectUrisOk()),
-		"bundle_id":                                          framework.StringOkToTF(apiObject.GetBundleIdOk()),
 		"certificate_based_authentication":                   kerberos,
 		"client_id":                                          framework.StringOkToTF(apiObject.GetIdOk()),
 		"client_secret":                                      types.StringNull(),
@@ -3222,7 +2979,6 @@ func applicationOidcOptionsToTF(apiObject *management.ApplicationOIDC, apiObject
 		"home_page_url":                                      framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
 		"initiate_login_uri":                                 framework.StringOkToTF(apiObject.GetInitiateLoginUriOk()),
 		"mobile_app":                                         mobileApp,
-		"package_name":                                       framework.StringOkToTF(apiObject.GetPackageNameOk()),
 		"par_requirement":                                    framework.EnumOkToTF(apiObject.GetParRequirementOk()),
 		"par_timeout":                                        framework.Int32OkToTF(apiObject.GetParTimeoutOk()),
 		"pkce_enforcement":                                   framework.EnumOkToTF(apiObject.GetPkceEnforcementOk()),
@@ -3245,22 +3001,17 @@ func applicationOidcOptionsToTF(apiObject *management.ApplicationOIDC, apiObject
 		attributesMap["client_secret"] = framework.StringOkToTF(apiObjectSecret.GetSecretOk())
 	}
 
-	flattenedObj, d := types.ObjectValue(applicationOidcOptionsTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(applicationOidcOptionsTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags
 }
 
-func applicationOidcOptionsCertificateBasedAuthenticationToTF(apiObject *management.ApplicationOIDCAllOfKerberos, ok bool) (types.List, diag.Diagnostics) {
+func applicationOidcOptionsCertificateBasedAuthenticationToTF(apiObject *management.ApplicationOIDCAllOfKerberos, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	tfObjType := types.ObjectType{AttrTypes: applicationOidcOptionsCertificateAuthenticationTFObjectTypes}
-
 	if !ok && apiObject == nil {
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(applicationOidcOptionsCertificateAuthenticationTFObjectTypes), diags
 	}
 
 	attributesMap := map[string]attr.Value{
@@ -3271,25 +3022,32 @@ func applicationOidcOptionsCertificateBasedAuthenticationToTF(apiObject *managem
 		attributesMap["key_id"] = framework.StringOkToTF(v.GetIdOk())
 	}
 
-	flattenedObj, d := types.ObjectValue(applicationOidcOptionsCertificateAuthenticationTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(applicationOidcOptionsCertificateAuthenticationTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags
 }
 
-func applicationMobileAppOkToTF(apiObject *management.ApplicationOIDCAllOfMobile, ok bool) (types.List, diag.Diagnostics) {
+func applicationMobileAppOkToTF(ctx context.Context, apiObject *management.ApplicationOIDCAllOfMobile, ok bool, stateValue ApplicationOIDCMobileAppResourceModel) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	tfObjType := types.ObjectType{AttrTypes: applicationOidcMobileAppTFObjectTypes}
-
 	if !ok || apiObject == nil {
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(applicationOidcMobileAppTFObjectTypes), diags
 	}
 
-	integrityDetection, d := applicationMobileAppIntegrityDetectionOkToTF(apiObject.GetIntegrityDetectionOk())
+	integrityDetectionObj, ok := apiObject.GetIntegrityDetectionOk()
+	var integrityDetectionState ApplicationOIDCMobileAppIntegrityDetectionResourceModel
+	if !stateValue.IntegrityDetection.IsNull() && !stateValue.IntegrityDetection.IsUnknown() {
+		d := stateValue.IntegrityDetection.As(ctx, &integrityDetectionState, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return types.ObjectNull(applicationOidcMobileAppTFObjectTypes), diags
+		}
+	}
+	integrityDetection, d := applicationMobileAppIntegrityDetectionOkToTF(ctx, integrityDetectionObj, ok, integrityDetectionState)
 	diags.Append(d...)
 
 	attributesMap := map[string]attr.Value{
@@ -3310,34 +3068,41 @@ func applicationMobileAppOkToTF(apiObject *management.ApplicationOIDCAllOfMobile
 				fmt.Sprintf("Expecting time unit of %s for attribute `passcode_refresh_seconds`, got %v", management.ENUMPASSCODEREFRESHTIMEUNIT_SECONDS, vU),
 			)
 
-			return types.ListNull(tfObjType), diags
+			return types.ObjectNull(applicationOidcMobileAppTFObjectTypes), diags
 		}
 
 		attributesMap["passcode_refresh_seconds"] = framework.Int32OkToTF(v.GetDurationOk())
 	}
 
-	flattenedObj, d := types.ObjectValue(applicationOidcMobileAppTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(applicationOidcMobileAppTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags
 }
 
-func applicationMobileAppIntegrityDetectionOkToTF(apiObject *management.ApplicationOIDCAllOfMobileIntegrityDetection, ok bool) (types.List, diag.Diagnostics) {
+func applicationMobileAppIntegrityDetectionOkToTF(ctx context.Context, apiObject *management.ApplicationOIDCAllOfMobileIntegrityDetection, ok bool, stateValue ApplicationOIDCMobileAppIntegrityDetectionResourceModel) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	tfObjType := types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionTFObjectTypes}
-
 	if !ok || apiObject == nil {
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(applicationOidcMobileAppIntegrityDetectionTFObjectTypes), diags
 	}
 
 	cacheDuration, d := applicationMobileAppIntegrityDetectionCacheDurationOkToTF(apiObject.GetCacheDurationOk())
 	diags.Append(d...)
 
-	googlePlay, d := applicationMobileAppIntegrityDetectionGooglePlayOkToTF(apiObject.GetGooglePlayOk())
+	googlePlayObject, ok := apiObject.GetGooglePlayOk()
+	var googlePlayState ApplicationOIDCMobileAppIntegrityDetectionGooglePlayResourceModel
+	if !stateValue.GooglePlay.IsNull() && !stateValue.GooglePlay.IsUnknown() {
+		d := stateValue.GooglePlay.As(ctx, &googlePlayState, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return types.ObjectNull(applicationOidcMobileAppIntegrityDetectionTFObjectTypes), diags
+		}
+	}
+	googlePlay, d := applicationMobileAppIntegrityDetectionGooglePlayOkToTF(googlePlayObject, ok, googlePlayState)
 	diags.Append(d...)
 
 	attributesMap := map[string]attr.Value{
@@ -3355,22 +3120,17 @@ func applicationMobileAppIntegrityDetectionOkToTF(apiObject *management.Applicat
 		}
 	}
 
-	flattenedObj, d := types.ObjectValue(applicationOidcMobileAppIntegrityDetectionTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(applicationOidcMobileAppIntegrityDetectionTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags
 }
 
-func applicationMobileAppIntegrityDetectionCacheDurationOkToTF(apiObject *management.ApplicationOIDCAllOfMobileIntegrityDetectionCacheDuration, ok bool) (types.List, diag.Diagnostics) {
+func applicationMobileAppIntegrityDetectionCacheDurationOkToTF(apiObject *management.ApplicationOIDCAllOfMobileIntegrityDetectionCacheDuration, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	tfObjType := types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionCacheDurationTFObjectTypes}
-
 	if !ok || apiObject == nil {
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(applicationOidcMobileAppIntegrityDetectionCacheDurationTFObjectTypes), diags
 	}
 
 	attributesMap := map[string]attr.Value{
@@ -3378,99 +3138,80 @@ func applicationMobileAppIntegrityDetectionCacheDurationOkToTF(apiObject *manage
 		"units":  framework.EnumOkToTF(apiObject.GetUnitsOk()),
 	}
 
-	flattenedObj, d := types.ObjectValue(applicationOidcMobileAppIntegrityDetectionCacheDurationTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(applicationOidcMobileAppIntegrityDetectionCacheDurationTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags
 }
 
-func applicationMobileAppIntegrityDetectionGooglePlayOkToTF(apiObject *management.ApplicationOIDCAllOfMobileIntegrityDetectionGooglePlay, ok bool) (types.List, diag.Diagnostics) {
+func applicationMobileAppIntegrityDetectionGooglePlayOkToTF(apiObject *management.ApplicationOIDCAllOfMobileIntegrityDetectionGooglePlay, ok bool, stateValue ApplicationOIDCMobileAppIntegrityDetectionGooglePlayResourceModel) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	tfObjType := types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionGooglePlayTFObjectTypes}
-
 	if !ok || apiObject == nil {
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(applicationOidcMobileAppIntegrityDetectionGooglePlayTFObjectTypes), diags
 	}
 
 	attributesMap := map[string]attr.Value{
-		"decryption_key":                   framework.StringOkToTF(apiObject.GetDecryptionKeyOk()),
-		"service_account_credentials_json": framework.StringOkToTF(apiObject.GetServiceAccountCredentialsOk()),
-		"verification_key":                 framework.StringOkToTF(apiObject.GetVerificationKeyOk()),
+		"decryption_key":                   stateValue.DecryptionKey,
+		"service_account_credentials_json": stateValue.ServiceAccountCredentialsJson,
+		"verification_key":                 stateValue.VerificationKey,
 		"verification_type":                framework.EnumOkToTF(apiObject.GetVerificationTypeOk()),
 	}
 
-	flattenedObj, d := types.ObjectValue(applicationOidcMobileAppIntegrityDetectionGooglePlayTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(applicationOidcMobileAppIntegrityDetectionGooglePlayTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags
 }
 
-func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.List, diag.Diagnostics) {
+func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	tfObjType := types.ObjectType{AttrTypes: applicationSamlOptionsTFObjectTypes}
-
 	if apiObject == nil || apiObject.GetId() == "" {
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(applicationSamlOptionsTFObjectTypes), diags
 	}
 
 	corsSettings, d := applicationCorsSettingsOkToTF(apiObject.GetCorsSettingsOk())
 	diags.Append(d...)
 
-	idpSigningKey, idpSigningKeyId, d := applicationSamlIdpSigningKeyOkToTF(apiObject.GetIdpSigningOk())
+	idpSigningKey, d := applicationSamlIdpSigningKeyOkToTF(apiObject.GetIdpSigningOk())
 	diags.Append(d...)
 
-	spVerification, spVerificationCertificateIds, d := applicationSamlSpVerificationOkToTF(apiObject.GetSpVerificationOk())
+	spVerification, d := applicationSamlSpVerificationOkToTF(apiObject.GetSpVerificationOk())
 	diags.Append(d...)
 
 	attributesMap := map[string]attr.Value{
-		"acs_urls":                        framework.StringSetOkToTF(apiObject.GetAcsUrlsOk()),
-		"assertion_duration":              framework.Int32OkToTF(apiObject.GetAssertionDurationOk()),
-		"assertion_signed_enabled":        framework.BoolOkToTF(apiObject.GetAssertionSignedOk()),
-		"cors_settings":                   corsSettings,
-		"enable_requested_authn_context":  framework.BoolOkToTF(apiObject.GetEnableRequestedAuthnContextOk()),
-		"home_page_url":                   framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
-		"idp_signing_key_id":              idpSigningKeyId,
-		"idp_signing_key":                 idpSigningKey,
-		"default_target_url":              framework.StringOkToTF(apiObject.GetDefaultTargetUrlOk()),
-		"nameid_format":                   framework.StringOkToTF(apiObject.GetNameIdFormatOk()),
-		"response_is_signed":              framework.BoolOkToTF(apiObject.GetResponseSignedOk()),
-		"slo_binding":                     framework.EnumOkToTF(apiObject.GetSloBindingOk()),
-		"slo_endpoint":                    framework.StringOkToTF(apiObject.GetSloEndpointOk()),
-		"slo_response_endpoint":           framework.StringOkToTF(apiObject.GetSloResponseEndpointOk()),
-		"slo_window":                      framework.Int32OkToTF(apiObject.GetSloWindowOk()),
-		"sp_entity_id":                    framework.StringOkToTF(apiObject.GetSpEntityIdOk()),
-		"sp_verification_certificate_ids": spVerificationCertificateIds,
-		"sp_verification":                 spVerification,
-		"type":                            framework.EnumOkToTF(apiObject.GetTypeOk()),
+		"acs_urls":                       framework.StringSetOkToTF(apiObject.GetAcsUrlsOk()),
+		"assertion_duration":             framework.Int32OkToTF(apiObject.GetAssertionDurationOk()),
+		"assertion_signed_enabled":       framework.BoolOkToTF(apiObject.GetAssertionSignedOk()),
+		"cors_settings":                  corsSettings,
+		"enable_requested_authn_context": framework.BoolOkToTF(apiObject.GetEnableRequestedAuthnContextOk()),
+		"home_page_url":                  framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
+		"idp_signing_key":                idpSigningKey,
+		"default_target_url":             framework.StringOkToTF(apiObject.GetDefaultTargetUrlOk()),
+		"nameid_format":                  framework.StringOkToTF(apiObject.GetNameIdFormatOk()),
+		"response_is_signed":             framework.BoolOkToTF(apiObject.GetResponseSignedOk()),
+		"slo_binding":                    framework.EnumOkToTF(apiObject.GetSloBindingOk()),
+		"slo_endpoint":                   framework.StringOkToTF(apiObject.GetSloEndpointOk()),
+		"slo_response_endpoint":          framework.StringOkToTF(apiObject.GetSloResponseEndpointOk()),
+		"slo_window":                     framework.Int32OkToTF(apiObject.GetSloWindowOk()),
+		"sp_entity_id":                   framework.StringOkToTF(apiObject.GetSpEntityIdOk()),
+		"sp_verification":                spVerification,
+		"type":                           framework.EnumOkToTF(apiObject.GetTypeOk()),
 	}
 
-	flattenedObj, d := types.ObjectValue(applicationSamlOptionsTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(applicationSamlOptionsTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags
 }
 
-func applicationSamlIdpSigningKeyOkToTF(apiObject *management.ApplicationSAMLAllOfIdpSigning, ok bool) (types.List, types.String, diag.Diagnostics) {
+func applicationSamlIdpSigningKeyOkToTF(apiObject *management.ApplicationSAMLAllOfIdpSigning, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	tfObjType := types.ObjectType{AttrTypes: applicationSamlOptionsIdpSigningKeyTFObjectTypes}
-
 	if !ok || apiObject == nil {
-		return types.ListNull(tfObjType), types.StringNull(), diags
+		return types.ObjectNull(applicationSamlOptionsIdpSigningKeyTFObjectTypes), diags
 	}
-
-	keyId := types.StringNull()
 
 	attributesMap := map[string]attr.Value{
 		"algorithm": framework.EnumOkToTF(apiObject.GetAlgorithmOk()),
@@ -3478,26 +3219,20 @@ func applicationSamlIdpSigningKeyOkToTF(apiObject *management.ApplicationSAMLAll
 	}
 
 	if v, ok := apiObject.GetKeyOk(); ok {
-		keyId = framework.StringOkToTF(v.GetIdOk())
-		attributesMap["key_id"] = keyId
+		attributesMap["key_id"] = framework.StringOkToTF(v.GetIdOk())
 	}
 
-	flattenedObj, d := types.ObjectValue(applicationSamlOptionsIdpSigningKeyTFObjectTypes, attributesMap)
+	returnVar, d := types.ObjectValue(applicationSamlOptionsIdpSigningKeyTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
-	diags.Append(d...)
-
-	return returnVar, keyId, diags
+	return returnVar, diags
 }
 
-func applicationSamlSpVerificationOkToTF(apiObject *management.ApplicationSAMLAllOfSpVerification, ok bool) (types.List, types.Set, diag.Diagnostics) {
+func applicationSamlSpVerificationOkToTF(apiObject *management.ApplicationSAMLAllOfSpVerification, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	tfObjType := types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes}
-
 	if !ok || apiObject == nil {
-		return types.ListNull(tfObjType), types.SetNull(types.StringType), diags
+		return types.ObjectNull(applicationSamlOptionsSpVerificationTFObjectTypes), diags
 	}
 
 	certificateIds := make([]string, 0)
@@ -3507,18 +3242,13 @@ func applicationSamlSpVerificationOkToTF(apiObject *management.ApplicationSAMLAl
 		}
 	}
 
-	certificateIdsList := framework.StringSetToTF(certificateIds)
-
 	attributesMap := map[string]attr.Value{
 		"authn_request_signed": framework.BoolOkToTF(apiObject.GetAuthnRequestSignedOk()),
-		"certificate_ids":      certificateIdsList,
+		"certificate_ids":      framework.StringSetToTF(certificateIds),
 	}
 
-	flattenedObj, d := types.ObjectValue(applicationSamlOptionsSpVerificationTFObjectTypes, attributesMap)
+	returnVar, d := types.ObjectValue(applicationSamlOptionsSpVerificationTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
-	diags.Append(d...)
-
-	return returnVar, certificateIdsList, diags
+	return returnVar, diags
 }

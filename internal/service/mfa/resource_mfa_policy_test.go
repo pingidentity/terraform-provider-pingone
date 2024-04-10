@@ -1776,23 +1776,23 @@ resource "pingone_application" "%[2]s-1" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-1"
   description    = "My test OIDC app for MFA Policy"
-  tags           = []
+
   login_page_url = "https://www.pingidentity.com"
 
   enabled = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-    mobile_app {
+    mobile_app = {
       bundle_id    = "com.%[2]s1.bundle"
       package_name = "com.%[2]s1.package"
 
       passcode_refresh_seconds = 45
 
-      integrity_detection {
+      integrity_detection = {
         enabled = false
       }
     }
@@ -1812,29 +1812,29 @@ resource "pingone_application" "%[2]s-2" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-2"
   description    = "My test OIDC app for MFA Policy"
-  tags           = []
+
   login_page_url = "https://www.pingidentity.com"
 
   enabled = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-    mobile_app {
+    mobile_app = {
       bundle_id    = "com.%[2]s2.bundle"
       package_name = "com.%[2]s2.package"
 
       passcode_refresh_seconds = 45
 
-      integrity_detection {
+      integrity_detection = {
         enabled = true
-        cache_duration {
+        cache_duration = {
           amount = 30
           units  = "HOURS"
         }
-        google_play {
+        google_play = {
           verification_type = "INTERNAL"
           decryption_key    = "dummykeydoesnotexist"
           verification_key  = "dummykeydoesnotexist"
@@ -1848,29 +1848,29 @@ resource "pingone_application" "%[2]s-3" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-3"
   description    = "My test OIDC app for MFA Policy"
-  tags           = []
+
   login_page_url = "https://www.pingidentity.com"
 
   enabled = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-    mobile_app {
+    mobile_app = {
       bundle_id    = "com.%[2]s3.bundle"
       package_name = "com.%[2]s3.package"
 
       passcode_refresh_seconds = 45
 
-      integrity_detection {
+      integrity_detection = {
         enabled = true
-        cache_duration {
+        cache_duration = {
           amount = 30
           units  = "HOURS"
         }
-        google_play {
+        google_play = {
           verification_type = "INTERNAL"
           decryption_key    = "dummykeydoesnotexist"
           verification_key  = "dummykeydoesnotexist"
@@ -1893,29 +1893,29 @@ resource "pingone_application" "%[2]s-4" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-4"
   description    = "My test OIDC app for MFA Policy"
-  tags           = []
+
   login_page_url = "https://www.pingidentity.com"
 
   enabled = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-    mobile_app {
+    mobile_app = {
       bundle_id    = "com.%[2]s4.bundle"
       package_name = "com.%[2]s4.package"
 
       passcode_refresh_seconds = 45
 
-      integrity_detection {
+      integrity_detection = {
         enabled = true
-        cache_duration {
+        cache_duration = {
           amount = 30
           units  = "HOURS"
         }
-        google_play {
+        google_play = {
           verification_type = "INTERNAL"
           decryption_key    = "dummykeydoesnotexist"
           verification_key  = "dummykeydoesnotexist"
@@ -2039,23 +2039,23 @@ resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "My test OIDC app for MFA Policy"
-  tags           = []
+
   login_page_url = "https://www.pingidentity.com"
 
   enabled = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-    mobile_app {
+    mobile_app = {
       bundle_id    = "com.%[2]s.bundle"
       package_name = "com.%[2]s.package"
 
       passcode_refresh_seconds = 45
 
-      integrity_detection {
+      integrity_detection = {
         enabled = false
       }
     }
@@ -2120,29 +2120,29 @@ resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "My test OIDC app for MFA Policy"
-  tags           = []
+
   login_page_url = "https://www.pingidentity.com"
 
   enabled = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-    mobile_app {
+    mobile_app = {
       bundle_id    = "com.%[2]s.bundle"
       package_name = "com.%[2]s.package"
 
       passcode_refresh_seconds = 45
 
-      integrity_detection {
+      integrity_detection = {
         enabled = true
-        cache_duration {
+        cache_duration = {
           amount = 30
           units  = "HOURS"
         }
-        google_play {
+        google_play = {
           verification_type = "INTERNAL"
           decryption_key    = "dummykeydoesnotexist"
           verification_key  = "dummykeydoesnotexist"
@@ -2264,7 +2264,7 @@ resource "pingone_application" "%[2]s" {
 
   enabled = true
 
-  saml_options {
+  saml_options = {
     acs_urls           = ["https://my-saas-app.com"]
     assertion_duration = 3600
     sp_entity_id       = "sp:%[2]s:localhost"
@@ -2327,12 +2327,12 @@ resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "My test OIDC app for MFA Policy"
-  tags           = []
+
   login_page_url = "https://www.pingidentity.com"
 
   enabled = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "WORKER"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
@@ -2395,12 +2395,12 @@ resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "My test OIDC app for MFA Policy"
-  tags           = []
+
   login_page_url = "https://www.pingidentity.com"
 
   enabled = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"

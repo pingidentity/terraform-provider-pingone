@@ -3,7 +3,7 @@ resource "pingone_application" "my_awesome_external_link" {
   name           = "My Awesome External Link"
   enabled        = true
 
-  external_link_options {
+  external_link_options = {
     home_page_url = "https://demo.bxretail.org/"
   }
 }

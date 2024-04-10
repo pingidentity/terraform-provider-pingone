@@ -743,7 +743,7 @@ resource "pingone_application" "%[3]s" {
   name           = "%[4]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -771,7 +771,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -850,7 +850,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -918,7 +918,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -946,7 +946,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -974,7 +974,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -1014,12 +1014,12 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  saml_options {
+  saml_options = {
     acs_urls           = ["https://my-saas-app.com"]
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:%[3]s"
 
-    idp_signing_key {
+    idp_signing_key = {
       key_id    = pingone_key.%[2]s.id
       algorithm = pingone_key.%[2]s.signature_algorithm
     }
@@ -1057,12 +1057,12 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  saml_options {
+  saml_options = {
     acs_urls           = ["https://my-saas-app.com"]
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:%[3]s"
 
-    idp_signing_key {
+    idp_signing_key = {
       key_id    = pingone_key.%[2]s.id
       algorithm = pingone_key.%[2]s.signature_algorithm
     }
@@ -1099,12 +1099,12 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  saml_options {
+  saml_options = {
     acs_urls           = ["https://my-saas-app.com"]
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:%[3]s"
 
-    idp_signing_key {
+    idp_signing_key = {
       key_id    = pingone_key.%[2]s.id
       algorithm = pingone_key.%[2]s.signature_algorithm
     }
@@ -1141,12 +1141,12 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  saml_options {
+  saml_options = {
     acs_urls           = ["https://my-saas-app.com"]
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:%[3]s"
 
-    idp_signing_key {
+    idp_signing_key = {
       key_id    = pingone_key.%[2]s.id
       algorithm = pingone_key.%[2]s.signature_algorithm
     }
@@ -1191,7 +1191,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  external_link_options {
+  external_link_options = {
     home_page_url = "https://demo.bxretail.org/"
   }
 }
@@ -1214,7 +1214,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -1243,7 +1243,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -1284,12 +1284,12 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  saml_options {
+  saml_options = {
     acs_urls           = ["https://my-saas-app.com"]
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:%[3]s"
 
-    idp_signing_key {
+    idp_signing_key = {
       key_id    = pingone_key.%[2]s.id
       algorithm = pingone_key.%[2]s.signature_algorithm
     }
@@ -1330,12 +1330,12 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  saml_options {
+  saml_options = {
     acs_urls           = ["https://my-saas-app.com"]
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:%[3]s"
 
-    idp_signing_key {
+    idp_signing_key = {
       key_id    = pingone_key.%[2]s.id
       algorithm = pingone_key.%[2]s.signature_algorithm
     }
@@ -1373,12 +1373,12 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  saml_options {
+  saml_options = {
     acs_urls           = ["https://my-saas-app.com"]
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:%[3]s"
 
-    idp_signing_key {
+    idp_signing_key = {
       key_id    = pingone_key.%[2]s.id
       algorithm = pingone_key.%[2]s.signature_algorithm
     }
@@ -1404,7 +1404,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  external_link_options {
+  external_link_options = {
     home_page_url = "https://demo.bxretail.org/"
   }
 }
@@ -1428,7 +1428,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]

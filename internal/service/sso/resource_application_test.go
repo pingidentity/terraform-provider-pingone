@@ -3332,7 +3332,7 @@ resource "pingone_application" "%[3]s" {
   name           = "%[4]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "WEB_APP"
     grant_types                 = ["AUTHORIZATION_CODE", "REFRESH_TOKEN"]
     response_types              = ["CODE"]
@@ -3364,14 +3364,14 @@ resource "pingone_application" "%[2]s" {
   description    = "My test OIDC app"
   login_page_url = "https://www.pingidentity.com"
 
-  icon {
+  icon = {
     id   = pingone_image.%[2]s.id
     href = pingone_image.%[2]s.uploaded_image.href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
 
-  access_control_group_options {
+  access_control_group_options = {
     type = "ANY_GROUP"
 
     groups = [
@@ -3384,7 +3384,7 @@ resource "pingone_application" "%[2]s" {
 
   enabled = true
 
-  oidc_options {
+  oidc_options = {
     type                             = "WEB_APP"
     grant_types                      = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
     response_types                   = ["CODE"]
@@ -3408,7 +3408,7 @@ resource "pingone_application" "%[2]s" {
 
     support_unsigned_request_object = true
 
-    cors_settings {
+    cors_settings = {
       behavior = "ALLOW_SPECIFIC_ORIGINS"
       origins = [
         "http://localhost",
@@ -3435,7 +3435,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "WEB_APP"
     grant_types                 = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -3454,7 +3454,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "WEB_APP"
     grant_types                 = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -3488,7 +3488,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "WEB_APP"
     grant_types                 = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -3509,7 +3509,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "WEB_APP"
     grant_types                 = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -3541,14 +3541,14 @@ resource "pingone_application" "%[2]s" {
   description    = "My test OIDC app"
   login_page_url = "https://www.pingidentity.com"
 
-  icon {
+  icon = {
     id   = pingone_image.%[2]s.id
     href = pingone_image.%[2]s.uploaded_image.href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
 
-  access_control_group_options {
+  access_control_group_options = {
     type = "ANY_GROUP"
 
     groups = [
@@ -3560,18 +3560,18 @@ resource "pingone_application" "%[2]s" {
 
   enabled = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
     allow_wildcards_in_redirect_uris = true
 
-    cors_settings {
+    cors_settings = {
       behavior = "ALLOW_NO_ORIGINS"
     }
 
-    mobile_app {
+    mobile_app = {
       bundle_id           = "com.%[2]s.bundle"
       package_name        = "com.%[2]s.package"
       huawei_app_id       = "%[2]s"
@@ -3581,17 +3581,17 @@ resource "pingone_application" "%[2]s" {
 
       universal_app_link = "https://applink.com"
 
-      integrity_detection {
+      integrity_detection = {
         enabled = true
 
         excluded_platforms = ["IOS"]
 
-        cache_duration {
+        cache_duration = {
           amount = 30
           units  = "HOURS"
         }
 
-        google_play {
+        google_play = {
           verification_type = "INTERNAL"
           decryption_key    = "decryptionkeydoesnotexist"
           verification_key  = "verificationkeydoesnotexist"
@@ -3612,7 +3612,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
@@ -3642,12 +3642,12 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-    certificate_based_authentication {
+    certificate_based_authentication = {
       key_id = pingone_key.%[2]s.id
     }
   }
@@ -3676,12 +3676,12 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-    certificate_based_authentication {
+    certificate_based_authentication = {
       key_id = pingone_key.%[2]s.id
     }
   }
@@ -3710,12 +3710,12 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "WORKER"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-    certificate_based_authentication {
+    certificate_based_authentication = {
       key_id = pingone_key.%[2]s.id
     }
   }
@@ -3732,12 +3732,12 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-    mobile_app {
+    mobile_app = {
       bundle_id           = "com.%[2]s.bundle"
       package_name        = "com.%[2]s.package"
       huawei_app_id       = "%[2]s"
@@ -3747,17 +3747,17 @@ resource "pingone_application" "%[2]s" {
 
       universal_app_link = "https://applink.com"
 
-      integrity_detection {
+      integrity_detection = {
         enabled = true
 
         excluded_platforms = ["IOS"]
 
-        cache_duration {
+        cache_duration = {
           amount = 30
           units  = "HOURS"
         }
 
-        google_play {
+        google_play = {
           verification_type = "INTERNAL"
           decryption_key    = "decryptionkeydoesnotexist"
           verification_key  = "verificationkeydoesnotexist"
@@ -3778,12 +3778,12 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-    mobile_app {}
+    mobile_app = {}
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -3798,12 +3798,12 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-    mobile_app {
+    mobile_app = {
       bundle_id           = "com.%[2]s.bundle"
       package_name        = "com.%[2]s.package"
       huawei_app_id       = "%[2]s"
@@ -3813,17 +3813,17 @@ resource "pingone_application" "%[2]s" {
 
       universal_app_link = "https://applink.com"
 
-      integrity_detection {
+      integrity_detection = {
         enabled = true
 
         excluded_platforms = ["IOS"]
 
-        cache_duration {
+        cache_duration = {
           amount = 45
           units  = "MINUTES"
         }
 
-        google_play {
+        google_play = {
           verification_type = "INTERNAL"
           decryption_key    = "decryptionkeydoesnotexist"
           verification_key  = "verificationkeydoesnotexist"
@@ -3844,12 +3844,12 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-    mobile_app {
+    mobile_app = {
       bundle_id           = "com.%[2]s.bundle"
       package_name        = "com.%[2]s.package"
       huawei_app_id       = "%[2]s"
@@ -3859,14 +3859,14 @@ resource "pingone_application" "%[2]s" {
 
       universal_app_link = "https://applink.com"
 
-      integrity_detection {
+      integrity_detection = {
         enabled = true
 
-        cache_duration {
+        cache_duration = {
           amount = 30
         }
 
-        google_play {
+        google_play = {
           verification_type                = "GOOGLE"
           service_account_credentials_json = jsonencode(%[4]s)
         }
@@ -3886,12 +3886,12 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-    mobile_app {
+    mobile_app = {
       bundle_id           = "com.%[2]s.bundle"
       package_name        = "com.%[2]s.package"
       huawei_app_id       = "%[2]s"
@@ -3901,10 +3901,10 @@ resource "pingone_application" "%[2]s" {
 
       universal_app_link = "https://applink.com"
 
-      integrity_detection {
+      integrity_detection = {
         enabled = true
 
-        cache_duration {
+        cache_duration = {
           amount = 30
         }
 
@@ -3925,12 +3925,12 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-    mobile_app {
+    mobile_app = {
       bundle_id           = "com.%[2]s.bundle"
       package_name        = "com.%[2]s.package"
       huawei_app_id       = "%[2]s"
@@ -3940,16 +3940,16 @@ resource "pingone_application" "%[2]s" {
 
       universal_app_link = "https://applink.com"
 
-      integrity_detection {
+      integrity_detection = {
         enabled = true
 
-        cache_duration {
+        cache_duration = {
           amount = 30
         }
 
         excluded_platforms = ["IOS"]
 
-        google_play {
+        google_play = {
           verification_type = "INTERNAL"
           decryption_key    = "decryptionkeydoesnotexist"
           verification_key  = "verificationkeydoesnotexist"
@@ -3982,14 +3982,14 @@ resource "pingone_application" "%[2]s" {
   description    = "My test OIDC app"
   login_page_url = "https://www.pingidentity.com"
 
-  icon {
+  icon = {
     id   = pingone_image.%[2]s.id
     href = pingone_image.%[2]s.uploaded_image.href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
 
-  access_control_group_options {
+  access_control_group_options = {
     type = "ANY_GROUP"
 
     groups = [
@@ -4001,7 +4001,7 @@ resource "pingone_application" "%[2]s" {
 
   enabled = true
 
-  oidc_options {
+  oidc_options = {
     type = "CUSTOM_APP"
     grant_types = [
       "AUTHORIZATION_CODE",
@@ -4034,7 +4034,7 @@ resource "pingone_application" "%[2]s" {
 
     require_signed_request_object = true
 
-    cors_settings {
+    cors_settings = {
       behavior = "ALLOW_SPECIFIC_ORIGINS"
       origins = [
         "http://localhost",
@@ -4061,7 +4061,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "CUSTOM_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
@@ -4091,14 +4091,14 @@ resource "pingone_application" "%[2]s" {
   description    = "My test OIDC app"
   login_page_url = "https://www.pingidentity.com"
 
-  icon {
+  icon = {
     id   = pingone_image.%[2]s.id
     href = pingone_image.%[2]s.uploaded_image.href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
 
-  access_control_group_options {
+  access_control_group_options = {
     type = "ANY_GROUP"
 
     groups = [
@@ -4110,7 +4110,7 @@ resource "pingone_application" "%[2]s" {
 
   enabled = true
 
-  oidc_options {
+  oidc_options = {
     type = "SERVICE"
     grant_types = [
       "AUTHORIZATION_CODE",
@@ -4138,7 +4138,7 @@ resource "pingone_application" "%[2]s" {
     target_link_uri    = "https://www.pingidentity.com/target"
     pkce_enforcement   = "REQUIRED"
 
-    cors_settings {
+    cors_settings = {
       behavior = "ALLOW_SPECIFIC_ORIGINS"
       origins = [
         "http://localhost",
@@ -4165,7 +4165,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SERVICE"
     grant_types                 = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -4197,14 +4197,14 @@ resource "pingone_application" "%[2]s" {
   description    = "My test OIDC app"
   login_page_url = "https://www.pingidentity.com"
 
-  icon {
+  icon = {
     id   = pingone_image.%[2]s.id
     href = pingone_image.%[2]s.uploaded_image.href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
 
-  access_control_group_options {
+  access_control_group_options = {
     type = "ANY_GROUP"
 
     groups = [
@@ -4216,7 +4216,7 @@ resource "pingone_application" "%[2]s" {
 
   enabled = true
 
-  oidc_options {
+  oidc_options = {
     type                             = "SINGLE_PAGE_APP"
     grant_types                      = ["AUTHORIZATION_CODE"]
     response_types                   = ["CODE"]
@@ -4231,7 +4231,7 @@ resource "pingone_application" "%[2]s" {
 
     support_unsigned_request_object = true
 
-    cors_settings {
+    cors_settings = {
       behavior = "ALLOW_SPECIFIC_ORIGINS"
       origins = [
         "http://localhost",
@@ -4258,7 +4258,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -4296,14 +4296,14 @@ resource "pingone_application" "%[2]s" {
   description    = "My test OIDC app"
   login_page_url = "https://www.pingidentity.com"
 
-  icon {
+  icon = {
     id   = pingone_image.%[2]s.id
     href = pingone_image.%[2]s.uploaded_image.href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
 
-  access_control_group_options {
+  access_control_group_options = {
     type = "ANY_GROUP"
 
     groups = [
@@ -4316,12 +4316,12 @@ resource "pingone_application" "%[2]s" {
 
   enabled = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "WORKER"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-    cors_settings {
+    cors_settings = {
       behavior = "ALLOW_SPECIFIC_ORIGINS"
       origins = [
         "http://localhost",
@@ -4348,7 +4348,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "WORKER"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
@@ -4366,7 +4366,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                             = "SINGLE_PAGE_APP"
     grant_types                      = ["AUTHORIZATION_CODE"]
     response_types                   = ["CODE"]
@@ -4390,7 +4390,7 @@ resource "pingone_application" "%[2]s" {
 
   login_page_url = "http://%[4]s/login" # https with the exception of localhost
 
-  oidc_options {
+  oidc_options = {
     home_page_url               = "http://%[4]s/home" # https with the exception of localhost
     initiate_login_uri          = "http://%[4]s/init" # https with the exception of localhost
     type                        = "SINGLE_PAGE_APP"
@@ -4415,7 +4415,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -4488,14 +4488,14 @@ resource "pingone_application" "%[3]s" {
   description    = "My test SAML app"
   login_page_url = "https://www.pingidentity.com"
 
-  icon {
+  icon = {
     id   = pingone_image.%[3]s.id
     href = pingone_image.%[3]s.uploaded_image.href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
 
-  access_control_group_options {
+  access_control_group_options = {
     type = "ANY_GROUP"
 
     groups = [
@@ -4508,7 +4508,7 @@ resource "pingone_application" "%[3]s" {
 
   enabled = true
 
-  saml_options {
+  saml_options = {
     type               = "WEB_APP"
     home_page_url      = "https://www.pingidentity.com"
     acs_urls           = ["https://www.pingidentity.com", "https://pingidentity.com"]
@@ -4516,7 +4516,7 @@ resource "pingone_application" "%[3]s" {
     sp_entity_id       = "sp:entity:%[3]s"
 
     assertion_signed_enabled = false
-    idp_signing_key {
+    idp_signing_key = {
       key_id    = pingone_key.%[3]s.id
       algorithm = pingone_key.%[3]s.signature_algorithm
     }
@@ -4530,7 +4530,7 @@ resource "pingone_application" "%[3]s" {
 
     default_target_url = "https://www.pingidentity.com/relaystate"
 
-    sp_verification {
+    sp_verification = {
       authn_request_signed = true
       certificate_ids = [
         pingone_certificate.%[3]s-2.id,
@@ -4538,7 +4538,7 @@ resource "pingone_application" "%[3]s" {
       ]
     }
 
-    cors_settings {
+    cors_settings = {
       behavior = "ALLOW_SPECIFIC_ORIGINS"
       origins = [
         "http://localhost",
@@ -4613,7 +4613,7 @@ resource "pingone_application" "%[3]s" {
   name           = "%[4]s"
   enabled        = true
 
-  saml_options {
+  saml_options = {
     acs_urls           = ["https://pingidentity.com"]
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:%[3]s"
@@ -4642,7 +4642,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  saml_options {
+  saml_options = {
     acs_urls           = ["https://pingidentity.com"]
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:%[2]s"
@@ -4671,11 +4671,11 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  saml_options {
+  saml_options = {
     acs_urls           = ["https://pingidentity.com"]
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:%[2]s"
-    idp_signing_key {
+    idp_signing_key = {
       key_id    = pingone_key.%[2]s.id
       algorithm = pingone_key.%[2]s.signature_algorithm
     }
@@ -4708,12 +4708,12 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   description    = "My test external link app"
 
-  icon {
+  icon = {
     id   = pingone_image.%[2]s.id
     href = pingone_image.%[2]s.uploaded_image.href
   }
 
-  access_control_group_options {
+  access_control_group_options = {
     type = "ANY_GROUP"
 
     groups = [
@@ -4726,7 +4726,7 @@ resource "pingone_application" "%[2]s" {
 
   enabled = true
 
-  external_link_options {
+  external_link_options = {
     home_page_url = "https://www.pingidentity.com"
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
@@ -4741,7 +4741,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  external_link_options {
+  external_link_options = {
     home_page_url = "https://www.pingidentity.com"
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -4756,7 +4756,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = %[4]t
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]

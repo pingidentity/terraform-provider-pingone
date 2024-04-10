@@ -280,7 +280,7 @@ resource "pingone_application" "%[3]s" {
   name           = "%[4]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "WEB_APP"
     grant_types                 = ["AUTHORIZATION_CODE", "REFRESH_TOKEN"]
     response_types              = ["CODE"]
@@ -305,7 +305,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -329,7 +329,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -360,7 +360,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -388,7 +388,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -416,7 +416,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -445,7 +445,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
