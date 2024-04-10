@@ -368,6 +368,18 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 		return
 	}
 
+	var plan, state environmentResourceModel
+	// Read Terraform plan and state data into the model
+	resp.Diagnostics.Append(resp.Plan.Get(ctx, &plan)...)
+
+	if !req.State.Raw.IsNull() {
+		resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	if plan.Region.IsUnknown() {
 
 		if r.region.Region == "" {

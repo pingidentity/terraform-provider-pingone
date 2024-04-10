@@ -92,14 +92,6 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 		"A string that specifies a URL (supports `https://` only) that provides access to a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_authn_method`. This property is required when `token_endpoint_authn_method` is `PRIVATE_KEY_JWT` and the `jwks` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).",
 	)
 
-	oidcJwksDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_authn_method`. This property is required when `token_endpoint_authn_method` is `PRIVATE_KEY_JWT` and the `jwks_url` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks_url` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).",
-	)
-
-	oidcJwksUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies a URL (supports `https://` only) that provides access to a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_authn_method`. This property is required when `token_endpoint_authn_method` is `PRIVATE_KEY_JWT` and the `jwks` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).",
-	)
-
 	oidcOptionsPKCEEnforcementDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies how `PKCE` request parameters are handled on the authorize request.",
 	)
@@ -130,10 +122,6 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 
 	samlDefaultTargetUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specfies a default URL used as the `RelayState` parameter by the IdP to deep link into the application after authentication. This value can be overridden by the `applicationUrl` query parameter for [GET Identity Provider Initiated SSO](https://apidocs.pingidentity.com/pingone/platform/v1/api/#get-identity-provider-initiated-sso). Although both of these parameters are generally URLs, because they are used as deep links, this is not enforced. If neither `defaultTargetUrl` nor `applicationUrl` is specified during a SAML authentication flow, no `RelayState` value is supplied to the application. The `defaultTargetUrl` (or the `applicationUrl`) value is passed to the SAML application’s ACS URL as a separate `RelayState` key value (not within the SAMLResponse key value).",
-	)
-
-	samlSpVerificationCertificateIds := framework.SchemaAttributeDescriptionFromMarkdown(
-		"**Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `sp_verification.certificate_ids` attribute going forward.  A list that specifies the certificate IDs used to verify the service provider signature.",
 	)
 
 	resp.Schema = schema.Schema{
@@ -239,213 +227,207 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 			"oidc_options": schema.SingleNestedAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("OIDC/OAuth application specific settings.").Description,
 				Computed:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"type": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the type associated with the application.").Description,
-							Computed:    true,
-						},
-						"home_page_url": schema.StringAttribute{
-							Description:         oidcHomePageURLDescription.Description,
-							MarkdownDescription: oidcHomePageURLDescription.MarkdownDescription,
-							Computed:            true,
-						},
-						"initiate_login_uri": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the URI to use for third-parties to begin the sign-on process for the application.").Description,
-							Computed:    true,
-						},
-						"jwks": schema.StringAttribute{
-							Description:         oidcJwksDescription.Description,
-							MarkdownDescription: oidcJwksDescription.MarkdownDescription,
-							Computed:            true,
-						},
-						"jwks_url": schema.StringAttribute{
-							Description:         oidcJwksUrlDescription.Description,
-							MarkdownDescription: oidcJwksUrlDescription.MarkdownDescription,
-							Computed:            true,
-						},
-						"target_link_uri": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("The URI for the application.").Description,
-							Computed:    true,
-						},
-						"grant_types": schema.SetAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A list that specifies the grant type for the authorization request.").Description,
-							ElementType: types.StringType,
-							Computed:    true,
-						},
-						"response_types": schema.SetAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A list that specifies the code or token type returned by an authorization request.").Description,
-							ElementType: types.StringType,
-							Computed:    true,
-						},
-						"token_endpoint_authn_method": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the client authentication methods supported by the token endpoint.").Description,
-							Computed:    true,
-						},
-						"par_requirement": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies whether pushed authorization requests (PAR) are required.").Description,
-							Computed:    true,
-						},
-						"par_timeout": schema.Int64Attribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the pushed authorization request (PAR) timeout in seconds.").Description,
-							Computed:    true,
-						},
-						"pkce_enforcement": schema.StringAttribute{
-							Description:         oidcOptionsPKCEEnforcementDescription.Description,
-							MarkdownDescription: oidcOptionsPKCEEnforcementDescription.MarkdownDescription,
-							Computed:            true,
-						},
-						"redirect_uris": schema.SetAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A list of strings that specifies the allowed callback URIs for the authentication response.").Description,
-							ElementType: types.StringType,
-							Computed:    true,
-						},
-						"allow_wildcards_in_redirect_uris": schema.BoolAttribute{
-							Description:         oidcAllowWildcardsInRedirectUrisDescription.Description,
-							MarkdownDescription: oidcAllowWildcardsInRedirectUrisDescription.MarkdownDescription,
-							Computed:            true,
-						},
-						"post_logout_redirect_uris": schema.SetAttribute{
-							Description:         oidcPostLogoutRedirectUrisDescription.Description,
-							MarkdownDescription: oidcPostLogoutRedirectUrisDescription.MarkdownDescription,
-							ElementType:         types.StringType,
-							Computed:            true,
-						},
-						"refresh_token_duration": schema.Int64Attribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the lifetime in seconds of the refresh token.").Description,
-							Computed:    true,
-						},
-						"refresh_token_rolling_duration": schema.Int64Attribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of seconds a refresh token can be exchanged before re-authentication is required.").Description,
-							Computed:    true,
-						},
-						"refresh_token_rolling_grace_period_duration": schema.Int64Attribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("The number of seconds that a refresh token may be reused after having been exchanged for a new set of tokens.").Description,
-							Computed:    true,
-						},
-						"additional_refresh_token_replay_protection_enabled": schema.BoolAttribute{
-							Description:         oidcAdditionalRefreshTokenReplayProtectionEnabledDescription.Description,
-							MarkdownDescription: oidcAdditionalRefreshTokenReplayProtectionEnabledDescription.MarkdownDescription,
-							Computed:            true,
-						},
-						"client_id": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application ID used to authenticate to the authorization server.").Description,
-							Computed:    true,
-						},
-						"client_secret": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application secret ID used to authenticate to the authorization server.").Description,
-							Computed:    true,
-							Sensitive:   true,
-						},
-						"certificate_based_authentication": schema.ListNestedAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("Certificate based authentication settings.").Description,
-							Computed:    true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"key_id": schema.StringAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that represents a PingOne ID for the issuance certificate key.").Description,
-										Computed:    true,
-									},
-								},
+
+				Attributes: map[string]schema.Attribute{
+					"type": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the type associated with the application.").Description,
+						Computed:    true,
+					},
+					"home_page_url": schema.StringAttribute{
+						Description:         oidcHomePageURLDescription.Description,
+						MarkdownDescription: oidcHomePageURLDescription.MarkdownDescription,
+						Computed:            true,
+					},
+					"initiate_login_uri": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the URI to use for third-parties to begin the sign-on process for the application.").Description,
+						Computed:    true,
+					},
+					"jwks": schema.StringAttribute{
+						Description:         oidcJwksDescription.Description,
+						MarkdownDescription: oidcJwksDescription.MarkdownDescription,
+						Computed:            true,
+					},
+					"jwks_url": schema.StringAttribute{
+						Description:         oidcJwksUrlDescription.Description,
+						MarkdownDescription: oidcJwksUrlDescription.MarkdownDescription,
+						Computed:            true,
+					},
+					"target_link_uri": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("The URI for the application.").Description,
+						Computed:    true,
+					},
+					"grant_types": schema.SetAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A list that specifies the grant type for the authorization request.").Description,
+						ElementType: types.StringType,
+						Computed:    true,
+					},
+					"response_types": schema.SetAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A list that specifies the code or token type returned by an authorization request.").Description,
+						ElementType: types.StringType,
+						Computed:    true,
+					},
+					"token_endpoint_authn_method": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the client authentication methods supported by the token endpoint.").Description,
+						Computed:    true,
+					},
+					"par_requirement": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies whether pushed authorization requests (PAR) are required.").Description,
+						Computed:    true,
+					},
+					"par_timeout": schema.Int64Attribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the pushed authorization request (PAR) timeout in seconds.").Description,
+						Computed:    true,
+					},
+					"pkce_enforcement": schema.StringAttribute{
+						Description:         oidcOptionsPKCEEnforcementDescription.Description,
+						MarkdownDescription: oidcOptionsPKCEEnforcementDescription.MarkdownDescription,
+						Computed:            true,
+					},
+					"redirect_uris": schema.SetAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A list of strings that specifies the allowed callback URIs for the authentication response.").Description,
+						ElementType: types.StringType,
+						Computed:    true,
+					},
+					"allow_wildcards_in_redirect_uris": schema.BoolAttribute{
+						Description:         oidcAllowWildcardsInRedirectUrisDescription.Description,
+						MarkdownDescription: oidcAllowWildcardsInRedirectUrisDescription.MarkdownDescription,
+						Computed:            true,
+					},
+					"post_logout_redirect_uris": schema.SetAttribute{
+						Description:         oidcPostLogoutRedirectUrisDescription.Description,
+						MarkdownDescription: oidcPostLogoutRedirectUrisDescription.MarkdownDescription,
+						ElementType:         types.StringType,
+						Computed:            true,
+					},
+					"refresh_token_duration": schema.Int64Attribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the lifetime in seconds of the refresh token.").Description,
+						Computed:    true,
+					},
+					"refresh_token_rolling_duration": schema.Int64Attribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of seconds a refresh token can be exchanged before re-authentication is required.").Description,
+						Computed:    true,
+					},
+					"refresh_token_rolling_grace_period_duration": schema.Int64Attribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("The number of seconds that a refresh token may be reused after having been exchanged for a new set of tokens.").Description,
+						Computed:    true,
+					},
+					"additional_refresh_token_replay_protection_enabled": schema.BoolAttribute{
+						Description:         oidcAdditionalRefreshTokenReplayProtectionEnabledDescription.Description,
+						MarkdownDescription: oidcAdditionalRefreshTokenReplayProtectionEnabledDescription.MarkdownDescription,
+						Computed:            true,
+					},
+					"client_id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application ID used to authenticate to the authorization server.").Description,
+						Computed:    true,
+					},
+					"client_secret": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application secret ID used to authenticate to the authorization server.").Description,
+						Computed:    true,
+						Sensitive:   true,
+					},
+					"certificate_based_authentication": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("Certificate based authentication settings.").Description,
+						Computed:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"key_id": schema.StringAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that represents a PingOne ID for the issuance certificate key.").Description,
+								Computed:    true,
 							},
 						},
-						"support_unsigned_request_object": schema.BoolAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the request query parameter JWT is allowed to be unsigned.").Description,
-							Computed:    true,
-						},
-						"require_signed_request_object": schema.BoolAttribute{
-							Description:         oidcRequireSignedRequestObjectDescription.Description,
-							MarkdownDescription: oidcRequireSignedRequestObjectDescription.MarkdownDescription,
-							Computed:            true,
-						},
-						"cors_settings": datasourceApplicationSchemaCorsSettings(),
-						"mobile_app": schema.ListNestedAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("Mobile application integration settings.").Description,
-							Computed:    true,
-							NestedObject: schema.NestedAttributeObject{
+					},
+					"support_unsigned_request_object": schema.BoolAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the request query parameter JWT is allowed to be unsigned.").Description,
+						Computed:    true,
+					},
+					"require_signed_request_object": schema.BoolAttribute{
+						Description:         oidcRequireSignedRequestObjectDescription.Description,
+						MarkdownDescription: oidcRequireSignedRequestObjectDescription.MarkdownDescription,
+						Computed:            true,
+					},
+					"cors_settings": datasourceApplicationSchemaCorsSettings(),
+					"mobile_app": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("Mobile application integration settings.").Description,
+						Computed:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"bundle_id": schema.StringAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the bundle associated with the application, for push notifications in native apps.").Description,
+								Computed:    true,
+							},
+							"package_name": schema.StringAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the package name associated with the application, for push notifications in native apps.").Description,
+								Computed:    true,
+							},
+							"huawei_app_id": schema.StringAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("The unique identifier for the app on the device and in the Huawei Mobile Service AppGallery.").Description,
+								Computed:    true,
+							},
+							"huawei_package_name": schema.StringAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("The package name associated with the application, for push notifications in native apps.").Description,
+								Computed:    true,
+							},
+							"passcode_refresh_seconds": schema.Int64Attribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("The amount of time a passcode should be displayed before being replaced with a new passcode.").Description,
+								Computed:    true,
+							},
+							"universal_app_link": schema.StringAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a URI prefix that enables direct triggering of the mobile application when scanning a QR code.").Description,
+								Computed:    true,
+							},
+							"integrity_detection": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("Mobile application integrity detection settings.").Description,
+								Computed:    true,
+
 								Attributes: map[string]schema.Attribute{
-									"bundle_id": schema.StringAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the bundle associated with the application, for push notifications in native apps.").Description,
+									"enabled": schema.BoolAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether device integrity detection takes place on mobile devices.").Description,
 										Computed:    true,
 									},
-									"package_name": schema.StringAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the package name associated with the application, for push notifications in native apps.").Description,
+									"excluded_platforms": schema.SetAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("Indicates OS excluded from device integrity checking.").Description,
+										ElementType: types.StringType,
 										Computed:    true,
 									},
-									"huawei_app_id": schema.StringAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("The unique identifier for the app on the device and in the Huawei Mobile Service AppGallery.").Description,
+									"cache_duration": schema.SingleNestedAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("Indicates the caching duration of successful integrity detection calls.").Description,
 										Computed:    true,
+
+										Attributes: map[string]schema.Attribute{
+											"amount": schema.Int64Attribute{
+												Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of minutes or hours that specify the duration between successful integrity detection calls.").Description,
+												Computed:    true,
+											},
+											"units": schema.StringAttribute{
+												Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the cache duration time units.").Description,
+												Computed:    true,
+											},
+										},
 									},
-									"huawei_package_name": schema.StringAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("The package name associated with the application, for push notifications in native apps.").Description,
+									"google_play": schema.SingleNestedAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that describes Google Play Integrity API credential settings for Android device integrity detection.").Description,
 										Computed:    true,
-									},
-									"passcode_refresh_seconds": schema.Int64Attribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("The amount of time a passcode should be displayed before being replaced with a new passcode.").Description,
-										Computed:    true,
-									},
-									"universal_app_link": schema.StringAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a URI prefix that enables direct triggering of the mobile application when scanning a QR code.").Description,
-										Computed:    true,
-									},
-									"integrity_detection": schema.ListNestedAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("Mobile application integrity detection settings.").Description,
-										Computed:    true,
-										NestedObject: schema.NestedAttributeObject{
-											Attributes: map[string]schema.Attribute{
-												"enabled": schema.BoolAttribute{
-													Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether device integrity detection takes place on mobile devices.").Description,
-													Computed:    true,
-												},
-												"excluded_platforms": schema.SetAttribute{
-													Description: framework.SchemaAttributeDescriptionFromMarkdown("Indicates OS excluded from device integrity checking.").Description,
-													ElementType: types.StringType,
-													Computed:    true,
-												},
-												"cache_duration": schema.ListNestedAttribute{
-													Description: framework.SchemaAttributeDescriptionFromMarkdown("Indicates the caching duration of successful integrity detection calls.").Description,
-													Computed:    true,
-													NestedObject: schema.NestedAttributeObject{
-														Attributes: map[string]schema.Attribute{
-															"amount": schema.Int64Attribute{
-																Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of minutes or hours that specify the duration between successful integrity detection calls.").Description,
-																Computed:    true,
-															},
-															"units": schema.StringAttribute{
-																Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the cache duration time units.").Description,
-																Computed:    true,
-															},
-														},
-													},
-												},
-												"google_play": schema.ListNestedAttribute{
-													Description: framework.SchemaAttributeDescriptionFromMarkdown("A single block that describes Google Play Integrity API credential settings for Android device integrity detection.").Description,
-													Computed:    true,
-													NestedObject: schema.NestedAttributeObject{
-														Attributes: map[string]schema.Attribute{
-															"decryption_key": schema.StringAttribute{
-																Description:         googlePlayDecryptionKeyDescription.Description,
-																MarkdownDescription: googlePlayDecryptionKeyDescription.MarkdownDescription,
-																Computed:            true,
-																Sensitive:           true,
-															},
-															"service_account_credentials_json": schema.StringAttribute{
-																Description: framework.SchemaAttributeDescriptionFromMarkdown("Contents of the JSON file that represents your Service Account Credentials.").Description,
-																Computed:    true,
-																Sensitive:   true,
-															},
-															"verification_key": schema.StringAttribute{
-																Description: framework.SchemaAttributeDescriptionFromMarkdown("Play Integrity verdict signature verification key from your Google Play Services account.").Description,
-																Computed:    true,
-																Sensitive:   true,
-															},
-															"verification_type": schema.StringAttribute{
-																Description: framework.SchemaAttributeDescriptionFromMarkdown("The type of verification.").Description,
-																Computed:    true,
-															},
-														},
-													},
-												},
+
+										Attributes: map[string]schema.Attribute{
+											"decryption_key": schema.StringAttribute{
+												Description:         googlePlayDecryptionKeyDescription.Description,
+												MarkdownDescription: googlePlayDecryptionKeyDescription.MarkdownDescription,
+												Computed:            true,
+												Sensitive:           true,
+											},
+											"service_account_credentials_json": schema.StringAttribute{
+												Description: framework.SchemaAttributeDescriptionFromMarkdown("Contents of the JSON file that represents your Service Account Credentials.").Description,
+												Computed:    true,
+												Sensitive:   true,
+											},
+											"verification_key": schema.StringAttribute{
+												Description: framework.SchemaAttributeDescriptionFromMarkdown("Play Integrity verdict signature verification key from your Google Play Services account.").Description,
+												Computed:    true,
+												Sensitive:   true,
+											},
+											"verification_type": schema.StringAttribute{
+												Description: framework.SchemaAttributeDescriptionFromMarkdown("The type of verification.").Description,
+												Computed:    true,
 											},
 										},
 									},
@@ -455,112 +437,102 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 					},
 				},
 			},
-			"saml_options": schema.ListNestedAttribute{
+			"saml_options": schema.SingleNestedAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("SAML application specific settings.").Description,
 				Computed:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"home_page_url": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the custom home page URL for the application.").Description,
-							Computed:    true,
-						},
-						"type": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the type associated with the application.").Description,
-							Computed:    true,
-						},
-						"acs_urls": schema.SetAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A list of string that specifies the Assertion Consumer Service URLs. The first URL in the list is used as default (there must be at least one URL).").Description,
-							ElementType: types.StringType,
-							Computed:    true,
-						},
-						"assertion_duration": schema.Int64Attribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the assertion validity duration in seconds.").Description,
-							Computed:    true,
-						},
-						"assertion_signed_enabled": schema.BoolAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the SAML assertion itself should be signed.").Description,
-							Computed:    true,
-						},
-						"default_target_url": schema.StringAttribute{
-							Description:         samlDefaultTargetUrlDescription.Description,
-							MarkdownDescription: samlDefaultTargetUrlDescription.MarkdownDescription,
-							Computed:            true,
-						},
-						"idp_signing_key": schema.ListNestedAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("SAML application assertion/response signing key settings.").Description,
-							Computed:    true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"algorithm": schema.StringAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the signature algorithm of the key.").Description,
-										Computed:    true,
-									},
-									"key_id": schema.StringAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.").Description,
-										Computed:    true,
-									},
-								},
-							},
-						},
-						"enable_requested_authn_context": schema.BoolAttribute{
-							Description:         samlEnableRequestedAuthnContextDescription.Description,
-							MarkdownDescription: samlEnableRequestedAuthnContextDescription.MarkdownDescription,
-							Computed:            true,
-						},
-						"nameid_format": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the format of the Subject NameID attibute in the SAML assertion.").Description,
-							Computed:    true,
-						},
-						"response_is_signed": schema.BoolAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the SAML assertion response itself should be signed.").Description,
-							Computed:    true,
-						},
-						"slo_binding": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the binding protocol to be used for the logout response.").Description,
-							Computed:    true,
-						},
-						"slo_endpoint": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the logout endpoint URL.").Description,
-							Computed:    true,
-						},
-						"slo_response_endpoint": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the endpoint URL to submit the logout response.").Description,
-							Computed:    true,
-						},
-						"slo_window": schema.Int64Attribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request.").Description,
-							Computed:    true,
-						},
-						"sp_entity_id": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the service provider entity ID used to lookup the application. This is a required property and is unique within the environment.").Description,
-							Computed:    true,
-						},
-						"sp_verification_certificate_ids": schema.SetAttribute{
-							Description:         samlSpVerificationCertificateIds.Description,
-							MarkdownDescription: samlSpVerificationCertificateIds.MarkdownDescription,
-							ElementType:         types.StringType,
-							DeprecationMessage:  "The `sp_verification_certificate_ids` attribute is deprecated and will be removed in the next major release.  Please use the `sp_verification.certificate_ids` attribute going forward.",
-							Computed:            true,
-						},
-						"sp_verification": schema.ListNestedAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A single list item that specifies SP signature verification settings.").Description,
-							Computed:    true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"authn_request_signed": schema.BoolAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the Authn Request signing should be enforced.").Description,
-										Computed:    true,
-									},
-									"certificate_ids": schema.SetAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("A list that specifies the certificate IDs used to verify the service provider signature.").Description,
-										ElementType: types.StringType,
-										Computed:    true,
-									},
-								},
-							},
-						},
-						"cors_settings": datasourceApplicationSchemaCorsSettings(),
+
+				Attributes: map[string]schema.Attribute{
+					"home_page_url": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the custom home page URL for the application.").Description,
+						Computed:    true,
 					},
+					"type": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the type associated with the application.").Description,
+						Computed:    true,
+					},
+					"acs_urls": schema.SetAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A list of string that specifies the Assertion Consumer Service URLs. The first URL in the list is used as default (there must be at least one URL).").Description,
+						ElementType: types.StringType,
+						Computed:    true,
+					},
+					"assertion_duration": schema.Int64Attribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the assertion validity duration in seconds.").Description,
+						Computed:    true,
+					},
+					"assertion_signed_enabled": schema.BoolAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the SAML assertion itself should be signed.").Description,
+						Computed:    true,
+					},
+					"default_target_url": schema.StringAttribute{
+						Description:         samlDefaultTargetUrlDescription.Description,
+						MarkdownDescription: samlDefaultTargetUrlDescription.MarkdownDescription,
+						Computed:            true,
+					},
+					"idp_signing_key": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("SAML application assertion/response signing key settings.").Description,
+						Computed:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"algorithm": schema.StringAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the signature algorithm of the key.").Description,
+								Computed:    true,
+							},
+							"key_id": schema.StringAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.").Description,
+								Computed:    true,
+							},
+						},
+					},
+					"enable_requested_authn_context": schema.BoolAttribute{
+						Description:         samlEnableRequestedAuthnContextDescription.Description,
+						MarkdownDescription: samlEnableRequestedAuthnContextDescription.MarkdownDescription,
+						Computed:            true,
+					},
+					"nameid_format": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the format of the Subject NameID attibute in the SAML assertion.").Description,
+						Computed:    true,
+					},
+					"response_is_signed": schema.BoolAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the SAML assertion response itself should be signed.").Description,
+						Computed:    true,
+					},
+					"slo_binding": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the binding protocol to be used for the logout response.").Description,
+						Computed:    true,
+					},
+					"slo_endpoint": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the logout endpoint URL.").Description,
+						Computed:    true,
+					},
+					"slo_response_endpoint": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the endpoint URL to submit the logout response.").Description,
+						Computed:    true,
+					},
+					"slo_window": schema.Int64Attribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request.").Description,
+						Computed:    true,
+					},
+					"sp_entity_id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the service provider entity ID used to lookup the application. This is a required property and is unique within the environment.").Description,
+						Computed:    true,
+					},
+					"sp_verification": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies SP signature verification settings.").Description,
+						Computed:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"authn_request_signed": schema.BoolAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the Authn Request signing should be enforced.").Description,
+								Computed:    true,
+							},
+							"certificate_ids": schema.SetAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A list that specifies the certificate IDs used to verify the service provider signature.").Description,
+								ElementType: types.StringType,
+								Computed:    true,
+							},
+						},
+					},
+					"cors_settings": datasourceApplicationSchemaCorsSettings(),
 				},
 			},
 		},
@@ -858,34 +830,12 @@ func (p *applicationDataSourceModel) toStateExternalLinkOptions(apiObject *manag
 
 func (p *applicationDataSourceModel) accessControlOkToTF(apiObject *management.ApplicationAccessControl, ok bool) (basetypes.StringValue, basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	tfObjType := types.ObjectType{AttrTypes: service.ImageTFObjectTypes}
 
-	if !ok || apiObject == nil {
-		return types.ListNull(tfObjType), diags
-	}
-
-	applicationIcon := map[string]attr.Value{
-		"id":   framework.StringOkToTF(apiObject.GetIdOk()),
-		"href": framework.StringOkToTF(apiObject.GetHrefOk()),
-	}
-
-	flattenedObj, d := types.ObjectValue(service.ImageTFObjectTypes, applicationIcon)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
-	diags.Append(d...)
-
-	return returnVar, diags
-}
-
-func (p *applicationDataSourceModel) accessControlOkToTF(apiObject *management.ApplicationAccessControl, ok bool) (basetypes.StringValue, basetypes.ListValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	objAccessControlGroupOptions := types.ListNull(types.ObjectType{AttrTypes: applicationAccessControlGroupOptionsTFObjectTypes})
+	returnVar := types.ObjectNull(applicationAccessControlGroupOptionsTFObjectTypes)
 	accessControlRoleType := types.StringNull()
 
 	if !ok || apiObject == nil {
-		return accessControlRoleType, objAccessControlGroupOptions, diags
+		return accessControlRoleType, returnVar, diags
 	}
 
 	accessControlRoleType = framework.EnumOkToTF(apiObject.Role.GetTypeOk())
@@ -902,11 +852,11 @@ func (p *applicationDataSourceModel) accessControlOkToTF(apiObject *management.A
 			"groups": framework.StringSetToTF(groups),
 		}
 
-		objAccessControlGroupOptions, d = types.ObjectValue(applicationAccessControlGroupOptionsTFObjectTypes, groupObj)
+		returnVar, d = types.ObjectValue(applicationAccessControlGroupOptionsTFObjectTypes, groupObj)
 		diags.Append(d...)
 	}
 
-	return accessControlRoleType, objAccessControlGroupOptions, diags
+	return accessControlRoleType, returnVar, diags
 
 }
 
@@ -945,8 +895,6 @@ func (p *applicationDataSourceModel) toStateOIDCOptions(apiObject *management.Ap
 		"par_timeout":                      framework.Int32OkToTF(apiObject.GetParTimeoutOk()),
 		"home_page_url":                    framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
 		"initiate_login_uri":               framework.StringOkToTF(apiObject.GetInitiateLoginUriOk()),
-		"jwks":                             framework.StringOkToTF(apiObject.GetJwksOk()),
-		"jwks_url":                         framework.StringOkToTF(apiObject.GetJwksUrlOk()),
 		"jwks":                             framework.StringOkToTF(apiObject.GetJwksOk()),
 		"jwks_url":                         framework.StringOkToTF(apiObject.GetJwksUrlOk()),
 		"target_link_uri":                  framework.StringOkToTF(apiObject.GetTargetLinkUriOk()),
@@ -1155,24 +1103,23 @@ func (p *applicationDataSourceModel) toStateSAMLOptions(apiObject *management.Ap
 
 	// Build Main Object
 	samlOptions := map[string]attr.Value{
-		"type":                            framework.EnumOkToTF(apiObject.GetTypeOk()),
-		"acs_urls":                        framework.EnumSetOkToTF(apiObject.GetAcsUrlsOk()),
-		"assertion_duration":              framework.Int32OkToTF(apiObject.GetAssertionDurationOk()),
-		"sp_entity_id":                    framework.StringOkToTF(apiObject.GetSpEntityIdOk()),
-		"home_page_url":                   framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
-		"assertion_signed_enabled":        framework.BoolOkToTF(apiObject.GetAssertionSignedOk()),
-		"default_target_url":              framework.StringOkToTF(apiObject.GetDefaultTargetUrlOk()),
-		"idp_signing_key":                 idpSigningKeyObj,
-		"enable_requested_authn_context":  framework.BoolOkToTF(apiObject.GetEnableRequestedAuthnContextOk()),
-		"nameid_format":                   framework.StringOkToTF(apiObject.GetNameIdFormatOk()),
-		"response_is_signed":              framework.BoolOkToTF(apiObject.GetResponseSignedOk()),
-		"slo_binding":                     framework.EnumOkToTF(apiObject.GetSloBindingOk()),
-		"slo_endpoint":                    framework.StringOkToTF(apiObject.GetSloEndpointOk()),
-		"slo_response_endpoint":           framework.StringOkToTF(apiObject.GetSloResponseEndpointOk()),
-		"slo_window":                      framework.Int32OkToTF(apiObject.GetSloWindowOk()),
-		"sp_verification_certificate_ids": framework.StringSetToTF(idList),
-		"sp_verification":                 spVerificationObj,
-		"cors_settings":                   corsSettingsObj,
+		"type":                           framework.EnumOkToTF(apiObject.GetTypeOk()),
+		"acs_urls":                       framework.EnumSetOkToTF(apiObject.GetAcsUrlsOk()),
+		"assertion_duration":             framework.Int32OkToTF(apiObject.GetAssertionDurationOk()),
+		"sp_entity_id":                   framework.StringOkToTF(apiObject.GetSpEntityIdOk()),
+		"home_page_url":                  framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
+		"assertion_signed_enabled":       framework.BoolOkToTF(apiObject.GetAssertionSignedOk()),
+		"default_target_url":             framework.StringOkToTF(apiObject.GetDefaultTargetUrlOk()),
+		"idp_signing_key":                idpSigningKeyObj,
+		"enable_requested_authn_context": framework.BoolOkToTF(apiObject.GetEnableRequestedAuthnContextOk()),
+		"nameid_format":                  framework.StringOkToTF(apiObject.GetNameIdFormatOk()),
+		"response_is_signed":             framework.BoolOkToTF(apiObject.GetResponseSignedOk()),
+		"slo_binding":                    framework.EnumOkToTF(apiObject.GetSloBindingOk()),
+		"slo_endpoint":                   framework.StringOkToTF(apiObject.GetSloEndpointOk()),
+		"slo_response_endpoint":          framework.StringOkToTF(apiObject.GetSloResponseEndpointOk()),
+		"slo_window":                     framework.Int32OkToTF(apiObject.GetSloWindowOk()),
+		"sp_verification":                spVerificationObj,
+		"cors_settings":                  corsSettingsObj,
 	}
 
 	returnVar, d := types.ObjectValue(applicationSamlOptionsTFObjectTypes, samlOptions)
