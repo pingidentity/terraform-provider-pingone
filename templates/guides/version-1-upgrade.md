@@ -14,13 +14,731 @@ Version 1.0.0 of the PingOne Terraform provider is a major release that introduc
 
 ## Resource: pingone_application
 
+
+### `access_control_group_options` parameter data type change
+
+The `access_control_group_options` parameter is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_group" "my_awesome_group" {
+  # ... other configuration parameters
+}
+
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  access_control_group_options {
+    type = "ANY_GROUP"
+
+    groups = [
+      pingone_group.my_awesome_group.id
+    ]
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_group" "my_awesome_group" {
+  # ... other configuration parameters
+}
+
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  access_control_group_options = {
+    type = "ANY_GROUP"
+
+    groups = [
+      pingone_group.my_awesome_group.id
+    ]
+  }
+}
+```
+
+### `external_link_options` parameter data type change
+
+The `external_link_options` parameter is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  external_link_options {
+    # ... other configuration parameters
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  external_link_options = {
+    # ... other configuration parameters
+  }
+}
+```
+
+### `icon` parameter data type change
+
+The `icon` parameter is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_image" "my_awesome_image" {
+  # ... other configuration parameters
+}
+
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  icon {
+    id   = pingone_image.my_awesome_image.id
+    href = pingone_image.my_awesome_image.uploaded_image[0].href
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_image" "my_awesome_image" {
+  # ... other configuration parameters
+}
+
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  icon = {
+    id   = pingone_image.my_awesome_image.id
+    href = pingone_image.my_awesome_image.uploaded_image.href
+  }
+}
+```
+
+### `oidc_options` parameter data type change
+
+The `oidc_options` parameter is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  oidc_options {
+    # ... other configuration parameters
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  oidc_options = {
+    # ... other configuration parameters
+  }
+}
+```
+
 ### `oidc_options.bundle_id` optional parameter removed
 
 This parameter was previously deprecated and has been removed.  Use the `oidc_options.mobile_app.bundle_id` parameter going forward.
 
+### `oidc_options.certificate_based_authentication` parameter data type change
+
+The `oidc_options.certificate_based_authentication` parameter is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_key" "my_awesome_key" {
+  # ... other configuration parameters
+
+  usage_type = "ISSUANCE"
+}
+
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  oidc_options {
+    # ... other configuration parameters
+
+    certificate_based_authentication {
+      key_id = pingone_key.my_awesome_key.id
+    }
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_key" "my_awesome_key" {
+  # ... other configuration parameters
+
+  usage_type = "ISSUANCE"
+}
+
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  oidc_options = {
+    # ... other configuration parameters
+
+    certificate_based_authentication = {
+      key_id = pingone_key.my_awesome_key.id
+    }
+  }
+}
+```
+
+### `oidc_options.cors_settings` parameter data type change
+
+The `oidc_options.cors_settings` parameter is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  oidc_options {
+    # ... other configuration parameters
+
+    cors_settings {
+      behavior = "ALLOW_SPECIFIC_ORIGINS"
+      origins = [
+        "http://localhost",
+        "https://localhost",
+        "http://auth.bxretail.org",
+        "https://auth.bxretail.org",
+        "http://*.bxretail.org",
+        "https://*.bxretail.org",
+        "http://192.168.1.1",
+        "https://192.168.1.1",
+      ]
+    }
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  oidc_options = {
+    # ... other configuration parameters
+
+    cors_settings = {
+      behavior = "ALLOW_SPECIFIC_ORIGINS"
+      origins = [
+        "http://localhost",
+        "https://localhost",
+        "http://auth.bxretail.org",
+        "https://auth.bxretail.org",
+        "http://*.bxretail.org",
+        "https://*.bxretail.org",
+        "http://192.168.1.1",
+        "https://192.168.1.1",
+      ]
+    }
+  }
+}
+```
+
+### `oidc_options.mobile_app` parameter data type change
+
+The `oidc_options.mobile_app` parameter is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  oidc_options {
+    # ... other configuration parameters
+
+    mobile_app {
+      bundle_id    = "org.bxretail.bundle"
+      package_name = "org.bxretail.package"
+
+      passcode_refresh_seconds = 45
+
+      universal_app_link = "https://bxretail.org"
+    }
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  oidc_options = {
+    # ... other configuration parameters
+
+    mobile_app = {
+      bundle_id    = "org.bxretail.bundle"
+      package_name = "org.bxretail.package"
+
+      passcode_refresh_seconds = 45
+
+      universal_app_link = "https://bxretail.org"
+    }
+  }
+}
+```
+
+### `oidc_options.mobile_app.integrity_detection` parameter data type change
+
+The `oidc_options.mobile_app.integrity_detection` parameter is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  oidc_options {
+    # ... other configuration parameters
+
+    mobile_app {
+      # ... other configuration parameters
+
+      integrity_detection {
+        enabled = true
+
+        excluded_platforms = ["IOS"]
+
+        cache_duration {
+          amount = 30
+          units  = "HOURS"
+        }
+
+        google_play {
+          verification_type = "INTERNAL"
+          decryption_key    = var.google_play_decryption_key
+          verification_key  = var.google_play_verification_key
+        }
+      }
+    }
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  oidc_options = {
+    # ... other configuration parameters
+
+    mobile_app = {
+      # ... other configuration parameters
+
+      integrity_detection = {
+        enabled = true
+
+        excluded_platforms = ["IOS"]
+
+        cache_duration = {
+          amount = 30
+          units  = "HOURS"
+        }
+
+        google_play = {
+          verification_type = "INTERNAL"
+          decryption_key    = var.google_play_decryption_key
+          verification_key  = var.google_play_verification_key
+        }
+      }
+    }
+  }
+}
+```
+
+### `oidc_options.mobile_app.integrity_detection.cache_duration` parameter data type change
+
+The `oidc_options.mobile_app.integrity_detection.cache_duration` parameter is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  oidc_options {
+    # ... other configuration parameters
+
+    mobile_app {
+      # ... other configuration parameters
+
+      integrity_detection {
+        # ... other configuration parameters
+
+        cache_duration {
+          amount = 30
+          units  = "HOURS"
+        }
+      }
+    }
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  oidc_options = {
+    # ... other configuration parameters
+
+    mobile_app = {
+      # ... other configuration parameters
+
+      integrity_detection = {
+        # ... other configuration parameters
+
+        cache_duration = {
+          amount = 30
+          units  = "HOURS"
+        }
+      }
+    }
+  }
+}
+```
+
+### `oidc_options.mobile_app.integrity_detection.google_play` parameter data type change
+
+The `oidc_options.mobile_app.integrity_detection.google_play` parameter is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  oidc_options {
+    # ... other configuration parameters
+
+    mobile_app {
+      # ... other configuration parameters
+
+      integrity_detection {
+        # ... other configuration parameters
+
+        google_play {
+          verification_type = "INTERNAL"
+          decryption_key    = var.google_play_decryption_key
+          verification_key  = var.google_play_verification_key
+        }
+      }
+    }
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  oidc_options = {
+    # ... other configuration parameters
+
+    mobile_app = {
+      # ... other configuration parameters
+
+      integrity_detection = {
+        # ... other configuration parameters
+
+        google_play = {
+          verification_type = "INTERNAL"
+          decryption_key    = var.google_play_decryption_key
+          verification_key  = var.google_play_verification_key
+        }
+      }
+    }
+  }
+}
+```
 ### `oidc_options.package_name` optional parameter removed
 
 This parameter was previously deprecated and has been removed.  Use the `oidc_options.mobile_app.package_name` parameter going forward.
+
+### `saml_options` parameter data type change
+
+The `saml_options` parameter is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_app" {
+  # ... other configuration parameters
+
+  saml_options {
+    acs_urls           = ["https:/bxretail.org"]
+    assertion_duration = 3600
+    sp_entity_id       = "sp:entity:bxretail"
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_key" "my_awesome_key" {
+  # ... other configuration parameters
+
+  usage_type = "SIGNING"
+}
+
+resource "pingone_application" "my_awesome_app" {
+  # ... other configuration parameters
+
+  saml_options = {
+    acs_urls           = ["https:/bxretail.org"]
+    assertion_duration = 3600
+    sp_entity_id       = "sp:entity:bxretail"
+
+    idp_signing_key = {
+      key_id    = pingone_key.my_awesome_key.id
+      algorithm = pingone_key.my_awesome_key.signature_algorithm
+    }
+  }
+}
+```
+
+### `saml_options.cors_settings` parameter data type change
+
+The `saml_options.cors_settings` parameter is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  saml_options {
+    # ... other configuration parameters
+
+    cors_settings {
+      behavior = "ALLOW_SPECIFIC_ORIGINS"
+      origins = [
+        "http://localhost",
+        "https://localhost",
+        "http://auth.bxretail.org",
+        "https://auth.bxretail.org",
+        "http://*.bxretail.org",
+        "https://*.bxretail.org",
+        "http://192.168.1.1",
+        "https://192.168.1.1",
+      ]
+    }
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  saml_options = {
+    # ... other configuration parameters
+
+    cors_settings = {
+      behavior = "ALLOW_SPECIFIC_ORIGINS"
+      origins = [
+        "http://localhost",
+        "https://localhost",
+        "http://auth.bxretail.org",
+        "https://auth.bxretail.org",
+        "http://*.bxretail.org",
+        "https://*.bxretail.org",
+        "http://192.168.1.1",
+        "https://192.168.1.1",
+      ]
+    }
+  }
+}
+```
+
+### `saml_options.idp_signing_key` parameter changed
+
+This parameter was previously optional and has now been made a required parameter.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_app" {
+  # ... other configuration parameters
+
+  saml_options {
+    acs_urls           = ["https:/bxretail.org"]
+    assertion_duration = 3600
+    sp_entity_id       = "sp:entity:bxretail"
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_key" "my_awesome_key" {
+  # ... other configuration parameters
+
+  usage_type = "SIGNING"
+}
+
+resource "pingone_application" "my_awesome_app" {
+  # ... other configuration parameters
+
+  saml_options = {
+    acs_urls           = ["https:/bxretail.org"]
+    assertion_duration = 3600
+    sp_entity_id       = "sp:entity:bxretail"
+
+    idp_signing_key = {
+      key_id    = pingone_key.my_awesome_key.id
+      algorithm = pingone_key.my_awesome_key.signature_algorithm
+    }
+  }
+}
+```
+
+### `saml_options.idp_signing_key` parameter data type change
+
+The `saml_options.idp_signing_key` parameter is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_key" "my_awesome_key" {
+  # ... other configuration parameters
+
+  usage_type = "SIGNING"
+}
+
+resource "pingone_application" "my_awesome_app" {
+  # ... other configuration parameters
+
+  saml_options {
+    acs_urls           = ["https:/bxretail.org"]
+    assertion_duration = 3600
+    sp_entity_id       = "sp:entity:bxretail"
+
+    idp_signing_key {
+      key_id    = pingone_key.my_awesome_key.id
+      algorithm = pingone_key.my_awesome_key.signature_algorithm
+    }
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_key" "my_awesome_key" {
+  # ... other configuration parameters
+
+  usage_type = "SIGNING"
+}
+
+resource "pingone_application" "my_awesome_app" {
+  # ... other configuration parameters
+
+  saml_options = {
+    acs_urls           = ["https:/bxretail.org"]
+    assertion_duration = 3600
+    sp_entity_id       = "sp:entity:bxretail"
+
+    idp_signing_key = {
+      key_id    = pingone_key.my_awesome_key.id
+      algorithm = pingone_key.my_awesome_key.signature_algorithm
+    }
+  }
+}
+```
+
+### `saml_options.sp_verification` parameter data type change
+
+The `saml_options.sp_verification` parameter is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_certificate" "my_awesome_certificate" {
+  # ... other configuration parameters
+
+  usage_type = "SIGNING"
+}
+
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  saml_options {
+    # ... other configuration parameters
+
+    sp_verification {
+      authn_request_signed = true
+      certificate_ids = [
+        pingone_certificate.my_awesome_certificate.id,
+      ]
+    }
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_certificate" "my_awesome_certificate" {
+  # ... other configuration parameters
+
+  usage_type = "SIGNING"
+}
+
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  saml_options = {
+    # ... other configuration parameters
+
+    sp_verification = {
+      authn_request_signed = true
+      certificate_ids = [
+        pingone_certificate.my_awesome_certificate.id,
+      ]
+    }
+  }
+}
+```
 
 ### `saml_options.idp_signing_key_id` optional parameter removed
 
