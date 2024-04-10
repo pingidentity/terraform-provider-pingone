@@ -4376,9 +4376,9 @@ resource "pingone_application" "%[3]s" {
     sp_entity_id       = "sp:entity:%[3]s"
 
     idp_signing_key = {
-		key_id    = pingone_key.%[3]s.id
-		algorithm = pingone_key.%[3]s.signature_algorithm
-	}
+      key_id    = pingone_key.%[3]s.id
+      algorithm = pingone_key.%[3]s.signature_algorithm
+    }
   }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, image, pkcs7_cert, pem_cert)
 }
