@@ -376,6 +376,11 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 		resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	}
 
+  
+ 	if resp.Diagnostics.HasError() {
+		return
+	}
+  
 	if plan.Region.IsUnknown() {
 
 		if r.region.Region == "" {
@@ -399,7 +404,7 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 	}
 
 	var servicePlan []environmentServiceModel
-	resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root("service"), &servicePlan)...)
+	resp.Diagnostics.Append(plan.Services.ElementsAs(ctx, &servicePlan, false)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

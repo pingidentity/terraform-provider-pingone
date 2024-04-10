@@ -336,7 +336,7 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("OIDC/OAuth application specific settings.").Description,
 				Computed:    true,
 
-				Attributes: map[string]schema.Attribute{
+        Attributes: map[string]schema.Attribute{
 					"type": schema.StringAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the type associated with the application.").Description,
 						Computed:    true,
