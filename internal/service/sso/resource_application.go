@@ -1063,6 +1063,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Description:         oidcOptionsMobileAppDescription.Description,
 						MarkdownDescription: oidcOptionsMobileAppDescription.MarkdownDescription,
 						Optional:            true,
+						Computed:            true,
 
 						Attributes: map[string]schema.Attribute{
 							"bundle_id": schema.StringAttribute{
@@ -1155,6 +1156,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							"integrity_detection": schema.SingleNestedAttribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies mobile application integrity detection settings.").Description,
 								Optional:    true,
+								Computed:    true,
 
 								Attributes: map[string]schema.Attribute{
 									"enabled": schema.BoolAttribute{
