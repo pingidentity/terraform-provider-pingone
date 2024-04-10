@@ -368,6 +368,14 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 		return
 	}
 
+	var plan, state environmentResourceModel
+	// Read Terraform plan and state data into the model
+	resp.Diagnostics.Append(resp.Plan.Get(ctx, &plan)...)
+
+	if !req.State.Raw.IsNull() {
+		resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	}
+
 	if plan.Region.IsUnknown() {
 
 		if r.region.Region == "" {
@@ -391,7 +399,7 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 	}
 
 	var servicePlan []environmentServiceModel
-	resp.Diagnostics.Append(plan.Services.ElementsAs(ctx, &servicePlan, false)...)
+	resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root("service"), &servicePlan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
