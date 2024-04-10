@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -417,6 +418,7 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 											},
 											"service_account_credentials_json": schema.StringAttribute{
 												Description: framework.SchemaAttributeDescriptionFromMarkdown("Contents of the JSON file that represents your Service Account Credentials.").Description,
+												CustomType:  jsontypes.NormalizedType{},
 												Computed:    true,
 												Sensitive:   true,
 											},
@@ -1000,24 +1002,12 @@ func (p *applicationDataSourceModel) applicationOidcMobileIntegrityDetectionOkTo
 	diags.Append(d...)
 
 	// Google Play
-	dummySuppressValue := "DUMMY_SUPPRESS_VALUE"
 	googlePlay := map[string]attr.Value{}
 	if v, ok := apiObject.GetGooglePlayOk(); ok {
 		googlePlay["verification_type"] = framework.EnumOkToTF(v.GetVerificationTypeOk())
-
-		if v.GetVerificationType() == management.ENUMAPPLICATIONNATIVEGOOGLEPLAYVERIFICATIONTYPE_INTERNAL {
-			googlePlay["decryption_key"] = framework.StringToTF(dummySuppressValue)
-			googlePlay["verification_key"] = framework.StringToTF(dummySuppressValue)
-		} else {
-			googlePlay["decryption_key"] = types.StringNull()
-			googlePlay["verification_key"] = types.StringNull()
-		}
-
-		if v.GetVerificationType() == management.ENUMAPPLICATIONNATIVEGOOGLEPLAYVERIFICATIONTYPE_GOOGLE {
-			googlePlay["service_account_credentials_json"] = framework.StringToTF(dummySuppressValue)
-		} else {
-			googlePlay["service_account_credentials_json"] = types.StringNull()
-		}
+		googlePlay["decryption_key"] = types.StringNull()
+		googlePlay["verification_key"] = types.StringNull()
+		googlePlay["service_account_credentials_json"] = jsontypes.NewNormalizedNull()
 	}
 
 	googlePlayObj, d := types.ObjectValue(applicationOidcMobileAppIntegrityDetectionGooglePlayTFObjectTypes, googlePlay)

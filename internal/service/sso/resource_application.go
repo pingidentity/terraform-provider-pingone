@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
@@ -124,10 +125,10 @@ type ApplicationOIDCMobileAppIntegrityDetectionCacheDurationResourceModel struct
 }
 
 type ApplicationOIDCMobileAppIntegrityDetectionGooglePlayResourceModel struct {
-	DecryptionKey                 types.String `tfsdk:"decryption_key"`
-	ServiceAccountCredentialsJson types.String `tfsdk:"service_account_credentials_json"`
-	VerificationKey               types.String `tfsdk:"verification_key"`
-	VerificationType              types.String `tfsdk:"verification_type"`
+	DecryptionKey                 types.String         `tfsdk:"decryption_key"`
+	ServiceAccountCredentialsJson jsontypes.Normalized `tfsdk:"service_account_credentials_json"`
+	VerificationKey               types.String         `tfsdk:"verification_key"`
+	VerificationType              types.String         `tfsdk:"verification_type"`
 }
 
 type ApplicationSAMLOptionsResourceModel struct {
@@ -219,7 +220,7 @@ var (
 
 	applicationOidcMobileAppIntegrityDetectionGooglePlayTFObjectTypes = map[string]attr.Type{
 		"decryption_key":                   types.StringType,
-		"service_account_credentials_json": types.StringType,
+		"service_account_credentials_json": jsontypes.NormalizedType{},
 		"verification_key":                 types.StringType,
 		"verification_type":                types.StringType,
 	}
@@ -1230,6 +1231,8 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 												MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionGooglePlayServiceAccountCredentialsJsonDescription.MarkdownDescription,
 												Optional:            true,
 												Sensitive:           true,
+
+												CustomType: jsontypes.NormalizedType{},
 
 												Validators: []validator.String{
 													stringvalidator.ConflictsWith(
