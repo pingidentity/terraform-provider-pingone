@@ -376,11 +376,10 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 		resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	}
 
-  
- 	if resp.Diagnostics.HasError() {
+	if resp.Diagnostics.HasError() {
 		return
 	}
-  
+
 	if plan.Region.IsUnknown() {
 
 		if r.region.Region == "" {

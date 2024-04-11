@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -15,9 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
@@ -44,114 +41,6 @@ type applicationDataSourceModel struct {
 	OIDCOptions               types.Object `tfsdk:"oidc_options"`
 	SAMLOptions               types.Object `tfsdk:"saml_options"`
 }
-
-var (
-	applicationCorsSettingsTFObjectTypes = map[string]attr.Type{
-		"behavior": types.StringType,
-		"origins":  types.SetType{ElemType: types.StringType},
-	}
-
-	applicationOidcOptionsTFObjectTypes = map[string]attr.Type{
-		"type":                             types.StringType,
-		"home_page_url":                    types.StringType,
-		"initiate_login_uri":               types.StringType,
-		"jwks":                             types.StringType,
-		"jwks_url":                         types.StringType,
-		"target_link_uri":                  types.StringType,
-		"grant_types":                      types.SetType{ElemType: types.StringType},
-		"response_types":                   types.SetType{ElemType: types.StringType},
-		"token_endpoint_authn_method":      types.StringType,
-		"par_requirement":                  types.StringType,
-		"par_timeout":                      types.Int64Type,
-		"pkce_enforcement":                 types.StringType,
-		"redirect_uris":                    types.SetType{ElemType: types.StringType},
-		"allow_wildcards_in_redirect_uris": types.BoolType,
-		"post_logout_redirect_uris":        types.SetType{ElemType: types.StringType},
-		"refresh_token_duration":           types.Int64Type,
-		"refresh_token_rolling_duration":   types.Int64Type,
-		"refresh_token_rolling_grace_period_duration":        types.Int64Type,
-		"additional_refresh_token_replay_protection_enabled": types.BoolType,
-		"client_id":                        types.StringType,
-		"client_secret":                    types.StringType,
-		"certificate_based_authentication": types.ObjectType{AttrTypes: applicationOidcOptionsCertificateAuthenticationTFObjectTypes},
-		"support_unsigned_request_object":  types.BoolType,
-		"require_signed_request_object":    types.BoolType,
-		"cors_settings":                    types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
-		"mobile_app":                       types.ObjectType{AttrTypes: applicationOidcMobileAppTFObjectTypes},
-	}
-
-	applicationOidcMobileAppTFObjectTypes = map[string]attr.Type{
-		"bundle_id":                types.StringType,
-		"package_name":             types.StringType,
-		"huawei_app_id":            types.StringType,
-		"huawei_package_name":      types.StringType,
-		"passcode_refresh_seconds": types.Int64Type,
-		"universal_app_link":       types.StringType,
-		"integrity_detection":      types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionTFObjectTypes},
-	}
-
-	applicationOidcMobileAppIntegrityDetectionTFObjectTypes = map[string]attr.Type{
-		"enabled":            types.BoolType,
-		"excluded_platforms": types.SetType{ElemType: types.StringType},
-		"cache_duration":     types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionCacheDurationTFObjectTypes},
-		"google_play":        types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionGooglePlayTFObjectTypes},
-	}
-
-	applicationOidcMobileAppIntegrityDetectionCacheDurationTFObjectTypes = map[string]attr.Type{
-		"amount": types.Int64Type,
-		"units":  types.StringType,
-	}
-
-	applicationOidcMobileAppIntegrityDetectionGooglePlayTFObjectTypes = map[string]attr.Type{
-		"decryption_key":                   types.StringType,
-		"service_account_credentials_json": types.StringType,
-		"verification_key":                 types.StringType,
-		"verification_type":                types.StringType,
-	}
-
-	applicationOidcOptionsCertificateAuthenticationTFObjectTypes = map[string]attr.Type{
-		"key_id": types.StringType,
-	}
-
-	applicationSamlOptionsTFObjectTypes = map[string]attr.Type{
-		"home_page_url":                  types.StringType,
-		"type":                           types.StringType,
-		"acs_urls":                       types.SetType{ElemType: types.StringType},
-		"assertion_duration":             types.Int64Type,
-		"assertion_signed_enabled":       types.BoolType,
-		"default_target_url":             types.StringType,
-		"idp_signing_key":                types.ObjectType{AttrTypes: applicationSamlOptionsIdpSigningKeyTFObjectTypes},
-		"enable_requested_authn_context": types.BoolType,
-		"nameid_format":                  types.StringType,
-		"response_is_signed":             types.BoolType,
-		"slo_binding":                    types.StringType,
-		"slo_endpoint":                   types.StringType,
-		"slo_response_endpoint":          types.StringType,
-		"slo_window":                     types.Int64Type,
-		"sp_entity_id":                   types.StringType,
-		"sp_verification":                types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes},
-		"cors_settings":                  types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
-	}
-
-	applicationSamlOptionsIdpSigningKeyTFObjectTypes = map[string]attr.Type{
-		"algorithm": types.StringType,
-		"key_id":    types.StringType,
-	}
-
-	applicationSamlOptionsSpVerificationTFObjectTypes = map[string]attr.Type{
-		"certificate_ids":      types.SetType{ElemType: types.StringType},
-		"authn_request_signed": types.BoolType,
-	}
-
-	applicationExternalLinkOptionsTFObjectTypes = map[string]attr.Type{
-		"home_page_url": types.StringType,
-	}
-
-	applicationAccessControlGroupOptionsTFObjectTypes = map[string]attr.Type{
-		"type":   types.StringType,
-		"groups": types.SetType{ElemType: types.StringType},
-	}
-)
 
 // Framework interfaces
 var (
@@ -336,7 +225,7 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("OIDC/OAuth application specific settings.").Description,
 				Computed:    true,
 
-        Attributes: map[string]schema.Attribute{
+				Attributes: map[string]schema.Attribute{
 					"type": schema.StringAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the type associated with the application.").Description,
 						Computed:    true,
@@ -525,6 +414,7 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 											},
 											"service_account_credentials_json": schema.StringAttribute{
 												Description: framework.SchemaAttributeDescriptionFromMarkdown("Contents of the JSON file that represents your Service Account Credentials.").Description,
+												CustomType:  jsontypes.NormalizedType{},
 												Computed:    true,
 												Sensitive:   true,
 											},
@@ -835,12 +725,12 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(application, secret)...)
+	resp.Diagnostics.Append(data.toState(ctx, application, secret)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (p *applicationDataSourceModel) toState(apiObject *management.ReadOneApplication200Response, secret *management.ApplicationSecret) diag.Diagnostics {
-	var diags diag.Diagnostics
+func (p *applicationDataSourceModel) toState(ctx context.Context, apiObject *management.ReadOneApplication200Response, apiSecretObject *management.ApplicationSecret) diag.Diagnostics {
+	var diags, d diag.Diagnostics
 	if apiObject == nil {
 		diags.AddError(
 			"Data object missing",
@@ -854,410 +744,119 @@ func (p *applicationDataSourceModel) toState(apiObject *management.ReadOneApplic
 	switch v := applicationInstance.(type) {
 	case *management.ApplicationExternalLink:
 		p.Id = framework.StringOkToTF(v.GetIdOk())
-		p.EnvironmentId = framework.StringToTF(*v.GetEnvironment().Id)
-		p.ApplicationId = framework.StringOkToTF(v.GetIdOk())
+		p.EnvironmentId = framework.StringOkToTF(v.Environment.GetIdOk())
 		p.Name = framework.StringOkToTF(v.GetNameOk())
 		p.Description = framework.StringOkToTF(v.GetDescriptionOk())
 		p.Enabled = framework.BoolOkToTF(v.GetEnabledOk())
+		p.LoginPageUrl = framework.StringOkToTF(v.GetLoginPageUrlOk())
+
+		p.AccessControlRoleType = types.StringNull()
+		p.AccessControlGroupOptions = types.ObjectNull(applicationAccessControlGroupOptionsTFObjectTypes)
+		if vA, ok := v.GetAccessControlOk(); ok {
+			if vR, ok := vA.GetRoleOk(); ok {
+				p.AccessControlRoleType = framework.EnumOkToTF(vR.GetTypeOk())
+			}
+
+			p.AccessControlGroupOptions, d = applicationAccessControlGroupOptionsToTF(vA.GetGroupOk())
+			diags = append(diags, d...)
+		}
+
 		p.HiddenFromAppPortal = framework.BoolOkToTF(v.GetHiddenFromAppPortalOk())
 
-		var d diag.Diagnostics
-
 		p.Icon, d = service.ImageOkToTF(v.GetIconOk())
-		diags.Append(d...)
+		diags = append(diags, d...)
 
-		p.AccessControlRoleType, p.AccessControlGroupOptions, d = p.accessControlOkToTF(v.GetAccessControlOk())
-		diags.Append(d...)
+		p.LoginPageUrl = framework.StringOkToTF(v.GetLoginPageUrlOk())
 
-		p.ExternalLinkOptions, d = p.toStateExternalLinkOptions(v)
-		diags.Append(d...)
+		// Service specific attributes
+		p.Tags = types.SetNull(types.StringType)
+		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsTFObjectTypes)
+		p.SAMLOptions = types.ObjectNull(applicationSamlOptionsTFObjectTypes)
+
+		p.ExternalLinkOptions, d = applicationExternalLinkOptionsToTF(v)
+		diags = append(diags, d...)
 
 	case *management.ApplicationOIDC:
 		p.Id = framework.StringOkToTF(v.GetIdOk())
-		p.EnvironmentId = framework.StringToTF(*v.GetEnvironment().Id)
-		p.ApplicationId = framework.StringOkToTF(v.GetIdOk())
+		p.EnvironmentId = framework.StringOkToTF(v.Environment.GetIdOk())
 		p.Name = framework.StringOkToTF(v.GetNameOk())
 		p.Description = framework.StringOkToTF(v.GetDescriptionOk())
 		p.Enabled = framework.BoolOkToTF(v.GetEnabledOk())
-		p.Tags = framework.EnumSetOkToTF(v.GetTagsOk())
 		p.LoginPageUrl = framework.StringOkToTF(v.GetLoginPageUrlOk())
+
+		p.AccessControlRoleType = types.StringNull()
+		p.AccessControlGroupOptions = types.ObjectNull(applicationAccessControlGroupOptionsTFObjectTypes)
+		if vA, ok := v.GetAccessControlOk(); ok {
+			if vR, ok := vA.GetRoleOk(); ok {
+				p.AccessControlRoleType = framework.EnumOkToTF(vR.GetTypeOk())
+			}
+
+			p.AccessControlGroupOptions, d = applicationAccessControlGroupOptionsToTF(vA.GetGroupOk())
+			diags = append(diags, d...)
+		}
+
 		p.HiddenFromAppPortal = framework.BoolOkToTF(v.GetHiddenFromAppPortalOk())
 
-		var d diag.Diagnostics
-
 		p.Icon, d = service.ImageOkToTF(v.GetIconOk())
-		diags.Append(d...)
+		diags = append(diags, d...)
 
-		p.AccessControlRoleType, p.AccessControlGroupOptions, d = p.accessControlOkToTF(v.GetAccessControlOk())
-		diags.Append(d...)
+		p.LoginPageUrl = framework.StringOkToTF(v.GetLoginPageUrlOk())
 
-		p.OIDCOptions, d = p.toStateOIDCOptions(v, secret)
-		diags.Append(d...)
+		// Service specific attributes
+		p.Tags = framework.EnumSetOkToTF(v.GetTagsOk())
+
+		var oidcOptionsState ApplicationOIDCOptionsResourceModel
+		if !p.OIDCOptions.IsNull() && !p.OIDCOptions.IsUnknown() {
+			d := p.OIDCOptions.As(ctx, &oidcOptionsState, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})
+			diags.Append(d...)
+			if diags.HasError() {
+				return diags
+			}
+		}
+		p.OIDCOptions, d = applicationOidcOptionsToTF(ctx, v, apiSecretObject, oidcOptionsState)
+		diags = append(diags, d...)
+
+		p.SAMLOptions = types.ObjectNull(applicationSamlOptionsTFObjectTypes)
+		p.ExternalLinkOptions = types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes)
 
 	case *management.ApplicationSAML:
 		p.Id = framework.StringOkToTF(v.GetIdOk())
-		p.EnvironmentId = framework.StringToTF(*v.GetEnvironment().Id)
-		p.ApplicationId = framework.StringOkToTF(v.GetIdOk())
+		p.EnvironmentId = framework.StringOkToTF(v.Environment.GetIdOk())
 		p.Name = framework.StringOkToTF(v.GetNameOk())
 		p.Description = framework.StringOkToTF(v.GetDescriptionOk())
 		p.Enabled = framework.BoolOkToTF(v.GetEnabledOk())
 		p.LoginPageUrl = framework.StringOkToTF(v.GetLoginPageUrlOk())
+
+		p.AccessControlRoleType = types.StringNull()
+		p.AccessControlGroupOptions = types.ObjectNull(applicationAccessControlGroupOptionsTFObjectTypes)
+		if vA, ok := v.GetAccessControlOk(); ok {
+			if vR, ok := vA.GetRoleOk(); ok {
+				p.AccessControlRoleType = framework.EnumOkToTF(vR.GetTypeOk())
+			}
+
+			p.AccessControlGroupOptions, d = applicationAccessControlGroupOptionsToTF(vA.GetGroupOk())
+			diags = append(diags, d...)
+		}
+
 		p.HiddenFromAppPortal = framework.BoolOkToTF(v.GetHiddenFromAppPortalOk())
 
-		var d diag.Diagnostics
-
 		p.Icon, d = service.ImageOkToTF(v.GetIconOk())
-		diags.Append(d...)
+		diags = append(diags, d...)
 
-		p.AccessControlRoleType, p.AccessControlGroupOptions, d = p.accessControlOkToTF(v.GetAccessControlOk())
-		diags.Append(d...)
+		p.LoginPageUrl = framework.StringOkToTF(v.GetLoginPageUrlOk())
 
-		p.SAMLOptions, d = p.toStateSAMLOptions(v)
-		diags.Append(d...)
+		// Service specific attributes
+		p.Tags = types.SetNull(types.StringType)
+		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsTFObjectTypes)
+
+		p.SAMLOptions, d = applicationSamlOptionsToTF(v)
+		diags = append(diags, d...)
+
+		p.ExternalLinkOptions = types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes)
 	}
 
 	return diags
-}
-
-func (p *applicationDataSourceModel) toStateExternalLinkOptions(apiObject *management.ApplicationExternalLink) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if apiObject == nil {
-		return types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes), diags
-	}
-
-	externalLinkOptions := map[string]attr.Value{
-		"home_page_url": framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
-	}
-
-	returnVar, d := types.ObjectValue(applicationExternalLinkOptionsTFObjectTypes, externalLinkOptions)
-	diags.Append(d...)
-
-	return returnVar, diags
-}
-
-func (p *applicationDataSourceModel) accessControlOkToTF(apiObject *management.ApplicationAccessControl, ok bool) (basetypes.StringValue, basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	objAccessControlGroupOptions := types.ObjectNull(applicationAccessControlGroupOptionsTFObjectTypes)
-	accessControlRoleType := types.StringNull()
-
-	if !ok || apiObject == nil {
-		return accessControlRoleType, objAccessControlGroupOptions, diags
-	}
-
-	accessControlRoleType = framework.EnumOkToTF(apiObject.Role.GetTypeOk())
-
-	if group, ok := apiObject.GetGroupOk(); ok {
-		var d diag.Diagnostics
-		groups := make([]string, 0)
-		for _, v := range group.GetGroups() {
-			groups = append(groups, v.GetId())
-		}
-
-		groupObj := map[string]attr.Value{
-			"type":   framework.EnumOkToTF(group.GetTypeOk()),
-			"groups": framework.StringSetToTF(groups),
-		}
-
-		objAccessControlGroupOptions, d = types.ObjectValue(applicationAccessControlGroupOptionsTFObjectTypes, groupObj)
-		diags.Append(d...)
-	}
-
-	return accessControlRoleType, objAccessControlGroupOptions, diags
-
-}
-
-func (p *applicationDataSourceModel) toStateOIDCOptions(apiObject *management.ApplicationOIDC, secret *management.ApplicationSecret) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if apiObject == nil {
-		return types.ObjectNull(applicationOidcOptionsTFObjectTypes), diags
-	}
-
-	kerberoObj, d := p.applicationOidcKerberosOkToTF(apiObject.GetKerberosOk())
-	diags.Append(d...)
-
-	// CORS Settings
-	corsSettingsObj := types.ObjectNull(applicationCorsSettingsTFObjectTypes)
-	if v, ok := apiObject.GetCorsSettingsOk(); ok {
-		corsSettings := map[string]attr.Value{
-			"behavior": framework.EnumOkToTF(v.GetBehaviorOk()),
-			"origins":  framework.StringSetOkToTF(v.GetOriginsOk()),
-		}
-
-		corsSettingsObj, d = types.ObjectValue(applicationCorsSettingsTFObjectTypes, corsSettings)
-		diags.Append(d...)
-	}
-
-	mobileObj, d := p.applicationOidcMobileOkToTF(apiObject.GetMobileOk())
-	diags.Append(d...)
-
-	// Build OIDC Options
-	oidcOptions := map[string]attr.Value{
-		"client_id":                        framework.StringOkToTF(apiObject.GetIdOk()),
-		"type":                             framework.EnumOkToTF(apiObject.GetTypeOk()),
-		"grant_types":                      framework.EnumSetOkToTF(apiObject.GetGrantTypesOk()),
-		"token_endpoint_authn_method":      framework.EnumOkToTF(apiObject.GetTokenEndpointAuthMethodOk()),
-		"par_requirement":                  framework.EnumOkToTF(apiObject.GetParRequirementOk()),
-		"par_timeout":                      framework.Int32OkToTF(apiObject.GetParTimeoutOk()),
-		"home_page_url":                    framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
-		"initiate_login_uri":               framework.StringOkToTF(apiObject.GetInitiateLoginUriOk()),
-		"jwks":                             framework.StringOkToTF(apiObject.GetJwksOk()),
-		"jwks_url":                         framework.StringOkToTF(apiObject.GetJwksUrlOk()),
-		"target_link_uri":                  framework.StringOkToTF(apiObject.GetTargetLinkUriOk()),
-		"response_types":                   framework.EnumSetOkToTF(apiObject.GetResponseTypesOk()),
-		"pkce_enforcement":                 framework.EnumOkToTF(apiObject.GetPkceEnforcementOk()),
-		"redirect_uris":                    framework.StringSetOkToTF(apiObject.GetRedirectUrisOk()),
-		"allow_wildcards_in_redirect_uris": framework.BoolOkToTF(apiObject.GetAllowWildcardInRedirectUrisOk()),
-		"post_logout_redirect_uris":        framework.StringSetOkToTF(apiObject.GetPostLogoutRedirectUrisOk()),
-		"refresh_token_duration":           framework.Int32OkToTF(apiObject.GetRefreshTokenDurationOk()),
-		"refresh_token_rolling_duration":   framework.Int32OkToTF(apiObject.GetRefreshTokenRollingDurationOk()),
-		"refresh_token_rolling_grace_period_duration":        framework.Int32OkToTF(apiObject.GetRefreshTokenRollingGracePeriodDurationOk()),
-		"additional_refresh_token_replay_protection_enabled": framework.BoolOkToTF(apiObject.GetAdditionalRefreshTokenReplayProtectionEnabledOk()),
-		"client_secret":                    framework.StringOkToTF(secret.GetSecretOk()),
-		"certificate_based_authentication": kerberoObj,
-		"support_unsigned_request_object":  framework.BoolOkToTF(apiObject.GetSupportUnsignedRequestObjectOk()),
-		"require_signed_request_object":    framework.BoolOkToTF(apiObject.GetRequireSignedRequestObjectOk()),
-		"cors_settings":                    corsSettingsObj,
-		"mobile_app":                       mobileObj,
-	}
-
-	returnVar, d := types.ObjectValue(applicationOidcOptionsTFObjectTypes, oidcOptions)
-	diags.Append(d...)
-
-	return returnVar, diags
-}
-
-func (p *applicationDataSourceModel) applicationOidcKerberosOkToTF(apiObject *management.ApplicationOIDCAllOfKerberos, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if !ok || apiObject == nil {
-		return types.ObjectNull(applicationOidcOptionsCertificateAuthenticationTFObjectTypes), diags
-	}
-
-	kerberos := map[string]attr.Value{}
-	if v, ok := apiObject.GetKeyOk(); ok {
-		kerberos["key_id"] = framework.StringOkToTF(v.GetIdOk())
-	} else {
-		kerberos["key_id"] = types.StringNull()
-	}
-
-	returnVar, d := types.ObjectValue(applicationOidcOptionsCertificateAuthenticationTFObjectTypes, kerberos)
-	diags.Append(d...)
-
-	return returnVar, diags
-}
-
-func (p *applicationDataSourceModel) applicationOidcMobileOkToTF(apiObject *management.ApplicationOIDCAllOfMobile, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if !ok || apiObject == nil {
-		return types.ObjectNull(applicationOidcMobileAppTFObjectTypes), diags
-	}
-
-	passcodeRefreshSeconds := types.Int64Null()
-	if v, ok := apiObject.GetPasscodeRefreshDurationOk(); ok {
-		passcodeRefreshSeconds = framework.Int32OkToTF(v.GetDurationOk())
-
-		if j, okJ := v.GetTimeUnitOk(); okJ && *j != management.ENUMPASSCODEREFRESHTIMEUNIT_SECONDS {
-			diags.AddError(
-				"Invalid time unit",
-				fmt.Sprintf("Expecting time unit of %s for attribute `passcode_refresh_seconds`, got %v", management.ENUMPASSCODEREFRESHTIMEUNIT_SECONDS, j),
-			)
-
-			return types.ObjectNull(applicationOidcMobileAppTFObjectTypes), diags
-		}
-	}
-
-	integrityDetection, d := p.applicationOidcMobileIntegrityDetectionOkToTF(apiObject.GetIntegrityDetectionOk())
-	diags.Append(d...)
-
-	mobileApp := map[string]attr.Value{
-		"bundle_id":                framework.StringOkToTF(apiObject.GetBundleIdOk()),
-		"package_name":             framework.StringOkToTF(apiObject.GetPackageNameOk()),
-		"huawei_app_id":            framework.StringOkToTF(apiObject.GetHuaweiAppIdOk()),
-		"huawei_package_name":      framework.StringOkToTF(apiObject.GetHuaweiPackageNameOk()),
-		"passcode_refresh_seconds": passcodeRefreshSeconds,
-		"universal_app_link":       framework.StringOkToTF(apiObject.GetUriPrefixOk()),
-		"integrity_detection":      integrityDetection,
-	}
-
-	returnVar, d := types.ObjectValue(applicationOidcMobileAppTFObjectTypes, mobileApp)
-	diags.Append(d...)
-
-	return returnVar, diags
-}
-
-func (p *applicationDataSourceModel) applicationOidcMobileIntegrityDetectionOkToTF(apiObject *management.ApplicationOIDCAllOfMobileIntegrityDetection, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if !ok || apiObject == nil {
-		return types.ObjectNull(applicationOidcMobileAppIntegrityDetectionTFObjectTypes), diags
-	}
-
-	// Cache Duration
-	cacheDuration := map[string]attr.Value{}
-	if v, ok := apiObject.GetCacheDurationOk(); ok {
-		cacheDuration = map[string]attr.Value{
-			"amount": framework.Int32OkToTF(v.GetAmountOk()),
-			"units":  framework.EnumOkToTF(v.GetUnitsOk()),
-		}
-	}
-	cacheDurationObj, d := types.ObjectValue(applicationOidcMobileAppIntegrityDetectionCacheDurationTFObjectTypes, cacheDuration)
-	diags.Append(d...)
-
-	// Google Play
-	dummySuppressValue := "DUMMY_SUPPRESS_VALUE"
-	googlePlay := map[string]attr.Value{}
-	if v, ok := apiObject.GetGooglePlayOk(); ok {
-		googlePlay["verification_type"] = framework.EnumOkToTF(v.GetVerificationTypeOk())
-
-		if v.GetVerificationType() == management.ENUMAPPLICATIONNATIVEGOOGLEPLAYVERIFICATIONTYPE_INTERNAL {
-			googlePlay["decryption_key"] = framework.StringToTF(dummySuppressValue)
-			googlePlay["verification_key"] = framework.StringToTF(dummySuppressValue)
-		} else {
-			googlePlay["decryption_key"] = types.StringNull()
-			googlePlay["verification_key"] = types.StringNull()
-		}
-
-		if v.GetVerificationType() == management.ENUMAPPLICATIONNATIVEGOOGLEPLAYVERIFICATIONTYPE_GOOGLE {
-			googlePlay["service_account_credentials_json"] = framework.StringToTF(dummySuppressValue)
-		} else {
-			googlePlay["service_account_credentials_json"] = types.StringNull()
-		}
-	}
-
-	googlePlayObj, d := types.ObjectValue(applicationOidcMobileAppIntegrityDetectionGooglePlayTFObjectTypes, googlePlay)
-	diags.Append(d...)
-
-	// Enabled
-	enabledBool := false
-	if v, ok := apiObject.GetModeOk(); ok {
-		if *v == management.ENUMENABLEDSTATUS_ENABLED {
-			enabledBool = true
-		}
-	}
-
-	// Build Main Object
-	integrityDetection := map[string]attr.Value{
-		"enabled":            framework.BoolOkToTF(&enabledBool, ok),
-		"excluded_platforms": framework.EnumSetOkToTF(apiObject.GetExcludedPlatformsOk()),
-		"cache_duration":     cacheDurationObj,
-		"google_play":        googlePlayObj,
-	}
-
-	returnVar, d := types.ObjectValue(applicationOidcMobileAppIntegrityDetectionTFObjectTypes, integrityDetection)
-	diags.Append(d...)
-
-	return returnVar, diags
-}
-
-func (p *applicationDataSourceModel) toStateSAMLOptions(apiObject *management.ApplicationSAML) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if apiObject == nil {
-		return types.ObjectNull(applicationSamlOptionsTFObjectTypes), diags
-	}
-
-	// IdP Signing Key
-	idpSigningKey := map[string]attr.Value{}
-	if v, ok := apiObject.GetIdpSigningOk(); ok {
-		idpSigningKey["algorithm"] = framework.EnumOkToTF(v.GetAlgorithmOk())
-
-		if j, ok := v.GetKeyOk(); ok {
-			idpSigningKey["key_id"] = framework.StringOkToTF(j.GetIdOk())
-		}
-	} else {
-		idpSigningKey["algorithm"] = types.StringNull()
-		idpSigningKey["key_id"] = types.StringNull()
-	}
-	idpSigningKeyObj, d := types.ObjectValue(applicationSamlOptionsIdpSigningKeyTFObjectTypes, idpSigningKey)
-	diags.Append(d...)
-
-	// SP Verification
-	spVerification := map[string]attr.Value{}
-	if v, ok := apiObject.GetSpVerificationOk(); ok {
-		spVerification["authn_request_signed"] = framework.BoolOkToTF(v.GetAuthnRequestSignedOk())
-
-		if v1, ok := v.GetCertificatesOk(); ok {
-			var idList []string
-
-			idList = make([]string, 0)
-			for _, j := range v1 {
-				idList = append(idList, j.GetId())
-			}
-			spVerification["certificate_ids"] = framework.StringSetToTF(idList)
-		}
-
-	} else {
-		spVerification["authn_request_signed"] = types.BoolNull()
-		spVerification["certificate_ids"] = types.SetNull(types.StringType)
-	}
-	spVerificationObj, d := types.ObjectValue(applicationSamlOptionsSpVerificationTFObjectTypes, spVerification)
-	diags.Append(d...)
-
-	// CORS Settings
-	corsSettingsObj := types.ObjectNull(applicationCorsSettingsTFObjectTypes)
-	if v, ok := apiObject.GetCorsSettingsOk(); ok {
-		corsSettings := map[string]attr.Value{
-			"behavior": framework.EnumOkToTF(v.GetBehaviorOk()),
-			"origins":  framework.StringSetOkToTF(v.GetOriginsOk()),
-		}
-
-		corsSettingsObj, d = types.ObjectValue(applicationCorsSettingsTFObjectTypes, corsSettings)
-		diags.Append(d...)
-	}
-
-	// Build Main Object
-	samlOptions := map[string]attr.Value{
-		"type":                           framework.EnumOkToTF(apiObject.GetTypeOk()),
-		"acs_urls":                       framework.EnumSetOkToTF(apiObject.GetAcsUrlsOk()),
-		"assertion_duration":             framework.Int32OkToTF(apiObject.GetAssertionDurationOk()),
-		"sp_entity_id":                   framework.StringOkToTF(apiObject.GetSpEntityIdOk()),
-		"home_page_url":                  framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
-		"assertion_signed_enabled":       framework.BoolOkToTF(apiObject.GetAssertionSignedOk()),
-		"default_target_url":             framework.StringOkToTF(apiObject.GetDefaultTargetUrlOk()),
-		"idp_signing_key":                idpSigningKeyObj,
-		"enable_requested_authn_context": framework.BoolOkToTF(apiObject.GetEnableRequestedAuthnContextOk()),
-		"nameid_format":                  framework.StringOkToTF(apiObject.GetNameIdFormatOk()),
-		"response_is_signed":             framework.BoolOkToTF(apiObject.GetResponseSignedOk()),
-		"slo_binding":                    framework.EnumOkToTF(apiObject.GetSloBindingOk()),
-		"slo_endpoint":                   framework.StringOkToTF(apiObject.GetSloEndpointOk()),
-		"slo_response_endpoint":          framework.StringOkToTF(apiObject.GetSloResponseEndpointOk()),
-		"slo_window":                     framework.Int32OkToTF(apiObject.GetSloWindowOk()),
-		"sp_verification":                spVerificationObj,
-		"cors_settings":                  corsSettingsObj,
-	}
-
-	returnVar, d := types.ObjectValue(applicationSamlOptionsTFObjectTypes, samlOptions)
-	diags.Append(d...)
-
-	return returnVar, diags
-}
-
-func applicationOIDCSecretDataSourceRetryConditions(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
-
-	var err error
-
-	// The secret may take a short time to propagate
-	if r.StatusCode == 404 {
-		tflog.Warn(ctx, "Application secret not found, available for retry")
-		return true
-	}
-
-	if p1error != nil {
-
-		if m, _ := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
-			tflog.Warn(ctx, "Insufficient PingOne privileges detected")
-			return true
-		}
-		if err != nil {
-			tflog.Warn(ctx, "Cannot match error string for retry")
-			return false
-		}
-
-	}
-
-	return false
 }

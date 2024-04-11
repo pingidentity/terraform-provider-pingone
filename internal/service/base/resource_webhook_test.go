@@ -547,7 +547,7 @@ resource "pingone_application" "%[2]s-1" {
   name           = "%[3]s-1"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -562,7 +562,7 @@ resource "pingone_application" "%[2]s-2" {
   name           = "%[3]s-2"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -577,7 +577,7 @@ resource "pingone_application" "%[2]s-3" {
   name           = "%[3]s-3"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -723,7 +723,7 @@ resource "pingone_application" "%[2]s-1" {
   name           = "%[3]s-1"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -738,7 +738,7 @@ resource "pingone_application" "%[2]s-2" {
   name           = "%[3]s-2"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -753,7 +753,7 @@ resource "pingone_application" "%[2]s-3" {
   name           = "%[3]s-3"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -803,7 +803,7 @@ resource "pingone_application" "%[2]s-1" {
   name           = "%[3]s-1"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -818,7 +818,7 @@ resource "pingone_application" "%[2]s-new" {
   name           = "%[3]s-new"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]

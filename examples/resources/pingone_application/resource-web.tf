@@ -3,7 +3,7 @@ resource "pingone_application" "my_awesome_web_app" {
   name           = "My Awesome Web App"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "WEB_APP"
     grant_types                 = ["AUTHORIZATION_CODE", "REFRESH_TOKEN"]
     response_types              = ["CODE"]

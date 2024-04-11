@@ -3,7 +3,7 @@ resource "pingone_application" "my_awesome_native_app" {
   name           = "My Awesome Native Mobile App"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -14,7 +14,7 @@ resource "pingone_application" "my_awesome_native_app" {
       "org.bxretail.app://callback"
     ]
 
-    mobile_app {
+    mobile_app = {
       bundle_id           = var.apple_bundle_id
       package_name        = var.android_package_name
       huawei_app_id       = var.huawei_app_id
@@ -24,15 +24,15 @@ resource "pingone_application" "my_awesome_native_app" {
 
       passcode_refresh_seconds = 30
 
-      integrity_detection {
+      integrity_detection = {
         enabled = true
 
-        cache_duration {
+        cache_duration = {
           amount = 24
           units  = "HOURS"
         }
 
-        google_play {
+        google_play = {
           verification_type = "INTERNAL"
           decryption_key    = var.google_play_integrity_api_decryption_key
           verification_key  = var.google_play_integrity_api_verification_key
