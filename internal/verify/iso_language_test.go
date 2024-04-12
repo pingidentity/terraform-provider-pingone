@@ -39,7 +39,6 @@ func TestIsoList_Success(t *testing.T) {
 		"bs-BA",
 		"ca",
 		"ca-ES",
-		"cs",
 		"cs-CZ",
 		"cy",
 		"cy-GB",
@@ -113,7 +112,6 @@ func TestIsoList_Success(t *testing.T) {
 		"hr",
 		"hr-BA",
 		"hr-HR",
-		"hu",
 		"hu-HU",
 		"hy",
 		"hy-AM",
@@ -161,7 +159,6 @@ func TestIsoList_Success(t *testing.T) {
 		"ns-ZA",
 		"pa",
 		"pa-IN",
-		"pl",
 		"pl-PL",
 		"ps",
 		"ps-AR",
@@ -178,11 +175,7 @@ func TestIsoList_Success(t *testing.T) {
 		"sa-IN",
 		"se",
 		"se-FI",
-		"se-FI",
-		"se-FI",
 		"se-NO",
-		"se-SE",
-		"se-SE",
 		"se-SE",
 		"sk",
 		"sk-SK",
@@ -218,7 +211,6 @@ func TestIsoList_Success(t *testing.T) {
 		"ur-PK",
 		"uz",
 		"uz-UZ",
-		"uz-UZ",
 		"vi",
 		"vi-VN",
 		"xh",
@@ -241,7 +233,7 @@ func TestIsoList_Success(t *testing.T) {
 
 func TestIsoReservedListString_Success(t *testing.T) {
 
-	expectedIsoList := "`de`, `en`, `es`, `fr`, `fr-CA`, `it`, `ja`, `ko`, `nl`, `pt`, `ru`, `th`, `tr`, `zh`"
+	expectedIsoList := "`cs`, `de`, `en`, `es`, `fr`, `fr-CA`, `hu`, `it`, `ja`, `ko`, `nl`, `pl`, `pt`, `ru`, `th`, `tr`, `zh`"
 
 	isoList := IsoReservedListString()
 
