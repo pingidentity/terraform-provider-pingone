@@ -1024,6 +1024,36 @@ resource "pingone_branding_theme" "my_awesome_theme" {
 }
 ```
 
+## Resource: pingone_custom_domain_verify
+
+### `timeouts` optional parameter data type changed
+
+The `timeouts` parameter data type is now a nested object type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_custom_domain_verify" "my_awesome_domain" {
+  # ... other configuration parameters
+
+  timeouts {
+    create = "5s"
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_custom_domain_verify" "my_awesome_domain" {
+  # ... other configuration parameters
+
+  timeouts = {
+    create = "5s"
+  }
+}
+```
+
 ## Resource: pingone_environment
 
 ### `default_population` optional parameter removed
