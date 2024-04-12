@@ -6,7 +6,25 @@ import (
 	"strings"
 )
 
-var reservedLanguageCodes = []string{"zh", "nl", "en", "fr", "fr-CA", "de", "it", "ja", "ko", "pt", "ru", "es", "th", "tr"}
+var reservedLanguageCodes = []string{
+	"cs",
+	"de",
+	"en",
+	"es",
+	"fr-CA",
+	"fr",
+	"hu",
+	"it",
+	"ja",
+	"ko",
+	"nl",
+	"pl",
+	"pt",
+	"ru",
+	"th",
+	"tr",
+	"zh",
+}
 var isoList = []string{
 	"af",
 	"af-ZA",
