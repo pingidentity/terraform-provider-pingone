@@ -161,15 +161,15 @@ resource "pingone_application" "%[2]s" {
 }
 
 resource "time_offset" "%[2]s" {
-	offset_minutes = 10
-  }
+  offset_minutes = 10
+}
 
 resource "pingone_application_secret" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
 
   previous = {
-	expires_at = time_offset.%[2]s.rfc3339
+    expires_at = time_offset.%[2]s.rfc3339
   }
 }
 
@@ -178,7 +178,7 @@ data "pingone_application_secret" "%[2]s" {
   application_id = pingone_application.%[2]s.id
 
   depends_on = [
-	pingone_application_secret.%[2]s,
+    pingone_application_secret.%[2]s,
   ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -207,13 +207,13 @@ resource "pingone_application_secret" "%[2]s" {
 }
 
 data "pingone_application_secret" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
-	application_id = pingone_application.%[2]s.id
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
 
-	depends_on = [
-		pingone_application_secret.%[2]s,
-	]
-  }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  depends_on = [
+    pingone_application_secret.%[2]s,
+  ]
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationSecretDataSourceConfig_Rotation2(resourceName, name string) string {
@@ -235,26 +235,26 @@ resource "pingone_application" "%[2]s" {
 }
 
 resource "time_offset" "%[2]s" {
-	offset_minutes = 10
-  }
+  offset_minutes = 10
+}
 
 resource "pingone_application_secret" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
 
   previous = {
-	expires_at = time_offset.%[2]s.rfc3339
+    expires_at = time_offset.%[2]s.rfc3339
   }
 }
 
 data "pingone_application_secret" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
-	application_id = pingone_application.%[2]s.id
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
 
-	depends_on = [
-		pingone_application_secret.%[2]s,
-	]
-  }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  depends_on = [
+    pingone_application_secret.%[2]s,
+  ]
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationSecretDataSourceConfig_IncorrectApplicationType(resourceName, name string) string {
