@@ -80,7 +80,7 @@ type predictorComposite struct {
 
 type predictorComposition struct {
 	ConditionJSON jsontypes.Normalized `tfsdk:"condition_json"`
-	Condition     types.String         `tfsdk:"condition"`
+	Condition     jsontypes.Normalized `tfsdk:"condition"`
 	Level         types.String         `tfsdk:"level"`
 }
 
@@ -208,7 +208,7 @@ var (
 
 	predictorCompositionTFObjectTypes = map[string]attr.Type{
 		"condition_json": jsontypes.NormalizedType{},
-		"condition":      types.StringType,
+		"condition":      jsontypes.NormalizedType{},
 		"level":          types.StringType,
 	}
 
@@ -671,6 +671,8 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 							"condition": schema.StringAttribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the condition logic for the composite risk predictor as applied to the service.").Description,
 								Computed:    true,
+
+								CustomType: jsontypes.NormalizedType{},
 							},
 
 							"level": schema.StringAttribute{
@@ -3023,7 +3025,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorComposite(apiObject *ri
 				return types.ObjectNull(predictorCompositeTFObjectTypes), diags
 			}
 
-			o["condition"] = framework.StringToTF(string(jsonString))
+			o["condition"] = jsontypes.NewNormalizedValue(string(jsonString))
 
 			if compositeConditionJSON.IsNull() || compositeConditionJSON.IsUnknown() {
 				o["condition_json"] = o["condition"]
