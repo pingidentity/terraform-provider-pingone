@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -11,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -23,8 +25,15 @@ type ApplicationSecretResource serviceClientType
 type ApplicationSecretResourceModel struct {
 	EnvironmentId           types.String `tfsdk:"environment_id"`
 	ApplicationId           types.String `tfsdk:"application_id"`
+	Previous                types.Object `tfsdk:"previous"`
 	Secret                  types.String `tfsdk:"secret"`
 	RegenerateTriggerValues types.Map    `tfsdk:"regenerate_trigger_values"`
+}
+
+type ApplicationSecretPreviousResourceModel struct {
+	Secret    types.String `tfsdk:"secret"`
+	ExpiresAt types.String `tfsdk:"expires_at"`
+	LastUsed  types.String `tfsdk:"last_used"`
 }
 
 // Framework interfaces
@@ -59,6 +68,29 @@ func (r *ApplicationSecretResource) Schema(ctx context.Context, req resource.Sch
 			"application_id": framework.Attr_LinkID(
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the application to generate the application secret for. The value for `application_id` may come from the `id` attribute of the `pingone_application` resource or data source."),
 			),
+
+			"previous": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies the previous secret, when it expires, and when it was last used.").Description,
+				Optional:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"secret": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the previous application secret. This property is returned in the response if the previous secret is not expired.").Description,
+						Computed:    true,
+						Sensitive:   true,
+					},
+
+					"expires_at": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A timestamp that specifies how long this secret is saved (and can be used) before it expires. Supported time range is 1 minute to 30 days.").Description,
+						Optional:    true,
+					},
+
+					"last_used": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A timestamp that specifies when the previous secret was last used.").Description,
+						Computed:    true,
+					},
+				},
+			},
 
 			"secret": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("The application secret used to authenticate to the authorization server.").Description,
@@ -152,12 +184,19 @@ func (r *ApplicationSecretResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
+	// Build the model for the API
+	applicationSecret, d := plan.expand()
+	resp.Diagnostics = append(resp.Diagnostics, d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Run the API call
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationSecretApi.UpdateApplicationSecret(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationSecretApi.UpdateApplicationSecret(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).ApplicationSecret(*applicationSecret).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateApplicationSecret",
@@ -255,15 +294,22 @@ func (r *ApplicationSecretResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
+	// Build the model for the API
+	applicationSecret, d := plan.expand()
+	resp.Diagnostics = append(resp.Diagnostics, d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	var response *management.ApplicationSecret
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationSecretApi.ReadApplicationSecret(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationSecretApi.UpdateApplicationSecret(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).ApplicationSecret(*applicationSecret).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
-		"ReadApplicationSecret",
+		"UpdateApplicationSecret",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&response,
@@ -316,8 +362,42 @@ func (r *ApplicationSecretResource) ImportState(ctx context.Context, req resourc
 	}
 }
 
-func (p *ApplicationSecretResourceModel) toState(apiObject *management.ApplicationSecret) diag.Diagnostics {
+func (p *ApplicationSecretResourceModel) expand() (*management.ApplicationSecret, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	data := management.NewApplicationSecret()
+
+	if !p.Previous.IsNull() && !p.Previous.IsUnknown() {
+		var plan ApplicationSecretPreviousResourceModel
+		d := p.Previous.As(context.Background(), &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if !plan.ExpiresAt.IsNull() && !plan.ExpiresAt.IsUnknown() {
+
+			expiresAt, err := time.Parse(time.RFC3339, plan.ExpiresAt.ValueString())
+			if err != nil {
+				diags.AddError(
+					"Invalid expires_at",
+					"Invalid expires_at value.  Please provide a valid RFC3339 formatted timestamp.",
+				)
+				return nil, diags
+			}
+
+			data.SetPrevious(*management.NewApplicationSecretPrevious(expiresAt))
+		}
+	}
+
+	return data, diags
+}
+
+func (p *ApplicationSecretResourceModel) toState(apiObject *management.ApplicationSecret) diag.Diagnostics {
+	var diags, d diag.Diagnostics
 
 	if apiObject == nil {
 		diags.AddError(
@@ -330,6 +410,8 @@ func (p *ApplicationSecretResourceModel) toState(apiObject *management.Applicati
 
 	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
 	p.Secret = framework.StringOkToTF(apiObject.GetSecretOk())
+	p.Previous, d = applicationSecretPreviousOkToTF(apiObject.GetPreviousOk())
+	diags.Append(d...)
 
 	return diags
 }

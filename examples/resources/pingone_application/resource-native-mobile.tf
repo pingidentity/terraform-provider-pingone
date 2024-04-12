@@ -41,3 +41,16 @@ resource "pingone_application" "my_awesome_native_app" {
     }
   }
 }
+
+resource "time_rotating" "my_awesome_native_app_secret_rotation" {
+  rotation_days = 30
+}
+
+resource "pingone_application_secret" "my_awesome_native_app" {
+  environment_id = pingone_environment.my_environment.id
+  application_id = pingone_application.my_awesome_native_app.id
+
+  regenerate_trigger_values = {
+    "rotation_rfc3339" : time_rotating.my_awesome_native_app_secret_rotation.rotation_rfc3339,
+  }
+}

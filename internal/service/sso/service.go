@@ -12,9 +12,9 @@ type serviceClientType struct {
 
 func Resources() []func() resource.Resource {
 	return []func() resource.Resource{
-		NewApplicationResource,
 		NewApplicationAttributeMappingResource,
 		NewApplicationFlowPolicyAssignmentResource,
+		NewApplicationResource,
 		NewApplicationResourceGrantResource,
 		NewApplicationRoleAssignmentResource,
 		NewApplicationSecretResource,
@@ -40,6 +40,7 @@ func DataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewApplicationDataSource,
 		NewApplicationFlowPolicyAssignmentsDataSource,
+		NewApplicationSecretDataSource,
 		NewApplicationSignOnPolicyAssignmentsDataSource,
 		NewFlowPoliciesDataSource,
 		NewFlowPolicyDataSource,

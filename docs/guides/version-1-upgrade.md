@@ -205,6 +205,109 @@ resource "pingone_application" "my_awesome_application" {
 }
 ```
 
+### `oidc_options.client_id` computed attribute removed
+
+The `oidc_options.client_id` attribute has been removed from the `pingone_application` resource, as it is a duplicate of the application's own ID.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  oidc_options {
+    # ... other configuration parameters
+  }
+}
+
+locals {
+  my_awesome_application_client_id = pingone_application.my_awesome_application.oidc_options[0].client_id
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  oidc_options = {
+    # ... other configuration parameters
+  }
+}
+
+locals {
+  my_awesome_application_client_id = pingone_application.my_awesome_application.id
+}
+```
+
+### `oidc_options.client_secret` computed attribute removed
+
+The `oidc_options.client_secret` attribute has been removed from the `pingone_application` resource, and is now found in the `pingone_application_secret` resource and/or data source.  Using the `pingone_application_secret` resource and data source has the benefit of being able to track the state of, and manage, previous secrets when performing application secret rotation.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  oidc_options {
+    # ... other configuration parameters
+  }
+}
+
+locals {
+  my_awesome_application_client_id     = pingone_application.my_awesome_application.oidc_options[0].client_id
+  my_awesome_application_client_secret = pingone_application.my_awesome_application.oidc_options[0].client_secret
+}
+```
+
+New configuration example (using the `pingone_application_secret` resource):
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  oidc_options = {
+    # ... other configuration parameters
+  }
+}
+
+resource "pingone_application_secret" "my_awesome_application" {
+  # ... other configuration parameters
+
+  application_id = pingone_application.my_awesome_application.id
+}
+
+locals {
+  my_awesome_application_client_id     = pingone_application.my_awesome_application.id
+  my_awesome_application_client_secret = pingone_application_secret.my_awesome_application.secret
+}
+```
+
+New configuration example (using the `pingone_application_secret` data source):
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  oidc_options = {
+    # ... other configuration parameters
+  }
+}
+
+data "pingone_application_secret" "my_awesome_application" {
+  # ... other configuration parameters
+
+  application_id = pingone_application.my_awesome_application.id
+}
+
+locals {
+  my_awesome_application_client_id     = pingone_application.my_awesome_application.id
+  my_awesome_application_client_secret = data.pingone_application_secret.my_awesome_application.secret
+}
+```
+
 ### `oidc_options.cors_settings` parameter data type change
 
 The `oidc_options.cors_settings` parameter is now a nested object type and no longer a list type.
@@ -1765,6 +1868,89 @@ The `oidc_options` computed attribute is now a nested object type and no longer 
 ### `oidc_options.certificate_based_authentication` computed attribute data type change
 
 The `oidc_options.certificate_based_authentication` computed attribute is now a nested object type and no longer a list type.
+
+### `oidc_options.client_id` computed attribute removed
+
+The `oidc_options.client_id` attribute has been removed from the `pingone_application` data source, as it is a duplicate of the application's own ID.
+
+Previous configuration example:
+
+```terraform
+data "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+}
+
+locals {
+  my_awesome_application_client_id = data.pingone_application.my_awesome_application.oidc_options[0].client_id
+}
+```
+
+New configuration example:
+
+```terraform
+data "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+}
+
+locals {
+  my_awesome_application_client_id = data.pingone_application.my_awesome_application.id
+}
+```
+
+### `oidc_options.client_secret` computed attribute removed
+
+The `oidc_options.client_secret` attribute has been removed from the `pingone_application` data source, and is now found in the `pingone_application_secret` resource and/or data source.  Using the `pingone_application_secret` resource and data source has the benefit of being able to track the state of, and manage, previous secrets when performing application secret rotation.
+
+Previous configuration example:
+
+```terraform
+data "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+}
+
+locals {
+  my_awesome_application_client_id     = data.pingone_application.my_awesome_application.oidc_options[0].client_id
+  my_awesome_application_client_secret = data.pingone_application.my_awesome_application.oidc_options[0].client_secret
+}
+```
+
+New configuration example (using the `pingone_application_secret` resource):
+
+```terraform
+data "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+}
+
+resource "pingone_application_secret" "my_awesome_application" {
+  # ... other configuration parameters
+
+  application_id = data.pingone_application.my_awesome_application.id
+}
+
+locals {
+  my_awesome_application_client_id     = data.pingone_application.my_awesome_application.id
+  my_awesome_application_client_secret = pingone_application_secret.my_awesome_application.secret
+}
+```
+
+New configuration example (using the `pingone_application_secret` data source):
+
+```terraform
+data "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+}
+
+data "pingone_application_secret" "my_awesome_application" {
+  # ... other configuration parameters
+
+  application_id = data.pingone_application.my_awesome_application.id
+}
+
+locals {
+  my_awesome_application_client_id     = data.pingone_application.my_awesome_application.id
+  my_awesome_application_client_secret = data.pingone_application_secret.my_awesome_application.secret
+}
+```
 
 ### `oidc_options.cors_settings` computed attribute data type change
 

@@ -3,16 +3,12 @@ package sso
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 )
 
@@ -78,7 +74,7 @@ func applicationCorsSettingsOkToTF(apiObject *management.ApplicationCorsSettings
 	return returnVar, diags
 }
 
-func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.ApplicationOIDC, apiObjectSecret *management.ApplicationSecret, stateValue ApplicationOIDCOptionsResourceModel) (types.Object, diag.Diagnostics) {
+func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.ApplicationOIDC, stateValue ApplicationOIDCOptionsResourceModel) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if apiObject == nil || apiObject.GetId() == "" {
@@ -110,8 +106,6 @@ func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.Appli
 		"additional_refresh_token_replay_protection_enabled": framework.BoolOkToTF(apiObject.GetAdditionalRefreshTokenReplayProtectionEnabledOk()),
 		"allow_wildcards_in_redirect_uris":                   framework.BoolOkToTF(apiObject.GetAllowWildcardInRedirectUrisOk()),
 		"certificate_based_authentication":                   kerberos,
-		"client_id":                                          framework.StringOkToTF(apiObject.GetIdOk()),
-		"client_secret":                                      types.StringNull(),
 		"cors_settings":                                      corsSettings,
 		"grant_types":                                        framework.EnumSetOkToTF(apiObject.GetGrantTypesOk()),
 		"home_page_url":                                      framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
@@ -133,10 +127,6 @@ func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.Appli
 		"target_link_uri":                                    framework.StringOkToTF(apiObject.GetTargetLinkUriOk()),
 		"token_endpoint_authn_method":                        framework.EnumOkToTF(apiObject.GetTokenEndpointAuthMethodOk()),
 		"type":                                               framework.EnumOkToTF(apiObject.GetTypeOk()),
-	}
-
-	if apiObjectSecret != nil {
-		attributesMap["client_secret"] = framework.StringOkToTF(apiObjectSecret.GetSecretOk())
 	}
 
 	returnVar, d := types.ObjectValue(applicationOidcOptionsTFObjectTypes, attributesMap)
@@ -389,30 +379,4 @@ func applicationSamlSpVerificationOkToTF(apiObject *management.ApplicationSAMLAl
 	diags.Append(d...)
 
 	return returnVar, diags
-}
-
-func applicationOIDCSecretDataSourceRetryConditions(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
-
-	var err error
-
-	// The secret may take a short time to propagate
-	if r.StatusCode == 404 {
-		tflog.Warn(ctx, "Application secret not found, available for retry")
-		return true
-	}
-
-	if p1error != nil {
-
-		if m, _ := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
-			tflog.Warn(ctx, "Insufficient PingOne privileges detected")
-			return true
-		}
-		if err != nil {
-			tflog.Warn(ctx, "Cannot match error string for retry")
-			return false
-		}
-
-	}
-
-	return false
 }

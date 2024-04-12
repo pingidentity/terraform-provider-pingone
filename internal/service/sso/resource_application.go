@@ -25,7 +25,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -68,8 +67,6 @@ type ApplicationOIDCOptionsResourceModel struct {
 	AdditionalRefreshTokenReplayProtectionEnabled types.Bool   `tfsdk:"additional_refresh_token_replay_protection_enabled"`
 	AllowWildcardsInRedirectUris                  types.Bool   `tfsdk:"allow_wildcards_in_redirect_uris"`
 	CertificateBasedAuthentication                types.Object `tfsdk:"certificate_based_authentication"`
-	ClientId                                      types.String `tfsdk:"client_id"`
-	ClientSecret                                  types.String `tfsdk:"client_secret"`
 	CorsSettings                                  types.Object `tfsdk:"cors_settings"`
 	GrantTypes                                    types.Set    `tfsdk:"grant_types"`
 	HomePageUrl                                   types.String `tfsdk:"home_page_url"`
@@ -171,8 +168,6 @@ var (
 		"additional_refresh_token_replay_protection_enabled": types.BoolType,
 		"allow_wildcards_in_redirect_uris":                   types.BoolType,
 		"certificate_based_authentication":                   types.ObjectType{AttrTypes: applicationOidcOptionsCertificateAuthenticationTFObjectTypes},
-		"client_id":                                          types.StringType,
-		"client_secret":                                      types.StringType,
 		"cors_settings":                                      types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
 		"grant_types":                                        types.SetType{ElemType: types.StringType},
 		"home_page_url":                                      types.StringType,
@@ -440,10 +435,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	oidcOptionsAdditionalRefreshTokenReplayProtectionEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true` (the default), if you attempt to reuse the refresh token, the authorization server immediately revokes the reused refresh token, as well as all descendant tokens. Setting this to null equates to a `false` setting.",
 	).DefaultValue(true)
-
-	oidcOptionsClientSecretDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the application secret ID used to authenticate to the authorization server.\n\n~> The `client_secret` cannot be rotated in this resource.  The `pingone_application_secret` resource should be used to control rotation of the `client_secret` value.  If using the `pingone_application_secret` resource, use of this attribute is likely to conflict with that resource.  In this case, the `pingone_application_secret.secret` attribute should be used instead.",
-	)
 
 	oidcOptionsSupportUnsignedRequestObjectDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the request query parameter JWT is allowed to be unsigned. If `false` or null, an unsigned request object is not allowed.",
@@ -1001,26 +992,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Computed:            true,
 
 						Default: booldefault.StaticBool(true),
-					},
-
-					"client_id": schema.StringAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application ID used to authenticate to the authorization server.").Description,
-						Computed:    true,
-
-						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseStateForUnknown(),
-						},
-					},
-
-					"client_secret": schema.StringAttribute{
-						Description:         oidcOptionsClientSecretDescription.Description,
-						MarkdownDescription: oidcOptionsClientSecretDescription.MarkdownDescription,
-						Computed:            true,
-						Sensitive:           true,
-
-						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseStateForUnknown(),
-						},
 					},
 
 					"support_unsigned_request_object": schema.BoolAttribute{
@@ -1689,54 +1660,11 @@ func (r *ApplicationResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	var secretResponse *management.ApplicationSecret
-	if response.ApplicationOIDC != nil && response.ApplicationOIDC.GetId() != "" {
-		resp.Diagnostics.Append(framework.ParseResponse(
-			ctx,
-
-			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationSecretApi.ReadApplicationSecret(ctx, plan.EnvironmentId.ValueString(), applicationId).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
-			},
-			"ReadApplicationSecret",
-			framework.DefaultCustomError,
-			func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
-
-				// The secret may take a short time to propagate
-				if r.StatusCode == 404 {
-					tflog.Warn(ctx, "Application secret not found, available for retry")
-					return true
-				}
-
-				if p1error != nil {
-					var err error
-
-					// Permissions may not have propagated by this point
-					if m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
-						tflog.Warn(ctx, "Insufficient PingOne privileges detected")
-						return true
-					}
-					if err != nil {
-						tflog.Warn(ctx, "Cannot match error string for retry")
-						return false
-					}
-
-				}
-
-				return false
-			},
-			&secretResponse,
-		)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-	}
-
 	// Create the state to save
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(ctx, response, secretResponse)...)
+	resp.Diagnostics.Append(state.toState(ctx, response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -1780,27 +1708,8 @@ func (r *ApplicationResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	var secretResponse *management.ApplicationSecret
-	if response.ApplicationOIDC != nil && response.ApplicationOIDC.GetId() != "" {
-		resp.Diagnostics.Append(framework.ParseResponse(
-			ctx,
-
-			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationSecretApi.ReadApplicationSecret(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
-			},
-			"ReadApplicationSecret",
-			framework.CustomErrorResourceNotFoundWarning,
-			applicationOIDCSecretDataSourceRetryConditions,
-			&secretResponse,
-		)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-	}
-
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(ctx, response, secretResponse)...)
+	resp.Diagnostics.Append(data.toState(ctx, response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -1845,54 +1754,11 @@ func (r *ApplicationResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	var secretResponse *management.ApplicationSecret
-	if response.ApplicationOIDC != nil && response.ApplicationOIDC.GetId() != "" {
-		resp.Diagnostics.Append(framework.ParseResponse(
-			ctx,
-
-			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationSecretApi.ReadApplicationSecret(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
-			},
-			"ReadApplicationSecret",
-			framework.DefaultCustomError,
-			func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
-
-				// The secret may take a short time to propagate
-				if r.StatusCode == 404 {
-					tflog.Warn(ctx, "Application secret not found, available for retry")
-					return true
-				}
-
-				if p1error != nil {
-					var err error
-
-					// Permissions may not have propagated by this point
-					if m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
-						tflog.Warn(ctx, "Insufficient PingOne privileges detected")
-						return true
-					}
-					if err != nil {
-						tflog.Warn(ctx, "Cannot match error string for retry")
-						return false
-					}
-
-				}
-
-				return false
-			},
-			&secretResponse,
-		)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-	}
-
 	// Create the state to save
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(ctx, response, secretResponse)...)
+	resp.Diagnostics.Append(state.toState(ctx, response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -2725,7 +2591,7 @@ func (p *ApplicationResourceModel) expandApplicationCommon(ctx context.Context) 
 	return &data, diags
 }
 
-func (p *ApplicationResourceModel) toState(ctx context.Context, apiObject *management.ReadOneApplication200Response, apiSecretObject *management.ApplicationSecret) diag.Diagnostics {
+func (p *ApplicationResourceModel) toState(ctx context.Context, apiObject *management.ReadOneApplication200Response) diag.Diagnostics {
 	var diags, d diag.Diagnostics
 
 	if apiObject == nil {
@@ -2813,7 +2679,7 @@ func (p *ApplicationResourceModel) toState(ctx context.Context, apiObject *manag
 				return diags
 			}
 		}
-		p.OIDCOptions, d = applicationOidcOptionsToTF(ctx, v, apiSecretObject, oidcOptionsState)
+		p.OIDCOptions, d = applicationOidcOptionsToTF(ctx, v, oidcOptionsState)
 		diags = append(diags, d...)
 
 		p.SAMLOptions = types.ObjectNull(applicationSamlOptionsTFObjectTypes)

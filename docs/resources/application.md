@@ -26,6 +26,19 @@ resource "pingone_application" "my_awesome_spa" {
     redirect_uris               = ["https://my-website.com"]
   }
 }
+
+resource "time_rotating" "my_awesome_spa_secret_rotation" {
+  rotation_days = 30
+}
+
+resource "pingone_application_secret" "my_awesome_spa" {
+  environment_id = pingone_environment.my_environment.id
+  application_id = pingone_application.my_awesome_spa.id
+
+  regenerate_trigger_values = {
+    "rotation_rfc3339" : time_rotating.my_awesome_spa_secret_rotation.rotation_rfc3339,
+  }
+}
 ```
 
 ## Example Usage - Web Application
@@ -42,6 +55,19 @@ resource "pingone_application" "my_awesome_web_app" {
     response_types              = ["CODE"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
     redirect_uris               = ["https://my-website.com"]
+  }
+}
+
+resource "time_rotating" "my_awesome_web_app_secret_rotation" {
+  rotation_days = 30
+}
+
+resource "pingone_application_secret" "my_awesome_web_app" {
+  environment_id = pingone_environment.my_environment.id
+  application_id = pingone_application.my_awesome_web_app.id
+
+  regenerate_trigger_values = {
+    "rotation_rfc3339" : time_rotating.my_awesome_web_app_secret_rotation.rotation_rfc3339,
   }
 }
 ```
@@ -130,6 +156,19 @@ resource "pingone_application" "my_awesome_native_app" {
     }
   }
 }
+
+resource "time_rotating" "my_awesome_native_app_secret_rotation" {
+  rotation_days = 30
+}
+
+resource "pingone_application_secret" "my_awesome_native_app" {
+  environment_id = pingone_environment.my_environment.id
+  application_id = pingone_application.my_awesome_native_app.id
+
+  regenerate_trigger_values = {
+    "rotation_rfc3339" : time_rotating.my_awesome_native_app_secret_rotation.rotation_rfc3339,
+  }
+}
 ```
 
 ## Example Usage - Worker Application
@@ -144,6 +183,19 @@ resource "pingone_application" "my_awesome_worker_app" {
     type                        = "WORKER"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+  }
+}
+
+resource "time_rotating" "my_awesome_worker_app_secret_rotation" {
+  rotation_days = 30
+}
+
+resource "pingone_application_secret" "my_awesome_worker_app" {
+  environment_id = pingone_environment.my_environment.id
+  application_id = pingone_application.my_awesome_worker_app.id
+
+  regenerate_trigger_values = {
+    "rotation_rfc3339" : time_rotating.my_awesome_worker_app_secret_rotation.rotation_rfc3339,
   }
 }
 ```
@@ -246,13 +298,6 @@ Optional:
 - `response_types` (Set of String) A list that specifies the code or token type returned by an authorization request.  Options are `CODE`, `ID_TOKEN`, `TOKEN`.  Note that `CODE` cannot be used in an authorization request with `TOKEN` or `ID_TOKEN` because PingOne does not currently support OIDC hybrid flows.
 - `support_unsigned_request_object` (Boolean) A boolean that specifies whether the request query parameter JWT is allowed to be unsigned. If `false` or null, an unsigned request object is not allowed.  Defaults to `false`.
 - `target_link_uri` (String) The URI for the application. If specified, PingOne will redirect application users to this URI after a user is authenticated. In the PingOne admin console, this becomes the value of the `target_link_uri` parameter used for the Initiate Single Sign-On URL field.  Both `http://` and `https://` URLs are permitted as well as custom mobile native schema (e.g., `org.bxretail.app://target`).
-
-Read-Only:
-
-- `client_id` (String) A string that specifies the application ID used to authenticate to the authorization server.
-- `client_secret` (String, Sensitive) A string that specifies the application secret ID used to authenticate to the authorization server.
-
-~> The `client_secret` cannot be rotated in this resource.  The `pingone_application_secret` resource should be used to control rotation of the `client_secret` value.  If using the `pingone_application_secret` resource, use of this attribute is likely to conflict with that resource.  In this case, the `pingone_application_secret.secret` attribute should be used instead.
 
 <a id="nestedatt--oidc_options--certificate_based_authentication"></a>
 ### Nested Schema for `oidc_options.certificate_based_authentication`
