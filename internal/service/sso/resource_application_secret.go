@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -11,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -26,6 +28,12 @@ type ApplicationSecretResourceModel struct {
 	Previous                types.Object `tfsdk:"previous"`
 	Secret                  types.String `tfsdk:"secret"`
 	RegenerateTriggerValues types.Map    `tfsdk:"regenerate_trigger_values"`
+}
+
+type ApplicationSecretPreviousResourceModel struct {
+	Secret    types.String `tfsdk:"secret"`
+	ExpiresAt types.String `tfsdk:"expires_at"`
+	LastUsed  types.String `tfsdk:"last_used"`
 }
 
 // Framework interfaces
@@ -176,12 +184,19 @@ func (r *ApplicationSecretResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
+	// Build the model for the API
+	applicationSecret, d := plan.expand()
+	resp.Diagnostics = append(resp.Diagnostics, d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Run the API call
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationSecretApi.UpdateApplicationSecret(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationSecretApi.UpdateApplicationSecret(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).ApplicationSecret(*applicationSecret).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateApplicationSecret",
@@ -279,15 +294,22 @@ func (r *ApplicationSecretResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
+	// Build the model for the API
+	applicationSecret, d := plan.expand()
+	resp.Diagnostics = append(resp.Diagnostics, d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	var response *management.ApplicationSecret
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationSecretApi.ReadApplicationSecret(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationSecretApi.UpdateApplicationSecret(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).ApplicationSecret(*applicationSecret).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
-		"ReadApplicationSecret",
+		"UpdateApplicationSecret",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&response,
@@ -340,8 +362,42 @@ func (r *ApplicationSecretResource) ImportState(ctx context.Context, req resourc
 	}
 }
 
-func (p *ApplicationSecretResourceModel) toState(apiObject *management.ApplicationSecret) diag.Diagnostics {
+func (p *ApplicationSecretResourceModel) expand() (*management.ApplicationSecret, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	data := management.NewApplicationSecret()
+
+	if !p.Previous.IsNull() && !p.Previous.IsUnknown() {
+		var plan ApplicationSecretPreviousResourceModel
+		d := p.Previous.As(context.Background(), &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if !plan.ExpiresAt.IsNull() && !plan.ExpiresAt.IsUnknown() {
+
+			expiresAt, err := time.Parse(time.RFC3339, plan.ExpiresAt.ValueString())
+			if err != nil {
+				diags.AddError(
+					"Invalid expires_at",
+					"Invalid expires_at value.  Please provide a valid RFC3339 formatted timestamp.",
+				)
+				return nil, diags
+			}
+
+			data.SetPrevious(*management.NewApplicationSecretPrevious(expiresAt))
+		}
+	}
+
+	return data, diags
+}
+
+func (p *ApplicationSecretResourceModel) toState(apiObject *management.ApplicationSecret) diag.Diagnostics {
+	var diags, d diag.Diagnostics
 
 	if apiObject == nil {
 		diags.AddError(
@@ -354,6 +410,8 @@ func (p *ApplicationSecretResourceModel) toState(apiObject *management.Applicati
 
 	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
 	p.Secret = framework.StringOkToTF(apiObject.GetSecretOk())
+	p.Previous, d = applicationSecretPreviousOkToTF(apiObject.GetPreviousOk())
+	diags.Append(d...)
 
 	return diags
 }
