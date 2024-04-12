@@ -2217,7 +2217,7 @@ func (p *ApplicationOIDCMobileAppIntegrityDetectionResourceModel) expand(ctx con
 		data.SetMode(mode)
 	}
 
-	googleVerificationIncluded := true
+	googleVerificationIncluded := true && data.GetMode() == management.ENUMENABLEDSTATUS_ENABLED
 
 	if !p.ExcludedPlatforms.IsNull() && !p.ExcludedPlatforms.IsUnknown() {
 		var excludedPlatformsPlan []string

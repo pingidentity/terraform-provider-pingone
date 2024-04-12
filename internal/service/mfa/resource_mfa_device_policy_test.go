@@ -1930,7 +1930,7 @@ resource "pingone_mfa_application_push_credential" "%[2]s-4" {
   application_id = pingone_application.%[2]s-4.id
 
   fcm = {
-    key = "dummykey"
+    google_service_account_credentials = jsonencode(%[4]s)
   }
 }
 
@@ -2256,6 +2256,18 @@ func testAccMFADevicePolicyConfig_MobileBadApplicationError_2(resourceName, name
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_key" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                = "%[3]s"
+  algorithm           = "EC"
+  key_length          = 256
+  signature_algorithm = "SHA384withECDSA"
+  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}
+
 resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
@@ -2268,6 +2280,11 @@ resource "pingone_application" "%[2]s" {
     acs_urls           = ["https://my-saas-app.com"]
     assertion_duration = 3600
     sp_entity_id       = "sp:%[2]s:localhost"
+
+    idp_signing_key = {
+      key_id    = pingone_key.%[3]s.id
+      algorithm = pingone_key.%[3]s.signature_algorithm
+    }
   }
 }
 
