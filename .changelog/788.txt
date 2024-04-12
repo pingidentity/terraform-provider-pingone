@@ -1,0 +1,7 @@
+```release-note:breaking-change
+Renamed the `pingone_mfa_policy` resource to `pingone_mfa_device_policy`.
+```
+
+```release-note:breaking-change
+Renamed the `pingone_mfa_policies` data source to `pingone_mfa_device_policies`.
+```
