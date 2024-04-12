@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
@@ -78,9 +79,9 @@ type predictorComposite struct {
 }
 
 type predictorComposition struct {
-	ConditionJSON types.String `tfsdk:"condition_json"`
-	Condition     types.String `tfsdk:"condition"`
-	Level         types.String `tfsdk:"level"`
+	ConditionJSON jsontypes.Normalized `tfsdk:"condition_json"`
+	Condition     jsontypes.Normalized `tfsdk:"condition"`
+	Level         types.String         `tfsdk:"level"`
 }
 
 // Custom Map
@@ -206,8 +207,8 @@ var (
 	}
 
 	predictorCompositionTFObjectTypes = map[string]attr.Type{
-		"condition_json": types.StringType,
-		"condition":      types.StringType,
+		"condition_json": jsontypes.NormalizedType{},
+		"condition":      jsontypes.NormalizedType{},
 		"level":          types.StringType,
 	}
 
@@ -664,14 +665,14 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the condition logic for the composite risk predictor. The value must be a valid JSON string.").Description,
 								Required:    true,
 
-								Validators: []validator.String{
-									stringvalidatorinternal.IsParseableJSON(),
-								},
+								CustomType: jsontypes.NormalizedType{},
 							},
 
 							"condition": schema.StringAttribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the condition logic for the composite risk predictor as applied to the service.").Description,
 								Computed:    true,
+
+								CustomType: jsontypes.NormalizedType{},
 							},
 
 							"level": schema.StringAttribute{
@@ -2912,7 +2913,7 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 	p.Deletable = framework.BoolOkToTF(apiObjectCommon.GetDeletableOk())
 
 	// Save the direct-to-state fields
-	compositeConditionJSON := types.StringNull()
+	compositeConditionJSON := jsontypes.NewNormalizedNull()
 	if !p.PredictorComposite.IsNull() && !p.PredictorComposite.IsUnknown() {
 
 		var predictorPlan predictorComposite
@@ -2997,7 +2998,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorBotDetection(apiObject 
 	return objValue, diags
 }
 
-func (p *riskPredictorResourceModel) toStateRiskPredictorComposite(apiObject *risk.RiskPredictorComposite, compositeConditionJSON basetypes.StringValue) (basetypes.ObjectValue, diag.Diagnostics) {
+func (p *riskPredictorResourceModel) toStateRiskPredictorComposite(apiObject *risk.RiskPredictorComposite, compositeConditionJSON jsontypes.Normalized) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if apiObject == nil || apiObject.GetId() == "" {
@@ -3024,7 +3025,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorComposite(apiObject *ri
 				return types.ObjectNull(predictorCompositeTFObjectTypes), diags
 			}
 
-			o["condition"] = framework.StringToTF(string(jsonString))
+			o["condition"] = jsontypes.NewNormalizedValue(string(jsonString))
 
 			if compositeConditionJSON.IsNull() || compositeConditionJSON.IsUnknown() {
 				o["condition_json"] = o["condition"]

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -21,7 +22,6 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	objectplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectplanmodifier"
 	stringplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringplanmodifier"
-	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -39,7 +39,7 @@ type applicationPushCredentialResourceModel struct {
 }
 
 type applicationPushCredentialFcmResourceModel struct {
-	GoogleServiceAccountCredentials types.String `tfsdk:"google_service_account_credentials"`
+	GoogleServiceAccountCredentials jsontypes.Normalized `tfsdk:"google_service_account_credentials"`
 }
 
 type applicationPushCredentialApnsResourceModel struct {
@@ -106,16 +106,14 @@ func (r *ApplicationPushCredentialResource) Schema(ctx context.Context, req reso
 						Required:            true,
 						Sensitive:           true,
 
+						CustomType: jsontypes.NormalizedType{},
+
 						PlanModifiers: []planmodifier.String{
 							stringplanmodifier.RequiresReplaceIf(
 								stringplanmodifierinternal.RequiresReplaceIfNowNull(),
 								"The attribute has been previously defined.  To nullify the attribute, it must be replaced.",
 								"The attribute has been previously defined.  To nullify the attribute, it must be replaced.",
 							),
-						},
-
-						Validators: []validator.String{
-							stringvalidatorinternal.IsParseableJSON(),
 						},
 					},
 				},
