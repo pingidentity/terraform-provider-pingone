@@ -1037,7 +1037,7 @@ resource "pingone_custom_domain_verify" "my_awesome_domain" {
   # ... other configuration parameters
 
   timeouts {
-    create = "5s"
+    create = "10m"
   }
 }
 ```
@@ -1049,7 +1049,7 @@ resource "pingone_custom_domain_verify" "my_awesome_domain" {
   # ... other configuration parameters
 
   timeouts = {
-    create = "5s"
+    create = "10m"
   }
 }
 ```
