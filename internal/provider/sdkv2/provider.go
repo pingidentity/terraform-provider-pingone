@@ -3,11 +3,8 @@ package sdkv2
 import (
 	"context"
 	"fmt"
-	"os"
-	"strconv"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
@@ -63,12 +60,6 @@ func New(version string) func() *schema.Provider {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "The PingOne region to use.  Options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.  Default value can be set with the `PINGONE_REGION` environment variable.",
-				},
-				"force_delete_production_type": {
-					Type:        schema.TypeBool,
-					Optional:    true,
-					Deprecated:  "This parameter is deprecated and will be removed in the next major release. Use the `global_options.environment.production_type_force_delete` block going forward.",
-					Description: "Choose whether to force-delete any configuration that has a `PRODUCTION` type parameter.  The platform default is that `PRODUCTION` type configuration will not destroy without intervention to protect stored data.  By default this parameter is set to `false` and can be overridden with the `PINGONE_FORCE_DELETE_PRODUCTION_TYPE` environment variable.",
 				},
 				"http_proxy": {
 					Type:        schema.TypeString,
@@ -184,7 +175,6 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 		var config client.Config
 
 		// Set the defaults
-		debugLogMessage := "[v5] Provider parameter %s missing, defaulting to environment variable"
 		if v, ok := d.Get("client_id").(string); ok && v != "" {
 			config.ClientID = v
 		}
@@ -213,19 +203,6 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 				ContainsUsersForceDelete: false,
 			},
 		}
-		if v, err := strconv.ParseBool(os.Getenv("PINGONE_FORCE_DELETE_PRODUCTION_TYPE")); err == nil && v {
-			tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "force_delete_production_type"), map[string]interface{}{
-				"env_var":       "PINGONE_FORCE_DELETE_PRODUCTION_TYPE",
-				"env_var_value": v,
-			})
-			config.GlobalOptions.Environment.ProductionTypeForceDelete = v
-		}
-
-		deprecatedForceDeleteSet := false
-		if v, ok := d.Get("force_delete_production_type").(bool); ok {
-			config.GlobalOptions.Environment.ProductionTypeForceDelete = v
-			deprecatedForceDeleteSet = true
-		}
 
 		if v, ok := d.Get("http_proxy").(string); ok && v != "" {
 			config.ProxyURL = &v
@@ -245,11 +222,6 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 
 			if v, ok := d.Get("environment").([]interface{}); ok && len(v) > 0 && v[0] != nil {
 				if v, ok := d.Get("production_type_force_delete").(bool); ok {
-
-					if deprecatedForceDeleteSet {
-						return nil, diag.FromErr(fmt.Errorf("Cannot set both `force_delete_production_type` and `global_options.environment.production_type_force_delete`"))
-					}
-
 					config.GlobalOptions.Environment.ProductionTypeForceDelete = v
 				}
 			}

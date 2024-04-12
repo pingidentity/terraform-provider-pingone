@@ -3,8 +3,6 @@ package framework
 import (
 	"context"
 	"fmt"
-	"os"
-	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -42,15 +40,14 @@ type pingOneProvider struct {
 
 // pingOneProviderModel describes the provider data model.
 type pingOneProviderModel struct {
-	ClientID                             types.String `tfsdk:"client_id"`
-	ClientSecret                         types.String `tfsdk:"client_secret"`
-	EnvironmentID                        types.String `tfsdk:"environment_id"`
-	APIAccessToken                       types.String `tfsdk:"api_access_token"`
-	Region                               types.String `tfsdk:"region"`
-	ServiceEndpoints                     types.List   `tfsdk:"service_endpoints"`
-	GlobalOptions                        types.List   `tfsdk:"global_options"`
-	ForceDeleteProductionEnvironmentType types.Bool   `tfsdk:"force_delete_production_type"`
-	HTTPProxy                            types.String `tfsdk:"http_proxy"`
+	ClientID         types.String `tfsdk:"client_id"`
+	ClientSecret     types.String `tfsdk:"client_secret"`
+	EnvironmentID    types.String `tfsdk:"environment_id"`
+	APIAccessToken   types.String `tfsdk:"api_access_token"`
+	Region           types.String `tfsdk:"region"`
+	ServiceEndpoints types.List   `tfsdk:"service_endpoints"`
+	GlobalOptions    types.List   `tfsdk:"global_options"`
+	HTTPProxy        types.String `tfsdk:"http_proxy"`
 }
 
 type pingOneProviderGlobalOptionsModel struct {
@@ -96,10 +93,6 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 
 	regionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The PingOne region to use.  Options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.  Default value can be set with the `PINGONE_REGION` environment variable.",
-	)
-
-	forceDeleteProductionTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Choose whether to force-delete any configuration that has a `PRODUCTION` type parameter.  The platform default is that `PRODUCTION` type configuration will not destroy without intervention to protect stored data.  By default this parameter is set to `false` and can be overridden with the `PINGONE_FORCE_DELETE_PRODUCTION_TYPE` environment variable.",
 	)
 
 	globalOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -168,13 +161,6 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 				Description:         regionDescription.Description,
 				MarkdownDescription: regionDescription.MarkdownDescription,
 				Optional:            true,
-			},
-
-			"force_delete_production_type": schema.BoolAttribute{
-				Description:         forceDeleteProductionTypeDescription.Description,
-				MarkdownDescription: forceDeleteProductionTypeDescription.MarkdownDescription,
-				Optional:            true,
-				DeprecationMessage:  "This parameter is deprecated and will be removed in the next major release. Use the `global_options.environment.production_type_force_delete` block going forward.",
 			},
 
 			"http_proxy": schema.StringAttribute{
@@ -279,7 +265,6 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 
 	// Set the defaults
 	tflog.Info(ctx, "[v6] Provider setting defaults..")
-	debugLogMessage := "[v6] Provider parameter %s missing, defaulting to environment variable"
 
 	globalOptions := &client.GlobalOptions{
 		Environment: &client.EnvironmentOptions{
@@ -288,14 +273,6 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		Population: &client.PopulationOptions{
 			ContainsUsersForceDelete: false,
 		},
-	}
-
-	if v, err := strconv.ParseBool(os.Getenv("PINGONE_FORCE_DELETE_PRODUCTION_TYPE")); err == nil && v {
-		tflog.Debug(ctx, fmt.Sprintf(debugLogMessage, "force_delete_production_type"), map[string]interface{}{
-			"env_var":       "PINGONE_FORCE_DELETE_PRODUCTION_TYPE",
-			"env_var_value": v,
-		})
-		globalOptions.Environment.ProductionTypeForceDelete = v
 	}
 
 	config := &pingone.Config{
@@ -310,12 +287,6 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 	if !data.HTTPProxy.IsNull() {
 		v := data.HTTPProxy.ValueString()
 		config.ProxyURL = &v
-	}
-
-	deprecatedForceDeleteSet := false
-	if !data.ForceDeleteProductionEnvironmentType.IsNull() {
-		globalOptions.Environment.ProductionTypeForceDelete = data.ForceDeleteProductionEnvironmentType.ValueBool()
-		deprecatedForceDeleteSet = true
 	}
 
 	if !data.GlobalOptions.IsNull() {
@@ -337,15 +308,6 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 
 				if len(globalOptionsEnvironmentData) > 0 {
 					if !globalOptionsEnvironmentData[0].ProductionTypeForceDelete.IsNull() {
-						if deprecatedForceDeleteSet {
-							resp.Diagnostics.AddAttributeError(
-								path.Root("force_delete_production_type"),
-								"Invalid provider configuration",
-								"Cannot set both `force_delete_production_type` and `global_options.environment.production_type_force_delete` in the PingOne provider configuration.  Please unset `force_delete_production_type` and use `global_options.environment.production_type_force_delete` going forward.",
-							)
-							return
-						}
-
 						globalOptions.Environment.ProductionTypeForceDelete = globalOptionsEnvironmentData[0].ProductionTypeForceDelete.ValueBool()
 					}
 				}
