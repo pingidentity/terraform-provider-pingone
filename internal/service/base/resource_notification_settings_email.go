@@ -472,8 +472,7 @@ func (p *NotificationSettingsEmailResourceModel) toState(apiObject *management.N
 		return diags
 	}
 
-	p.Id = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.Id = p.EnvironmentId
 
 	p.Host = framework.StringOkToTF(apiObject.GetHostOk())
 	p.Port = framework.Int32OkToTF(apiObject.GetPortOk())

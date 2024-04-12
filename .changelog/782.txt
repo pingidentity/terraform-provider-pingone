@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_notification_settings_email`: Fixed panic crash when attempting to import environment default notification email settings.
+```
