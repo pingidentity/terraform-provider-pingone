@@ -11,9 +11,11 @@ Version 1.0.0 of the PingOne Terraform provider is a major release that introduc
 
 ## Provider Configuration
 
+### `force_delete_production_type` optional parameter removed
+
+This parameter was previously deprecated and has been removed.  Use the `global_options.environment.production_type_force_delete` parameter going forward.
 
 ## Resource: pingone_application
-
 
 ### `access_control_group_options` parameter data type change
 
