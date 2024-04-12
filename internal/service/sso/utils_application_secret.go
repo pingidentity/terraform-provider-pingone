@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -17,8 +18,8 @@ import (
 var (
 	ApplicationSecretPreviousTFObjectTypes = map[string]attr.Type{
 		"secret":     types.StringType,
-		"expires_at": types.StringType,
-		"last_used":  types.StringType,
+		"expires_at": timetypes.RFC3339Type{},
+		"last_used":  timetypes.RFC3339Type{},
 	}
 )
 

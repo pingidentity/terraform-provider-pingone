@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -24,13 +25,13 @@ import (
 type VoicePhraseContentResource serviceClientType
 
 type voicePhraseContentResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	VoicePhraseId types.String `tfsdk:"voice_phrase_id"`
-	Locale        types.String `tfsdk:"locale"`
-	Content       types.String `tfsdk:"content"`
-	CreatedAt     types.String `tfsdk:"created_at"`
-	UpdatedAt     types.String `tfsdk:"updated_at"`
+	Id            types.String      `tfsdk:"id"`
+	EnvironmentId types.String      `tfsdk:"environment_id"`
+	VoicePhraseId types.String      `tfsdk:"voice_phrase_id"`
+	Locale        types.String      `tfsdk:"locale"`
+	Content       types.String      `tfsdk:"content"`
+	CreatedAt     timetypes.RFC3339 `tfsdk:"created_at"`
+	UpdatedAt     timetypes.RFC3339 `tfsdk:"updated_at"`
 }
 
 // Framework interfaces
@@ -109,6 +110,8 @@ func (r *VoicePhraseContentResource) Schema(ctx context.Context, req resource.Sc
 				Description: "Date and time the verify phrase content was created.",
 				Computed:    true,
 
+				CustomType: timetypes.RFC3339Type{},
+
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -117,6 +120,8 @@ func (r *VoicePhraseContentResource) Schema(ctx context.Context, req resource.Sc
 			"updated_at": schema.StringAttribute{
 				Description: "Date and time the verify phrase content was updated. Can be null.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 		},
 	}

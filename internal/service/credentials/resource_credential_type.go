@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -35,17 +36,17 @@ import (
 type CredentialTypeResource serviceClientType
 
 type CredentialTypeResourceModel struct {
-	Id                 types.String `tfsdk:"id"`
-	EnvironmentId      types.String `tfsdk:"environment_id"`
-	IssuerId           types.String `tfsdk:"issuer_id"`
-	CardType           types.String `tfsdk:"card_type"`
-	CardDesignTemplate types.String `tfsdk:"card_design_template"`
-	Description        types.String `tfsdk:"description"`
-	Metadata           types.Object `tfsdk:"metadata"`
-	RevokeOnDelete     types.Bool   `tfsdk:"revoke_on_delete"`
-	Title              types.String `tfsdk:"title"`
-	CreatedAt          types.String `tfsdk:"created_at"`
-	UpdatedAt          types.String `tfsdk:"updated_at"`
+	Id                 types.String      `tfsdk:"id"`
+	EnvironmentId      types.String      `tfsdk:"environment_id"`
+	IssuerId           types.String      `tfsdk:"issuer_id"`
+	CardType           types.String      `tfsdk:"card_type"`
+	CardDesignTemplate types.String      `tfsdk:"card_design_template"`
+	Description        types.String      `tfsdk:"description"`
+	Metadata           types.Object      `tfsdk:"metadata"`
+	RevokeOnDelete     types.Bool        `tfsdk:"revoke_on_delete"`
+	Title              types.String      `tfsdk:"title"`
+	CreatedAt          timetypes.RFC3339 `tfsdk:"created_at"`
+	UpdatedAt          timetypes.RFC3339 `tfsdk:"updated_at"`
 }
 
 type MetadataModel struct {
@@ -439,6 +440,8 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 				Description: "Date and time the object was created.",
 				Computed:    true,
 
+				CustomType: timetypes.RFC3339Type{},
+
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -447,6 +450,8 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 			"updated_at": schema.StringAttribute{
 				Description: "Date and time the object was updated. Can be null.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 		},
 	}

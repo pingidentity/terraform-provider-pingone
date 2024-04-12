@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -35,20 +36,20 @@ import (
 type VerifyPolicyResource serviceClientType
 
 type verifyPolicyResourceModel struct {
-	Id               types.String `tfsdk:"id"`
-	EnvironmentId    types.String `tfsdk:"environment_id"`
-	Name             types.String `tfsdk:"name"`
-	Default          types.Bool   `tfsdk:"default"`
-	Description      types.String `tfsdk:"description"`
-	GovernmentId     types.Object `tfsdk:"government_id"`
-	FacialComparison types.Object `tfsdk:"facial_comparison"`
-	Liveness         types.Object `tfsdk:"liveness"`
-	Email            types.Object `tfsdk:"email"`
-	Phone            types.Object `tfsdk:"phone"`
-	Transaction      types.Object `tfsdk:"transaction"`
-	Voice            types.Object `tfsdk:"voice"`
-	CreatedAt        types.String `tfsdk:"created_at"`
-	UpdatedAt        types.String `tfsdk:"updated_at"`
+	Id               types.String      `tfsdk:"id"`
+	EnvironmentId    types.String      `tfsdk:"environment_id"`
+	Name             types.String      `tfsdk:"name"`
+	Default          types.Bool        `tfsdk:"default"`
+	Description      types.String      `tfsdk:"description"`
+	GovernmentId     types.Object      `tfsdk:"government_id"`
+	FacialComparison types.Object      `tfsdk:"facial_comparison"`
+	Liveness         types.Object      `tfsdk:"liveness"`
+	Email            types.Object      `tfsdk:"email"`
+	Phone            types.Object      `tfsdk:"phone"`
+	Transaction      types.Object      `tfsdk:"transaction"`
+	Voice            types.Object      `tfsdk:"voice"`
+	CreatedAt        timetypes.RFC3339 `tfsdk:"created_at"`
+	UpdatedAt        timetypes.RFC3339 `tfsdk:"updated_at"`
 }
 
 type governmentIdModel struct {
@@ -1272,6 +1273,8 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 				Description: "Date and time the verify policy was created.",
 				Computed:    true,
 
+				CustomType: timetypes.RFC3339Type{},
+
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -1280,6 +1283,8 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 			"updated_at": schema.StringAttribute{
 				Description: "Date and time the verify policy was updated. Can be null.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 		},
 	}
