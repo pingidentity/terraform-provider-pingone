@@ -18,7 +18,6 @@ pingone_application_secret
 `data-source/pingone_application`: Removed `oidc_options.client_id` and `oidc_options.client_secret`.  Use the `pingone_application_secret` resource or data source going forward.
 ```
 
-
 ```release-note:enhancement
 `resource/pingone_application_secret`: Support for handling previous secrets for application secret rotation.
 ```
