@@ -11,11 +11,11 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func TestAccMFAPoliciesDataSource_ByAll(t *testing.T) {
+func TestAccMFADevicePoliciesDataSource_ByAll(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	dataSourceFullName := fmt.Sprintf("data.pingone_mfa_policies.%s", resourceName)
+	dataSourceFullName := fmt.Sprintf("data.pingone_mfa_device_policies.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 
@@ -30,11 +30,11 @@ func TestAccMFAPoliciesDataSource_ByAll(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPoliciesDataSourceConfig_ByAll(environmentName, licenseID, resourceName, name),
+				Config: testAccMFADevicePoliciesDataSourceConfig_ByAll(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "ids.#", "3"),
@@ -47,11 +47,11 @@ func TestAccMFAPoliciesDataSource_ByAll(t *testing.T) {
 	})
 }
 
-func testAccMFAPoliciesDataSourceConfig_ByAll(environmentName, licenseID, resourceName, name string) string {
+func testAccMFADevicePoliciesDataSourceConfig_ByAll(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-resource "pingone_mfa_policy" "%[3]s-1" {
+resource "pingone_mfa_device_policy" "%[3]s-1" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s-1"
 
@@ -81,7 +81,7 @@ resource "pingone_mfa_policy" "%[3]s-1" {
 
 }
 
-resource "pingone_mfa_policy" "%[3]s-2" {
+resource "pingone_mfa_device_policy" "%[3]s-2" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s-2"
 
@@ -111,12 +111,12 @@ resource "pingone_mfa_policy" "%[3]s-2" {
 
 }
 
-data "pingone_mfa_policies" "%[3]s" {
+data "pingone_mfa_device_policies" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
   depends_on = [
-    pingone_mfa_policy.%[3]s-1,
-    pingone_mfa_policy.%[3]s-2,
+    pingone_mfa_device_policy.%[3]s-1,
+    pingone_mfa_device_policy.%[3]s-2,
   ]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

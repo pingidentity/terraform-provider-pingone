@@ -16,11 +16,11 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func TestAccMFAPolicy_RemovalDrift(t *testing.T) {
+func TestAccMFADevicePolicy_RemovalDrift(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 
@@ -42,25 +42,25 @@ func TestAccMFAPolicy_RemovalDrift(t *testing.T) {
 			p1Client = acctest.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: testAccMFAPolicyConfig_FullSMS(resourceName, name),
-				Check:  mfa.MFAPolicy_GetIDs(resourceFullName, &environmentID, &mfaDevicePolicyID),
+				Config: testAccMFADevicePolicyConfig_FullSMS(resourceName, name),
+				Check:  mfa.MFADevicePolicy_GetIDs(resourceFullName, &environmentID, &mfaDevicePolicyID),
 			},
 			{
 				PreConfig: func() {
-					mfa.MFAPolicy_RemovalDrift_PreConfig(ctx, p1Client.API.MFAAPIClient, t, environmentID, mfaDevicePolicyID)
+					mfa.MFADevicePolicy_RemovalDrift_PreConfig(ctx, p1Client.API.MFAAPIClient, t, environmentID, mfaDevicePolicyID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
 			},
 			// Test removal of the environment
 			{
-				Config: testAccMFAPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  mfa.MFAPolicy_GetIDs(resourceFullName, &environmentID, &mfaDevicePolicyID),
+				Config: testAccMFADevicePolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  mfa.MFADevicePolicy_GetIDs(resourceFullName, &environmentID, &mfaDevicePolicyID),
 			},
 			{
 				PreConfig: func() {
@@ -73,11 +73,11 @@ func TestAccMFAPolicy_RemovalDrift(t *testing.T) {
 	})
 }
 
-func TestAccMFAPolicy_NewEnv(t *testing.T) {
+func TestAccMFADevicePolicy_NewEnv(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 
@@ -92,11 +92,11 @@ func TestAccMFAPolicy_NewEnv(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Config: testAccMFADevicePolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -107,11 +107,11 @@ func TestAccMFAPolicy_NewEnv(t *testing.T) {
 	})
 }
 
-func TestAccMFAPolicy_SMS_Full(t *testing.T) {
+func TestAccMFADevicePolicy_SMS_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
 
 	name := resourceName
 
@@ -121,11 +121,11 @@ func TestAccMFAPolicy_SMS_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_FullSMS(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_FullSMS(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "true"),
@@ -163,11 +163,11 @@ func TestAccMFAPolicy_SMS_Full(t *testing.T) {
 	})
 }
 
-func TestAccMFAPolicy_SMS_Minimal(t *testing.T) {
+func TestAccMFADevicePolicy_SMS_Minimal(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
 
 	name := resourceName
 
@@ -177,11 +177,11 @@ func TestAccMFAPolicy_SMS_Minimal(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_MinimalSMS(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_MinimalSMS(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "true"),
@@ -203,11 +203,11 @@ func TestAccMFAPolicy_SMS_Minimal(t *testing.T) {
 	})
 }
 
-func TestAccMFAPolicy_SMS_Change(t *testing.T) {
+func TestAccMFADevicePolicy_SMS_Change(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
 
 	name := resourceName
 
@@ -217,11 +217,11 @@ func TestAccMFAPolicy_SMS_Change(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_FullSMS(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_FullSMS(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "true"),
@@ -240,7 +240,7 @@ func TestAccMFAPolicy_SMS_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccMFAPolicyConfig_MinimalSMS(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_MinimalSMS(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "true"),
@@ -259,7 +259,7 @@ func TestAccMFAPolicy_SMS_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccMFAPolicyConfig_FullSMS(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_FullSMS(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "true"),
@@ -281,11 +281,11 @@ func TestAccMFAPolicy_SMS_Change(t *testing.T) {
 	})
 }
 
-func TestAccMFAPolicy_Voice_Full(t *testing.T) {
+func TestAccMFADevicePolicy_Voice_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
 
 	name := resourceName
 
@@ -295,11 +295,11 @@ func TestAccMFAPolicy_Voice_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_FullVoice(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_FullVoice(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "PROMPT_TO_SELECT"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
@@ -337,11 +337,11 @@ func TestAccMFAPolicy_Voice_Full(t *testing.T) {
 	})
 }
 
-func TestAccMFAPolicy_Voice_Minimal(t *testing.T) {
+func TestAccMFADevicePolicy_Voice_Minimal(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
 
 	name := resourceName
 
@@ -351,11 +351,11 @@ func TestAccMFAPolicy_Voice_Minimal(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_MinimalVoice(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_MinimalVoice(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
@@ -377,11 +377,11 @@ func TestAccMFAPolicy_Voice_Minimal(t *testing.T) {
 	})
 }
 
-func TestAccMFAPolicy_Voice_Change(t *testing.T) {
+func TestAccMFADevicePolicy_Voice_Change(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
 
 	name := resourceName
 
@@ -391,11 +391,11 @@ func TestAccMFAPolicy_Voice_Change(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_FullVoice(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_FullVoice(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "PROMPT_TO_SELECT"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
@@ -414,7 +414,7 @@ func TestAccMFAPolicy_Voice_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccMFAPolicyConfig_MinimalVoice(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_MinimalVoice(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
@@ -433,7 +433,7 @@ func TestAccMFAPolicy_Voice_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccMFAPolicyConfig_FullVoice(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_FullVoice(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "PROMPT_TO_SELECT"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
@@ -455,11 +455,11 @@ func TestAccMFAPolicy_Voice_Change(t *testing.T) {
 	})
 }
 
-func TestAccMFAPolicy_Email_Full(t *testing.T) {
+func TestAccMFADevicePolicy_Email_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
 
 	name := resourceName
 
@@ -469,11 +469,11 @@ func TestAccMFAPolicy_Email_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_FullEmail(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_FullEmail(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "ALWAYS_DISPLAY_DEVICES"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
@@ -511,11 +511,11 @@ func TestAccMFAPolicy_Email_Full(t *testing.T) {
 	})
 }
 
-func TestAccMFAPolicy_Email_Minimal(t *testing.T) {
+func TestAccMFADevicePolicy_Email_Minimal(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
 
 	name := resourceName
 
@@ -525,11 +525,11 @@ func TestAccMFAPolicy_Email_Minimal(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_MinimalEmail(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_MinimalEmail(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
@@ -551,11 +551,11 @@ func TestAccMFAPolicy_Email_Minimal(t *testing.T) {
 	})
 }
 
-func TestAccMFAPolicy_Email_Change(t *testing.T) {
+func TestAccMFADevicePolicy_Email_Change(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
 
 	name := resourceName
 
@@ -565,11 +565,11 @@ func TestAccMFAPolicy_Email_Change(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_FullEmail(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_FullEmail(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "ALWAYS_DISPLAY_DEVICES"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
@@ -588,7 +588,7 @@ func TestAccMFAPolicy_Email_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccMFAPolicyConfig_MinimalEmail(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_MinimalEmail(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
@@ -607,7 +607,7 @@ func TestAccMFAPolicy_Email_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccMFAPolicyConfig_FullEmail(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_FullEmail(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "device_selection", "ALWAYS_DISPLAY_DEVICES"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
@@ -629,11 +629,11 @@ func TestAccMFAPolicy_Email_Change(t *testing.T) {
 	})
 }
 
-func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
+func TestAccMFADevicePolicy_Mobile_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
 
 	name := resourceName
 
@@ -646,11 +646,11 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 			acctest.PreCheckGoogleFirebaseCredentials(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_FullMobile(resourceName, name, firebaseCredentials),
+				Config: testAccMFADevicePolicyConfig_FullMobile(resourceName, name, firebaseCredentials),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
@@ -740,7 +740,7 @@ func TestAccMFAPolicy_Mobile_Full(t *testing.T) {
 	})
 }
 
-func TestAccMFAPolicy_Mobile_IntegrityDetectionErrors(t *testing.T) {
+func TestAccMFADevicePolicy_Mobile_IntegrityDetectionErrors(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -753,24 +753,24 @@ func TestAccMFAPolicy_Mobile_IntegrityDetectionErrors(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_MobileIntegrityDetectionError_1(resourceName, name),
-				// Integrity detection (`mobile.application.integrity_detection`) has no effect when the MFAPolicy resource has integrity detection disabled
+				Config: testAccMFADevicePolicyConfig_MobileIntegrityDetectionError_1(resourceName, name),
+				// Integrity detection (`mobile.application.integrity_detection`) has no effect when the MFADevicePolicy resource has integrity detection disabled
 				ExpectError: regexp.MustCompile("Integrity detection \\(`mobile\\.application\\.integrity_detection`\\) has no effect when the Application resource has integrity detection disabled"),
 			},
 			{
-				Config: testAccMFAPolicyConfig_MobileIntegrityDetectionError_2(resourceName, name),
-				// Integrity detection (`mobile.application.integrity_detection`) must be set when the MFAPolicy resource has integrity detection enabled
+				Config: testAccMFADevicePolicyConfig_MobileIntegrityDetectionError_2(resourceName, name),
+				// Integrity detection (`mobile.application.integrity_detection`) must be set when the MFADevicePolicy resource has integrity detection enabled
 				ExpectError: regexp.MustCompile("Integrity detection \\(`mobile\\.application\\.integrity_detection`\\) must be set when the Application resource has integrity detection enabled"),
 			},
 		},
 	})
 }
 
-func TestAccMFAPolicy_Mobile_BadMFAPolicyErrors(t *testing.T) {
+func TestAccMFADevicePolicy_Mobile_BadMFADevicePolicyErrors(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -783,34 +783,34 @@ func TestAccMFAPolicy_Mobile_BadMFAPolicyErrors(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccMFAPolicyConfig_MobileBadApplicationError_1(resourceName, name),
+				Config:      testAccMFADevicePolicyConfig_MobileBadApplicationError_1(resourceName, name),
 				ExpectError: regexp.MustCompile("Application referenced in `mobile.application.id` does not exist"),
 			},
 			{
-				Config:      testAccMFAPolicyConfig_MobileBadApplicationError_2(resourceName, name),
+				Config:      testAccMFADevicePolicyConfig_MobileBadApplicationError_2(resourceName, name),
 				ExpectError: regexp.MustCompile("Application referenced in `mobile.application.id` is not of type OIDC"),
 			},
 			{
-				Config:      testAccMFAPolicyConfig_MobileBadApplicationError_3(resourceName, name),
+				Config:      testAccMFADevicePolicyConfig_MobileBadApplicationError_3(resourceName, name),
 				ExpectError: regexp.MustCompile("Application referenced in `mobile.application.id` is OIDC, but is not the required `Native` OIDC application type"),
 			},
 			{
-				Config:      testAccMFAPolicyConfig_MobileBadApplicationError_4(resourceName, name),
+				Config:      testAccMFADevicePolicyConfig_MobileBadApplicationError_4(resourceName, name),
 				ExpectError: regexp.MustCompile("Application referenced in `mobile.application.id` does not contain mobile application configuration"),
 			},
 		},
 	})
 }
 
-func TestAccMFAPolicy_Mobile_Minimal(t *testing.T) {
+func TestAccMFADevicePolicy_Mobile_Minimal(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
 
 	name := resourceName
 
@@ -820,11 +820,11 @@ func TestAccMFAPolicy_Mobile_Minimal(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_MinimalMobile(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_MinimalMobile(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
@@ -842,11 +842,11 @@ func TestAccMFAPolicy_Mobile_Minimal(t *testing.T) {
 	})
 }
 
-func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
+func TestAccMFADevicePolicy_Mobile_Change(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
 
 	name := resourceName
 
@@ -859,11 +859,11 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 			acctest.PreCheckGoogleFirebaseCredentials(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_FullMobile(resourceName, name, firebaseCredentials),
+				Config: testAccMFADevicePolicyConfig_FullMobile(resourceName, name, firebaseCredentials),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
@@ -934,7 +934,7 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccMFAPolicyConfig_MinimalMobile(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_MinimalMobile(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
@@ -949,7 +949,7 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccMFAPolicyConfig_FullMobile(resourceName, name, firebaseCredentials),
+				Config: testAccMFADevicePolicyConfig_FullMobile(resourceName, name, firebaseCredentials),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
@@ -1023,11 +1023,11 @@ func TestAccMFAPolicy_Mobile_Change(t *testing.T) {
 	})
 }
 
-func TestAccMFAPolicy_Totp_Full(t *testing.T) {
+func TestAccMFADevicePolicy_Totp_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
 
 	name := resourceName
 
@@ -1037,11 +1037,11 @@ func TestAccMFAPolicy_Totp_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_FullTotp(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_FullTotp(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
@@ -1076,11 +1076,11 @@ func TestAccMFAPolicy_Totp_Full(t *testing.T) {
 	})
 }
 
-func TestAccMFAPolicy_Totp_Minimal(t *testing.T) {
+func TestAccMFADevicePolicy_Totp_Minimal(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
 
 	name := resourceName
 
@@ -1090,11 +1090,11 @@ func TestAccMFAPolicy_Totp_Minimal(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_MinimalTotp(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_MinimalTotp(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
@@ -1113,11 +1113,11 @@ func TestAccMFAPolicy_Totp_Minimal(t *testing.T) {
 	})
 }
 
-func TestAccMFAPolicy_Totp_Change(t *testing.T) {
+func TestAccMFADevicePolicy_Totp_Change(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
 
 	name := resourceName
 
@@ -1127,11 +1127,11 @@ func TestAccMFAPolicy_Totp_Change(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_FullTotp(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_FullTotp(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
@@ -1147,7 +1147,7 @@ func TestAccMFAPolicy_Totp_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccMFAPolicyConfig_MinimalTotp(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_MinimalTotp(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
@@ -1163,7 +1163,7 @@ func TestAccMFAPolicy_Totp_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccMFAPolicyConfig_FullTotp(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_FullTotp(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
@@ -1182,11 +1182,11 @@ func TestAccMFAPolicy_Totp_Change(t *testing.T) {
 	})
 }
 
-func TestAccMFAPolicy_FIDO2_Full(t *testing.T) {
+func TestAccMFADevicePolicy_FIDO2_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
 
 	name := resourceName
 
@@ -1196,11 +1196,11 @@ func TestAccMFAPolicy_FIDO2_Full(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_FullFIDO2(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_FullFIDO2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
@@ -1233,11 +1233,11 @@ func TestAccMFAPolicy_FIDO2_Full(t *testing.T) {
 	})
 }
 
-func TestAccMFAPolicy_FIDO2_Minimal(t *testing.T) {
+func TestAccMFADevicePolicy_FIDO2_Minimal(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
 
 	name := resourceName
 
@@ -1247,11 +1247,11 @@ func TestAccMFAPolicy_FIDO2_Minimal(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_MinimalFIDO2(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_MinimalFIDO2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
@@ -1268,11 +1268,11 @@ func TestAccMFAPolicy_FIDO2_Minimal(t *testing.T) {
 	})
 }
 
-func TestAccMFAPolicy_FIDO2_Change(t *testing.T) {
+func TestAccMFADevicePolicy_FIDO2_Change(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
 
 	name := resourceName
 
@@ -1282,11 +1282,11 @@ func TestAccMFAPolicy_FIDO2_Change(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_FullFIDO2(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_FullFIDO2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
@@ -1300,7 +1300,7 @@ func TestAccMFAPolicy_FIDO2_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccMFAPolicyConfig_MinimalFIDO2(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_MinimalFIDO2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
@@ -1314,7 +1314,7 @@ func TestAccMFAPolicy_FIDO2_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccMFAPolicyConfig_FullFIDO2(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_FullFIDO2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "sms.0.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.0.enabled", "false"),
@@ -1331,11 +1331,11 @@ func TestAccMFAPolicy_FIDO2_Change(t *testing.T) {
 	})
 }
 
-func TestAccMFAPolicy_DataModel(t *testing.T) {
+func TestAccMFADevicePolicy_DataModel(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
 
 	name := resourceName
 
@@ -1345,12 +1345,12 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Minimal from new
 			{
-				Config: testAccMFAPolicyConfig_MinimalFIDO2(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_MinimalFIDO2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -1360,12 +1360,12 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 				),
 			},
 			{
-				Config:  testAccMFAPolicyConfig_MinimalFIDO2(resourceName, name),
+				Config:  testAccMFADevicePolicyConfig_MinimalFIDO2(resourceName, name),
 				Destroy: true,
 			},
 			// Full from new
 			{
-				Config: testAccMFAPolicyConfig_FullFIDO2(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_FullFIDO2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -1375,12 +1375,12 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 				),
 			},
 			{
-				Config:  testAccMFAPolicyConfig_FullFIDO2(resourceName, name),
+				Config:  testAccMFADevicePolicyConfig_FullFIDO2(resourceName, name),
 				Destroy: true,
 			},
 			// Update
 			{
-				Config: testAccMFAPolicyConfig_FullFIDO2(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_FullFIDO2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -1390,7 +1390,7 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccMFAPolicyConfig_MinimalFIDO2(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_MinimalFIDO2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -1400,7 +1400,7 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccMFAPolicyConfig_FullFIDO2(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_FullFIDO2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -1413,11 +1413,11 @@ func TestAccMFAPolicy_DataModel(t *testing.T) {
 	})
 }
 
-func TestAccMFAPolicy_BadParameters(t *testing.T) {
+func TestAccMFADevicePolicy_BadParameters(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
 
 	name := resourceName
 
@@ -1427,12 +1427,12 @@ func TestAccMFAPolicy_BadParameters(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: testAccMFAPolicyConfig_FullSMS(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_FullSMS(resourceName, name),
 			},
 			// Errors
 			{
@@ -1456,11 +1456,11 @@ func TestAccMFAPolicy_BadParameters(t *testing.T) {
 	})
 }
 
-func TestAccMFAPolicy_DeleteDependentSOPFinalAction(t *testing.T) {
+func TestAccMFADevicePolicy_DeleteDependentSOPFinalAction(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_policy.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
 
 	name := resourceName
 
@@ -1470,28 +1470,28 @@ func TestAccMFAPolicy_DeleteDependentSOPFinalAction(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFAPolicy_CheckDestroy,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMFAPolicyConfig_DeleteDependentSOPFinalAction(resourceName, name),
+				Config: testAccMFADevicePolicyConfig_DeleteDependentSOPFinalAction(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 			{
-				Config:  testAccMFAPolicyConfig_DeleteDependentSOPFinalAction(resourceName, name),
+				Config:  testAccMFADevicePolicyConfig_DeleteDependentSOPFinalAction(resourceName, name),
 				Destroy: true,
 			},
 		},
 	})
 }
 
-func testAccMFAPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
+func testAccMFADevicePolicyConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_mfa_policy" "%[3]s" {
+resource "pingone_mfa_device_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
 
@@ -1522,11 +1522,11 @@ resource "pingone_mfa_policy" "%[3]s" {
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccMFAPolicyConfig_FullSMS(resourceName, name string) string {
+func testAccMFADevicePolicyConfig_FullSMS(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_mfa_policy" "%[2]s" {
+resource "pingone_mfa_device_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
@@ -1569,11 +1569,11 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccMFAPolicyConfig_MinimalSMS(resourceName, name string) string {
+func testAccMFADevicePolicyConfig_MinimalSMS(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_mfa_policy" "%[2]s" {
+resource "pingone_mfa_device_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
@@ -1604,11 +1604,11 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccMFAPolicyConfig_FullVoice(resourceName, name string) string {
+func testAccMFADevicePolicyConfig_FullVoice(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_mfa_policy" "%[2]s" {
+resource "pingone_mfa_device_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
@@ -1651,11 +1651,11 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccMFAPolicyConfig_MinimalVoice(resourceName, name string) string {
+func testAccMFADevicePolicyConfig_MinimalVoice(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_mfa_policy" "%[2]s" {
+resource "pingone_mfa_device_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
@@ -1686,11 +1686,11 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccMFAPolicyConfig_FullEmail(resourceName, name string) string {
+func testAccMFADevicePolicyConfig_FullEmail(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_mfa_policy" "%[2]s" {
+resource "pingone_mfa_device_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
@@ -1733,11 +1733,11 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccMFAPolicyConfig_MinimalEmail(resourceName, name string) string {
+func testAccMFADevicePolicyConfig_MinimalEmail(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_mfa_policy" "%[2]s" {
+resource "pingone_mfa_device_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
@@ -1768,7 +1768,7 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccMFAPolicyConfig_FullMobile(resourceName, name, key string) string {
+func testAccMFADevicePolicyConfig_FullMobile(resourceName, name, key string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -1934,7 +1934,7 @@ resource "pingone_mfa_application_push_credential" "%[2]s-4" {
   }
 }
 
-resource "pingone_mfa_policy" "%[2]s" {
+resource "pingone_mfa_device_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
@@ -2031,7 +2031,7 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, key)
 }
 
-func testAccMFAPolicyConfig_MobileIntegrityDetectionError_1(resourceName, name string) string {
+func testAccMFADevicePolicyConfig_MobileIntegrityDetectionError_1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2062,7 +2062,7 @@ resource "pingone_application" "%[2]s" {
   }
 }
 
-resource "pingone_mfa_policy" "%[2]s" {
+resource "pingone_mfa_device_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
@@ -2112,7 +2112,7 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccMFAPolicyConfig_MobileIntegrityDetectionError_2(resourceName, name string) string {
+func testAccMFADevicePolicyConfig_MobileIntegrityDetectionError_2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2152,7 +2152,7 @@ resource "pingone_application" "%[2]s" {
   }
 }
 
-resource "pingone_mfa_policy" "%[2]s" {
+resource "pingone_mfa_device_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
@@ -2200,11 +2200,11 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccMFAPolicyConfig_MobileBadApplicationError_1(resourceName, name string) string {
+func testAccMFADevicePolicyConfig_MobileBadApplicationError_1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_mfa_policy" "%[2]s" {
+resource "pingone_mfa_device_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
@@ -2252,7 +2252,7 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccMFAPolicyConfig_MobileBadApplicationError_2(resourceName, name string) string {
+func testAccMFADevicePolicyConfig_MobileBadApplicationError_2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2271,7 +2271,7 @@ resource "pingone_application" "%[2]s" {
   }
 }
 
-resource "pingone_mfa_policy" "%[2]s" {
+resource "pingone_mfa_device_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
@@ -2319,7 +2319,7 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccMFAPolicyConfig_MobileBadApplicationError_3(resourceName, name string) string {
+func testAccMFADevicePolicyConfig_MobileBadApplicationError_3(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2339,7 +2339,7 @@ resource "pingone_application" "%[2]s" {
   }
 }
 
-resource "pingone_mfa_policy" "%[2]s" {
+resource "pingone_mfa_device_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
@@ -2387,7 +2387,7 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccMFAPolicyConfig_MobileBadApplicationError_4(resourceName, name string) string {
+func testAccMFADevicePolicyConfig_MobileBadApplicationError_4(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2407,7 +2407,7 @@ resource "pingone_application" "%[2]s" {
   }
 }
 
-resource "pingone_mfa_policy" "%[2]s" {
+resource "pingone_mfa_device_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
@@ -2454,11 +2454,11 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccMFAPolicyConfig_MinimalMobile(resourceName, name string) string {
+func testAccMFADevicePolicyConfig_MinimalMobile(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_mfa_policy" "%[2]s" {
+resource "pingone_mfa_device_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
@@ -2489,11 +2489,11 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccMFAPolicyConfig_FullTotp(resourceName, name string) string {
+func testAccMFADevicePolicyConfig_FullTotp(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_mfa_policy" "%[2]s" {
+resource "pingone_mfa_device_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
@@ -2532,11 +2532,11 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccMFAPolicyConfig_MinimalTotp(resourceName, name string) string {
+func testAccMFADevicePolicyConfig_MinimalTotp(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_mfa_policy" "%[2]s" {
+resource "pingone_mfa_device_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
@@ -2567,7 +2567,7 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccMFAPolicyConfig_FullFIDO2(resourceName, name string) string {
+func testAccMFADevicePolicyConfig_FullFIDO2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2608,7 +2608,7 @@ resource "pingone_mfa_fido2_policy" "%[2]s" {
   }
 }
 
-resource "pingone_mfa_policy" "%[2]s" {
+resource "pingone_mfa_device_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
@@ -2645,7 +2645,7 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccMFAPolicyConfig_MinimalFIDO2(resourceName, name string) string {
+func testAccMFADevicePolicyConfig_MinimalFIDO2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2686,7 +2686,7 @@ resource "pingone_mfa_fido2_policy" "%[2]s" {
   }
 }
 
-resource "pingone_mfa_policy" "%[2]s" {
+resource "pingone_mfa_device_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
@@ -2717,7 +2717,7 @@ resource "pingone_mfa_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccMFAPolicyConfig_DeleteDependentSOPFinalAction(resourceName, name string) string {
+func testAccMFADevicePolicyConfig_DeleteDependentSOPFinalAction(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -2726,7 +2726,7 @@ resource "pingone_sign_on_policy" "%[2]s" {
   name           = "%[3]s"
 }
 
-resource "pingone_mfa_policy" "%[2]s" {
+resource "pingone_mfa_device_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
@@ -2763,7 +2763,7 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
   priority = "1"
 
   mfa {
-    device_sign_on_policy_id = pingone_mfa_policy.%[2]s.id
+    device_sign_on_policy_id = pingone_mfa_device_policy.%[2]s.id
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

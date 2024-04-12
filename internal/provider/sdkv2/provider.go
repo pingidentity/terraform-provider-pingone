@@ -167,8 +167,8 @@ func New(version string) func() *schema.Provider {
 				"pingone_resource":                              sso.ResourceResource(),
 				"pingone_sign_on_policy_action":                 sso.ResourceSignOnPolicyAction(),
 
-				"pingone_mfa_policy":   mfa.ResourceMFAPolicy(),
-				"pingone_mfa_settings": mfa.ResourceMFASettings(),
+				"pingone_mfa_device_policy": mfa.ResourceMFADevicePolicy(),
+				"pingone_mfa_settings":      mfa.ResourceMFASettings(),
 			},
 		}
 

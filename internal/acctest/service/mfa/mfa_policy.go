@@ -11,7 +11,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
 
-func MFAPolicy_CheckDestroy(s *terraform.State) error {
+func MFADevicePolicy_CheckDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -23,7 +23,7 @@ func MFAPolicy_CheckDestroy(s *terraform.State) error {
 	apiClient := p1Client.API.MFAAPIClient
 
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_mfa_policy" {
+		if rs.Type != "pingone_mfa_device_policy" {
 			continue
 		}
 
@@ -53,7 +53,7 @@ func MFAPolicy_CheckDestroy(s *terraform.State) error {
 	return nil
 }
 
-func MFAPolicy_GetIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+func MFADevicePolicy_GetIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -68,7 +68,7 @@ func MFAPolicy_GetIDs(resourceName string, environmentID, resourceID *string) re
 	}
 }
 
-func MFAPolicy_RemovalDrift_PreConfig(ctx context.Context, apiClient *mfa.APIClient, t *testing.T, environmentID, mfaDevicePolicyID string) {
+func MFADevicePolicy_RemovalDrift_PreConfig(ctx context.Context, apiClient *mfa.APIClient, t *testing.T, environmentID, mfaDevicePolicyID string) {
 	if environmentID == "" || mfaDevicePolicyID == "" {
 		t.Fatalf("One of environment ID or MFA device policy ID cannot be determined. Environment ID: %s, MFA Device Policy ID: %s", environmentID, mfaDevicePolicyID)
 	}

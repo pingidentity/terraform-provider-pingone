@@ -1,11 +1,11 @@
 ---
-page_title: "pingone_mfa_policy Resource - terraform-provider-pingone"
+page_title: "pingone_mfa_device_policy Resource - terraform-provider-pingone"
 subcategory: "MFA"
 description: |-
   Resource to create and manage MFA Policies in a PingOne Environment.
 ---
 
-# pingone_mfa_policy (Resource)
+# pingone_mfa_device_policy (Resource)
 
 Resource to create and manage MFA Policies in a PingOne Environment.
 
@@ -18,7 +18,7 @@ resource "pingone_environment" "my_environment" {
   # ...
 }
 
-resource "pingone_mfa_policy" "my_awesome_mfa_policy" {
+resource "pingone_mfa_device_policy" "my_awesome_mfa_policy" {
   environment_id = pingone_environment.my_environment.id
   name           = "My awesome MFA policy"
 
@@ -112,7 +112,7 @@ resource "pingone_mfa_application_push_credential" "example_apns" {
   }
 }
 
-resource "pingone_mfa_policy" "my_awesome_mfa_policy" {
+resource "pingone_mfa_device_policy" "my_awesome_mfa_policy" {
   environment_id = pingone_environment.my_environment.id
   name           = "My awesome MFA policy"
 
@@ -314,5 +314,5 @@ Optional:
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-$ terraform import pingone_mfa_policy.example <environment_id>/<mfa_policy_id>
+$ terraform import pingone_mfa_device_policy.example <environment_id>/<mfa_policy_id>
 ```

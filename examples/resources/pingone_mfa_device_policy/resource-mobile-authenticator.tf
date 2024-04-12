@@ -57,7 +57,7 @@ resource "pingone_mfa_application_push_credential" "example_apns" {
   }
 }
 
-resource "pingone_mfa_policy" "my_awesome_mfa_policy" {
+resource "pingone_mfa_device_policy" "my_awesome_mfa_policy" {
   environment_id = pingone_environment.my_environment.id
   name           = "My awesome MFA policy"
 
