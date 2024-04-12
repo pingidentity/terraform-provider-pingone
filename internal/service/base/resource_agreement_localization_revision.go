@@ -121,9 +121,6 @@ func (r *AgreementLocalizationRevisionResource) Schema(ctx context.Context, req 
 					stringplanmodifier.RequiresReplace(),
 					stringplanmodifier.UseStateForUnknown(),
 				},
-				Validators: []validator.String{
-					stringvalidator.RegexMatches(verify.RFC3339Regexp, "Attribute must be a valid RFC3339 date/time string."),
-				},
 			},
 
 			"not_valid_after": schema.StringAttribute{
