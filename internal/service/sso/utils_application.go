@@ -3,16 +3,12 @@ package sso
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 )
 
@@ -383,24 +379,4 @@ func applicationSamlSpVerificationOkToTF(apiObject *management.ApplicationSAMLAl
 	diags.Append(d...)
 
 	return returnVar, diags
-}
-
-func applicationOIDCSecretDataSourceRetryConditions(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
-
-	var err error
-
-	if p1error != nil {
-
-		if m, _ := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
-			tflog.Warn(ctx, "Insufficient PingOne privileges detected")
-			return true
-		}
-		if err != nil {
-			tflog.Warn(ctx, "Cannot match error string for retry")
-			return false
-		}
-
-	}
-
-	return false
 }
