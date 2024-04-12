@@ -26,16 +26,22 @@ func TestAccApplicationSecretDataSource_Basic(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.ApplicationSecret_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				VersionConstraint: "0.11.1",
+				Source:            "hashicorp/time",
+			},
+		},
+		CheckDestroy: sso.ApplicationSecret_CheckDestroy,
+		ErrorCheck:   acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccApplicationSecretDataSourceConfig_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckNoResourceAttr(dataSourceFullName, "previous.secret"),
-					resource.TestCheckNoResourceAttr(dataSourceFullName, "previous.expires_at"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "previous.secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "previous.expires_at", verify.RFC3339Regexp),
 					resource.TestCheckNoResourceAttr(dataSourceFullName, "previous.last_used"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 				),
@@ -59,11 +65,17 @@ func TestAccApplicationSecretDataSource_Rotation(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.ApplicationSecret_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				VersionConstraint: "0.11.1",
+				Source:            "hashicorp/time",
+			},
+		},
+		CheckDestroy: sso.ApplicationSecret_CheckDestroy,
+		ErrorCheck:   acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationSecretDataSourceConfig_Full(resourceName, name),
+				Config: testAccApplicationSecretDataSourceConfig_Rotation1(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckNoResourceAttr(dataSourceFullName, "previous.secret"),
 					resource.TestCheckNoResourceAttr(dataSourceFullName, "previous.expires_at"),
@@ -71,13 +83,12 @@ func TestAccApplicationSecretDataSource_Rotation(t *testing.T) {
 					resource.TestMatchResourceAttr(dataSourceFullName, "secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 				),
 			},
-			// rotate
 			{
-				Config: testAccApplicationSecretDataSourceConfig_Full(resourceName, name),
+				Config: testAccApplicationSecretDataSourceConfig_Rotation2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "previous.secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "previous.expires_at", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "previous.last_used", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
+					resource.TestMatchResourceAttr(dataSourceFullName, "previous.expires_at", verify.RFC3339Regexp),
+					resource.TestCheckNoResourceAttr(dataSourceFullName, "previous.last_used"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 				),
 			},
@@ -149,10 +160,101 @@ resource "pingone_application" "%[2]s" {
   }
 }
 
+resource "time_offset" "%[2]s" {
+	offset_minutes = 10
+  }
+
+resource "pingone_application_secret" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  previous = {
+	expires_at = time_offset.%[2]s.rfc3339
+  }
+}
+
 data "pingone_application_secret" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
+
+  depends_on = [
+	pingone_application_secret.%[2]s,
+  ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationSecretDataSourceConfig_Rotation1(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options = {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+
+resource "pingone_application_secret" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+}
+
+data "pingone_application_secret" "%[2]s" {
+	environment_id = data.pingone_environment.general_test.id
+	application_id = pingone_application.%[2]s.id
+
+	depends_on = [
+		pingone_application_secret.%[2]s,
+	]
+  }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationSecretDataSourceConfig_Rotation2(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options = {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+
+resource "time_offset" "%[2]s" {
+	offset_minutes = 10
+  }
+
+resource "pingone_application_secret" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  previous = {
+	expires_at = time_offset.%[2]s.rfc3339
+  }
+}
+
+data "pingone_application_secret" "%[2]s" {
+	environment_id = data.pingone_environment.general_test.id
+	application_id = pingone_application.%[2]s.id
+
+	depends_on = [
+		pingone_application_secret.%[2]s,
+	]
+  }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationSecretDataSourceConfig_IncorrectApplicationType(resourceName, name string) string {
