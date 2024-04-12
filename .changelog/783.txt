@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_language`: Updated the list of languages that are reserved in the platform.
+```

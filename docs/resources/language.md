@@ -29,7 +29,7 @@ resource "pingone_language" "my_customers_language" {
 ### Required
 
 - `environment_id` (String) The ID of the environment to create the language in.
-- `locale` (String) An ISO standard language code. For more information about standard language codes, see [ISO Language Code Table](http://www.lingoes.net/en/translator/langcode.htm).  The following language codes are reserved as they are created automatically in the environment: `de`, `en`, `es`, `fr`, `fr-CA`, `it`, `ja`, `ko`, `nl`, `pt`, `ru`, `th`, `tr`, `zh`.
+- `locale` (String) An ISO standard language code. For more information about standard language codes, see [ISO Language Code Table](http://www.lingoes.net/en/translator/langcode.htm).  The following language codes are reserved as they are created automatically in the environment: `cs`, `de`, `en`, `es`, `fr`, `fr-CA`, `hu`, `it`, `ja`, `ko`, `nl`, `pl`, `pt`, `ru`, `th`, `tr`, `zh`.
 
 ### Read-Only
 
