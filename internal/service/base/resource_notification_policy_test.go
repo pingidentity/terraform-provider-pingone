@@ -431,10 +431,12 @@ resource "pingone_notification_policy" "%[3]s" {
 
   name = "%[4]s"
 
-  quota {
-    type  = "ENVIRONMENT"
-    total = 10000
-  }
+  quota = [
+    {
+      type  = "ENVIRONMENT"
+      total = 10000
+    }
+  ]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -447,17 +449,18 @@ resource "pingone_notification_policy" "%[2]s" {
 
   name = "%[3]s"
 
-  quota {
-    type             = "ENVIRONMENT"
-    delivery_methods = ["SMS", "Voice"]
-    total            = 10000
-  }
-
-  quota {
-    type             = "ENVIRONMENT"
-    delivery_methods = ["Email"]
-    total            = 10000
-  }
+  quota = [
+    {
+      type             = "ENVIRONMENT"
+      delivery_methods = ["SMS", "Voice"]
+      total            = 10000
+    },
+    {
+      type             = "ENVIRONMENT"
+      delivery_methods = ["Email"]
+      total            = 10000
+    }
+  ]
 
   country_limit = {
     type             = "DENIED"
@@ -491,16 +494,17 @@ resource "pingone_notification_policy" "%[2]s" {
 
   name = "%[3]s"
 
-  quota {
-    type  = "ENVIRONMENT"
-    total = 10000
-  }
-
-  quota {
-    type             = "ENVIRONMENT"
-    delivery_methods = ["Email"]
-    total            = 500
-  }
+  quota = [
+    {
+      type  = "ENVIRONMENT"
+      total = 10000
+    },
+    {
+      type             = "ENVIRONMENT"
+      delivery_methods = ["Email"]
+      total            = 500
+    }
+  ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -513,12 +517,14 @@ resource "pingone_notification_policy" "%[2]s" {
 
   name = "%[3]s"
 
-  quota {
-    type             = "USER"
-    delivery_methods = ["SMS"]
-    used             = 40
-    unused           = 45
-  }
+  quota = [
+    {
+      type             = "USER"
+      delivery_methods = ["SMS"]
+      used             = 40
+      unused           = 45
+    }
+  ]
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -543,11 +549,13 @@ resource "pingone_notification_policy" "%[2]s" {
 
   name = "%[3]s"
 
-  quota {
-    type   = "USER"
-    used   = 55
-    unused = 45
-  }
+  quota = [
+    {
+      type   = "USER"
+      used   = 55
+      unused = 45
+    }
+  ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -560,11 +568,13 @@ resource "pingone_notification_policy" "%[2]s" {
 
   name = "%[3]s"
 
-  quota {
-    type             = "USER"
-    delivery_methods = ["SMS", "Email"]
-    total            = 100
-  }
+  quota = [
+    {
+      type             = "USER"
+      delivery_methods = ["SMS", "Email"]
+      total            = 100
+    }
+  ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 

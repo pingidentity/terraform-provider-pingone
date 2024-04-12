@@ -1831,6 +1831,53 @@ This parameter was previously deprecated and has been removed.  Use the `fido2` 
 
 This parameter was previously deprecated and has been removed.  Device authentication parameters have moved to the `pingone_mfa_device_policy` resource.
 
+## Resource: pingone_notification_policy
+
+### `quota` schema type change
+
+This parameter `quota` was previously a list block data type, and is now a set of nested objects type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_notification_policy" "my_awesome_notification_policy" {
+  # ... other configuration parameters
+
+  quota {
+    type             = "USER"
+    delivery_methods = ["SMS", "Voice"]
+    total            = 30
+  }
+  
+  quota {
+    type             = "USER"
+    delivery_methods = ["Email"]
+    total            = 30
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_notification_policy" "my_awesome_notification_policy" {
+  # ... other configuration parameters
+
+  quota = [
+    {
+      type             = "USER"
+      delivery_methods = ["SMS", "Voice"]
+      total            = 30
+    },
+    {
+      type             = "USER"
+      delivery_methods = ["Email"]
+      total            = 30
+    }
+  ]
+}
+```
+
 ## Resource: pingone_resource_attribute
 
 ### `resource_id` parameter changed

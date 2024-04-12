@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -37,7 +36,7 @@ type NotificationPolicyResourceModel struct {
 	Name          types.String `tfsdk:"name"`
 	Default       types.Bool   `tfsdk:"default"`
 	CountryLimit  types.Object `tfsdk:"country_limit"`
-	Quota         types.List   `tfsdk:"quota"`
+	Quota         types.Set    `tfsdk:"quota"`
 	Id            types.String `tfsdk:"id"`
 }
 
@@ -99,7 +98,7 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 	const maxQuotaLimit = 2
 
 	quotaDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object block that define the SMS/Voice limits.",
+		"A set of objects that define the SMS/Voice limits.  A maximum of two quota objects can be defined, one for SMS and/or Voice quota, and one for Email quota.",
 	)
 
 	defaultDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -248,14 +247,13 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 					},
 				},
 			},
-		},
 
-		Blocks: map[string]schema.Block{
-			"quota": schema.ListNestedBlock{
+			"quota": schema.SetNestedAttribute{
 				Description:         quotaDescription.Description,
 				MarkdownDescription: quotaDescription.MarkdownDescription,
+				Optional:            true,
 
-				NestedObject: schema.NestedBlockObject{
+				NestedObject: schema.NestedAttributeObject{
 
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
@@ -328,8 +326,8 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 					},
 				},
 
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(maxQuotaLimit),
+				Validators: []validator.Set{
+					setvalidator.SizeAtMost(maxQuotaLimit),
 				},
 			},
 		},
@@ -719,12 +717,12 @@ func (p *NotificationPolicyResourceModel) toState(apiObject *management.Notifica
 	return diags
 }
 
-func toStateQuota(quotas []management.NotificationsPolicyQuotasInner) (types.List, diag.Diagnostics) {
+func toStateQuota(quotas []management.NotificationsPolicyQuotasInner) (types.Set, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	tfObjType := types.ObjectType{AttrTypes: quotaTFObjectTypes}
 
 	if len(quotas) == 0 {
-		return types.ListValueMust(tfObjType, []attr.Value{}), diags
+		return types.SetNull(tfObjType), diags
 	}
 
 	flattenedList := []attr.Value{}
@@ -744,7 +742,7 @@ func toStateQuota(quotas []management.NotificationsPolicyQuotasInner) (types.Lis
 		flattenedList = append(flattenedList, flattenedObj)
 	}
 
-	returnVar, d := types.ListValue(tfObjType, flattenedList)
+	returnVar, d := types.SetValue(tfObjType, flattenedList)
 	diags.Append(d...)
 
 	return returnVar, diags
