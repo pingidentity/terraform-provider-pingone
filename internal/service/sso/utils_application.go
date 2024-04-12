@@ -389,12 +389,6 @@ func applicationOIDCSecretDataSourceRetryConditions(ctx context.Context, r *http
 
 	var err error
 
-	// The secret may take a short time to propagate
-	if r.StatusCode == 404 {
-		tflog.Warn(ctx, "Application secret not found, available for retry")
-		return true
-	}
-
 	if p1error != nil {
 
 		if m, _ := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {

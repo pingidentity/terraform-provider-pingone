@@ -23,6 +23,7 @@ type ApplicationSecretResource serviceClientType
 type ApplicationSecretResourceModel struct {
 	EnvironmentId           types.String `tfsdk:"environment_id"`
 	ApplicationId           types.String `tfsdk:"application_id"`
+	Previous                types.Object `tfsdk:"previous"`
 	Secret                  types.String `tfsdk:"secret"`
 	RegenerateTriggerValues types.Map    `tfsdk:"regenerate_trigger_values"`
 }
@@ -59,6 +60,29 @@ func (r *ApplicationSecretResource) Schema(ctx context.Context, req resource.Sch
 			"application_id": framework.Attr_LinkID(
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the application to generate the application secret for. The value for `application_id` may come from the `id` attribute of the `pingone_application` resource or data source."),
 			),
+
+			"previous": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies the previous secret, when it expires, and when it was last used.").Description,
+				Optional:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"secret": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the previous application secret. This property is returned in the response if the previous secret is not expired.").Description,
+						Computed:    true,
+						Sensitive:   true,
+					},
+
+					"expires_at": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A timestamp that specifies how long this secret is saved (and can be used) before it expires. Supported time range is 1 minute to 30 days.").Description,
+						Optional:    true,
+					},
+
+					"last_used": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A timestamp that specifies when the previous secret was last used.").Description,
+						Computed:    true,
+					},
+				},
+			},
 
 			"secret": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("The application secret used to authenticate to the authorization server.").Description,

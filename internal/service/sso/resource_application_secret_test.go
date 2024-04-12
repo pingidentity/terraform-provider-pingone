@@ -73,7 +73,7 @@ func TestAccApplicationSecret_RemovalDrift(t *testing.T) {
 	})
 }
 
-func TestAccApplicationSecret_Full(t *testing.T) {
+func TestAccApplicationSecret_Basic(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -86,6 +86,9 @@ func TestAccApplicationSecret_Full(t *testing.T) {
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckNoResourceAttr(resourceFullName, "previous.secret"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "previous.expires_at"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "previous.last_used"),
 			resource.TestMatchResourceAttr(resourceFullName, "secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 		),
 	}
