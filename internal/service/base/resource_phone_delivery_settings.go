@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"slices"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -36,14 +37,14 @@ import (
 type PhoneDeliverySettingsResource serviceClientType
 
 type PhoneDeliverySettingsResourceModel struct {
-	Id                      types.String `tfsdk:"id"`
-	EnvironmentId           types.String `tfsdk:"environment_id"`
-	ProviderType            types.String `tfsdk:"provider_type"`
-	ProviderCustom          types.Object `tfsdk:"provider_custom"`
-	ProviderCustomTwilio    types.Object `tfsdk:"provider_custom_twilio"`
-	ProviderCustomSyniverse types.Object `tfsdk:"provider_custom_syniverse"`
-	CreatedAt               types.String `tfsdk:"created_at"`
-	UpdatedAt               types.String `tfsdk:"updated_at"`
+	Id                      types.String      `tfsdk:"id"`
+	EnvironmentId           types.String      `tfsdk:"environment_id"`
+	ProviderType            types.String      `tfsdk:"provider_type"`
+	ProviderCustom          types.Object      `tfsdk:"provider_custom"`
+	ProviderCustomTwilio    types.Object      `tfsdk:"provider_custom_twilio"`
+	ProviderCustomSyniverse types.Object      `tfsdk:"provider_custom_syniverse"`
+	CreatedAt               timetypes.RFC3339 `tfsdk:"created_at"`
+	UpdatedAt               timetypes.RFC3339 `tfsdk:"updated_at"`
 }
 
 type PhoneDeliverySettingsProviderCustomResourceModel struct {
@@ -927,6 +928,8 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 				Description: "A string that specifies the time the resource was created.",
 				Computed:    true,
 
+				CustomType: timetypes.RFC3339Type{},
+
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -935,6 +938,8 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 			"updated_at": schema.StringAttribute{
 				Description: "A string that specifies the time the resource was last updated.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 		},
 	}

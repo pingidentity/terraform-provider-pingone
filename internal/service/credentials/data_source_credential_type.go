@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -19,18 +20,18 @@ import (
 type CredentialTypeDataSource serviceClientType
 
 type CredentialTypeDataSourceModel struct {
-	Id                 types.String `tfsdk:"id"`
-	EnvironmentId      types.String `tfsdk:"environment_id"`
-	IssuerId           types.String `tfsdk:"issuer_id"`
-	CredentialTypeId   types.String `tfsdk:"credential_type_id"`
-	Title              types.String `tfsdk:"title"`
-	Description        types.String `tfsdk:"description"`
-	CardType           types.String `tfsdk:"card_type"`
-	CardDesignTemplate types.String `tfsdk:"card_design_template"`
-	Metadata           types.Object `tfsdk:"metadata"`
-	RevokeOnDelete     types.Bool   `tfsdk:"revoke_on_delete"`
-	CreatedAt          types.String `tfsdk:"created_at"`
-	UpdatedAt          types.String `tfsdk:"updated_at"`
+	Id                 types.String      `tfsdk:"id"`
+	EnvironmentId      types.String      `tfsdk:"environment_id"`
+	IssuerId           types.String      `tfsdk:"issuer_id"`
+	CredentialTypeId   types.String      `tfsdk:"credential_type_id"`
+	Title              types.String      `tfsdk:"title"`
+	Description        types.String      `tfsdk:"description"`
+	CardType           types.String      `tfsdk:"card_type"`
+	CardDesignTemplate types.String      `tfsdk:"card_design_template"`
+	Metadata           types.Object      `tfsdk:"metadata"`
+	RevokeOnDelete     types.Bool        `tfsdk:"revoke_on_delete"`
+	CreatedAt          timetypes.RFC3339 `tfsdk:"created_at"`
+	UpdatedAt          timetypes.RFC3339 `tfsdk:"updated_at"`
 }
 
 type MetadataDataSourceModel struct {
@@ -234,11 +235,15 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 			"created_at": schema.StringAttribute{
 				Description: "Date and time the object was created.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 
 			"updated_at": schema.StringAttribute{
 				Description: "Date and time the object was updated. Can be null.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 		},
 	}

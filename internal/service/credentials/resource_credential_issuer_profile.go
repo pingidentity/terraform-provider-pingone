@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -31,13 +32,13 @@ import (
 type CredentialIssuerProfileResource serviceClientType
 
 type CredentialIssuerProfileResourceModel struct {
-	Id                    types.String   `tfsdk:"id"`
-	EnvironmentId         types.String   `tfsdk:"environment_id"`
-	ApplicationInstanceId types.String   `tfsdk:"application_instance_id"`
-	CreatedAt             types.String   `tfsdk:"created_at"`
-	UpdatedAt             types.String   `tfsdk:"updated_at"`
-	Name                  types.String   `tfsdk:"name"`
-	Timeouts              timeouts.Value `tfsdk:"timeouts"`
+	Id                    types.String      `tfsdk:"id"`
+	EnvironmentId         types.String      `tfsdk:"environment_id"`
+	ApplicationInstanceId types.String      `tfsdk:"application_instance_id"`
+	CreatedAt             timetypes.RFC3339 `tfsdk:"created_at"`
+	UpdatedAt             timetypes.RFC3339 `tfsdk:"updated_at"`
+	Name                  types.String      `tfsdk:"name"`
+	Timeouts              timeouts.Value    `tfsdk:"timeouts"`
 }
 
 // Framework interfaces
@@ -86,6 +87,8 @@ func (r *CredentialIssuerProfileResource) Schema(ctx context.Context, req resour
 				Description: "Date and time the issuer profile was created.",
 				Computed:    true,
 
+				CustomType: timetypes.RFC3339Type{},
+
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -94,6 +97,8 @@ func (r *CredentialIssuerProfileResource) Schema(ctx context.Context, req resour
 			"updated_at": schema.StringAttribute{
 				Description: "Date and time the issuer profile was last updated.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 
 			"name": schema.StringAttribute{

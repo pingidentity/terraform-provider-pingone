@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -29,14 +30,14 @@ import (
 type NotificationSettingsResource serviceClientType
 
 type NotificationSettingsResourceModel struct {
-	Id                    types.String `tfsdk:"id"`
-	EnvironmentId         types.String `tfsdk:"environment_id"`
-	DeliveryMode          types.String `tfsdk:"delivery_mode"`
-	ProviderFallbackChain types.List   `tfsdk:"provider_fallback_chain"`
-	From                  types.Object `tfsdk:"from"`
-	ReplyTo               types.Object `tfsdk:"reply_to"`
-	AllowedList           types.Set    `tfsdk:"allowed_list"`
-	UpdatedAt             types.String `tfsdk:"updated_at"`
+	Id                    types.String      `tfsdk:"id"`
+	EnvironmentId         types.String      `tfsdk:"environment_id"`
+	DeliveryMode          types.String      `tfsdk:"delivery_mode"`
+	ProviderFallbackChain types.List        `tfsdk:"provider_fallback_chain"`
+	From                  types.Object      `tfsdk:"from"`
+	ReplyTo               types.Object      `tfsdk:"reply_to"`
+	AllowedList           types.Set         `tfsdk:"allowed_list"`
+	UpdatedAt             timetypes.RFC3339 `tfsdk:"updated_at"`
 }
 
 type NotificationSettingsAllowedListResourceModel struct {
@@ -213,6 +214,8 @@ func (r *NotificationSettingsResource) Schema(ctx context.Context, req resource.
 			"updated_at": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the time the resource was last updated in RFC3339 format.").Description,
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 		},
 	}
