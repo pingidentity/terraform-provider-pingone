@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -20,12 +21,12 @@ import (
 type CredentialIssuerProfileDataSource serviceClientType
 
 type CredentialIssuerProfileDataSourceModel struct {
-	Id                    types.String `tfsdk:"id"`
-	EnvironmentId         types.String `tfsdk:"environment_id"`
-	ApplicationInstanceId types.String `tfsdk:"application_instance_id"`
-	CreatedAt             types.String `tfsdk:"created_at"`
-	UpdatedAt             types.String `tfsdk:"updated_at"`
-	Name                  types.String `tfsdk:"name"`
+	Id                    types.String      `tfsdk:"id"`
+	EnvironmentId         types.String      `tfsdk:"environment_id"`
+	ApplicationInstanceId types.String      `tfsdk:"application_instance_id"`
+	CreatedAt             timetypes.RFC3339 `tfsdk:"created_at"`
+	UpdatedAt             timetypes.RFC3339 `tfsdk:"updated_at"`
+	Name                  types.String      `tfsdk:"name"`
 }
 
 // Framework interfaces
@@ -65,11 +66,15 @@ func (r *CredentialIssuerProfileDataSource) Schema(ctx context.Context, req data
 			"created_at": schema.StringAttribute{
 				Description: "Date and time the issuer profile was created.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 
 			"updated_at": schema.StringAttribute{
 				Description: "Date and time the issuer profile was last updated.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 
 			"name": schema.StringAttribute{

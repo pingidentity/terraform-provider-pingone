@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -30,15 +31,15 @@ import (
 type AgreementLocalizationRevisionResource serviceClientType
 
 type AgreementLocalizationRevisionResourceModel struct {
-	Id                      types.String `tfsdk:"id"`
-	EnvironmentId           types.String `tfsdk:"environment_id"`
-	AgreementId             types.String `tfsdk:"agreement_id"`
-	AgreementLocalizationId types.String `tfsdk:"agreement_localization_id"`
-	ContentType             types.String `tfsdk:"content_type"`
-	EffectiveAt             types.String `tfsdk:"effective_at"`
-	NotValidAfter           types.String `tfsdk:"not_valid_after"`
-	RequireReconsent        types.Bool   `tfsdk:"require_reconsent"`
-	Text                    types.String `tfsdk:"text"`
+	Id                      types.String      `tfsdk:"id"`
+	EnvironmentId           types.String      `tfsdk:"environment_id"`
+	AgreementId             types.String      `tfsdk:"agreement_id"`
+	AgreementLocalizationId types.String      `tfsdk:"agreement_localization_id"`
+	ContentType             types.String      `tfsdk:"content_type"`
+	EffectiveAt             timetypes.RFC3339 `tfsdk:"effective_at"`
+	NotValidAfter           timetypes.RFC3339 `tfsdk:"not_valid_after"`
+	RequireReconsent        types.Bool        `tfsdk:"require_reconsent"`
+	Text                    types.String      `tfsdk:"text"`
 }
 
 // Framework interfaces
@@ -113,18 +114,20 @@ func (r *AgreementLocalizationRevisionResource) Schema(ctx context.Context, req 
 				Description: "The start date that the revision is presented to users.  The effective date must be unique for each language agreement, and the property value can be the present date or a future date only.  Must be a valid RFC3339 date/time string.  If left undefined, will default to the current date and time (the revision will be effective immediately).",
 				Optional:    true,
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
+
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 					stringplanmodifier.UseStateForUnknown(),
-				},
-				Validators: []validator.String{
-					stringvalidator.RegexMatches(verify.RFC3339Regexp, "Attribute must be a valid RFC3339 date/time string."),
 				},
 			},
 
 			"not_valid_after": schema.StringAttribute{
 				Description: "Specifies whether the revision is still valid in the context of all revisions for a language. This property is calculated dynamically at read time, taking into consideration the agreement language, the language enabled property, and the agreement enabled property. When a new revision is added, this attribute's property values for all other previous revisions might be impacted. For example, if a new revision becomes effective and it forces reconsent, then all older revisions are no longer valid.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 
 			"require_reconsent": schema.BoolAttribute{
@@ -374,21 +377,18 @@ func (r *AgreementLocalizationRevisionResource) ImportState(ctx context.Context,
 }
 
 func (p *AgreementLocalizationRevisionResourceModel) expand() (*management.AgreementLanguageRevision, diag.Diagnostics) {
-	var diags diag.Diagnostics
+	var diags, d diag.Diagnostics
 
 	var t time.Time
 
 	if !p.EffectiveAt.IsNull() && !p.EffectiveAt.IsUnknown() {
-		var e error
-		t, e = time.Parse(time.RFC3339, p.EffectiveAt.ValueString())
-		if e != nil {
-			diags.AddError(
-				"Invalid data format",
-				"Cannot convert effectve_at to a date/time.  Please check the format is a valid RFC3339 date time format.")
-			return nil, diags
-		}
+		t, d = p.EffectiveAt.ValueRFC3339Time()
+		diags.Append(d...)
 	} else {
 		t = time.Now().Local()
+	}
+	if diags.HasError() {
+		return nil, diags
 	}
 
 	data := management.NewAgreementLanguageRevision(

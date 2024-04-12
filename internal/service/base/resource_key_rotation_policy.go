@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -25,19 +26,19 @@ import (
 type KeyRotationPolicyResource serviceClientType
 
 type keyRotationPolicyResourceModel struct {
-	Id                 types.String `tfsdk:"id"`
-	EnvironmentId      types.String `tfsdk:"environment_id"`
-	Name               types.String `tfsdk:"name"`
-	Algorithm          types.String `tfsdk:"algorithm"`
-	CurrentKeyId       types.String `tfsdk:"current_key_id"`
-	SubjectDn          types.String `tfsdk:"subject_dn"`
-	KeyLength          types.Int64  `tfsdk:"key_length"`
-	NextKeyId          types.String `tfsdk:"next_key_id"`
-	RotatedAt          types.String `tfsdk:"rotated_at"`
-	RotationPeriod     types.Int64  `tfsdk:"rotation_period"`
-	SignatureAlgorithm types.String `tfsdk:"signature_algorithm"`
-	UsageType          types.String `tfsdk:"usage_type"`
-	ValidityPeriod     types.Int64  `tfsdk:"validity_period"`
+	Id                 types.String      `tfsdk:"id"`
+	EnvironmentId      types.String      `tfsdk:"environment_id"`
+	Name               types.String      `tfsdk:"name"`
+	Algorithm          types.String      `tfsdk:"algorithm"`
+	CurrentKeyId       types.String      `tfsdk:"current_key_id"`
+	SubjectDn          types.String      `tfsdk:"subject_dn"`
+	KeyLength          types.Int64       `tfsdk:"key_length"`
+	NextKeyId          types.String      `tfsdk:"next_key_id"`
+	RotatedAt          timetypes.RFC3339 `tfsdk:"rotated_at"`
+	RotationPeriod     types.Int64       `tfsdk:"rotation_period"`
+	SignatureAlgorithm types.String      `tfsdk:"signature_algorithm"`
+	UsageType          types.String      `tfsdk:"usage_type"`
+	ValidityPeriod     types.Int64       `tfsdk:"validity_period"`
 }
 
 // Framework interfaces
@@ -157,6 +158,8 @@ func (r *KeyRotationPolicyResource) Schema(ctx context.Context, req resource.Sch
 			"rotated_at": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("The last time the key rotation policy was rotated.").Description,
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 
 			"rotation_period": schema.Int64Attribute{

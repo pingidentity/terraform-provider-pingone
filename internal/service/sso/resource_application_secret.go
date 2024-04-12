@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -31,9 +31,9 @@ type ApplicationSecretResourceModel struct {
 }
 
 type ApplicationSecretPreviousResourceModel struct {
-	Secret    types.String `tfsdk:"secret"`
-	ExpiresAt types.String `tfsdk:"expires_at"`
-	LastUsed  types.String `tfsdk:"last_used"`
+	Secret    types.String      `tfsdk:"secret"`
+	ExpiresAt timetypes.RFC3339 `tfsdk:"expires_at"`
+	LastUsed  types.String      `tfsdk:"last_used"`
 }
 
 // Framework interfaces
@@ -83,6 +83,8 @@ func (r *ApplicationSecretResource) Schema(ctx context.Context, req resource.Sch
 					"expires_at": schema.StringAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A timestamp that specifies how long this secret is saved (and can be used) before it expires. Supported time range is 1 minute to 30 days.").Description,
 						Optional:    true,
+
+						CustomType: timetypes.RFC3339Type{},
 					},
 
 					"last_used": schema.StringAttribute{
@@ -380,12 +382,9 @@ func (p *ApplicationSecretResourceModel) expand() (*management.ApplicationSecret
 
 		if !plan.ExpiresAt.IsNull() && !plan.ExpiresAt.IsUnknown() {
 
-			expiresAt, err := time.Parse(time.RFC3339, plan.ExpiresAt.ValueString())
-			if err != nil {
-				diags.AddError(
-					"Invalid expires_at",
-					"Invalid expires_at value.  Please provide a valid RFC3339 formatted timestamp.",
-				)
+			expiresAt, d := plan.ExpiresAt.ValueRFC3339Time()
+			diags.Append(d...)
+			if diags.HasError() {
 				return nil, diags
 			}
 

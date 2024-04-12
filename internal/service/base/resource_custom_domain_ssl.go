@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -24,15 +25,15 @@ import (
 type CustomDomainSSLResource serviceClientType
 
 type CustomDomainSSLResourceModel struct {
-	Id                              types.String `tfsdk:"id"`
-	EnvironmentId                   types.String `tfsdk:"environment_id"`
-	CustomDomainId                  types.String `tfsdk:"custom_domain_id"`
-	CerificatePemFile               types.String `tfsdk:"certificate_pem_file"`
-	IntermediateCertificatesPemFile types.String `tfsdk:"intermediate_certificates_pem_file"`
-	PrivateKeyPemFile               types.String `tfsdk:"private_key_pem_file"`
-	DomainName                      types.String `tfsdk:"domain_name"`
-	Status                          types.String `tfsdk:"status"`
-	CertificateExpiresAt            types.String `tfsdk:"certificate_expires_at"`
+	Id                              types.String      `tfsdk:"id"`
+	EnvironmentId                   types.String      `tfsdk:"environment_id"`
+	CustomDomainId                  types.String      `tfsdk:"custom_domain_id"`
+	CerificatePemFile               types.String      `tfsdk:"certificate_pem_file"`
+	IntermediateCertificatesPemFile types.String      `tfsdk:"intermediate_certificates_pem_file"`
+	PrivateKeyPemFile               types.String      `tfsdk:"private_key_pem_file"`
+	DomainName                      types.String      `tfsdk:"domain_name"`
+	Status                          types.String      `tfsdk:"status"`
+	CertificateExpiresAt            timetypes.RFC3339 `tfsdk:"certificate_expires_at"`
 }
 
 // Framework interfaces
@@ -144,6 +145,8 @@ func (r *CustomDomainSSLResource) Schema(ctx context.Context, req resource.Schem
 			"certificate_expires_at": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("The time when the certificate expires.  If this property is not present, it indicates that an SSL certificate has not been setup for this custom domain.").Description,
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 		},
 	}
@@ -318,7 +321,7 @@ func (p *CustomDomainSSLResourceModel) toState(apiObject *management.CustomDomai
 	if v, ok := apiObject.GetCertificateOk(); ok {
 		p.CertificateExpiresAt = framework.TimeOkToTF(v.GetExpiresAtOk())
 	} else {
-		p.CertificateExpiresAt = types.StringNull()
+		p.CertificateExpiresAt = timetypes.NewRFC3339Null()
 	}
 
 	return diags

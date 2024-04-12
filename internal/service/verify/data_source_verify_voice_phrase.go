@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -22,12 +23,12 @@ import (
 type VoicePhraseDataSource serviceClientType
 
 type voicePhraseDataSourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	VoicePhraseId types.String `tfsdk:"voice_phrase_id"`
-	DisplayName   types.String `tfsdk:"display_name"`
-	CreatedAt     types.String `tfsdk:"created_at"`
-	UpdatedAt     types.String `tfsdk:"updated_at"`
+	Id            types.String      `tfsdk:"id"`
+	EnvironmentId types.String      `tfsdk:"environment_id"`
+	VoicePhraseId types.String      `tfsdk:"voice_phrase_id"`
+	DisplayName   types.String      `tfsdk:"display_name"`
+	CreatedAt     timetypes.RFC3339 `tfsdk:"created_at"`
+	UpdatedAt     timetypes.RFC3339 `tfsdk:"updated_at"`
 }
 
 // Framework interfaces
@@ -101,11 +102,15 @@ func (r *VoicePhraseDataSource) Schema(ctx context.Context, req datasource.Schem
 			"created_at": schema.StringAttribute{
 				Description: "Date and time the verify phrase was created.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 
 			"updated_at": schema.StringAttribute{
 				Description: "Date and time the verify phrase was updated. Can be null.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 		},
 	}

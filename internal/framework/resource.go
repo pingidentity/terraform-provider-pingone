@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -79,11 +80,11 @@ func BoolOkToTF(b *bool, ok bool) basetypes.BoolValue {
 	}
 }
 
-func TimeOkToTF(v *time.Time, ok bool) basetypes.StringValue {
+func TimeOkToTF(v *time.Time, ok bool) timetypes.RFC3339 {
 	if !ok || v == nil {
-		return types.StringNull()
+		return timetypes.NewRFC3339Null()
 	} else {
-		return types.StringValue(v.Format(time.RFC3339))
+		return timetypes.NewRFC3339TimeValue(*v)
 	}
 }
 

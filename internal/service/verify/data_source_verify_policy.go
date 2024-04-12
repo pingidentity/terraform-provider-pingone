@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -25,21 +26,21 @@ import (
 type VerifyPolicyDataSource serviceClientType
 
 type verifyPolicyDataSourceModel struct {
-	Id               types.String `tfsdk:"id"`
-	EnvironmentId    types.String `tfsdk:"environment_id"`
-	VerifyPolicyId   types.String `tfsdk:"verify_policy_id"`
-	Name             types.String `tfsdk:"name"`
-	Default          types.Bool   `tfsdk:"default"`
-	Description      types.String `tfsdk:"description"`
-	GovernmentId     types.Object `tfsdk:"government_id"`
-	FacialComparison types.Object `tfsdk:"facial_comparison"`
-	Liveness         types.Object `tfsdk:"liveness"`
-	Email            types.Object `tfsdk:"email"`
-	Phone            types.Object `tfsdk:"phone"`
-	Transaction      types.Object `tfsdk:"transaction"`
-	Voice            types.Object `tfsdk:"voice"`
-	CreatedAt        types.String `tfsdk:"created_at"`
-	UpdatedAt        types.String `tfsdk:"updated_at"`
+	Id               types.String      `tfsdk:"id"`
+	EnvironmentId    types.String      `tfsdk:"environment_id"`
+	VerifyPolicyId   types.String      `tfsdk:"verify_policy_id"`
+	Name             types.String      `tfsdk:"name"`
+	Default          types.Bool        `tfsdk:"default"`
+	Description      types.String      `tfsdk:"description"`
+	GovernmentId     types.Object      `tfsdk:"government_id"`
+	FacialComparison types.Object      `tfsdk:"facial_comparison"`
+	Liveness         types.Object      `tfsdk:"liveness"`
+	Email            types.Object      `tfsdk:"email"`
+	Phone            types.Object      `tfsdk:"phone"`
+	Transaction      types.Object      `tfsdk:"transaction"`
+	Voice            types.Object      `tfsdk:"voice"`
+	CreatedAt        timetypes.RFC3339 `tfsdk:"created_at"`
+	UpdatedAt        timetypes.RFC3339 `tfsdk:"updated_at"`
 }
 
 var (
@@ -719,11 +720,15 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 			"created_at": schema.StringAttribute{
 				Description: "Date and time the verify policy was created.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 
 			"updated_at": schema.StringAttribute{
 				Description: "Date and time the verify policy was updated. Can be null.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 		},
 	}

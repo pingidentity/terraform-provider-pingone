@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -36,24 +37,24 @@ import (
 type KeyResource serviceClientType
 
 type keyResourceModel struct {
-	Id                 types.String `tfsdk:"id"`
-	EnvironmentId      types.String `tfsdk:"environment_id"`
-	Name               types.String `tfsdk:"name"`
-	Algorithm          types.String `tfsdk:"algorithm"`
-	Default            types.Bool   `tfsdk:"default"`
-	ExpiresAt          types.String `tfsdk:"expires_at"`
-	IssuerDn           types.String `tfsdk:"issuer_dn"`
-	KeyLength          types.Int64  `tfsdk:"key_length"`
-	SerialNumber       types.String `tfsdk:"serial_number"`
-	SignatureAlgorithm types.String `tfsdk:"signature_algorithm"`
-	StartsAt           types.String `tfsdk:"starts_at"`
-	Status             types.String `tfsdk:"status"`
-	SubjectDn          types.String `tfsdk:"subject_dn"`
-	UsageType          types.String `tfsdk:"usage_type"`
-	ValidityPeriod     types.Int64  `tfsdk:"validity_period"`
-	CustomCrl          types.String `tfsdk:"custom_crl"`
-	PKCS12FileBase64   types.String `tfsdk:"pkcs12_file_base64"`
-	PKCS12FilePassword types.String `tfsdk:"pkcs12_file_password"`
+	Id                 types.String      `tfsdk:"id"`
+	EnvironmentId      types.String      `tfsdk:"environment_id"`
+	Name               types.String      `tfsdk:"name"`
+	Algorithm          types.String      `tfsdk:"algorithm"`
+	Default            types.Bool        `tfsdk:"default"`
+	ExpiresAt          timetypes.RFC3339 `tfsdk:"expires_at"`
+	IssuerDn           types.String      `tfsdk:"issuer_dn"`
+	KeyLength          types.Int64       `tfsdk:"key_length"`
+	SerialNumber       types.String      `tfsdk:"serial_number"`
+	SignatureAlgorithm types.String      `tfsdk:"signature_algorithm"`
+	StartsAt           timetypes.RFC3339 `tfsdk:"starts_at"`
+	Status             types.String      `tfsdk:"status"`
+	SubjectDn          types.String      `tfsdk:"subject_dn"`
+	UsageType          types.String      `tfsdk:"usage_type"`
+	ValidityPeriod     types.Int64       `tfsdk:"validity_period"`
+	CustomCrl          types.String      `tfsdk:"custom_crl"`
+	PKCS12FileBase64   types.String      `tfsdk:"pkcs12_file_base64"`
+	PKCS12FilePassword types.String      `tfsdk:"pkcs12_file_password"`
 }
 
 // Framework interfaces
@@ -221,6 +222,8 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the date and time the key resource expires.").Description,
 				Computed:    true,
 
+				CustomType: timetypes.RFC3339Type{},
+
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -328,6 +331,8 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 			"starts_at": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the date and time the validity period starts.").Description,
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),

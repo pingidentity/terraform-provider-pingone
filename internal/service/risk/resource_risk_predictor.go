@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -110,8 +110,8 @@ type predictorCustomMapHMLList struct {
 
 // New device
 type predictorDevice struct {
-	ActivationAt types.String `tfsdk:"activation_at"`
-	Detect       types.String `tfsdk:"detect"`
+	ActivationAt timetypes.RFC3339 `tfsdk:"activation_at"`
+	Detect       types.String      `tfsdk:"detect"`
 }
 
 // User Location Anomaly
@@ -256,7 +256,7 @@ var (
 
 	// Device
 	predictorDeviceTFObjectTypes = map[string]attr.Type{
-		"activation_at": types.StringType,
+		"activation_at": timetypes.RFC3339Type{},
 		"detect":        types.StringType,
 	}
 
@@ -847,8 +847,10 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						Description:         predictorDeviceActivationAtDescription.Description,
 						MarkdownDescription: predictorDeviceActivationAtDescription.MarkdownDescription,
 						Optional:            true,
+
+						CustomType: timetypes.RFC3339Type{},
+
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.RFC3339Regexp, "Attribute must be a valid RFC3339 date/time string."),
 							stringvalidatorinternal.ConflictsIfMatchesPathValue(
 								types.StringValue(string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_SUSPICIOUS_DEVICE)),
 								path.MatchRelative().AtParent().AtName("detect"),
@@ -2405,11 +2407,9 @@ func (p *riskPredictorResourceModel) expandPredictorDevice(ctx context.Context, 
 	data.SetDetect(risk.EnumPredictorNewDeviceDetectType(predictorPlan.Detect.ValueString()))
 
 	if !predictorPlan.ActivationAt.IsNull() && !predictorPlan.ActivationAt.IsUnknown() {
-		t, e := time.Parse(time.RFC3339, predictorPlan.ActivationAt.ValueString())
-		if e != nil {
-			diags.AddError(
-				"Invalid data format",
-				"Cannot convert activation_at to a date/time.  Please check the format is a valid RFC3339 date time format.")
+		t, d := predictorPlan.ActivationAt.ValueRFC3339Time()
+		diags.Append(d...)
+		if diags.HasError() {
 			return nil, diags
 		}
 

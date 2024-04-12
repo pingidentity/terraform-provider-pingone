@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -22,16 +23,16 @@ import (
 type AgreementDataSource serviceClientType
 
 type AgreementDataSourceModel struct {
-	Id                    types.String  `tfsdk:"id"`
-	EnvironmentId         types.String  `tfsdk:"environment_id"`
-	AgreementId           types.String  `tfsdk:"agreement_id"`
-	Name                  types.String  `tfsdk:"name"`
-	Enabled               types.Bool    `tfsdk:"enabled"`
-	Description           types.String  `tfsdk:"description"`
-	ReconsentPeriodDays   types.Float64 `tfsdk:"reconsent_period_days"`
-	TotalUserConsents     types.Int64   `tfsdk:"total_user_consent_count"`
-	ExpiredUserConsents   types.Int64   `tfsdk:"expired_user_consent_count"`
-	ConsentCountsUpdateAt types.String  `tfsdk:"consent_counts_updated_at"`
+	Id                    types.String      `tfsdk:"id"`
+	EnvironmentId         types.String      `tfsdk:"environment_id"`
+	AgreementId           types.String      `tfsdk:"agreement_id"`
+	Name                  types.String      `tfsdk:"name"`
+	Enabled               types.Bool        `tfsdk:"enabled"`
+	Description           types.String      `tfsdk:"description"`
+	ReconsentPeriodDays   types.Float64     `tfsdk:"reconsent_period_days"`
+	TotalUserConsents     types.Int64       `tfsdk:"total_user_consent_count"`
+	ExpiredUserConsents   types.Int64       `tfsdk:"expired_user_consent_count"`
+	ConsentCountsUpdateAt timetypes.RFC3339 `tfsdk:"consent_counts_updated_at"`
 }
 
 // Framework interfaces
@@ -121,6 +122,8 @@ func (r *AgreementDataSource) Schema(ctx context.Context, req datasource.SchemaR
 			"consent_counts_updated_at": schema.StringAttribute{
 				Description: "The date and time the consent user count metrics were last updated. This value is typically updated once every 24 hours.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 		},
 	}
