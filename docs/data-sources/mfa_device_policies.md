@@ -12,7 +12,7 @@ Datasource to retrieve the IDs of multiple PingOne MFA Device policies.
 ## Example Usage
 
 ```terraform
-data "pingone_mfa_device_policies" "example_all_mfa_policy_ids" {
+data "pingone_mfa_device_policies" "example_all_mfa_device_policy_ids" {
   environment_id = var.environment_id
 }
 ```

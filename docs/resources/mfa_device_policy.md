@@ -18,9 +18,9 @@ resource "pingone_environment" "my_environment" {
   # ...
 }
 
-resource "pingone_mfa_device_policy" "my_awesome_mfa_policy" {
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
   environment_id = pingone_environment.my_environment.id
-  name           = "My awesome MFA policy"
+  name           = "My awesome MFA device policy"
 
   mobile {
     enabled = false
@@ -112,9 +112,9 @@ resource "pingone_mfa_application_push_credential" "example_apns" {
   }
 }
 
-resource "pingone_mfa_device_policy" "my_awesome_mfa_policy" {
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
   environment_id = pingone_environment.my_environment.id
-  name           = "My awesome MFA policy"
+  name           = "My awesome MFA device policy"
 
   depends_on = [
     pingone_mfa_application_push_credential.example_fcm,
@@ -314,5 +314,5 @@ Optional:
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-$ terraform import pingone_mfa_device_policy.example <environment_id>/<mfa_policy_id>
+$ terraform import pingone_mfa_device_policy.example <environment_id>/<mfa_device_policy_id>
 ```
