@@ -19,19 +19,19 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func ResourceMFAPolicy() *schema.Resource {
+func ResourceMFADevicePolicy() *schema.Resource {
 	return &schema.Resource{
 
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage MFA Policies in a PingOne Environment.",
 
-		CreateContext: resourceMFAPolicyCreate,
-		ReadContext:   resourceMFAPolicyRead,
-		UpdateContext: resourceMFAPolicyUpdate,
-		DeleteContext: resourceMFAPolicyDelete,
+		CreateContext: resourceMFADevicePolicyCreate,
+		ReadContext:   resourceMFADevicePolicyRead,
+		UpdateContext: resourceMFADevicePolicyUpdate,
+		DeleteContext: resourceMFADevicePolicyDelete,
 
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceMFAPolicyImport,
+			StateContext: resourceMFADevicePolicyImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -356,7 +356,7 @@ func offlineDeviceResourceSchema(resourcePrefix string) *schema.Resource {
 	}
 }
 
-func resourceMFAPolicyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMFADevicePolicyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
 
@@ -364,7 +364,7 @@ func resourceMFAPolicyCreate(ctx context.Context, d *schema.ResourceData, meta i
 
 	var diags diag.Diagnostics
 
-	mfaPolicy, diags := expandMFAPolicyPost(ctx, managementApiClient, d)
+	mfaPolicy, diags := expandMFADevicePolicyPost(ctx, managementApiClient, d)
 	if diags.HasError() {
 		return diags
 	}
@@ -388,10 +388,10 @@ func resourceMFAPolicyCreate(ctx context.Context, d *schema.ResourceData, meta i
 
 	d.SetId(respObject.DeviceAuthenticationPolicy.GetId())
 
-	return resourceMFAPolicyRead(ctx, d, meta)
+	return resourceMFADevicePolicyRead(ctx, d, meta)
 }
 
-func resourceMFAPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMFADevicePolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
 
@@ -434,37 +434,37 @@ func resourceMFAPolicyRead(ctx context.Context, d *schema.ResourceData, meta int
 	}
 
 	if v, ok := respObject.GetSmsOk(); ok {
-		d.Set("sms", flattenMFAPolicyOfflineDevice(v))
+		d.Set("sms", flattenMFADevicePolicyOfflineDevice(v))
 	} else {
 		d.Set("sms", nil)
 	}
 
 	if v, ok := respObject.GetVoiceOk(); ok {
-		d.Set("voice", flattenMFAPolicyOfflineDevice(v))
+		d.Set("voice", flattenMFADevicePolicyOfflineDevice(v))
 	} else {
 		d.Set("voice", nil)
 	}
 
 	if v, ok := respObject.GetEmailOk(); ok {
-		d.Set("email", flattenMFAPolicyOfflineDevice(v))
+		d.Set("email", flattenMFADevicePolicyOfflineDevice(v))
 	} else {
 		d.Set("email", nil)
 	}
 
 	if v, ok := respObject.GetMobileOk(); ok {
-		d.Set("mobile", flattenMFAPolicyMobile(v))
+		d.Set("mobile", flattenMFADevicePolicyMobile(v))
 	} else {
 		d.Set("mobile", nil)
 	}
 
 	if v, ok := respObject.GetTotpOk(); ok {
-		d.Set("totp", flattenMFAPolicyTotp(v))
+		d.Set("totp", flattenMFADevicePolicyTotp(v))
 	} else {
 		d.Set("totp", nil)
 	}
 
 	if v, ok := respObject.GetFido2Ok(); ok {
-		d.Set("fido2", flattenMFAPolicyFIDO2Device(v))
+		d.Set("fido2", flattenMFADevicePolicyFIDO2Device(v))
 	} else {
 		d.Set("fido2", nil)
 	}
@@ -472,7 +472,7 @@ func resourceMFAPolicyRead(ctx context.Context, d *schema.ResourceData, meta int
 	return diags
 }
 
-func resourceMFAPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMFADevicePolicyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
 
@@ -480,7 +480,7 @@ func resourceMFAPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta i
 
 	var diags diag.Diagnostics
 
-	mfaPolicy, diags := expandMFAPolicy(ctx, managementApiClient, d)
+	mfaPolicy, diags := expandMFADevicePolicy(ctx, managementApiClient, d)
 	if diags.HasError() {
 		return diags
 	}
@@ -492,7 +492,7 @@ func resourceMFAPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta i
 			fO, fR, fErr := apiClient.DeviceAuthenticationPolicyApi.UpdateDeviceAuthenticationPolicy(ctx, d.Get("environment_id").(string), d.Id()).DeviceAuthenticationPolicy(*mfaPolicy).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
-		"UpdateMFAPolicy",
+		"UpdateMFADevicePolicy",
 		sdk.DefaultCustomError,
 		nil,
 	)
@@ -500,10 +500,10 @@ func resourceMFAPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta i
 		return diags
 	}
 
-	return resourceMFAPolicyRead(ctx, d, meta)
+	return resourceMFADevicePolicyRead(ctx, d, meta)
 }
 
-func resourceMFAPolicyDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMFADevicePolicyDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.MFAAPIClient
 
@@ -542,7 +542,7 @@ func resourceMFAPolicyDelete(ctx context.Context, d *schema.ResourceData, meta i
 	return diags
 }
 
-func resourceMFAPolicyImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceMFADevicePolicyImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 
 	idComponents := []framework.ImportComponent{
 		{
@@ -563,40 +563,40 @@ func resourceMFAPolicyImport(ctx context.Context, d *schema.ResourceData, meta i
 	d.Set("environment_id", attributes["environment_id"])
 	d.SetId(attributes["mfa_device_policy_id"])
 
-	resourceMFAPolicyRead(ctx, d, meta)
+	resourceMFADevicePolicyRead(ctx, d, meta)
 
 	return []*schema.ResourceData{d}, nil
 }
 
-func expandMFAPolicyPost(ctx context.Context, apiClient *management.APIClient, d *schema.ResourceData) (*mfa.DeviceAuthenticationPolicyPost, diag.Diagnostics) {
+func expandMFADevicePolicyPost(ctx context.Context, apiClient *management.APIClient, d *schema.ResourceData) (*mfa.DeviceAuthenticationPolicyPost, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	mfaPolicyPost := mfa.DeviceAuthenticationPolicyPost{}
-	mfaPolicyPost.DeviceAuthenticationPolicy, diags = expandMFAPolicy(ctx, apiClient, d)
+	mfaPolicyPost.DeviceAuthenticationPolicy, diags = expandMFADevicePolicy(ctx, apiClient, d)
 
 	return &mfaPolicyPost, diags
 }
 
-func expandMFAPolicy(ctx context.Context, apiClient *management.APIClient, d *schema.ResourceData) (*mfa.DeviceAuthenticationPolicy, diag.Diagnostics) {
+func expandMFADevicePolicy(ctx context.Context, apiClient *management.APIClient, d *schema.ResourceData) (*mfa.DeviceAuthenticationPolicy, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	mobile, diags := expandMFAPolicyMobileDevice(d.Get("mobile").([]interface{})[0], ctx, apiClient, d.Get("environment_id").(string))
+	mobile, diags := expandMFADevicePolicyMobileDevice(d.Get("mobile").([]interface{})[0], ctx, apiClient, d.Get("environment_id").(string))
 	if diags.HasError() {
 		return nil, diags
 	}
 
 	item := mfa.NewDeviceAuthenticationPolicy(
 		d.Get("name").(string),
-		*expandMFAPolicyOfflineDevice(d.Get("sms").([]interface{})[0]),
-		*expandMFAPolicyOfflineDevice(d.Get("voice").([]interface{})[0]),
-		*expandMFAPolicyOfflineDevice(d.Get("email").([]interface{})[0]),
+		*expandMFADevicePolicyOfflineDevice(d.Get("sms").([]interface{})[0]),
+		*expandMFADevicePolicyOfflineDevice(d.Get("voice").([]interface{})[0]),
+		*expandMFADevicePolicyOfflineDevice(d.Get("email").([]interface{})[0]),
 		*mobile,
-		*expandMFAPolicyTOTPDevice(d.Get("totp").([]interface{})[0]),
+		*expandMFADevicePolicyTOTPDevice(d.Get("totp").([]interface{})[0]),
 		false,
 		false,
 	)
 
 	if v, ok := d.GetOk("fido2"); ok {
-		item.SetFido2(*expandMFAPolicyFIDO2Device(v.([]interface{})[0]))
+		item.SetFido2(*expandMFADevicePolicyFIDO2Device(v.([]interface{})[0]))
 	}
 
 	if v, ok := d.GetOk("device_selection"); ok {
@@ -610,7 +610,7 @@ func expandMFAPolicy(ctx context.Context, apiClient *management.APIClient, d *sc
 	return item, diags
 }
 
-func expandMFAPolicyOfflineDevice(v interface{}) *mfa.DeviceAuthenticationPolicyOfflineDevice {
+func expandMFADevicePolicyOfflineDevice(v interface{}) *mfa.DeviceAuthenticationPolicyOfflineDevice {
 
 	obj := v.(map[string]interface{})
 
@@ -631,7 +631,7 @@ func expandMFAPolicyOfflineDevice(v interface{}) *mfa.DeviceAuthenticationPolicy
 	return item
 }
 
-func expandMFAPolicyMobileDevice(v interface{}, ctx context.Context, apiClient *management.APIClient, environmentID string) (*mfa.DeviceAuthenticationPolicyMobile, diag.Diagnostics) {
+func expandMFADevicePolicyMobileDevice(v interface{}, ctx context.Context, apiClient *management.APIClient, environmentID string) (*mfa.DeviceAuthenticationPolicyMobile, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	obj := v.(map[string]interface{})
@@ -839,7 +839,7 @@ func checkApplicationForMobileApp(ctx context.Context, apiClient *management.API
 	return oidcObject, diags
 }
 
-func expandMFAPolicyTOTPDevice(v interface{}) *mfa.DeviceAuthenticationPolicyTotp {
+func expandMFADevicePolicyTOTPDevice(v interface{}) *mfa.DeviceAuthenticationPolicyTotp {
 
 	obj := v.(map[string]interface{})
 
@@ -860,7 +860,7 @@ func expandMFAPolicyTOTPDevice(v interface{}) *mfa.DeviceAuthenticationPolicyTot
 	return item
 }
 
-func expandMFAPolicyFIDO2Device(v interface{}) *mfa.DeviceAuthenticationPolicyFido2 {
+func expandMFADevicePolicyFIDO2Device(v interface{}) *mfa.DeviceAuthenticationPolicyFido2 {
 
 	obj := v.(map[string]interface{})
 
@@ -877,7 +877,7 @@ func expandMFAPolicyFIDO2Device(v interface{}) *mfa.DeviceAuthenticationPolicyFi
 	return item
 }
 
-func flattenMFAPolicyOfflineDevice(c *mfa.DeviceAuthenticationPolicyOfflineDevice) []map[string]interface{} {
+func flattenMFADevicePolicyOfflineDevice(c *mfa.DeviceAuthenticationPolicyOfflineDevice) []map[string]interface{} {
 	item := map[string]interface{}{
 		"enabled": c.GetEnabled(),
 	}
@@ -923,7 +923,7 @@ func flattenMFAPolicyOfflineDevice(c *mfa.DeviceAuthenticationPolicyOfflineDevic
 	return append(make([]map[string]interface{}, 0), item)
 }
 
-func flattenMFAPolicyMobile(c *mfa.DeviceAuthenticationPolicyMobile) []map[string]interface{} {
+func flattenMFADevicePolicyMobile(c *mfa.DeviceAuthenticationPolicyMobile) []map[string]interface{} {
 
 	item := map[string]interface{}{
 		"enabled": c.GetEnabled(),
@@ -951,13 +951,13 @@ func flattenMFAPolicyMobile(c *mfa.DeviceAuthenticationPolicyMobile) []map[strin
 	}
 
 	if v, ok := c.GetApplicationsOk(); ok {
-		item["application"] = expandMFAPolicyMobileApplication(v)
+		item["application"] = expandMFADevicePolicyMobileApplication(v)
 	}
 
 	return append(make([]map[string]interface{}, 0), item)
 }
 
-func expandMFAPolicyMobileApplication(c []mfa.DeviceAuthenticationPolicyMobileApplicationsInner) []map[string]interface{} {
+func expandMFADevicePolicyMobileApplication(c []mfa.DeviceAuthenticationPolicyMobileApplicationsInner) []map[string]interface{} {
 
 	items := make([]map[string]interface{}, 0)
 
@@ -1048,7 +1048,7 @@ func expandMFAPolicyMobileApplication(c []mfa.DeviceAuthenticationPolicyMobileAp
 
 }
 
-func flattenMFAPolicyTotp(c *mfa.DeviceAuthenticationPolicyTotp) []map[string]interface{} {
+func flattenMFADevicePolicyTotp(c *mfa.DeviceAuthenticationPolicyTotp) []map[string]interface{} {
 
 	item := map[string]interface{}{
 		"enabled": c.GetEnabled(),
@@ -1083,7 +1083,7 @@ func flattenMFAPolicyTotp(c *mfa.DeviceAuthenticationPolicyTotp) []map[string]in
 	return append(make([]map[string]interface{}, 0), item)
 }
 
-func flattenMFAPolicyFIDO2Device(c *mfa.DeviceAuthenticationPolicyFido2) []map[string]interface{} {
+func flattenMFADevicePolicyFIDO2Device(c *mfa.DeviceAuthenticationPolicyFido2) []map[string]interface{} {
 
 	item := map[string]interface{}{
 		"enabled": c.GetEnabled(),

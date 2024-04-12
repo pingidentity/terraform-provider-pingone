@@ -1807,9 +1807,13 @@ This resource was previously deprecated and has been removed.  Use the `pingone_
 
 This resource was previously deprecated and has been removed.  Review the [Upgrade MFA Policies to use FIDO2 with Passkeys](./upgrade-mfa-policy-for-fido2) to ensure all MFA Policies are upgraded in the PingOne tenant prior to upgrading the PingOne provider version to `v1.0.0`.
 
-## Resource: pingone_mfa_policy
+## Resource: pingone_mfa_policy (now pingone_mfa_device_policy)
 
 Review the [Upgrade MFA Policies to use FIDO2 with Passkeys](./upgrade-mfa-policy-for-fido2) to ensure all MFA Policies are upgraded in the PingOne tenant prior to upgrading the PingOne provider version to `v1.0.0`.
+
+### Resource renamed to `pingone_mfa_device_policy`
+
+The `pingone_mfa_policy` resource has been renamed to `pingone_mfa_device_policy` to better align with the console and API experience.
 
 ### `platform` optional parameter removed
 
@@ -2133,6 +2137,12 @@ data "pingone_licenses" "example_by_data_filter" {
   ]
 }
 ```
+
+## Data Source: pingone_mfa_policies (now pingone_mfa_device_policies)
+
+### Data Source renamed to `pingone_mfa_device_policies`
+
+The `pingone_mfa_policies` data source has been renamed to `pingone_mfa_device_policies` to better align with the console and API experience.
 
 ## Data Source: pingone_organization
 

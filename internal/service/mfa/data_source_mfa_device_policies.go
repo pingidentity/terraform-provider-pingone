@@ -15,9 +15,9 @@ import (
 )
 
 // Types
-type MFAPoliciesDataSource serviceClientType
+type MFADevicePoliciesDataSource serviceClientType
 
-type MFAPoliciesDataSourceModel struct {
+type MFADevicePoliciesDataSourceModel struct {
 	Id            types.String `tfsdk:"id"`
 	EnvironmentId types.String `tfsdk:"environment_id"`
 	Ids           types.List   `tfsdk:"ids"`
@@ -25,21 +25,21 @@ type MFAPoliciesDataSourceModel struct {
 
 // Framework interfaces
 var (
-	_ datasource.DataSource = &MFAPoliciesDataSource{}
+	_ datasource.DataSource = &MFADevicePoliciesDataSource{}
 )
 
 // New Object
-func NewMFAPoliciesDataSource() datasource.DataSource {
-	return &MFAPoliciesDataSource{}
+func NewMFADevicePoliciesDataSource() datasource.DataSource {
+	return &MFADevicePoliciesDataSource{}
 }
 
 // Metadata
-func (r *MFAPoliciesDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_mfa_policies"
+func (r *MFADevicePoliciesDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_mfa_device_policies"
 }
 
 // Schema
-func (r *MFAPoliciesDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (r *MFADevicePoliciesDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -59,7 +59,7 @@ func (r *MFAPoliciesDataSource) Schema(ctx context.Context, req datasource.Schem
 	}
 }
 
-func (r *MFAPoliciesDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (r *MFADevicePoliciesDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
 		return
@@ -85,8 +85,8 @@ func (r *MFAPoliciesDataSource) Configure(ctx context.Context, req datasource.Co
 	}
 }
 
-func (r *MFAPoliciesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data *MFAPoliciesDataSourceModel
+func (r *MFADevicePoliciesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data *MFADevicePoliciesDataSourceModel
 
 	if r.Client.MFAAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -124,7 +124,7 @@ func (r *MFAPoliciesDataSource) Read(ctx context.Context, req datasource.ReadReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (p *MFAPoliciesDataSourceModel) toState(apiObject []mfa.DeviceAuthenticationPolicy) diag.Diagnostics {
+func (p *MFADevicePoliciesDataSourceModel) toState(apiObject []mfa.DeviceAuthenticationPolicy) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
