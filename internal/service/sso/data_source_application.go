@@ -313,15 +313,6 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						MarkdownDescription: oidcAdditionalRefreshTokenReplayProtectionEnabledDescription.MarkdownDescription,
 						Computed:            true,
 					},
-					"client_id": schema.StringAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application ID used to authenticate to the authorization server.").Description,
-						Computed:    true,
-					},
-					"client_secret": schema.StringAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application secret ID used to authenticate to the authorization server.").Description,
-						Computed:    true,
-						Sensitive:   true,
-					},
 					"certificate_based_authentication": schema.SingleNestedAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("Certificate based authentication settings.").Description,
 						Computed:    true,
@@ -703,33 +694,12 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	// Secondary call required to obtain kerberos secret for OIDC applications
-	var secret *management.ApplicationSecret
-	if application.ApplicationOIDC != nil && application.ApplicationOIDC.GetId() != "" {
-		resp.Diagnostics.Append(framework.ParseResponse(
-			ctx,
-
-			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationSecretApi.ReadApplicationSecret(ctx, *application.ApplicationOIDC.GetEnvironment().Id, application.ApplicationOIDC.GetId()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
-
-			},
-			"ReadApplicationSecret",
-			framework.DefaultCustomError,
-			applicationOIDCSecretDataSourceRetryConditions,
-			&secret,
-		)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-	}
-
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(ctx, application, secret)...)
+	resp.Diagnostics.Append(data.toState(ctx, application)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (p *applicationDataSourceModel) toState(ctx context.Context, apiObject *management.ReadOneApplication200Response, apiSecretObject *management.ApplicationSecret) diag.Diagnostics {
+func (p *applicationDataSourceModel) toState(ctx context.Context, apiObject *management.ReadOneApplication200Response) diag.Diagnostics {
 	var diags, d diag.Diagnostics
 	if apiObject == nil {
 		diags.AddError(
@@ -816,7 +786,7 @@ func (p *applicationDataSourceModel) toState(ctx context.Context, apiObject *man
 				return diags
 			}
 		}
-		p.OIDCOptions, d = applicationOidcOptionsToTF(ctx, v, apiSecretObject, oidcOptionsState)
+		p.OIDCOptions, d = applicationOidcOptionsToTF(ctx, v, oidcOptionsState)
 		diags = append(diags, d...)
 
 		p.SAMLOptions = types.ObjectNull(applicationSamlOptionsTFObjectTypes)

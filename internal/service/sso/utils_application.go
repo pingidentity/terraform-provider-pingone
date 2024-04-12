@@ -78,7 +78,7 @@ func applicationCorsSettingsOkToTF(apiObject *management.ApplicationCorsSettings
 	return returnVar, diags
 }
 
-func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.ApplicationOIDC, apiObjectSecret *management.ApplicationSecret, stateValue ApplicationOIDCOptionsResourceModel) (types.Object, diag.Diagnostics) {
+func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.ApplicationOIDC, stateValue ApplicationOIDCOptionsResourceModel) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if apiObject == nil || apiObject.GetId() == "" {
@@ -110,8 +110,6 @@ func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.Appli
 		"additional_refresh_token_replay_protection_enabled": framework.BoolOkToTF(apiObject.GetAdditionalRefreshTokenReplayProtectionEnabledOk()),
 		"allow_wildcards_in_redirect_uris":                   framework.BoolOkToTF(apiObject.GetAllowWildcardInRedirectUrisOk()),
 		"certificate_based_authentication":                   kerberos,
-		"client_id":                                          framework.StringOkToTF(apiObject.GetIdOk()),
-		"client_secret":                                      types.StringNull(),
 		"cors_settings":                                      corsSettings,
 		"grant_types":                                        framework.EnumSetOkToTF(apiObject.GetGrantTypesOk()),
 		"home_page_url":                                      framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
@@ -133,10 +131,6 @@ func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.Appli
 		"target_link_uri":                                    framework.StringOkToTF(apiObject.GetTargetLinkUriOk()),
 		"token_endpoint_authn_method":                        framework.EnumOkToTF(apiObject.GetTokenEndpointAuthMethodOk()),
 		"type":                                               framework.EnumOkToTF(apiObject.GetTypeOk()),
-	}
-
-	if apiObjectSecret != nil {
-		attributesMap["client_secret"] = framework.StringOkToTF(apiObjectSecret.GetSecretOk())
 	}
 
 	returnVar, d := types.ObjectValue(applicationOidcOptionsTFObjectTypes, attributesMap)

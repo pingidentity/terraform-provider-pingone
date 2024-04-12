@@ -12,3 +12,16 @@ resource "pingone_application" "my_awesome_spa" {
     redirect_uris               = ["https://my-website.com"]
   }
 }
+
+resource "time_rotating" "my_awesome_spa_secret_rotation" {
+  rotation_days = 30
+}
+
+resource "pingone_application_secret" "my_awesome_spa" {
+  environment_id = pingone_environment.my_environment.id
+  application_id = pingone_application.my_awesome_spa.id
+
+  regenerate_trigger_values = {
+    "rotation_rfc3339" : time_rotating.my_awesome_spa_secret_rotation.rotation_rfc3339,
+  }
+}
