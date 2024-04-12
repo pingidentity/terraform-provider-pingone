@@ -33,7 +33,7 @@ resource "pingone_custom_domain_verify" "my_custom_domain" {
 
 ### Optional
 
-- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
 
@@ -41,9 +41,9 @@ resource "pingone_custom_domain_verify" "my_custom_domain" {
 - `id` (String) The ID of this resource.
 - `status` (String) A string that specifies the status of the custom domain.  Options are `ACTIVE`, `SSL_CERTIFICATE_REQUIRED`, `VERIFICATION_REQUIRED`.
 
-<a id="nestedblock--timeouts"></a>
+<a id="nestedatt--timeouts"></a>
 ### Nested Schema for `timeouts`
 
 Optional:
 
-- `create` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+- `create` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m", as a time to wait for DNS record changes to propagate for validation. Valid time units are "s" (seconds), "m" (minutes), "h" (hours). The default is 60 minutes.

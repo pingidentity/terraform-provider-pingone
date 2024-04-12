@@ -80,11 +80,10 @@ func (r *CustomDomainVerifyResource) Schema(ctx context.Context, req resource.Sc
 				Description:         statusDescription.Description,
 				Computed:            true,
 			},
-		},
 
-		Blocks: map[string]schema.Block{
-			"timeouts": timeouts.Block(ctx, timeouts.Opts{
-				Create: true,
+			"timeouts": timeouts.Attributes(ctx, timeouts.Opts{
+				Create:            true,
+				CreateDescription: "A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as \"30s\" or \"2h45m\", as a time to wait for DNS record changes to propagate for validation. Valid time units are \"s\" (seconds), \"m\" (minutes), \"h\" (hours). The default is 60 minutes.",
 			}),
 		},
 	}
@@ -132,7 +131,13 @@ func (r *CustomDomainVerifyResource) Create(ctx context.Context, req resource.Cr
 		return
 	}
 
-	timeoutValue := 60
+	defaultTimeout := 60
+
+	timeout, d := plan.Timeouts.Create(ctx, time.Duration(defaultTimeout)*time.Minute)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Run the API call
 	var response *management.CustomDomain
@@ -174,7 +179,7 @@ func (r *CustomDomainVerifyResource) Create(ctx context.Context, req resource.Cr
 		},
 		sdk.DefaultCreateReadRetryable,
 		&response,
-		time.Duration(timeoutValue)*time.Minute, // 60 mins
+		timeout,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
