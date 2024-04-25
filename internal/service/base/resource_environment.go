@@ -29,6 +29,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	stringdefaultinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringdefaultinternal"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -43,15 +44,15 @@ type EnvironmentResource struct {
 }
 
 type environmentResourceModel struct {
-	Id             types.String `tfsdk:"id"`
-	Name           types.String `tfsdk:"name"`
-	Description    types.String `tfsdk:"description"`
-	Type           types.String `tfsdk:"type"`
-	Region         types.String `tfsdk:"region"`
-	LicenseId      types.String `tfsdk:"license_id"`
-	OrganizationId types.String `tfsdk:"organization_id"`
-	Solution       types.String `tfsdk:"solution"`
-	Services       types.Set    `tfsdk:"services"`
+	Id             pingonetypes.ResourceIDValue `tfsdk:"id"`
+	Name           types.String                 `tfsdk:"name"`
+	Description    types.String                 `tfsdk:"description"`
+	Type           types.String                 `tfsdk:"type"`
+	Region         types.String                 `tfsdk:"region"`
+	LicenseId      pingonetypes.ResourceIDValue `tfsdk:"license_id"`
+	OrganizationId pingonetypes.ResourceIDValue `tfsdk:"organization_id"`
+	Solution       types.String                 `tfsdk:"solution"`
+	Services       types.Set                    `tfsdk:"services"`
 }
 
 type environmentServiceModel struct {
@@ -244,15 +245,15 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 
 				Required: true,
 
-				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
-				},
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"organization_id": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that represents the ID of the PingOne organization tenant to which the environment belongs.").Description,
 
 				Computed: true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -1012,7 +1013,7 @@ func (p *environmentResourceModel) toState(environmentApiObject *management.Envi
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(environmentApiObject.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(environmentApiObject.GetIdOk())
 	p.Name = framework.StringOkToTF(environmentApiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(environmentApiObject.GetDescriptionOk())
 	p.Type = framework.EnumOkToTF(environmentApiObject.GetTypeOk())
@@ -1028,13 +1029,13 @@ func (p *environmentResourceModel) toState(environmentApiObject *management.Envi
 	}
 
 	if v, ok := environmentApiObject.GetLicenseOk(); ok {
-		p.LicenseId = framework.StringOkToTF(v.GetIdOk())
+		p.LicenseId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	}
 
 	if v, ok := environmentApiObject.GetOrganizationOk(); ok {
-		p.OrganizationId = framework.StringOkToTF(v.GetIdOk())
+		p.OrganizationId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	} else {
-		p.OrganizationId = types.StringNull()
+		p.OrganizationId = pingonetypes.NewResourceIDNull()
 	}
 
 	p.Solution = framework.EnumOkToTF(servicesApiObject.GetSolutionTypeOk())

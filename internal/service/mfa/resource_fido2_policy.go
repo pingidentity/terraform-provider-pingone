@@ -21,6 +21,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -33,20 +34,20 @@ import (
 type FIDO2PolicyResource serviceClientType
 
 type FIDO2PolicyResourceModel struct {
-	Id                            types.String `tfsdk:"id"`
-	EnvironmentId                 types.String `tfsdk:"environment_id"`
-	Name                          types.String `tfsdk:"name"`
-	Description                   types.String `tfsdk:"description"`
-	Default                       types.Bool   `tfsdk:"default"`
-	AttestationRequirements       types.String `tfsdk:"attestation_requirements"`
-	AuthenticatorAttachment       types.String `tfsdk:"authenticator_attachment"`
-	BackupEligibility             types.Object `tfsdk:"backup_eligibility"`
-	DeviceDisplayName             types.String `tfsdk:"device_display_name"`
-	DiscoverableCredentials       types.String `tfsdk:"discoverable_credentials"`
-	MdsAuthenticatorsRequirements types.Object `tfsdk:"mds_authenticators_requirements"`
-	RelyingPartyId                types.String `tfsdk:"relying_party_id"`
-	UserDisplayNameAttributes     types.Object `tfsdk:"user_display_name_attributes"`
-	UserVerification              types.Object `tfsdk:"user_verification"`
+	Id                            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId                 pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name                          types.String                 `tfsdk:"name"`
+	Description                   types.String                 `tfsdk:"description"`
+	Default                       types.Bool                   `tfsdk:"default"`
+	AttestationRequirements       types.String                 `tfsdk:"attestation_requirements"`
+	AuthenticatorAttachment       types.String                 `tfsdk:"authenticator_attachment"`
+	BackupEligibility             types.Object                 `tfsdk:"backup_eligibility"`
+	DeviceDisplayName             types.String                 `tfsdk:"device_display_name"`
+	DiscoverableCredentials       types.String                 `tfsdk:"discoverable_credentials"`
+	MdsAuthenticatorsRequirements types.Object                 `tfsdk:"mds_authenticators_requirements"`
+	RelyingPartyId                types.String                 `tfsdk:"relying_party_id"`
+	UserDisplayNameAttributes     types.Object                 `tfsdk:"user_display_name_attributes"`
+	UserVerification              types.Object                 `tfsdk:"user_verification"`
 }
 
 type FIDO2PolicyBackupEligibilityResourceModel struct {
@@ -877,8 +878,8 @@ func (p *FIDO2PolicyResourceModel) toState(apiObject *mfa.FIDO2Policy) diag.Diag
 
 	var d diag.Diagnostics
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())

@@ -19,6 +19,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	customboolvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -27,17 +28,17 @@ import (
 type ApplicationAttributeMappingResource serviceClientType
 
 type ApplicationAttributeMappingResourceModel struct {
-	Id                    types.String `tfsdk:"id"`
-	EnvironmentId         types.String `tfsdk:"environment_id"`
-	ApplicationId         types.String `tfsdk:"application_id"`
-	Name                  types.String `tfsdk:"name"`
-	Required              types.Bool   `tfsdk:"required"`
-	Value                 types.String `tfsdk:"value"`
-	MappingType           types.String `tfsdk:"mapping_type"`
-	OIDCScopes            types.Set    `tfsdk:"oidc_scopes"`
-	OIDCIDTokenEnabled    types.Bool   `tfsdk:"oidc_id_token_enabled"`
-	OIDCUserinfoEnabled   types.Bool   `tfsdk:"oidc_userinfo_enabled"`
-	SAMLSubjectNameformat types.String `tfsdk:"saml_subject_nameformat"`
+	Id                    pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId         pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ApplicationId         pingonetypes.ResourceIDValue `tfsdk:"application_id"`
+	Name                  types.String                 `tfsdk:"name"`
+	Required              types.Bool                   `tfsdk:"required"`
+	Value                 types.String                 `tfsdk:"value"`
+	MappingType           types.String                 `tfsdk:"mapping_type"`
+	OIDCScopes            types.Set                    `tfsdk:"oidc_scopes"`
+	OIDCIDTokenEnabled    types.Bool                   `tfsdk:"oidc_id_token_enabled"`
+	OIDCUserinfoEnabled   types.Bool                   `tfsdk:"oidc_userinfo_enabled"`
+	SAMLSubjectNameformat types.String                 `tfsdk:"saml_subject_nameformat"`
 }
 
 type coreApplicationAttributeType struct {
@@ -169,12 +170,11 @@ func (r *ApplicationAttributeMappingResource) Schema(ctx context.Context, req re
 			"oidc_scopes": schema.SetAttribute{
 				Description:         oidcScopesDescription.Description,
 				MarkdownDescription: oidcScopesDescription.MarkdownDescription,
-				ElementType:         types.StringType,
+				ElementType:         pingonetypes.ResourceIDType{},
 				Optional:            true,
 				Computed:            true,
 				Validators: []validator.Set{
 					setvalidator.SizeAtLeast(attrMinLength),
-					setvalidator.ValueStringsAre(verify.P1ResourceIDValidator()),
 				},
 			},
 
@@ -774,13 +774,13 @@ func (p *ApplicationAttributeMappingResourceModel) toState(apiObject *management
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Required = framework.BoolOkToTF(apiObject.GetRequiredOk())
 	p.Value = framework.StringOkToTF(apiObject.GetValueOk())
 	p.MappingType = ApplicationAttributeMappingMappingTypeOkToTF(apiObject.GetMappingTypeOk())
 
-	p.OIDCScopes = framework.StringSetOkToTF(apiObject.GetOidcScopesOk())
+	p.OIDCScopes = framework.PingOneResourceIDSetOkToTF(apiObject.GetOidcScopesOk())
 	p.OIDCIDTokenEnabled = framework.BoolOkToTF(apiObject.GetIdTokenOk())
 	p.OIDCUserinfoEnabled = framework.BoolOkToTF(apiObject.GetUserInfoOk())
 

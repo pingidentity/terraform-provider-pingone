@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -22,14 +23,14 @@ import (
 type GatewayRoleAssignmentResource serviceClientType
 
 type GatewayRoleAssignmentResourceModel struct {
-	Id                  types.String `tfsdk:"id"`
-	EnvironmentId       types.String `tfsdk:"environment_id"`
-	GatewayId           types.String `tfsdk:"gateway_id"`
-	RoleId              types.String `tfsdk:"role_id"`
-	ScopeEnvironmentId  types.String `tfsdk:"scope_environment_id"`
-	ScopeOrganizationId types.String `tfsdk:"scope_organization_id"`
-	ScopePopulationId   types.String `tfsdk:"scope_population_id"`
-	ReadOnly            types.Bool   `tfsdk:"read_only"`
+	Id                  pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId       pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	GatewayId           pingonetypes.ResourceIDValue `tfsdk:"gateway_id"`
+	RoleId              pingonetypes.ResourceIDValue `tfsdk:"role_id"`
+	ScopeEnvironmentId  pingonetypes.ResourceIDValue `tfsdk:"scope_environment_id"`
+	ScopeOrganizationId pingonetypes.ResourceIDValue `tfsdk:"scope_organization_id"`
+	ScopePopulationId   pingonetypes.ResourceIDValue `tfsdk:"scope_population_id"`
+	ReadOnly            types.Bool                   `tfsdk:"read_only"`
 }
 
 // Framework interfaces
@@ -318,9 +319,9 @@ func (p *GatewayRoleAssignmentResourceModel) toState(apiObject *management.RoleA
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringOkToTF(apiObject.Environment.GetIdOk())
-	p.RoleId = framework.StringOkToTF(apiObject.Role.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDOkToTF(apiObject.Environment.GetIdOk())
+	p.RoleId = framework.PingOneResourceIDOkToTF(apiObject.Role.GetIdOk())
 	p.ReadOnly = framework.BoolOkToTF(apiObject.GetReadOnlyOk())
 
 	p.ScopeEnvironmentId, p.ScopeOrganizationId, p.ScopePopulationId = service.RoleAssignmentScopeOkToTF(apiObject.GetScopeOk())

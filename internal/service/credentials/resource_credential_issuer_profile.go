@@ -24,6 +24,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -32,13 +33,13 @@ import (
 type CredentialIssuerProfileResource serviceClientType
 
 type CredentialIssuerProfileResourceModel struct {
-	Id                    types.String      `tfsdk:"id"`
-	EnvironmentId         types.String      `tfsdk:"environment_id"`
-	ApplicationInstanceId types.String      `tfsdk:"application_instance_id"`
-	CreatedAt             timetypes.RFC3339 `tfsdk:"created_at"`
-	UpdatedAt             timetypes.RFC3339 `tfsdk:"updated_at"`
-	Name                  types.String      `tfsdk:"name"`
-	Timeouts              timeouts.Value    `tfsdk:"timeouts"`
+	Id                    pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId         pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ApplicationInstanceId pingonetypes.ResourceIDValue `tfsdk:"application_instance_id"`
+	CreatedAt             timetypes.RFC3339            `tfsdk:"created_at"`
+	UpdatedAt             timetypes.RFC3339            `tfsdk:"updated_at"`
+	Name                  types.String                 `tfsdk:"name"`
+	Timeouts              timeouts.Value               `tfsdk:"timeouts"`
 }
 
 // Framework interfaces
@@ -81,6 +82,8 @@ func (r *CredentialIssuerProfileResource) Schema(ctx context.Context, req resour
 			"application_instance_id": schema.StringAttribute{
 				Description: "Identifier (UUID) of the application instance registered with the PingOne platform service. This enables the client to send messages to the service.",
 				Computed:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"created_at": schema.StringAttribute{
@@ -410,9 +413,9 @@ func (p *CredentialIssuerProfileResourceModel) toState(apiObject *credentials.Cr
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.ApplicationInstanceId = framework.StringToTF(*apiObject.GetApplicationInstance().Id)
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
+	p.ApplicationInstanceId = framework.PingOneResourceIDToTF(*apiObject.GetApplicationInstance().Id)
 	p.CreatedAt = framework.TimeOkToTF(apiObject.GetCreatedAtOk())
 	p.UpdatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())

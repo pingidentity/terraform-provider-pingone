@@ -6,13 +6,15 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
 
 // Common models
@@ -23,18 +25,22 @@ type DataFilterModel struct {
 
 // Common schema attributes
 func Attr_ID() schema.StringAttribute {
+	return Attr_IDCustomType(pingonetypes.ResourceIDType{})
+}
+
+func Attr_IDCustomType(customType basetypes.StringTypable) schema.StringAttribute {
 	return schema.StringAttribute{
 		Computed: true,
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.UseStateForUnknown(),
 		},
+
+		CustomType: customType,
 	}
 }
 
 func Attr_LinkID(description SchemaAttributeDescription) schema.StringAttribute {
-	return Attr_LinkIDWithValidators(description, []validator.String{
-		verify.P1ResourceIDValidator(),
-	})
+	return Attr_LinkIDWithValidators(description, []validator.String{})
 }
 
 func Attr_LinkIDWithValidators(description SchemaAttributeDescription, validators []validator.String) schema.StringAttribute {
@@ -49,6 +55,9 @@ func Attr_LinkIDWithValidators(description SchemaAttributeDescription, validator
 		Description:         description.Description,
 		MarkdownDescription: description.MarkdownDescription,
 		Required:            true,
+
+		CustomType: pingonetypes.ResourceIDType{},
+
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
@@ -151,6 +160,10 @@ func Attr_DataFilter(description SchemaAttributeDescription, acceptableAttribute
 }
 
 func Attr_DataSourceReturnIDs(description SchemaAttributeDescription) schema.ListAttribute {
+	return Attr_DataSourceReturnIDsByElement(description, pingonetypes.ResourceIDType{})
+}
+
+func Attr_DataSourceReturnIDsByElement(description SchemaAttributeDescription, elementType attr.Type) schema.ListAttribute {
 	if description.MarkdownDescription == "" {
 		description.MarkdownDescription = description.Description
 	}
@@ -159,6 +172,6 @@ func Attr_DataSourceReturnIDs(description SchemaAttributeDescription) schema.Lis
 		Description:         description.Description,
 		MarkdownDescription: description.MarkdownDescription,
 		Computed:            true,
-		ElementType:         types.StringType,
+		ElementType:         elementType,
 	}
 }

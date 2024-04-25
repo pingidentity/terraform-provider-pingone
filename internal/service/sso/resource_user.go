@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -27,6 +28,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -36,37 +38,37 @@ import (
 type UserResource serviceClientType
 
 type UserResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Username      types.String `tfsdk:"username"`
-	Email         types.String `tfsdk:"email"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Username      types.String                 `tfsdk:"username"`
+	Email         types.String                 `tfsdk:"email"`
 	//EmailVerified     types.Bool   `tfsdk:"email_verified"`
-	Enabled           types.Bool   `tfsdk:"enabled"`
-	PopulationId      types.String `tfsdk:"population_id"`
-	Account           types.Object `tfsdk:"account"`
-	Address           types.Object `tfsdk:"address"`
-	ExternalId        types.String `tfsdk:"external_id"`
-	IdentityProvider  types.Object `tfsdk:"identity_provider"`
-	Lifecycle         types.Object `tfsdk:"user_lifecycle"`
-	Locale            types.String `tfsdk:"locale"`
-	MFAEnabled        types.Bool   `tfsdk:"mfa_enabled"`
-	MobilePhone       types.String `tfsdk:"mobile_phone"`
-	Name              types.Object `tfsdk:"name"`
-	Nickname          types.String `tfsdk:"nickname"`
-	Password          types.Object `tfsdk:"password"`
-	Photo             types.Object `tfsdk:"photo"`
-	PreferredLanguage types.String `tfsdk:"preferred_language"`
-	PrimaryPhone      types.String `tfsdk:"primary_phone"`
-	Timezone          types.String `tfsdk:"timezone"`
-	Title             types.String `tfsdk:"title"`
-	Type              types.String `tfsdk:"type"`
-	VerifyStatus      types.String `tfsdk:"verify_status"`
+	Enabled           types.Bool                   `tfsdk:"enabled"`
+	PopulationId      pingonetypes.ResourceIDValue `tfsdk:"population_id"`
+	Account           types.Object                 `tfsdk:"account"`
+	Address           types.Object                 `tfsdk:"address"`
+	ExternalId        types.String                 `tfsdk:"external_id"`
+	IdentityProvider  types.Object                 `tfsdk:"identity_provider"`
+	Lifecycle         types.Object                 `tfsdk:"user_lifecycle"`
+	Locale            types.String                 `tfsdk:"locale"`
+	MFAEnabled        types.Bool                   `tfsdk:"mfa_enabled"`
+	MobilePhone       types.String                 `tfsdk:"mobile_phone"`
+	Name              types.Object                 `tfsdk:"name"`
+	Nickname          types.String                 `tfsdk:"nickname"`
+	Password          types.Object                 `tfsdk:"password"`
+	Photo             types.Object                 `tfsdk:"photo"`
+	PreferredLanguage types.String                 `tfsdk:"preferred_language"`
+	PrimaryPhone      types.String                 `tfsdk:"primary_phone"`
+	Timezone          types.String                 `tfsdk:"timezone"`
+	Title             types.String                 `tfsdk:"title"`
+	Type              types.String                 `tfsdk:"type"`
+	VerifyStatus      types.String                 `tfsdk:"verify_status"`
 }
 
 type UserAccountResourceModel struct {
-	CanAuthenticate types.Bool   `tfsdk:"can_authenticate"`
-	LockedAt        types.String `tfsdk:"locked_at"`
-	Status          types.String `tfsdk:"status"`
+	CanAuthenticate types.Bool        `tfsdk:"can_authenticate"`
+	LockedAt        timetypes.RFC3339 `tfsdk:"locked_at"`
+	Status          types.String      `tfsdk:"status"`
 }
 
 type UserAddressResourceModel struct {
@@ -78,8 +80,8 @@ type UserAddressResourceModel struct {
 }
 
 type UserIdentityProviderResourceModel struct {
-	Id   types.String `tfsdk:"id"`
-	Type types.String `tfsdk:"type"`
+	Id   pingonetypes.ResourceIDValue `tfsdk:"id"`
+	Type types.String                 `tfsdk:"type"`
 }
 
 type UserLifecycleResourceModel struct {
@@ -107,10 +109,10 @@ type UserPasswordExternalResourceModel struct {
 }
 
 type UserPasswordExternalGatewayResourceModel struct {
-	Id                    types.String `tfsdk:"id"`
-	Type                  types.String `tfsdk:"type"`
-	UserTypeId            types.String `tfsdk:"user_type_id"`
-	CorrelationAttributes types.Map    `tfsdk:"correlation_attributes"`
+	Id                    pingonetypes.ResourceIDValue `tfsdk:"id"`
+	Type                  types.String                 `tfsdk:"type"`
+	UserTypeId            pingonetypes.ResourceIDValue `tfsdk:"user_type_id"`
+	CorrelationAttributes types.Map                    `tfsdk:"correlation_attributes"`
 }
 
 type UserPhotoResourceModel struct {
@@ -120,7 +122,7 @@ type UserPhotoResourceModel struct {
 var (
 	userAccountTFObjectTypes = map[string]attr.Type{
 		"can_authenticate": types.BoolType,
-		"locked_at":        types.StringType,
+		"locked_at":        timetypes.RFC3339Type{},
 		"status":           types.StringType,
 	}
 
@@ -133,7 +135,7 @@ var (
 	}
 
 	userIdentityProviderTFObjectTypes = map[string]attr.Type{
-		"id":   types.StringType,
+		"id":   pingonetypes.ResourceIDType{},
 		"type": types.StringType,
 	}
 
@@ -166,9 +168,9 @@ var (
 	}
 
 	userPasswordExternalGatewayTFObjectTypes = map[string]attr.Type{
-		"id":           types.StringType,
+		"id":           pingonetypes.ResourceIDType{},
 		"type":         types.StringType,
-		"user_type_id": types.StringType,
+		"user_type_id": pingonetypes.ResourceIDType{},
 		"correlation_attributes": types.MapType{
 			ElemType: types.StringType,
 		},
@@ -403,9 +405,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				).Description,
 				Required: true,
 
-				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
-				},
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"account": schema.SingleNestedAttribute{
@@ -432,6 +432,8 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 						PlanModifiers: []planmodifier.String{
 							stringplanmodifier.UseStateForUnknown(),
 						},
+
+						CustomType: timetypes.RFC3339Type{},
 					},
 
 					"status": schema.StringAttribute{
@@ -538,7 +540,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 
 				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
 					o := map[string]attr.Value{
-						"id":   types.StringNull(),
+						"id":   pingonetypes.NewResourceIDNull(),
 						"type": types.StringValue(string(management.ENUMIDENTITYPROVIDER_PING_ONE)),
 					}
 
@@ -553,6 +555,8 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 						Description:         identityProviderIdDescription.Description,
 						MarkdownDescription: identityProviderIdDescription.MarkdownDescription,
 						Optional:            true,
+
+						CustomType: pingonetypes.ResourceIDType{},
 
 						PlanModifiers: []planmodifier.String{
 							stringplanmodifier.RequiresReplace(),
@@ -778,9 +782,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 										).Description,
 										Optional: true,
 
-										Validators: []validator.String{
-											verify.P1ResourceIDValidator(),
-										},
+										CustomType: pingonetypes.ResourceIDType{},
 									},
 
 									"type": schema.StringAttribute{
@@ -799,9 +801,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 										).Description,
 										Optional: true,
 
-										Validators: []validator.String{
-											verify.P1ResourceIDValidator(),
-										},
+										CustomType: pingonetypes.ResourceIDType{},
 									},
 
 									"correlation_attributes": schema.MapAttribute{
@@ -930,7 +930,7 @@ func (r *UserResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 
 		o := map[string]attr.Value{
 			"can_authenticate": types.BoolValue(true),
-			"locked_at":        types.StringNull(),
+			"locked_at":        timetypes.NewRFC3339Null(),
 			"status":           types.StringValue(string(management.ENUMUSERSTATUS_OK)),
 		}
 
@@ -949,7 +949,7 @@ func (r *UserResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 		resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root("account"), &accountPlan)...)
 
 		if !accountPlan.Status.Equal(types.StringValue("LOCKED")) {
-			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("account").AtName("locked_at"), types.StringNull())...)
+			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("account").AtName("locked_at"), timetypes.NewRFC3339Null())...)
 		}
 	}
 }
@@ -1649,8 +1649,8 @@ func (p *UserResourceModel) toState(ctx context.Context, apiObject *management.U
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringOkToTF(apiObject.Environment.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDOkToTF(apiObject.Environment.GetIdOk())
 	p.Username = framework.StringOkToTF(apiObject.GetUsernameOk())
 	p.Email = framework.StringOkToTF(apiObject.GetEmailOk())
 	//p.EmailVerified = framework.BoolOkToTF(apiObject.GetEmailVerifiedOk())
@@ -1658,7 +1658,7 @@ func (p *UserResourceModel) toState(ctx context.Context, apiObject *management.U
 
 	var d diag.Diagnostics
 
-	p.PopulationId = framework.StringOkToTF(apiObject.Population.GetIdOk())
+	p.PopulationId = framework.PingOneResourceIDOkToTF(apiObject.Population.GetIdOk())
 	p.Account, d = p.userAccountOkToTF(apiObject.GetAccountOk())
 	diags = append(diags, d...)
 
@@ -1746,7 +1746,7 @@ func (p *UserResourceModel) userIdentityProviderOkToTF(apiObject *management.Use
 	}
 
 	objMap := map[string]attr.Value{
-		"id":   framework.StringOkToTF(apiObject.GetIdOk()),
+		"id":   framework.PingOneResourceIDOkToTF(apiObject.GetIdOk()),
 		"type": framework.EnumOkToTF(apiObject.GetTypeOk()),
 	}
 

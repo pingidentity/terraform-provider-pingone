@@ -20,6 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	objectplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectplanmodifier"
 	stringplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringplanmodifier"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -30,12 +31,12 @@ import (
 type ApplicationPushCredentialResource serviceClientType
 
 type applicationPushCredentialResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	ApplicationId types.String `tfsdk:"application_id"`
-	Fcm           types.Object `tfsdk:"fcm"`
-	Apns          types.Object `tfsdk:"apns"`
-	Hms           types.Object `tfsdk:"hms"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ApplicationId pingonetypes.ResourceIDValue `tfsdk:"application_id"`
+	Fcm           types.Object                 `tfsdk:"fcm"`
+	Apns          types.Object                 `tfsdk:"apns"`
+	Hms           types.Object                 `tfsdk:"hms"`
 }
 
 type applicationPushCredentialFcmResourceModel struct {
@@ -549,7 +550,7 @@ func (p *applicationPushCredentialResourceModel) toState(apiObject *mfa.MFAPushC
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
 
 	// The rest are credentials not returned from the API and passed through as-is
 

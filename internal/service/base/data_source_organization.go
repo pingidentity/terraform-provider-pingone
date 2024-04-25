@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -23,12 +24,12 @@ import (
 type OrganizationDataSource serviceClientType
 
 type OrganizationDataSourceModel struct {
-	Id                   types.String `tfsdk:"id"`
-	OrganizationId       types.String `tfsdk:"organization_id"`
-	Name                 types.String `tfsdk:"name"`
-	Description          types.String `tfsdk:"description"`
-	Type                 types.String `tfsdk:"type"`
-	BillingConnectionIds types.Set    `tfsdk:"billing_connection_ids"`
+	Id                   pingonetypes.ResourceIDValue `tfsdk:"id"`
+	OrganizationId       pingonetypes.ResourceIDValue `tfsdk:"organization_id"`
+	Name                 types.String                 `tfsdk:"name"`
+	Description          types.String                 `tfsdk:"description"`
+	Type                 types.String                 `tfsdk:"type"`
+	BillingConnectionIds types.Set                    `tfsdk:"billing_connection_ids"`
 }
 
 // Framework interfaces
@@ -66,6 +67,8 @@ func (r *OrganizationDataSource) Schema(ctx context.Context, req datasource.Sche
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
 				},
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"name": schema.StringAttribute{
@@ -226,8 +229,8 @@ func (p *OrganizationDataSourceModel) toState(v *management.Organization) diag.D
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(v.GetIdOk())
-	p.OrganizationId = framework.StringOkToTF(v.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(v.GetIdOk())
+	p.OrganizationId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	p.Name = framework.StringOkToTF(v.GetNameOk())
 	p.Description = framework.StringOkToTF(v.GetDescriptionOk())
 	p.Type = organzationTypeEnumOkToTF(v.GetTypeOk())

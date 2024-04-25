@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -19,11 +20,11 @@ import (
 type LicensesDataSource serviceClientType
 
 type LicensesDataSourceModel struct {
-	OrganizationId types.String `tfsdk:"organization_id"`
-	Id             types.String `tfsdk:"id"`
-	ScimFilter     types.String `tfsdk:"scim_filter"`
-	DataFilters    types.List   `tfsdk:"data_filters"`
-	Ids            types.List   `tfsdk:"ids"`
+	OrganizationId pingonetypes.ResourceIDValue `tfsdk:"organization_id"`
+	Id             pingonetypes.ResourceIDValue `tfsdk:"id"`
+	ScimFilter     types.String                 `tfsdk:"scim_filter"`
+	DataFilters    types.List                   `tfsdk:"data_filters"`
+	Ids            types.List                   `tfsdk:"ids"`
 }
 
 // Framework interfaces
@@ -196,7 +197,7 @@ func (p *LicensesDataSourceModel) toState(environmentID string, licenses []manag
 
 	var d diag.Diagnostics
 
-	p.Id = framework.StringToTF(environmentID)
+	p.Id = framework.PingOneResourceIDToTF(environmentID)
 	p.Ids, d = framework.StringSliceToTF(list)
 	diags.Append(d...)
 

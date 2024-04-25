@@ -19,6 +19,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	customboolvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -27,15 +28,15 @@ import (
 type ResourceAttributeResource serviceClientType
 
 type ResourceAttributeResourceModel struct {
-	Id              types.String `tfsdk:"id"`
-	EnvironmentId   types.String `tfsdk:"environment_id"`
-	ResourceId      types.String `tfsdk:"resource_id"`
-	ResourceName    types.String `tfsdk:"resource_name"`
-	Name            types.String `tfsdk:"name"`
-	Type            types.String `tfsdk:"type"`
-	Value           types.String `tfsdk:"value"`
-	IDTokenEnabled  types.Bool   `tfsdk:"id_token_enabled"`
-	UserinfoEnabled types.Bool   `tfsdk:"userinfo_enabled"`
+	Id              pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId   pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ResourceId      pingonetypes.ResourceIDValue `tfsdk:"resource_id"`
+	ResourceName    types.String                 `tfsdk:"resource_name"`
+	Name            types.String                 `tfsdk:"name"`
+	Type            types.String                 `tfsdk:"type"`
+	Value           types.String                 `tfsdk:"value"`
+	IDTokenEnabled  types.Bool                   `tfsdk:"id_token_enabled"`
+	UserinfoEnabled types.Bool                   `tfsdk:"userinfo_enabled"`
 }
 
 type coreResourceAttributeType struct {
@@ -119,6 +120,8 @@ func (r *ResourceAttributeResource) Schema(ctx context.Context, req resource.Sch
 				Description:         resourceIdDescription.Description,
 				MarkdownDescription: resourceIdDescription.MarkdownDescription,
 				Computed:            true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -245,7 +248,7 @@ func (r *ResourceAttributeResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	plan.ResourceId = framework.StringOkToTF(resourceResponse.GetIdOk())
+	plan.ResourceId = framework.PingOneResourceIDOkToTF(resourceResponse.GetIdOk())
 
 	_, isCoreAttribute := plan.isCoreAttribute(resourceResponse.GetType())
 	isOverriddenAttribute := plan.isOverriddenAttribute(resourceResponse.GetType())
@@ -708,8 +711,8 @@ func (p *ResourceAttributeResourceModel) toState(apiObject *management.ResourceA
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.ResourceId = framework.StringOkToTF(resourceApiObject.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.ResourceId = framework.PingOneResourceIDOkToTF(resourceApiObject.GetIdOk())
 	p.ResourceName = framework.StringOkToTF(resourceApiObject.GetNameOk())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Value = framework.StringOkToTF(apiObject.GetValueOk())

@@ -12,15 +12,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
 
 // Types
 type EnvironmentsDataSource serviceClientType
 
 type EnvironmentsDataSourceModel struct {
-	Id         types.String `tfsdk:"id"`
-	ScimFilter types.String `tfsdk:"scim_filter"`
-	Ids        types.List   `tfsdk:"ids"`
+	Id         pingonetypes.ResourceIDValue `tfsdk:"id"`
+	ScimFilter types.String                 `tfsdk:"scim_filter"`
+	Ids        types.List                   `tfsdk:"ids"`
 }
 
 // Framework interfaces
@@ -150,7 +151,7 @@ func (p *EnvironmentsDataSourceModel) toState(environments []management.Environm
 	var d diag.Diagnostics
 
 	if p.Id.IsNull() {
-		p.Id = framework.StringToTF(uuid.New().String())
+		p.Id = framework.PingOneResourceIDToTF(uuid.New().String())
 	}
 
 	p.Ids, d = framework.StringSliceToTF(list)

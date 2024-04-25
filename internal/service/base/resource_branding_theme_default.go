@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -22,10 +23,10 @@ import (
 type BrandingThemeDefaultResource serviceClientType
 
 type brandingThemeDefaultResourceModel struct {
-	Id              types.String `tfsdk:"id"`
-	EnvironmentId   types.String `tfsdk:"environment_id"`
-	BrandingThemeId types.String `tfsdk:"branding_theme_id"`
-	Default         types.Bool   `tfsdk:"default"`
+	Id              pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId   pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	BrandingThemeId pingonetypes.ResourceIDValue `tfsdk:"branding_theme_id"`
+	Default         types.Bool                   `tfsdk:"default"`
 }
 
 // Framework interfaces

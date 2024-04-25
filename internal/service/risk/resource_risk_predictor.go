@@ -36,6 +36,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/risk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	riskservicehelpers "github.com/pingidentity/terraform-provider-pingone/internal/service/risk/helpers"
@@ -47,25 +48,25 @@ import (
 type RiskPredictorResource serviceClientType
 
 type riskPredictorResourceModel struct {
-	Id                           types.String `tfsdk:"id"`
-	EnvironmentId                types.String `tfsdk:"environment_id"`
-	Name                         types.String `tfsdk:"name"`
-	CompactName                  types.String `tfsdk:"compact_name"`
-	Description                  types.String `tfsdk:"description"`
-	Type                         types.String `tfsdk:"type"`
-	Default                      types.Object `tfsdk:"default"`
-	Licensed                     types.Bool   `tfsdk:"licensed"`
-	Deletable                    types.Bool   `tfsdk:"deletable"`
-	PredictorAnonymousNetwork    types.Object `tfsdk:"predictor_anonymous_network"`
-	PredictorBotDetection        types.Object `tfsdk:"predictor_bot_detection"`
-	PredictorComposite           types.Object `tfsdk:"predictor_composite"`
-	PredictorCustomMap           types.Object `tfsdk:"predictor_custom_map"`
-	PredictorDevice              types.Object `tfsdk:"predictor_device"`
-	PredictorGeoVelocity         types.Object `tfsdk:"predictor_geovelocity"`
-	PredictorIPReputation        types.Object `tfsdk:"predictor_ip_reputation"`
-	PredictorUserLocationAnomaly types.Object `tfsdk:"predictor_user_location_anomaly"`
-	PredictorUserRiskBehavior    types.Object `tfsdk:"predictor_user_risk_behavior"`
-	PredictorVelocity            types.Object `tfsdk:"predictor_velocity"`
+	Id                           pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId                pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name                         types.String                 `tfsdk:"name"`
+	CompactName                  types.String                 `tfsdk:"compact_name"`
+	Description                  types.String                 `tfsdk:"description"`
+	Type                         types.String                 `tfsdk:"type"`
+	Default                      types.Object                 `tfsdk:"default"`
+	Licensed                     types.Bool                   `tfsdk:"licensed"`
+	Deletable                    types.Bool                   `tfsdk:"deletable"`
+	PredictorAnonymousNetwork    types.Object                 `tfsdk:"predictor_anonymous_network"`
+	PredictorBotDetection        types.Object                 `tfsdk:"predictor_bot_detection"`
+	PredictorComposite           types.Object                 `tfsdk:"predictor_composite"`
+	PredictorCustomMap           types.Object                 `tfsdk:"predictor_custom_map"`
+	PredictorDevice              types.Object                 `tfsdk:"predictor_device"`
+	PredictorGeoVelocity         types.Object                 `tfsdk:"predictor_geovelocity"`
+	PredictorIPReputation        types.Object                 `tfsdk:"predictor_ip_reputation"`
+	PredictorUserLocationAnomaly types.Object                 `tfsdk:"predictor_user_location_anomaly"`
+	PredictorUserRiskBehavior    types.Object                 `tfsdk:"predictor_user_risk_behavior"`
+	PredictorVelocity            types.Object                 `tfsdk:"predictor_velocity"`
 }
 
 // Anonymous network, IP reputation, geovelocity
@@ -2873,7 +2874,7 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 		}
 	}
 
-	p.Id = framework.StringToTF(apiObjectCommon.GetId())
+	p.Id = framework.PingOneResourceIDToTF(apiObjectCommon.GetId())
 	// p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
 	p.Name = framework.StringOkToTF(apiObjectCommon.GetNameOk())
 	p.CompactName = framework.StringOkToTF(apiObjectCommon.GetCompactNameOk())

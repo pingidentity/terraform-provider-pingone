@@ -11,15 +11,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
 
 // Types
 type ApplicationFlowPolicyAssignmentsDataSource serviceClientType
 
 type ApplicationFlowPolicyAssignmentsDataSourceModel struct {
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	ApplicationId types.String `tfsdk:"application_id"`
-	Ids           types.List   `tfsdk:"ids"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ApplicationId pingonetypes.ResourceIDValue `tfsdk:"application_id"`
+	Ids           types.List                   `tfsdk:"ids"`
 }
 
 // Framework interfaces
@@ -140,10 +141,7 @@ func (p *ApplicationFlowPolicyAssignmentsDataSourceModel) toState(apiObject []ma
 		list = append(list, item.GetId())
 	}
 
-	var d diag.Diagnostics
-
-	p.Ids, d = framework.StringSliceToTF(list)
-	diags.Append(d...)
+	p.Ids = framework.PingOneResourceIDListToTF(list)
 
 	return diags
 }

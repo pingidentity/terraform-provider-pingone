@@ -16,30 +16,30 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
-	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
 type ApplicationDataSource serviceClientType
 
 type applicationDataSourceModel struct {
-	Id                        types.String `tfsdk:"id"`
-	EnvironmentId             types.String `tfsdk:"environment_id"`
-	ApplicationId             types.String `tfsdk:"application_id"`
-	Name                      types.String `tfsdk:"name"`
-	Description               types.String `tfsdk:"description"`
-	Enabled                   types.Bool   `tfsdk:"enabled"`
-	Tags                      types.Set    `tfsdk:"tags"`
-	LoginPageUrl              types.String `tfsdk:"login_page_url"`
-	Icon                      types.Object `tfsdk:"icon"`
-	AccessControlRoleType     types.String `tfsdk:"access_control_role_type"`
-	AccessControlGroupOptions types.Object `tfsdk:"access_control_group_options"`
-	HiddenFromAppPortal       types.Bool   `tfsdk:"hidden_from_app_portal"`
-	ExternalLinkOptions       types.Object `tfsdk:"external_link_options"`
-	OIDCOptions               types.Object `tfsdk:"oidc_options"`
-	SAMLOptions               types.Object `tfsdk:"saml_options"`
+	Id                        pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId             pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ApplicationId             pingonetypes.ResourceIDValue `tfsdk:"application_id"`
+	Name                      types.String                 `tfsdk:"name"`
+	Description               types.String                 `tfsdk:"description"`
+	Enabled                   types.Bool                   `tfsdk:"enabled"`
+	Tags                      types.Set                    `tfsdk:"tags"`
+	LoginPageUrl              types.String                 `tfsdk:"login_page_url"`
+	Icon                      types.Object                 `tfsdk:"icon"`
+	AccessControlRoleType     types.String                 `tfsdk:"access_control_role_type"`
+	AccessControlGroupOptions types.Object                 `tfsdk:"access_control_group_options"`
+	HiddenFromAppPortal       types.Bool                   `tfsdk:"hidden_from_app_portal"`
+	ExternalLinkOptions       types.Object                 `tfsdk:"external_link_options"`
+	OIDCOptions               types.Object                 `tfsdk:"oidc_options"`
+	SAMLOptions               types.Object                 `tfsdk:"saml_options"`
 }
 
 // Framework interfaces
@@ -134,11 +134,13 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 				Description:         applicationIdDescription.Description,
 				MarkdownDescription: applicationIdDescription.MarkdownDescription,
 				Optional:            true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("name"),
 					),
-					validation.P1ResourceIDValidator(),
 				},
 			},
 			"name": schema.StringAttribute{
@@ -713,8 +715,8 @@ func (p *applicationDataSourceModel) toState(ctx context.Context, apiObject *man
 	applicationInstance := apiObject.GetActualInstance()
 	switch v := applicationInstance.(type) {
 	case *management.ApplicationExternalLink:
-		p.Id = framework.StringOkToTF(v.GetIdOk())
-		p.EnvironmentId = framework.StringOkToTF(v.Environment.GetIdOk())
+		p.Id = framework.PingOneResourceIDOkToTF(v.GetIdOk())
+		p.EnvironmentId = framework.PingOneResourceIDOkToTF(v.Environment.GetIdOk())
 		p.Name = framework.StringOkToTF(v.GetNameOk())
 		p.Description = framework.StringOkToTF(v.GetDescriptionOk())
 		p.Enabled = framework.BoolOkToTF(v.GetEnabledOk())
@@ -747,8 +749,8 @@ func (p *applicationDataSourceModel) toState(ctx context.Context, apiObject *man
 		diags = append(diags, d...)
 
 	case *management.ApplicationOIDC:
-		p.Id = framework.StringOkToTF(v.GetIdOk())
-		p.EnvironmentId = framework.StringOkToTF(v.Environment.GetIdOk())
+		p.Id = framework.PingOneResourceIDOkToTF(v.GetIdOk())
+		p.EnvironmentId = framework.PingOneResourceIDOkToTF(v.Environment.GetIdOk())
 		p.Name = framework.StringOkToTF(v.GetNameOk())
 		p.Description = framework.StringOkToTF(v.GetDescriptionOk())
 		p.Enabled = framework.BoolOkToTF(v.GetEnabledOk())
@@ -793,8 +795,8 @@ func (p *applicationDataSourceModel) toState(ctx context.Context, apiObject *man
 		p.ExternalLinkOptions = types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes)
 
 	case *management.ApplicationSAML:
-		p.Id = framework.StringOkToTF(v.GetIdOk())
-		p.EnvironmentId = framework.StringOkToTF(v.Environment.GetIdOk())
+		p.Id = framework.PingOneResourceIDOkToTF(v.GetIdOk())
+		p.EnvironmentId = framework.PingOneResourceIDOkToTF(v.Environment.GetIdOk())
 		p.Name = framework.StringOkToTF(v.GetNameOk())
 		p.Description = framework.StringOkToTF(v.GetDescriptionOk())
 		p.Enabled = framework.BoolOkToTF(v.GetEnabledOk())

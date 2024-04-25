@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -19,8 +20,8 @@ import (
 type RolesDataSource serviceClientType
 
 type RolesDataSourceModel struct {
-	Id  types.String `tfsdk:"id"`
-	Ids types.List   `tfsdk:"ids"`
+	Id  pingonetypes.ResourceIDValue `tfsdk:"id"`
+	Ids types.List                   `tfsdk:"ids"`
 }
 
 // Framework interfaces
@@ -140,7 +141,7 @@ func (p *RolesDataSourceModel) toState(v []management.Role) diag.Diagnostics {
 	var d diag.Diagnostics
 
 	if p.Id.IsNull() {
-		p.Id = framework.StringToTF(uuid.New().String())
+		p.Id = framework.PingOneResourceIDToTF(uuid.New().String())
 	}
 
 	p.Ids, d = framework.StringSliceToTF(list)

@@ -14,18 +14,18 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
 type TrustedEmailDomainDataSource serviceClientType
 
 type TrustedEmailDomainDataSourceModel struct {
-	DomainName    types.String `tfsdk:"domain_name"`
-	EmailDomainId types.String `tfsdk:"trusted_email_domain_id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Id            types.String `tfsdk:"id"`
+	DomainName    types.String                 `tfsdk:"domain_name"`
+	EmailDomainId pingonetypes.ResourceIDValue `tfsdk:"trusted_email_domain_id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
 }
 
 // Framework interfaces
@@ -74,8 +74,9 @@ func (r *TrustedEmailDomainDataSource) Schema(ctx context.Context, req datasourc
 				Description:         trustedEmailDomainIdDescription.Description,
 				Optional:            true,
 
+				CustomType: pingonetypes.ResourceIDType{},
+
 				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("domain_name")),
 				},
 			},
@@ -225,15 +226,15 @@ func (p *TrustedEmailDomainDataSourceModel) toState(v *management.EmailDomain) d
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(v.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 
 	if e, ok := v.GetEnvironmentOk(); ok {
-		p.EnvironmentId = framework.StringOkToTF(e.GetIdOk())
+		p.EnvironmentId = framework.PingOneResourceIDOkToTF(e.GetIdOk())
 	} else {
-		p.EnvironmentId = types.StringNull()
+		p.EnvironmentId = pingonetypes.NewResourceIDNull()
 	}
 
-	p.EmailDomainId = framework.StringOkToTF(v.GetIdOk())
+	p.EmailDomainId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	p.DomainName = framework.StringOkToTF(v.GetDomainNameOk())
 
 	return diags

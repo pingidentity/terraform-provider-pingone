@@ -16,23 +16,23 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
 
 // Types
 type EnvironmentDataSource serviceClientType
 
 type EnvironmentDataSourceModel struct {
-	Id             types.String `tfsdk:"id"`
-	EnvironmentId  types.String `tfsdk:"environment_id"`
-	Name           types.String `tfsdk:"name"`
-	Description    types.String `tfsdk:"description"`
-	Type           types.String `tfsdk:"type"`
-	Region         types.String `tfsdk:"region"`
-	LicenseId      types.String `tfsdk:"license_id"`
-	OrganizationId types.String `tfsdk:"organization_id"`
-	Solution       types.String `tfsdk:"solution"`
-	Services       types.Set    `tfsdk:"services"`
+	Id             pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId  pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name           types.String                 `tfsdk:"name"`
+	Description    types.String                 `tfsdk:"description"`
+	Type           types.String                 `tfsdk:"type"`
+	Region         types.String                 `tfsdk:"region"`
+	LicenseId      pingonetypes.ResourceIDValue `tfsdk:"license_id"`
+	OrganizationId pingonetypes.ResourceIDValue `tfsdk:"organization_id"`
+	Solution       types.String                 `tfsdk:"solution"`
+	Services       types.Set                    `tfsdk:"services"`
 }
 
 // Framework interfaces
@@ -104,9 +104,11 @@ func (r *EnvironmentDataSource) Schema(ctx context.Context, req datasource.Schem
 				Description:         environmentIdDescription.Description,
 				MarkdownDescription: environmentIdDescription.MarkdownDescription,
 				Optional:            true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
-					verify.P1ResourceIDValidator(),
 				},
 			},
 
@@ -140,11 +142,15 @@ func (r *EnvironmentDataSource) Schema(ctx context.Context, req datasource.Schem
 			"license_id": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of a valid license applied to the environment.").Description,
 				Computed:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"organization_id": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the PingOne organization tenant to which the environment belongs.").Description,
 				Computed:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"solution": schema.StringAttribute{
@@ -358,8 +364,8 @@ func (p *EnvironmentDataSourceModel) toState(environmentApiObject *management.En
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(environmentApiObject.GetIdOk())
-	p.EnvironmentId = framework.StringOkToTF(environmentApiObject.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(environmentApiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDOkToTF(environmentApiObject.GetIdOk())
 	p.Name = framework.StringOkToTF(environmentApiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(environmentApiObject.GetDescriptionOk())
 	p.Type = framework.EnumOkToTF(environmentApiObject.GetTypeOk())
@@ -375,13 +381,13 @@ func (p *EnvironmentDataSourceModel) toState(environmentApiObject *management.En
 	}
 
 	if v, ok := environmentApiObject.GetLicenseOk(); ok {
-		p.LicenseId = framework.StringOkToTF(v.GetIdOk())
+		p.LicenseId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	}
 
 	if v, ok := environmentApiObject.GetOrganizationOk(); ok {
-		p.OrganizationId = framework.StringOkToTF(v.GetIdOk())
+		p.OrganizationId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	} else {
-		p.OrganizationId = types.StringNull()
+		p.OrganizationId = pingonetypes.NewResourceIDNull()
 	}
 
 	p.Solution = framework.EnumOkToTF(servicesApiObject.GetSolutionTypeOk())

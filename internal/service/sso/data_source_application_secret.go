@@ -11,16 +11,17 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
 
 // Types
 type ApplicationSecretDataSource serviceClientType
 
 type ApplicationSecretDataSourceModel struct {
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	ApplicationId types.String `tfsdk:"application_id"`
-	Previous      types.Object `tfsdk:"previous"`
-	Secret        types.String `tfsdk:"secret"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ApplicationId pingonetypes.ResourceIDValue `tfsdk:"application_id"`
+	Previous      types.Object                 `tfsdk:"previous"`
+	Secret        types.String                 `tfsdk:"secret"`
 }
 
 // Framework interfaces

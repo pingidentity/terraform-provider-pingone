@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -25,15 +26,10 @@ import (
 type BrandingSettingsResource serviceClientType
 
 type brandingSettingsResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	CompanyName   types.String `tfsdk:"company_name"`
-	LogoImage     types.Object `tfsdk:"logo_image"`
-}
-
-type imageResourceModel struct {
-	Id   types.String `tfsdk:"id"`
-	Href types.String `tfsdk:"href"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	CompanyName   types.String                 `tfsdk:"company_name"`
+	LogoImage     types.Object                 `tfsdk:"logo_image"`
 }
 
 // Framework interfaces
@@ -96,9 +92,7 @@ func (r *BrandingSettingsResource) Schema(ctx context.Context, req resource.Sche
 						MarkdownDescription: logoIdDescription.MarkdownDescription,
 						Required:            true,
 
-						Validators: []validator.String{
-							verify.P1ResourceIDValidator(),
-						},
+						CustomType: pingonetypes.ResourceIDType{},
 					},
 
 					"href": schema.StringAttribute{
@@ -340,8 +334,8 @@ func (r *BrandingSettingsResource) ImportState(ctx context.Context, req resource
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes["environment_id"])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes["environment_id"])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), framework.PingOneResourceIDToTF(attributes["environment_id"]))...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), framework.PingOneResourceIDToTF(attributes["environment_id"]))...)
 }
 
 func (p *brandingSettingsResourceModel) expand(ctx context.Context) (*management.BrandingSettings, diag.Diagnostics) {
@@ -357,7 +351,7 @@ func (p *brandingSettingsResourceModel) expand(ctx context.Context) (*management
 
 	if !p.LogoImage.IsNull() && !p.LogoImage.IsUnknown() {
 
-		var plan imageResourceModel
+		var plan service.ImageResourceModel
 		diags.Append(p.LogoImage.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -384,7 +378,7 @@ func (p *brandingSettingsResourceModel) toState(apiObject *management.BrandingSe
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
 	p.CompanyName = framework.EnumOkToTF(apiObject.GetCompanyNameOk())
 
 	logoImage, d := service.ImageOkToTF(apiObject.GetLogoOk())

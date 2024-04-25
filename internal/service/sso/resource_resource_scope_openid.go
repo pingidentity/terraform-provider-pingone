@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -16,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -24,12 +24,12 @@ import (
 type ResourceScopeOpenIDResource serviceClientType
 
 type ResourceScopeOpenIDResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	ResourceId    types.String `tfsdk:"resource_id"`
-	Name          types.String `tfsdk:"name"`
-	Description   types.String `tfsdk:"description"`
-	MappedClaims  types.Set    `tfsdk:"mapped_claims"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ResourceId    pingonetypes.ResourceIDValue `tfsdk:"resource_id"`
+	Name          types.String                 `tfsdk:"name"`
+	Description   types.String                 `tfsdk:"description"`
+	MappedClaims  types.Set                    `tfsdk:"mapped_claims"`
 }
 
 // Framework interfaces
@@ -94,18 +94,14 @@ func (r *ResourceScopeOpenIDResource) Schema(ctx context.Context, req resource.S
 				MarkdownDescription: mappedClaimsDescription.MarkdownDescription,
 				Optional:            true,
 
-				ElementType: types.StringType,
-
-				Validators: []validator.Set{
-					setvalidator.ValueStringsAre(
-						verify.P1ResourceIDValidator(),
-					),
-				},
+				ElementType: pingonetypes.ResourceIDType{},
 			},
 
 			"resource_id": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("The ID of the OpenID Connect resource.").Description,
 				Computed:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 		},
 	}
@@ -159,7 +155,7 @@ func (r *ResourceScopeOpenIDResource) Create(ctx context.Context, req resource.C
 		return
 	}
 
-	plan.ResourceId = framework.StringOkToTF(resource.GetIdOk())
+	plan.ResourceId = framework.PingOneResourceIDOkToTF(resource.GetIdOk())
 
 	// Build the model for the API
 	resourceScope, d := plan.expand(ctx, r.Client.ManagementAPIClient, *resource)
@@ -498,12 +494,12 @@ func (p *ResourceScopeOpenIDResourceModel) toState(apiObject *management.Resourc
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
 
 	if v, ok := apiObject.GetResourceOk(); ok {
-		p.ResourceId = framework.StringOkToTF(v.GetIdOk())
+		p.ResourceId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	} else {
-		p.ResourceId = types.StringNull()
+		p.ResourceId = pingonetypes.NewResourceIDNull()
 	}
 
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())

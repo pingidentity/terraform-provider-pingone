@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -29,22 +30,22 @@ import (
 type BrandingThemeResource serviceClientType
 
 type brandingThemeResourceModel struct {
-	Id                   types.String `tfsdk:"id"`
-	EnvironmentId        types.String `tfsdk:"environment_id"`
-	Name                 types.String `tfsdk:"name"`
-	Template             types.String `tfsdk:"template"`
-	Default              types.Bool   `tfsdk:"default"`
-	Logo                 types.Object `tfsdk:"logo"`
-	BackgroundImage      types.Object `tfsdk:"background_image"`
-	BackgroundColor      types.String `tfsdk:"background_color"`
-	UseDefaultBackground types.Bool   `tfsdk:"use_default_background"`
-	BodyTextColor        types.String `tfsdk:"body_text_color"`
-	ButtonColor          types.String `tfsdk:"button_color"`
-	ButtonTextColor      types.String `tfsdk:"button_text_color"`
-	CardColor            types.String `tfsdk:"card_color"`
-	FooterText           types.String `tfsdk:"footer_text"`
-	HeadingTextColor     types.String `tfsdk:"heading_text_color"`
-	LinkTextColor        types.String `tfsdk:"link_text_color"`
+	Id                   pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId        pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name                 types.String                 `tfsdk:"name"`
+	Template             types.String                 `tfsdk:"template"`
+	Default              types.Bool                   `tfsdk:"default"`
+	Logo                 types.Object                 `tfsdk:"logo"`
+	BackgroundImage      types.Object                 `tfsdk:"background_image"`
+	BackgroundColor      types.String                 `tfsdk:"background_color"`
+	UseDefaultBackground types.Bool                   `tfsdk:"use_default_background"`
+	BodyTextColor        types.String                 `tfsdk:"body_text_color"`
+	ButtonColor          types.String                 `tfsdk:"button_color"`
+	ButtonTextColor      types.String                 `tfsdk:"button_text_color"`
+	CardColor            types.String                 `tfsdk:"card_color"`
+	FooterText           types.String                 `tfsdk:"footer_text"`
+	HeadingTextColor     types.String                 `tfsdk:"heading_text_color"`
+	LinkTextColor        types.String                 `tfsdk:"link_text_color"`
 }
 
 // Framework interfaces
@@ -159,9 +160,7 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 						MarkdownDescription: logoIdDescription.MarkdownDescription,
 						Required:            true,
 
-						Validators: []validator.String{
-							verify.P1ResourceIDValidator(),
-						},
+						CustomType: pingonetypes.ResourceIDType{},
 					},
 
 					"href": schema.StringAttribute{
@@ -186,9 +185,7 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 						MarkdownDescription: backgroundImageIdDescription.MarkdownDescription,
 						Required:            true,
 
-						Validators: []validator.String{
-							verify.P1ResourceIDValidator(),
-						},
+						CustomType: pingonetypes.ResourceIDType{},
 					},
 
 					"href": schema.StringAttribute{
@@ -529,7 +526,7 @@ func (p *brandingThemeResourceModel) expand(ctx context.Context) (*management.Br
 	var diags diag.Diagnostics
 
 	logoType := management.ENUMBRANDINGLOGOTYPE_NONE
-	var logo imageResourceModel
+	var logo service.ImageResourceModel
 
 	if !p.Logo.IsNull() && !p.Logo.IsUnknown() {
 
@@ -546,7 +543,7 @@ func (p *brandingThemeResourceModel) expand(ctx context.Context) (*management.Br
 	}
 
 	backgroundType := management.ENUMBRANDINGTHEMEBACKGROUNDTYPE_NONE
-	var background imageResourceModel
+	var background service.ImageResourceModel
 	if !p.BackgroundImage.IsNull() && !p.BackgroundImage.IsUnknown() {
 
 		diags.Append(p.BackgroundImage.As(ctx, &background, basetypes.ObjectAsOptions{
@@ -621,8 +618,8 @@ func (p *brandingThemeResourceModel) toState(apiObject *management.BrandingTheme
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.Template = framework.EnumOkToTF(apiObject.GetTemplateOk())
 	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())
 

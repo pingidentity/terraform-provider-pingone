@@ -9,30 +9,30 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/davincitypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
 type FlowPolicyDataSource serviceClientType
 
 type FlowPolicyDataSourceModel struct {
-	Id                 types.String `tfsdk:"id"`
-	EnvironmentId      types.String `tfsdk:"environment_id"`
-	FlowPolicyId       types.String `tfsdk:"flow_policy_id"`
-	Name               types.String `tfsdk:"name"`
-	Enabled            types.Bool   `tfsdk:"enabled"`
-	DaVinciApplication types.List   `tfsdk:"davinci_application"`
-	Trigger            types.List   `tfsdk:"trigger"`
+	Id                 davincitypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId      pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	FlowPolicyId       davincitypes.ResourceIDValue `tfsdk:"flow_policy_id"`
+	Name               types.String                 `tfsdk:"name"`
+	Enabled            types.Bool                   `tfsdk:"enabled"`
+	DaVinciApplication types.List                   `tfsdk:"davinci_application"`
+	Trigger            types.List                   `tfsdk:"trigger"`
 }
 
 var (
 	dvApplicationTFObjectTypes = map[string]attr.Type{
-		"id":   types.StringType,
+		"id":   davincitypes.ResourceIDType{},
 		"name": types.StringType,
 	}
 
@@ -63,7 +63,7 @@ func (r *FlowPolicyDataSource) Schema(ctx context.Context, req datasource.Schema
 		Description: "Datasource to retrieve a PingOne DaVinci flow policy.",
 
 		Attributes: map[string]schema.Attribute{
-			"id": framework.Attr_ID(),
+			"id": framework.Attr_IDCustomType(davincitypes.ResourceIDType{}),
 
 			"environment_id": framework.Attr_LinkID(
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment that is configured with the DaVinci flow policy."),
@@ -72,9 +72,8 @@ func (r *FlowPolicyDataSource) Schema(ctx context.Context, req datasource.Schema
 			"flow_policy_id": schema.StringAttribute{
 				Description: "The ID of the DaVinci flow policy.",
 				Optional:    true,
-				Validators: []validator.String{
-					verify.P1DVResourceIDValidator(),
-				},
+
+				CustomType: davincitypes.ResourceIDType{},
 			},
 
 			"name": schema.StringAttribute{
@@ -97,6 +96,8 @@ func (r *FlowPolicyDataSource) Schema(ctx context.Context, req datasource.Schema
 						"id": schema.StringAttribute{
 							Description: "A string that specifies the ID of the DaVinci application to which the flow policy is assigned.",
 							Computed:    true,
+
+							CustomType: davincitypes.ResourceIDType{},
 						},
 						"name": schema.StringAttribute{
 							Description: "A string that specifies the name of the DaVinci application to which the flow policy is assigned.",
@@ -199,8 +200,8 @@ func (p *FlowPolicyDataSourceModel) toState(apiObject *management.FlowPolicy) di
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	p.FlowPolicyId = framework.StringToTF(apiObject.GetId())
+	p.Id = framework.DaVinciResourceIDToTF(apiObject.GetId())
+	p.FlowPolicyId = framework.DaVinciResourceIDToTF(apiObject.GetId())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
 
@@ -224,7 +225,7 @@ func toStateDavinciApplication(davinciApplication *management.FlowPolicyApplicat
 	}
 
 	dvApplicationMap := map[string]attr.Value{
-		"id":   framework.StringOkToTF(davinciApplication.GetIdOk()),
+		"id":   framework.DaVinciResourceIDOkToTF(davinciApplication.GetIdOk()),
 		"name": framework.StringOkToTF(davinciApplication.GetNameOk()),
 	}
 

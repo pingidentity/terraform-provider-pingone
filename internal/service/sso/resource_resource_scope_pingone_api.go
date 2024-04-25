@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -24,12 +25,12 @@ import (
 type ResourceScopePingOneAPIResource serviceClientType
 
 type ResourceScopePingOneAPIResourceModel struct {
-	Id               types.String `tfsdk:"id"`
-	EnvironmentId    types.String `tfsdk:"environment_id"`
-	ResourceId       types.String `tfsdk:"resource_id"`
-	Name             types.String `tfsdk:"name"`
-	Description      types.String `tfsdk:"description"`
-	SchemaAttributes types.Set    `tfsdk:"schema_attributes"`
+	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ResourceId       pingonetypes.ResourceIDValue `tfsdk:"resource_id"`
+	Name             types.String                 `tfsdk:"name"`
+	Description      types.String                 `tfsdk:"description"`
+	SchemaAttributes types.Set                    `tfsdk:"schema_attributes"`
 }
 
 // Framework interfaces
@@ -109,6 +110,8 @@ func (r *ResourceScopePingOneAPIResource) Schema(ctx context.Context, req resour
 			"resource_id": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("The ID of the PingOne API resource.").Description,
 				Computed:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 		},
 	}
@@ -162,7 +165,7 @@ func (r *ResourceScopePingOneAPIResource) Create(ctx context.Context, req resour
 		return
 	}
 
-	plan.ResourceId = framework.StringOkToTF(resource.GetIdOk())
+	plan.ResourceId = framework.PingOneResourceIDOkToTF(resource.GetIdOk())
 
 	// Build the model for the API
 	resourceScope, d := plan.expand(ctx, r.Client.ManagementAPIClient, *resource)
@@ -295,7 +298,7 @@ func (r *ResourceScopePingOneAPIResource) Update(ctx context.Context, req resour
 		return
 	}
 
-	plan.ResourceId = framework.StringOkToTF(resource.GetIdOk())
+	plan.ResourceId = framework.PingOneResourceIDOkToTF(resource.GetIdOk())
 
 	// Build the model for the API
 	resourceScope, d := plan.expand(ctx, r.Client.ManagementAPIClient, *resource)
@@ -503,12 +506,12 @@ func (p *ResourceScopePingOneAPIResourceModel) toState(apiObject *management.Res
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
 
 	if v, ok := apiObject.GetResourceOk(); ok {
-		p.ResourceId = framework.StringOkToTF(v.GetIdOk())
+		p.ResourceId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	} else {
-		p.ResourceId = types.StringNull()
+		p.ResourceId = pingonetypes.NewResourceIDNull()
 	}
 
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())

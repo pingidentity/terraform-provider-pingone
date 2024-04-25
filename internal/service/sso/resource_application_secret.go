@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -23,11 +24,11 @@ import (
 type ApplicationSecretResource serviceClientType
 
 type ApplicationSecretResourceModel struct {
-	EnvironmentId           types.String `tfsdk:"environment_id"`
-	ApplicationId           types.String `tfsdk:"application_id"`
-	Previous                types.Object `tfsdk:"previous"`
-	Secret                  types.String `tfsdk:"secret"`
-	RegenerateTriggerValues types.Map    `tfsdk:"regenerate_trigger_values"`
+	EnvironmentId           pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ApplicationId           pingonetypes.ResourceIDValue `tfsdk:"application_id"`
+	Previous                types.Object                 `tfsdk:"previous"`
+	Secret                  types.String                 `tfsdk:"secret"`
+	RegenerateTriggerValues types.Map                    `tfsdk:"regenerate_trigger_values"`
 }
 
 type ApplicationSecretPreviousResourceModel struct {
@@ -407,7 +408,7 @@ func (p *ApplicationSecretResourceModel) toState(apiObject *management.Applicati
 		return diags
 	}
 
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.Secret = framework.StringOkToTF(apiObject.GetSecretOk())
 	p.Previous, d = applicationSecretPreviousOkToTF(apiObject.GetPreviousOk())
 	diags.Append(d...)

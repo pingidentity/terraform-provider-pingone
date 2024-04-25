@@ -14,6 +14,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/davincitypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -22,11 +24,11 @@ import (
 type ApplicationFlowPolicyAssignmentResource serviceClientType
 
 type ApplicationFlowPolicyAssignmentResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	ApplicationId types.String `tfsdk:"application_id"`
-	FlowPolicyId  types.String `tfsdk:"flow_policy_id"`
-	Priority      types.Int64  `tfsdk:"priority"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ApplicationId pingonetypes.ResourceIDValue `tfsdk:"application_id"`
+	FlowPolicyId  davincitypes.ResourceIDValue `tfsdk:"flow_policy_id"`
+	Priority      types.Int64                  `tfsdk:"priority"`
 }
 
 // Framework interfaces
@@ -67,9 +69,7 @@ func (r *ApplicationFlowPolicyAssignmentResource) Schema(ctx context.Context, re
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("The ID of the DaVinci flow policy to associate.").Description,
 				Required:    true,
 
-				Validators: []validator.String{
-					verify.P1DVResourceIDValidator(),
-				},
+				CustomType: davincitypes.ResourceIDType{},
 			},
 
 			"priority": schema.Int64Attribute{
@@ -336,10 +336,10 @@ func (p *ApplicationFlowPolicyAssignmentResourceModel) toState(apiObject *manage
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.ApplicationId = framework.StringToTF(*apiObject.GetApplication().Id)
-	p.FlowPolicyId = framework.StringToTF(apiObject.GetFlowPolicy().Id)
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
+	p.ApplicationId = framework.PingOneResourceIDToTF(*apiObject.GetApplication().Id)
+	p.FlowPolicyId = framework.DaVinciResourceIDToTF(apiObject.GetFlowPolicy().Id)
 	p.Priority = framework.Int32OkToTF(apiObject.GetPriorityOk())
 
 	return diags

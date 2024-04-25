@@ -14,6 +14,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -22,10 +23,10 @@ import (
 type AgreementEnableResource serviceClientType
 
 type AgreementEnableResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	AgreementId   types.String `tfsdk:"agreement_id"`
-	Enabled       types.Bool   `tfsdk:"enabled"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	AgreementId   pingonetypes.ResourceIDValue `tfsdk:"agreement_id"`
+	Enabled       types.Bool                   `tfsdk:"enabled"`
 }
 
 // Framework interfaces
@@ -384,9 +385,9 @@ func (p *AgreementEnableResourceModel) toState(apiObject *management.Agreement) 
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.AgreementId = framework.StringToTF(apiObject.GetId())
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
+	p.AgreementId = framework.PingOneResourceIDToTF(apiObject.GetId())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
 
 	return diags

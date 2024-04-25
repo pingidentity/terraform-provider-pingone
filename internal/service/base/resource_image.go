@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -28,10 +29,10 @@ import (
 type ImageResource serviceClientType
 
 type ImageResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	ImageFileB64  types.String `tfsdk:"image_file_base64"`
-	UploadedImage types.Object `tfsdk:"uploaded_image"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ImageFileB64  types.String                 `tfsdk:"image_file_base64"`
+	UploadedImage types.Object                 `tfsdk:"uploaded_image"`
 }
 
 type ImageUploadedImageResourceModel struct {
@@ -384,8 +385,8 @@ func (p *ImageResourceModel) toState(apiObject *management.Image) diag.Diagnosti
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 
 	var d diag.Diagnostics
 	p.UploadedImage, d = toStateImageTarget(apiObject.GetTargetsOk())

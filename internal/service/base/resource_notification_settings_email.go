@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -25,15 +26,15 @@ import (
 type NotificationSettingsEmailResource serviceClientType
 
 type NotificationSettingsEmailResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Host          types.String `tfsdk:"host"`
-	Port          types.Int64  `tfsdk:"port"`
-	Protocol      types.String `tfsdk:"protocol"`
-	Username      types.String `tfsdk:"username"`
-	Password      types.String `tfsdk:"password"`
-	From          types.List   `tfsdk:"from"`
-	ReplyTo       types.List   `tfsdk:"reply_to"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Host          types.String                 `tfsdk:"host"`
+	Port          types.Int64                  `tfsdk:"port"`
+	Protocol      types.String                 `tfsdk:"protocol"`
+	Username      types.String                 `tfsdk:"username"`
+	Password      types.String                 `tfsdk:"password"`
+	From          types.List                   `tfsdk:"from"`
+	ReplyTo       types.List                   `tfsdk:"reply_to"`
 }
 
 type EmailSourceModel struct {

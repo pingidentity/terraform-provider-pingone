@@ -8,16 +8,17 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
 
 type ImageResourceModel struct {
-	Id   types.String `tfsdk:"id"`
-	Href types.String `tfsdk:"href"`
+	Id   pingonetypes.ResourceIDValue `tfsdk:"id"`
+	Href types.String                 `tfsdk:"href"`
 }
 
 var (
 	ImageTFObjectTypes = map[string]attr.Type{
-		"id":   types.StringType,
+		"id":   pingonetypes.ResourceIDType{},
 		"href": types.StringType,
 	}
 )
@@ -57,9 +58,9 @@ func ImageOkToTF(logo interface{}, ok bool) (types.Object, diag.Diagnostics) {
 	}
 
 	if s["id"] != "" {
-		attributesMap["id"] = framework.StringToTF(s["id"])
+		attributesMap["id"] = framework.PingOneResourceIDToTF(s["id"])
 	} else {
-		attributesMap["id"] = types.StringNull()
+		attributesMap["id"] = pingonetypes.NewResourceIDNull()
 	}
 
 	returnVar, d := types.ObjectValue(ImageTFObjectTypes, attributesMap)
