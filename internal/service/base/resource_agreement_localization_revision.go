@@ -23,6 +23,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -31,15 +32,15 @@ import (
 type AgreementLocalizationRevisionResource serviceClientType
 
 type AgreementLocalizationRevisionResourceModel struct {
-	Id                      types.String      `tfsdk:"id"`
-	EnvironmentId           types.String      `tfsdk:"environment_id"`
-	AgreementId             types.String      `tfsdk:"agreement_id"`
-	AgreementLocalizationId types.String      `tfsdk:"agreement_localization_id"`
-	ContentType             types.String      `tfsdk:"content_type"`
-	EffectiveAt             timetypes.RFC3339 `tfsdk:"effective_at"`
-	NotValidAfter           timetypes.RFC3339 `tfsdk:"not_valid_after"`
-	RequireReconsent        types.Bool        `tfsdk:"require_reconsent"`
-	Text                    types.String      `tfsdk:"text"`
+	Id                      pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId           pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	AgreementId             pingonetypes.ResourceIDValue `tfsdk:"agreement_id"`
+	AgreementLocalizationId pingonetypes.ResourceIDValue `tfsdk:"agreement_localization_id"`
+	ContentType             types.String                 `tfsdk:"content_type"`
+	EffectiveAt             timetypes.RFC3339            `tfsdk:"effective_at"`
+	NotValidAfter           timetypes.RFC3339            `tfsdk:"not_valid_after"`
+	RequireReconsent        types.Bool                   `tfsdk:"require_reconsent"`
+	Text                    types.String                 `tfsdk:"text"`
 }
 
 // Framework interfaces
@@ -413,9 +414,9 @@ func (p *AgreementLocalizationRevisionResourceModel) toState(apiObject *manageme
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	p.AgreementId = framework.StringToTF(*apiObject.GetAgreement().Id)
-	p.AgreementLocalizationId = framework.StringToTF(*apiObject.GetLanguage().Id)
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.AgreementId = framework.PingOneResourceIDToTF(*apiObject.GetAgreement().Id)
+	p.AgreementLocalizationId = framework.PingOneResourceIDToTF(*apiObject.GetLanguage().Id)
 	p.ContentType = framework.EnumOkToTF(apiObject.GetContentTypeOk())
 	p.EffectiveAt = framework.TimeOkToTF(apiObject.GetEffectiveAtOk())
 	p.NotValidAfter = framework.TimeOkToTF(apiObject.GetNotValidAfterOk())

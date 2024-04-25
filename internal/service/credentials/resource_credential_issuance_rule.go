@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	customobjectvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -27,14 +28,14 @@ import (
 type CredentialIssuanceRuleResource serviceClientType
 
 type CredentialIssuanceRuleResourceModel struct {
-	Id                         types.String `tfsdk:"id"`
-	EnvironmentId              types.String `tfsdk:"environment_id"`
-	CredentialTypeId           types.String `tfsdk:"credential_type_id"`
-	DigitalWalletApplicationId types.String `tfsdk:"digital_wallet_application_id"`
-	Automation                 types.Object `tfsdk:"automation"`
-	Filter                     types.Object `tfsdk:"filter"`
-	Notification               types.Object `tfsdk:"notification"`
-	Status                     types.String `tfsdk:"status"`
+	Id                         pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId              pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	CredentialTypeId           pingonetypes.ResourceIDValue `tfsdk:"credential_type_id"`
+	DigitalWalletApplicationId pingonetypes.ResourceIDValue `tfsdk:"digital_wallet_application_id"`
+	Automation                 types.Object                 `tfsdk:"automation"`
+	Filter                     types.Object                 `tfsdk:"filter"`
+	Notification               types.Object                 `tfsdk:"notification"`
+	Status                     types.String                 `tfsdk:"status"`
 }
 
 type FilterModel struct {
@@ -153,9 +154,8 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 			"digital_wallet_application_id": schema.StringAttribute{
 				Description: "Identifier (UUID) of the customer's Digital Wallet App that will interact with the user's Digital Wallet. If present, digital wallet pairing automatically starts when a user matches the credential issuance rule.",
 				Optional:    true,
-				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
-				},
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"status": schema.StringAttribute{
@@ -740,13 +740,13 @@ func (p *CredentialIssuanceRuleResourceModel) toState(apiObject *credentials.Cre
 	}
 
 	// core issuance rule attributes
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.CredentialTypeId = framework.StringToTF(apiObject.CredentialType.GetId())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
+	p.CredentialTypeId = framework.PingOneResourceIDToTF(apiObject.CredentialType.GetId())
 	p.Status = framework.EnumOkToTF(apiObject.GetStatusOk())
 
 	if v, ok := apiObject.GetDigitalWalletApplicationOk(); ok {
-		p.DigitalWalletApplicationId = framework.StringToTF(v.GetId())
+		p.DigitalWalletApplicationId = framework.PingOneResourceIDToTF(v.GetId())
 	}
 
 	// automation object

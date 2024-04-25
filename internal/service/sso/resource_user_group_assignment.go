@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -20,12 +21,12 @@ import (
 type UserGroupAssignmentResource serviceClientType
 
 type UserGroupAssignmentResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	UserId        types.String `tfsdk:"user_id"`
-	GroupId       types.String `tfsdk:"group_id"`
-	Name          types.String `tfsdk:"name"`
-	Type          types.String `tfsdk:"type"`
+	Id            types.String                 `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	UserId        pingonetypes.ResourceIDValue `tfsdk:"user_id"`
+	GroupId       pingonetypes.ResourceIDValue `tfsdk:"group_id"`
+	Name          types.String                 `tfsdk:"name"`
+	Type          types.String                 `tfsdk:"type"`
 }
 
 // Framework interfaces
@@ -59,7 +60,7 @@ func (r *UserGroupAssignmentResource) Schema(ctx context.Context, req resource.S
 		Description: "Resource to create and manage a user's group membership in a PingOne environment.",
 
 		Attributes: map[string]schema.Attribute{
-			"id": framework.Attr_ID(),
+			"id": framework.Attr_IDCustomType(nil),
 
 			"environment_id": framework.Attr_LinkID(
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment that contains the user to assign group membership to."),

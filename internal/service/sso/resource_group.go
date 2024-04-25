@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -24,13 +25,13 @@ import (
 type GroupResource serviceClientType
 
 type GroupResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Name          types.String `tfsdk:"name"`
-	Description   types.String `tfsdk:"description"`
-	PopulationId  types.String `tfsdk:"population_id"`
-	UserFilter    types.String `tfsdk:"user_filter"`
-	ExternalId    types.String `tfsdk:"external_id"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name          types.String                 `tfsdk:"name"`
+	Description   types.String                 `tfsdk:"description"`
+	PopulationId  pingonetypes.ResourceIDValue `tfsdk:"population_id"`
+	UserFilter    types.String                 `tfsdk:"user_filter"`
+	ExternalId    types.String                 `tfsdk:"external_id"`
 }
 
 // Framework interfaces
@@ -93,12 +94,10 @@ func (r *GroupResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				MarkdownDescription: populationIdDescription.MarkdownDescription,
 				Optional:            true,
 
+				CustomType: pingonetypes.ResourceIDType{},
+
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
-				},
-
-				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
 				},
 			},
 
@@ -383,15 +382,15 @@ func (p *GroupResourceModel) toState(apiObject *management.Group) diag.Diagnosti
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringOkToTF(apiObject.Environment.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDOkToTF(apiObject.Environment.GetIdOk())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 
 	if v, ok := apiObject.GetPopulationOk(); ok {
-		p.PopulationId = framework.StringOkToTF(v.GetIdOk())
+		p.PopulationId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	} else {
-		p.PopulationId = types.StringNull()
+		p.PopulationId = pingonetypes.NewResourceIDNull()
 	}
 
 	p.UserFilter = framework.StringOkToTF(apiObject.GetUserFilterOk())

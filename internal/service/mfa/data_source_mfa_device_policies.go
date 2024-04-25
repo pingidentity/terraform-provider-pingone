@@ -12,15 +12,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
 
 // Types
 type MFADevicePoliciesDataSource serviceClientType
 
 type MFADevicePoliciesDataSourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Ids           types.List   `tfsdk:"ids"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Ids           types.List                   `tfsdk:"ids"`
 }
 
 // Framework interfaces
@@ -144,10 +145,10 @@ func (p *MFADevicePoliciesDataSourceModel) toState(apiObject []mfa.DeviceAuthent
 	var d diag.Diagnostics
 
 	if p.Id.IsNull() {
-		p.Id = framework.StringToTF(uuid.New().String())
+		p.Id = framework.PingOneResourceIDToTF(uuid.New().String())
 	}
 
-	p.EnvironmentId = framework.StringToTF(p.EnvironmentId.ValueString())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(p.EnvironmentId.ValueString())
 
 	p.Ids, d = framework.StringSliceToTF(list)
 	diags.Append(d...)

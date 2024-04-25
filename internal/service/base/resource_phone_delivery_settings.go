@@ -26,6 +26,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -37,14 +38,14 @@ import (
 type PhoneDeliverySettingsResource serviceClientType
 
 type PhoneDeliverySettingsResourceModel struct {
-	Id                      types.String      `tfsdk:"id"`
-	EnvironmentId           types.String      `tfsdk:"environment_id"`
-	ProviderType            types.String      `tfsdk:"provider_type"`
-	ProviderCustom          types.Object      `tfsdk:"provider_custom"`
-	ProviderCustomTwilio    types.Object      `tfsdk:"provider_custom_twilio"`
-	ProviderCustomSyniverse types.Object      `tfsdk:"provider_custom_syniverse"`
-	CreatedAt               timetypes.RFC3339 `tfsdk:"created_at"`
-	UpdatedAt               timetypes.RFC3339 `tfsdk:"updated_at"`
+	Id                      pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId           pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ProviderType            types.String                 `tfsdk:"provider_type"`
+	ProviderCustom          types.Object                 `tfsdk:"provider_custom"`
+	ProviderCustomTwilio    types.Object                 `tfsdk:"provider_custom_twilio"`
+	ProviderCustomSyniverse types.Object                 `tfsdk:"provider_custom_syniverse"`
+	CreatedAt               timetypes.RFC3339            `tfsdk:"created_at"`
+	UpdatedAt               timetypes.RFC3339            `tfsdk:"updated_at"`
 }
 
 type PhoneDeliverySettingsProviderCustomResourceModel struct {
@@ -1539,8 +1540,8 @@ func (p *PhoneDeliverySettingsResourceModel) toState(ctx context.Context, apiObj
 		}
 	}
 
-	p.Id = framework.StringOkToTF(apiObjectCommon.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObjectCommon.GetEnvironment().Id)
+	p.Id = framework.PingOneResourceIDOkToTF(apiObjectCommon.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObjectCommon.GetEnvironment().Id)
 	p.ProviderType = framework.EnumOkToTF(apiObjectCommon.GetProviderOk())
 	p.CreatedAt = framework.TimeOkToTF(apiObjectCommon.GetCreatedAtOk())
 	p.UpdatedAt = framework.TimeOkToTF(apiObjectCommon.GetUpdatedAtOk())

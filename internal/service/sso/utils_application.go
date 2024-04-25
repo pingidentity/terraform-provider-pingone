@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
 
 func applicationExternalLinkOptionsToTF(apiObject *management.ApplicationExternalLink) (types.Object, diag.Diagnostics) {
@@ -47,7 +48,7 @@ func applicationAccessControlGroupOptionsToTF(apiObject *management.ApplicationA
 			groups = append(groups, group.GetId())
 		}
 
-		attributesMap["groups"] = framework.StringSetToTF(groups)
+		attributesMap["groups"] = framework.PingOneResourceIDSetToTF(groups)
 	}
 
 	returnVar, d := types.ObjectValue(applicationAccessControlGroupOptionsTFObjectTypes, attributesMap)
@@ -143,11 +144,11 @@ func applicationOidcOptionsCertificateBasedAuthenticationToTF(apiObject *managem
 	}
 
 	attributesMap := map[string]attr.Value{
-		"key_id": types.StringNull(),
+		"key_id": pingonetypes.ResourceIDValue{},
 	}
 
 	if v, ok := apiObject.GetKeyOk(); ok {
-		attributesMap["key_id"] = framework.StringOkToTF(v.GetIdOk())
+		attributesMap["key_id"] = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	}
 
 	returnVar, d := types.ObjectValue(applicationOidcOptionsCertificateAuthenticationTFObjectTypes, attributesMap)
@@ -343,11 +344,11 @@ func applicationSamlIdpSigningKeyOkToTF(apiObject *management.ApplicationSAMLAll
 
 	attributesMap := map[string]attr.Value{
 		"algorithm": framework.EnumOkToTF(apiObject.GetAlgorithmOk()),
-		"key_id":    types.StringNull(),
+		"key_id":    pingonetypes.NewResourceIDNull(),
 	}
 
 	if v, ok := apiObject.GetKeyOk(); ok {
-		attributesMap["key_id"] = framework.StringOkToTF(v.GetIdOk())
+		attributesMap["key_id"] = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	}
 
 	returnVar, d := types.ObjectValue(applicationSamlOptionsIdpSigningKeyTFObjectTypes, attributesMap)
@@ -372,7 +373,7 @@ func applicationSamlSpVerificationOkToTF(apiObject *management.ApplicationSAMLAl
 
 	attributesMap := map[string]attr.Value{
 		"authn_request_signed": framework.BoolOkToTF(apiObject.GetAuthnRequestSignedOk()),
-		"certificate_ids":      framework.StringSetToTF(certificateIds),
+		"certificate_ids":      framework.PingOneResourceIDSetToTF(certificateIds),
 	}
 
 	returnVar, d := types.ObjectValue(applicationSamlOptionsSpVerificationTFObjectTypes, attributesMap)

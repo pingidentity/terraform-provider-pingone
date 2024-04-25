@@ -17,40 +17,40 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
 type UserDataSource serviceClientType
 
 type UserDataSourceModel struct {
-	Id                types.String `tfsdk:"id"`
-	UserId            types.String `tfsdk:"user_id"`
-	EnvironmentId     types.String `tfsdk:"environment_id"`
-	Username          types.String `tfsdk:"username"`
-	Email             types.String `tfsdk:"email"`
-	EmailVerified     types.Bool   `tfsdk:"email_verified"`
-	Enabled           types.Bool   `tfsdk:"enabled"`
-	PopulationId      types.String `tfsdk:"population_id"`
-	Account           types.Object `tfsdk:"account"`
-	Address           types.Object `tfsdk:"address"`
-	ExternalId        types.String `tfsdk:"external_id"`
-	IdentityProvider  types.Object `tfsdk:"identity_provider"`
-	Lifecycle         types.Object `tfsdk:"user_lifecycle"`
-	Locale            types.String `tfsdk:"locale"`
-	MFAEnabled        types.Bool   `tfsdk:"mfa_enabled"`
-	MobilePhone       types.String `tfsdk:"mobile_phone"`
-	Name              types.Object `tfsdk:"name"`
-	Nickname          types.String `tfsdk:"nickname"`
-	Password          types.Object `tfsdk:"password"`
-	Photo             types.Object `tfsdk:"photo"`
-	PreferredLanguage types.String `tfsdk:"preferred_language"`
-	PrimaryPhone      types.String `tfsdk:"primary_phone"`
-	Timezone          types.String `tfsdk:"timezone"`
-	Title             types.String `tfsdk:"title"`
-	Type              types.String `tfsdk:"type"`
-	VerifyStatus      types.String `tfsdk:"verify_status"`
+	Id                pingonetypes.ResourceIDValue `tfsdk:"id"`
+	UserId            pingonetypes.ResourceIDValue `tfsdk:"user_id"`
+	EnvironmentId     pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Username          types.String                 `tfsdk:"username"`
+	Email             types.String                 `tfsdk:"email"`
+	EmailVerified     types.Bool                   `tfsdk:"email_verified"`
+	Enabled           types.Bool                   `tfsdk:"enabled"`
+	PopulationId      pingonetypes.ResourceIDValue `tfsdk:"population_id"`
+	Account           types.Object                 `tfsdk:"account"`
+	Address           types.Object                 `tfsdk:"address"`
+	ExternalId        types.String                 `tfsdk:"external_id"`
+	IdentityProvider  types.Object                 `tfsdk:"identity_provider"`
+	Lifecycle         types.Object                 `tfsdk:"user_lifecycle"`
+	Locale            types.String                 `tfsdk:"locale"`
+	MFAEnabled        types.Bool                   `tfsdk:"mfa_enabled"`
+	MobilePhone       types.String                 `tfsdk:"mobile_phone"`
+	Name              types.Object                 `tfsdk:"name"`
+	Nickname          types.String                 `tfsdk:"nickname"`
+	Password          types.Object                 `tfsdk:"password"`
+	Photo             types.Object                 `tfsdk:"photo"`
+	PreferredLanguage types.String                 `tfsdk:"preferred_language"`
+	PrimaryPhone      types.String                 `tfsdk:"primary_phone"`
+	Timezone          types.String                 `tfsdk:"timezone"`
+	Title             types.String                 `tfsdk:"title"`
+	Type              types.String                 `tfsdk:"type"`
+	VerifyStatus      types.String                 `tfsdk:"verify_status"`
 }
 
 var (
@@ -219,13 +219,14 @@ func (r *UserDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 				Optional:            true,
 				Computed:            true,
 
+				CustomType: pingonetypes.ResourceIDType{},
+
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
 						path.MatchRoot("user_id"),
 						path.MatchRoot("username"),
 						path.MatchRoot("email"),
 					),
-					verify.P1ResourceIDValidator(),
 				},
 			},
 
@@ -279,6 +280,8 @@ func (r *UserDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 					"A PingOne resource identifier of the population resource associated with the user.",
 				).Description,
 				Computed: true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"account": schema.SingleNestedAttribute{
@@ -371,6 +374,8 @@ func (r *UserDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 							"A string that identifies the external identity provider used to authenticate the user. If not provided, PingOne is the identity provider. This attribute is required if the identity provider is authoritative for just-in-time user provisioning.",
 						).Description,
 						Computed: true,
+
+						CustomType: pingonetypes.ResourceIDType{},
 					},
 
 					"type": schema.StringAttribute{
@@ -490,6 +495,8 @@ func (r *UserDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 											"A string that specifies the PingOne resource ID of the linked gateway that references the remote directory.",
 										).Description,
 										Computed: true,
+
+										CustomType: pingonetypes.ResourceIDType{},
 									},
 
 									"type": schema.StringAttribute{
@@ -503,6 +510,8 @@ func (r *UserDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 											"A string that specifies the PingOne resource ID of a user type in the list of user types for the LDAP gateway.",
 										).Description,
 										Computed: true,
+
+										CustomType: pingonetypes.ResourceIDType{},
 									},
 
 									"correlation_attributes": schema.MapAttribute{
@@ -711,9 +720,9 @@ func (p *UserDataSourceModel) toState(apiObject *management.User, apiObjectEnabl
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.UserId = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringOkToTF(apiObject.Environment.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.UserId = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDOkToTF(apiObject.Environment.GetIdOk())
 	p.Username = framework.StringOkToTF(apiObject.GetUsernameOk())
 	p.Email = framework.StringOkToTF(apiObject.GetEmailOk())
 
@@ -722,7 +731,7 @@ func (p *UserDataSourceModel) toState(apiObject *management.User, apiObjectEnabl
 
 	var d diag.Diagnostics
 
-	p.PopulationId = framework.StringOkToTF(apiObject.Population.GetIdOk())
+	p.PopulationId = framework.PingOneResourceIDOkToTF(apiObject.Population.GetIdOk())
 	p.Account, d = p.userAccountOkToTF(apiObject.GetAccountOk())
 	diags = append(diags, d...)
 
@@ -808,7 +817,7 @@ func (p *UserDataSourceModel) userIdentityProviderOkToTF(apiObject *management.U
 	}
 
 	objMap := map[string]attr.Value{
-		"id":   framework.StringOkToTF(apiObject.GetIdOk()),
+		"id":   framework.PingOneResourceIDOkToTF(apiObject.GetIdOk()),
 		"type": framework.EnumOkToTF(apiObject.GetTypeOk()),
 	}
 

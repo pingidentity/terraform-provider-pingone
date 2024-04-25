@@ -16,6 +16,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -24,16 +25,16 @@ import (
 type AgreementLocalizationResource serviceClientType
 
 type AgreementLocalizationResourceModel struct {
-	Id                   types.String `tfsdk:"id"`
-	EnvironmentId        types.String `tfsdk:"environment_id"`
-	AgreementId          types.String `tfsdk:"agreement_id"`
-	LanguageId           types.String `tfsdk:"language_id"`
-	DisplayName          types.String `tfsdk:"display_name"`
-	Locale               types.String `tfsdk:"locale"`
-	Enabled              types.Bool   `tfsdk:"enabled"`
-	UXTextCheckboxAccept types.String `tfsdk:"text_checkbox_accept"`
-	UXTextButtonContinue types.String `tfsdk:"text_button_continue"`
-	UXTextButtonDecline  types.String `tfsdk:"text_button_decline"`
+	Id                   pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId        pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	AgreementId          pingonetypes.ResourceIDValue `tfsdk:"agreement_id"`
+	LanguageId           pingonetypes.ResourceIDValue `tfsdk:"language_id"`
+	DisplayName          types.String                 `tfsdk:"display_name"`
+	Locale               types.String                 `tfsdk:"locale"`
+	Enabled              types.Bool                   `tfsdk:"enabled"`
+	UXTextCheckboxAccept types.String                 `tfsdk:"text_checkbox_accept"`
+	UXTextButtonContinue types.String                 `tfsdk:"text_button_continue"`
+	UXTextButtonDecline  types.String                 `tfsdk:"text_button_decline"`
 }
 
 // Framework interfaces
@@ -482,9 +483,9 @@ func (p *AgreementLocalizationResourceModel) toState(apiObject *management.Agree
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	p.AgreementId = framework.StringToTF(*apiObject.GetAgreement().Id)
-	p.LanguageId = framework.StringOkToTF(languageApiObject.GetIdOk())
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.AgreementId = framework.PingOneResourceIDToTF(*apiObject.GetAgreement().Id)
+	p.LanguageId = framework.PingOneResourceIDOkToTF(languageApiObject.GetIdOk())
 	p.DisplayName = framework.StringOkToTF(apiObject.GetDisplayNameOk())
 	p.Locale = framework.StringOkToTF(apiObject.GetLocaleOk())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())

@@ -28,6 +28,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -38,20 +39,20 @@ import (
 type ApplicationResource serviceClientType
 
 type ApplicationResourceModel struct {
-	Id                        types.String `tfsdk:"id"`
-	EnvironmentId             types.String `tfsdk:"environment_id"`
-	Name                      types.String `tfsdk:"name"`
-	Description               types.String `tfsdk:"description"`
-	Enabled                   types.Bool   `tfsdk:"enabled"`
-	Tags                      types.Set    `tfsdk:"tags"`
-	LoginPageUrl              types.String `tfsdk:"login_page_url"`
-	Icon                      types.Object `tfsdk:"icon"`
-	AccessControlRoleType     types.String `tfsdk:"access_control_role_type"`
-	AccessControlGroupOptions types.Object `tfsdk:"access_control_group_options"`
-	HiddenFromAppPortal       types.Bool   `tfsdk:"hidden_from_app_portal"`
-	ExternalLinkOptions       types.Object `tfsdk:"external_link_options"`
-	OIDCOptions               types.Object `tfsdk:"oidc_options"`
-	SAMLOptions               types.Object `tfsdk:"saml_options"`
+	Id                        pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId             pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name                      types.String                 `tfsdk:"name"`
+	Description               types.String                 `tfsdk:"description"`
+	Enabled                   types.Bool                   `tfsdk:"enabled"`
+	Tags                      types.Set                    `tfsdk:"tags"`
+	LoginPageUrl              types.String                 `tfsdk:"login_page_url"`
+	Icon                      types.Object                 `tfsdk:"icon"`
+	AccessControlRoleType     types.String                 `tfsdk:"access_control_role_type"`
+	AccessControlGroupOptions types.Object                 `tfsdk:"access_control_group_options"`
+	HiddenFromAppPortal       types.Bool                   `tfsdk:"hidden_from_app_portal"`
+	ExternalLinkOptions       types.Object                 `tfsdk:"external_link_options"`
+	OIDCOptions               types.Object                 `tfsdk:"oidc_options"`
+	SAMLOptions               types.Object                 `tfsdk:"saml_options"`
 }
 
 type ApplicationAccessControlGroupOptionsResourceModel struct {
@@ -96,7 +97,7 @@ type ApplicationCorsSettingsResourceModel struct {
 }
 
 type ApplicationOIDCCertificateBasedAuthenticationResourceModel struct {
-	KeyId types.String `tfsdk:"key_id"`
+	KeyId pingonetypes.ResourceIDValue `tfsdk:"key_id"`
 }
 
 type ApplicationOIDCMobileAppResourceModel struct {
@@ -149,8 +150,8 @@ type ApplicationSAMLOptionsResourceModel struct {
 }
 
 type ApplicationSAMLOptionsIdpSigningKeyResourceModel struct {
-	Algorithm types.String `tfsdk:"algorithm"`
-	KeyId     types.String `tfsdk:"key_id"`
+	Algorithm types.String                 `tfsdk:"algorithm"`
+	KeyId     pingonetypes.ResourceIDValue `tfsdk:"key_id"`
 }
 
 type ApplicationSAMLOptionsSpVerificationResourceModel struct {
@@ -221,7 +222,7 @@ var (
 	}
 
 	applicationOidcOptionsCertificateAuthenticationTFObjectTypes = map[string]attr.Type{
-		"key_id": types.StringType,
+		"key_id": pingonetypes.ResourceIDType{},
 	}
 
 	applicationSamlOptionsTFObjectTypes = map[string]attr.Type{
@@ -246,12 +247,12 @@ var (
 
 	applicationSamlOptionsIdpSigningKeyTFObjectTypes = map[string]attr.Type{
 		"algorithm": types.StringType,
-		"key_id":    types.StringType,
+		"key_id":    pingonetypes.ResourceIDType{},
 	}
 
 	applicationSamlOptionsSpVerificationTFObjectTypes = map[string]attr.Type{
 		"authn_request_signed": types.BoolType,
-		"certificate_ids":      types.SetType{ElemType: types.StringType},
+		"certificate_ids":      types.SetType{ElemType: pingonetypes.ResourceIDType{}},
 	}
 
 	applicationExternalLinkOptionsTFObjectTypes = map[string]attr.Type{
@@ -259,7 +260,7 @@ var (
 	}
 
 	applicationAccessControlGroupOptionsTFObjectTypes = map[string]attr.Type{
-		"groups": types.SetType{ElemType: types.StringType},
+		"groups": types.SetType{ElemType: pingonetypes.ResourceIDType{}},
 		"type":   types.StringType,
 	}
 )
@@ -678,9 +679,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID for the application icon.  Must be a valid PingOne Resource ID.").Description,
 						Required:    true,
 
-						Validators: []validator.String{
-							verify.P1ResourceIDValidator(),
-						},
+						CustomType: pingonetypes.ResourceIDType{},
 					},
 
 					"href": schema.StringAttribute{
@@ -714,13 +713,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A set that specifies the group IDs for the groups the actor must belong to for access to the application.  Values must be valid PingOne Resource IDs.").Description,
 						Required:    true,
 
-						ElementType: types.StringType,
-
-						Validators: []validator.Set{
-							setvalidator.ValueStringsAre(
-								verify.P1ResourceIDValidator(),
-							),
-						},
+						ElementType: pingonetypes.ResourceIDType{},
 					},
 				},
 			},
@@ -1023,9 +1016,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 								MarkdownDescription: oidcOptionsCertificateBasedAuthenticationKeyIdDescription.MarkdownDescription,
 								Required:            true,
 
-								Validators: []validator.String{
-									verify.P1ResourceIDValidator(),
-								},
+								CustomType: pingonetypes.ResourceIDType{},
 							},
 						},
 					},
@@ -1405,9 +1396,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.  Must be a valid PingOne resource ID.").Description,
 								Required:    true,
 
-								Validators: []validator.String{
-									verify.P1ResourceIDValidator(),
-								},
+								CustomType: pingonetypes.ResourceIDType{},
 							},
 						},
 					},
@@ -1428,14 +1417,8 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 							"certificate_ids": schema.SetAttribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("A list that specifies the certificate IDs used to verify the service provider signature.  Values must be valid PingOne resource IDs.").Description,
-								ElementType: types.StringType,
+								ElementType: pingonetypes.ResourceIDType{},
 								Required:    true,
-
-								Validators: []validator.Set{
-									setvalidator.ValueStringsAre(
-										verify.P1ResourceIDValidator(),
-									),
-								},
 							},
 						},
 					},
@@ -2606,8 +2589,8 @@ func (p *ApplicationResourceModel) toState(ctx context.Context, apiObject *manag
 	applicationInstance := apiObject.GetActualInstance()
 	switch v := applicationInstance.(type) {
 	case *management.ApplicationExternalLink:
-		p.Id = framework.StringOkToTF(v.GetIdOk())
-		p.EnvironmentId = framework.StringOkToTF(v.Environment.GetIdOk())
+		p.Id = framework.PingOneResourceIDOkToTF(v.GetIdOk())
+		p.EnvironmentId = framework.PingOneResourceIDOkToTF(v.Environment.GetIdOk())
 		p.Name = framework.StringOkToTF(v.GetNameOk())
 		p.Description = framework.StringOkToTF(v.GetDescriptionOk())
 		p.Enabled = framework.BoolOkToTF(v.GetEnabledOk())
@@ -2640,8 +2623,8 @@ func (p *ApplicationResourceModel) toState(ctx context.Context, apiObject *manag
 		diags = append(diags, d...)
 
 	case *management.ApplicationOIDC:
-		p.Id = framework.StringOkToTF(v.GetIdOk())
-		p.EnvironmentId = framework.StringOkToTF(v.Environment.GetIdOk())
+		p.Id = framework.PingOneResourceIDOkToTF(v.GetIdOk())
+		p.EnvironmentId = framework.PingOneResourceIDOkToTF(v.Environment.GetIdOk())
 		p.Name = framework.StringOkToTF(v.GetNameOk())
 		p.Description = framework.StringOkToTF(v.GetDescriptionOk())
 		p.Enabled = framework.BoolOkToTF(v.GetEnabledOk())
@@ -2686,8 +2669,8 @@ func (p *ApplicationResourceModel) toState(ctx context.Context, apiObject *manag
 		p.ExternalLinkOptions = types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes)
 
 	case *management.ApplicationSAML:
-		p.Id = framework.StringOkToTF(v.GetIdOk())
-		p.EnvironmentId = framework.StringOkToTF(v.Environment.GetIdOk())
+		p.Id = framework.PingOneResourceIDOkToTF(v.GetIdOk())
+		p.EnvironmentId = framework.PingOneResourceIDOkToTF(v.Environment.GetIdOk())
 		p.Name = framework.StringOkToTF(v.GetNameOk())
 		p.Description = framework.StringOkToTF(v.GetDescriptionOk())
 		p.Enabled = framework.BoolOkToTF(v.GetEnabledOk())

@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -26,13 +27,13 @@ import (
 type ApplicationResourceGrantResource serviceClientType
 
 type ApplicationResourceGrantResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	ApplicationId types.String `tfsdk:"application_id"`
-	ResourceId    types.String `tfsdk:"resource_id"`
-	ResourceName  types.String `tfsdk:"resource_name"`
-	Scopes        types.Set    `tfsdk:"scopes"`
-	ScopeNames    types.Set    `tfsdk:"scope_names"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ApplicationId pingonetypes.ResourceIDValue `tfsdk:"application_id"`
+	ResourceId    pingonetypes.ResourceIDValue `tfsdk:"resource_id"`
+	ResourceName  types.String                 `tfsdk:"resource_name"`
+	Scopes        types.Set                    `tfsdk:"scopes"`
+	ScopeNames    types.Set                    `tfsdk:"scope_names"`
 }
 
 // Framework interfaces
@@ -92,6 +93,8 @@ func (r *ApplicationResourceGrantResource) Schema(ctx context.Context, req resou
 				Description:         resourceIdDescription.Description,
 				MarkdownDescription: resourceIdDescription.MarkdownDescription,
 				Computed:            true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -692,10 +695,10 @@ func (p *ApplicationResourceGrantResourceModel) toState(apiObject *management.Ap
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.ResourceId = framework.StringOkToTF(resourceApiObject.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.ResourceId = framework.PingOneResourceIDOkToTF(resourceApiObject.GetIdOk())
 	p.ResourceName = framework.StringOkToTF(resourceApiObject.GetNameOk())
-	p.ApplicationId = framework.StringOkToTF(apiObject.Application.GetIdOk())
+	p.ApplicationId = framework.PingOneResourceIDOkToTF(apiObject.Application.GetIdOk())
 
 	if _, ok := apiObject.GetScopesOk(); ok {
 

@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -20,11 +21,11 @@ import (
 type AgreementLocalizationEnableResource serviceClientType
 
 type AgreementLocalizationEnableResourceModel struct {
-	Id                      types.String `tfsdk:"id"`
-	EnvironmentId           types.String `tfsdk:"environment_id"`
-	AgreementId             types.String `tfsdk:"agreement_id"`
-	AgreementLocalizationId types.String `tfsdk:"agreement_localization_id"`
-	Enabled                 types.Bool   `tfsdk:"enabled"`
+	Id                      pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId           pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	AgreementId             pingonetypes.ResourceIDValue `tfsdk:"agreement_id"`
+	AgreementLocalizationId pingonetypes.ResourceIDValue `tfsdk:"agreement_localization_id"`
+	Enabled                 types.Bool                   `tfsdk:"enabled"`
 }
 
 // Framework interfaces
@@ -403,8 +404,8 @@ func (p *AgreementLocalizationEnableResourceModel) toState(apiObject *management
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	p.AgreementLocalizationId = framework.StringToTF(apiObject.GetId())
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.AgreementLocalizationId = framework.PingOneResourceIDToTF(apiObject.GetId())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
 
 	return diags

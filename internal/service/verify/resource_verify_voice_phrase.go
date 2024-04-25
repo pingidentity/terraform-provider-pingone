@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -25,11 +26,11 @@ import (
 type VoicePhraseResource serviceClientType
 
 type voicePhraseResourceModel struct {
-	Id            types.String      `tfsdk:"id"`
-	EnvironmentId types.String      `tfsdk:"environment_id"`
-	DisplayName   types.String      `tfsdk:"display_name"`
-	CreatedAt     timetypes.RFC3339 `tfsdk:"created_at"`
-	UpdatedAt     timetypes.RFC3339 `tfsdk:"updated_at"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	DisplayName   types.String                 `tfsdk:"display_name"`
+	CreatedAt     timetypes.RFC3339            `tfsdk:"created_at"`
+	UpdatedAt     timetypes.RFC3339            `tfsdk:"updated_at"`
 }
 
 // Framework interfaces
@@ -359,8 +360,8 @@ func (p *voicePhraseResourceModel) toState(apiObject *verify.VoicePhrase) diag.D
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.DisplayName = framework.StringOkToTF(apiObject.GetDisplayNameOk())
 	p.CreatedAt = framework.TimeOkToTF(apiObject.GetCreatedAtOk())
 	p.UpdatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())

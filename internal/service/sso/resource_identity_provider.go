@@ -24,6 +24,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -34,26 +35,26 @@ import (
 type IdentityProviderResource serviceClientType
 
 type IdentityProviderResourceModel struct {
-	Id                       types.String `tfsdk:"id"`
-	EnvironmentId            types.String `tfsdk:"environment_id"`
-	Name                     types.String `tfsdk:"name"`
-	Description              types.String `tfsdk:"description"`
-	Enabled                  types.Bool   `tfsdk:"enabled"`
-	RegistrationPopulationId types.String `tfsdk:"registration_population_id"`
-	LoginButtonIcon          types.Object `tfsdk:"login_button_icon"`
-	Icon                     types.Object `tfsdk:"icon"`
-	Facebook                 types.Object `tfsdk:"facebook"`
-	Google                   types.Object `tfsdk:"google"`
-	LinkedIn                 types.Object `tfsdk:"linkedin"`
-	Yahoo                    types.Object `tfsdk:"yahoo"`
-	Amazon                   types.Object `tfsdk:"amazon"`
-	Twitter                  types.Object `tfsdk:"twitter"`
-	Apple                    types.Object `tfsdk:"apple"`
-	Paypal                   types.Object `tfsdk:"paypal"`
-	Microsoft                types.Object `tfsdk:"microsoft"`
-	Github                   types.Object `tfsdk:"github"`
-	OpenIDConnect            types.Object `tfsdk:"openid_connect"`
-	Saml                     types.Object `tfsdk:"saml"`
+	Id                       pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId            pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name                     types.String                 `tfsdk:"name"`
+	Description              types.String                 `tfsdk:"description"`
+	Enabled                  types.Bool                   `tfsdk:"enabled"`
+	RegistrationPopulationId pingonetypes.ResourceIDValue `tfsdk:"registration_population_id"`
+	LoginButtonIcon          types.Object                 `tfsdk:"login_button_icon"`
+	Icon                     types.Object                 `tfsdk:"icon"`
+	Facebook                 types.Object                 `tfsdk:"facebook"`
+	Google                   types.Object                 `tfsdk:"google"`
+	LinkedIn                 types.Object                 `tfsdk:"linkedin"`
+	Yahoo                    types.Object                 `tfsdk:"yahoo"`
+	Amazon                   types.Object                 `tfsdk:"amazon"`
+	Twitter                  types.Object                 `tfsdk:"twitter"`
+	Apple                    types.Object                 `tfsdk:"apple"`
+	Paypal                   types.Object                 `tfsdk:"paypal"`
+	Microsoft                types.Object                 `tfsdk:"microsoft"`
+	Github                   types.Object                 `tfsdk:"github"`
+	OpenIDConnect            types.Object                 `tfsdk:"openid_connect"`
+	Saml                     types.Object                 `tfsdk:"saml"`
 }
 
 type IdentityProviderClientIdClientSecretResourceModel struct {
@@ -111,17 +112,17 @@ type IdentityProviderOIDCResourceModel struct {
 }
 
 type IdentityProviderSAMLResourceModel struct {
-	AuthenticationRequestSigned   types.Bool   `tfsdk:"authentication_request_signed"`
-	IdpEntityId                   types.String `tfsdk:"idp_entity_id"`
-	SpEntityId                    types.String `tfsdk:"sp_entity_id"`
-	IdpVerificationCertificateIds types.Set    `tfsdk:"idp_verification_certificate_ids"`
-	SpSigningKeyId                types.String `tfsdk:"sp_signing_key_id"`
-	SsoBinding                    types.String `tfsdk:"sso_binding"`
-	SsoEndpoint                   types.String `tfsdk:"sso_endpoint"`
-	SloBinding                    types.String `tfsdk:"slo_binding"`
-	SloEndpoint                   types.String `tfsdk:"slo_endpoint"`
-	SloResponseEndpoint           types.String `tfsdk:"slo_response_endpoint"`
-	SloWindow                     types.Int64  `tfsdk:"slo_window"`
+	AuthenticationRequestSigned   types.Bool                   `tfsdk:"authentication_request_signed"`
+	IdpEntityId                   types.String                 `tfsdk:"idp_entity_id"`
+	SpEntityId                    types.String                 `tfsdk:"sp_entity_id"`
+	IdpVerificationCertificateIds types.Set                    `tfsdk:"idp_verification_certificate_ids"`
+	SpSigningKeyId                pingonetypes.ResourceIDValue `tfsdk:"sp_signing_key_id"`
+	SsoBinding                    types.String                 `tfsdk:"sso_binding"`
+	SsoEndpoint                   types.String                 `tfsdk:"sso_endpoint"`
+	SloBinding                    types.String                 `tfsdk:"slo_binding"`
+	SloEndpoint                   types.String                 `tfsdk:"slo_endpoint"`
+	SloResponseEndpoint           types.String                 `tfsdk:"slo_response_endpoint"`
+	SloWindow                     types.Int64                  `tfsdk:"slo_window"`
 }
 
 var (
@@ -165,8 +166,8 @@ var (
 		"authentication_request_signed":    types.BoolType,
 		"idp_entity_id":                    types.StringType,
 		"sp_entity_id":                     types.StringType,
-		"idp_verification_certificate_ids": types.SetType{ElemType: types.StringType},
-		"sp_signing_key_id":                types.StringType,
+		"idp_verification_certificate_ids": types.SetType{ElemType: pingonetypes.ResourceIDType{}},
+		"sp_signing_key_id":                pingonetypes.ResourceIDType{},
 		"sso_binding":                      types.StringType,
 		"sso_endpoint":                     types.StringType,
 		"slo_binding":                      types.StringType,
@@ -299,9 +300,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 				MarkdownDescription: registrationPopulationIdDescription.MarkdownDescription,
 				Optional:            true,
 
-				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
-				},
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"login_button_icon": schema.SingleNestedAttribute{
@@ -314,9 +313,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 						MarkdownDescription: loginButtonIconIdDescription.MarkdownDescription,
 						Required:            true,
 
-						Validators: []validator.String{
-							verify.P1ResourceIDValidator(),
-						},
+						CustomType: pingonetypes.ResourceIDType{},
 					},
 
 					"href": schema.StringAttribute{
@@ -341,9 +338,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 						MarkdownDescription: iconIdDescription.MarkdownDescription,
 						Required:            true,
 
-						Validators: []validator.String{
-							verify.P1ResourceIDValidator(),
-						},
+						CustomType: pingonetypes.ResourceIDType{},
 					},
 
 					"href": schema.StringAttribute{
@@ -668,13 +663,10 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An unordered list that specifies the identity provider's certificate IDs used to verify the signature on the signed assertion from the identity provider. Signing is done with a private key and verified with a public key.  Items must be valid PingOne resource IDs.").Description,
 						Required:    true,
 
-						ElementType: types.StringType,
+						ElementType: pingonetypes.ResourceIDType{},
 
 						Validators: []validator.Set{
 							setvalidator.SizeAtLeast(attrMinLength),
-							setvalidator.ValueStringsAre(
-								verify.P1ResourceIDValidator(),
-							),
 						},
 					},
 
@@ -682,9 +674,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the service provider's signing key ID.  Must be a valid PingOne resource ID.").Description,
 						Optional:    true,
 
-						Validators: []validator.String{
-							verify.P1ResourceIDValidator(),
-						},
+						CustomType: pingonetypes.ResourceIDType{},
 					},
 
 					"sso_binding": schema.StringAttribute{
@@ -1589,16 +1579,16 @@ func (p *IdentityProviderResourceModel) toState(apiObject *management.IdentityPr
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(common.GetIdOk())
-	p.EnvironmentId = framework.StringOkToTF(common.Environment.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(common.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDOkToTF(common.Environment.GetIdOk())
 	p.Name = framework.StringOkToTF(common.GetNameOk())
 	p.Description = framework.StringOkToTF(common.GetDescriptionOk())
 	p.Enabled = framework.BoolOkToTF(common.GetEnabledOk())
 
-	p.RegistrationPopulationId = types.StringNull()
+	p.RegistrationPopulationId = pingonetypes.NewResourceIDNull()
 	if v, ok := common.GetRegistrationOk(); ok {
 		if q, ok := v.GetPopulationOk(); ok {
-			p.RegistrationPopulationId = framework.StringOkToTF(q.GetIdOk())
+			p.RegistrationPopulationId = framework.PingOneResourceIDOkToTF(q.GetIdOk())
 		}
 	}
 
@@ -1769,7 +1759,7 @@ func identityProviderSAMLToTF(idpApiObject *management.IdentityProviderSAML) (ty
 		"slo_window":                    framework.Int32OkToTF(idpApiObject.GetSloWindowOk()),
 	}
 
-	attributesMap["idp_verification_certificate_ids"] = types.SetNull(types.StringType)
+	attributesMap["idp_verification_certificate_ids"] = types.SetNull(pingonetypes.ResourceIDType{})
 	if v, ok := idpApiObject.GetIdpVerificationOk(); ok {
 		if c, ok := v.GetCertificatesOk(); ok {
 			ids := make([]string, 0)
@@ -1777,14 +1767,14 @@ func identityProviderSAMLToTF(idpApiObject *management.IdentityProviderSAML) (ty
 				ids = append(ids, certificate.GetId())
 			}
 
-			attributesMap["idp_verification_certificate_ids"] = framework.StringSetToTF(ids)
+			attributesMap["idp_verification_certificate_ids"] = framework.PingOneResourceIDSetToTF(ids)
 		}
 	}
 
-	attributesMap["sp_signing_key_id"] = types.StringNull()
+	attributesMap["sp_signing_key_id"] = pingonetypes.NewResourceIDNull()
 	if v, ok := idpApiObject.GetSpSigningOk(); ok {
 		if c, ok := v.GetKeyOk(); ok {
-			attributesMap["sp_signing_key_id"] = framework.StringOkToTF(c.GetIdOk())
+			attributesMap["sp_signing_key_id"] = framework.PingOneResourceIDOkToTF(c.GetIdOk())
 		}
 	}
 

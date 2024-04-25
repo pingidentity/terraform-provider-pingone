@@ -17,6 +17,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -25,11 +26,11 @@ import (
 type TrustedEmailAddressResource serviceClientType
 
 type TrustedEmailAddressResourceModel struct {
-	EmailDomainId types.String `tfsdk:"email_domain_id"`
-	EmailAddress  types.String `tfsdk:"email_address"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Id            types.String `tfsdk:"id"`
-	Status        types.String `tfsdk:"status"`
+	EmailDomainId pingonetypes.ResourceIDValue `tfsdk:"email_domain_id"`
+	EmailAddress  types.String                 `tfsdk:"email_address"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	Status        types.String                 `tfsdk:"status"`
 }
 
 // Framework interfaces
@@ -312,9 +313,9 @@ func (p *TrustedEmailAddressResourceModel) toState(apiObject *management.EmailDo
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.EmailDomainId = framework.StringToTF(*apiObject.GetDomain().Id)
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
+	p.EmailDomainId = framework.PingOneResourceIDToTF(*apiObject.GetDomain().Id)
 	p.EmailAddress = framework.StringOkToTF(apiObject.GetEmailAddressOk())
 
 	if v, ok := apiObject.GetStatusOk(); ok {

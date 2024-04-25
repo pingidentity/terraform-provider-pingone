@@ -16,6 +16,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -24,11 +25,11 @@ import (
 type DigitalWalletApplicationResource serviceClientType
 
 type DigitalWalletApplicationResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	ApplicationId types.String `tfsdk:"application_id"`
-	AppOpenUrl    types.String `tfsdk:"app_open_url"`
-	Name          types.String `tfsdk:"name"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ApplicationId pingonetypes.ResourceIDValue `tfsdk:"application_id"`
+	AppOpenUrl    types.String                 `tfsdk:"app_open_url"`
+	Name          types.String                 `tfsdk:"name"`
 }
 
 // Framework interfaces
@@ -69,9 +70,8 @@ func (r *DigitalWalletApplicationResource) Schema(ctx context.Context, req resou
 			"application_id": schema.StringAttribute{
 				Description: "The identifier (UUID) of the PingOne application associated with the digital wallet application.",
 				Required:    true,
-				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
-				},
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"app_open_url": schema.StringAttribute{
@@ -356,9 +356,9 @@ func (p *DigitalWalletApplicationResourceModel) toState(apiObject *credentials.D
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.ApplicationId = framework.StringToTF(*apiObject.GetApplication().Id)
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
+	p.ApplicationId = framework.PingOneResourceIDToTF(*apiObject.GetApplication().Id)
 	p.AppOpenUrl = framework.StringToTF(apiObject.GetAppOpenUrl())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 

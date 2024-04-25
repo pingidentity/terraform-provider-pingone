@@ -17,23 +17,23 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
 
 // Types
 type ResourceDataSource serviceClientType
 
 type ResourceDataSourceModel struct {
-	Id                           types.String `tfsdk:"id"`
-	EnvironmentId                types.String `tfsdk:"environment_id"`
-	ResourceId                   types.String `tfsdk:"resource_id"`
-	Name                         types.String `tfsdk:"name"`
-	Description                  types.String `tfsdk:"description"`
-	Type                         types.String `tfsdk:"type"`
-	Audience                     types.String `tfsdk:"audience"`
-	AccessTokenValiditySeconds   types.Int64  `tfsdk:"access_token_validity_seconds"`
-	IntrospectEndpointAuthMethod types.String `tfsdk:"introspect_endpoint_auth_method"`
-	ClientSecret                 types.String `tfsdk:"client_secret"`
+	Id                           pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId                pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ResourceId                   pingonetypes.ResourceIDValue `tfsdk:"resource_id"`
+	Name                         types.String                 `tfsdk:"name"`
+	Description                  types.String                 `tfsdk:"description"`
+	Type                         types.String                 `tfsdk:"type"`
+	Audience                     types.String                 `tfsdk:"audience"`
+	AccessTokenValiditySeconds   types.Int64                  `tfsdk:"access_token_validity_seconds"`
+	IntrospectEndpointAuthMethod types.String                 `tfsdk:"introspect_endpoint_auth_method"`
+	ClientSecret                 types.String                 `tfsdk:"client_secret"`
 }
 
 // Framework interfaces
@@ -96,9 +96,11 @@ func (r *ResourceDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 				MarkdownDescription: resourceIdDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
-					verify.P1ResourceIDValidator(),
 				},
 			},
 
@@ -278,8 +280,8 @@ func (p *ResourceDataSourceModel) toState(apiObject *management.Resource, apiObj
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	p.ResourceId = framework.StringToTF(apiObject.GetId())
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.ResourceId = framework.PingOneResourceIDToTF(apiObject.GetId())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.Type = framework.EnumOkToTF(apiObject.GetTypeOk())

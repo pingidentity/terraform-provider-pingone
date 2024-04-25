@@ -5,26 +5,24 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
 type VoicePhraseContentsDataSource serviceClientType
 
 type voicePhraseContentsDataSourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	VoicePhraseId types.String `tfsdk:"voice_phrase_id"`
-	Ids           types.List   `tfsdk:"ids"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	VoicePhraseId pingonetypes.ResourceIDValue `tfsdk:"voice_phrase_id"`
+	Ids           types.List                   `tfsdk:"ids"`
 }
 
 // Framework interfaces
@@ -64,11 +62,8 @@ func (r *VoicePhraseContentsDataSource) Schema(ctx context.Context, req datasour
 				Description:         phraseIdDescription.Description,
 				MarkdownDescription: phraseIdDescription.MarkdownDescription,
 				Required:            true,
-				Validators: []validator.String{
-					stringvalidator.Any(
-						validation.P1ResourceIDValidator(),
-					),
-				},
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescriptionFromMarkdown(
@@ -162,8 +157,8 @@ func (p *voicePhraseContentsDataSourceModel) toState(environmentID string, voice
 
 	var d diag.Diagnostics
 
-	p.Id = framework.StringToTF(environmentID)
-	p.VoicePhraseId = framework.StringToTF(voicePhraseID)
+	p.Id = framework.PingOneResourceIDToTF(environmentID)
+	p.VoicePhraseId = framework.PingOneResourceIDToTF(voicePhraseID)
 	p.Ids, d = framework.StringSliceToTF(list)
 	diags.Append(d...)
 

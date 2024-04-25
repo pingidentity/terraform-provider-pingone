@@ -15,24 +15,24 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
 type AgreementDataSource serviceClientType
 
 type AgreementDataSourceModel struct {
-	Id                    types.String      `tfsdk:"id"`
-	EnvironmentId         types.String      `tfsdk:"environment_id"`
-	AgreementId           types.String      `tfsdk:"agreement_id"`
-	Name                  types.String      `tfsdk:"name"`
-	Enabled               types.Bool        `tfsdk:"enabled"`
-	Description           types.String      `tfsdk:"description"`
-	ReconsentPeriodDays   types.Float64     `tfsdk:"reconsent_period_days"`
-	TotalUserConsents     types.Int64       `tfsdk:"total_user_consent_count"`
-	ExpiredUserConsents   types.Int64       `tfsdk:"expired_user_consent_count"`
-	ConsentCountsUpdateAt timetypes.RFC3339 `tfsdk:"consent_counts_updated_at"`
+	Id                    pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId         pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	AgreementId           pingonetypes.ResourceIDValue `tfsdk:"agreement_id"`
+	Name                  types.String                 `tfsdk:"name"`
+	Enabled               types.Bool                   `tfsdk:"enabled"`
+	Description           types.String                 `tfsdk:"description"`
+	ReconsentPeriodDays   types.Float64                `tfsdk:"reconsent_period_days"`
+	TotalUserConsents     types.Int64                  `tfsdk:"total_user_consent_count"`
+	ExpiredUserConsents   types.Int64                  `tfsdk:"expired_user_consent_count"`
+	ConsentCountsUpdateAt timetypes.RFC3339            `tfsdk:"consent_counts_updated_at"`
 }
 
 // Framework interfaces
@@ -77,9 +77,11 @@ func (r *AgreementDataSource) Schema(ctx context.Context, req datasource.SchemaR
 			"agreement_id": schema.StringAttribute{
 				Description: "The ID of the agreement to retrieve. Either `agreement_id`, or `name` can be used to retrieve the agreement localization, but cannot be set together.",
 				Optional:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
-					verify.P1ResourceIDValidator(),
 				},
 			},
 
@@ -261,9 +263,9 @@ func (p *AgreementDataSourceModel) toState(apiObject *management.Agreement) diag
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.AgreementId = framework.StringToTF(apiObject.GetId())
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
+	p.AgreementId = framework.PingOneResourceIDToTF(apiObject.GetId())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())

@@ -22,6 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -32,12 +33,12 @@ import (
 type NotificationPolicyResource serviceClientType
 
 type NotificationPolicyResourceModel struct {
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Name          types.String `tfsdk:"name"`
-	Default       types.Bool   `tfsdk:"default"`
-	CountryLimit  types.Object `tfsdk:"country_limit"`
-	Quota         types.Set    `tfsdk:"quota"`
-	Id            types.String `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name          types.String                 `tfsdk:"name"`
+	Default       types.Bool                   `tfsdk:"default"`
+	CountryLimit  types.Object                 `tfsdk:"country_limit"`
+	Quota         types.Set                    `tfsdk:"quota"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
 }
 
 type NotificationPolicyQuotaResourceModel struct {
@@ -702,7 +703,7 @@ func (p *NotificationPolicyResourceModel) toState(apiObject *management.Notifica
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())
 

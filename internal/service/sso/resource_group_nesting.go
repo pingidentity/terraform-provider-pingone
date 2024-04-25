@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -20,11 +21,11 @@ import (
 type GroupNestingResource serviceClientType
 
 type GroupNestingResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	GroupId       types.String `tfsdk:"group_id"`
-	NestedGroupId types.String `tfsdk:"nested_group_id"`
-	Type          types.String `tfsdk:"type"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	GroupId       pingonetypes.ResourceIDValue `tfsdk:"group_id"`
+	NestedGroupId pingonetypes.ResourceIDValue `tfsdk:"nested_group_id"`
+	Type          types.String                 `tfsdk:"type"`
 }
 
 // Framework interfaces
@@ -287,9 +288,9 @@ func (p *GroupNestingResourceModel) toState(apiObject *management.GroupNesting) 
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
 	p.Type = framework.StringOkToTF(apiObject.GetTypeOk())
-	p.NestedGroupId = framework.StringOkToTF(apiObject.GetIdOk())
+	p.NestedGroupId = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
 
 	return diags
 }

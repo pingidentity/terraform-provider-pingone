@@ -26,6 +26,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	boolvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -34,15 +35,15 @@ import (
 type SystemApplicationResource serviceClientType
 
 type systemApplicationResourceModel struct {
-	Id                        types.String `tfsdk:"id"`
-	EnvironmentId             types.String `tfsdk:"environment_id"`
-	Type                      types.String `tfsdk:"type"`
-	Name                      types.String `tfsdk:"name"`
-	Enabled                   types.Bool   `tfsdk:"enabled"`
-	AccessControlRoleType     types.String `tfsdk:"access_control_role_type"`
-	AccessControlGroupOptions types.Object `tfsdk:"access_control_group_options"`
-	ApplyDefaultTheme         types.Bool   `tfsdk:"apply_default_theme"`
-	EnableDefaultThemeFooter  types.Bool   `tfsdk:"enable_default_theme_footer"`
+	Id                        pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId             pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Type                      types.String                 `tfsdk:"type"`
+	Name                      types.String                 `tfsdk:"name"`
+	Enabled                   types.Bool                   `tfsdk:"enabled"`
+	AccessControlRoleType     types.String                 `tfsdk:"access_control_role_type"`
+	AccessControlGroupOptions types.Object                 `tfsdk:"access_control_group_options"`
+	ApplyDefaultTheme         types.Bool                   `tfsdk:"apply_default_theme"`
+	EnableDefaultThemeFooter  types.Bool                   `tfsdk:"enable_default_theme_footer"`
 }
 
 type applicationAccessControlGroupOptionsResourceModel struct {
@@ -53,7 +54,7 @@ type applicationAccessControlGroupOptionsResourceModel struct {
 var (
 	applicationAccessControlGroupOptionsTFObjectTypes = map[string]attr.Type{
 		"type":   types.StringType,
-		"groups": types.SetType{ElemType: types.StringType},
+		"groups": types.SetType{ElemType: pingonetypes.ResourceIDType{}},
 	}
 )
 
@@ -182,7 +183,7 @@ func (r *SystemApplicationResource) Schema(ctx context.Context, req resource.Sch
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A set that specifies the group IDs for the groups the actor must belong to for access to the application.").Description,
 						Required:    true,
 
-						ElementType: types.StringType,
+						ElementType: pingonetypes.ResourceIDType{},
 					},
 
 					"type": schema.StringAttribute{
@@ -684,8 +685,8 @@ func (p *systemApplicationResourceModel) toState(apiObject *management.ReadOneAp
 		p.EnableDefaultThemeFooter = framework.BoolOkToTF(apiObject.ApplicationPingOneSelfService.GetEnableDefaultThemeFooterOk())
 	}
 
-	p.Id = framework.StringToTF(apiObjectCommon.GetId())
-	p.EnvironmentId = framework.StringToTF(*apiObjectCommon.GetEnvironment().Id)
+	p.Id = framework.PingOneResourceIDToTF(apiObjectCommon.GetId())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObjectCommon.GetEnvironment().Id)
 	p.Type = framework.EnumOkToTF(apiObjectCommon.GetTypeOk())
 	p.Name = framework.StringOkToTF(apiObjectCommon.GetNameOk())
 	p.Enabled = framework.BoolOkToTF(apiObjectCommon.GetEnabledOk())
@@ -707,7 +708,7 @@ func (p *systemApplicationResourceModel) toState(apiObject *management.ReadOneAp
 					groupsSlice = append(groupsSlice, group.GetId())
 				}
 
-				tfGroupsSlice := framework.StringSetToTF(groupsSlice)
+				tfGroupsSlice := framework.PingOneResourceIDSetToTF(groupsSlice)
 
 				objValue, d := types.ObjectValue(applicationAccessControlGroupOptionsTFObjectTypes, map[string]attr.Value{
 					"groups": tfGroupsSlice,

@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -25,12 +26,12 @@ import (
 type CustomDomainResource serviceClientType
 
 type CustomDomainResourceModel struct {
-	Id                   types.String      `tfsdk:"id"`
-	EnvironmentId        types.String      `tfsdk:"environment_id"`
-	DomainName           types.String      `tfsdk:"domain_name"`
-	Status               types.String      `tfsdk:"status"`
-	CanonicalName        types.String      `tfsdk:"canonical_name"`
-	CertificateExpiresAt timetypes.RFC3339 `tfsdk:"certificate_expires_at"`
+	Id                   pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId        pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	DomainName           types.String                 `tfsdk:"domain_name"`
+	Status               types.String                 `tfsdk:"status"`
+	CanonicalName        types.String                 `tfsdk:"canonical_name"`
+	CertificateExpiresAt timetypes.RFC3339            `tfsdk:"certificate_expires_at"`
 }
 
 // Framework interfaces
@@ -315,8 +316,8 @@ func (p *CustomDomainResourceModel) toState(apiObject *management.CustomDomain) 
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.DomainName = framework.StringOkToTF(apiObject.GetDomainNameOk())
 	p.Status = framework.EnumOkToTF(apiObject.GetStatusOk())
 	p.CanonicalName = framework.StringOkToTF(apiObject.GetCanonicalNameOk())

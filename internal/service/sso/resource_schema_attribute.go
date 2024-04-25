@@ -25,6 +25,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	boolvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	objectvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
 	setplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setplanmodifier"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
@@ -37,22 +38,22 @@ import (
 type SchemaAttributeResource serviceClientType
 
 type SchemaAttributeResourceModelV1 struct {
-	Id               types.String `tfsdk:"id"`
-	EnvironmentId    types.String `tfsdk:"environment_id"`
-	Description      types.String `tfsdk:"description"`
-	DisplayName      types.String `tfsdk:"display_name"`
-	Enabled          types.Bool   `tfsdk:"enabled"`
-	EnumeratedValues types.Set    `tfsdk:"enumerated_values"`
-	LdapAttribute    types.String `tfsdk:"ldap_attribute"`
-	Multivalued      types.Bool   `tfsdk:"multivalued"`
-	Name             types.String `tfsdk:"name"`
-	RegexValidation  types.Object `tfsdk:"regex_validation"`
-	Required         types.Bool   `tfsdk:"required"`
-	SchemaId         types.String `tfsdk:"schema_id"`
-	SchemaName       types.String `tfsdk:"schema_name"`
-	SchemaType       types.String `tfsdk:"schema_type"`
-	Type             types.String `tfsdk:"type"`
-	Unique           types.Bool   `tfsdk:"unique"`
+	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Description      types.String                 `tfsdk:"description"`
+	DisplayName      types.String                 `tfsdk:"display_name"`
+	Enabled          types.Bool                   `tfsdk:"enabled"`
+	EnumeratedValues types.Set                    `tfsdk:"enumerated_values"`
+	LdapAttribute    types.String                 `tfsdk:"ldap_attribute"`
+	Multivalued      types.Bool                   `tfsdk:"multivalued"`
+	Name             types.String                 `tfsdk:"name"`
+	RegexValidation  types.Object                 `tfsdk:"regex_validation"`
+	Required         types.Bool                   `tfsdk:"required"`
+	SchemaId         pingonetypes.ResourceIDValue `tfsdk:"schema_id"`
+	SchemaName       types.String                 `tfsdk:"schema_name"`
+	SchemaType       types.String                 `tfsdk:"schema_type"`
+	Type             types.String                 `tfsdk:"type"`
+	Unique           types.Bool                   `tfsdk:"unique"`
 }
 
 type SchemaAttributeEnumeratedValuesResourceModel struct {
@@ -165,6 +166,8 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 				Description:         schemaIdDescription.Description,
 				MarkdownDescription: schemaIdDescription.MarkdownDescription,
 				Computed:            true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -791,8 +794,8 @@ func (p *SchemaAttributeResourceModelV1) toState(apiObject *management.SchemaAtt
 
 	var d diag.Diagnostics
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringOkToTF(apiObject.Environment.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDOkToTF(apiObject.Environment.GetIdOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.DisplayName = framework.StringOkToTF(apiObject.GetDisplayNameOk())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
@@ -808,7 +811,7 @@ func (p *SchemaAttributeResourceModelV1) toState(apiObject *management.SchemaAtt
 	diags.Append(d...)
 
 	p.Required = framework.BoolOkToTF(apiObject.GetRequiredOk())
-	p.SchemaId = framework.StringOkToTF(apiObject.Schema.GetIdOk())
+	p.SchemaId = framework.PingOneResourceIDOkToTF(apiObject.Schema.GetIdOk())
 	p.SchemaName = framework.StringOkToTF(schemaApiObject.GetNameOk())
 	p.SchemaType = framework.EnumOkToTF(apiObject.GetSchemaTypeOk())
 	p.Type = framework.EnumOkToTF(apiObject.GetTypeOk())

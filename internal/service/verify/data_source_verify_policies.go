@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -18,9 +19,9 @@ import (
 type VerifyPoliciesDataSource serviceClientType
 
 type verifyPoliciesDataSourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Ids           types.List   `tfsdk:"ids"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Ids           types.List                   `tfsdk:"ids"`
 }
 
 // Framework interfaces
@@ -140,11 +141,8 @@ func (p *verifyPoliciesDataSourceModel) toState(environmentID string, verifyPoli
 		list = append(list, item.GetId())
 	}
 
-	var d diag.Diagnostics
-
-	p.Id = framework.StringToTF(environmentID)
-	p.Ids, d = framework.StringSliceToTF(list)
-	diags.Append(d...)
+	p.Id = framework.PingOneResourceIDToTF(environmentID)
+	p.Ids = framework.PingOneResourceIDListToTF(list)
 
 	return diags
 }

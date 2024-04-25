@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -28,16 +29,16 @@ import (
 type WebhookResource serviceClientType
 
 type WebhookResourceModel struct {
-	Id                     types.String `tfsdk:"id"`
-	EnvironmentId          types.String `tfsdk:"environment_id"`
-	Name                   types.String `tfsdk:"name"`
-	Enabled                types.Bool   `tfsdk:"enabled"`
-	HttpEndpointUrl        types.String `tfsdk:"http_endpoint_url"`
-	HttpEndpointHeaders    types.Map    `tfsdk:"http_endpoint_headers"`
-	VerifyTLSCertificates  types.Bool   `tfsdk:"verify_tls_certificates"`
-	TLSClientAuthKeyPairId types.String `tfsdk:"tls_client_auth_key_pair_id"`
-	Format                 types.String `tfsdk:"format"`
-	FilterOptions          types.Object `tfsdk:"filter_options"`
+	Id                     pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId          pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name                   types.String                 `tfsdk:"name"`
+	Enabled                types.Bool                   `tfsdk:"enabled"`
+	HttpEndpointUrl        types.String                 `tfsdk:"http_endpoint_url"`
+	HttpEndpointHeaders    types.Map                    `tfsdk:"http_endpoint_headers"`
+	VerifyTLSCertificates  types.Bool                   `tfsdk:"verify_tls_certificates"`
+	TLSClientAuthKeyPairId pingonetypes.ResourceIDValue `tfsdk:"tls_client_auth_key_pair_id"`
+	Format                 types.String                 `tfsdk:"format"`
+	FilterOptions          types.Object                 `tfsdk:"filter_options"`
 }
 
 type WebhookFilterOptionsResourceModel struct {
@@ -52,8 +53,8 @@ type WebhookFilterOptionsResourceModel struct {
 var (
 	webhookFilterOptionsTFObjectTypes = map[string]attr.Type{
 		"included_action_types":    types.SetType{ElemType: types.StringType},
-		"included_application_ids": types.SetType{ElemType: types.StringType},
-		"included_population_ids":  types.SetType{ElemType: types.StringType},
+		"included_application_ids": types.SetType{ElemType: pingonetypes.ResourceIDType{}},
+		"included_population_ids":  types.SetType{ElemType: pingonetypes.ResourceIDType{}},
 		"included_tags":            types.SetType{ElemType: types.StringType},
 		"ip_address_exposed":       types.BoolType,
 		"useragent_exposed":        types.BoolType,
@@ -189,9 +190,7 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 				MarkdownDescription: tlsClientAuthKeyPairIdDescription.MarkdownDescription,
 				Optional:            true,
 
-				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
-				},
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"format": schema.StringAttribute{
@@ -229,13 +228,10 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 						MarkdownDescription: filterOptionsIncludedApplicationIDsDescription.MarkdownDescription,
 						Optional:            true,
 
-						ElementType: types.StringType,
+						ElementType: pingonetypes.ResourceIDType{},
 
 						Validators: []validator.Set{
 							setvalidator.SizeAtMost(attrFilterOptionsIncludedIDsMaxLength),
-							setvalidator.ValueStringsAre(
-								verify.P1ResourceIDValidator(),
-							),
 						},
 					},
 
@@ -244,13 +240,10 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 						MarkdownDescription: filterOptionsIncludedPopulationIDsDescription.MarkdownDescription,
 						Optional:            true,
 
-						ElementType: types.StringType,
+						ElementType: pingonetypes.ResourceIDType{},
 
 						Validators: []validator.Set{
 							setvalidator.SizeAtMost(attrFilterOptionsIncludedIDsMaxLength),
-							setvalidator.ValueStringsAre(
-								verify.P1ResourceIDValidator(),
-							),
 						},
 					},
 
@@ -659,8 +652,8 @@ func (p *WebhookResourceModel) toState(apiObject *management.Subscription) diag.
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
 
@@ -674,9 +667,9 @@ func (p *WebhookResourceModel) toState(apiObject *management.Subscription) diag.
 
 	p.VerifyTLSCertificates = framework.BoolOkToTF(apiObject.GetVerifyTlsCertificatesOk())
 
-	p.TLSClientAuthKeyPairId = types.StringNull()
+	p.TLSClientAuthKeyPairId = pingonetypes.NewResourceIDNull()
 	if v, ok := apiObject.GetTlsClientAuthKeyPairOk(); ok {
-		p.TLSClientAuthKeyPairId = framework.StringOkToTF(v.GetIdOk())
+		p.TLSClientAuthKeyPairId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	}
 
 	p.Format = framework.EnumOkToTF(apiObject.GetFormatOk())
@@ -703,9 +696,9 @@ func toStateWebhookFilterOptions(v *management.SubscriptionFilterOptions, ok boo
 			applicationIDList = append(applicationIDList, application.GetId())
 		}
 
-		applicationIDSet = framework.StringSetToTF(applicationIDList)
+		applicationIDSet = framework.PingOneResourceIDSetToTF(applicationIDList)
 	} else {
-		applicationIDSet = types.SetNull(types.StringType)
+		applicationIDSet = types.SetNull(pingonetypes.ResourceIDType{})
 	}
 
 	populationIDList := make([]string, 0)
@@ -714,9 +707,9 @@ func toStateWebhookFilterOptions(v *management.SubscriptionFilterOptions, ok boo
 			populationIDList = append(populationIDList, population.GetId())
 		}
 
-		populationIDSet = framework.StringSetToTF(populationIDList)
+		populationIDSet = framework.PingOneResourceIDSetToTF(populationIDList)
 	} else {
-		populationIDSet = types.SetNull(types.StringType)
+		populationIDSet = types.SetNull(pingonetypes.ResourceIDType{})
 	}
 
 	objMap := map[string]attr.Value{

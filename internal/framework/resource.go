@@ -13,11 +13,149 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	pingone "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/davincitypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
 type ResourceType struct {
 	Client *pingone.Client
+}
+
+func PingOneResourceIDToTF(v string) pingonetypes.ResourceIDValue {
+	if v == "" {
+		return pingonetypes.NewResourceIDNull()
+	} else {
+		return pingonetypes.NewResourceIDValue(v)
+	}
+}
+
+func PingOneResourceIDOkToTF(v *string, ok bool) pingonetypes.ResourceIDValue {
+	if !ok || v == nil {
+		return pingonetypes.NewResourceIDNull()
+	} else {
+		return pingonetypes.NewResourceIDValue(*v)
+	}
+}
+
+func PingOneResourceIDSetOkToTF(v []string, ok bool) basetypes.SetValue {
+	if !ok || v == nil {
+		return types.SetNull(pingonetypes.ResourceIDType{})
+	} else {
+		list := make([]attr.Value, 0)
+		for _, item := range v {
+			list = append(list, PingOneResourceIDToTF(item))
+		}
+
+		return types.SetValueMust(pingonetypes.ResourceIDType{}, list)
+	}
+}
+
+func PingOneResourceIDSetToTF(v []string) basetypes.SetValue {
+	if v == nil {
+		return types.SetNull(pingonetypes.ResourceIDType{})
+	} else {
+		list := make([]attr.Value, 0)
+		for _, item := range v {
+			list = append(list, PingOneResourceIDToTF(item))
+		}
+
+		return types.SetValueMust(pingonetypes.ResourceIDType{}, list)
+	}
+}
+
+func PingOneResourceIDListOkToTF(v []string, ok bool) basetypes.ListValue {
+	if !ok || v == nil {
+		return types.ListNull(pingonetypes.ResourceIDType{})
+	} else {
+		list := make([]attr.Value, 0)
+		for _, item := range v {
+			list = append(list, PingOneResourceIDToTF(item))
+		}
+
+		return types.ListValueMust(pingonetypes.ResourceIDType{}, list)
+	}
+}
+
+func PingOneResourceIDListToTF(v []string) basetypes.ListValue {
+	if v == nil {
+		return types.ListNull(pingonetypes.ResourceIDType{})
+	} else {
+		list := make([]attr.Value, 0)
+		for _, item := range v {
+			list = append(list, PingOneResourceIDToTF(item))
+		}
+
+		return types.ListValueMust(pingonetypes.ResourceIDType{}, list)
+	}
+}
+
+func DaVinciResourceIDToTF(v string) davincitypes.ResourceIDValue {
+	if v == "" {
+		return davincitypes.NewResourceIDNull()
+	} else {
+		return davincitypes.NewResourceIDValue(v)
+	}
+}
+
+func DaVinciResourceIDOkToTF(v *string, ok bool) davincitypes.ResourceIDValue {
+	if !ok || v == nil {
+		return davincitypes.NewResourceIDNull()
+	} else {
+		return davincitypes.NewResourceIDValue(*v)
+	}
+}
+
+func DaVinciResourceIDSetOkToTF(v []string, ok bool) basetypes.SetValue {
+	if !ok || v == nil {
+		return types.SetNull(davincitypes.ResourceIDType{})
+	} else {
+		list := make([]attr.Value, 0)
+		for _, item := range v {
+			list = append(list, DaVinciResourceIDToTF(item))
+		}
+
+		return types.SetValueMust(davincitypes.ResourceIDType{}, list)
+	}
+}
+
+func DaVinciResourceIDSetToTF(v []string) basetypes.SetValue {
+	if v == nil {
+		return types.SetNull(davincitypes.ResourceIDType{})
+	} else {
+		list := make([]attr.Value, 0)
+		for _, item := range v {
+			list = append(list, DaVinciResourceIDToTF(item))
+		}
+
+		return types.SetValueMust(davincitypes.ResourceIDType{}, list)
+	}
+}
+
+func DaVinciResourceIDListOkToTF(v []string, ok bool) basetypes.ListValue {
+	if !ok || v == nil {
+		return types.ListNull(pingonetypes.ResourceIDType{})
+	} else {
+		list := make([]attr.Value, 0)
+		for _, item := range v {
+			list = append(list, PingOneResourceIDToTF(item))
+		}
+
+		return types.ListValueMust(pingonetypes.ResourceIDType{}, list)
+	}
+}
+
+func DaVinciResourceIDListToTF(v []string) basetypes.ListValue {
+	if v == nil {
+		return types.ListNull(pingonetypes.ResourceIDType{})
+	} else {
+		list := make([]attr.Value, 0)
+		for _, item := range v {
+			list = append(list, PingOneResourceIDToTF(item))
+		}
+
+		return types.ListValueMust(pingonetypes.ResourceIDType{}, list)
+	}
 }
 
 func StringToTF(v string) basetypes.StringValue {

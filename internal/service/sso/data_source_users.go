@@ -14,6 +14,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -21,11 +22,11 @@ import (
 type UsersDataSource serviceClientType
 
 type UsersDataSourceModel struct {
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Id            types.String `tfsdk:"id"`
-	ScimFilter    types.String `tfsdk:"scim_filter"`
-	DataFilters   types.List   `tfsdk:"data_filters"`
-	Ids           types.List   `tfsdk:"ids"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	ScimFilter    types.String                 `tfsdk:"scim_filter"`
+	DataFilters   types.List                   `tfsdk:"data_filters"`
+	Ids           types.List                   `tfsdk:"ids"`
 }
 
 // Framework interfaces
@@ -245,10 +246,10 @@ func (p *UsersDataSourceModel) toState(environmentID string, users []management.
 	var d diag.Diagnostics
 
 	if p.Id.IsNull() {
-		p.Id = framework.StringToTF(uuid.New().String())
+		p.Id = framework.PingOneResourceIDToTF(uuid.New().String())
 	}
 
-	p.EnvironmentId = framework.StringToTF(environmentID)
+	p.EnvironmentId = framework.PingOneResourceIDToTF(environmentID)
 	p.Ids, d = framework.StringSliceToTF(list)
 	diags.Append(d...)
 

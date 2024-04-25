@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -20,24 +21,24 @@ import (
 type UserRoleAssignmentsDataSource serviceClientType
 
 type UserRoleAssignmentsDataSourceModel struct {
-	Id              types.String `tfsdk:"id"`
-	EnvironmentId   types.String `tfsdk:"environment_id"`
-	UserId          types.String `tfsdk:"user_id"`
-	RoleAssignments types.Set    `tfsdk:"role_assignments"`
+	Id              pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId   pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	UserId          pingonetypes.ResourceIDValue `tfsdk:"user_id"`
+	RoleAssignments types.Set                    `tfsdk:"role_assignments"`
 }
 
 var (
 	roleAssignmentsUserRoleAssignmentTFObjectTypes = map[string]attr.Type{
-		"id": types.StringType,
+		"id": pingonetypes.ResourceIDType{},
 		"scope": types.ObjectType{
 			AttrTypes: roleAssignmentsUserRoleAssignmentScopeTFObjectTypes,
 		},
-		"role_id":   types.StringType,
+		"role_id":   pingonetypes.ResourceIDType{},
 		"read_only": types.BoolType,
 	}
 
 	roleAssignmentsUserRoleAssignmentScopeTFObjectTypes = map[string]attr.Type{
-		"id":   types.StringType,
+		"id":   pingonetypes.ResourceIDType{},
 		"type": types.StringType,
 	}
 )
@@ -88,6 +89,8 @@ func (r *UserRoleAssignmentsDataSource) Schema(ctx context.Context, req datasour
 						"id": schema.StringAttribute{
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the role assignment relationship.").Description,
 							Computed:    true,
+
+							CustomType: pingonetypes.ResourceIDType{},
 						},
 
 						"scope": schema.SingleNestedAttribute{
@@ -98,6 +101,8 @@ func (r *UserRoleAssignmentsDataSource) Schema(ctx context.Context, req datasour
 								"id": schema.StringAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the environment, population or organization that the role is scoped to.").Description,
 									Computed:    true,
+
+									CustomType: pingonetypes.ResourceIDType{},
 								},
 
 								"type": schema.StringAttribute{
@@ -111,6 +116,8 @@ func (r *UserRoleAssignmentsDataSource) Schema(ctx context.Context, req datasour
 						"role_id": schema.StringAttribute{
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the admin role that has been assigned to the user.").Description,
 							Computed:    true,
+
+							CustomType: pingonetypes.ResourceIDType{},
 						},
 
 						"read_only": schema.BoolAttribute{
@@ -204,7 +211,7 @@ func (p *UserRoleAssignmentsDataSourceModel) toState(apiObject *management.Entit
 	}
 
 	if p.Id.IsNull() {
-		p.Id = framework.StringToTF(uuid.New().String())
+		p.Id = framework.PingOneResourceIDToTF(uuid.New().String())
 	}
 
 	var d diag.Diagnostics
@@ -230,9 +237,9 @@ func toStateRoleAssignments(apiObject []management.RoleAssignment, ok bool) (typ
 		diags = append(diags, d...)
 
 		objMap := map[string]attr.Value{
-			"id":        framework.StringOkToTF(item.GetIdOk()),
+			"id":        framework.PingOneResourceIDOkToTF(item.GetIdOk()),
 			"scope":     scopeObj,
-			"role_id":   framework.StringOkToTF(item.Role.GetIdOk()),
+			"role_id":   framework.PingOneResourceIDOkToTF(item.Role.GetIdOk()),
 			"read_only": framework.BoolOkToTF(item.GetReadOnlyOk()),
 		}
 
@@ -256,7 +263,7 @@ func toStateRoleAssignmentsScope(apiObject *management.RoleAssignmentScope, ok b
 	}
 
 	objMap := map[string]attr.Value{
-		"id":   framework.StringOkToTF(apiObject.GetIdOk()),
+		"id":   framework.PingOneResourceIDOkToTF(apiObject.GetIdOk()),
 		"type": framework.EnumOkToTF(apiObject.GetTypeOk()),
 	}
 

@@ -13,6 +13,8 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/davincitypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -20,11 +22,11 @@ import (
 type FlowPoliciesDataSource serviceClientType
 
 type FlowPoliciesDataSourceModel struct {
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Id            types.String `tfsdk:"id"`
-	ScimFilter    types.String `tfsdk:"scim_filter"`
-	DataFilters   types.List   `tfsdk:"data_filters"`
-	Ids           types.List   `tfsdk:"ids"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	ScimFilter    types.String                 `tfsdk:"scim_filter"`
+	DataFilters   types.List                   `tfsdk:"data_filters"`
+	Ids           types.List                   `tfsdk:"ids"`
 }
 
 // Framework interfaces
@@ -72,9 +74,10 @@ func (r *FlowPoliciesDataSource) Schema(ctx context.Context, req datasource.Sche
 				[]string{"scim_filter", "data_filters"},
 			),
 
-			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescriptionFromMarkdown(
+			"ids": framework.Attr_DataSourceReturnIDsByElement(framework.SchemaAttributeDescriptionFromMarkdown(
 				"The list of resulting IDs of DaVinci flow policies that have been successfully retrieved and filtered.",
-			)),
+			),
+				davincitypes.ResourceIDType{}),
 		},
 	}
 }
@@ -209,8 +212,8 @@ func (p *FlowPoliciesDataSourceModel) toState(environmentID string, flowPolicies
 
 	var d diag.Diagnostics
 
-	p.Id = framework.StringToTF(environmentID)
-	p.Ids, d = framework.StringSliceToTF(list)
+	p.Id = framework.PingOneResourceIDToTF(environmentID)
+	p.Ids = framework.DaVinciResourceIDListToTF(list)
 	diags.Append(d...)
 
 	return diags

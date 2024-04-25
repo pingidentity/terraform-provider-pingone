@@ -16,6 +16,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -27,11 +28,11 @@ type PopulationResource struct {
 }
 
 type PopulationResourceModel struct {
-	Id               types.String `tfsdk:"id"`
-	EnvironmentId    types.String `tfsdk:"environment_id"`
-	Name             types.String `tfsdk:"name"`
-	Description      types.String `tfsdk:"description"`
-	PasswordPolicyId types.String `tfsdk:"password_policy_id"`
+	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name             types.String                 `tfsdk:"name"`
+	Description      types.String                 `tfsdk:"description"`
+	PasswordPolicyId pingonetypes.ResourceIDValue `tfsdk:"password_policy_id"`
 }
 
 // Framework interfaces
@@ -85,9 +86,7 @@ func (r *PopulationResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of a password policy to assign to the population.  Must be a valid PingOne resource ID.").Description,
 				Optional:    true,
 
-				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
-				},
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 		},
 	}
@@ -361,15 +360,15 @@ func (p *PopulationResourceModel) toState(apiObject *management.Population) diag
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringOkToTF(apiObject.Environment.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDOkToTF(apiObject.Environment.GetIdOk())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 
 	if v, ok := apiObject.GetPasswordPolicyOk(); ok {
-		p.PasswordPolicyId = framework.StringOkToTF(v.GetIdOk())
+		p.PasswordPolicyId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	} else {
-		p.PasswordPolicyId = types.StringNull()
+		p.PasswordPolicyId = pingonetypes.NewResourceIDNull()
 	}
 
 	return diags

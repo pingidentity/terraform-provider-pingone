@@ -16,32 +16,32 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
 type GatewayDataSource serviceClientType
 
 type gatewayDataSourceModel struct {
-	Id                                    types.String `tfsdk:"id"`
-	EnvironmentId                         types.String `tfsdk:"environment_id"`
-	GatewayId                             types.String `tfsdk:"gateway_id"`
-	Name                                  types.String `tfsdk:"name"`
-	Description                           types.String `tfsdk:"description"`
-	Enabled                               types.Bool   `tfsdk:"enabled"`
-	Type                                  types.String `tfsdk:"type"`
-	BindDN                                types.String `tfsdk:"bind_dn"`
-	ConnectionSecurity                    types.String `tfsdk:"connection_security"`
-	KerberosServiceAccountUPN             types.String `tfsdk:"kerberos_service_account_upn"`
-	KerberosRetainPreviousCredentialsMins types.Int64  `tfsdk:"kerberos_retain_previous_credentials_mins"`
-	Servers                               types.Set    `tfsdk:"servers"`
-	ValidateTLSCertificates               types.Bool   `tfsdk:"validate_tls_certificates"`
-	Vendor                                types.String `tfsdk:"vendor"`
-	UserType                              types.Set    `tfsdk:"user_type"`
-	RadiusDavinciPolicyId                 types.String `tfsdk:"radius_davinci_policy_id"`
-	RadiusDefaultSharedSecret             types.String `tfsdk:"radius_default_shared_secret"`
-	RadiusClient                          types.Set    `tfsdk:"radius_client"`
+	Id                                    pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId                         pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	GatewayId                             pingonetypes.ResourceIDValue `tfsdk:"gateway_id"`
+	Name                                  types.String                 `tfsdk:"name"`
+	Description                           types.String                 `tfsdk:"description"`
+	Enabled                               types.Bool                   `tfsdk:"enabled"`
+	Type                                  types.String                 `tfsdk:"type"`
+	BindDN                                types.String                 `tfsdk:"bind_dn"`
+	ConnectionSecurity                    types.String                 `tfsdk:"connection_security"`
+	KerberosServiceAccountUPN             types.String                 `tfsdk:"kerberos_service_account_upn"`
+	KerberosRetainPreviousCredentialsMins types.Int64                  `tfsdk:"kerberos_retain_previous_credentials_mins"`
+	Servers                               types.Set                    `tfsdk:"servers"`
+	ValidateTLSCertificates               types.Bool                   `tfsdk:"validate_tls_certificates"`
+	Vendor                                types.String                 `tfsdk:"vendor"`
+	UserType                              types.Set                    `tfsdk:"user_type"`
+	RadiusDavinciPolicyId                 types.String                 `tfsdk:"radius_davinci_policy_id"`
+	RadiusDefaultSharedSecret             types.String                 `tfsdk:"radius_default_shared_secret"`
+	RadiusClient                          types.Set                    `tfsdk:"radius_client"`
 }
 
 var (
@@ -172,11 +172,13 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				Description:         gatewayIdDescription.Description,
 				MarkdownDescription: gatewayIdDescription.MarkdownDescription,
 				Optional:            true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("name"),
 					),
-					validation.P1ResourceIDValidator(),
 				},
 			},
 			"name": schema.StringAttribute{
@@ -250,6 +252,8 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 							Description:         userTypeIdsDescription.Description,
 							MarkdownDescription: userTypeIdsDescription.MarkdownDescription,
 							Computed:            true,
+
+							CustomType: pingonetypes.ResourceIDType{},
 						},
 						"name": schema.StringAttribute{
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("The name of the user type.").Description,
@@ -286,6 +290,8 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 									"population_id": schema.StringAttribute{
 										Description: framework.SchemaAttributeDescriptionFromMarkdown("The ID of the population to use to create user entries during lookup.").Description,
 										Computed:    true,
+
+										CustomType: pingonetypes.ResourceIDType{},
 									},
 									"attribute_mapping": schema.SetNestedAttribute{
 										Description:         userMigrationAttributeMappingDescription.Description,
@@ -488,18 +494,18 @@ func (p *gatewayDataSourceModel) toState(apiObject interface{}) diag.Diagnostics
 
 	switch v := apiObject.(type) {
 	case *management.Gateway:
-		p.Id = framework.StringOkToTF(v.GetIdOk())
-		p.EnvironmentId = framework.StringToTF(*v.GetEnvironment().Id)
-		p.GatewayId = framework.StringOkToTF(v.GetIdOk())
+		p.Id = framework.PingOneResourceIDOkToTF(v.GetIdOk())
+		p.EnvironmentId = framework.PingOneResourceIDToTF(*v.GetEnvironment().Id)
+		p.GatewayId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 		p.Name = framework.StringOkToTF(v.GetNameOk())
 		p.Description = framework.StringOkToTF(v.GetDescriptionOk())
 		p.Enabled = framework.BoolOkToTF(v.GetEnabledOk())
 		p.Type = framework.EnumOkToTF(v.GetTypeOk())
 
 	case *management.GatewayTypeLDAP:
-		p.Id = framework.StringOkToTF(v.GetIdOk())
-		p.EnvironmentId = framework.StringToTF(*v.GetEnvironment().Id)
-		p.GatewayId = framework.StringOkToTF(v.GetIdOk())
+		p.Id = framework.PingOneResourceIDOkToTF(v.GetIdOk())
+		p.EnvironmentId = framework.PingOneResourceIDToTF(*v.GetEnvironment().Id)
+		p.GatewayId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 		p.Name = framework.StringOkToTF(v.GetNameOk())
 		p.Description = framework.StringOkToTF(v.GetDescriptionOk())
 		p.Enabled = framework.BoolOkToTF(v.GetEnabledOk())
@@ -522,9 +528,9 @@ func (p *gatewayDataSourceModel) toState(apiObject interface{}) diag.Diagnostics
 		diags.Append(d...)
 
 	case *management.GatewayTypeRADIUS:
-		p.Id = framework.StringOkToTF(v.GetIdOk())
-		p.EnvironmentId = framework.StringToTF(*v.GetEnvironment().Id)
-		p.GatewayId = framework.StringOkToTF(v.GetIdOk())
+		p.Id = framework.PingOneResourceIDOkToTF(v.GetIdOk())
+		p.EnvironmentId = framework.PingOneResourceIDToTF(*v.GetEnvironment().Id)
+		p.GatewayId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 		p.Name = framework.StringOkToTF(v.GetNameOk())
 		p.Description = framework.StringOkToTF(v.GetDescriptionOk())
 		p.Enabled = framework.BoolOkToTF(v.GetEnabledOk())

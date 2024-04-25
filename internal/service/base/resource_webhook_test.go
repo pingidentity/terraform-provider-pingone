@@ -659,7 +659,7 @@ resource "pingone_webhook" "%[3]s" {
 
   format = "ACTIVITY"
 
-  filter_options {
+  filter_options = {
     included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
   }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, pkcs12, keystorePassword)
@@ -690,7 +690,7 @@ resource "pingone_webhook" "%[3]s" {
 
   format = "ACTIVITY"
 
-  filter_options {
+  filter_options = {
     included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
   }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, pkcs12, keystorePassword)

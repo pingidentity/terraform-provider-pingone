@@ -15,20 +15,20 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
 type VoicePhraseDataSource serviceClientType
 
 type voicePhraseDataSourceModel struct {
-	Id            types.String      `tfsdk:"id"`
-	EnvironmentId types.String      `tfsdk:"environment_id"`
-	VoicePhraseId types.String      `tfsdk:"voice_phrase_id"`
-	DisplayName   types.String      `tfsdk:"display_name"`
-	CreatedAt     timetypes.RFC3339 `tfsdk:"created_at"`
-	UpdatedAt     timetypes.RFC3339 `tfsdk:"updated_at"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	VoicePhraseId pingonetypes.ResourceIDValue `tfsdk:"voice_phrase_id"`
+	DisplayName   types.String                 `tfsdk:"display_name"`
+	CreatedAt     timetypes.RFC3339            `tfsdk:"created_at"`
+	UpdatedAt     timetypes.RFC3339            `tfsdk:"updated_at"`
 }
 
 // Framework interfaces
@@ -79,11 +79,13 @@ func (r *VoicePhraseDataSource) Schema(ctx context.Context, req datasource.Schem
 				Description:         voicePhraseIdDescription.Description,
 				MarkdownDescription: voicePhraseIdDescription.MarkdownDescription,
 				Optional:            true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("display_name"),
 					),
-					validation.P1ResourceIDValidator(),
 				},
 			},
 
@@ -246,9 +248,9 @@ func (p *voicePhraseDataSourceModel) toState(apiObject *verify.VoicePhrase) diag
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.VoicePhraseId = framework.StringOkToTF(apiObject.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
+	p.VoicePhraseId = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
 	p.DisplayName = framework.StringOkToTF(apiObject.GetDisplayNameOk())
 	p.CreatedAt = framework.TimeOkToTF(apiObject.GetCreatedAtOk())
 	p.UpdatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
