@@ -1831,6 +1831,92 @@ This parameter was previously deprecated and has been removed.  Use the `fido2` 
 
 This parameter was previously deprecated and has been removed.  Device authentication parameters have moved to the `pingone_mfa_device_policy` resource.
 
+### `lockout` schema type change
+
+This parameter `lockout` was previously a block data type, and is now a single nested object type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_settings" "my_awesome_mfa_settings" {
+  # ... other configuration parameters
+
+  lockout {
+    failure_count    = 5
+    duration_seconds = 600
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_settings" "my_awesome_mfa_settings" {
+  # ... other configuration parameters
+
+  lockout = {
+    failure_count    = 5
+    duration_seconds = 600
+  }
+}
+```
+
+### `pairing` schema type change
+
+This parameter `pairing` was previously a block data type, and is now a single nested object type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_settings" "my_awesome_mfa_settings" {
+  # ... other configuration parameters
+
+  pairing {
+    max_allowed_devices = 5
+    pairing_key_format  = "ALPHANUMERIC"
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_settings" "my_awesome_mfa_settings" {
+  # ... other configuration parameters
+
+  pairing = {
+    max_allowed_devices = 5
+    pairing_key_format  = "ALPHANUMERIC"
+  }
+}
+```
+
+### `phone_extensions_enabled` parameter moved
+
+This parameter `phone_extensions_enabled` has moved to a nested object type at `phone_extensions.enabled`.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_settings" "my_awesome_mfa_settings" {
+  # ... other configuration parameters
+
+  phone_extensions_enabled = true
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_settings" "my_awesome_mfa_settings" {
+  # ... other configuration parameters
+
+  phone_extensions = {
+    enabled = true
+  }
+}
+```
+
 ## Resource: pingone_notification_policy
 
 ### `quota` schema type change

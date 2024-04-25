@@ -94,15 +94,13 @@ func TestAccMFASettings_Full(t *testing.T) {
 			{
 				Config: testAccMFASettingsConfig_Full(environmentName, licenseID, resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "pairing.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "pairing.0.max_allowed_devices", "7"),
-					resource.TestCheckResourceAttr(resourceFullName, "pairing.0.pairing_key_format", "NUMERIC"),
-					resource.TestCheckResourceAttr(resourceFullName, "lockout.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "lockout.0.failure_count", "13"),
-					resource.TestCheckResourceAttr(resourceFullName, "lockout.0.duration_seconds", "8"),
-					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions_enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "pairing.max_allowed_devices", "7"),
+					resource.TestCheckResourceAttr(resourceFullName, "pairing.pairing_key_format", "NUMERIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "lockout.failure_count", "13"),
+					resource.TestCheckResourceAttr(resourceFullName, "lockout.duration_seconds", "8"),
+					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "users.mfa_enabled", "true"),
 				),
 			},
 			// Test importing the resource
@@ -115,11 +113,12 @@ func TestAccMFASettings_Full(t *testing.T) {
 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
 						}
 
-						return rs.Primary.ID, nil
+						return rs.Primary.Attributes["environment_id"], nil
 					}
 				}(),
-				ImportState:       true,
-				ImportStateVerify: true,
+				ImportState:                          true,
+				ImportStateVerify:                    true,
+				ImportStateVerifyIdentifierAttribute: "environment_id",
 			},
 		},
 	})
@@ -148,27 +147,25 @@ func TestAccMFASettings_Minimal(t *testing.T) {
 			{
 				Config: testAccMFASettingsConfig_Minimal(environmentName, licenseID, resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "pairing.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "pairing.0.max_allowed_devices", "5"),
-					resource.TestCheckResourceAttr(resourceFullName, "pairing.0.pairing_key_format", "NUMERIC"),
-					resource.TestCheckResourceAttr(resourceFullName, "lockout.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions_enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "pairing.max_allowed_devices", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "pairing.pairing_key_format", "NUMERIC"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "lockout.failure_count"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "lockout.duration_seconds"),
+					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "users.mfa_enabled", "false"),
 				),
 			},
 			{
 				Config: testAccMFASettingsConfig_LockoutMinimal(environmentName, licenseID, resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "pairing.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "pairing.0.max_allowed_devices", "5"),
-					resource.TestCheckResourceAttr(resourceFullName, "pairing.0.pairing_key_format", "NUMERIC"),
-					resource.TestCheckResourceAttr(resourceFullName, "lockout.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "lockout.0.failure_count", "13"),
-					resource.TestCheckResourceAttr(resourceFullName, "lockout.0.duration_seconds", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions_enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "pairing.max_allowed_devices", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "pairing.pairing_key_format", "NUMERIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "lockout.failure_count", "13"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "lockout.duration_seconds"),
+					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "users.mfa_enabled", "false"),
 				),
 			},
 		},
@@ -198,41 +195,37 @@ func TestAccMFASettings_Change(t *testing.T) {
 			{
 				Config: testAccMFASettingsConfig_Full(environmentName, licenseID, resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "pairing.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "pairing.0.max_allowed_devices", "7"),
-					resource.TestCheckResourceAttr(resourceFullName, "pairing.0.pairing_key_format", "NUMERIC"),
-					resource.TestCheckResourceAttr(resourceFullName, "lockout.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "lockout.0.failure_count", "13"),
-					resource.TestCheckResourceAttr(resourceFullName, "lockout.0.duration_seconds", "8"),
-					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions_enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "pairing.max_allowed_devices", "7"),
+					resource.TestCheckResourceAttr(resourceFullName, "pairing.pairing_key_format", "NUMERIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "lockout.failure_count", "13"),
+					resource.TestCheckResourceAttr(resourceFullName, "lockout.duration_seconds", "8"),
+					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "users.mfa_enabled", "true"),
 				),
 			},
 			{
 				Config: testAccMFASettingsConfig_Minimal(environmentName, licenseID, resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "pairing.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "pairing.0.max_allowed_devices", "5"),
-					resource.TestCheckResourceAttr(resourceFullName, "pairing.0.pairing_key_format", "NUMERIC"),
-					resource.TestCheckResourceAttr(resourceFullName, "lockout.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions_enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "pairing.max_allowed_devices", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "pairing.pairing_key_format", "NUMERIC"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "lockout.failure_count"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "lockout.duration_seconds"),
+					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "users.mfa_enabled", "false"),
 				),
 			},
 			{
 				Config: testAccMFASettingsConfig_Full(environmentName, licenseID, resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "pairing.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "pairing.0.max_allowed_devices", "7"),
-					resource.TestCheckResourceAttr(resourceFullName, "pairing.0.pairing_key_format", "NUMERIC"),
-					resource.TestCheckResourceAttr(resourceFullName, "lockout.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "lockout.0.failure_count", "13"),
-					resource.TestCheckResourceAttr(resourceFullName, "lockout.0.duration_seconds", "8"),
-					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions_enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "pairing.max_allowed_devices", "7"),
+					resource.TestCheckResourceAttr(resourceFullName, "pairing.pairing_key_format", "NUMERIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "lockout.failure_count", "13"),
+					resource.TestCheckResourceAttr(resourceFullName, "lockout.duration_seconds", "8"),
+					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "users.mfa_enabled", "true"),
 				),
 			},
 		},
@@ -267,13 +260,13 @@ func TestAccMFASettings_BadParameters(t *testing.T) {
 				ResourceName:  resourceFullName,
 				ImportStateId: "/",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "badformat/badformat",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})
@@ -286,17 +279,23 @@ func testAccMFASettingsConfig_Full(environmentName, licenseID, resourceName stri
 resource "pingone_mfa_settings" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  pairing {
-    max_allowed_devices = 7
-    pairing_key_format  = "NUMERIC"
-  }
-
-  lockout {
+  lockout = {
     failure_count    = 13
     duration_seconds = 8
   }
 
-  phone_extensions_enabled = true
+  pairing = {
+    max_allowed_devices = 7
+    pairing_key_format  = "NUMERIC"
+  }
+
+  phone_extensions = {
+    enabled = true
+  }
+
+  users = {
+    mfa_enabled = true
+  }
 
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
@@ -308,11 +307,9 @@ func testAccMFASettingsConfig_Minimal(environmentName, licenseID, resourceName s
 resource "pingone_mfa_settings" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  pairing {
+  pairing = {
     pairing_key_format = "NUMERIC"
   }
-
-
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
@@ -323,13 +320,12 @@ func testAccMFASettingsConfig_LockoutMinimal(environmentName, licenseID, resourc
 resource "pingone_mfa_settings" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  pairing {
+  pairing = {
     pairing_key_format = "NUMERIC"
   }
 
-  lockout {
+  lockout = {
     failure_count = 13
   }
-
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
