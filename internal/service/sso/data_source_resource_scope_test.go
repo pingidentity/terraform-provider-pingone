@@ -309,7 +309,7 @@ data "pingone_resource" "%[2]s" {
 
 resource "pingone_resource_attribute" "%[2]s-1" {
   environment_id = data.pingone_environment.general_test.id
-  resource_name    = data.pingone_resource.%[2]s.name
+  resource_name  = data.pingone_resource.%[2]s.name
 
   name  = "%[3]s-1"
   value = "$${user.name.given}"
@@ -317,7 +317,7 @@ resource "pingone_resource_attribute" "%[2]s-1" {
 
 resource "pingone_resource_attribute" "%[2]s-2" {
   environment_id = data.pingone_environment.general_test.id
-  resource_name    = data.pingone_resource.%[2]s.name
+  resource_name  = data.pingone_resource.%[2]s.name
 
   name  = "%[3]s-2"
   value = "$${user.name.family}"
@@ -325,7 +325,7 @@ resource "pingone_resource_attribute" "%[2]s-2" {
 
 resource "pingone_resource_attribute" "%[2]s-3" {
   environment_id = data.pingone_environment.general_test.id
-  resource_name    = data.pingone_resource.%[2]s.name
+  resource_name  = data.pingone_resource.%[2]s.name
 
   name  = "%[3]s-3"
   value = "$${user.email}"
