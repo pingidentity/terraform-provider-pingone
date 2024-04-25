@@ -14,6 +14,7 @@ func Resources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewApplicationPushCredentialResource,
 		NewFIDO2PolicyResource,
+		NewMFASettingsResource,
 	}
 }
 

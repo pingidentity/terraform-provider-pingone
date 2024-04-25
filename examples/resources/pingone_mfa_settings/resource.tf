@@ -1,16 +1,21 @@
 resource "pingone_mfa_settings" "mfa_settings" {
   environment_id = pingone_environment.my_environment.id
 
-  pairing {
+  pairing = {
     max_allowed_devices = 5
     pairing_key_format  = "ALPHANUMERIC"
   }
 
-  lockout {
+  lockout = {
     failure_count    = 5
     duration_seconds = 600
   }
 
-  phone_extensions_enabled = true
+  phone_extensions = {
+    enabled = true
+  }
 
+  users = {
+    mfa_enabled = true
+  }
 }
