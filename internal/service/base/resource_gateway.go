@@ -4,256 +4,471 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"slices"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
-	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func ResourceGateway() *schema.Resource {
+// Types
+type GatewayResource serviceClientType
 
-	ldapSchemaAttrList := []string{"bind_dn", "bind_password", "servers", "vendor"}
-	radiusSchemaAttrList := []string{"radius_davinci_policy_id", "radius_client"}
+type GatewayResourceModel struct {
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name          types.String                 `tfsdk:"name"`
+	Description   types.String                 `tfsdk:"description"`
+	Type          types.String                 `tfsdk:"type"`
+	Enabled       types.Bool                   `tfsdk:"enabled"`
 
-	return &schema.Resource{
+	// LDAP
+	BindDN                                types.String `tfsdk:"bind_dn"`
+	BindPassword                          types.String `tfsdk:"bind_password"`
+	ConnectionSecurity                    types.String `tfsdk:"connection_security"`
+	KerberosServiceAccountPassword        types.String `tfsdk:"kerberos_service_account_password"`
+	KerberosServiceAccountUPN             types.String `tfsdk:"kerberos_service_account_upn"`
+	KerberosRetainPreviousCredentialsMins types.String `tfsdk:"kerberos_retain_previous_credentials_mins"`
+	Servers                               types.Set    `tfsdk:"servers"`
+	ValidateTLSCertificates               types.Bool   `tfsdk:"validate_tls_certificates"`
+	Vendor                                types.String `tfsdk:"vendor"`
+	UserTypes                             types.Set    `tfsdk:"user_types"`
 
+	// Radius
+	RadiusDavinciPolicyId     pingonetypes.ResourceIDValue `tfsdk:"radius_davinci_policy_id"`
+	RadiusDefaultSharedSecret types.String                 `tfsdk:"radius_default_shared_secret"`
+	RadiusClient              types.Set                    `tfsdk:"radius_client"`
+}
+
+type GatewayUserTypeResourceModel struct {
+	Id                        pingonetypes.ResourceIDValue `tfsdk:"id"`
+	Name                      types.String                 `tfsdk:"name"`
+	PasswordAuthority         types.String                 `tfsdk:"password_authority"`
+	SearchBaseDN              types.String                 `tfsdk:"search_base_dn"`
+	UserLinkAttributes        types.String                 `tfsdk:"user_link_attributes"`
+	UserMigration             types.Object                 `tfsdk:"user_migration"`
+	PushPasswordChangesToLDAP types.Bool                   `tfsdk:"push_password_changes_to_ldap"`
+}
+
+type GatewayUserTypeMigrationResourceModel struct {
+	LookupFilterPattern types.String                 `tfsdk:"lookup_filter_pattern"`
+	PopulationId        pingonetypes.ResourceIDValue `tfsdk:"population_id"`
+	AttributeMapping    types.Set                    `tfsdk:"attribute_mapping"`
+}
+
+type GatewayUserTypeMigrationAttributeMappingResourceModel struct {
+	Name  types.String `tfsdk:"name"`
+	Value types.String `tfsdk:"value"`
+}
+
+type GatewayRadiusClientResourceModel struct {
+	IP           types.String `tfsdk:"ip"`
+	SharedSecret types.String `tfsdk:"shared_secret"`
+}
+
+var (
+	GatewayUserTypesTFObjectTypes = map[string]attr.Type{
+		"id":                            pingonetypes.ResourceIDType{},
+		"name":                          types.StringType,
+		"password_authority":            types.StringType,
+		"search_base_dn":                types.StringType,
+		"user_link_attributes":          types.StringType,
+		"user_migration":                types.ObjectType{},
+		"push_password_changes_to_ldap": types.BoolType,
+	}
+
+	GatewayUserTypesMigrationTFObjectTypes = map[string]attr.Type{
+		"lookup_filter_pattern": types.StringType,
+		"population_id":         pingonetypes.ResourceIDType{},
+		"attribute_mapping":     types.SetType{},
+	}
+
+	GatewayUserTypesMigrationAttributeMappingTFObjectTypes = map[string]attr.Type{
+		"name":  types.StringType,
+		"value": types.StringType,
+	}
+
+	GatewayRadiusClientTFObjectTypes = map[string]attr.Type{
+		"ip":            types.StringType,
+		"shared_secret": types.StringType,
+	}
+)
+
+// Framework interfaces
+var (
+	_ resource.Resource                = &GatewayResource{}
+	_ resource.ResourceWithConfigure   = &GatewayResource{}
+	_ resource.ResourceWithImportState = &GatewayResource{}
+)
+
+// New Object
+func NewGatewayResource() resource.Resource {
+	return &GatewayResource{}
+}
+
+// Metadata
+func (r *GatewayResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_gateway"
+}
+
+func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+
+	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the type of gateway.",
+	).AllowedValuesEnum(management.AllowedEnumGatewayTypeEnumValues).RequiresReplace()
+
+	connectionSecurityDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"For LDAP gateways only: A string that specifies the connection security type.",
+	).AllowedValuesEnum(management.AllowedEnumGatewayTypeLDAPSecurityEnumValues).DefaultValue(management.ENUMGATEWAYTYPELDAPSECURITY_NONE)
+
+	kerberosServiceAccountUpnDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"For LDAP gateways only: A string that specifies the Kerberos service account user principal name (for example, `username@bxretail.org`).",
+	)
+
+	serversDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"For LDAP gateways only: A set of LDAP server host name and port number combinations (for example, [`ds1.bxretail.org:636`, `ds2.bxretail.org:636`]).",
+	)
+
+	validateTlsCertificatesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"For LDAP gateways only: A boolean that specifies whether or not to trust all SSL certificates, including self-signed (defaults to `true`). If this value is `false`, TLS certificates are not validated. When the value is set to `true`, only certificates that are signed by the default JVM CAs, or the CA certs that the customer has uploaded to the certificate service are trusted.",
+	).DefaultValue(true)
+
+	vendorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"For LDAP gateways only: A string that specifies the LDAP vendor.",
+	).AllowedValuesEnum(management.AllowedEnumGatewayVendorEnumValues).RequiresReplace()
+
+	userTypesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"For LDAP gateways only: A set of objects that define how users should be provisioned in PingOne. The `user_types` set of objects specifies which user properties in PingOne correspond to the user properties in an external LDAP directory. You can use an LDAP browser to view the user properties in the external LDAP directory.",
+	)
+
+	userTypesPasswordAuthorityDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the password authority for the user type.",
+	).AllowedValuesEnum(management.AllowedEnumGatewayPasswordAuthorityEnumValues).AppendMarkdownString(fmt.Sprintf("If set to `%s`, PingOne authenticates with the external directory initially, then PingOne authenticates all subsequent sign-ons.", string(management.ENUMGATEWAYPASSWORDAUTHORITY_PING_ONE)))
+
+	userTypesUserMigrationLookupFilterPatternDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The LDAP user search filter to use to match users against the entered user identifier at login. For example, `(((uid=${identifier})(mail=${identifier}))`. Alternatively, this can be a search against the user directory.",
+	)
+
+	userTypesUserMigrationLookupAttributeMappingDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	)
+
+	userTypesUserMigrationLookupAttributeMappingNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the name of a user attribute in PingOne. See [Users properties](https://apidocs.pingidentity.com/pingone/platform/v1/api/#users) for the complete list of available PingOne user attributes.",
+	)
+
+	userTypesUserMigrationLookupAttributeMappingValueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the reference to the corresponding external LDAP attribute.  Values are in the format `${ldapAttributes.mail}`, while Terraform HCL requires an additional `$` prefix character. For example, `$${ldapAttributes.mail}`.",
+	)
+
+	userTypesPushPasswordChangesToLdapDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether password updates in PingOne should be pushed to the user's record in LDAP.  If false, the user cannot change the password and have it updated in the remote LDAP directory. In this case, operations for forgotten passwords or resetting of passwords are not available to a user referencing this gateway.",
+	).DefaultValue(false)
+
+	radiusClientSharedSecretDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the shared secret for the RADIUS client. If this value is not provided, the shared secret specified with `radius_default_shared_secret` is used. If you are not providing a shared secret for the client, this parameter is optional.",
+	)
+
+	ldapRequiredSchemaPaths := []path.Expression{}
+	radiusRequiredSchemaPaths := []path.Expression{}
+
+	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage PingOne gateways.",
+		Description: "Resource to create and manage gateway configuration in a PingOne environment.",
 
-		CreateContext: resourceGatewayCreate,
-		ReadContext:   resourceGatewayRead,
-		UpdateContext: resourceGatewayUpdate,
-		DeleteContext: resourceGatewayDelete,
+		Attributes: map[string]schema.Attribute{
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to manage the gateway in."),
+			),
 
-		Importer: &schema.ResourceImporter{
-			StateContext: resourceGatewayImport,
-		},
-
-		Schema: map[string]*schema.Schema{
-			"environment_id": {
-				Description:      "The ID of the environment to create the gateway in.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-				ForceNew:         true,
+			"name": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the name of the gateway resource.").Description,
+				Required:    true,
 			},
-			"name": {
-				Description:      "The name of the gateway resource.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
-			},
-			"description": {
-				Description: "A description to apply to the gateway resource.",
-				Type:        schema.TypeString,
+
+			"description": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a description to apply to the gateway resource.").Description,
 				Optional:    true,
 			},
-			"type": {
-				Description:  fmt.Sprintf("The type of gateway resource. Options are `%s`, `%s`, `%s`, `%s` and `%s`.", string(management.ENUMGATEWAYTYPE_PING_FEDERATE), string(management.ENUMGATEWAYTYPE_API_GATEWAY_INTEGRATION), string(management.ENUMGATEWAYTYPE_LDAP), string(management.ENUMGATEWAYTYPE_RADIUS), string(management.ENUMGATEWAYTYPE_PING_INTELLIGENCE)),
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{string(management.ENUMGATEWAYTYPE_PING_FEDERATE), string(management.ENUMGATEWAYTYPE_API_GATEWAY_INTEGRATION), string(management.ENUMGATEWAYTYPE_LDAP), string(management.ENUMGATEWAYTYPE_RADIUS), string(management.ENUMGATEWAYTYPE_PING_INTELLIGENCE)}, false),
+
+			"type": schema.StringAttribute{
+				Description:         typeDescription.Description,
+				MarkdownDescription: typeDescription.MarkdownDescription,
+				Required:            true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+
+				Validators: []validator.String{
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumGatewayTypeEnumValues)...),
+				},
 			},
-			"enabled": {
-				Description: "Indicates whether the gateway is enabled.",
-				Type:        schema.TypeBool,
+
+			"enabled": schema.BoolAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the gateway is enabled in the environment.").Description,
 				Required:    true,
 			},
 
 			// LDAP
-			"bind_dn": {
-				Description:      "For LDAP gateways only: The distinguished name information to bind to the LDAP database (for example, `uid=pingone,dc=bxretail,dc=org`).",
-				Type:             schema.TypeString,
-				Optional:         true,
-				RequiredWith:     ldapSchemaAttrList,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
-			},
-			"bind_password": {
-				Description:      "For LDAP gateways only: The Bind password for the LDAP database.",
-				Type:             schema.TypeString,
-				Optional:         true,
-				RequiredWith:     ldapSchemaAttrList,
-				Sensitive:        true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
-			},
-			"connection_security": {
-				Description:      fmt.Sprintf("For LDAP gateways only: The connection security type. Options are `%s`, `%s`, and `%s`.", string(management.ENUMGATEWAYTYPELDAPSECURITY_NONE), string(management.ENUMGATEWAYTYPELDAPSECURITY_TLS), string(management.ENUMGATEWAYTYPELDAPSECURITY_START_TLS)),
-				Type:             schema.TypeString,
-				Optional:         true,
-				Default:          management.ENUMGATEWAYTYPELDAPSECURITY_NONE,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMGATEWAYTYPELDAPSECURITY_NONE), string(management.ENUMGATEWAYTYPELDAPSECURITY_TLS), string(management.ENUMGATEWAYTYPELDAPSECURITY_START_TLS)}, false)),
-			},
-			"kerberos_service_account_password": {
-				Description: "For LDAP gateways only: The password for the Kerberos service account.",
-				Type:        schema.TypeString,
+			"bind_dn": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("For LDAP gateways only: A string that specifies the distinguished name information to bind to the LDAP database (for example, `uid=pingone,dc=bxretail,dc=org`).").Description,
 				Optional:    true,
-				Sensitive:   true,
-			},
-			"kerberos_service_account_upn": {
-				Description: "For LDAP gateways only: The Kerberos service account user principal name (for example, `username@bxretail.org`).",
-				Type:        schema.TypeString,
-				Optional:    true,
-			},
-			"kerberos_retain_previous_credentials_mins": {
-				Description: "For LDAP gateways only: The number of minutes for which the previous credentials are persisted.",
-				Type:        schema.TypeInt,
-				Optional:    true,
-			},
-			"servers": {
-				Description:  "For LDAP gateways only: A list of LDAP server host name and port number combinations (for example, [`ds1.bxretail.org:636`, `ds2.bxretail.org:636`]).",
-				Type:         schema.TypeSet,
-				Optional:     true,
-				RequiredWith: ldapSchemaAttrList,
-				Elem: &schema.Schema{
-					Type:             schema.TypeString,
-					ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+
+				Validators: []validator.String{
+					stringvalidator.AlsoRequires(ldapRequiredSchemaPaths...),
 				},
 			},
-			"validate_tls_certificates": {
-				Description: "For LDAP gateways only: Indicates whether or not to trust all SSL certificates (defaults to `true`). If this value is `false`, TLS certificates are not validated. When the value is set to `true`, only certificates that are signed by the default JVM CAs, or the CA certs that the customer has uploaded to the certificate service are trusted.",
-				Type:        schema.TypeBool,
+
+			"bind_password": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("For LDAP gateways only: A string that specifies the bind password for the LDAP database.").Description,
 				Optional:    true,
-				Default:     true,
+				Sensitive:   true,
+
+				Validators: []validator.String{
+					stringvalidator.AlsoRequires(ldapRequiredSchemaPaths...),
+				},
 			},
-			"vendor": {
-				Description:      fmt.Sprintf("For LDAP gateways only: The LDAP vendor. Options are `%s`, `%s`, `%s`, `%s`, `%s`, `%s`, `%s`, and `%s`.", string(management.ENUMGATEWAYVENDOR_PING_DIRECTORY), string(management.ENUMGATEWAYVENDOR_MICROSOFT_ACTIVE_DIRECTORY), string(management.ENUMGATEWAYVENDOR_ORACLE_DIRECTORY_SERVER_ENTERPRISE_EDITION), string(management.ENUMGATEWAYVENDOR_ORACLE_UNIFIED_DIRECTORY), string(management.ENUMGATEWAYVENDOR_CA_DIRECTORY), string(management.ENUMGATEWAYVENDOR_OPEN_DJ_DIRECTORY), string(management.ENUMGATEWAYVENDOR_IBM__TIVOLI_SECURITY_DIRECTORY_SERVER), string(management.ENUMGATEWAYVENDOR_LDAP_V3_COMPLIANT_DIRECTORY_SERVER)),
-				Type:             schema.TypeString,
-				Optional:         true,
-				RequiredWith:     ldapSchemaAttrList,
-				ForceNew:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMGATEWAYVENDOR_PING_DIRECTORY), string(management.ENUMGATEWAYVENDOR_MICROSOFT_ACTIVE_DIRECTORY), string(management.ENUMGATEWAYVENDOR_ORACLE_DIRECTORY_SERVER_ENTERPRISE_EDITION), string(management.ENUMGATEWAYVENDOR_ORACLE_UNIFIED_DIRECTORY), string(management.ENUMGATEWAYVENDOR_CA_DIRECTORY), string(management.ENUMGATEWAYVENDOR_OPEN_DJ_DIRECTORY), string(management.ENUMGATEWAYVENDOR_IBM__TIVOLI_SECURITY_DIRECTORY_SERVER), string(management.ENUMGATEWAYVENDOR_LDAP_V3_COMPLIANT_DIRECTORY_SERVER)}, false)),
+
+			"connection_security": schema.StringAttribute{
+				Description:         connectionSecurityDescription.Description,
+				MarkdownDescription: connectionSecurityDescription.MarkdownDescription,
+				Optional:            true,
+
+				Default: stringdefault.StaticString(string(management.ENUMGATEWAYTYPELDAPSECURITY_NONE)),
+
+				Validators: []validator.String{
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumGatewayTypeLDAPSecurityEnumValues)...),
+					stringvalidator.AlsoRequires(ldapRequiredSchemaPaths...),
+				},
 			},
-			"user_type": {
-				Description: "For LDAP gateways only: A collection of properties that define how users should be provisioned in PingOne. The `user_type` block specifies which user properties in PingOne correspond to the user properties in an external LDAP directory. You can use an LDAP browser to view the user properties in the external LDAP directory.",
-				Type:        schema.TypeSet,
+
+			"kerberos_service_account_password": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("For LDAP gateways only: A string that specifies the password for the Kerberos service account.").Description,
 				Optional:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"id": {
-							Description: "Identifies the user type. This correlates to the `password.external.gateway.userType.id` User property.",
-							Type:        schema.TypeString,
+				Sensitive:   true,
+
+				Validators: []validator.String{
+					stringvalidator.AlsoRequires(ldapRequiredSchemaPaths...),
+				},
+			},
+
+			"kerberos_service_account_upn": schema.StringAttribute{
+				Description:         kerberosServiceAccountUpnDescription.Description,
+				MarkdownDescription: kerberosServiceAccountUpnDescription.MarkdownDescription,
+				Optional:            true,
+
+				Validators: []validator.String{
+					stringvalidator.AlsoRequires(ldapRequiredSchemaPaths...),
+				},
+			},
+
+			"kerberos_retain_previous_credentials_mins": schema.Int64Attribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("For LDAP gateways only: An integer that specifies the number of minutes for which the previous credentials are persisted.").Description,
+				Optional:    true,
+
+				Validators: []validator.Int64{
+					int64validator.AlsoRequires(ldapRequiredSchemaPaths...),
+				},
+			},
+
+			"servers": schema.SetAttribute{
+				Description:         serversDescription.Description,
+				MarkdownDescription: serversDescription.MarkdownDescription,
+				Optional:            true,
+
+				ElementType: types.StringType,
+
+				Validators: []validator.Set{
+					setvalidator.AlsoRequires(ldapRequiredSchemaPaths...),
+				},
+			},
+
+			"validate_tls_certificates": schema.BoolAttribute{
+				Description:         validateTlsCertificatesDescription.Description,
+				MarkdownDescription: validateTlsCertificatesDescription.MarkdownDescription,
+				Optional:            true,
+
+				Default: booldefault.StaticBool(true),
+
+				Validators: []validator.Bool{
+					boolvalidator.AlsoRequires(ldapRequiredSchemaPaths...),
+				},
+			},
+
+			"vendor": schema.StringAttribute{
+				Description:         vendorDescription.Description,
+				MarkdownDescription: vendorDescription.MarkdownDescription,
+				Optional:            true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+
+				Validators: []validator.String{
+					stringvalidator.AlsoRequires(ldapRequiredSchemaPaths...),
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumGatewayVendorEnumValues)...),
+				},
+			},
+
+			"user_types": schema.SetNestedAttribute{
+				Description:         userTypesDescription.Description,
+				MarkdownDescription: userTypesDescription.MarkdownDescription,
+				Optional:            true,
+
+				Validators: []validator.Set{
+					setvalidator.AlsoRequires(ldapRequiredSchemaPaths...),
+				},
+
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"id": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
 							Computed:    true,
 						},
-						"name": {
-							Description:      "The name of the user type.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
-						},
-						"password_authority": {
-							Description:      fmt.Sprintf("This can be either `%s` or `%s`. If set to `%s`, PingOne authenticates with the external directory initially, then PingOne authenticates all subsequent sign-ons.", string(management.ENUMGATEWAYPASSWORDAUTHORITY_PING_ONE), string(management.ENUMGATEWAYPASSWORDAUTHORITY_LDAP), string(management.ENUMGATEWAYPASSWORDAUTHORITY_PING_ONE)),
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMGATEWAYPASSWORDAUTHORITY_PING_ONE), string(management.ENUMGATEWAYPASSWORDAUTHORITY_LDAP)}, false)),
-						},
-						"search_base_dn": {
-							Description: "The LDAP base domain name (DN) for this user type.",
-							Type:        schema.TypeString,
+
+						"name": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
 							Required:    true,
 						},
-						"user_link_attributes": {
-							Description: "A list of strings that represent LDAP attribute names that uniquely identify the user, and link to users in PingOne.",
-							Type:        schema.TypeList,
-							Required:    true,
-							Elem: &schema.Schema{
-								Type:             schema.TypeString,
-								ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+
+						"password_authority": schema.StringAttribute{
+							Description:         userTypesPasswordAuthorityDescription.Description,
+							MarkdownDescription: userTypesPasswordAuthorityDescription.MarkdownDescription,
+							Required:            true,
+
+							Validators: []validator.String{
+								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumGatewayPasswordAuthorityEnumValues)...),
 							},
 						},
-						"user_migration": {
-							Description: "The configurations for initially authenticating new users who will be migrated to PingOne. Note: If there are multiple users having the same user name, only the first user processed is provisioned.",
-							Type:        schema.TypeList,
-							MaxItems:    1,
+
+						"search_base_dn": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the LDAP base domain name (DN) for this user type.").Description,
+							Required:    true,
+						},
+
+						"user_link_attributes": schema.SetAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A list of strings that represent LDAP attribute names that uniquely identify the user, and link to users in PingOne.").Description,
+							Required:    true,
+
+							ElementType: types.StringType,
+						},
+
+						"user_migration": schema.SingleNestedAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that describes the configurations for initially authenticating new users who will be migrated to PingOne. Note: If there are multiple users having the same user name, only the first user processed is provisioned.").Description,
 							Optional:    true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"lookup_filter_pattern": {
-										Description: "The LDAP user search filter to use to match users against the entered user identifier at login. For example, `(((uid=${identifier})(mail=${identifier}))`. Alternatively, this can be a search against the user directory.",
-										Type:        schema.TypeString,
-										Required:    true,
-									},
-									"population_id": {
-										Description:      "The ID of the population to use to create user entries during lookup.",
-										Type:             schema.TypeString,
-										Required:         true,
-										ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-									},
-									"attribute_mapping": {
-										Description: "A collection of properties that define how users should be provisioned in PingOne. The `user_type` block specifies which user properties in PingOne correspond to the user properties in an external LDAP directory. You can use an LDAP browser to view the user properties in the external LDAP directory.",
-										Type:        schema.TypeSet,
-										Required:    true,
-										Elem: &schema.Resource{
-											Schema: map[string]*schema.Schema{
-												"name": {
-													Description:      "The name of a user attribute in PingOne. See [Users properties](https://apidocs.pingidentity.com/pingone/platform/v1/api/#users) for the complete list of available PingOne user attributes.",
-													Type:             schema.TypeString,
-													Required:         true,
-													ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
-												},
-												"value": {
-													Description:      "A reference to the corresponding external LDAP attribute.  Values are in the format `${ldapAttributes.mail}`, while Terraform HCL requires an additional `$` prefix character. For example, `$${ldapAttributes.mail}`",
-													Type:             schema.TypeString,
-													Required:         true,
-													ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
-												},
+
+							Attributes: map[string]schema.Attribute{
+								"lookup_filter_pattern": schema.StringAttribute{
+									Description:         userTypesUserMigrationLookupFilterPatternDescription.Description,
+									MarkdownDescription: userTypesUserMigrationLookupFilterPatternDescription.MarkdownDescription,
+									Required:            true,
+								},
+
+								"population_id": schema.StringAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the population to use to create user entries during lookup.  Must be a valid PingOne resource ID.").Description,
+									Required:    true,
+
+									CustomType: pingonetypes.ResourceIDType{},
+								},
+
+								"attribute_mapping": schema.SetNestedAttribute{
+									Description:         userTypesUserMigrationLookupAttributeMappingDescription.Description,
+									MarkdownDescription: userTypesUserMigrationLookupAttributeMappingDescription.MarkdownDescription,
+									Required:            true,
+
+									NestedObject: schema.NestedAttributeObject{
+										Attributes: map[string]schema.Attribute{
+											"name": schema.StringAttribute{
+												Description:         userTypesUserMigrationLookupAttributeMappingNameDescription.Description,
+												MarkdownDescription: userTypesUserMigrationLookupAttributeMappingNameDescription.MarkdownDescription,
+												Required:            true,
+											},
+
+											"value": schema.StringAttribute{
+												Description:         userTypesUserMigrationLookupAttributeMappingValueDescription.Description,
+												MarkdownDescription: userTypesUserMigrationLookupAttributeMappingValueDescription.MarkdownDescription,
+												Required:            true,
 											},
 										},
 									},
 								},
 							},
 						},
-						"push_password_changes_to_ldap": {
-							Description: "A boolean that determines whether password updates in PingOne should be pushed to the user's record in LDAP.  If false, the user cannot change the password and have it updated in the remote LDAP directory. In this case, operations for forgotten passwords or resetting of passwords are not available to a user referencing this gateway.",
-							Type:        schema.TypeBool,
-							Optional:    true,
-							Default:     false,
+
+						"push_password_changes_to_ldap": schema.BoolAttribute{
+							Description:         userTypesPushPasswordChangesToLdapDescription.Description,
+							MarkdownDescription: userTypesPushPasswordChangesToLdapDescription.MarkdownDescription,
+							Optional:            true,
+
+							Default: booldefault.StaticBool(false),
 						},
 					},
 				},
 			},
 
-			// RADIUS
-			"radius_davinci_policy_id": {
-				Description:      "For RADIUS gateways only: The ID of the DaVinci flow policy to use.",
-				Type:             schema.TypeString,
-				Optional:         true,
-				RequiredWith:     radiusSchemaAttrList,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+			"radius_davinci_policy_id": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("For RADIUS gateways only: A string that specifies the ID of the DaVinci flow policy to use.  Must be a valid PingOne resource ID.").Description,
+				Optional:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+
+				Validators: []validator.String{
+					stringvalidator.AlsoRequires(radiusRequiredSchemaPaths...),
+				},
 			},
-			"radius_default_shared_secret": {
-				Description:      "For RADIUS gateways only: Value to use for the shared secret if the shared secret is not provided for one or more of the RADIUS clients specified.",
-				Type:             schema.TypeString,
-				Optional:         true,
-				Sensitive:        true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+
+			"radius_default_shared_secret": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("For RADIUS gateways only: A strign that specifies the value to use for the shared secret if the shared secret is not provided for one or more of the RADIUS clients specified.").Description,
+				Optional:    true,
+				Sensitive:   true,
+
+				Validators: []validator.String{
+					stringvalidator.AlsoRequires(radiusRequiredSchemaPaths...),
+				},
 			},
-			"radius_client": {
-				Description:  "For RADIUS gateways only: A collection of RADIUS clients.",
-				Type:         schema.TypeSet,
-				Optional:     true,
-				RequiredWith: radiusSchemaAttrList,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"ip": {
-							Description:      "The IP of the RADIUS client.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.IsIPv4Address),
+
+			"radius_client": schema.SetNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("For RADIUS gateways only: A set of objects describing RADIUS client connections.").Description,
+				Optional:    true,
+
+				Validators: []validator.Set{
+					setvalidator.AlsoRequires(radiusRequiredSchemaPaths...),
+				},
+
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"ip": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the IP address of the RADIUS client.").Description,
+							Required:    true,
+
+							Validators: []validator.String{ipv4},
 						},
-						"shared_secret": {
-							Description:      "The shared secret for the RADIUS client. If this value is not provided, the shared secret specified with `default_shared_secret` is used. If you are not providing a shared secret for the client, this parameter is optional.",
-							Type:             schema.TypeString,
-							Optional:         true,
-							Sensitive:        true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+
+						"shared_secret": schema.StringAttribute{
+							Description:         radiusClientSharedSecretDescription.Description,
+							MarkdownDescription: radiusClientSharedSecretDescription.MarkdownDescription,
+							Optional:            true,
+							Sensitive:           true,
 						},
 					},
 				},
@@ -262,225 +477,210 @@ func ResourceGateway() *schema.Resource {
 	}
 }
 
-func resourceGatewayCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
-
-	var diags diag.Diagnostics
-
-	gatewayRequest, diags := expandGatewayRequest(d)
-	if diags.HasError() {
-		return diags
+func (r *GatewayResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
 	}
 
-	resp, diags := sdk.ParseResponse(
+	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected the provider client, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
+		)
+
+		return
+	}
+
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
+		)
+		return
+	}
+}
+
+func (r *GatewayResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan, state GatewayResourceModel
+
+	if r.Client.MFAAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the API
+	createGatewayRequest, d := plan.expand(ctx)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	var response *management.CreateGateway201Response
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.GatewaysApi.CreateGateway(ctx, d.Get("environment_id").(string)).CreateGatewayRequest(*gatewayRequest).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.GatewaysApi.CreateGateway(ctx, plan.EnvironmentId.ValueString()).CreateGatewayRequest(*createGatewayRequest).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateGateway",
-		gatewayWriteErrors,
+		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
-		return diags
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	respObject := resp.(*management.CreateGateway201Response)
+	// Create the state to save
+	state = plan
 
-	if gateway := respObject.Gateway; gateway != nil && gateway.GetId() != "" {
-		d.SetId(gateway.GetId())
-	} else if gateway := respObject.GatewayTypeLDAP; gateway != nil && gateway.GetId() != "" {
-		d.SetId(gateway.GetId())
-	} else if gateway := respObject.GatewayTypeRADIUS; gateway != nil && gateway.GetId() != "" {
-		d.SetId(gateway.GetId())
-	}
-
-	return resourceGatewayRead(ctx, d, meta)
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourceGatewayRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *GatewayResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *GatewayResourceModel
 
-	var diags diag.Diagnostics
+	if r.Client.MFAAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
 
-	resp, diags := sdk.ParseResponse(
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	var response *management.CreateGateway201Response
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.GatewaysApi.ReadOneGateway(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.GatewaysApi.ReadOneGateway(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneGateway",
-		sdk.CustomErrorResourceNotFoundWarning,
+		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
-		return diags
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if resp == nil {
-		d.SetId("")
-		return nil
+	// Remove from state if resource is not found
+	if response == nil {
+		resp.State.RemoveResource(ctx)
+		return
 	}
 
-	respObject := resp.(*management.CreateGateway201Response)
-
-	if gateway := respObject.Gateway; gateway != nil && gateway.GetId() != "" {
-
-		d.Set("name", gateway.GetName())
-		d.Set("enabled", gateway.GetEnabled())
-		d.Set("type", gateway.GetType())
-
-		if v, ok := gateway.GetDescriptionOk(); ok {
-			d.Set("description", v)
-		} else {
-			d.Set("description", nil)
-		}
-	} else if gateway := respObject.GatewayTypeLDAP; gateway != nil && gateway.GetId() != "" {
-
-		d.Set("name", gateway.GetName())
-		d.Set("enabled", gateway.GetEnabled())
-		d.Set("type", gateway.GetType())
-
-		if v, ok := gateway.GetDescriptionOk(); ok {
-			d.Set("description", v)
-		} else {
-			d.Set("description", nil)
-		}
-
-		d.Set("bind_dn", gateway.GetBindDN())
-
-		d.Set("vendor", string(gateway.GetVendor()))
-
-		d.Set("connection_security", string(gateway.GetConnectionSecurity()))
-
-		if v, ok := gateway.GetKerberosOk(); ok {
-			d.Set("kerberos_service_account_upn", v.GetServiceAccountUserPrincipalName())
-
-			if v1, ok := v.GetMinutesToRetainPreviousCredentialsOk(); ok {
-				d.Set("kerberos_retain_previous_credentials_mins", v1)
-			} else {
-				d.Set("kerberos_retain_previous_credentials_mins", nil)
-			}
-
-		} else {
-			d.Set("kerberos_service_account_upn", nil)
-			d.Set("kerberos_service_account_password", nil)
-			d.Set("kerberos_retain_previous_credentials_mins", nil)
-		}
-
-		if v, ok := gateway.GetServersHostAndPortOk(); ok {
-			d.Set("servers", v)
-		} else {
-			d.Set("servers", nil)
-		}
-
-		if v, ok := gateway.GetValidateTlsCertificatesOk(); ok {
-			d.Set("validate_tls_certificates", v)
-		} else {
-			d.Set("validate_tls_certificates", nil)
-		}
-
-		d.Set("user_type", flattenUserType(gateway.GetUserTypes()))
-
-	} else if gateway := respObject.GatewayTypeRADIUS; gateway != nil && gateway.GetId() != "" {
-
-		d.Set("name", gateway.GetName())
-		d.Set("enabled", gateway.GetEnabled())
-		d.Set("type", gateway.GetType())
-
-		if v, ok := gateway.GetDescriptionOk(); ok {
-			d.Set("description", v)
-		} else {
-			d.Set("description", nil)
-		}
-
-		d.Set("radius_davinci_policy_id", gateway.GetDavinci().Policy.Id)
-
-		if v, ok := gateway.GetDefaultSharedSecretOk(); ok {
-			d.Set("radius_default_shared_secret", v)
-		} else {
-			d.Set("radius_default_shared_secret", nil)
-		}
-
-		radiusClientsFlattened := make([]interface{}, 0)
-		for _, v := range gateway.GetRadiusClients() {
-
-			radiusClient := map[string]interface{}{
-				"ip": v.GetIp(),
-			}
-
-			if v1, ok := v.GetSharedSecretOk(); ok {
-				radiusClient["shared_secret"] = *v1
-			}
-
-			radiusClientsFlattened = append(radiusClientsFlattened, radiusClient)
-		}
-
-		d.Set("radius_client", radiusClientsFlattened)
-	}
-
-	return diags
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(data.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceGatewayUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *GatewayResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan, state GatewayResourceModel
 
-	var diags diag.Diagnostics
-
-	gatewayRequest, diags := expandGatewayRequest(d)
-	if diags.HasError() {
-		return diags
+	if r.Client.MFAAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
 	}
 
-	_, diags = sdk.ParseResponse(
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the API
+	createGatewayRequest, d := plan.expand(ctx)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	var response *management.CreateGateway201Response
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.GatewaysApi.UpdateGateway(ctx, d.Get("environment_id").(string), d.Id()).CreateGatewayRequest(*gatewayRequest).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.GatewaysApi.UpdateGateway(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).CreateGatewayRequest(*createGatewayRequest).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateGateway",
-		gatewayWriteErrors,
+		framework.DefaultCustomError,
 		nil,
-	)
-	if diags.HasError() {
-		return diags
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	return resourceGatewayRead(ctx, d, meta)
+	// Update the state to save
+	state = plan
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourceGatewayDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *GatewayResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *GatewayResourceModel
 
-	var diags diag.Diagnostics
+	if r.Client.MFAAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
 
-	_, diags = sdk.ParseResponse(
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := apiClient.GatewaysApi.DeleteGateway(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
+			fR, fErr := r.Client.ManagementAPIClient.GatewaysApi.DeleteGateway(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteGateway",
-		sdk.CustomErrorResourceNotFoundWarning,
+		framework.CustomErrorResourceNotFoundWarning,
 		nil,
-	)
-	if diags.HasError() {
-		return diags
+		nil,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-
-	return diags
 }
 
-func resourceGatewayImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func (r *GatewayResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 
 	idComponents := []framework.ImportComponent{
 		{
@@ -488,42 +688,32 @@ func resourceGatewayImport(ctx context.Context, d *schema.ResourceData, meta int
 			Regexp: verify.P1ResourceIDRegexp,
 		},
 		{
-			Label:  "gateway_id",
-			Regexp: verify.P1ResourceIDRegexp,
+			Label:     "gateway_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
 		},
 	}
 
-	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
 	if err != nil {
-		return nil, err
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			err.Error(),
+		)
+		return
 	}
 
-	d.Set("environment_id", attributes["environment_id"])
-	d.SetId(attributes["gateway_id"])
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
 
-	resourceGatewayRead(ctx, d, meta)
-
-	return []*schema.ResourceData{d}, nil
-}
-
-var (
-	gatewayWriteErrors = func(error model.P1Error) diag.Diagnostics {
-		var diags diag.Diagnostics
-
-		// Invalid shared secret combination
-		if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
-			if code, ok := details[0].GetCodeOk(); ok && *code == "INVALID_VALUE" {
-				diags = diag.FromErr(fmt.Errorf(details[0].GetMessage()))
-
-				return diags
-			}
+		if idComponent.PrimaryID {
+			pathKey = "id"
 		}
 
-		return nil
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
 	}
-)
+}
 
-func expandGatewayRequest(d *schema.ResourceData) (*management.CreateGatewayRequest, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	gatewayRequest := &management.CreateGatewayRequest{}
