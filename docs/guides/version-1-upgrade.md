@@ -2119,6 +2119,16 @@ data "pingone_flow_policies" "example_by_data_filter" {
 }
 ```
 
+## Data Source: pingone_flow_policy
+
+### `davinci_application` computed attribute data type change
+
+The `davinci_application` computed attribute is now a nested object type and no longer a list block type.
+
+### `trigger` computed attribute data type change
+
+The `trigger` computed attribute is now a nested object type and no longer a list block type.
+
 ## Data Source: pingone_groups
 
 ### `data_filter` optional parameter renamed and data type changed

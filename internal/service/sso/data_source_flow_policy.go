@@ -26,8 +26,8 @@ type FlowPolicyDataSourceModel struct {
 	FlowPolicyId       davincitypes.ResourceIDValue `tfsdk:"flow_policy_id"`
 	Name               types.String                 `tfsdk:"name"`
 	Enabled            types.Bool                   `tfsdk:"enabled"`
-	DaVinciApplication types.List                   `tfsdk:"davinci_application"`
-	Trigger            types.List                   `tfsdk:"trigger"`
+	DaVinciApplication types.Object                 `tfsdk:"davinci_application"`
+	Trigger            types.Object                 `tfsdk:"trigger"`
 }
 
 var (
@@ -85,37 +85,33 @@ func (r *FlowPolicyDataSource) Schema(ctx context.Context, req datasource.Schema
 				Description: "A boolean to specify whether the flow policy is enabled in the environment or not.",
 				Computed:    true,
 			},
-		},
 
-		Blocks: map[string]schema.Block{
-			"davinci_application": schema.ListNestedBlock{
-				Description: "A block that describes the DaVinci application that contains the flow policy.",
+			"davinci_application": schema.SingleNestedAttribute{
+				Description: "A single object that describes the DaVinci application that contains the flow policy.",
+				Computed:    true,
 
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Description: "A string that specifies the ID of the DaVinci application to which the flow policy is assigned.",
-							Computed:    true,
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description: "A string that specifies the ID of the DaVinci application to which the flow policy is assigned.",
+						Computed:    true,
 
-							CustomType: davincitypes.ResourceIDType{},
-						},
-						"name": schema.StringAttribute{
-							Description: "A string that specifies the name of the DaVinci application to which the flow policy is assigned.",
-							Computed:    true,
-						},
+						CustomType: davincitypes.ResourceIDType{},
+					},
+					"name": schema.StringAttribute{
+						Description: "A string that specifies the name of the DaVinci application to which the flow policy is assigned.",
+						Computed:    true,
 					},
 				},
 			},
 
-			"trigger": schema.ListNestedBlock{
-				Description: "A block that describes the configured DaVinci flow policy trigger.",
+			"trigger": schema.SingleNestedAttribute{
+				Description: "A single object that describes the configured DaVinci flow policy trigger.",
+				Computed:    true,
 
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"type": schema.StringAttribute{
-							Description: "A string that specifies the type of the DaVinci flow policy.",
-							Computed:    true,
-						},
+				Attributes: map[string]schema.Attribute{
+					"type": schema.StringAttribute{
+						Description: "A string that specifies the type of the DaVinci flow policy.",
+						Computed:    true,
 					},
 				},
 			},
@@ -216,12 +212,11 @@ func (p *FlowPolicyDataSourceModel) toState(apiObject *management.FlowPolicy) di
 	return diags
 }
 
-func toStateDavinciApplication(davinciApplication *management.FlowPolicyApplication, ok bool) (types.List, diag.Diagnostics) {
+func toStateDavinciApplication(davinciApplication *management.FlowPolicyApplication, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	tfObjType := types.ObjectType{AttrTypes: dvApplicationTFObjectTypes}
 
 	if !ok || davinciApplication == nil {
-		return types.ListValueMust(tfObjType, []attr.Value{}), diags
+		return types.ObjectNull(dvApplicationTFObjectTypes), diags
 	}
 
 	dvApplicationMap := map[string]attr.Value{
@@ -229,22 +224,18 @@ func toStateDavinciApplication(davinciApplication *management.FlowPolicyApplicat
 		"name": framework.StringOkToTF(davinciApplication.GetNameOk()),
 	}
 
-	flattenedObj, d := types.ObjectValue(dvApplicationTFObjectTypes, dvApplicationMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(dvApplicationTFObjectTypes, dvApplicationMap)
 	diags.Append(d...)
 
 	return returnVar, diags
 
 }
 
-func toStateFlowTrigger(davinciApplication *management.FlowPolicyTrigger, ok bool) (types.List, diag.Diagnostics) {
+func toStateFlowTrigger(davinciApplication *management.FlowPolicyTrigger, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	tfObjType := types.ObjectType{AttrTypes: flowTriggerTFObjectTypes}
 
 	if !ok || davinciApplication == nil {
-		return types.ListValueMust(tfObjType, []attr.Value{}), diags
+		return types.ObjectNull(flowTriggerTFObjectTypes), diags
 	}
 
 	dvApplicationMap := map[string]attr.Value{}
@@ -258,10 +249,7 @@ func toStateFlowTrigger(davinciApplication *management.FlowPolicyTrigger, ok boo
 
 	}
 
-	flattenedObj, d := types.ObjectValue(flowTriggerTFObjectTypes, dvApplicationMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(flowTriggerTFObjectTypes, dvApplicationMap)
 	diags.Append(d...)
 
 	return returnVar, diags
