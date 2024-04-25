@@ -10,7 +10,7 @@ resource "pingone_notification_settings_email" "my_awesome_smtp_settings" {
   username = var.smtp_server_username
   password = var.smtp_server_password
 
-  from {
+  from = {
     email_address = "services@bxretail.org"
     name          = "Customer Services"
   }

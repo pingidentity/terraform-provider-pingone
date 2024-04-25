@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -15,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
@@ -33,8 +33,8 @@ type NotificationSettingsEmailResourceModel struct {
 	Protocol      types.String                 `tfsdk:"protocol"`
 	Username      types.String                 `tfsdk:"username"`
 	Password      types.String                 `tfsdk:"password"`
-	From          types.List                   `tfsdk:"from"`
-	ReplyTo       types.List                   `tfsdk:"reply_to"`
+	From          types.Object                 `tfsdk:"from"`
+	ReplyTo       types.Object                 `tfsdk:"reply_to"`
 }
 
 type EmailSourceModel struct {
@@ -125,54 +125,42 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 					stringvalidator.LengthAtLeast(attrMinLength),
 				},
 			},
-		},
 
-		Blocks: map[string]schema.Block{
-			"from": schema.ListNestedBlock{
+			"from": schema.SingleNestedAttribute{
 				Description: "A required single block that specifies the email sender's \"from\" name and email address.",
+				Required:    true,
 
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"name": schema.StringAttribute{
-							Description: "A string that specifies the email sender's \"from\" name.",
-							Optional:    true,
-						},
-						"email_address": schema.StringAttribute{
-							Description: "A string that specifies the email sender's \"from\" email address.",
-							Required:    true,
-							Validators: []validator.String{
-								stringvalidator.LengthAtLeast(emailAddressMaxLength),
-							},
+				Attributes: map[string]schema.Attribute{
+					"name": schema.StringAttribute{
+						Description: "A string that specifies the email sender's \"from\" name.",
+						Optional:    true,
+					},
+					"email_address": schema.StringAttribute{
+						Description: "A string that specifies the email sender's \"from\" email address.",
+						Required:    true,
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(emailAddressMaxLength),
 						},
 					},
-				},
-
-				Validators: []validator.List{
-					listvalidator.IsRequired(),
-					listvalidator.SizeAtMost(1),
 				},
 			},
-			"reply_to": schema.ListNestedBlock{
-				Description: "A single block that specifies the email sender's \"reply to\" name and email address.",
 
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"name": schema.StringAttribute{
-							Description: "A string that specifies the email sender's \"reply to\" name.",
-							Optional:    true,
-						},
-						"email_address": schema.StringAttribute{
-							Description: "A string that specifies the email sender's \"reply to\" email address.",
-							Required:    true,
-							Validators: []validator.String{
-								stringvalidator.LengthAtLeast(emailAddressMaxLength),
-							},
+			"reply_to": schema.SingleNestedAttribute{
+				Description: "A single block that specifies the email sender's \"reply to\" name and email address.",
+				Optional:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"name": schema.StringAttribute{
+						Description: "A string that specifies the email sender's \"reply to\" name.",
+						Optional:    true,
+					},
+					"email_address": schema.StringAttribute{
+						Description: "A string that specifies the email sender's \"reply to\" email address.",
+						Required:    true,
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(emailAddressMaxLength),
 						},
 					},
-				},
-
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
 				},
 			},
 		},
@@ -427,32 +415,38 @@ func (p *NotificationSettingsEmailResourceModel) expand(ctx context.Context) (*m
 	}
 
 	if !p.From.IsNull() && !p.From.IsUnknown() {
-		var plan []EmailSourceModel
-		d := p.From.ElementsAs(ctx, &plan, false)
+		var plan EmailSourceModel
+		d := p.From.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
 		diags.Append(d...)
 
-		from := management.NewNotificationsSettingsEmailDeliverySettingsFrom(plan[0].EmailAddress.ValueString())
+		from := management.NewNotificationsSettingsEmailDeliverySettingsFrom(plan.EmailAddress.ValueString())
 
-		if !plan[0].Name.IsNull() && !plan[0].Name.IsUnknown() {
-			from.SetName(plan[0].Name.ValueString())
+		if !plan.Name.IsNull() && !plan.Name.IsUnknown() {
+			from.SetName(plan.Name.ValueString())
 		}
 
 		data.SetFrom(*from)
 	}
 
 	if !p.ReplyTo.IsNull() && !p.ReplyTo.IsUnknown() {
-		var plan []EmailSourceModel
-		d := p.ReplyTo.ElementsAs(ctx, &plan, false)
+		var plan EmailSourceModel
+		d := p.ReplyTo.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
 		diags.Append(d...)
 
 		replyTo := management.NewNotificationsSettingsEmailDeliverySettingsReplyTo()
 
-		if !plan[0].EmailAddress.IsNull() && !plan[0].EmailAddress.IsUnknown() {
-			replyTo.SetAddress(plan[0].EmailAddress.ValueString())
+		if !plan.EmailAddress.IsNull() && !plan.EmailAddress.IsUnknown() {
+			replyTo.SetAddress(plan.EmailAddress.ValueString())
 		}
 
-		if !plan[0].Name.IsNull() && !plan[0].Name.IsUnknown() {
-			replyTo.SetName(plan[0].Name.ValueString())
+		if !plan.Name.IsNull() && !plan.Name.IsUnknown() {
+			replyTo.SetName(plan.Name.ValueString())
 		}
 
 		data.SetReplyTo(*replyTo)
@@ -491,12 +485,11 @@ func (p *NotificationSettingsEmailResourceModel) toState(apiObject *management.N
 	return diags
 }
 
-func toStateEmailSource(emailSource interface{}, ok bool) (types.List, diag.Diagnostics) {
+func toStateEmailSource(emailSource interface{}, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	tfObjType := types.ObjectType{AttrTypes: emailSourceTFObjectTypes}
 
 	if !ok || emailSource == nil {
-		return types.ListValueMust(tfObjType, []attr.Value{}), diags
+		return types.ObjectNull(emailSourceTFObjectTypes), diags
 	}
 
 	var emailSourceMap map[string]attr.Value
@@ -504,7 +497,7 @@ func toStateEmailSource(emailSource interface{}, ok bool) (types.List, diag.Diag
 	switch t := emailSource.(type) {
 	case *management.NotificationsSettingsEmailDeliverySettingsFrom:
 		if t.GetAddress() == "" {
-			return types.ListValueMust(tfObjType, []attr.Value{}), diags
+			return types.ObjectNull(emailSourceTFObjectTypes), diags
 		}
 
 		emailSourceMap = map[string]attr.Value{
@@ -515,7 +508,7 @@ func toStateEmailSource(emailSource interface{}, ok bool) (types.List, diag.Diag
 
 	case *management.NotificationsSettingsEmailDeliverySettingsReplyTo:
 		if t.GetAddress() == "" {
-			return types.ListValueMust(tfObjType, []attr.Value{}), diags
+			return types.ObjectNull(emailSourceTFObjectTypes), diags
 		}
 
 		emailSourceMap = map[string]attr.Value{
@@ -530,13 +523,10 @@ func toStateEmailSource(emailSource interface{}, ok bool) (types.List, diag.Diag
 			fmt.Sprintf("Expected an email type object, got: %T. Please report this issue to the provider maintainers.", t),
 		)
 
-		return types.ListValueMust(tfObjType, []attr.Value{}), diags
+		return types.ObjectNull(emailSourceTFObjectTypes), diags
 	}
 
-	flattenedObj, d := types.ObjectValue(emailSourceTFObjectTypes, emailSourceMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(emailSourceTFObjectTypes, emailSourceMap)
 	diags.Append(d...)
 
 	return returnVar, diags

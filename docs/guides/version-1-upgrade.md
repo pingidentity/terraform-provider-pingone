@@ -1878,6 +1878,74 @@ resource "pingone_notification_policy" "my_awesome_notification_policy" {
 }
 ```
 
+## Resource: pingone_notification_settings_email
+
+### `from` schema type change
+
+This parameter `from` was previously a block data type, and is now a single nested object type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_notification_settings_email" "my_awesome_email_settings" {
+  # ... other configuration parameters
+
+  from {
+    email_address = "noreply@bxretail.org"
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_notification_settings_email" "my_awesome_email_settings" {
+  # ... other configuration parameters
+
+  from = {
+    email_address = "noreply@bxretail.org"
+  }
+}
+```
+
+### `reply_to` schema type change
+
+This parameter `reply_to` was previously a block data type, and is now a single nested object type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_notification_settings_email" "my_awesome_email_settings" {
+  # ... other configuration parameters
+
+  from {
+    email_address = "noreply@bxretail.org"
+  }
+
+  reply_to {
+    email_address = "customerservices@bxretail.org"
+    name          = "BXRetail Customer Services"
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_notification_settings_email" "my_awesome_email_settings" {
+  # ... other configuration parameters
+
+  from = {
+    email_address = "noreply@bxretail.org"
+  }
+
+  reply_to = {
+    email_address = "customerservices@bxretail.org"
+    name          = "BXRetail Customer Services"
+  }
+}
+```
+
 ## Resource: pingone_resource_attribute
 
 ### `resource_id` parameter changed
