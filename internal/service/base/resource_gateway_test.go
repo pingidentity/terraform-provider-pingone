@@ -159,7 +159,7 @@ func TestAccGateway_Minimal(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "type", "PING_FEDERATE"),
 				),
@@ -202,7 +202,7 @@ func TestAccGateway_Change(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "type", "PING_FEDERATE"),
 				),
@@ -224,7 +224,7 @@ func TestAccGateway_Change(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "type", "API_GATEWAY_INTEGRATION"),
 				),
@@ -271,10 +271,10 @@ func TestAccGateway_PF(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{
-					"connection_security",
-					"validate_tls_certificates",
-				},
+				// ImportStateVerifyIgnore: []string{
+				// 	"connection_security",
+				// 	"validate_tls_certificates",
+				// },
 			},
 		},
 	})
@@ -318,10 +318,10 @@ func TestAccGateway_APIG(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{
-					"connection_security",
-					"validate_tls_certificates",
-				},
+				// ImportStateVerifyIgnore: []string{
+				// 	"connection_security",
+				// 	"validate_tls_certificates",
+				// },
 			},
 		},
 	})
@@ -365,10 +365,10 @@ func TestAccGateway_Intelligence(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{
-					"connection_security",
-					"validate_tls_certificates",
-				},
+				// ImportStateVerifyIgnore: []string{
+				// 	"connection_security",
+				// 	"validate_tls_certificates",
+				// },
 			},
 		},
 	})
@@ -388,47 +388,49 @@ func TestAccGateway_LDAP(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-			resource.TestCheckResourceAttr(resourceFullName, "description", ""),
+			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "type", "LDAP"),
 			resource.TestCheckResourceAttr(resourceFullName, "bind_dn", "ou=test1,dc=example,dc=com"),
 			resource.TestCheckResourceAttr(resourceFullName, "bind_password", "dummyPasswordValue1"),
 			resource.TestCheckResourceAttr(resourceFullName, "connection_security", "TLS"),
-			resource.TestCheckResourceAttr(resourceFullName, "kerberos_service_account_upn", "username@domainname"),
-			resource.TestCheckResourceAttr(resourceFullName, "kerberos_service_account_password", "dummyKerberosPasswordValue"),
-			resource.TestCheckResourceAttr(resourceFullName, "kerberos_retain_previous_credentials_mins", "20"),
+			resource.TestCheckResourceAttr(resourceFullName, "kerberos.service_account_upn", "username@domainname"),
+			resource.TestCheckResourceAttr(resourceFullName, "kerberos.service_account_password", "dummyKerberosPasswordValue"),
+			resource.TestCheckResourceAttr(resourceFullName, "kerberos.retain_previous_credentials_mins", "20"),
 			resource.TestCheckResourceAttr(resourceFullName, "servers.#", "3"),
 			resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds2.dummyldapservice.com:636"),
 			resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds3.dummyldapservice.com:636"),
 			resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds1.dummyldapservice.com:636"),
 			resource.TestCheckResourceAttr(resourceFullName, "validate_tls_certificates", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "vendor", "Microsoft Active Directory"),
-			resource.TestCheckResourceAttr(resourceFullName, "user_type.#", "2"),
+			resource.TestCheckResourceAttr(resourceFullName, "user_types.#", "2"),
 
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.*", map[string]string{
-				"name":                                   "User Set 2",
-				"password_authority":                     "PING_ONE",
-				"search_base_dn":                         "ou=users,dc=example,dc=com",
-				"user_link_attributes.#":                 "3",
-				"user_link_attributes.0":                 "objectGUID",
-				"user_link_attributes.1":                 "dn",
-				"user_link_attributes.2":                 "objectSid",
-				"user_migration.#":                       "1",
-				"user_migration.0.lookup_filter_pattern": "(|(uid=${identifier})(mail=${identifier}))",
-				"user_migration.0.attribute_mapping.#":   "3",
-				"push_password_changes_to_ldap":          "true",
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_types.*", map[string]string{
+				"name":                                     "User Set 2",
+				"password_authority":                       "PING_ONE",
+				"search_base_dn":                           "ou=users,dc=example,dc=com",
+				"user_link_attributes.#":                   "3",
+				"user_link_attributes.0":                   "objectGUID",
+				"user_link_attributes.1":                   "dn",
+				"user_link_attributes.2":                   "objectSid",
+				"new_user_lookup.ldap_filter_pattern":      "(|(uid=${identifier})(mail=${identifier}))",
+				"new_user_lookup.attribute_mappings.#":     "3",
+				"push_password_changes_to_ldap":            "true",
+				"allow_password_changes":                   "true",
+				"update_user_on_successful_authentication": "true",
 			}),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.*", map[string]string{
-				"name":                                   "User Set 1",
-				"password_authority":                     "LDAP",
-				"search_base_dn":                         "ou=users1,dc=example,dc=com",
-				"user_link_attributes.#":                 "2",
-				"user_link_attributes.0":                 "objectGUID",
-				"user_link_attributes.1":                 "objectSid",
-				"user_migration.#":                       "1",
-				"user_migration.0.lookup_filter_pattern": "(|(uid=${identifier})(mail=${identifier}))",
-				"user_migration.0.attribute_mapping.#":   "2",
-				"push_password_changes_to_ldap":          "true",
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_types.*", map[string]string{
+				"name":                                     "User Set 1",
+				"password_authority":                       "LDAP",
+				"search_base_dn":                           "ou=users1,dc=example,dc=com",
+				"user_link_attributes.#":                   "2",
+				"user_link_attributes.0":                   "objectGUID",
+				"user_link_attributes.1":                   "objectSid",
+				"new_user_lookup.ldap_filter_pattern":      "(|(uid=${identifier})(mail=${identifier}))",
+				"new_user_lookup.attribute_mappings.#":     "2",
+				"push_password_changes_to_ldap":            "true",
+				"allow_password_changes":                   "true",
+				"update_user_on_successful_authentication": "true",
 			}),
 		),
 	}
@@ -439,45 +441,49 @@ func TestAccGateway_LDAP(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-			resource.TestCheckResourceAttr(resourceFullName, "description", ""),
+			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "type", "LDAP"),
 			resource.TestCheckResourceAttr(resourceFullName, "bind_dn", "ou=test1,dc=example,dc=com"),
 			resource.TestCheckResourceAttr(resourceFullName, "bind_password", "dummyPasswordValue1"),
 			resource.TestCheckResourceAttr(resourceFullName, "connection_security", "TLS"),
-			resource.TestCheckResourceAttr(resourceFullName, "kerberos_service_account_upn", "username@domainname"),
-			resource.TestCheckResourceAttr(resourceFullName, "kerberos_service_account_password", "dummyKerberosPasswordValue"),
-			resource.TestCheckResourceAttr(resourceFullName, "kerberos_retain_previous_credentials_mins", "20"),
+			resource.TestCheckResourceAttr(resourceFullName, "kerberos.service_account_upn", "username@domainname"),
+			resource.TestCheckResourceAttr(resourceFullName, "kerberos.service_account_password", "dummyKerberosPasswordValue"),
+			resource.TestCheckResourceAttr(resourceFullName, "kerberos.retain_previous_credentials_mins", "20"),
 			resource.TestCheckResourceAttr(resourceFullName, "servers.#", "3"),
 			resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds2.dummyldapservice.com:636"),
 			resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds3.dummyldapservice.com:636"),
 			resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds1.dummyldapservice.com:636"),
 			resource.TestCheckResourceAttr(resourceFullName, "validate_tls_certificates", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "vendor", "Microsoft Active Directory"),
-			resource.TestCheckResourceAttr(resourceFullName, "user_type.#", "2"),
+			resource.TestCheckResourceAttr(resourceFullName, "user_types.#", "2"),
 
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.*", map[string]string{
-				"name":                                   "User Set 2",
-				"password_authority":                     "PING_ONE",
-				"search_base_dn":                         "ou=users,dc=example,dc=com",
-				"user_link_attributes.#":                 "3",
-				"user_link_attributes.0":                 "objectGUID",
-				"user_link_attributes.1":                 "dn",
-				"user_link_attributes.2":                 "objectSid",
-				"user_migration.#":                       "1",
-				"user_migration.0.lookup_filter_pattern": "(|(uid=${identifier})(mail=${identifier}))",
-				"user_migration.0.attribute_mapping.#":   "3",
-				"push_password_changes_to_ldap":          "true",
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_types.*", map[string]string{
+				"name":                                     "User Set 2",
+				"password_authority":                       "PING_ONE",
+				"search_base_dn":                           "ou=users,dc=example,dc=com",
+				"user_link_attributes.#":                   "3",
+				"user_link_attributes.0":                   "objectGUID",
+				"user_link_attributes.1":                   "dn",
+				"user_link_attributes.2":                   "objectSid",
+				"new_user_lookup.#":                        "1",
+				"new_user_lookup.ldap_filter_pattern":      "(|(uid=${identifier})(mail=${identifier}))",
+				"new_user_lookup.attribute_mappings.#":     "3",
+				"push_password_changes_to_ldap":            "true",
+				"allow_password_changes":                   "false",
+				"update_user_on_successful_authentication": "false",
 			}),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_type.*", map[string]string{
-				"name":                          "User Set 1",
-				"password_authority":            "LDAP",
-				"search_base_dn":                "ou=users1,dc=example,dc=com",
-				"user_link_attributes.#":        "2",
-				"user_link_attributes.0":        "objectGUID",
-				"user_link_attributes.1":        "objectSid",
-				"user_migration.#":              "0",
-				"push_password_changes_to_ldap": "true",
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "user_types.*", map[string]string{
+				"name":                                     "User Set 1",
+				"password_authority":                       "LDAP",
+				"search_base_dn":                           "ou=users1,dc=example,dc=com",
+				"user_link_attributes.#":                   "2",
+				"user_link_attributes.0":                   "objectGUID",
+				"user_link_attributes.1":                   "objectSid",
+				"new_user_lookup.#":                        "0",
+				"push_password_changes_to_ldap":            "true",
+				"allow_password_changes":                   "false",
+				"update_user_on_successful_authentication": "false",
 			}),
 		),
 	}
@@ -488,22 +494,22 @@ func TestAccGateway_LDAP(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-			resource.TestCheckResourceAttr(resourceFullName, "description", ""),
+			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "type", "LDAP"),
 			resource.TestCheckResourceAttr(resourceFullName, "bind_dn", "ou=test,dc=example,dc=com"),
 			resource.TestCheckResourceAttr(resourceFullName, "bind_password", "dummyPasswordValue"),
 			resource.TestCheckResourceAttr(resourceFullName, "connection_security", "None"),
-			resource.TestCheckResourceAttr(resourceFullName, "kerberos_service_account_upn", ""),
-			resource.TestCheckResourceAttr(resourceFullName, "kerberos_service_account_password", ""),
-			resource.TestCheckResourceAttr(resourceFullName, "kerberos_retain_previous_credentials_mins", "0"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "kerberos.service_account_upn"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "kerberos.service_account_password"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "kerberos.retain_previous_credentials_mins"),
 			resource.TestCheckResourceAttr(resourceFullName, "servers.#", "3"),
 			resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds2.dummyldapservice.com:389"),
 			resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds3.dummyldapservice.com:389"),
 			resource.TestCheckTypeSetElemAttr(resourceFullName, "servers.*", "ds1.dummyldapservice.com:389"),
 			resource.TestCheckResourceAttr(resourceFullName, "validate_tls_certificates", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "vendor", "Microsoft Active Directory"),
-			resource.TestCheckResourceAttr(resourceFullName, "user_type.#", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "user_types.#", "0"),
 		),
 	}
 
@@ -553,7 +559,7 @@ func TestAccGateway_LDAP(t *testing.T) {
 				ImportStateVerify: true,
 				ImportStateVerifyIgnore: []string{
 					"bind_password",
-					"kerberos_service_account_password",
+					"kerberos.service_account_password",
 				},
 			},
 		},
@@ -574,21 +580,22 @@ func TestAccGateway_RADIUS(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-			resource.TestCheckResourceAttr(resourceFullName, "description", ""),
+			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "type", "RADIUS"),
 			resource.TestMatchResourceAttr(resourceFullName, "radius_davinci_policy_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "radius_default_shared_secret", "sharedsecret123"),
-			resource.TestCheckResourceAttr(resourceFullName, "radius_client.#", "2"),
-
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "radius_client.*", map[string]string{
+			resource.TestCheckResourceAttr(resourceFullName, "radius_clients.#", "2"),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "radius_clients.*", map[string]string{
 				"ip":            "127.0.0.1",
 				"shared_secret": "sharedsecret123-1",
 			}),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "radius_client.*", map[string]string{
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "radius_clients.*", map[string]string{
 				"ip":            "127.0.0.2",
 				"shared_secret": "sharedsecret123-2",
 			}),
+			resource.TestCheckResourceAttr(resourceFullName, "radius_network_policy_server.ip", "10.1.1.1"),
+			resource.TestCheckResourceAttr(resourceFullName, "radius_network_policy_server.port", "5000"),
 		),
 	}
 
@@ -603,12 +610,14 @@ func TestAccGateway_RADIUS(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "type", "RADIUS"),
 			resource.TestMatchResourceAttr(resourceFullName, "radius_davinci_policy_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "radius_default_shared_secret", "sharedsecret123"),
-			resource.TestCheckResourceAttr(resourceFullName, "radius_client.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "radius_clients.#", "1"),
 
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "radius_client.*", map[string]string{
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "radius_clients.*", map[string]string{
 				"ip":            "127.0.0.3",
 				"shared_secret": "",
 			}),
+			resource.TestCheckNoResourceAttr(resourceFullName, "radius_network_policy_server.ip"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "radius_network_policy_server.port"),
 		),
 	}
 
@@ -652,10 +661,6 @@ func TestAccGateway_RADIUS(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{
-					"connection_security",
-					"validate_tls_certificates",
-				},
 			},
 		},
 	})
@@ -673,11 +678,10 @@ func TestAccGateway_RADIUSSharedSecrets(t *testing.T) {
 		Config: testAccGatewayConfig_RADIUSDefaultSharedSecret(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "radius_default_shared_secret", "sharedsecret123"),
-			resource.TestCheckResourceAttr(resourceFullName, "radius_client.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "radius_clients.#", "1"),
 
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "radius_client.*", map[string]string{
-				"ip":            "127.0.0.3",
-				"shared_secret": "",
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "radius_clients.*", map[string]string{
+				"ip": "127.0.0.3",
 			}),
 		),
 	}
@@ -685,10 +689,10 @@ func TestAccGateway_RADIUSSharedSecrets(t *testing.T) {
 	perClientSecretStep := resource.TestStep{
 		Config: testAccGatewayConfig_RADIUSSharedSecretPerClient(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttr(resourceFullName, "radius_default_shared_secret", ""),
-			resource.TestCheckResourceAttr(resourceFullName, "radius_client.#", "1"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "radius_default_shared_secret"),
+			resource.TestCheckResourceAttr(resourceFullName, "radius_clients.#", "1"),
 
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "radius_client.*", map[string]string{
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "radius_clients.*", map[string]string{
 				"ip":            "127.0.0.3",
 				"shared_secret": "sharedsecret123-3",
 			}),
@@ -723,7 +727,7 @@ func TestAccGateway_RADIUSSharedSecrets(t *testing.T) {
 			// Invalid shared secret
 			{
 				Config:      testAccGatewayConfig_RADIUSInvalidSecretCombination(resourceName, name),
-				ExpectError: regexp.MustCompile(`RadiusClient\[127\.0\.0\.3\] shared secret cannot be empty, if default shared secret is empty\.`),
+				ExpectError: regexp.MustCompile(`Invalid Value`),
 			},
 		},
 	})
@@ -758,19 +762,19 @@ func TestAccGateway_BadParameter(t *testing.T) {
 			{
 				ResourceName: resourceFullName,
 				ImportState:  true,
-				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/gateway_id" and must match regex: .*`),
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "/",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/gateway_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "badformat/badformat",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/gateway_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})
@@ -877,9 +881,11 @@ resource "pingone_gateway" "%[2]s" {
   connection_security = "TLS"
   vendor              = "Microsoft Active Directory"
 
-  kerberos_service_account_upn              = "username@domainname"
-  kerberos_service_account_password         = "dummyKerberosPasswordValue"
-  kerberos_retain_previous_credentials_mins = 20
+  kerberos = {
+    service_account_upn              = "username@domainname"
+    service_account_password         = "dummyKerberosPasswordValue"
+    retain_previous_credentials_mins = 20
+  }
 
   servers = [
     "ds1.dummyldapservice.com:636",
@@ -889,64 +895,64 @@ resource "pingone_gateway" "%[2]s" {
 
   validate_tls_certificates = false
 
-  user_type {
-    name               = "User Set 1"
-    password_authority = "LDAP"
-    search_base_dn     = "ou=users1,dc=example,dc=com"
+  user_types = [
+    {
+      name               = "User Set 1"
+      password_authority = "LDAP"
+      search_base_dn     = "ou=users1,dc=example,dc=com"
 
-    user_link_attributes = ["objectGUID", "objectSid"]
+      user_link_attributes = ["objectGUID", "objectSid"]
 
-    user_migration {
-      lookup_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
+      new_user_lookup = {
+        ldap_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
 
-      population_id = pingone_population.%[2]s.id
+        population_id = pingone_population.%[2]s.id
 
-      attribute_mapping {
-        name  = "username"
-        value = "$${ldapAttributes.uid}"
+        attribute_mappings = [
+          {
+            name  = "username"
+            value = "$${ldapAttributes.uid}"
+          },
+          {
+            name  = "email"
+            value = "$${ldapAttributes.mail}"
+          }
+        ]
       }
 
-      attribute_mapping {
-        name  = "email"
-        value = "$${ldapAttributes.mail}"
+      push_password_changes_to_ldap = true
+    },
+    {
+      name               = "User Set 2"
+      password_authority = "PING_ONE"
+      search_base_dn     = "ou=users,dc=example,dc=com"
+
+      user_link_attributes = ["objectGUID", "dn", "objectSid"]
+
+      new_user_lookup = {
+        ldap_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
+
+        population_id = pingone_population.%[2]s.id
+
+        attribute_mappings = [
+          {
+            name  = "username"
+            value = "$${ldapAttributes.uid}"
+          },
+          {
+            name  = "email"
+            value = "$${ldapAttributes.mail}"
+          },
+          {
+            name  = "name.family"
+            value = "$${ldapAttributes.sn}"
+          }
+        ]
       }
+
+      push_password_changes_to_ldap = true
     }
-
-    push_password_changes_to_ldap = true
-  }
-
-  user_type {
-    name               = "User Set 2"
-    password_authority = "PING_ONE"
-    search_base_dn     = "ou=users,dc=example,dc=com"
-
-    user_link_attributes = ["objectGUID", "dn", "objectSid"]
-
-    user_migration {
-      lookup_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
-
-      population_id = pingone_population.%[2]s.id
-
-      attribute_mapping {
-        name  = "username"
-        value = "$${ldapAttributes.uid}"
-      }
-
-      attribute_mapping {
-        name  = "email"
-        value = "$${ldapAttributes.mail}"
-      }
-
-      attribute_mapping {
-        name  = "name.family"
-        value = "$${ldapAttributes.sn}"
-      }
-    }
-
-    push_password_changes_to_ldap = true
-  }
-
-
+  ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -972,9 +978,11 @@ resource "pingone_gateway" "%[2]s" {
   connection_security = "TLS"
   vendor              = "Microsoft Active Directory"
 
-  kerberos_service_account_upn              = "username@domainname"
-  kerberos_service_account_password         = "dummyKerberosPasswordValue"
-  kerberos_retain_previous_credentials_mins = 20
+  kerberos = {
+    service_account_upn              = "username@domainname"
+    service_account_password         = "dummyKerberosPasswordValue"
+    retain_previous_credentials_mins = 20
+  }
 
   servers = [
     "ds1.dummyldapservice.com:636",
@@ -984,46 +992,47 @@ resource "pingone_gateway" "%[2]s" {
 
   validate_tls_certificates = false
 
-  user_type {
-    name               = "User Set 1"
-    password_authority = "LDAP"
-    search_base_dn     = "ou=users1,dc=example,dc=com"
+  user_types = [
+    {
+      name               = "User Set 1"
+      password_authority = "LDAP"
+      search_base_dn     = "ou=users1,dc=example,dc=com"
 
-    user_link_attributes = ["objectGUID", "objectSid"]
+      user_link_attributes = ["objectGUID", "objectSid"]
 
-    push_password_changes_to_ldap = true
-  }
+      push_password_changes_to_ldap = true
+    },
+    {
+      name               = "User Set 2"
+      password_authority = "PING_ONE"
+      search_base_dn     = "ou=users,dc=example,dc=com"
 
-  user_type {
-    name               = "User Set 2"
-    password_authority = "PING_ONE"
-    search_base_dn     = "ou=users,dc=example,dc=com"
+      user_link_attributes = ["objectGUID", "dn", "objectSid"]
 
-    user_link_attributes = ["objectGUID", "dn", "objectSid"]
+      new_user_lookup = {
+        ldap_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
 
-    user_migration {
-      lookup_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
+        population_id = pingone_population.%[2]s.id
 
-      population_id = pingone_population.%[2]s.id
-
-      attribute_mapping {
-        name  = "username"
-        value = "$${ldapAttributes.uid}"
+        attribute_mappings = [
+          {
+            name  = "username"
+            value = "$${ldapAttributes.uid}"
+          },
+          {
+            name  = "email"
+            value = "$${ldapAttributes.mail}"
+          },
+          {
+            name  = "name.family"
+            value = "$${ldapAttributes.sn}"
+          }
+        ]
       }
 
-      attribute_mapping {
-        name  = "email"
-        value = "$${ldapAttributes.mail}"
-      }
-
-      attribute_mapping {
-        name  = "name.family"
-        value = "$${ldapAttributes.sn}"
-      }
+      push_password_changes_to_ldap = true
     }
-
-    push_password_changes_to_ldap = true
-  }
+  ]
 
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -1068,14 +1077,20 @@ resource "pingone_gateway" "%[2]s" {
 
   radius_davinci_policy_id = "ee8470a2-8161-4d76-a7af-a8505a2da084" // dummy ID
 
-  radius_client {
-    ip            = "127.0.0.1"
-    shared_secret = "sharedsecret123-1"
-  }
+  radius_clients = [
+    {
+      ip            = "127.0.0.1"
+      shared_secret = "sharedsecret123-1"
+    },
+    {
+      ip            = "127.0.0.2"
+      shared_secret = "sharedsecret123-2"
+    }
+  ]
 
-  radius_client {
-    ip            = "127.0.0.2"
-    shared_secret = "sharedsecret123-2"
+  radius_network_policy_server = {
+    ip   = "10.1.1.1"
+    port = 5000
   }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -1095,9 +1110,11 @@ resource "pingone_gateway" "%[2]s" {
 
   radius_davinci_policy_id = "ee8470a2-8161-4d76-a7af-a8505a2da085" // dummy ID
 
-  radius_client {
-    ip = "127.0.0.3"
-  }
+  radius_clients = [
+    {
+      ip = "127.0.0.3"
+    }
+  ]
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -1114,10 +1131,12 @@ resource "pingone_gateway" "%[2]s" {
 
   radius_davinci_policy_id = "ee8470a2-8161-4d76-a7af-a8505a2da085" // dummy ID
 
-  radius_client {
-    ip            = "127.0.0.3"
-    shared_secret = "sharedsecret123-3"
-  }
+  radius_clients = [
+    {
+      ip            = "127.0.0.3"
+      shared_secret = "sharedsecret123-3"
+    }
+  ]
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -1134,9 +1153,11 @@ resource "pingone_gateway" "%[2]s" {
 
   radius_davinci_policy_id = "ee8470a2-8161-4d76-a7af-a8505a2da085" // dummy ID
 
-  radius_client {
-    ip = "127.0.0.3"
-  }
+  radius_clients = [
+    {
+      ip = "127.0.0.3"
+    }
+  ]
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
