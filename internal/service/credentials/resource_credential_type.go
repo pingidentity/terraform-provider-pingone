@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -41,6 +42,7 @@ type CredentialTypeResourceModel struct {
 	CardType           types.String `tfsdk:"card_type"`
 	CardDesignTemplate types.String `tfsdk:"card_design_template"`
 	Description        types.String `tfsdk:"description"`
+	ManagementMode     types.String `tfsdk:"management_mode"`
 	Metadata           types.Object `tfsdk:"metadata"`
 	RevokeOnDelete     types.Bool   `tfsdk:"revoke_on_delete"`
 	Title              types.String `tfsdk:"title"`
@@ -69,6 +71,7 @@ type FieldsModel struct {
 	IsVisible   types.Bool   `tfsdk:"is_visible"`
 	Attribute   types.String `tfsdk:"attribute"`
 	Value       types.String `tfsdk:"value"`
+	Required    types.Bool   `tfsdk:"required"`
 }
 
 var (
@@ -93,6 +96,7 @@ var (
 		"is_visible":   types.BoolType,
 		"attribute":    types.StringType,
 		"value":        types.StringType,
+		"required":     types.BoolType,
 	}
 )
 
@@ -122,6 +126,9 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 	const attrMinPercent = 0
 	const attrMaxPercent = 100
 
+	// defaults
+	const defaultManagementMode = credentials.ENUMCREDENTIALTYPEMANAGEMENTMODE_AUTOMATED
+
 	titleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Title of the credential. Verification sites are expected to be able to request the issued credential from the compatible wallet app using the title.  This value aligns to `${cardTitle}` in the `card_design_template`.",
 	)
@@ -133,6 +140,10 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 	issuerIdDescriptipion := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The identifier (UUID) of the issuer of the credential, which is the `id` of the `credential_issuer_profile` defined in the `environment`.",
 	)
+
+	managementModeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Specifies the management mode of the credential type.",
+	).AllowedValuesEnum(credentials.AllowedEnumCredentialTypeManagementModeEnumValues).DefaultValue(string(credentials.ENUMCREDENTIALTYPEMANAGEMENTMODE_AUTOMATED))
 
 	revokeOnDeleteDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether a user's issued verifiable credentials are automatically revoked when a `credential_type`, `user`, or `environment` is deleted.",
@@ -231,6 +242,17 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 				Required:    true,
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(regexp.MustCompile(`^<svg.*>[\s\S]*<\/svg>\s*$`), "expected value to contain a valid PingOne Credentials SVG card template."),
+				},
+			},
+
+			"management_mode": schema.StringAttribute{
+				Description:         managementModeDescription.Description,
+				MarkdownDescription: managementModeDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString(string(defaultManagementMode)),
+				Validators: []validator.String{
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(credentials.AllowedEnumCredentialTypeManagementModeEnumValues)...),
 				},
 			},
 
@@ -426,8 +448,20 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 									Validators: []validator.String{
 										stringvalidator.LengthAtLeast(attrMinLength),
 										stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("attribute")),
-										customstringvalidator.IsRequiredIfMatchesPathValue(basetypes.NewStringValue(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT)), path.MatchRelative().AtParent().AtName("type")),
+										// TODO: Implement new validator.  The rules are:
+										// - `value` property is required if fields.type is `ALPHANUMERIC TEXT` AND
+										// - management_mode is `AUTOMATED` (this is the new condition)
+										//
+										// I could not find an available validator combination / capability to implement.  Checking in code for now.
+										stringvalidator.All(
+											customstringvalidator.IsRequiredIfMatchesPathValue(basetypes.NewStringValue(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT)), path.MatchRelative().AtParent().AtName("type")),
+										),
 									},
+								},
+								"required": schema.BoolAttribute{
+									Description: "Specifies whether the field is required for the credential.",
+									Optional:    true,
+									Computed:    true,
 								},
 							},
 						},
@@ -726,6 +760,13 @@ func (p *CredentialTypeResourceModel) expand(ctx context.Context) (*credentials.
 		data.SetCardType(p.CardType.ValueString())
 	}
 
+	if !p.ManagementMode.IsNull() && !p.ManagementMode.IsUnknown() {
+		managementModeObject := credentials.NewCredentialTypeManagement()
+		managementModeObject.SetMode(credentials.EnumCredentialTypeManagementMode(p.ManagementMode.ValueString()))
+
+		data.SetManagement(*managementModeObject)
+	}
+
 	if !p.RevokeOnDelete.IsNull() && !p.RevokeOnDelete.IsUnknown() {
 		onDeleteObject := credentials.NewCredentialTypeOnDelete()
 		onDeleteObject.SetRevokeIssuedCredentials(p.RevokeOnDelete.ValueBool())
@@ -812,11 +853,11 @@ func (p *FieldsModel) expandFields() (*credentials.CredentialTypeMetaDataFieldsI
 	attrId := p.Type.ValueString() + " -> " + p.Title.ValueString() // construct id per P1Creds API recommendations
 	innerFields.SetId(attrId)
 
-	if attrType == credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT {
+	if attrType == credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT && !p.Value.IsNull() && !p.Value.IsUnknown() {
 		innerFields.SetValue(p.Value.ValueString())
 	}
 
-	if attrType == credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE {
+	if attrType == credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_DIRECTORY_ATTRIBUTE && !p.Attribute.IsNull() && !p.Attribute.IsUnknown() {
 		innerFields.SetAttribute(p.Attribute.ValueString())
 
 		if !p.FileSupport.IsNull() && !p.FileSupport.IsUnknown() {
@@ -831,6 +872,10 @@ func (p *FieldsModel) expandFields() (*credentials.CredentialTypeMetaDataFieldsI
 
 	if !p.IsVisible.IsNull() && !p.IsVisible.IsUnknown() {
 		innerFields.SetIsVisible(p.IsVisible.ValueBool())
+	}
+
+	if !p.Required.IsNull() && !p.Required.IsUnknown() {
+		innerFields.SetRequired(p.Required.ValueBool())
 	}
 
 	if innerFields == nil {
@@ -864,6 +909,10 @@ func (p *CredentialTypeResourceModel) toState(apiObject *credentials.CredentialT
 	p.CardDesignTemplate = framework.StringOkToTF(apiObject.GetCardDesignTemplateOk())
 	p.CreatedAt = framework.TimeOkToTF(apiObject.GetCreatedAtOk())
 	p.UpdatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
+
+	if v, ok := apiObject.GetManagementOk(); ok {
+		p.ManagementMode = framework.EnumOkToTF(v.GetModeOk())
+	}
 
 	revokeOnDelete := types.BoolNull()
 	if v, ok := apiObject.GetOnDeleteOk(); ok {
@@ -921,6 +970,7 @@ func toStateFields(innerFields []credentials.CredentialTypeMetaDataFieldsInner, 
 			"is_visible":   framework.BoolOkToTF(v.GetIsVisibleOk()),
 			"attribute":    framework.StringOkToTF(v.GetAttributeOk()),
 			"value":        framework.StringOkToTF(v.GetValueOk()),
+			"required":     framework.BoolOkToTF(v.GetRequiredOk()),
 		}
 		innerflattenedObj, d := types.ObjectValue(innerFieldsServiceTFObjectTypes, fieldsMap)
 		diags.Append(d...)
