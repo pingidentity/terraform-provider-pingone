@@ -30,8 +30,8 @@ resource "pingone_gateway" "my_ldap_gateway" {
     "ds3.bxretail.org:636",
   ]
 
-  user_types = [
-    {
+  user_types = {
+    "User Set 1" = {
       name               = "User Set 1"
       password_authority = "LDAP"
       search_base_dn     = "ou=users,dc=bxretail,dc=org"
@@ -55,8 +55,8 @@ resource "pingone_gateway" "my_ldap_gateway" {
         ]
       }
 
-      push_password_changes_to_ldap = true
+      update_user_on_successful_authentication = true
     }
-  ]
+  }
 
 }

@@ -44,8 +44,8 @@ resource "pingone_gateway" "my_ldap_gateway" {
     "ds3.bxretail.org:636",
   ]
 
-  user_types = [
-    {
+  user_types = {
+    "User Set 1" = {
       name               = "User Set 1"
       password_authority = "LDAP"
       search_base_dn     = "ou=users,dc=bxretail,dc=org"
@@ -69,9 +69,9 @@ resource "pingone_gateway" "my_ldap_gateway" {
         ]
       }
 
-      push_password_changes_to_ldap = true
+      update_user_on_successful_authentication = true
     }
-  ]
+  }
 
 }
 ```
@@ -156,7 +156,7 @@ resource "pingone_gateway" "my_awesome_api_gateway" {
 - `radius_default_shared_secret` (String, Sensitive) For RADIUS gateways only: A strign that specifies the value to use for the shared secret if the shared secret is not provided for one or more of the RADIUS clients specified.
 - `radius_network_policy_server` (Attributes) For RADIUS gateways only: A single object that allows configuration of the RADIUS gateway to authenticate using the MS-CHAP v2 protocol. (see [below for nested schema](#nestedatt--radius_network_policy_server))
 - `servers` (Set of String) For LDAP gateways only: A set of LDAP server host name and port number combinations (for example, [`ds1.bxretail.org:636`, `ds2.bxretail.org:636`]).
-- `user_types` (Attributes Set) For LDAP gateways only: A set of objects that define how users should be provisioned in PingOne. The `user_types` set of objects specifies which user properties in PingOne correspond to the user properties in an external LDAP directory. You can use an LDAP browser to view the user properties in the external LDAP directory. (see [below for nested schema](#nestedatt--user_types))
+- `user_types` (Attributes Map) For LDAP gateways only: A map of objects that define how users should be provisioned in PingOne, where the map key is the name to apply to the user type configuration. The `user_types` map of objects specifies which user properties in PingOne correspond to the user properties in an external LDAP directory. You can use an LDAP browser to view the user properties in the external LDAP directory. (see [below for nested schema](#nestedatt--user_types))
 - `validate_tls_certificates` (Boolean) For LDAP gateways only: A boolean that specifies whether or not to trust all SSL certificates, including self-signed (defaults to `true`). If this value is `false`, TLS certificates are not validated. When the value is set to `true`, only certificates that are signed by the default JVM CAs, or the CA certs that the customer has uploaded to the certificate service are trusted.  Defaults to `true`.
 - `vendor` (String) For LDAP gateways only: A string that specifies the LDAP vendor.  Options are `CA Directory`, `IBM (Tivoli) Security Directory Server`, `LDAP v3 compliant Directory Server`, `Microsoft Active Directory`, `OpenDJ Directory`, `Oracle Directory Server Enterprise Edition`, `Oracle Unified Directory`, `PingDirectory`.  This field is immutable and will trigger a replace plan if changed.
 
@@ -203,7 +203,6 @@ Required:
 
 Required:
 
-- `name` (String) A string that specifies the name of the user type.
 - `password_authority` (String) A string that specifies the password authority for the user type.  Options are `LDAP`, `PING_ONE`.  If set to `PING_ONE`, PingOne authenticates with the external directory initially, then PingOne authenticates all subsequent sign-ons.
 - `search_base_dn` (String) A string that specifies the LDAP base domain name (DN) for this user type.
 - `user_link_attributes` (List of String) A list of strings that represent LDAP attribute names that uniquely identify the user, and link to users in PingOne.
@@ -212,7 +211,6 @@ Optional:
 
 - `allow_password_changes` (Boolean) A boolean that, if set to `false`, the user cannot change the password in the remote LDAP directory. In this case, operations for forgotten passwords or resetting of passwords are not available to a user referencing this gateway.  Defaults to `false`.
 - `new_user_lookup` (Attributes) A single object that describes the configurations for initially authenticating new users who will be migrated to PingOne. Note: If there are multiple users having the same user name, only the first user processed is provisioned. (see [below for nested schema](#nestedatt--user_types--new_user_lookup))
-- `push_password_changes_to_ldap` (Boolean) A boolean that specifies whether password updates in PingOne should be pushed to the user's record in LDAP.  If false, the user cannot change the password and have it updated in the remote LDAP directory. In this case, operations for forgotten passwords or resetting of passwords are not available to a user referencing this gateway.  Defaults to `false`.
 - `update_user_on_successful_authentication` (Boolean) A boolean that, if set to `true`, when users sign on through an LDAP Gateway client, user attributes are updated based on responses from the LDAP server.  Defaults to `false`.
 
 Read-Only:

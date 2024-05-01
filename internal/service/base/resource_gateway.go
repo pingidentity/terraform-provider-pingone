@@ -7,6 +7,7 @@ import (
 	"slices"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -50,7 +51,7 @@ type gatewayResourceModel struct {
 	Servers                 types.Set    `tfsdk:"servers"`
 	ValidateTLSCertificates types.Bool   `tfsdk:"validate_tls_certificates"`
 	Vendor                  types.String `tfsdk:"vendor"`
-	UserTypes               types.Set    `tfsdk:"user_types"`
+	UserTypes               types.Map    `tfsdk:"user_types"`
 
 	// Radius
 	RadiusClients             types.Set                    `tfsdk:"radius_clients"`
@@ -68,10 +69,8 @@ type gatewayKerberosResourceModel struct {
 type gatewayUserTypeResourceModel struct {
 	AllowPasswordChanges                 types.Bool                   `tfsdk:"allow_password_changes"`
 	Id                                   pingonetypes.ResourceIDValue `tfsdk:"id"`
-	Name                                 types.String                 `tfsdk:"name"`
 	NewUserLookup                        types.Object                 `tfsdk:"new_user_lookup"`
 	PasswordAuthority                    types.String                 `tfsdk:"password_authority"`
-	PushPasswordChangesToLDAP            types.Bool                   `tfsdk:"push_password_changes_to_ldap"`
 	SearchBaseDN                         types.String                 `tfsdk:"search_base_dn"`
 	UpdateUserOnSuccessfulAuthentication types.Bool                   `tfsdk:"update_user_on_successful_authentication"`
 	UserLinkAttributes                   types.List                   `tfsdk:"user_link_attributes"`
@@ -106,13 +105,11 @@ var (
 	}
 
 	gatewayUserTypesTFObjectTypes = map[string]attr.Type{
-		"allow_password_changes":        types.BoolType,
-		"id":                            pingonetypes.ResourceIDType{},
-		"name":                          types.StringType,
-		"new_user_lookup":               types.ObjectType{AttrTypes: gatewayUserTypesNewUserLookupTFObjectTypes},
-		"password_authority":            types.StringType,
-		"push_password_changes_to_ldap": types.BoolType,
-		"search_base_dn":                types.StringType,
+		"allow_password_changes": types.BoolType,
+		"id":                     pingonetypes.ResourceIDType{},
+		"new_user_lookup":        types.ObjectType{AttrTypes: gatewayUserTypesNewUserLookupTFObjectTypes},
+		"password_authority":     types.StringType,
+		"search_base_dn":         types.StringType,
 		"update_user_on_successful_authentication": types.BoolType,
 		"user_link_attributes":                     types.ListType{ElemType: types.StringType},
 	}
@@ -192,7 +189,7 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 	).AllowedValuesEnum(management.AllowedEnumGatewayVendorEnumValues).RequiresReplace()
 
 	userTypesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"For LDAP gateways only: A set of objects that define how users should be provisioned in PingOne. The `user_types` set of objects specifies which user properties in PingOne correspond to the user properties in an external LDAP directory. You can use an LDAP browser to view the user properties in the external LDAP directory.",
+		"For LDAP gateways only: A map of objects that define how users should be provisioned in PingOne, where the map key is the name to apply to the user type configuration. The `user_types` map of objects specifies which user properties in PingOne correspond to the user properties in an external LDAP directory. You can use an LDAP browser to view the user properties in the external LDAP directory.",
 	)
 
 	userTypesAllowPasswordChangesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -226,10 +223,6 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 	userTypesUserMigrationLookupAttributeMappingValueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the reference to the corresponding external LDAP attribute.  Values are in the format `${ldapAttributes.mail}`, while Terraform HCL requires an additional `$` prefix character. For example, `$${ldapAttributes.mail}`.",
 	)
-
-	userTypesPushPasswordChangesToLdapDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A boolean that specifies whether password updates in PingOne should be pushed to the user's record in LDAP.  If false, the user cannot change the password and have it updated in the remote LDAP directory. In this case, operations for forgotten passwords or resetting of passwords are not available to a user referencing this gateway.",
-	).DefaultValue(false)
 
 	radiusClientSharedSecretDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the shared secret for the RADIUS client. If this value is not provided, the shared secret specified with `radius_default_shared_secret` is used. If you are not providing a shared secret for the client, this parameter is optional.",
@@ -304,8 +297,6 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Optional:            true,
 				Computed:            true,
 
-				//Default: stringdefault.StaticString(string(management.ENUMGATEWAYTYPELDAPSECURITY_NONE)),
-
 				Validators: []validator.String{
 					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumGatewayTypeLDAPSecurityEnumValues)...),
 					stringvalidator.AlsoRequires(ldapRequiredSchemaPaths...),
@@ -317,8 +308,6 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 				MarkdownDescription: followReferralsDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
-
-				//Default: booldefault.StaticBool(false),
 			},
 
 			"kerberos": schema.SingleNestedAttribute{
@@ -367,8 +356,6 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Optional:            true,
 				Computed:            true,
 
-				//Default: booldefault.StaticBool(true),
-
 				Validators: []validator.Bool{
 					boolvalidator.AlsoRequires(ldapRequiredSchemaPaths...),
 				},
@@ -389,13 +376,13 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 				},
 			},
 
-			"user_types": schema.SetNestedAttribute{
+			"user_types": schema.MapNestedAttribute{
 				Description:         userTypesDescription.Description,
 				MarkdownDescription: userTypesDescription.MarkdownDescription,
 				Optional:            true,
 
-				Validators: []validator.Set{
-					setvalidator.AlsoRequires(ldapRequiredSchemaPaths...),
+				Validators: []validator.Map{
+					mapvalidator.AlsoRequires(ldapRequiredSchemaPaths...),
 				},
 
 				NestedObject: schema.NestedAttributeObject{
@@ -424,11 +411,10 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 							Computed:            true,
 
 							CustomType: pingonetypes.ResourceIDType{},
-						},
 
-						"name": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the name of the user type.").Description,
-							Required:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 
 						"password_authority": schema.StringAttribute{
@@ -493,15 +479,6 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 									},
 								},
 							},
-						},
-
-						"push_password_changes_to_ldap": schema.BoolAttribute{
-							Description:         userTypesPushPasswordChangesToLdapDescription.Description,
-							MarkdownDescription: userTypesPushPasswordChangesToLdapDescription.MarkdownDescription,
-							Optional:            true,
-							Computed:            true,
-
-							Default: booldefault.StaticBool(false),
 						},
 					},
 				},
@@ -594,24 +571,24 @@ func (r *GatewayResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 		return
 	}
 
-	var plan gatewayResourceModel
+	var plan, config gatewayResourceModel
 	// Read Terraform plan and state data into the model
 	resp.Diagnostics.Append(resp.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 
-	if plan.Type.Equal(types.StringValue(string(management.ENUMGATEWAYTYPE_LDAP))) {
-		if plan.ConnectionSecurity.IsNull() {
-			resp.Plan.SetAttribute(ctx, path.Root("connection_security"), types.StringValue(string(management.ENUMGATEWAYTYPELDAPSECURITY_NONE)))
+	if config.Type.Equal(types.StringValue(string(management.ENUMGATEWAYTYPE_LDAP))) {
+		if config.ConnectionSecurity.IsNull() {
+			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("connection_security"), types.StringValue(string(management.ENUMGATEWAYTYPELDAPSECURITY_NONE)))...)
 		}
 
-		if plan.FollowReferrals.IsNull() {
-			resp.Plan.SetAttribute(ctx, path.Root("follow_referrals"), types.BoolValue(false))
+		if config.FollowReferrals.IsNull() {
+			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("follow_referrals"), types.BoolValue(false))...)
 		}
 
-		if plan.ValidateTLSCertificates.IsNull() {
-			resp.Plan.SetAttribute(ctx, path.Root("validate_tls_certificates"), types.BoolValue(true))
+		if config.ValidateTLSCertificates.IsNull() {
+			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("validate_tls_certificates"), types.BoolValue(true))...)
 		}
 	}
-
 }
 
 func (r *GatewayResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -685,7 +662,7 @@ func (r *GatewayResource) Create(ctx context.Context, req resource.CreateRequest
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(state.toState(ctx, response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -730,7 +707,7 @@ func (r *GatewayResource) Read(ctx context.Context, req resource.ReadRequest, re
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response)...)
+	resp.Diagnostics.Append(data.toState(ctx, response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -779,7 +756,7 @@ func (r *GatewayResource) Update(ctx context.Context, req resource.UpdateRequest
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(state.toState(ctx, response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -875,18 +852,10 @@ func (p *gatewayResourceModel) expand(ctx context.Context) (*management.CreateGa
 
 	} else if gatewayType == management.ENUMGATEWAYTYPE_LDAP {
 
-		servers := make([]string, 0)
-
-		if !p.Servers.IsNull() && !p.Servers.IsUnknown() {
-			var serversPlan []string
-			diags.Append(p.Servers.ElementsAs(ctx, &serversPlan, false)...)
-			if diags.HasError() {
-				return nil, diags
-			}
-
-			for _, server := range serversPlan {
-				servers = append(servers, server)
-			}
+		var serversPlan []string
+		diags.Append(p.Servers.ElementsAs(ctx, &serversPlan, false)...)
+		if diags.HasError() {
+			return nil, diags
 		}
 
 		gateway := *management.NewGatewayTypeLDAP(
@@ -895,7 +864,7 @@ func (p *gatewayResourceModel) expand(ctx context.Context) (*management.CreateGa
 			p.Enabled.ValueBool(),
 			p.BindDN.ValueString(),
 			p.BindPassword.ValueString(),
-			servers,
+			serversPlan,
 			management.EnumGatewayVendor(p.Vendor.ValueString()),
 		)
 
@@ -932,7 +901,7 @@ func (p *gatewayResourceModel) expand(ctx context.Context) (*management.CreateGa
 		}
 
 		if !p.UserTypes.IsNull() && !p.UserTypes.IsUnknown() {
-			var userTypesPlan []gatewayUserTypeResourceModel
+			var userTypesPlan map[string]gatewayUserTypeResourceModel
 			diags.Append(p.UserTypes.ElementsAs(ctx, &userTypesPlan, false)...)
 			if diags.HasError() {
 				return nil, diags
@@ -940,8 +909,8 @@ func (p *gatewayResourceModel) expand(ctx context.Context) (*management.CreateGa
 
 			userTypes := make([]management.GatewayTypeLDAPAllOfUserTypes, 0)
 
-			for _, userTypePlan := range userTypesPlan {
-				userType, d := userTypePlan.expandLDAPUserType(ctx)
+			for userTypeKey, userTypePlan := range userTypesPlan {
+				userType, d := userTypePlan.expandLDAPUserType(ctx, userTypeKey)
 				diags.Append(d...)
 				if diags.HasError() {
 					return nil, diags
@@ -990,6 +959,24 @@ func (p *gatewayResourceModel) expand(ctx context.Context) (*management.CreateGa
 			gateway.SetDefaultSharedSecret(p.RadiusDefaultSharedSecret.ValueString())
 		}
 
+		if !p.RadiusNetworkPolicyServer.IsNull() && !p.RadiusNetworkPolicyServer.IsUnknown() {
+			var radiusNPSPlan gatewayRadiusNetworkPolicyServerResourceModel
+			diags.Append(p.RadiusNetworkPolicyServer.As(ctx, &radiusNPSPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			radiusNPS := management.NewGatewayTypeRADIUSAllOfNetworkPolicyServer(
+				radiusNPSPlan.IP.ValueString(),
+				int32(radiusNPSPlan.Port.ValueInt64()),
+			)
+
+			gateway.SetNetworkPolicyServer(*radiusNPS)
+		}
+
 		data.GatewayTypeRADIUS = &gateway
 
 	} else {
@@ -1006,7 +993,7 @@ func (p *gatewayResourceModel) expand(ctx context.Context) (*management.CreateGa
 	return data, diags
 }
 
-func (p *gatewayUserTypeResourceModel) expandLDAPUserType(ctx context.Context) (*management.GatewayTypeLDAPAllOfUserTypes, diag.Diagnostics) {
+func (p *gatewayUserTypeResourceModel) expandLDAPUserType(ctx context.Context, key string) (*management.GatewayTypeLDAPAllOfUserTypes, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var userLinkAttributesPlan []string
@@ -1016,14 +1003,22 @@ func (p *gatewayUserTypeResourceModel) expandLDAPUserType(ctx context.Context) (
 	}
 
 	data := management.NewGatewayTypeLDAPAllOfUserTypes(
-		p.Name.ValueString(),
+		key,
 		userLinkAttributesPlan,
 		management.EnumGatewayPasswordAuthority(p.PasswordAuthority.ValueString()),
 		p.SearchBaseDN.ValueString(),
 	)
 
-	if !p.PushPasswordChangesToLDAP.IsNull() && !p.PushPasswordChangesToLDAP.IsUnknown() {
-		data.SetAllowPasswordChanges(p.PushPasswordChangesToLDAP.ValueBool())
+	if !p.Id.IsNull() && !p.Id.IsUnknown() {
+		data.SetId(p.Id.ValueString())
+	}
+
+	if !p.AllowPasswordChanges.IsNull() && !p.AllowPasswordChanges.IsUnknown() {
+		data.SetAllowPasswordChanges(p.AllowPasswordChanges.ValueBool())
+	}
+
+	if !p.UpdateUserOnSuccessfulAuthentication.IsNull() && !p.UpdateUserOnSuccessfulAuthentication.IsUnknown() {
+		data.SetUpdateUserOnSuccessfulAuthentication(p.UpdateUserOnSuccessfulAuthentication.ValueBool())
 	}
 
 	if !p.NewUserLookup.IsNull() && !p.NewUserLookup.IsUnknown() {
@@ -1075,7 +1070,7 @@ func (p *gatewayUserTypeNewUserLookupResourceModel) expandLDAPUserTypeNewUserLoo
 	return data, diags
 }
 
-func (p *gatewayResourceModel) toState(apiObject *management.CreateGateway201Response) diag.Diagnostics {
+func (p *gatewayResourceModel) toState(ctx context.Context, apiObject *management.CreateGateway201Response) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -1107,7 +1102,7 @@ func (p *gatewayResourceModel) toState(apiObject *management.CreateGateway201Res
 		p.Servers = types.SetNull(types.StringType)
 		p.ValidateTLSCertificates = types.BoolNull()
 		p.Vendor = types.StringNull()
-		p.UserTypes = types.SetNull(types.ObjectType{AttrTypes: gatewayUserTypesTFObjectTypes})
+		p.UserTypes = types.MapNull(types.ObjectType{AttrTypes: gatewayUserTypesTFObjectTypes})
 
 		// Radius
 		p.RadiusDavinciPolicyId = pingonetypes.NewResourceIDNull()
@@ -1125,10 +1120,22 @@ func (p *gatewayResourceModel) toState(apiObject *management.CreateGateway201Res
 
 		// LDAP
 		p.BindDN = framework.StringOkToTF(t.GetBindDNOk())
-		p.BindPassword = framework.StringOkToTF(t.GetBindPasswordOk())
+		// p.BindPassword = framework.StringOkToTF(t.GetBindPasswordOk()) - passthrough from state
 		p.ConnectionSecurity = framework.EnumOkToTF(t.GetConnectionSecurityOk())
 		p.FollowReferrals = framework.BoolOkToTF(t.GetFollowReferralsOk())
-		p.Kerberos, d = toStateKerberosOk(t.GetKerberosOk())
+
+		var kerberosPlan *gatewayKerberosResourceModel
+
+		diags.Append(p.Kerberos.As(ctx, &kerberosPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return diags
+		}
+
+		kerberosObj, ok := t.GetKerberosOk()
+		p.Kerberos, d = toStateKerberosOk(kerberosObj, ok, kerberosPlan)
 		diags.Append(d...)
 
 		p.Servers = framework.StringSetOkToTF(t.GetServersHostAndPortOk())
@@ -1162,7 +1169,7 @@ func (p *gatewayResourceModel) toState(apiObject *management.CreateGateway201Res
 		p.Servers = types.SetNull(types.StringType)
 		p.ValidateTLSCertificates = types.BoolNull()
 		p.Vendor = types.StringNull()
-		p.UserTypes = types.SetNull(types.ObjectType{AttrTypes: gatewayUserTypesTFObjectTypes})
+		p.UserTypes = types.MapNull(types.ObjectType{AttrTypes: gatewayUserTypesTFObjectTypes})
 
 		// Radius
 		if dv, ok := t.GetDavinciOk(); ok {
@@ -1227,15 +1234,20 @@ func toStateRadiusNetworkPolicyServerOk(apiObject *management.GatewayTypeRADIUSA
 	return returnVar, diags
 }
 
-func toStateKerberosOk(apiObject *management.GatewayTypeLDAPAllOfKerberos, ok bool) (types.Object, diag.Diagnostics) {
+func toStateKerberosOk(apiObject *management.GatewayTypeLDAPAllOfKerberos, ok bool, kerberosStateModel *gatewayKerberosResourceModel) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
 		return types.ObjectNull(gatewayKerberosTFObjectTypes), diags
 	}
 
+	serviceAccountPassword := types.StringNull()
+	if kerberosStateModel != nil {
+		serviceAccountPassword = kerberosStateModel.ServiceAccountPassword
+	}
+
 	o := map[string]attr.Value{
-		"service_account_password":         framework.StringOkToTF(apiObject.GetServiceAccountPasswordOk()),
+		"service_account_password":         serviceAccountPassword,
 		"service_account_upn":              framework.StringOkToTF(apiObject.GetServiceAccountUserPrincipalNameOk()),
 		"retain_previous_credentials_mins": framework.Int32OkToTF(apiObject.GetMinutesToRetainPreviousCredentialsOk()),
 	}
@@ -1246,26 +1258,24 @@ func toStateKerberosOk(apiObject *management.GatewayTypeLDAPAllOfKerberos, ok bo
 	return returnVar, diags
 }
 
-func toStateUserTypesOk(apiObject []management.GatewayTypeLDAPAllOfUserTypes, ok bool) (types.Set, diag.Diagnostics) {
+func toStateUserTypesOk(apiObject []management.GatewayTypeLDAPAllOfUserTypes, ok bool) (types.Map, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
 	tfObjType := types.ObjectType{AttrTypes: gatewayUserTypesTFObjectTypes}
 
 	if !ok || apiObject == nil {
-		return types.SetNull(tfObjType), diags
+		return types.MapNull(tfObjType), diags
 	}
 
-	objectList := []attr.Value{}
+	objectList := map[string]attr.Value{}
 	for _, userType := range apiObject {
 
 		o := map[string]attr.Value{
-			"id":                            framework.PingOneResourceIDOkToTF(userType.GetIdOk()),
-			"name":                          framework.StringOkToTF(userType.GetNameOk()),
-			"password_authority":            framework.EnumOkToTF(userType.GetPasswordAuthorityOk()),
-			"search_base_dn":                framework.StringOkToTF(userType.GetSearchBaseDnOk()),
-			"user_link_attributes":          framework.StringListOkToTF(userType.GetOrderedCorrelationAttributesOk()),
-			"push_password_changes_to_ldap": framework.BoolOkToTF(userType.GetAllowPasswordChangesOk()),
-			"allow_password_changes":        framework.BoolOkToTF(userType.GetAllowPasswordChangesOk()),
+			"id":                     framework.PingOneResourceIDOkToTF(userType.GetIdOk()),
+			"password_authority":     framework.EnumOkToTF(userType.GetPasswordAuthorityOk()),
+			"search_base_dn":         framework.StringOkToTF(userType.GetSearchBaseDnOk()),
+			"user_link_attributes":   framework.StringListOkToTF(userType.GetOrderedCorrelationAttributesOk()),
+			"allow_password_changes": framework.BoolOkToTF(userType.GetAllowPasswordChangesOk()),
 			"update_user_on_successful_authentication": framework.BoolOkToTF(userType.GetUpdateUserOnSuccessfulAuthenticationOk()),
 		}
 
@@ -1275,10 +1285,10 @@ func toStateUserTypesOk(apiObject []management.GatewayTypeLDAPAllOfUserTypes, ok
 		objValue, d := types.ObjectValue(gatewayUserTypesTFObjectTypes, o)
 		diags.Append(d...)
 
-		objectList = append(objectList, objValue)
+		objectList[userType.GetName()] = objValue
 	}
 
-	returnVar, d := types.SetValue(tfObjType, objectList)
+	returnVar, d := types.MapValue(tfObjType, objectList)
 	diags.Append(d...)
 
 	return returnVar, diags
