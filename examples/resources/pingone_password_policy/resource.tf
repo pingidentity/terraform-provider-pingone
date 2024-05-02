@@ -8,31 +8,29 @@ resource "pingone_password_policy" "my_password_policy" {
   name        = "My awesome password policy"
   description = "My new password policy"
 
-  exclude_commonly_used_passwords = true
-  exclude_profile_data            = true
-  not_similar_to_current          = true
+  excludes_commonly_used_passwords = true
+  excludes_profile_data            = true
+  not_similar_to_current           = true
 
-  password_history {
-    prior_password_count = 6
-    retention_days       = 365
+  history = {
+    count          = 6
+    retention_days = 365
   }
 
-  password_length {
+  length = {
     min = 8
     max = 255
   }
 
-  password_age {
-    max = 182
-    min = 1
-  }
+  password_age_max = 182
+  password_age_min = 1
 
-  account_lockout {
+  lockout = {
     duration_seconds = 900
-    fail_count       = 5
+    failure_count    = 5
   }
 
-  min_characters {
+  min_characters = {
     alphabetical_uppercase = 1
     alphabetical_lowercase = 1
     numeric                = 1
