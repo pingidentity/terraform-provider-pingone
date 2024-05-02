@@ -271,10 +271,6 @@ func TestAccGateway_PF(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
-				// ImportStateVerifyIgnore: []string{
-				// 	"connection_security",
-				// 	"validate_tls_certificates",
-				// },
 			},
 		},
 	})
@@ -318,10 +314,6 @@ func TestAccGateway_APIG(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
-				// ImportStateVerifyIgnore: []string{
-				// 	"connection_security",
-				// 	"validate_tls_certificates",
-				// },
 			},
 		},
 	})
@@ -365,10 +357,6 @@ func TestAccGateway_Intelligence(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
-				// ImportStateVerifyIgnore: []string{
-				// 	"connection_security",
-				// 	"validate_tls_certificates",
-				// },
 			},
 		},
 	})
