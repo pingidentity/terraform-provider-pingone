@@ -32,7 +32,6 @@ resource "pingone_gateway" "my_ldap_gateway" {
 
   user_types = {
     "User Set 1" = {
-      name               = "User Set 1"
       password_authority = "LDAP"
       search_base_dn     = "ou=users,dc=bxretail,dc=org"
 

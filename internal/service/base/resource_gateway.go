@@ -165,13 +165,17 @@ func (r *GatewayResource) Metadata(ctx context.Context, req resource.MetadataReq
 
 func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 
+	bindDnDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"For LDAP gateways only: A string that specifies the distinguished name information to bind to the LDAP directory (for example, `uid=pingone,dc=bxretail,dc=org`).",
+	)
+
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of gateway.",
 	).AllowedValuesEnum(management.AllowedEnumGatewayTypeEnumValues).RequiresReplace()
 
 	connectionSecurityDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"For LDAP gateways only: A string that specifies the connection security type.",
-	).AllowedValuesEnum(management.AllowedEnumGatewayTypeLDAPSecurityEnumValues).DefaultValue(management.ENUMGATEWAYTYPELDAPSECURITY_NONE)
+	).AllowedValuesEnum(management.AllowedEnumGatewayTypeLDAPSecurityEnumValues).DefaultValue(string(management.ENUMGATEWAYTYPELDAPSECURITY_NONE))
 
 	followReferralsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to true, PingOne sends LDAP queries per referrals it receives from the LDAP servers.",
@@ -186,7 +190,7 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 	)
 
 	validateTlsCertificatesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"For LDAP gateways only: A boolean that specifies whether or not to trust all SSL certificates, including self-signed (defaults to `true`). If this value is `false`, TLS certificates are not validated. When the value is set to `true`, only certificates that are signed by the default JVM CAs, or the CA certs that the customer has uploaded to the certificate service are trusted.",
+		"For LDAP gateways only: A boolean that specifies whether or not to trust all SSL certificates, including self-signed. If this value is `false`, TLS certificates are not validated. When the value is set to `true`, only certificates that are signed by the default JVM CAs, or the CA certs that the customer has uploaded to the certificate service are trusted.",
 	).DefaultValue(true)
 
 	vendorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -286,8 +290,9 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 
 			// LDAP
 			"bind_dn": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("For LDAP gateways only: A string that specifies the distinguished name information to bind to the LDAP database (for example, `uid=pingone,dc=bxretail,dc=org`).").Description,
-				Optional:    true,
+				Description:         bindDnDescription.Description,
+				MarkdownDescription: bindDnDescription.MarkdownDescription,
+				Optional:            true,
 
 				Validators: []validator.String{
 					stringvalidatorinternal.IsRequiredIfMatchesPathValue(
@@ -315,7 +320,7 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 			},
 
 			"bind_password": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("For LDAP gateways only: A string that specifies the bind password for the LDAP database.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("For LDAP gateways only: A string that specifies the bind password for the LDAP directory.").Description,
 				Optional:    true,
 				Sensitive:   true,
 
@@ -693,7 +698,7 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 			},
 
 			"radius_default_shared_secret": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("For RADIUS gateways only: A strign that specifies the value to use for the shared secret if the shared secret is not provided for one or more of the RADIUS clients specified.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("For RADIUS gateways only: A string that specifies the value to use for the shared secret if the shared secret is not provided for one or more of the RADIUS clients specified.").Description,
 				Optional:    true,
 				Sensitive:   true,
 

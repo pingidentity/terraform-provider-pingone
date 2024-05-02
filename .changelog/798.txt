@@ -33,3 +33,7 @@
 ```release-note:breaking-change
 `resource/pingone_gateway`: Renamed `user_type.push_password_changes_to_ldap` to `user_types.allow_password_changes`.
 ```
+
+```release-note:breaking-change
+`resource/pingone_gateway`: Renamed `user_type.user_migration.lookup_filter_pattern` to `user_types.new_user_lookup.ldap_filter_pattern`.
+```

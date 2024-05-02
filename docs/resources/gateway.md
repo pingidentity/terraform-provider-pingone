@@ -46,7 +46,6 @@ resource "pingone_gateway" "my_ldap_gateway" {
 
   user_types = {
     "User Set 1" = {
-      name               = "User Set 1"
       password_authority = "LDAP"
       search_base_dn     = "ou=users,dc=bxretail,dc=org"
 
@@ -145,19 +144,19 @@ resource "pingone_gateway" "my_awesome_api_gateway" {
 
 ### Optional
 
-- `bind_dn` (String) For LDAP gateways only: A string that specifies the distinguished name information to bind to the LDAP database (for example, "uid=pingone,dc=bxretail,dc=org").
-- `bind_password` (String, Sensitive) For LDAP gateways only: A string that specifies the bind password for the LDAP database.
-- `connection_security` (String) For LDAP gateways only: A string that specifies the connection security type.  Options are `None`, `StartTLS`, `TLS`.  Defaults to `DOC ERROR: Unknown default data type`.
+- `bind_dn` (String) For LDAP gateways only: A string that specifies the distinguished name information to bind to the LDAP directory (for example, `uid=pingone,dc=bxretail,dc=org`).
+- `bind_password` (String, Sensitive) For LDAP gateways only: A string that specifies the bind password for the LDAP directory.
+- `connection_security` (String) For LDAP gateways only: A string that specifies the connection security type.  Options are `None`, `StartTLS`, `TLS`.  Defaults to `None`.
 - `description` (String) A string that specifies a description to apply to the gateway resource.
 - `follow_referrals` (Boolean) A boolean that, when set to true, PingOne sends LDAP queries per referrals it receives from the LDAP servers.  Defaults to `false`.
 - `kerberos` (Attributes) For LDAP gateways only: A single object that specifies Kerberos connection details. (see [below for nested schema](#nestedatt--kerberos))
 - `radius_clients` (Attributes Set) For RADIUS gateways only: A set of objects describing RADIUS client connections. (see [below for nested schema](#nestedatt--radius_clients))
 - `radius_davinci_policy_id` (String) For RADIUS gateways only: A string that specifies the ID of the DaVinci flow policy to use.  Must be a valid PingOne resource ID.
-- `radius_default_shared_secret` (String, Sensitive) For RADIUS gateways only: A strign that specifies the value to use for the shared secret if the shared secret is not provided for one or more of the RADIUS clients specified.
+- `radius_default_shared_secret` (String, Sensitive) For RADIUS gateways only: A string that specifies the value to use for the shared secret if the shared secret is not provided for one or more of the RADIUS clients specified.
 - `radius_network_policy_server` (Attributes) For RADIUS gateways only: A single object that allows configuration of the RADIUS gateway to authenticate using the MS-CHAP v2 protocol. (see [below for nested schema](#nestedatt--radius_network_policy_server))
 - `servers` (Set of String) For LDAP gateways only: A set of LDAP server host name and port number combinations (for example, [`ds1.bxretail.org:636`, `ds2.bxretail.org:636`]).
 - `user_types` (Attributes Map) For LDAP gateways only: A map of objects that define how users should be provisioned in PingOne, where the map key is the name to apply to the user type configuration. The `user_types` map of objects specifies which user properties in PingOne correspond to the user properties in an external LDAP directory. You can use an LDAP browser to view the user properties in the external LDAP directory. (see [below for nested schema](#nestedatt--user_types))
-- `validate_tls_certificates` (Boolean) For LDAP gateways only: A boolean that specifies whether or not to trust all SSL certificates, including self-signed (defaults to `true`). If this value is `false`, TLS certificates are not validated. When the value is set to `true`, only certificates that are signed by the default JVM CAs, or the CA certs that the customer has uploaded to the certificate service are trusted.  Defaults to `true`.
+- `validate_tls_certificates` (Boolean) For LDAP gateways only: A boolean that specifies whether or not to trust all SSL certificates, including self-signed. If this value is `false`, TLS certificates are not validated. When the value is set to `true`, only certificates that are signed by the default JVM CAs, or the CA certs that the customer has uploaded to the certificate service are trusted.  Defaults to `true`.
 - `vendor` (String) For LDAP gateways only: A string that specifies the LDAP vendor.  Options are `CA Directory`, `IBM (Tivoli) Security Directory Server`, `LDAP v3 compliant Directory Server`, `Microsoft Active Directory`, `OpenDJ Directory`, `Oracle Directory Server Enterprise Edition`, `Oracle Unified Directory`, `PingDirectory`.  This field is immutable and will trigger a replace plan if changed.
 
 ### Read-Only
