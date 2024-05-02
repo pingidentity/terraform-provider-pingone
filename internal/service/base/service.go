@@ -26,6 +26,7 @@ func Resources() []func() resource.Resource {
 		NewEnvironmentResource,
 		NewFormResource,
 		NewFormsRecaptchaV2Resource,
+		NewGatewayResource,
 		NewGatewayRoleAssignmentResource,
 		NewIdentityPropagationPlanResource,
 		NewImageResource,

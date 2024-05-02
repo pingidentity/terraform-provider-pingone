@@ -41,10 +41,10 @@ resource "pingone_gateway" "my_awesome_ldap_gateway" {
 
   # ...
 
-  user_type {
-    name = "User Set 1"
-
-    # ...
+  user_types = {
+    "User Set 1" = {
+      # ...
+    }
   }
 }
 
@@ -69,7 +69,7 @@ resource "pingone_sign_on_policy_action" "my_policy_first_factor" {
     new_user_provisioning {
       gateway {
         id           = pingone_gateway.my_awesome_ldap_gateway.id
-        user_type_id = pingone_gateway.my_awesome_ldap_gateway.user_type.* [index(pingone_gateway.my_awesome_ldap_gateway.user_type[*].name, "User Set 1")].id
+        user_type_id = pingone_gateway.my_awesome_ldap_gateway.user_types["User Set 1"].id
       }
     }
   }

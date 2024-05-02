@@ -2,12 +2,12 @@
 page_title: "pingone_gateway Resource - terraform-provider-pingone"
 subcategory: "Platform"
 description: |-
-  Resource to create and manage PingOne gateways.
+  Resource to create and manage gateway configuration in a PingOne environment.
 ---
 
 # pingone_gateway (Resource)
 
-Resource to create and manage PingOne gateways.
+Resource to create and manage gateway configuration in a PingOne environment.
 
 ## Example Usage - LDAP
 
@@ -44,30 +44,32 @@ resource "pingone_gateway" "my_ldap_gateway" {
     "ds3.bxretail.org:636",
   ]
 
-  user_type {
-    name               = "User Set 1"
-    password_authority = "LDAP"
-    search_base_dn     = "ou=users,dc=bxretail,dc=org"
+  user_types = {
+    "User Set 1" = {
+      password_authority = "LDAP"
+      search_base_dn     = "ou=users,dc=bxretail,dc=org"
 
-    user_link_attributes = ["objectGUID", "objectSid"]
+      user_link_attributes = ["objectGUID", "objectSid"]
 
-    user_migration {
-      lookup_filter_pattern = "(|(sAMAccountName=$${identifier})(UserPrincipalName=$${identifier}))"
+      new_user_lookup = {
+        ldap_filter_pattern = "(|(sAMAccountName=$${identifier})(UserPrincipalName=$${identifier}))"
 
-      population_id = pingone_population.my_population.id
+        population_id = pingone_population.my_population.id
 
-      attribute_mapping {
-        name  = "username"
-        value = "$${ldapAttributes.sAMAccountName}"
+        attribute_mappings = [
+          {
+            name  = "username"
+            value = "$${ldapAttributes.sAMAccountName}"
+          },
+          {
+            name  = "email"
+            value = "$${ldapAttributes.mail}"
+          }
+        ]
       }
 
-      attribute_mapping {
-        name  = "email"
-        value = "$${ldapAttributes.mail}"
-      }
+      update_user_on_successful_authentication = true
     }
-
-    push_password_changes_to_ldap = true
   }
 
 }
@@ -89,9 +91,12 @@ resource "pingone_gateway" "my_radius_gateway" {
   radius_default_shared_secret = var.radius_default_shared_secret
   radius_davinci_policy_id     = var.radius_davinci_policy_id
 
-  radius_client {
-    ip = "127.0.0.1"
-  }
+  radius_clients = [
+    {
+      ip = "127.0.0.1"
+    }
+  ]
+
 }
 ```
 
@@ -132,79 +137,101 @@ resource "pingone_gateway" "my_awesome_api_gateway" {
 
 ### Required
 
-- `enabled` (Boolean) Indicates whether the gateway is enabled.
-- `environment_id` (String) The ID of the environment to create the gateway in.
-- `name` (String) The name of the gateway resource.
-- `type` (String) The type of gateway resource. Options are `PING_FEDERATE`, `API_GATEWAY_INTEGRATION`, `LDAP`, `RADIUS` and `PING_INTELLIGENCE`.
+- `enabled` (Boolean) A boolean that specifies whether the gateway is enabled in the environment.
+- `environment_id` (String) The ID of the environment to manage the gateway in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `name` (String) A string that specifies the name of the gateway resource.
+- `type` (String) A string that specifies the type of gateway.  Options are `API_GATEWAY_INTEGRATION`, `LDAP`, `PING_FEDERATE`, `PING_INTELLIGENCE`, `RADIUS`.  This field is immutable and will trigger a replace plan if changed.
 
 ### Optional
 
-- `bind_dn` (String) For LDAP gateways only: The distinguished name information to bind to the LDAP database (for example, `uid=pingone,dc=bxretail,dc=org`).
-- `bind_password` (String, Sensitive) For LDAP gateways only: The Bind password for the LDAP database.
-- `connection_security` (String) For LDAP gateways only: The connection security type. Options are `None`, `TLS`, and `StartTLS`. Defaults to `None`.
-- `description` (String) A description to apply to the gateway resource.
-- `kerberos_retain_previous_credentials_mins` (Number) For LDAP gateways only: The number of minutes for which the previous credentials are persisted.
-- `kerberos_service_account_password` (String, Sensitive) For LDAP gateways only: The password for the Kerberos service account.
-- `kerberos_service_account_upn` (String) For LDAP gateways only: The Kerberos service account user principal name (for example, `username@bxretail.org`).
-- `radius_client` (Block Set) For RADIUS gateways only: A collection of RADIUS clients. (see [below for nested schema](#nestedblock--radius_client))
-- `radius_davinci_policy_id` (String) For RADIUS gateways only: The ID of the DaVinci flow policy to use.
-- `radius_default_shared_secret` (String, Sensitive) For RADIUS gateways only: Value to use for the shared secret if the shared secret is not provided for one or more of the RADIUS clients specified.
-- `servers` (Set of String) For LDAP gateways only: A list of LDAP server host name and port number combinations (for example, [`ds1.bxretail.org:636`, `ds2.bxretail.org:636`]).
-- `user_type` (Block Set) For LDAP gateways only: A collection of properties that define how users should be provisioned in PingOne. The `user_type` block specifies which user properties in PingOne correspond to the user properties in an external LDAP directory. You can use an LDAP browser to view the user properties in the external LDAP directory. (see [below for nested schema](#nestedblock--user_type))
-- `validate_tls_certificates` (Boolean) For LDAP gateways only: Indicates whether or not to trust all SSL certificates (defaults to `true`). If this value is `false`, TLS certificates are not validated. When the value is set to `true`, only certificates that are signed by the default JVM CAs, or the CA certs that the customer has uploaded to the certificate service are trusted. Defaults to `true`.
-- `vendor` (String) For LDAP gateways only: The LDAP vendor. Options are `PingDirectory`, `Microsoft Active Directory`, `Oracle Directory Server Enterprise Edition`, `Oracle Unified Directory`, `CA Directory`, `OpenDJ Directory`, `IBM (Tivoli) Security Directory Server`, and `LDAP v3 compliant Directory Server`.
+- `bind_dn` (String) For LDAP gateways only: A string that specifies the distinguished name information to bind to the LDAP directory (for example, `uid=pingone,dc=bxretail,dc=org`).
+- `bind_password` (String, Sensitive) For LDAP gateways only: A string that specifies the bind password for the LDAP directory.
+- `connection_security` (String) For LDAP gateways only: A string that specifies the connection security type.  Options are `None`, `StartTLS`, `TLS`.  Defaults to `None`.
+- `description` (String) A string that specifies a description to apply to the gateway resource.
+- `follow_referrals` (Boolean) For LDAP gateways only: A boolean that, when set to true, PingOne sends LDAP queries per referrals it receives from the LDAP servers.  Defaults to `false`.
+- `kerberos` (Attributes) For LDAP gateways only: A single object that specifies Kerberos connection details. (see [below for nested schema](#nestedatt--kerberos))
+- `radius_clients` (Attributes Set) For RADIUS gateways only: A set of objects describing RADIUS client connections. (see [below for nested schema](#nestedatt--radius_clients))
+- `radius_davinci_policy_id` (String) For RADIUS gateways only: A string that specifies the ID of the DaVinci flow policy to use.  Must be a valid PingOne resource ID.
+- `radius_default_shared_secret` (String, Sensitive) For RADIUS gateways only: A string that specifies the value to use for the shared secret if the shared secret is not provided for one or more of the RADIUS clients specified.
+- `radius_network_policy_server` (Attributes) For RADIUS gateways only: A single object that allows configuration of the RADIUS gateway to authenticate using the MS-CHAP v2 protocol. (see [below for nested schema](#nestedatt--radius_network_policy_server))
+- `servers` (Set of String) For LDAP gateways only: A set of LDAP server host name and port number combinations (for example, [`ds1.bxretail.org:636`, `ds2.bxretail.org:636`]).
+- `user_types` (Attributes Map) For LDAP gateways only: A map of objects that define how users should be provisioned in PingOne, where the map key is the name to apply to the user type configuration. The `user_types` map of objects specifies which user properties in PingOne correspond to the user properties in an external LDAP directory. You can use an LDAP browser to view the user properties in the external LDAP directory. (see [below for nested schema](#nestedatt--user_types))
+- `validate_tls_certificates` (Boolean) For LDAP gateways only: A boolean that specifies whether or not to trust all SSL certificates, including self-signed. If this value is `false`, TLS certificates are not validated. When the value is set to `true`, only certificates that are signed by the default JVM CAs, or the CA certs that the customer has uploaded to the certificate service are trusted.  Defaults to `true`.
+- `vendor` (String) For LDAP gateways only: A string that specifies the LDAP vendor.  Options are `CA Directory`, `IBM (Tivoli) Security Directory Server`, `LDAP v3 compliant Directory Server`, `Microsoft Active Directory`, `OpenDJ Directory`, `Oracle Directory Server Enterprise Edition`, `Oracle Unified Directory`, `PingDirectory`.  This field is immutable and will trigger a replace plan if changed.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 
-<a id="nestedblock--radius_client"></a>
-### Nested Schema for `radius_client`
+<a id="nestedatt--kerberos"></a>
+### Nested Schema for `kerberos`
 
 Required:
 
-- `ip` (String) The IP of the RADIUS client.
+- `service_account_upn` (String) A string that specifies the Kerberos service account user principal name (for example, `username@bxretail.org`).
 
 Optional:
 
-- `shared_secret` (String, Sensitive) The shared secret for the RADIUS client. If this value is not provided, the shared secret specified with `default_shared_secret` is used. If you are not providing a shared secret for the client, this parameter is optional.
+- `retain_previous_credentials_mins` (Number) An integer that specifies the number of minutes for which the previous credentials are persisted.
+- `service_account_password` (String, Sensitive) A string that specifies the password for the Kerberos service account.
 
 
-<a id="nestedblock--user_type"></a>
-### Nested Schema for `user_type`
+<a id="nestedatt--radius_clients"></a>
+### Nested Schema for `radius_clients`
 
 Required:
 
-- `name` (String) The name of the user type.
-- `password_authority` (String) This can be either `PING_ONE` or `LDAP`. If set to `PING_ONE`, PingOne authenticates with the external directory initially, then PingOne authenticates all subsequent sign-ons.
-- `search_base_dn` (String) The LDAP base domain name (DN) for this user type.
+- `ip` (String) A string that specifies the IP address of the RADIUS client.
+
+Optional:
+
+- `shared_secret` (String, Sensitive) A string that specifies the shared secret for the RADIUS client. If this value is not provided, the shared secret specified with `radius_default_shared_secret` is used. If you are not providing a shared secret for the client, this parameter is optional.
+
+
+<a id="nestedatt--radius_network_policy_server"></a>
+### Nested Schema for `radius_network_policy_server`
+
+Required:
+
+- `ip` (String) A string that specifies the IP address of the Network Policy Server (NPS).
+- `port` (Number) An integer that specifies the port number of the NPS.
+
+
+<a id="nestedatt--user_types"></a>
+### Nested Schema for `user_types`
+
+Required:
+
+- `password_authority` (String) A string that specifies the password authority for the user type.  Options are `LDAP`, `PING_ONE`.  If set to `PING_ONE`, PingOne authenticates with the external directory initially, then PingOne authenticates all subsequent sign-ons.
+- `search_base_dn` (String) A string that specifies the LDAP base domain name (DN) for this user type.
 - `user_link_attributes` (List of String) A list of strings that represent LDAP attribute names that uniquely identify the user, and link to users in PingOne.
 
 Optional:
 
-- `push_password_changes_to_ldap` (Boolean) A boolean that determines whether password updates in PingOne should be pushed to the user's record in LDAP.  If false, the user cannot change the password and have it updated in the remote LDAP directory. In this case, operations for forgotten passwords or resetting of passwords are not available to a user referencing this gateway. Defaults to `false`.
-- `user_migration` (Block List, Max: 1) The configurations for initially authenticating new users who will be migrated to PingOne. Note: If there are multiple users having the same user name, only the first user processed is provisioned. (see [below for nested schema](#nestedblock--user_type--user_migration))
+- `allow_password_changes` (Boolean) A boolean that, if set to `false`, the user cannot change the password in the remote LDAP directory. In this case, operations for forgotten passwords or resetting of passwords are not available to a user referencing this gateway.  Defaults to `false`.
+- `new_user_lookup` (Attributes) A single object that describes the configurations for initially authenticating new users who will be migrated to PingOne. Note: If there are multiple users having the same user name, only the first user processed is provisioned. (see [below for nested schema](#nestedatt--user_types--new_user_lookup))
+- `update_user_on_successful_authentication` (Boolean) A boolean that, if set to `true`, when users sign on through an LDAP Gateway client, user attributes are updated based on responses from the LDAP server.  Defaults to `false`.
 
 Read-Only:
 
 - `id` (String) Identifies the user type. This correlates to the `password.external.gateway.userType.id` User property.
 
-<a id="nestedblock--user_type--user_migration"></a>
-### Nested Schema for `user_type.user_migration`
+<a id="nestedatt--user_types--new_user_lookup"></a>
+### Nested Schema for `user_types.new_user_lookup`
 
 Required:
 
-- `attribute_mapping` (Block Set, Min: 1) A collection of properties that define how users should be provisioned in PingOne. The `user_type` block specifies which user properties in PingOne correspond to the user properties in an external LDAP directory. You can use an LDAP browser to view the user properties in the external LDAP directory. (see [below for nested schema](#nestedblock--user_type--user_migration--attribute_mapping))
-- `lookup_filter_pattern` (String) The LDAP user search filter to use to match users against the entered user identifier at login. For example, `(((uid=${identifier})(mail=${identifier}))`. Alternatively, this can be a search against the user directory.
-- `population_id` (String) The ID of the population to use to create user entries during lookup.
+- `attribute_mappings` (Attributes Set) A set of objects supplying a mapping of PingOne attributes to external LDAP attributes. One of the entries must be a mapping for `username`. This is required for the PingOne user schema. (see [below for nested schema](#nestedatt--user_types--new_user_lookup--attribute_mappings))
+- `ldap_filter_pattern` (String) The LDAP user search filter to use to match users against the entered user identifier at login. For example, `(((uid=${identifier})(mail=${identifier}))`. Alternatively, this can be a search against the user directory.
+- `population_id` (String) A string that specifies the ID of the population to use to create user entries during lookup.  Must be a valid PingOne resource ID.
 
-<a id="nestedblock--user_type--user_migration--attribute_mapping"></a>
-### Nested Schema for `user_type.user_migration.attribute_mapping`
+<a id="nestedatt--user_types--new_user_lookup--attribute_mappings"></a>
+### Nested Schema for `user_types.new_user_lookup.attribute_mappings`
 
 Required:
 
-- `name` (String) The name of a user attribute in PingOne. See [Users properties](https://apidocs.pingidentity.com/pingone/platform/v1/api/#users) for the complete list of available PingOne user attributes.
-- `value` (String) A reference to the corresponding external LDAP attribute.  Values are in the format `${ldapAttributes.mail}`, while Terraform HCL requires an additional `$` prefix character. For example, `$${ldapAttributes.mail}`
+- `name` (String) A string that specifies the name of a user attribute in PingOne. See [Users properties](https://apidocs.pingidentity.com/pingone/platform/v1/api/#users) for the complete list of available PingOne user attributes.
+- `value` (String) A string that specifies the reference to the corresponding external LDAP attribute.  Values are in the format `${ldapAttributes.mail}`, while Terraform HCL requires an additional `$` prefix character. For example, `$${ldapAttributes.mail}`.
 
 ## Import
 

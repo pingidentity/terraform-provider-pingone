@@ -1,0 +1,83 @@
+```release-note:note
+`resource/pingone_gateway`: Migrated to plugin framework.
+```
+
+```release-note:breaking-change
+`resource/pingone_gateway`: Changed the `user_type` data type from a set of objects to a map of objects and renamed to `user_types`.
+```
+
+```release-note:bug
+`resource/pingone_gateway`: Fixed issue that, when updating a `user_types` object, Terraform re-creates the full `user_types` object instead of updating the object in place.
+```
+
+```release-note:breaking-change
+`resource/pingone_gateway`: Renamed `user_type.user_migation` to `user_types.new_user_lookup` and changed data type from block set to single object.
+```
+
+```release-note:breaking-change
+`resource/pingone_gateway`: Renamed `user_type.user_migation.attribute_mapping` to `user_types.new_user_lookup.attribute_mappings` and changed data type from block set to set of objects.
+```
+
+```release-note:breaking-change
+`resource/pingone_gateway`: Renamed `radius_client` to `radius_clients` and changed data type from block set to set of objects.
+```
+
+```release-note:enhancement
+`resource/pingone_gateway`: Added `new_user_lookup.update_user_on_successful_authentication` LDAP gateway parameter.
+```
+
+```release-note:enhancement
+`resource/pingone_gateway`: Added `follow_referrals` LDAP gateway parameter.
+```
+
+```release-note:breaking-change
+`resource/pingone_gateway`: Renamed `user_type.push_password_changes_to_ldap` to `user_types.allow_password_changes`.
+```
+
+```release-note:breaking-change
+`resource/pingone_gateway`: Renamed `user_type.user_migration.lookup_filter_pattern` to `user_types.new_user_lookup.ldap_filter_pattern`.
+```
+
+```release-note:breaking-change
+`data-source/pingone_gateway`: Changed the `user_type` data type from a set of objects to a map of objects and renamed to `user_types`.
+```
+
+```release-note:breaking-change
+`data-source/pingone_gateway`: Renamed `user_type.user_migation` to `user_types.new_user_lookup` and changed data type from block set to single object.
+```
+
+```release-note:breaking-change
+`data-source/pingone_gateway`: Renamed `user_type.user_migation.attribute_mapping` to `user_types.new_user_lookup.attribute_mappings` and changed data type from block set to set of objects.
+```
+
+```release-note:breaking-change
+`data-source/pingone_gateway`: Renamed `radius_client` to `radius_clients` and changed data type from block set to set of objects.
+```
+
+```release-note:enhancement
+`data-source/pingone_gateway`: Added `new_user_lookup.update_user_on_successful_authentication` LDAP gateway parameter.
+```
+
+```release-note:enhancement
+`data-source/pingone_gateway`: Added `follow_referrals` LDAP gateway parameter.
+```
+
+```release-note:breaking-change
+`data-source/pingone_gateway`: Renamed `user_type.push_password_changes_to_ldap` to `user_types.allow_password_changes`.
+```
+
+```release-note:breaking-change
+`data-source/pingone_gateway`: Renamed `user_type.user_migration.lookup_filter_pattern` to `user_types.new_user_lookup.ldap_filter_pattern`.
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` 0.11.8 => 0.11.9
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` 0.6.2 => 0.7.0
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.38.0 => 0.39.0
+```
