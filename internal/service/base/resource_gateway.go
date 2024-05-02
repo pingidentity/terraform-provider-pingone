@@ -178,7 +178,7 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 	).AllowedValuesEnum(management.AllowedEnumGatewayTypeLDAPSecurityEnumValues).DefaultValue(string(management.ENUMGATEWAYTYPELDAPSECURITY_NONE))
 
 	followReferralsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A boolean that, when set to true, PingOne sends LDAP queries per referrals it receives from the LDAP servers.",
+		"For LDAP gateways only: A boolean that, when set to true, PingOne sends LDAP queries per referrals it receives from the LDAP servers.",
 	).DefaultValue(false)
 
 	kerberosServiceAccountUpnDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -1436,6 +1436,13 @@ func (p *gatewayResourceModel) toState(ctx context.Context, apiObject *managemen
 		diags.Append(d...)
 		p.RadiusNetworkPolicyServer, d = toStateRadiusNetworkPolicyServerOk(t.GetNetworkPolicyServerOk())
 		diags.Append(d...)
+
+	default:
+		diags.AddError(
+			"Undefined gateway type",
+			"Cannot identify the gateway type from the data object.  Please report this to the provider maintainers.",
+		)
+
 	}
 
 	return diags

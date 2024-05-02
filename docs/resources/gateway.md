@@ -148,7 +148,7 @@ resource "pingone_gateway" "my_awesome_api_gateway" {
 - `bind_password` (String, Sensitive) For LDAP gateways only: A string that specifies the bind password for the LDAP directory.
 - `connection_security` (String) For LDAP gateways only: A string that specifies the connection security type.  Options are `None`, `StartTLS`, `TLS`.  Defaults to `None`.
 - `description` (String) A string that specifies a description to apply to the gateway resource.
-- `follow_referrals` (Boolean) A boolean that, when set to true, PingOne sends LDAP queries per referrals it receives from the LDAP servers.  Defaults to `false`.
+- `follow_referrals` (Boolean) For LDAP gateways only: A boolean that, when set to true, PingOne sends LDAP queries per referrals it receives from the LDAP servers.  Defaults to `false`.
 - `kerberos` (Attributes) For LDAP gateways only: A single object that specifies Kerberos connection details. (see [below for nested schema](#nestedatt--kerberos))
 - `radius_clients` (Attributes Set) For RADIUS gateways only: A set of objects describing RADIUS client connections. (see [below for nested schema](#nestedatt--radius_clients))
 - `radius_davinci_policy_id` (String) For RADIUS gateways only: A string that specifies the ID of the DaVinci flow policy to use.  Must be a valid PingOne resource ID.
