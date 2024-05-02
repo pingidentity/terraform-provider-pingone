@@ -69,3 +69,15 @@
 ```release-note:breaking-change
 `data-source/pingone_gateway`: Renamed `user_type.user_migration.lookup_filter_pattern` to `user_types.new_user_lookup.ldap_filter_pattern`.
 ```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` 0.11.8 => 0.11.9
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` 0.6.2 => 0.7.0
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.38.0 => 0.39.0
+```
