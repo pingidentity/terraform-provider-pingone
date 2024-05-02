@@ -737,7 +737,7 @@ func TestAccGateway_BadParameter(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccGatewayConfig_BadParameter(resourceName, name),
-				ExpectError: regexp.MustCompile("Unexpected parameter bind_dn for PING_FEDERATE gateway type"),
+				ExpectError: regexp.MustCompile("Invalid argument combination"),
 			},
 			// Configure for import testing
 			{

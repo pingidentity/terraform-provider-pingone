@@ -25,7 +25,12 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	boolvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	mapvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/mapvalidator"
+	objectvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
+	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
+	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -228,8 +233,16 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 		"A string that specifies the shared secret for the RADIUS client. If this value is not provided, the shared secret specified with `radius_default_shared_secret` is used. If you are not providing a shared secret for the client, this parameter is optional.",
 	)
 
-	ldapRequiredSchemaPaths := []path.Expression{}
-	radiusRequiredSchemaPaths := []path.Expression{}
+	ldapRequiredSchemaPaths := []path.Expression{
+		path.MatchRoot("bind_dn"),
+		path.MatchRoot("bind_password"),
+		path.MatchRoot("servers"),
+		path.MatchRoot("vendor"),
+	}
+	radiusRequiredSchemaPaths := []path.Expression{
+		path.MatchRoot("radius_davinci_policy_id"),
+		path.MatchRoot("radius_clients"),
+	}
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -277,7 +290,27 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Optional:    true,
 
 				Validators: []validator.String{
+					stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_LDAP)),
+						path.MatchRoot("type"),
+					),
 					stringvalidator.AlsoRequires(ldapRequiredSchemaPaths...),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_API_GATEWAY_INTEGRATION)),
+						path.MatchRoot("type"),
+					),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_FEDERATE)),
+						path.MatchRoot("type"),
+					),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_INTELLIGENCE)),
+						path.MatchRoot("type"),
+					),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_RADIUS)),
+						path.MatchRoot("type"),
+					),
 				},
 			},
 
@@ -287,7 +320,27 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Sensitive:   true,
 
 				Validators: []validator.String{
+					stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_LDAP)),
+						path.MatchRoot("type"),
+					),
 					stringvalidator.AlsoRequires(ldapRequiredSchemaPaths...),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_API_GATEWAY_INTEGRATION)),
+						path.MatchRoot("type"),
+					),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_FEDERATE)),
+						path.MatchRoot("type"),
+					),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_INTELLIGENCE)),
+						path.MatchRoot("type"),
+					),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_RADIUS)),
+						path.MatchRoot("type"),
+					),
 				},
 			},
 
@@ -300,6 +353,22 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Validators: []validator.String{
 					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumGatewayTypeLDAPSecurityEnumValues)...),
 					stringvalidator.AlsoRequires(ldapRequiredSchemaPaths...),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_API_GATEWAY_INTEGRATION)),
+						path.MatchRoot("type"),
+					),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_FEDERATE)),
+						path.MatchRoot("type"),
+					),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_INTELLIGENCE)),
+						path.MatchRoot("type"),
+					),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_RADIUS)),
+						path.MatchRoot("type"),
+					),
 				},
 			},
 
@@ -308,6 +377,26 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 				MarkdownDescription: followReferralsDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
+
+				Validators: []validator.Bool{
+					boolvalidator.AlsoRequires(ldapRequiredSchemaPaths...),
+					boolvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_API_GATEWAY_INTEGRATION)),
+						path.MatchRoot("type"),
+					),
+					boolvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_FEDERATE)),
+						path.MatchRoot("type"),
+					),
+					boolvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_INTELLIGENCE)),
+						path.MatchRoot("type"),
+					),
+					boolvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_RADIUS)),
+						path.MatchRoot("type"),
+					),
+				},
 			},
 
 			"kerberos": schema.SingleNestedAttribute{
@@ -316,6 +405,22 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 
 				Validators: []validator.Object{
 					objectvalidator.AlsoRequires(ldapRequiredSchemaPaths...),
+					objectvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_API_GATEWAY_INTEGRATION)),
+						path.MatchRoot("type"),
+					),
+					objectvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_FEDERATE)),
+						path.MatchRoot("type"),
+					),
+					objectvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_INTELLIGENCE)),
+						path.MatchRoot("type"),
+					),
+					objectvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_RADIUS)),
+						path.MatchRoot("type"),
+					),
 				},
 
 				Attributes: map[string]schema.Attribute{
@@ -346,7 +451,27 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 				ElementType: types.StringType,
 
 				Validators: []validator.Set{
+					setvalidatorinternal.IsRequiredIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_LDAP)),
+						path.MatchRoot("type"),
+					),
 					setvalidator.AlsoRequires(ldapRequiredSchemaPaths...),
+					setvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_API_GATEWAY_INTEGRATION)),
+						path.MatchRoot("type"),
+					),
+					setvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_FEDERATE)),
+						path.MatchRoot("type"),
+					),
+					setvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_INTELLIGENCE)),
+						path.MatchRoot("type"),
+					),
+					setvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_RADIUS)),
+						path.MatchRoot("type"),
+					),
 				},
 			},
 
@@ -358,6 +483,22 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 
 				Validators: []validator.Bool{
 					boolvalidator.AlsoRequires(ldapRequiredSchemaPaths...),
+					boolvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_API_GATEWAY_INTEGRATION)),
+						path.MatchRoot("type"),
+					),
+					boolvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_FEDERATE)),
+						path.MatchRoot("type"),
+					),
+					boolvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_INTELLIGENCE)),
+						path.MatchRoot("type"),
+					),
+					boolvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_RADIUS)),
+						path.MatchRoot("type"),
+					),
 				},
 			},
 
@@ -371,8 +512,28 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 				},
 
 				Validators: []validator.String{
+					stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_LDAP)),
+						path.MatchRoot("type"),
+					),
 					stringvalidator.AlsoRequires(ldapRequiredSchemaPaths...),
 					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumGatewayVendorEnumValues)...),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_API_GATEWAY_INTEGRATION)),
+						path.MatchRoot("type"),
+					),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_FEDERATE)),
+						path.MatchRoot("type"),
+					),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_INTELLIGENCE)),
+						path.MatchRoot("type"),
+					),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_RADIUS)),
+						path.MatchRoot("type"),
+					),
 				},
 			},
 
@@ -383,6 +544,22 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 
 				Validators: []validator.Map{
 					mapvalidator.AlsoRequires(ldapRequiredSchemaPaths...),
+					mapvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_API_GATEWAY_INTEGRATION)),
+						path.MatchRoot("type"),
+					),
+					mapvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_FEDERATE)),
+						path.MatchRoot("type"),
+					),
+					mapvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_INTELLIGENCE)),
+						path.MatchRoot("type"),
+					),
+					mapvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_RADIUS)),
+						path.MatchRoot("type"),
+					),
 				},
 
 				NestedObject: schema.NestedAttributeObject{
@@ -491,7 +668,27 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 				CustomType: pingonetypes.ResourceIDType{},
 
 				Validators: []validator.String{
+					stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_RADIUS)),
+						path.MatchRoot("type"),
+					),
 					stringvalidator.AlsoRequires(radiusRequiredSchemaPaths...),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_API_GATEWAY_INTEGRATION)),
+						path.MatchRoot("type"),
+					),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_FEDERATE)),
+						path.MatchRoot("type"),
+					),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_INTELLIGENCE)),
+						path.MatchRoot("type"),
+					),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_LDAP)),
+						path.MatchRoot("type"),
+					),
 				},
 			},
 
@@ -502,6 +699,22 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 
 				Validators: []validator.String{
 					stringvalidator.AlsoRequires(radiusRequiredSchemaPaths...),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_API_GATEWAY_INTEGRATION)),
+						path.MatchRoot("type"),
+					),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_FEDERATE)),
+						path.MatchRoot("type"),
+					),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_INTELLIGENCE)),
+						path.MatchRoot("type"),
+					),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_LDAP)),
+						path.MatchRoot("type"),
+					),
 				},
 			},
 
@@ -510,8 +723,28 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Optional:    true,
 
 				Validators: []validator.Set{
+					setvalidatorinternal.IsRequiredIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_RADIUS)),
+						path.MatchRoot("type"),
+					),
 					setvalidator.AlsoRequires(radiusRequiredSchemaPaths...),
 					setvalidator.SizeAtLeast(1),
+					setvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_API_GATEWAY_INTEGRATION)),
+						path.MatchRoot("type"),
+					),
+					setvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_FEDERATE)),
+						path.MatchRoot("type"),
+					),
+					setvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_INTELLIGENCE)),
+						path.MatchRoot("type"),
+					),
+					setvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_LDAP)),
+						path.MatchRoot("type"),
+					),
 				},
 
 				NestedObject: schema.NestedAttributeObject{
@@ -521,7 +754,7 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 							Required:    true,
 
 							Validators: []validator.String{
-								stringvalidator.RegexMatches(verify.IPv4Regexp, "The IP address must be a valid IPv4 address."),
+								stringvalidator.RegexMatches(verify.IPv4RegexpFull, "The IP address must be a valid IPv4 address."),
 							},
 						},
 
@@ -541,6 +774,22 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 
 				Validators: []validator.Object{
 					objectvalidator.AlsoRequires(radiusRequiredSchemaPaths...),
+					objectvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_API_GATEWAY_INTEGRATION)),
+						path.MatchRoot("type"),
+					),
+					objectvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_FEDERATE)),
+						path.MatchRoot("type"),
+					),
+					objectvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_PING_INTELLIGENCE)),
+						path.MatchRoot("type"),
+					),
+					objectvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMGATEWAYTYPE_LDAP)),
+						path.MatchRoot("type"),
+					),
 				},
 
 				Attributes: map[string]schema.Attribute{

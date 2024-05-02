@@ -13,7 +13,11 @@ var P1ResourceIDRegexpFullString = regexp.MustCompile(fmt.Sprintf(`^%s$`, P1Reso
 var P1DVResourceIDRegexp = regexp.MustCompile(`[a-f0-9]{32}`)
 var P1DVResourceIDRegexpFullString = regexp.MustCompile(fmt.Sprintf(`^%s$`, P1DVResourceIDRegexp.String()))
 var RFC3339Regexp = regexp.MustCompile(`^((?:(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2}(?:\.\d+)?))(Z|[\+-]\d{2}:\d{2})?)$`)
-var IPv4IPv6Regexp = regexp.MustCompile(`^(?:\d{1,3}\.){3}\d{1,3}(?:/\d{1,2})?$|^(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}(?:/\d{1,3})?$`)
+var IPv4Regexp = regexp.MustCompile(`(?:\d{1,3}\.){3}\d{1,3}(?:/\d{1,2})?`)
+var IPv4RegexpFull = regexp.MustCompile(fmt.Sprintf(`^%s$`, IPv4Regexp.String()))
+var IPv6Regexp = regexp.MustCompile(`(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}(?:/\d{1,3})?`)
+var IPv6RegexpFull = regexp.MustCompile(fmt.Sprintf(`^%s$`, IPv6Regexp.String()))
+var IPv4IPv6Regexp = regexp.MustCompile(fmt.Sprintf(`%s|%s`, IPv4RegexpFull.String(), IPv6RegexpFull.String()))
 var HexColorCode = regexp.MustCompile(`^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$`)
 
 var urlRegexStringWithoutProtocol = `(?:[\w-]+\.)+[a-z]{2,}(?:\/[\w.-]+)*(?:\/[\w\:.-]+)?\/?(?:\?.*)?$`
