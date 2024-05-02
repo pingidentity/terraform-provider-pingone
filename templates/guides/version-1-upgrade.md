@@ -1195,6 +1195,318 @@ resource "pingone_environment" "my_environment" {
 
 This parameter block is no longer needed and has been removed.
 
+## Resource: pingone_gateway
+
+### `radius_client` parameter rename and data type change
+
+The `radius_client` parameter has been renamed to `radius_clients` and is now a set of objects data type and no longer a block set type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_gateway" "my_awesome_gateway" {
+  type = "RADIUS"
+
+  # ... other configuration parameters
+
+  radius_client {
+    ip = "127.0.0.1"
+  }
+
+  radius_client {
+    ip = "127.0.0.2"
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_gateway" "my_awesome_gateway" {
+  type = "RADIUS"
+
+  # ... other configuration parameters
+
+  radius_clients = [
+    {
+      ip = "127.0.0.1"
+    },
+    {
+      ip = "127.0.0.2"
+    }
+  ]
+}
+```
+
+### `user_type` parameter rename and data type change
+
+The `user_type` parameter has been renamed to `user_types` and is now a map of objects data type and no longer a block set of objects type.  The map key of the new data type is the name of the user type (previously the `user_type.name` parameter).
+
+Previous configuration example:
+
+```terraform
+resource "pingone_gateway" "my_awesome_gateway" {
+  type = "LDAP"
+
+  # ... other configuration parameters
+
+  user_type {
+    name               = "User Type 1"
+    password_authority = "PING_ONE"
+
+    # ... other configuration parameters
+  }
+
+  user_type {
+    name               = "User Type 2"
+    password_authority = "LDAP"
+
+    # ... other configuration parameters
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_gateway" "my_awesome_gateway" {
+  type = "LDAP"
+
+  # ... other configuration parameters
+
+  user_types = {
+    "User Type 1" = {
+      password_authority = "PING_ONE"
+
+      # ... other configuration parameters
+    },
+
+    "User Type 2" = {
+      password_authority = "LDAP"
+      
+      # ... other configuration parameters
+    }
+  }
+}
+```
+
+### `user_type.push_password_changes_to_ldap` parameter rename
+
+The `user_type.push_password_changes_to_ldap` parameter has been renamed to `user_types.allow_password_changes`.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_gateway" "my_awesome_gateway" {
+  type = "LDAP"
+
+  # ... other configuration parameters
+
+  user_type {
+    name               = "User Type 1"
+    password_authority = "LDAP"
+
+    push_password_changes_to_ldap = true
+
+    # ... other configuration parameters
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_gateway" "my_awesome_gateway" {
+  type = "LDAP"
+
+  # ... other configuration parameters
+
+  user_types = {
+    "User Type 1" = {
+      password_authority = "LDAP"
+      
+      allow_password_changes = true
+
+      # ... other configuration parameters
+    }
+  }
+}
+```
+
+### `user_type.user_migration` parameter rename and data type change
+
+The `user_type.user_migration` parameter has been renamed to `user_types.new_user_lookup` and is now a single object data type and no longer a block set type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_gateway" "my_awesome_gateway" {
+  type = "LDAP"
+
+  # ... other configuration parameters
+
+  user_type {
+    name               = "User Type 1"
+    password_authority = "LDAP"
+
+    user_migration {
+      lookup_filter_pattern = "(|(sAMAccountName=$${identifier})(UserPrincipalName=$${identifier}))"
+
+      # ... other configuration parameters
+    }
+
+    # ... other configuration parameters
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_gateway" "my_awesome_gateway" {
+  type = "LDAP"
+
+  # ... other configuration parameters
+
+  user_types = {
+    "User Type 1" = {
+      password_authority = "LDAP"
+      
+      new_user_lookup = {
+        ldap_filter_pattern = "(|(sAMAccountName=$${identifier})(UserPrincipalName=$${identifier}))"
+
+        # ... other configuration parameters
+      }
+
+      # ... other configuration parameters
+    }
+  }
+}
+```
+
+### `user_type.user_migration.attribute_mapping` parameter rename and data type change
+
+The `user_type.user_migration.attribute_mapping` parameter has been renamed to `user_types.new_user_lookup.attribute_mappings` and is now a set of objects data type and no longer a block set type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_gateway" "my_awesome_gateway" {
+  type = "LDAP"
+
+  # ... other configuration parameters
+
+  user_type {
+    name               = "User Type 1"
+    password_authority = "LDAP"
+
+    user_migration {
+      lookup_filter_pattern = "(|(sAMAccountName=$${identifier})(UserPrincipalName=$${identifier}))"
+
+      attribute_mapping {
+        name  = "username"
+        value = "$${ldapAttributes.sAMAccountName}"
+      }
+
+      attribute_mapping {
+        name  = "email"
+        value = "$${ldapAttributes.mail}"
+      }
+
+      # ... other configuration parameters
+    }
+
+    # ... other configuration parameters
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_gateway" "my_awesome_gateway" {
+  type = "LDAP"
+
+  # ... other configuration parameters
+
+  user_types = {
+    "User Type 1" = {
+      password_authority = "LDAP"
+      
+      new_user_lookup = {
+        ldap_filter_pattern = "(|(sAMAccountName=$${identifier})(UserPrincipalName=$${identifier}))"
+
+        attribute_mappings = [
+          {
+            name  = "username"
+            value = "$${ldapAttributes.sAMAccountName}"
+          },
+          {
+            name  = "email"
+            value = "$${ldapAttributes.mail}"
+          }
+        ]
+
+        # ... other configuration parameters
+      }
+
+      # ... other configuration parameters
+    }
+  }
+}
+```
+
+### `user_type.user_migration.lookup_filter_pattern` parameter rename
+
+The `user_type.user_migration.lookup_filter_pattern` parameter has been renamed to `user_types.new_user_lookup.ldap_filter_pattern`.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_gateway" "my_awesome_gateway" {
+  type = "LDAP"
+
+  # ... other configuration parameters
+
+  user_type {
+    name               = "User Type 1"
+    password_authority = "LDAP"
+
+    user_migration {
+      lookup_filter_pattern = "(|(sAMAccountName=$${identifier})(UserPrincipalName=$${identifier}))"
+
+      # ... other configuration parameters
+    }
+
+    # ... other configuration parameters
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_gateway" "my_awesome_gateway" {
+  type = "LDAP"
+
+  # ... other configuration parameters
+
+  user_types = {
+    "User Type 1" = {
+      password_authority = "LDAP"
+      
+      new_user_lookup = {
+        ldap_filter_pattern = "(|(sAMAccountName=$${identifier})(UserPrincipalName=$${identifier}))"
+
+        # ... other configuration parameters
+      }
+
+      # ... other configuration parameters
+    }
+  }
+}
+```
+
 ## Resource: pingone_identity_provider
 
 ### `amazon` parameter data type change
@@ -2282,6 +2594,32 @@ The `davinci_application` computed attribute is now a nested object type and no 
 ### `trigger` computed attribute data type change
 
 The `trigger` computed attribute is now a nested object type and no longer a list block type.
+
+## Data Source: pingone_gateway
+
+### `radius_client` computed attribute rename and data type change
+
+The `radius_client` computed attribute has been renamed to `radius_clients` and is now a set of objects data type and no longer a block set type.
+
+### `user_type` computed attribute rename and data type change
+
+The `user_type` computed attribute has been renamed to `user_types` and is now a map of objects data type and no longer a block set of objects type.  The map key of the new data type is the name of the user type (previously the `user_type.name` parameter).
+
+### `user_type.push_password_changes_to_ldap` computed attribute rename
+
+The `user_type.push_password_changes_to_ldap` computed attribute has been renamed to `user_types.allow_password_changes`.
+
+### `user_type.user_migration` computed attribute rename and data type change
+
+The `user_type.user_migration` computed attribute has been renamed to `user_types.new_user_lookup` and is now a single object data type and no longer a block set type.
+
+### `user_type.user_migration.attribute_mapping` computed attribute rename and data type change
+
+The `user_type.user_migration.attribute_mapping` computed attribute has been renamed to `user_types.new_user_lookup.attribute_mappings` and is now a set of objects data type and no longer a block set type.
+
+### `user_type.user_migration.lookup_filter_pattern` computed attribute rename
+
+The `user_type.user_migration.lookup_filter_pattern` computed attribute has been renamed to `user_types.new_user_lookup.ldap_filter_pattern`.
 
 ## Data Source: pingone_groups
 
