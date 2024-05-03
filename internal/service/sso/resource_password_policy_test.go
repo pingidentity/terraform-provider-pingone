@@ -129,16 +129,15 @@ func TestAccPasswordPolicy_Full(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "Test description"),
-					resource.TestCheckResourceAttr(resourceFullName, "environment_default", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "bypass_policy", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "exclude_commonly_used_passwords", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "exclude_profile_data", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "history.prior_password_count", "10"),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "excludes_commonly_used_passwords", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "excludes_profile_data", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "history.count", "10"),
 					resource.TestCheckResourceAttr(resourceFullName, "history.retention_days", "150"),
 					resource.TestCheckResourceAttr(resourceFullName, "length.min", "12"),
 					resource.TestCheckResourceAttr(resourceFullName, "length.max", "255"),
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.duration_seconds", "30"),
-					resource.TestCheckResourceAttr(resourceFullName, "lockout.fail_count", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "lockout.failure_count", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "min_characters.alphabetical_uppercase", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "min_characters.alphabetical_lowercase", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "min_characters.numeric", "1"),
@@ -149,7 +148,7 @@ func TestAccPasswordPolicy_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "min_complexity", "7"),
 					resource.TestCheckResourceAttr(resourceFullName, "min_unique_characters", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "not_similar_to_current", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "population_count", "0"),
+					//resource.TestCheckResourceAttr(resourceFullName, "population_count", "1"),
 				),
 			},
 			// Test importing the resource
@@ -167,6 +166,9 @@ func TestAccPasswordPolicy_Full(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"population_count", // this is ignored because it is 0 (not returned) on recording initial creation state, but is returned on import read, leading to a difference between the state after create and the state after re-import
+				},
 			},
 		},
 	})
@@ -196,10 +198,9 @@ func TestAccPasswordPolicy_Minimal(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckNoResourceAttr(resourceFullName, "description"),
-					resource.TestCheckResourceAttr(resourceFullName, "environment_default", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "bypass_policy", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "exclude_commonly_used_passwords", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "exclude_profile_data", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "excludes_commonly_used_passwords", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "excludes_profile_data", "false"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "history"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "length"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "lockout"),
@@ -285,8 +286,8 @@ resource "pingone_password_policy" "%[2]s" {
   not_similar_to_current           = true
 
   history = {
-    prior_password_count = 10
-    retention_days       = 150
+    count          = 10
+    retention_days = 150
   }
 
   length = {
@@ -312,6 +313,13 @@ resource "pingone_password_policy" "%[2]s" {
   max_repeated_characters = 2
   min_complexity          = 7
   min_unique_characters   = 5
+}
+
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name               = "%[3]s"
+  password_policy_id = pingone_password_policy.%[2]s.id
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 

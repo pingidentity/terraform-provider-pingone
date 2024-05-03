@@ -43,6 +43,14 @@ func (r SchemaAttributeDescription) Clean(removeTrailingStop bool) SchemaAttribu
 }
 
 func (r SchemaAttributeDescription) DefaultValue(defaultValue any) SchemaAttributeDescription {
+	return r.genericValue("Defaults to", defaultValue)
+}
+
+func (r SchemaAttributeDescription) FixedValue(defaultValue any) SchemaAttributeDescription {
+	return r.genericValue("Fixed value of", defaultValue)
+}
+
+func (r SchemaAttributeDescription) genericValue(text string, defaultValue any) SchemaAttributeDescription {
 	var defaultValueString string
 	switch v := defaultValue.(type) {
 	case string:
@@ -58,7 +66,7 @@ func (r SchemaAttributeDescription) DefaultValue(defaultValue any) SchemaAttribu
 	default:
 		defaultValueString = "DOC ERROR: Unknown default data type"
 	}
-	return r.AppendStringValue("Defaults to", defaultValueString)
+	return r.AppendStringValue(text, defaultValueString)
 }
 
 func (r SchemaAttributeDescription) AllowedValues(allowedValues ...any) SchemaAttributeDescription {

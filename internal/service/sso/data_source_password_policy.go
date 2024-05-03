@@ -28,7 +28,6 @@ type PasswordPolicyDataSourceModel struct {
 	Name                          types.String                 `tfsdk:"name"`
 	Description                   types.String                 `tfsdk:"description"`
 	Default                       types.Bool                   `tfsdk:"default"`
-	BypassPolicy                  types.Bool                   `tfsdk:"bypass_policy"`
 	ExcludesCommonlyUsedPasswords types.Bool                   `tfsdk:"excludes_commonly_used_passwords"`
 	ExcludesProfileData           types.Bool                   `tfsdk:"excludes_profile_data"`
 	History                       types.Object                 `tfsdk:"history"`
@@ -74,10 +73,6 @@ func (r *PasswordPolicyDataSource) Schema(ctx context.Context, req datasource.Sc
 
 	defaultDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether this password policy is enforced as the default within the environment. When set to `true`, all other password policies are set to `false`.",
-	)
-
-	bypassPolicyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A boolean that specifies whether the password policy for a user will be ignored.",
 	)
 
 	excludeCommonlyUsedPasswordsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -168,12 +163,6 @@ func (r *PasswordPolicyDataSource) Schema(ctx context.Context, req datasource.Sc
 			"default": schema.BoolAttribute{
 				Description:         defaultDescription.Description,
 				MarkdownDescription: defaultDescription.MarkdownDescription,
-				Computed:            true,
-			},
-
-			"bypass_policy": schema.BoolAttribute{
-				Description:         bypassPolicyDescription.Description,
-				MarkdownDescription: bypassPolicyDescription.MarkdownDescription,
 				Computed:            true,
 			},
 
@@ -450,7 +439,6 @@ func (p *PasswordPolicyDataSourceModel) toState(apiObject *management.PasswordPo
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())
-	p.BypassPolicy = framework.BoolOkToTF(apiObject.GetBypassPolicyOk())
 	p.ExcludesCommonlyUsedPasswords = framework.BoolOkToTF(apiObject.GetExcludesCommonlyUsedOk())
 	p.ExcludesProfileData = framework.BoolOkToTF(apiObject.GetExcludesProfileDataOk())
 

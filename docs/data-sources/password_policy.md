@@ -39,7 +39,6 @@ data "pingone_password_policy" "example_by_id" {
 
 ### Read-Only
 
-- `bypass_policy` (Boolean) A boolean that specifies whether the password policy for a user will be ignored.
 - `default` (Boolean) A boolean that specifies whether this password policy is enforced as the default within the environment. When set to `true`, all other password policies are set to `false`.
 - `description` (String) A string that specifies the description to apply to the password policy.
 - `excludes_commonly_used_passwords` (Boolean) A boolean that specifies whether to ensure the password is not one of the commonly used passwords.

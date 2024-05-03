@@ -33,7 +33,6 @@ type PasswordPolicyResourceModel struct {
 	Name                          types.String                 `tfsdk:"name"`
 	Description                   types.String                 `tfsdk:"description"`
 	Default                       types.Bool                   `tfsdk:"default"`
-	BypassPolicy                  types.Bool                   `tfsdk:"bypass_policy"`
 	ExcludesCommonlyUsedPasswords types.Bool                   `tfsdk:"excludes_commonly_used_passwords"`
 	ExcludesProfileData           types.Bool                   `tfsdk:"excludes_profile_data"`
 	History                       types.Object                 `tfsdk:"history"`
@@ -116,13 +115,16 @@ func (r *PasswordPolicyResource) Metadata(ctx context.Context, req resource.Meta
 func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 
 	const attrMinLength = 1
+	const passwordLengthMax = 255
+	const passwordLengthMinMin = 8
+	const passwordLengthMinMax = 32
+	const minCharactersFixedValue = 1
+	const maxRepeatedCharactersFixedValue = 2
+	const minComplexityFixedValue = 7
+	const minUniqueCharactersFixedValue = 5
 
 	defaultDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether this password policy is enforced as the default within the environment. When set to `true`, all other password policies are set to `false`.",
-	).DefaultValue(false)
-
-	bypassPolicyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A boolean that specifies whether the password policy for a user will be ignored.",
 	).DefaultValue(false)
 
 	excludeCommonlyUsedPasswordsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -135,35 +137,47 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 
 	passwordLengthMaxDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that specifies the maximum number of characters allowed for the password. This property is not enforced when not present.",
-	).DefaultValue(255)
+	).DefaultValue(passwordLengthMax).FixedValue(passwordLengthMax)
 
 	passwordLengthMinDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that specifies the minimum number of characters required for the password. This can be from `8` to `32` (inclusive). This property is not enforced when not present.",
-	).DefaultValue(8)
+		fmt.Sprintf("An integer that specifies the minimum number of characters required for the password. This can be from `%d` to `%d` (inclusive). This property is not enforced when not present.", passwordLengthMinMin, passwordLengthMinMax),
+	)
 
 	minCharactersDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that specifies sets of characters that can be included, and the value is the minimum number of times one of the characters must appear in the user's password. The only allowed key values are `ABCDEFGHIJKLMNOPQRSTUVWXYZ`, `abcdefghijklmnopqrstuvwxyz`, `0123456789`, and `~!@#$%^&*()-_=+[]{}\\|;:,.<>/?`. This property is not enforced when not present.",
 	)
 
 	minCharactersAlphabeticalUppercaseDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that specifies the count of alphabetical uppercase characters (`ABCDEFGHIJKLMNOPQRSTUVWXYZ`) that should feature in the user's password.  Fixed value of 1.",
-	).DefaultValue(1)
+		"An integer that specifies the count of alphabetical uppercase characters (`ABCDEFGHIJKLMNOPQRSTUVWXYZ`) that should feature in the user's password.",
+	).DefaultValue(minCharactersFixedValue).FixedValue(minCharactersFixedValue)
 
 	minCharactersAlphabeticalLowercaseDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that specifies the count of alphabetical uppercase characters (`abcdefghijklmnopqrstuvwxyz`) that should feature in the user's password.  Fixed value of 1.",
-	).DefaultValue(1)
+		"An integer that specifies the count of alphabetical uppercase characters (`abcdefghijklmnopqrstuvwxyz`) that should feature in the user's password.",
+	).DefaultValue(minCharactersFixedValue).FixedValue(minCharactersFixedValue)
 
 	minCharactersNumericDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that specifies the count of numeric characters (`0123456789`) that should feature in the user's password.  Fixed value of 1.",
-	).DefaultValue(1)
+		"An integer that specifies the count of numeric characters (`0123456789`) that should feature in the user's password.",
+	).DefaultValue(minCharactersFixedValue).FixedValue(minCharactersFixedValue)
 
 	minCharactersSpecialCharactersDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that specifies the count of special characters (`~!@#$%^&*()-_=+[]{}\\|;:,.<>/?`) that should feature in the user's password.  Fixed value of 1.",
-	).DefaultValue(1)
+		"An integer that specifies the count of special characters (`~!@#$%^&*()-_=+[]{}\\|;:,.<>/?`) that should feature in the user's password.",
+	).DefaultValue(minCharactersFixedValue).FixedValue(minCharactersFixedValue)
 
 	passwordAgeMaxDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that specifies the maximum number of days the same password can be used before it must be changed. The value must be a positive, non-zero integer.  The value must be greater than the sum of `min` (if set) + 21 (the expiration warning interval for passwords).",
 	)
+
+	maxRepeatedCharactersDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the maximum number of repeated characters allowed. This property is not enforced when not present.",
+	).FixedValue(maxRepeatedCharactersFixedValue)
+
+	minComplexityDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the minimum complexity of the password based on the concept of password haystacks. The value is the number of days required to exhaust the entire search space during a brute force attack. This property is not enforced when not present.",
+	).FixedValue(minComplexityFixedValue)
+
+	minUniqueCharactersDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the minimum number of unique characters required. This property is not enforced when not present.",
+	).FixedValue(minUniqueCharactersFixedValue)
 
 	notSimilarToCurrentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, ensures that the proposed password is not too similar to the user's current password based on the Levenshtein distance algorithm. The value of this parameter is evaluated only for password change actions in which the user enters both the current and the new password. By design, PingOne does not know the user's current password.",
@@ -203,15 +217,6 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 				Default: booldefault.StaticBool(false),
 			},
 
-			"bypass_policy": schema.BoolAttribute{
-				Description:         bypassPolicyDescription.Description,
-				MarkdownDescription: bypassPolicyDescription.MarkdownDescription,
-				Optional:            true,
-				Computed:            true,
-
-				Default: booldefault.StaticBool(false),
-			},
-
 			"excludes_commonly_used_passwords": schema.BoolAttribute{
 				Description:         excludeCommonlyUsedPasswordsDescription.Description,
 				MarkdownDescription: excludeCommonlyUsedPasswordsDescription.MarkdownDescription,
@@ -237,19 +242,19 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 				Attributes: map[string]schema.Attribute{
 					"count": schema.Int64Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of prior passwords to keep for prevention of password re-use. The value must be a positive, non-zero integer.").Description,
-						Optional:    true,
+						Required:    true,
 
 						Validators: []validator.Int64{
-							int64validator.AtLeast(1),
+							int64validator.AtLeast(attrMinLength),
 						},
 					},
 
 					"retention_days": schema.Int64Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the length of time to keep recent passwords for prevention of password re-use. The value must be a positive, non-zero integer.").Description,
-						Optional:    true,
+						Required:    true,
 
 						Validators: []validator.Int64{
-							int64validator.AtLeast(1),
+							int64validator.AtLeast(attrMinLength),
 						},
 					},
 				},
@@ -266,23 +271,20 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Optional:            true,
 						Computed:            true,
 
-						Default: int64default.StaticInt64(255),
+						Default: int64default.StaticInt64(passwordLengthMax),
 
 						Validators: []validator.Int64{
-							int64validator.Between(255, 255),
+							int64validator.Between(passwordLengthMax, passwordLengthMax),
 						},
 					},
 
 					"min": schema.Int64Attribute{
 						Description:         passwordLengthMinDescription.Description,
 						MarkdownDescription: passwordLengthMinDescription.MarkdownDescription,
-						Optional:            true,
-						Computed:            true,
-
-						Default: int64default.StaticInt64(8),
+						Required:            true,
 
 						Validators: []validator.Int64{
-							int64validator.AtLeast(1),
+							int64validator.Between(passwordLengthMinMin, passwordLengthMinMax),
 						},
 					},
 				},
@@ -295,19 +297,19 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 				Attributes: map[string]schema.Attribute{
 					"duration_seconds": schema.Int64Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the length of time before a password is automatically moved out of the lock out state. The value must be a positive, non-zero integer.").Description,
-						Optional:    true,
+						Required:    true,
 
 						Validators: []validator.Int64{
-							int64validator.AtLeast(1),
+							int64validator.AtLeast(attrMinLength),
 						},
 					},
 
 					"failure_count": schema.Int64Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of tries before a password is placed in the lockout state. The value must be a positive, non-zero integer.").Description,
-						Optional:    true,
+						Required:    true,
 
 						Validators: []validator.Int64{
-							int64validator.AtLeast(1),
+							int64validator.AtLeast(attrMinLength),
 						},
 					},
 				},
@@ -325,10 +327,10 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Optional:            true,
 						Computed:            true,
 
-						Default: int64default.StaticInt64(1),
+						Default: int64default.StaticInt64(minCharactersFixedValue),
 
 						Validators: []validator.Int64{
-							int64validator.Between(1, 1),
+							int64validator.Between(minCharactersFixedValue, minCharactersFixedValue),
 						},
 					},
 
@@ -338,10 +340,10 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Optional:            true,
 						Computed:            true,
 
-						Default: int64default.StaticInt64(1),
+						Default: int64default.StaticInt64(minCharactersFixedValue),
 
 						Validators: []validator.Int64{
-							int64validator.Between(1, 1),
+							int64validator.Between(minCharactersFixedValue, minCharactersFixedValue),
 						},
 					},
 
@@ -351,10 +353,10 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Optional:            true,
 						Computed:            true,
 
-						Default: int64default.StaticInt64(1),
+						Default: int64default.StaticInt64(minCharactersFixedValue),
 
 						Validators: []validator.Int64{
-							int64validator.Between(1, 1),
+							int64validator.Between(minCharactersFixedValue, minCharactersFixedValue),
 						},
 					},
 
@@ -364,10 +366,10 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Optional:            true,
 						Computed:            true,
 
-						Default: int64default.StaticInt64(1),
+						Default: int64default.StaticInt64(minCharactersFixedValue),
 
 						Validators: []validator.Int64{
-							int64validator.Between(1, 1),
+							int64validator.Between(minCharactersFixedValue, minCharactersFixedValue),
 						},
 					},
 				},
@@ -379,7 +381,7 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 				Optional:            true,
 
 				Validators: []validator.Int64{
-					int64validator.AtLeast(1),
+					int64validator.AtLeast(attrMinLength),
 				},
 			},
 
@@ -388,34 +390,37 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 				Optional:    true,
 
 				Validators: []validator.Int64{
-					int64validator.AtLeast(1),
+					int64validator.AtLeast(attrMinLength),
 				},
 			},
 
 			"max_repeated_characters": schema.Int64Attribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the maximum number of repeated characters allowed. This property is not enforced when not present.").Description,
-				Optional:    true,
+				Description:         maxRepeatedCharactersDescription.Description,
+				MarkdownDescription: maxRepeatedCharactersDescription.MarkdownDescription,
+				Optional:            true,
 
 				Validators: []validator.Int64{
-					int64validator.Between(2, 2),
+					int64validator.Between(maxRepeatedCharactersFixedValue, maxRepeatedCharactersFixedValue),
 				},
 			},
 
 			"min_complexity": schema.Int64Attribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the minimum complexity of the password based on the concept of password haystacks. The value is the number of days required to exhaust the entire search space during a brute force attack. This property is not enforced when not present.").Description,
-				Optional:    true,
+				Description:         minComplexityDescription.Description,
+				MarkdownDescription: minComplexityDescription.MarkdownDescription,
+				Optional:            true,
 
 				Validators: []validator.Int64{
-					int64validator.Between(7, 7),
+					int64validator.Between(minComplexityFixedValue, minComplexityFixedValue),
 				},
 			},
 
 			"min_unique_characters": schema.Int64Attribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the minimum number of unique characters required. This property is not enforced when not present.").Description,
-				Optional:    true,
+				Description:         minUniqueCharactersDescription.Description,
+				MarkdownDescription: minUniqueCharactersDescription.MarkdownDescription,
+				Optional:            true,
 
 				Validators: []validator.Int64{
-					int64validator.Between(5, 5),
+					int64validator.Between(minUniqueCharactersFixedValue, minUniqueCharactersFixedValue),
 				},
 			},
 
@@ -694,10 +699,6 @@ func (p *PasswordPolicyResourceModel) expand(ctx context.Context) (*management.P
 		data.SetDefault(false)
 	}
 
-	if !p.BypassPolicy.IsNull() && !p.BypassPolicy.IsUnknown() {
-		data.SetBypassPolicy(p.BypassPolicy.ValueBool())
-	}
-
 	if !p.History.IsNull() && !p.History.IsUnknown() {
 		var plan PasswordPolicyPasswordHistoryResourceModel
 		diags.Append(p.History.As(ctx, &plan, basetypes.ObjectAsOptions{
@@ -842,7 +843,6 @@ func (p *PasswordPolicyResourceModel) toState(apiObject *management.PasswordPoli
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())
-	p.BypassPolicy = framework.BoolOkToTF(apiObject.GetBypassPolicyOk())
 	p.ExcludesCommonlyUsedPasswords = framework.BoolOkToTF(apiObject.GetExcludesCommonlyUsedOk())
 	p.ExcludesProfileData = framework.BoolOkToTF(apiObject.GetExcludesProfileDataOk())
 

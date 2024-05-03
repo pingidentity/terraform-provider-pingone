@@ -67,7 +67,6 @@ resource "pingone_password_policy" "my_password_policy" {
 
 ### Optional
 
-- `bypass_policy` (Boolean) A boolean that specifies whether the password policy for a user will be ignored.  Defaults to `false`.
 - `default` (Boolean) A boolean that specifies whether this password policy is enforced as the default within the environment. When set to `true`, all other password policies are set to `false`.  Defaults to `false`.
 - `description` (String) A string that specifies the description to apply to the password policy.
 - `excludes_commonly_used_passwords` (Boolean) A boolean that specifies whether to ensure the password is not one of the commonly used passwords.  Defaults to `false`.
@@ -75,10 +74,10 @@ resource "pingone_password_policy" "my_password_policy" {
 - `history` (Attributes) A single object that specifies settings to control the user's password history. (see [below for nested schema](#nestedatt--history))
 - `length` (Attributes) A single object that specifies settings to control the user's password length. (see [below for nested schema](#nestedatt--length))
 - `lockout` (Attributes) A single object that specifies settings to control the user's lockout on unsuccessful authentication attempts. (see [below for nested schema](#nestedatt--lockout))
-- `max_repeated_characters` (Number) An integer that specifies the maximum number of repeated characters allowed. This property is not enforced when not present.
+- `max_repeated_characters` (Number) An integer that specifies the maximum number of repeated characters allowed. This property is not enforced when not present.  Fixed value of `2`.
 - `min_characters` (Attributes) A single object that specifies sets of characters that can be included, and the value is the minimum number of times one of the characters must appear in the user's password. The only allowed key values are `ABCDEFGHIJKLMNOPQRSTUVWXYZ`, `abcdefghijklmnopqrstuvwxyz`, `0123456789`, and `~!@#$%^&*()-_=+[]{}\|;:,.<>/?`. This property is not enforced when not present. (see [below for nested schema](#nestedatt--min_characters))
-- `min_complexity` (Number) An integer that specifies the minimum complexity of the password based on the concept of password haystacks. The value is the number of days required to exhaust the entire search space during a brute force attack. This property is not enforced when not present.
-- `min_unique_characters` (Number) An integer that specifies the minimum number of unique characters required. This property is not enforced when not present.
+- `min_complexity` (Number) An integer that specifies the minimum complexity of the password based on the concept of password haystacks. The value is the number of days required to exhaust the entire search space during a brute force attack. This property is not enforced when not present.  Fixed value of `7`.
+- `min_unique_characters` (Number) An integer that specifies the minimum number of unique characters required. This property is not enforced when not present.  Fixed value of `5`.
 - `not_similar_to_current` (Boolean) A boolean that, when set to `true`, ensures that the proposed password is not too similar to the user's current password based on the Levenshtein distance algorithm. The value of this parameter is evaluated only for password change actions in which the user enters both the current and the new password. By design, PingOne does not know the user's current password.  Defaults to `false`.
 - `password_age_max` (Number) An integer that specifies the maximum number of days the same password can be used before it must be changed. The value must be a positive, non-zero integer.  The value must be greater than the sum of `min` (if set) + 21 (the expiration warning interval for passwords).
 - `password_age_min` (Number) An integer that specifies the minimum number of days a password must be used before changing. The value must be a positive, non-zero integer. This property is not enforced when not present.
@@ -91,7 +90,7 @@ resource "pingone_password_policy" "my_password_policy" {
 <a id="nestedatt--history"></a>
 ### Nested Schema for `history`
 
-Optional:
+Required:
 
 - `count` (Number) An integer that specifies the number of prior passwords to keep for prevention of password re-use. The value must be a positive, non-zero integer.
 - `retention_days` (Number) An integer that specifies the length of time to keep recent passwords for prevention of password re-use. The value must be a positive, non-zero integer.
@@ -100,16 +99,19 @@ Optional:
 <a id="nestedatt--length"></a>
 ### Nested Schema for `length`
 
+Required:
+
+- `min` (Number) An integer that specifies the minimum number of characters required for the password. This can be from `8` to `32` (inclusive). This property is not enforced when not present.
+
 Optional:
 
-- `max` (Number) An integer that specifies the maximum number of characters allowed for the password. This property is not enforced when not present.  Defaults to `255`.
-- `min` (Number) An integer that specifies the minimum number of characters required for the password. This can be from `8` to `32` (inclusive). This property is not enforced when not present.  Defaults to `8`.
+- `max` (Number) An integer that specifies the maximum number of characters allowed for the password. This property is not enforced when not present.  Defaults to `255`.  Fixed value of `255`.
 
 
 <a id="nestedatt--lockout"></a>
 ### Nested Schema for `lockout`
 
-Optional:
+Required:
 
 - `duration_seconds` (Number) An integer that specifies the length of time before a password is automatically moved out of the lock out state. The value must be a positive, non-zero integer.
 - `failure_count` (Number) An integer that specifies the number of tries before a password is placed in the lockout state. The value must be a positive, non-zero integer.
@@ -120,10 +122,10 @@ Optional:
 
 Optional:
 
-- `alphabetical_lowercase` (Number) An integer that specifies the count of alphabetical uppercase characters (`abcdefghijklmnopqrstuvwxyz`) that should feature in the user's password.  Fixed value of 1.  Defaults to `1`.
-- `alphabetical_uppercase` (Number) An integer that specifies the count of alphabetical uppercase characters (`ABCDEFGHIJKLMNOPQRSTUVWXYZ`) that should feature in the user's password.  Fixed value of 1.  Defaults to `1`.
-- `numeric` (Number) An integer that specifies the count of numeric characters (`0123456789`) that should feature in the user's password.  Fixed value of 1.  Defaults to `1`.
-- `special_characters` (Number) An integer that specifies the count of special characters (`~!@#$%^&*()-_=+[]{}\|;:,.<>/?`) that should feature in the user's password.  Fixed value of 1.  Defaults to `1`.
+- `alphabetical_lowercase` (Number) An integer that specifies the count of alphabetical uppercase characters (`abcdefghijklmnopqrstuvwxyz`) that should feature in the user's password.  Defaults to `1`.  Fixed value of `1`.
+- `alphabetical_uppercase` (Number) An integer that specifies the count of alphabetical uppercase characters (`ABCDEFGHIJKLMNOPQRSTUVWXYZ`) that should feature in the user's password.  Defaults to `1`.  Fixed value of `1`.
+- `numeric` (Number) An integer that specifies the count of numeric characters (`0123456789`) that should feature in the user's password.  Defaults to `1`.  Fixed value of `1`.
+- `special_characters` (Number) An integer that specifies the count of special characters (`~!@#$%^&*()-_=+[]{}\|;:,.<>/?`) that should feature in the user's password.  Defaults to `1`.  Fixed value of `1`.
 
 ## Import
 
