@@ -267,8 +267,7 @@ func TestAccCredentialIssuanceRule_InvalidConfigs(t *testing.T) {
 			},
 			{
 				Config:      testAccCredentialIssuanceRuleConfig_CredentialTypeIsManaged(resourceName, name),
-				ExpectError: regexp.MustCompile("Error: An active Credential Issuance Rule cannot be assigned to a Credential Type with a management mode of MANAGED."),
-				//Destroy:     true,
+				ExpectError: regexp.MustCompile("Error: A Credential Issuance Rule cannot be assigned to a Credential Type that has a management mode of MANAGED."),
 			},
 		},
 	})

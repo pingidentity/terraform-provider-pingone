@@ -912,7 +912,7 @@ func checkCredentialTypeManagementMode(ctx context.Context, r *CredentialIssuanc
 		managementMode, managementModeOk := v.GetModeOk()
 		if !managementModeOk {
 			diags.AddError(
-				"Credential Type referenced in `credential_type.id` does have a management mode defined.",
+				"Credential Type referenced in `credential_type.id` does not have a management mode defined.",
 				fmt.Sprintf("Credential Type Id %s does not contain a `management.mode` value, or the value could not be found. Please report this to the provider maintainers.", credentialTypeId),
 			)
 			return diags
@@ -920,7 +920,7 @@ func checkCredentialTypeManagementMode(ctx context.Context, r *CredentialIssuanc
 
 		if *managementMode == credentials.ENUMCREDENTIALTYPEMANAGEMENTMODE_MANAGED {
 			diags.AddError(
-				fmt.Sprintf("An active Credential Issuance Rule cannot be assigned to a Credential Type with a management mode of %s.", string(credentials.ENUMCREDENTIALTYPEMANAGEMENTMODE_MANAGED)),
+				fmt.Sprintf("A Credential Issuance Rule cannot be assigned to a Credential Type that has a management mode of %s.", string(credentials.ENUMCREDENTIALTYPEMANAGEMENTMODE_MANAGED)),
 				fmt.Sprintf("The Credential Type Id %s associated with the configured Issuance Rule is set to a `management.mode` of %s.  The Issuance Rule must be removed, or the Credential Type updated.", credentialTypeId, string(credentials.ENUMCREDENTIALTYPEMANAGEMENTMODE_MANAGED)),
 			)
 			return diags
