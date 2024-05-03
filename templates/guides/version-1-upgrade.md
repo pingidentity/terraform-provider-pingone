@@ -2344,6 +2344,294 @@ resource "pingone_notification_settings_email" "my_awesome_email_settings" {
 }
 ```
 
+## Resource: pingone_password_policy
+
+### `account_lockout` parameter rename and data type change
+
+The `account_lockout` parameter has been renamed to `lockout` and is now a nested object type and no longer a block list type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_password_policy" "my_awesome_password_policy" {
+  # ... other configuration parameters
+
+  account_lockout {
+    duration_seconds = 900
+    fail_count       = 5
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_password_policy" "my_awesome_password_policy" {
+  # ... other configuration parameters
+
+  lockout = {
+    duration_seconds = 900
+    failure_count    = 5
+  }
+}
+```
+
+### `account_lockout.fail_count` parameter renamed
+
+The `account_lockout.fail_count` parameter has been renamed to `lockout.failure_count`.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_password_policy" "my_awesome_password_policy" {
+  # ... other configuration parameters
+
+  account_lockout {
+    # ... other configuration parameters
+
+    fail_count = 5
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_password_policy" "my_awesome_password_policy" {
+  # ... other configuration parameters
+
+  lockout = {
+    # ... other configuration parameters
+
+    failure_count = 5
+  }
+}
+```
+
+### `bypass_policy` parameter removed
+
+The `bypass_policy` parameter has no effect and has been removed.
+
+### `environment_default` parameter renamed
+
+The `environment_default` parameter has been renamed to `default`.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_password_policy" "my_awesome_password_policy" {
+  # ... other configuration parameters
+
+  environment_default = true
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_password_policy" "my_awesome_password_policy" {
+  # ... other configuration parameters
+
+  default = true
+}
+```
+
+### `exclude_commonly_used_passwords` parameter renamed
+
+The `exclude_commonly_used_passwords` parameter has been renamed to `excludes_commonly_used_passwords`.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_password_policy" "my_awesome_password_policy" {
+  # ... other configuration parameters
+
+  exclude_commonly_used_passwords = true
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_password_policy" "my_awesome_password_policy" {
+  # ... other configuration parameters
+
+  excludes_commonly_used_passwords = true
+}
+```
+
+### `exclude_profile_data` parameter renamed
+
+The `exclude_profile_data` parameter has been renamed to `excludes_profile_data`.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_password_policy" "my_awesome_password_policy" {
+  # ... other configuration parameters
+
+  exclude_profile_data = true
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_password_policy" "my_awesome_password_policy" {
+  # ... other configuration parameters
+
+  excludes_profile_data = true
+}
+```
+
+### `password_age.max` parameter moved
+
+The `password_age.max` parameter has been moved to `password_age_max`.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_password_policy" "my_awesome_password_policy" {
+  # ... other configuration parameters
+
+  password_age {
+    # ... other configuration parameters
+
+    max = 30
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_password_policy" "my_awesome_password_policy" {
+  # ... other configuration parameters
+
+  password_age_max = 30
+}
+```
+
+### `password_age.min` parameter moved
+
+The `password_age.min` parameter has been moved to `password_age_min`.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_password_policy" "my_awesome_password_policy" {
+  # ... other configuration parameters
+
+  password_age {
+    # ... other configuration parameters
+
+    min = 1
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_password_policy" "my_awesome_password_policy" {
+  # ... other configuration parameters
+
+  password_age_min = 1
+}
+```
+
+### `password_history` parameter rename and data type change
+
+The `password_history` parameter has been renamed to `history` and is now a nested object type and no longer a block list type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_password_policy" "my_awesome_password_policy" {
+  # ... other configuration parameters
+
+  password_history {
+    prior_password_count = 6
+    retention_days       = 365
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_password_policy" "my_awesome_password_policy" {
+  # ... other configuration parameters
+
+  history {
+    count          = 6
+    retention_days = 365
+  }
+}
+```
+
+### `password_history.prior_password_count` parameter renamed
+
+The `password_history.prior_password_count` parameter has been renamed to `history.count`.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_password_policy" "my_awesome_password_policy" {
+  # ... other configuration parameters
+
+  password_history {
+    # ... other configuration parameters
+
+    prior_password_count = 6
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_password_policy" "my_awesome_password_policy" {
+  # ... other configuration parameters
+
+  history {
+    # ... other configuration parameters
+
+    count = 6
+  }
+}
+```
+
+### `password_length` parameter rename and data type change
+
+The `password_length` parameter has been renamed to `length` and is now a nested object type and no longer a block list type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_password_policy" "my_awesome_password_policy" {
+  # ... other configuration parameters
+
+  password_length {
+    min = 8
+    max = 255
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_password_policy" "my_awesome_password_policy" {
+  # ... other configuration parameters
+
+  length = {
+    min = 8
+    max = 255
+  }
+}
+```
+
 ## Resource: pingone_resource_attribute
 
 ### `resource_id` parameter changed
@@ -2720,6 +3008,53 @@ This parameter was previously deprecated and has been removed.  Consider using t
 ### `base_url_orchestrate` computed attribute removed
 
 This parameter was previously deprecated and has been removed.  Consider using the [PingOne Utilities module](https://registry.terraform.io/modules/pingidentity/utils/pingone/latest) going forward.
+
+
+## Data Source: pingone_password_policy
+
+### `account_lockout` computed attribute rename and data type change
+
+The `account_lockout` computed attribute has been renamed to `lockout` and is now a nested object type and no longer a block list type.
+
+### `account_lockout.fail_count` computed attribute renamed
+
+The `account_lockout.fail_count` computed attribute has been renamed to `lockout.failure_count`.
+
+### `bypass_policy` computed attribute removed
+
+The `bypass_policy` computed attribute has no effect and has been removed.
+
+### `environment_default` computed attribute renamed
+
+The `environment_default` computed attribute has been renamed to `default`.
+
+### `exclude_commonly_used_passwords` computed attribute renamed
+
+The `exclude_commonly_used_passwords` computed attribute has been renamed to `excludes_commonly_used_passwords`.
+
+### `exclude_profile_data` computed attribute renamed
+
+The `exclude_profile_data` computed attribute has been renamed to `excludes_profile_data`.
+
+### `password_age.max` computed attribute moved
+
+The `password_age.max` computed attribute has been moved to `password_age_max`.
+
+### `password_age.min` computed attribute moved
+
+The `password_age.min` computed attribute has been moved to `password_age_min`.
+
+### `password_history` computed attribute rename and data type change
+
+The `password_history` computed attribute has been renamed to `history` and is now a nested object type and no longer a block list type.
+
+### `password_history.prior_password_count` computed attribute renamed
+
+The `password_history.prior_password_count` computed attribute has been renamed to `history.count`.
+
+### `password_length` computed attribute rename and data type change
+
+The `password_length` computed attribute has been renamed to `length` and is now a nested object type and no longer a block list type.
 
 ## Data Source: pingone_populations
 

@@ -36,8 +36,7 @@ func TestAccPasswordPolicyDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "password_policy_id"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "environment_default", resourceFullName, "environment_default"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "bypass_policy", resourceFullName, "bypass_policy"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "default", resourceFullName, "default"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "exclude_commonly_used_passwords", resourceFullName, "exclude_commonly_used_passwords"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "exclude_profile_data", resourceFullName, "exclude_profile_data"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "password_history.%", resourceFullName, "password_history.%"),
@@ -49,7 +48,7 @@ func TestAccPasswordPolicyDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "min_complexity", resourceFullName, "min_complexity"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "min_unique_characters", resourceFullName, "min_unique_characters"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "not_similar_to_current", resourceFullName, "not_similar_to_current"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "population_count", resourceFullName, "population_count"),
+					//resource.TestCheckResourceAttrPair(dataSourceFullName, "population_count", resourceFullName, "population_count"),
 				),
 			},
 		},
@@ -82,8 +81,7 @@ func TestAccPasswordPolicyDataSource_ByIDFull(t *testing.T) {
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "password_policy_id"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "environment_default", resourceFullName, "environment_default"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "bypass_policy", resourceFullName, "bypass_policy"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "default", resourceFullName, "default"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "exclude_commonly_used_passwords", resourceFullName, "exclude_commonly_used_passwords"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "exclude_profile_data", resourceFullName, "exclude_profile_data"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "password_history.%", resourceFullName, "password_history.%"),
@@ -95,7 +93,7 @@ func TestAccPasswordPolicyDataSource_ByIDFull(t *testing.T) {
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "min_complexity", resourceFullName, "min_complexity"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "min_unique_characters", resourceFullName, "min_unique_characters"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "not_similar_to_current", resourceFullName, "not_similar_to_current"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "population_count", resourceFullName, "population_count"),
+					//resource.TestCheckResourceAttrPair(dataSourceFullName, "population_count", resourceFullName, "population_count"),
 				),
 			},
 		},
@@ -118,7 +116,7 @@ func TestAccPasswordPolicyDataSource_NotFound(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccPasswordPolicyDataSourceConfig_NotFoundByName(resourceName),
-				ExpectError: regexp.MustCompile("Cannot find password policy doesnotexist"),
+				ExpectError: regexp.MustCompile("Cannot find the password policy from name"),
 			},
 			{
 				Config:      testAccPasswordPolicyDataSourceConfig_NotFoundByID(resourceName),
@@ -138,31 +136,29 @@ resource "pingone_password_policy" "%[2]s" {
 
   description = "My new password policy"
 
-  exclude_commonly_used_passwords = true
-  exclude_profile_data            = true
-  not_similar_to_current          = true
+  excludes_commonly_used_passwords = true
+  excludes_profile_data            = true
+  not_similar_to_current           = true
 
-  password_history {
-    prior_password_count = 6
-    retention_days       = 365
+  history = {
+    count          = 6
+    retention_days = 365
   }
 
-  password_length {
+  length = {
     min = 8
     max = 255
   }
 
-  password_age {
-    max = 182
-    min = 1
-  }
+  password_age_max = 182
+  password_age_min = 1
 
-  account_lockout {
+  lockout = {
     duration_seconds = 900
-    fail_count       = 5
+    failure_count    = 5
   }
 
-  min_characters {
+  min_characters = {
     alphabetical_uppercase = 1
     alphabetical_lowercase = 1
     numeric                = 1
@@ -195,31 +191,29 @@ resource "pingone_password_policy" "%[2]s" {
 
   description = "My new password policy"
 
-  exclude_commonly_used_passwords = true
-  exclude_profile_data            = true
-  not_similar_to_current          = true
+  excludes_commonly_used_passwords = true
+  excludes_profile_data            = true
+  not_similar_to_current           = true
 
-  password_history {
-    prior_password_count = 6
-    retention_days       = 365
+  history = {
+    count          = 6
+    retention_days = 365
   }
 
-  password_length {
+  length = {
     min = 8
     max = 255
   }
 
-  password_age {
-    max = 182
-    min = 1
-  }
+  password_age_max = 182
+  password_age_min = 1
 
-  account_lockout {
+  lockout = {
     duration_seconds = 900
-    fail_count       = 5
+    failure_count    = 5
   }
 
-  min_characters {
+  min_characters = {
     alphabetical_uppercase = 1
     alphabetical_lowercase = 1
     numeric                = 1

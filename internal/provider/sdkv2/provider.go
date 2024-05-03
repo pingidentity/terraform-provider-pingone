@@ -138,7 +138,6 @@ func New(version string) func() *schema.Provider {
 				"pingone_trusted_email_domain_ownership": base.DatasourceTrustedEmailDomainOwnership(),
 				"pingone_trusted_email_domain_spf":       base.DatasourceTrustedEmailDomainSPF(),
 
-				"pingone_password_policy":    sso.DatasourcePasswordPolicy(),
 				"pingone_resource_attribute": sso.DatasourceResourceAttribute(),
 			},
 
@@ -153,9 +152,8 @@ func New(version string) func() *schema.Provider {
 				"pingone_notification_template_content": base.ResourceNotificationTemplateContent(),
 
 				"pingone_application_sign_on_policy_assignment": sso.ResourceApplicationSignOnPolicyAssignment(),
-				"pingone_password_policy":                       sso.ResourcePasswordPolicy(),
-				"pingone_resource":                              sso.ResourceResource(),
-				"pingone_sign_on_policy_action":                 sso.ResourceSignOnPolicyAction(),
+				"pingone_resource":              sso.ResourceResource(),
+				"pingone_sign_on_policy_action": sso.ResourceSignOnPolicyAction(),
 
 				"pingone_mfa_device_policy": mfa.ResourceMFADevicePolicy(),
 			},

@@ -5,383 +5,462 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func DatasourcePasswordPolicy() *schema.Resource {
-	return &schema.Resource{
+// Types
+type PasswordPolicyDataSource serviceClientType
 
+type PasswordPolicyDataSourceModel struct {
+	Id                            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId                 pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	PasswordPolicyId              pingonetypes.ResourceIDValue `tfsdk:"password_policy_id"`
+	Name                          types.String                 `tfsdk:"name"`
+	Description                   types.String                 `tfsdk:"description"`
+	Default                       types.Bool                   `tfsdk:"default"`
+	ExcludesCommonlyUsedPasswords types.Bool                   `tfsdk:"excludes_commonly_used_passwords"`
+	ExcludesProfileData           types.Bool                   `tfsdk:"excludes_profile_data"`
+	History                       types.Object                 `tfsdk:"history"`
+	Length                        types.Object                 `tfsdk:"length"`
+	Lockout                       types.Object                 `tfsdk:"lockout"`
+	MinCharacters                 types.Object                 `tfsdk:"min_characters"`
+	PasswordAgeMax                types.Int64                  `tfsdk:"password_age_max"`
+	PasswordAgeMin                types.Int64                  `tfsdk:"password_age_min"`
+	MaxRepeatedCharacters         types.Int64                  `tfsdk:"max_repeated_characters"`
+	MinComplexity                 types.Int64                  `tfsdk:"min_complexity"`
+	MinUniqueCharacters           types.Int64                  `tfsdk:"min_unique_characters"`
+	NotSimilarToCurrent           types.Bool                   `tfsdk:"not_similar_to_current"`
+	PopulationCount               types.Int64                  `tfsdk:"population_count"`
+}
+
+// Framework interfaces
+var (
+	_ datasource.DataSource = &PasswordPolicyDataSource{}
+)
+
+// New Object
+func NewPasswordPolicyDataSource() datasource.DataSource {
+	return &PasswordPolicyDataSource{}
+}
+
+// Metadata
+func (r *PasswordPolicyDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_password_policy"
+}
+
+// Schema
+func (r *PasswordPolicyDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+
+	nameLength := 1
+
+	passwordPolicyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the ID of the password policy to retrieve configuration for.  Must be a valid PingOne resource ID.",
+	).ExactlyOneOf([]string{"password_policy_id", "name"})
+
+	nameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the name of the password policy to retrieve configuration for.",
+	).ExactlyOneOf([]string{"password_policy_id", "name"})
+
+	defaultDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether this password policy is enforced as the default within the environment. When set to `true`, all other password policies are set to `false`.",
+	)
+
+	excludeCommonlyUsedPasswordsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether to ensure the password is not one of the commonly used passwords.",
+	)
+
+	excludeProfileDataDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether to ensure the password is not an exact match for the value of any attribute in the user's profile, such as name, phone number, or address.",
+	)
+
+	passwordLengthMaxDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the maximum number of characters allowed for the password. This property is not enforced when not present.",
+	)
+
+	passwordLengthMinDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the minimum number of characters required for the password. This can be from `8` to `32` (inclusive). This property is not enforced when not present.",
+	)
+
+	minCharactersDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies sets of characters that can be included, and the value is the minimum number of times one of the characters must appear in the user's password. The only allowed key values are `ABCDEFGHIJKLMNOPQRSTUVWXYZ`, `abcdefghijklmnopqrstuvwxyz`, `0123456789`, and `~!@#$%^&*()-_=+[]{}\\|;:,.<>/?`. This property is not enforced when not present.",
+	)
+
+	minCharactersAlphabeticalUppercaseDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the count of alphabetical uppercase characters (`ABCDEFGHIJKLMNOPQRSTUVWXYZ`) that should feature in the user's password.  Fixed value of 1.",
+	)
+
+	minCharactersAlphabeticalLowercaseDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the count of alphabetical uppercase characters (`abcdefghijklmnopqrstuvwxyz`) that should feature in the user's password.  Fixed value of 1.",
+	)
+
+	minCharactersNumericDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the count of numeric characters (`0123456789`) that should feature in the user's password.  Fixed value of 1.",
+	)
+
+	minCharactersSpecialCharactersDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the count of special characters (`~!@#$%^&*()-_=+[]{}\\|;:,.<>/?`) that should feature in the user's password.  Fixed value of 1.",
+	)
+
+	passwordAgeMaxDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the maximum number of days the same password can be used before it must be changed. The value must be a positive, non-zero integer.  The value must be greater than the sum of `min` (if set) + 21 (the expiration warning interval for passwords).",
+	)
+
+	notSimilarToCurrentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, ensures that the proposed password is not too similar to the user's current password based on the Levenshtein distance algorithm. The value of this parameter is evaluated only for password change actions in which the user enters both the current and the new password. By design, PingOne does not know the user's current password.",
+	).DefaultValue(false)
+
+	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Datasource to read PingOne password policy data",
+		Description: "Datasource to retrieve a PingOne password policy in an environment by ID or by name.",
 
-		ReadContext: datasourcePingOnePasswordPolicyRead,
+		Attributes: map[string]schema.Attribute{
+			"id": framework.Attr_ID(),
 
-		Schema: map[string]*schema.Schema{
-			"environment_id": {
-				Description:      "The ID of the environment.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+			"environment_id": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment that is configured with the password policy.  Must be a valid PingOne resource ID.").Description,
+				Required:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
-			"password_policy_id": {
-				Description:      "The ID of the password policy.",
-				Type:             schema.TypeString,
-				Optional:         true,
-				ConflictsWith:    []string{"name"},
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+
+			"password_policy_id": schema.StringAttribute{
+				Description:         passwordPolicyIdDescription.Description,
+				MarkdownDescription: passwordPolicyIdDescription.MarkdownDescription,
+				Optional:            true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
+				},
 			},
-			"name": {
-				Description:   "The name of the password policy.",
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"password_policy_id"},
+
+			"name": schema.StringAttribute{
+				Description:         nameDescription.Description,
+				MarkdownDescription: nameDescription.MarkdownDescription,
+				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("password_policy_id")),
+					stringvalidator.LengthAtLeast(nameLength),
+				},
 			},
-			"description": {
-				Description: "A description to apply to the password policy.",
-				Type:        schema.TypeString,
+
+			"description": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the description to apply to the password policy.").Description,
 				Computed:    true,
 			},
-			"environment_default": {
-				Description: "Indicates whether this password policy is enforced within the environment. When set to true, all other password policies are set to false. Note: this may cause state management conflicts if more than one password policy is set as default.",
-				Type:        schema.TypeBool,
-				Computed:    true,
+
+			"default": schema.BoolAttribute{
+				Description:         defaultDescription.Description,
+				MarkdownDescription: defaultDescription.MarkdownDescription,
+				Computed:            true,
 			},
-			"bypass_policy": {
-				Description: "Determines whether the password policy for a user will be ignored.",
-				Type:        schema.TypeBool,
-				Computed:    true,
+
+			"excludes_commonly_used_passwords": schema.BoolAttribute{
+				Description:         excludeCommonlyUsedPasswordsDescription.Description,
+				MarkdownDescription: excludeCommonlyUsedPasswordsDescription.MarkdownDescription,
+				Computed:            true,
 			},
-			"exclude_commonly_used_passwords": {
-				Description: "Set this to true to ensure the password is not one of the commonly used passwords.",
-				Type:        schema.TypeBool,
-				Computed:    true,
+
+			"excludes_profile_data": schema.BoolAttribute{
+				Description:         excludeProfileDataDescription.Description,
+				MarkdownDescription: excludeProfileDataDescription.MarkdownDescription,
+				Computed:            true,
 			},
-			"exclude_profile_data": {
-				Description: "Set this to true to ensure the password is not an exact match for the value of any attribute in the user’s profile, such as name, phone number, or address.",
-				Type:        schema.TypeBool,
+
+			"history": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies settings to control the user's password history.").Description,
 				Computed:    true,
-			},
-			"password_history": {
-				Description: "Settings to control the users password history.",
-				Type:        schema.TypeList,
-				Computed:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"prior_password_count": {
-							Description: "Specifies the number of prior passwords to keep for prevention of password re-use. The value must be a positive, non-zero integer.",
-							Type:        schema.TypeInt,
-							Computed:    true,
-						},
-						"retention_days": {
-							Description: "The length of time to keep recent passwords for prevention of password re-use. The value must be a positive, non-zero integer.",
-							Type:        schema.TypeInt,
-							Computed:    true,
-						},
+
+				Attributes: map[string]schema.Attribute{
+					"count": schema.Int64Attribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of prior passwords to keep for prevention of password re-use. The value must be a positive, non-zero integer.").Description,
+						Computed:    true,
+					},
+
+					"retention_days": schema.Int64Attribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the length of time to keep recent passwords for prevention of password re-use. The value must be a positive, non-zero integer.").Description,
+						Computed:    true,
 					},
 				},
 			},
-			"password_length": {
-				Description: "Settings to control the user's password length.",
-				Type:        schema.TypeList,
+
+			"length": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies settings to control the user's password length.").Description,
 				Computed:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"max": {
-							Description: "The maximum number of characters allowed for the password. Defaults to 255. This property is not enforced when not present.",
-							Type:        schema.TypeInt,
-							Computed:    true,
-						},
-						"min": {
-							Description: "The minimum number of characters required for the password. This can be from 8 to 32 (inclusive). Defaults to 8 characters. This property is not enforced when not present.",
-							Type:        schema.TypeInt,
-							Computed:    true,
-						},
+
+				Attributes: map[string]schema.Attribute{
+					"max": schema.Int64Attribute{
+						Description:         passwordLengthMaxDescription.Description,
+						MarkdownDescription: passwordLengthMaxDescription.MarkdownDescription,
+						Computed:            true,
+					},
+
+					"min": schema.Int64Attribute{
+						Description:         passwordLengthMinDescription.Description,
+						MarkdownDescription: passwordLengthMinDescription.MarkdownDescription,
+						Computed:            true,
 					},
 				},
 			},
-			"account_lockout": {
-				Description: "Settings to control the user's lockout on unsuccessful authentication attempts.",
-				Type:        schema.TypeList,
+
+			"lockout": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies settings to control the user's lockout on unsuccessful authentication attempts.").Description,
 				Computed:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"duration_seconds": {
-							Description: "The length of time before a password is automatically moved out of the lock out state. The value must be a positive, non-zero integer.",
-							Type:        schema.TypeInt,
-							Computed:    true,
-						},
-						"fail_count": {
-							Description: "The number of tries before a password is placed in the lockout state. The value must be a positive, non-zero integer.",
-							Type:        schema.TypeInt,
-							Computed:    true,
-						},
+
+				Attributes: map[string]schema.Attribute{
+					"duration_seconds": schema.Int64Attribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the length of time before a password is automatically moved out of the lock out state. The value must be a positive, non-zero integer.").Description,
+						Computed:    true,
+					},
+
+					"failure_count": schema.Int64Attribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of tries before a password is placed in the lockout state. The value must be a positive, non-zero integer.").Description,
+						Computed:    true,
 					},
 				},
 			},
-			"min_characters": {
-				Description: "Sets of characters that can be included, and the value is the minimum number of times one of the characters must appear in the password. The only allowed key values are `ABCDEFGHIJKLMNOPQRSTUVWXYZ`, `abcdefghijklmnopqrstuvwxyz`, `0123456789`, and `~!@#$%^&*()-_=+[]{}\\|;:,.<>/?`. This property is not enforced when not present.",
-				Type:        schema.TypeList,
-				Computed:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"alphabetical_uppercase": {
-							Description: "Count of alphabetical uppercase characters (`ABCDEFGHIJKLMNOPQRSTUVWXYZ`) that should feature in the user's password.",
-							Type:        schema.TypeInt,
-							Computed:    true,
-						},
-						"alphabetical_lowercase": {
-							Description: "Count of alphabetical uppercase characters (`abcdefghijklmnopqrstuvwxyz`) that should feature in the user's password.",
-							Type:        schema.TypeInt,
-							Computed:    true,
-						},
-						"numeric": {
-							Description: "Count of numeric characters (`0123456789`) that should feature in the user's password.",
-							Type:        schema.TypeInt,
-							Computed:    true,
-						},
-						"special_characters": {
-							Description: "Count of special characters (`~!@#$%^&*()-_=+[]{}\\|;:,.<>/?`) that should feature in the user's password.",
-							Type:        schema.TypeInt,
-							Computed:    true,
-						},
+
+			"min_characters": schema.SingleNestedAttribute{
+				Description:         minCharactersDescription.Description,
+				MarkdownDescription: minCharactersDescription.MarkdownDescription,
+				Computed:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"alphabetical_uppercase": schema.Int64Attribute{
+						Description:         minCharactersAlphabeticalUppercaseDescription.Description,
+						MarkdownDescription: minCharactersAlphabeticalUppercaseDescription.MarkdownDescription,
+						Computed:            true,
+					},
+
+					"alphabetical_lowercase": schema.Int64Attribute{
+						Description:         minCharactersAlphabeticalLowercaseDescription.Description,
+						MarkdownDescription: minCharactersAlphabeticalLowercaseDescription.MarkdownDescription,
+						Computed:            true,
+					},
+
+					"numeric": schema.Int64Attribute{
+						Description:         minCharactersNumericDescription.Description,
+						MarkdownDescription: minCharactersNumericDescription.MarkdownDescription,
+						Computed:            true,
+					},
+
+					"special_characters": schema.Int64Attribute{
+						Description:         minCharactersSpecialCharactersDescription.Description,
+						MarkdownDescription: minCharactersSpecialCharactersDescription.MarkdownDescription,
+						Computed:            true,
 					},
 				},
 			},
-			"password_age": {
-				Description: "Settings to control the user's password age.",
-				Type:        schema.TypeList,
-				Computed:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"max": {
-							Description: "The maximum number of days the same password can be used before it must be changed. The value must be a positive, non-zero integer.  The value must be greater than the sum of `min` (if set) + 21 (the expiration warning interval for passwords).",
-							Type:        schema.TypeInt,
-							Computed:    true,
-						},
-						"min": {
-							Description: "The minimum number of days a password must be used before changing. The value must be a positive, non-zero integer. This property is not enforced when not present.",
-							Type:        schema.TypeInt,
-							Computed:    true,
-						},
-					},
-				},
+
+			"password_age_max": schema.Int64Attribute{
+				Description:         passwordAgeMaxDescription.Description,
+				MarkdownDescription: passwordAgeMaxDescription.MarkdownDescription,
+				Computed:            true,
 			},
-			"max_repeated_characters": {
-				Description: "The maximum number of repeated characters allowed. This property is not enforced when not present.",
-				Type:        schema.TypeInt,
+
+			"password_age_min": schema.Int64Attribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the minimum number of days a password must be used before changing. The value must be a positive, non-zero integer. This property is not enforced when not present.").Description,
 				Computed:    true,
 			},
-			"min_complexity": {
-				Description: "The minimum complexity of the password based on the concept of password haystacks. The value is the number of days required to exhaust the entire search space during a brute force attack. This property is not enforced when not present.",
-				Type:        schema.TypeInt,
+
+			"max_repeated_characters": schema.Int64Attribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the maximum number of repeated characters allowed. This property is not enforced when not present.").Description,
 				Computed:    true,
 			},
-			"min_unique_characters": {
-				Description: "The minimum number of unique characters required. This property is not enforced when not present.",
-				Type:        schema.TypeInt,
+
+			"min_complexity": schema.Int64Attribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the minimum complexity of the password based on the concept of password haystacks. The value is the number of days required to exhaust the entire search space during a brute force attack. This property is not enforced when not present.").Description,
 				Computed:    true,
 			},
-			"not_similar_to_current": {
-				Description: "Set this to true to ensure that the proposed password is not too similar to the user's current password based on the Levenshtein distance algorithm. The value of this parameter is evaluated only for password change actions in which the user enters both the current and the new password. By design, PingOne does not know the user's current password.",
-				Type:        schema.TypeBool,
+
+			"min_unique_characters": schema.Int64Attribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the minimum number of unique characters required. This property is not enforced when not present.").Description,
 				Computed:    true,
 			},
-			"population_count": {
-				Description: "The number of populations associated with the password policy.",
-				Type:        schema.TypeInt,
+
+			"not_similar_to_current": schema.BoolAttribute{
+				Description:         notSimilarToCurrentDescription.Description,
+				MarkdownDescription: notSimilarToCurrentDescription.MarkdownDescription,
+				Computed:            true,
+			},
+
+			"population_count": schema.Int64Attribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of populations associated with the password policy.").Description,
 				Computed:    true,
 			},
 		},
 	}
 }
 
-func datasourcePingOnePasswordPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *PasswordPolicyDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
+	}
 
-	var diags diag.Diagnostics
+	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected the provider client, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
+		)
 
-	var resp management.PasswordPolicy
+		return
+	}
 
-	if v, ok := d.GetOk("name"); ok {
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
+		)
+		return
+	}
+}
 
-		respList, diags := sdk.ParseResponse(
+func (r *PasswordPolicyDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data *PasswordPolicyDataSourceModel
+
+	if r.Client.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var policyInstance management.PasswordPolicy
+
+	// Gateway API does not support SCIM filtering
+	if !data.PasswordPolicyId.IsNull() {
+		// Run the API call
+		var response *management.PasswordPolicy
+		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := apiClient.PasswordPoliciesApi.ReadAllPasswordPolicies(ctx, d.Get("environment_id").(string)).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+				fO, fR, fErr := r.Client.ManagementAPIClient.PasswordPoliciesApi.ReadOnePasswordPolicy(ctx, data.EnvironmentId.ValueString(), data.PasswordPolicyId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
-			"ReadAllPasswordPolicies",
-			sdk.DefaultCustomError,
+			"ReadOnePasswordPolicy",
+			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-		)
-		if diags.HasError() {
-			return diags
+			&response,
+		)...)
+		if resp.Diagnostics.HasError() {
+			return
 		}
 
-		if passwordPolicies, ok := respList.(*management.EntityArray).Embedded.GetPasswordPoliciesOk(); ok {
+		policyInstance = *response
 
+	} else if !data.Name.IsNull() {
+		// Run the API call
+		var entityArray *management.EntityArray
+		resp.Diagnostics.Append(framework.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				fO, fR, fErr := r.Client.ManagementAPIClient.PasswordPoliciesApi.ReadAllPasswordPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			},
+			"ReadAllPasswordPolicies",
+			framework.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+			&entityArray,
+		)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		if passwordPolicies, ok := entityArray.Embedded.GetPasswordPoliciesOk(); ok {
 			found := false
-			for _, passwordPolicy := range passwordPolicies {
 
-				if passwordPolicy.GetName() == v.(string) {
-					resp = passwordPolicy
+			for _, passwordPolicyObject := range passwordPolicies {
+				if passwordPolicyObject.GetId() != "" && passwordPolicyObject.GetName() == data.Name.ValueString() {
+					policyInstance = passwordPolicyObject
 					found = true
 					break
 				}
 			}
 
 			if !found {
-				diags = append(diags, diag.Diagnostic{
-					Severity: diag.Error,
-					Summary:  fmt.Sprintf("Cannot find password policy %s", v),
-				})
-
-				return diags
+				resp.Diagnostics.AddError(
+					"Cannot find the password policy from name",
+					fmt.Sprintf("The password policy name %s for environment %s cannot be found", data.Name.String(), data.EnvironmentId.String()),
+				)
+				return
 			}
 
 		}
-
-	} else if v, ok2 := d.GetOk("password_policy_id"); ok2 {
-
-		passwordPolicyResp, diags := sdk.ParseResponse(
-			ctx,
-
-			func() (any, *http.Response, error) {
-				fO, fR, fErr := apiClient.PasswordPoliciesApi.ReadOnePasswordPolicy(ctx, d.Get("environment_id").(string), v.(string)).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
-			},
-			"ReadOnePasswordPolicy",
-			sdk.DefaultCustomError,
-			sdk.DefaultCreateReadRetryable,
-		)
-		if diags.HasError() {
-			return diags
-		}
-
-		resp = *passwordPolicyResp.(*management.PasswordPolicy)
-
 	} else {
+		resp.Diagnostics.AddError(
+			"Missing parameter",
+			"Cannot find the requested PingOne Password policy: password_policy_id or name argument must be set.",
+		)
+		return
+	}
 
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "Neither password_policy_id or name are set",
-			Detail:   "Neither password_policy_id or name are set",
-		})
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(data.toState(&policyInstance)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (p *PasswordPolicyDataSourceModel) toState(apiObject *management.PasswordPolicy) diag.Diagnostics {
+	var diags, d diag.Diagnostics
+
+	if apiObject == nil {
+		diags.AddError(
+			"Data object missing",
+			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
+		)
 
 		return diags
-
 	}
 
-	d.SetId(resp.GetId())
-	d.Set("password_policy_id", resp.GetId())
-	d.Set("name", resp.GetName())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.PasswordPolicyId = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.EnvironmentId = framework.PingOneResourceIDOkToTF(apiObject.Environment.GetIdOk())
+	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
+	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
+	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())
+	p.ExcludesCommonlyUsedPasswords = framework.BoolOkToTF(apiObject.GetExcludesCommonlyUsedOk())
+	p.ExcludesProfileData = framework.BoolOkToTF(apiObject.GetExcludesProfileDataOk())
 
-	if v, ok := resp.GetDescriptionOk(); ok {
-		d.Set("description", v)
-	} else {
-		d.Set("description", nil)
-	}
+	p.History, d = passwordPolicyHistoryOkToTF(apiObject.GetHistoryOk())
+	diags.Append(d...)
 
-	if v, ok := resp.GetDefaultOk(); ok {
-		d.Set("environment_default", v)
-	} else {
-		d.Set("environment_default", nil)
-	}
+	p.Length, d = passwordPolicyLengthOkToTF(apiObject.GetLengthOk())
+	diags.Append(d...)
 
-	if v, ok := resp.GetBypassPolicyOk(); ok {
-		d.Set("bypass_policy", v)
-	} else {
-		d.Set("bypass_policy", nil)
-	}
+	p.Lockout, d = passwordPolicyLockoutOkToTF(apiObject.GetLockoutOk())
+	diags.Append(d...)
 
-	if v, ok := resp.GetExcludesCommonlyUsedOk(); ok {
-		d.Set("exclude_commonly_used_passwords", v)
-	} else {
-		d.Set("exclude_commonly_used_passwords", nil)
-	}
+	p.MinCharacters, d = passwordPolicyMinCharactersOkToTF(apiObject.GetMinCharactersOk())
+	diags.Append(d...)
 
-	if v, ok := resp.GetExcludesProfileDataOk(); ok {
-		d.Set("exclude_profile_data", v)
-	} else {
-		d.Set("exclude_profile_data", nil)
-	}
-
-	if v, ok := resp.GetHistoryOk(); ok {
-		flattenedVal := flattenPasswordHistory(v)
-		d.Set("password_history", flattenedVal)
-	} else {
-		d.Set("password_history", nil)
-	}
-
-	if v, ok := resp.GetLengthOk(); ok {
-		flattenedVal := flattenPasswordLength(v)
-		d.Set("password_length", flattenedVal)
-	} else {
-		d.Set("password_length", nil)
-	}
-
-	if v, ok := resp.GetLockoutOk(); ok {
-		flattenedVal := flattenUserLockout(v)
-		d.Set("account_lockout", flattenedVal)
-	} else {
-		d.Set("account_lockout", nil)
-	}
-
-	if v, ok := resp.GetMinCharactersOk(); ok {
-		flattenedVal := flattenMinCharacters(v)
-		d.Set("min_characters", flattenedVal)
-	} else {
-		d.Set("min_characters", nil)
-	}
-
-	passwordAgeMaxV, passwordAgeMaxOk := resp.GetMaxAgeDaysOk()
-	passwordAgeMinV, passwordAgeMinOk := resp.GetMinAgeDaysOk()
-
-	if passwordAgeMaxOk || passwordAgeMinOk {
-		flattenedVal := flattenPasswordAge(passwordAgeMaxV, passwordAgeMinV)
-		d.Set("password_age", flattenedVal)
-	} else {
-		d.Set("password_age", nil)
-	}
-
-	if v, ok := resp.GetMaxRepeatedCharactersOk(); ok {
-		d.Set("max_repeated_characters", v)
-	} else {
-		d.Set("max_repeated_characters", nil)
-	}
-
-	if v, ok := resp.GetMinComplexityOk(); ok {
-		d.Set("min_complexity", v)
-	} else {
-		d.Set("min_complexity", nil)
-	}
-
-	if v, ok := resp.GetMinUniqueCharactersOk(); ok {
-		d.Set("min_unique_characters", v)
-	} else {
-		d.Set("min_unique_characters", nil)
-	}
-
-	if v, ok := resp.GetNotSimilarToCurrentOk(); ok {
-		d.Set("not_similar_to_current", v)
-	} else {
-		d.Set("not_similar_to_current", nil)
-	}
-
-	if v, ok := resp.GetPopulationCountOk(); ok {
-		d.Set("population_count", v)
-	} else {
-		d.Set("population_count", nil)
-	}
+	p.PasswordAgeMax = framework.Int32OkToTF(apiObject.GetMaxAgeDaysOk())
+	p.PasswordAgeMin = framework.Int32OkToTF(apiObject.GetMinAgeDaysOk())
+	p.MaxRepeatedCharacters = framework.Int32OkToTF(apiObject.GetMaxRepeatedCharactersOk())
+	p.MinComplexity = framework.Int32OkToTF(apiObject.GetMinComplexityOk())
+	p.MinUniqueCharacters = framework.Int32OkToTF(apiObject.GetMinUniqueCharactersOk())
+	p.NotSimilarToCurrent = framework.BoolOkToTF(apiObject.GetNotSimilarToCurrentOk())
+	p.PopulationCount = framework.Int32OkToTF(apiObject.GetPopulationCountOk())
 
 	return diags
 }
