@@ -129,13 +129,12 @@ func New(version string) func() *schema.Provider {
 			},
 
 			DataSourcesMap: map[string]*schema.Resource{
-				"pingone_certificate":                    base.DatasourceCertificate(),
-				"pingone_certificate_export":             base.DatasourceCertificateExport(),
-				"pingone_certificate_signing_request":    base.DatasourceCertificateSigningRequest(),
-				"pingone_language":                       base.DatasourceLanguage(),
-				"pingone_license":                        base.DatasourceLicense(),
-				"pingone_trusted_email_domain_ownership": base.DatasourceTrustedEmailDomainOwnership(),
-				"pingone_trusted_email_domain_spf":       base.DatasourceTrustedEmailDomainSPF(),
+				"pingone_certificate":                 base.DatasourceCertificate(),
+				"pingone_certificate_export":          base.DatasourceCertificateExport(),
+				"pingone_certificate_signing_request": base.DatasourceCertificateSigningRequest(),
+				"pingone_language":                    base.DatasourceLanguage(),
+				"pingone_license":                     base.DatasourceLicense(),
+				"pingone_trusted_email_domain_spf":    base.DatasourceTrustedEmailDomainSPF(),
 
 				"pingone_resource_attribute": sso.DatasourceResourceAttribute(),
 			},
