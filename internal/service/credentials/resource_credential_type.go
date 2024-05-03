@@ -444,15 +444,6 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 									Validators: []validator.String{
 										stringvalidator.LengthAtLeast(attrMinLength),
 										stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("attribute")),
-										// TODO: Implement new validator.  The rules are:
-										// - `value` property is required if fields.type is `ALPHANUMERIC TEXT` AND
-										// - management_mode is `AUTOMATED` (this is the new condition)
-										//
-										// I could not find an available validator combination / capability to implement.  Checking in code for now.
-										// stringvalidator.All(
-										// 	customstringvalidator.IsRequiredIfMatchesPathValue(basetypes.NewStringValue(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT)), path.MatchRelative().AtParent().AtName("type")),
-										// 	customstringvalidator.IsRequiredIfMatchesPathValue(basetypes.NewStringValue(string(credentials.ENUMCREDENTIALTYPEMANAGEMENTMODE_AUTOMATED)), path.MatchRoot("management_mode")),
-										// ),
 									},
 								},
 								"required": schema.BoolAttribute{
@@ -965,6 +956,10 @@ func (p *CredentialTypeResourceModel) toState(apiObject *credentials.CredentialT
 func toStateMetadata(metadata *credentials.CredentialTypeMetaData, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if !ok || metadata == nil {
+		return types.ObjectNull(metadataServiceTFObjectTypes), diags
+	}
+
 	// core metadata object
 	metadataMap := map[string]attr.Value{
 		"background_image":   framework.StringOkToTF(metadata.GetBackgroundImageOk()),
@@ -991,6 +986,10 @@ func toStateMetadata(metadata *credentials.CredentialTypeMetaData, ok bool) (typ
 
 func toStateFields(innerFields []credentials.CredentialTypeMetaDataFieldsInner, ok bool) (types.List, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if !ok || innerFields == nil {
+		return types.ListNull(types.ObjectType{AttrTypes: innerFieldsServiceTFObjectTypes}), diags
+	}
 
 	tfInnerObjType := types.ObjectType{AttrTypes: innerFieldsServiceTFObjectTypes}
 	innerflattenedList := []attr.Value{}

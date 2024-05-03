@@ -40,6 +40,7 @@ func TestAccCredentialTypeDataSource_ByIDFull(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "description", fmt.Sprintf("%s Example Description", name)),
 					resource.TestCheckResourceAttr(dataSourceFullName, "card_type", name),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "card_design_template", resourceFullName, "card_design_template"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "management_mode", "AUTOMATED"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "metadata.%", resourceFullName, "metadata.%"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "metadata.fields.%", resourceFullName, "metadata.fields.%"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "revoke_on_delete", "false"),

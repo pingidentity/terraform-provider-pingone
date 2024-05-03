@@ -881,9 +881,9 @@ EOT
 
     fields = [
       {
-        type         = "Alphanumeric Text"
-        title        = "selfie"
-        is_visible   = false
+        type       = "Alphanumeric Text"
+        title      = "selfie"
+        is_visible = false
       }
     ]
   }
@@ -1165,8 +1165,8 @@ EOT
         type       = "Alphanumeric Text"
         title      = "other"
         is_visible = false
-		value      = "sample"
-      }	  
+        value      = "sample"
+      }
     ]
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)

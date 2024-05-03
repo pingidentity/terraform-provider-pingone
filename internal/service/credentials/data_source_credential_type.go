@@ -23,12 +23,13 @@ type CredentialTypeDataSourceModel struct {
 	EnvironmentId      types.String `tfsdk:"environment_id"`
 	IssuerId           types.String `tfsdk:"issuer_id"`
 	CredentialTypeId   types.String `tfsdk:"credential_type_id"`
-	Title              types.String `tfsdk:"title"`
-	Description        types.String `tfsdk:"description"`
 	CardType           types.String `tfsdk:"card_type"`
 	CardDesignTemplate types.String `tfsdk:"card_design_template"`
+	Description        types.String `tfsdk:"description"`
+	ManagementMode     types.String `tfsdk:"management_mode"`
 	Metadata           types.Object `tfsdk:"metadata"`
 	RevokeOnDelete     types.Bool   `tfsdk:"revoke_on_delete"`
+	Title              types.String `tfsdk:"title"`
 	CreatedAt          types.String `tfsdk:"created_at"`
 	UpdatedAt          types.String `tfsdk:"updated_at"`
 }
@@ -54,6 +55,7 @@ type FieldsDataSourceModel struct {
 	IsVisible   types.Bool   `tfsdk:"is_visible"`
 	Attribute   types.String `tfsdk:"attribute"`
 	Value       types.String `tfsdk:"value"`
+	Required    types.Bool   `tfsdk:"required"`
 }
 
 var (
@@ -78,6 +80,7 @@ var (
 		"is_visible":   types.BoolType,
 		"attribute":    types.StringType,
 		"value":        types.StringType,
+		"required":     types.BoolType,
 	}
 )
 
@@ -135,6 +138,11 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 
 			"card_design_template": schema.StringAttribute{
 				Description: "An SVG formatted image containing placeholders for the credentials fields that need to be displayed in the image.",
+				Computed:    true,
+			},
+
+			"management_mode": schema.StringAttribute{
+				Description: "Specifies the management mode of the credential type.",
 				Computed:    true,
 			},
 
@@ -223,6 +231,10 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 								},
 								"value": schema.StringAttribute{
 									Description: "The text to appear on the credential for a field.type of Alphanumeric Text.",
+									Computed:    true,
+								},
+								"required": schema.BoolAttribute{
+									Description: "Specifies whether the field is required for the credential.",
 									Computed:    true,
 								},
 							},
@@ -332,6 +344,10 @@ func (p *CredentialTypeDataSourceModel) toState(apiObject *credentials.Credentia
 	p.CreatedAt = framework.TimeOkToTF(apiObject.GetCreatedAtOk())
 	p.UpdatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
 
+	if v, ok := apiObject.GetManagementOk(); ok {
+		p.ManagementMode = framework.EnumOkToTF(v.GetModeOk())
+	}
+
 	revokeOnDelete := types.BoolNull()
 	if v, ok := apiObject.GetOnDeleteOk(); ok {
 		revokeOnDelete = framework.BoolOkToTF(v.GetRevokeIssuedCredentialsOk())
@@ -348,6 +364,10 @@ func (p *CredentialTypeDataSourceModel) toState(apiObject *credentials.Credentia
 
 func toStateMetadataDataSource(metadata *credentials.CredentialTypeMetaData, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if !ok || metadata == nil {
+		return types.ObjectNull(metadataDataSourceServiceTFObjectTypes), diags
+	}
 
 	// core metadata object
 	metadataMap := map[string]attr.Value{
@@ -376,6 +396,10 @@ func toStateMetadataDataSource(metadata *credentials.CredentialTypeMetaData, ok 
 func toStateFieldsDataSource(innerFields []credentials.CredentialTypeMetaDataFieldsInner, ok bool) (types.List, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if !ok || innerFields == nil {
+		return types.ListNull(types.ObjectType{AttrTypes: innerFieldsDataSourceServiceTFObjectTypes}), diags
+	}
+
 	tfInnerObjType := types.ObjectType{AttrTypes: innerFieldsDataSourceServiceTFObjectTypes}
 	innerflattenedList := []attr.Value{}
 	for _, v := range innerFields {
@@ -388,6 +412,7 @@ func toStateFieldsDataSource(innerFields []credentials.CredentialTypeMetaDataFie
 			"is_visible":   framework.BoolOkToTF(v.GetIsVisibleOk()),
 			"attribute":    framework.StringOkToTF(v.GetAttributeOk()),
 			"value":        framework.StringOkToTF(v.GetValueOk()),
+			"required":     framework.BoolOkToTF(v.GetRequiredOk()),
 		}
 		innerflattenedObj, d := types.ObjectValue(innerFieldsDataSourceServiceTFObjectTypes, fieldsMap)
 		diags.Append(d...)
