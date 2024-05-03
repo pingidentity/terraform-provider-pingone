@@ -3090,6 +3090,16 @@ data "pingone_populations" "example_by_data_filter" {
 }
 ```
 
+## Data Source: pingone_trusted_email_domain_dkim
+
+### `region` computed attribute renamed
+
+The `region` computed attribute has been renamed to `regions`.
+
+### `region.token` computed attribute renamed
+
+The `region.token` computed attribute has been renamed to `regions.tokens`.
+
 ## Data Source: pingone_user
 
 ### `status` computed attribute removed
