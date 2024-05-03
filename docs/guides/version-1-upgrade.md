@@ -3009,7 +3009,6 @@ This parameter was previously deprecated and has been removed.  Consider using t
 
 This parameter was previously deprecated and has been removed.  Consider using the [PingOne Utilities module](https://registry.terraform.io/modules/pingidentity/utils/pingone/latest) going forward.
 
-
 ## Data Source: pingone_password_policy
 
 ### `account_lockout` computed attribute rename and data type change
@@ -3103,6 +3102,16 @@ The `region` computed attribute has been renamed to `regions`.
 ### `region.token` computed attribute renamed
 
 The `region.token` computed attribute has been renamed to `regions.tokens`.
+
+## Data Source: pingone_trusted_email_domain_ownership
+
+### `id` computed attribute removed
+
+The unnecessary `id` computed attribute has been removed.
+
+### `region` computed attribute renamed
+
+The `region` computed attribute has been renamed to `regions`.
 
 ## Data Source: pingone_user
 
