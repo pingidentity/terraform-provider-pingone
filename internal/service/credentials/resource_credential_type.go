@@ -17,7 +17,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -102,9 +101,10 @@ var (
 
 // Framework interfaces
 var (
-	_ resource.Resource                = &CredentialTypeResource{}
-	_ resource.ResourceWithConfigure   = &CredentialTypeResource{}
-	_ resource.ResourceWithImportState = &CredentialTypeResource{}
+	_ resource.Resource                   = &CredentialTypeResource{}
+	_ resource.ResourceWithConfigure      = &CredentialTypeResource{}
+	_ resource.ResourceWithValidateConfig = &CredentialTypeResource{}
+	_ resource.ResourceWithImportState    = &CredentialTypeResource{}
 )
 
 // New Object
@@ -125,9 +125,6 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 	const attrMaxColumns = 3
 	const attrMinPercent = 0
 	const attrMaxPercent = 100
-
-	// defaults
-	const defaultManagementMode = credentials.ENUMCREDENTIALTYPEMANAGEMENTMODE_AUTOMATED
 
 	titleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Title of the credential. Verification sites are expected to be able to request the issued credential from the compatible wallet app using the title.  This value aligns to `${cardTitle}` in the `card_design_template`.",
@@ -250,7 +247,6 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 				MarkdownDescription: managementModeDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
-				Default:             stringdefault.StaticString(string(defaultManagementMode)),
 				Validators: []validator.String{
 					stringvalidator.OneOf(utils.EnumSliceToStringSlice(credentials.AllowedEnumCredentialTypeManagementModeEnumValues)...),
 				},
@@ -453,9 +449,10 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 										// - management_mode is `AUTOMATED` (this is the new condition)
 										//
 										// I could not find an available validator combination / capability to implement.  Checking in code for now.
-										stringvalidator.All(
-											customstringvalidator.IsRequiredIfMatchesPathValue(basetypes.NewStringValue(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT)), path.MatchRelative().AtParent().AtName("type")),
-										),
+										// stringvalidator.All(
+										// 	customstringvalidator.IsRequiredIfMatchesPathValue(basetypes.NewStringValue(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT)), path.MatchRelative().AtParent().AtName("type")),
+										// 	customstringvalidator.IsRequiredIfMatchesPathValue(basetypes.NewStringValue(string(credentials.ENUMCREDENTIALTYPEMANAGEMENTMODE_AUTOMATED)), path.MatchRoot("management_mode")),
+										// ),
 									},
 								},
 								"required": schema.BoolAttribute{
@@ -483,6 +480,43 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 				Computed:    true,
 			},
 		},
+	}
+}
+
+func (r *CredentialTypeResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var data CredentialTypeResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var metaData MetadataModel
+	resp.Diagnostics.Append(data.Metadata.As(ctx, &metaData, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var metadataFields []FieldsModel
+	resp.Diagnostics.Append(metaData.Fields.ElementsAs(ctx, &metadataFields, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if data.ManagementMode != types.StringValue(string(credentials.ENUMCREDENTIALTYPEMANAGEMENTMODE_MANAGED)) {
+		for _, v := range metadataFields {
+			if v.Type == types.StringValue(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT)) && (v.Value.IsNull() || v.Value.IsUnknown()) {
+
+				resp.Diagnostics.AddAttributeError(
+					path.Root("metadata"),
+					"Invalid credential type configuration",
+					fmt.Sprintf("The configuration for `%s` is invalid.  The `fields.value` property is required when the `fields.type` property is `%s` and the credential `management_mode` property is undefined or `%s`.", v.Title.ValueString(), v.Type.ValueString(), string(credentials.ENUMCREDENTIALTYPEMANAGEMENTMODE_AUTOMATED)),
+				)
+			}
+		}
 	}
 }
 

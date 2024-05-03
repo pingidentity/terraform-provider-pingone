@@ -338,7 +338,7 @@ func (r *CredentialIssuanceRuleResource) Create(ctx context.Context, req resourc
 	}
 
 	// Build the model for the API
-	CredentialIssuanceRule, d := plan.expand(ctx)
+	CredentialIssuanceRule, d := plan.expand(ctx, r)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -432,7 +432,7 @@ func (r *CredentialIssuanceRuleResource) Update(ctx context.Context, req resourc
 	}
 
 	// Build the model for the API
-	CredentialIssuanceRule, d := plan.expand(ctx)
+	CredentialIssuanceRule, d := plan.expand(ctx, r)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -537,8 +537,13 @@ func (r *CredentialIssuanceRuleResource) ImportState(ctx context.Context, req re
 	}
 }
 
-func (p *CredentialIssuanceRuleResourceModel) expand(ctx context.Context) (*credentials.CredentialIssuanceRule, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func (p *CredentialIssuanceRuleResourceModel) expand(ctx context.Context, r *CredentialIssuanceRuleResource) (*credentials.CredentialIssuanceRule, diag.Diagnostics) {
+	// The P1 Credentials service automatically sets the Issuance Rule to disabled in the backend if the Credential Type associated with it has a management.mode of `MANAGED`.
+	// Perform check to prevent an out of plan / drift condition.
+	diags := checkCredentialTypeManagementMode(ctx, r, p.EnvironmentId.ValueString(), p.CredentialTypeId.ValueString())
+	if diags.HasError() {
+		return nil, diags
+	}
 
 	// expand automation rules
 	credentialIssuanceRuleAutomation := credentials.NewCredentialIssuanceRuleAutomationWithDefaults()
@@ -872,4 +877,55 @@ func enumCredentialIssuanceRuleNotificationMethodOkToTF(v []credentials.EnumCred
 
 		return types.SetValueMust(types.StringType, list)
 	}
+}
+
+func checkCredentialTypeManagementMode(ctx context.Context, r *CredentialIssuanceRuleResource, environmentId, credentialTypeId string) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// Run the API call
+	var respObject *credentials.CredentialType
+	diags.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			fO, fR, fErr := r.Client.CredentialsAPIClient.CredentialTypesApi.ReadOneCredentialType(ctx, environmentId, credentialTypeId).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentId, fO, fR, fErr)
+		},
+		"ReadOneCredentialType",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+		&respObject,
+	)...)
+	if diags.HasError() {
+		return diags
+	}
+
+	if respObject == nil {
+		diags.AddError(
+			"Credential Type Id Invalid or Missing",
+			"Creantial Type referenced in `credential_type.id` does not exist",
+		)
+		return diags
+	}
+
+	if v, ok := respObject.GetManagementOk(); ok {
+		managementMode, managementModeOk := v.GetModeOk()
+		if !managementModeOk {
+			diags.AddError(
+				"Credential Type referenced in `credential_type.id` does have a management mode defined.",
+				fmt.Sprintf("Credential Type Id %s does not contain a `management.mode` value, or the value could not be found. Please report this to the provider maintainers.", credentialTypeId),
+			)
+			return diags
+		}
+
+		if *managementMode == credentials.ENUMCREDENTIALTYPEMANAGEMENTMODE_MANAGED {
+			diags.AddError(
+				fmt.Sprintf("An active Credential Issuance Rule cannot be assigned to a Credential Type with a management mode of %s.", string(credentials.ENUMCREDENTIALTYPEMANAGEMENTMODE_MANAGED)),
+				fmt.Sprintf("The Credential Type Id %s associated with the configured Issuance Rule is set to a `management.mode` of %s.  The Issuance Rule must be removed, or the Credential Type updated.", credentialTypeId, string(credentials.ENUMCREDENTIALTYPEMANAGEMENTMODE_MANAGED)),
+			)
+			return diags
+		}
+	}
+
+	return diags
 }
