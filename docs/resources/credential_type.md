@@ -129,6 +129,7 @@ EOT
 
 - `card_type` (String) A descriptor of the credential type. Can be non-identity types such as proof of employment or proof of insurance.
 - `description` (String) A description of the credential type. This value aligns to `${cardSubtitle}` in the `card_design_template`.
+- `management_mode` (String) Specifies the management mode of the credential type.  Options are `AUTOMATED`, `MANAGED`.  Defaults to `AUTOMATED`.
 - `revoke_on_delete` (Boolean) A boolean that specifies whether a user's issued verifiable credentials are automatically revoked when a `credential_type`, `user`, or `environment` is deleted.  Defaults to `true`.
 
 ### Read-Only
@@ -172,6 +173,7 @@ Optional:
 - `attribute` (String) Name of the PingOne Directory attribute. Present if `field.type` is `Directory Attribute`.
 - `file_support` (String) Specifies how an image is stored in the credential field.  Options are `BASE64_STRING`, `INCLUDE_FILE`, `REFERENCE_FILE`.
 - `is_visible` (Boolean) Specifies whether the field should be visible to viewers of the credential.
+- `required` (Boolean) Specifies whether the field is required for the credential.
 - `title` (String) Descriptive text when showing the field.
 - `value` (String) The text to appear on the credential for a `field.type` of `Alphanumeric Text`.
 

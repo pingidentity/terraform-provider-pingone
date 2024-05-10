@@ -300,6 +300,10 @@ func (p *CredentialIssuanceRuleDataSourceModel) toState(apiObject *credentials.C
 func toStateAutomationDataSource(automation *credentials.CredentialIssuanceRuleAutomation, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if !ok || automation == nil {
+		return types.ObjectNull(automationDataSourceServiceTFObjectTypes), diags
+	}
+
 	automationMap := map[string]attr.Value{
 		"issue":  framework.EnumOkToTF(automation.GetIssueOk()),
 		"revoke": framework.EnumOkToTF(automation.GetRevokeOk()),
@@ -313,6 +317,10 @@ func toStateAutomationDataSource(automation *credentials.CredentialIssuanceRuleA
 
 func toStateFilterDataSource(filter *credentials.CredentialIssuanceRuleFilter, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if !ok || filter == nil {
+		return types.ObjectNull(filterDataSourceServiceTFObjectTypes), diags
+	}
 
 	filterMap := map[string]attr.Value{
 		"population_ids": framework.PingOneResourceIDSetOkToTF(filter.GetPopulationIdsOk()),
@@ -328,7 +336,7 @@ func toStateFilterDataSource(filter *credentials.CredentialIssuanceRuleFilter, o
 func toStateNotificationDataSource(notification *credentials.CredentialIssuanceRuleNotification, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if notification == nil {
+	if !ok || notification == nil {
 		return types.ObjectNull(notificationDataSourceServiceTFObjectTypes), diags
 	}
 

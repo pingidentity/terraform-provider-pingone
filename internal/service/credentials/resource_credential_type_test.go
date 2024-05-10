@@ -141,6 +141,7 @@ func TestAccCredentialType_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "description", fmt.Sprintf("%s Example Description", name)),
 			resource.TestCheckResourceAttr(resourceFullName, "card_type", "VerifiedEmployee"),
 			resource.TestCheckResourceAttr(resourceFullName, "card_design_template", cardDesignTemplate),
+			resource.TestCheckResourceAttr(resourceFullName, "management_mode", "AUTOMATED"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.description", fmt.Sprintf("%s Example Description", name)),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.version", "5"), // ensures calculated default is 5
@@ -156,6 +157,13 @@ func TestAccCredentialType_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.3.title", "displayName"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.3.attribute", "name.formatted"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.3.is_visible", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.3.required", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.6.id", "Directory Attribute -> id"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.6.type", "Directory Attribute"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.6.title", "id"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.6.attribute", "id"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.6.is_visible", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.6.required", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.7.file_support", "REFERENCE_FILE"),
 			resource.TestCheckResourceAttr(resourceFullName, "revoke_on_delete", "true"),
 			resource.TestMatchResourceAttr(resourceFullName, "created_at", verify.RFC3339Regexp),
@@ -183,6 +191,7 @@ func TestAccCredentialType_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "description", fmt.Sprintf("%s Example Description", updatedName)),
 			resource.TestCheckResourceAttr(resourceFullName, "card_type", "DemonstrationCard"),
 			resource.TestCheckResourceAttr(resourceFullName, "card_design_template", updatedCardDesignTemplate),
+			resource.TestCheckResourceAttr(resourceFullName, "management_mode", "AUTOMATED"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.name", updatedName),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.version", "5"), // ensures calculated default is 5
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.#", "1"),
@@ -190,6 +199,44 @@ func TestAccCredentialType_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.0.type", "Issued Timestamp"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.0.title", "timestamp"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.0.is_visible", "false"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "metadata.columns"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "metadata.bg_opacity_percent"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "metadata.card_color"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "metadata.text_color"),
+			resource.TestCheckResourceAttr(resourceFullName, "revoke_on_delete", "false"),
+			resource.TestMatchResourceAttr(resourceFullName, "created_at", verify.RFC3339Regexp),
+			resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
+		),
+	}
+
+	updateManagementModeStep := resource.TestStep{
+		Config: testAccCredentialTypeConfig_ManagedCredential(resourceName, updatedName),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "issuer_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "title", updatedName),
+			resource.TestCheckResourceAttr(resourceFullName, "description", fmt.Sprintf("%s Example Description", updatedName)),
+			resource.TestCheckResourceAttr(resourceFullName, "card_type", "DemonstrationCard"),
+			resource.TestCheckResourceAttr(resourceFullName, "card_design_template", updatedCardDesignTemplate),
+			resource.TestCheckResourceAttr(resourceFullName, "management_mode", "MANAGED"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.name", updatedName),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.version", "5"), // ensures calculated default is 5
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.#", "3"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.0.id", "Issued Timestamp -> timestamp"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.0.type", "Issued Timestamp"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.0.title", "timestamp"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.0.is_visible", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.1.id", "Alphanumeric Text -> selfie"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.1.type", "Alphanumeric Text"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.1.title", "selfie"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.1.is_visible", "false"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "metadata.fields.1.value"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.2.id", "Alphanumeric Text -> other"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.2.type", "Alphanumeric Text"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.2.title", "other"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.2.is_visible", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "metadata.fields.2.value", "sample"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "metadata.columns"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "metadata.bg_opacity_percent"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "metadata.card_color"),
@@ -223,7 +270,7 @@ func TestAccCredentialType_Full(t *testing.T) {
 			},
 			// update
 			fullStep,
-			minimalStep,
+			updateManagementModeStep,
 			fullStep,
 			// Test importing the resource
 			{
@@ -242,6 +289,10 @@ func TestAccCredentialType_Full(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			// clear
+			{
+				Config:  testAccCredentialTypeConfig_ManagedCredential(resourceName, updatedName),
+				Destroy: true,
+			},
 			{
 				Config:  testAccCredentialTypeConfig_Minimal(resourceName, updatedName),
 				Destroy: true,
@@ -291,12 +342,17 @@ func TestAccCredentialType_MetaData(t *testing.T) {
 			},
 			{
 				Config:      testAccCredentialTypeConfig_EmptyFieldsArray(resourceName, name),
-				ExpectError: regexp.MustCompile("ttribute metadata.fields list must contain at least 1 elements"),
+				ExpectError: regexp.MustCompile("Attribute metadata.fields list must contain at least 1 elements"),
 				Destroy:     true,
 			},
 			{
 				Config:      testAccCredentialTypeConfig_InvalidFileSupportValue(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Match"),
+				Destroy:     true,
+			},
+			{
+				Config:      testAccCredentialTypeConfig_InvalidManagementModeValueCombination(resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Invalid credential type configuration"),
 				Destroy:     true,
 			},
 		},
@@ -526,6 +582,7 @@ EOT
         title      = "id"
         attribute  = "id"
         is_visible = false
+        required   = true
       },
       {
         type         = "Directory Attribute"
@@ -798,6 +855,41 @@ EOT
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
+func testAccCredentialTypeConfig_InvalidManagementModeValueCombination(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_credential_type" "%[3]s" {
+  environment_id   = data.pingone_environment.general_test.id
+  title            = "%[3]s"
+  description      = "%[3]s Example Description"
+  card_type        = "DemonstrationCard"
+  revoke_on_delete = true
+
+  card_design_template = <<-EOT
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 480">
+<rect fill="none" width="736" height="476" stroke="#CACED3" stroke-width="3" rx="10" ry="10" x="2" y="2"></rect>
+<rect fill="" height="476" rx="10" ry="10" width="736" x="2" y="2" opacity=""></rect>
+<line y2="160" x2="695" y1="160" x1="42.5" stroke=""></line>
+<text fill="" font-weight="450" font-size="30" x="160" y="90">$${cardTitle}</text>
+<text font-size="25" font-weight="300" x="160" y="130">$${cardSubtitle}</text>
+</svg>
+EOT
+
+  metadata = {
+    name = "%[3]s"
+
+    fields = [
+      {
+        type       = "Alphanumeric Text"
+        title      = "selfie"
+        is_visible = false
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
 func testAccCredentialTypeConfig_CardDesignTemplate_NoSVG(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -1028,6 +1120,53 @@ EOT
         title      = "timestamp"
         is_visible = false
       },
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccCredentialTypeConfig_ManagedCredential(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_credential_type" "%[2]s" {
+  environment_id   = data.pingone_environment.general_test.id
+  title            = "%[3]s"
+  description      = "%[3]s Example Description"
+  card_type        = "DemonstrationCard"
+  management_mode  = "MANAGED"
+  revoke_on_delete = false
+
+  card_design_template = <<-EOT
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 480">
+<rect fill="none" width="736" height="476" stroke="#CACED3" stroke-width="3" rx="10" ry="10" x="2" y="2"></rect>
+<rect fill="" height="476" rx="10" ry="10" width="736" x="2" y="2" opacity=""></rect>
+<line y2="160" x2="695" y1="160" x1="42.5" stroke=""></line>
+<text fill="" font-weight="450" font-size="30" x="160" y="90">$${cardTitle}</text>
+<text font-size="25" font-weight="300" x="160" y="130">$${cardSubtitle}</text>
+</svg>
+EOT
+
+  metadata = {
+    name = "%[3]s"
+
+    fields = [
+      {
+        type       = "Issued Timestamp"
+        title      = "timestamp"
+        is_visible = false
+      },
+      {
+        type       = "Alphanumeric Text"
+        title      = "selfie"
+        is_visible = false
+      },
+      {
+        type       = "Alphanumeric Text"
+        title      = "other"
+        is_visible = false
+        value      = "sample"
+      }
     ]
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
