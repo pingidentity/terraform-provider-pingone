@@ -4,225 +4,321 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
-	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func ResourceMFADevicePolicy() *schema.Resource {
-	return &schema.Resource{
+// Types
+type MFADevicePolicyResource serviceClientType
 
+type MFADevicePolicyResourceModel struct {
+	Id                    pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId         pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name                  types.String                 `tfsdk:"name"`
+	Authentication        types.Object                 `tfsdk:"authentication"`
+	NewDeviceNotification types.String                 `tfsdk:"new_device_notification"`
+	Sms                   types.Object                 `tfsdk:"sms"`
+	Voice                 types.Object                 `tfsdk:"voice"`
+	Email                 types.Object                 `tfsdk:"email"`
+	Mobile                types.Object                 `tfsdk:"mobile"`
+	Totp                  types.Object                 `tfsdk:"totp"`
+	Fido2                 types.Object                 `tfsdk:"fido2"`
+}
+
+type MFADevicePolicyAuthenticationResourceModel struct {
+	DeviceSelection types.String `tfsdk:"device_selection"`
+}
+
+type MFADevicePolicySmsResourceModel MFADevicePolicyOfflineDeviceResourceModel
+type MFADevicePolicyVoiceResourceModel MFADevicePolicyOfflineDeviceResourceModel
+type MFADevicePolicyEmailResourceModel MFADevicePolicyOfflineDeviceResourceModel
+type MFADevicePolicyTotpResourceModel MFADevicePolicyOfflineDeviceResourceModel
+
+type MFADevicePolicyOfflineDeviceResourceModel struct {
+	Enabled         types.Bool   `tfsdk:"enabled"`
+	Otp             types.Object `tfsdk:"otp"`
+	PairingDisabled types.Bool   `tfsdk:"pairing_disabled"`
+}
+
+type MFADevicePolicyOfflineDeviceOtpResourceModel struct {
+	MFADevicePolicyOtpResourceModel
+	Lifetime types.Object `tfsdk:"lifetime"`
+}
+
+type MFADevicePolicyOtpResourceModel struct {
+	Failure types.Object `tfsdk:"failure"`
+}
+
+type MFADevicePolicyFailureResourceModel struct {
+	CoolDown types.Object `tfsdk:"cool_down"`
+	Count    types.Int64  `tfsdk:"count"`
+}
+
+type MFADevicePolicyCooldownResourceModel MFADevicePolicyTimePeriodResourceModel
+type MFADevicePolicyPushTimeoutResourceModel MFADevicePolicyTimePeriodResourceModel
+type MFADevicePolicyLockDurationResourceModel MFADevicePolicyTimePeriodResourceModel
+type MFADevicePolicyPairingKeyLifetimeResourceModel MFADevicePolicyTimePeriodResourceModel
+type MFADevicePolicyTimePeriodResourceModel struct {
+	Duration types.Int64  `tfsdk:"duration"`
+	TimeUnit types.String `tfsdk:"time_unit"`
+}
+
+type MFADevicePolicyFido2ResourceModel struct {
+	Enabled         types.Bool                   `tfsdk:"enabled"`
+	Fido2PolicyId   pingonetypes.ResourceIDValue `tfsdk:"fido2_policy_id"`
+	PairingDisabled types.Bool                   `tfsdk:"pairing_disabled"`
+}
+
+type MFADevicePolicyMobileResourceModel struct {
+	Applications types.Map    `tfsdk:"applications"`
+	Enabled      types.Bool   `tfsdk:"enabled"`
+	Otp          types.Object `tfsdk:"otp"`
+}
+
+type MFADevicePolicyMobileApplicationResourceModel struct {
+	AutoEnrolment       types.Object `tfsdk:"auto_enrollment"`
+	DeviceAuthorization types.Object `tfsdk:"device_authorization"`
+	IntegrityDetection  types.Object `tfsdk:"integrity_detection"`
+	Otp                 types.Object `tfsdk:"otp"`
+	PairingDisabled     types.Bool   `tfsdk:"pairing_disabled"`
+	PairingKeyLifetime  types.Object `tfsdk:"pairing_key_lifetime"`
+	Push                types.Object `tfsdk:"push"`
+	PushLimit           types.Object `tfsdk:"push_limit"`
+	PushTimeout         types.Object `tfsdk:"push_timeout"`
+}
+
+type MFADevicePolicyMobileApplicationAutoEnrolmentResourceModel struct {
+	Enabled types.Bool `tfsdk:"enabled"`
+}
+
+type MFADevicePolicyMobileApplicationDeviceAuthorizationResourceModel struct {
+	Enabled           types.Bool   `tfsdk:"enabled"`
+	ExtraVerification types.String `tfsdk:"extra_verification"`
+}
+
+type MFADevicePolicyMobileApplicationOtpResourceModel MFADevicePolicyEnabledResourceModel
+type MFADevicePolicyMobileApplicationPushResourceModel MFADevicePolicyEnabledResourceModel
+type MFADevicePolicyEnabledResourceModel struct {
+	Enabled types.Bool `tfsdk:"enabled"`
+}
+
+type MFADevicePolicyPushLimitResourceModel struct {
+	Count        types.Int64  `tfsdk:"count"`
+	LockDuration types.Object `tfsdk:"lock_duration"`
+	TimePeriod   types.Object `tfsdk:"time_period"`
+}
+
+var (
+	MFADevicePolicyAuthenticationTFObjectTypes = map[string]attr.Type{
+		"device_selection": types.StringType,
+	}
+
+	MFADevicePolicyOfflineDeviceTFObjectTypes = map[string]attr.Type{
+		"enabled":          types.Int64Type,
+		"otp":              types.ObjectType{},
+		"pairing_disabled": types.BoolType,
+	}
+
+	MFADevicePolicyOfflineDeviceOtpTFObjectTypes = map[string]attr.Type{
+		"failure":  types.ObjectType{AttrTypes: MFADevicePolicyFailureTFObjectTypes},
+		"lifetime": types.ObjectType{},
+	}
+
+	MFADevicePolicyFailureTFObjectTypes = map[string]attr.Type{
+		"cool_down": types.ObjectType{AttrTypes: MFADevicePolicyTimePeriodTFObjectTypes},
+		"count":     types.Int64Type,
+	}
+
+	MFADevicePolicyTimePeriodTFObjectTypes = map[string]attr.Type{
+		"duration":  types.Int64Type,
+		"time_unit": types.StringType,
+	}
+
+	MFADevicePolicyFido2TFObjectTypes = map[string]attr.Type{
+		"enabled":          types.BoolType,
+		"fido2_policy_id":  pingonetypes.ResourceIDType{},
+		"pairing_disabled": types.BoolType,
+	}
+
+	MFADevicePolicyMobileTFObjectTypes = map[string]attr.Type{
+		"applications": types.MapType{},
+		"enabled":      types.BoolType,
+		"otp":          types.ObjectType{},
+	}
+)
+
+// Framework interfaces
+var (
+	_ resource.Resource                = &MFADevicePolicyResource{}
+	_ resource.ResourceWithConfigure   = &MFADevicePolicyResource{}
+	_ resource.ResourceWithImportState = &MFADevicePolicyResource{}
+)
+
+// New Object
+func NewMFADevicePolicyResource() resource.Resource {
+	return &MFADevicePolicyResource{}
+}
+
+// Metadata
+func (r *MFADevicePolicyResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_mfa_device_policy"
+}
+
+func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+
+	// schema descriptions and validation settings
+	deviceSelectionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that defines the device selection method.",
+	).AllowedValuesEnum(mfa.AllowedEnumMFADevicePolicySelectionEnumValues).DefaultValue(string(mfa.ENUMMFADEVICEPOLICYSELECTION_DEFAULT_TO_FIRST))
+
+	newDeviceNotificationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that defines whether a user should be notified if a new authentication method has been added to their account.",
+	).AllowedValuesEnum(mfa.AllowedEnumMFADevicePolicyNewDeviceNotificationEnumValues).DefaultValue(string(mfa.ENUMMFADEVICEPOLICYNEWDEVICENOTIFICATION_NONE))
+
+	totpPairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, prevents users from pairing new devices with the TOTP method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.",
+	).DefaultValue(false)
+
+	totpOtpFailureCoolDownDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the type of time unit for `duration`.",
+	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitEnumValues)
+
+	fido2PairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, prevents users from pairing new devices with the FIDO2 method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.",
+	).DefaultValue(false)
+
+	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage MFA Policies in a PingOne Environment.",
+		Description: "Resource to create and manage MFA device policies for a PingOne environment.",
 
-		CreateContext: resourceMFADevicePolicyCreate,
-		ReadContext:   resourceMFADevicePolicyRead,
-		UpdateContext: resourceMFADevicePolicyUpdate,
-		DeleteContext: resourceMFADevicePolicyDelete,
+		Attributes: map[string]schema.Attribute{
+			"id": framework.Attr_ID(),
 
-		Importer: &schema.ResourceImporter{
-			StateContext: resourceMFADevicePolicyImport,
-		},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment that contains the MFA device policy to manage."),
+			),
 
-		Schema: map[string]*schema.Schema{
-			"environment_id": {
-				Description:      "The ID of the environment to create the MFA device policy in.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ForceNew:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-			},
-			"name": {
-				Description:      "A string that specifies the MFA policy's name.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
-			},
-			"device_selection": {
-				Description:      fmt.Sprintf("A string that defines the device selection method. Options are `%s` (this is the default setting for new environments), `%s` and `%s`.", string(mfa.ENUMMFADEVICEPOLICYSELECTION_DEFAULT_TO_FIRST), string(mfa.ENUMMFADEVICEPOLICYSELECTION_PROMPT_TO_SELECT), string(mfa.ENUMMFADEVICEPOLICYSELECTION_ALWAYS_DISPLAY_DEVICES)),
-				Type:             schema.TypeString,
-				Optional:         true,
-				Default:          string(mfa.ENUMMFADEVICEPOLICYSELECTION_DEFAULT_TO_FIRST),
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMMFADEVICEPOLICYSELECTION_DEFAULT_TO_FIRST), string(mfa.ENUMMFASETTINGSDEVICESELECTION_PROMPT_TO_SELECT), string(mfa.ENUMMFADEVICEPOLICYSELECTION_ALWAYS_DISPLAY_DEVICES)}, false)),
-			},
-			"new_device_notification": {
-				Description:      fmt.Sprintf("A string that defines whether a user should be notified if a new authentication method has been added to their account. Options are `%s` (the default), `%s` and `%s`.", string(mfa.ENUMMFADEVICEPOLICYNEWDEVICENOTIFICATION_NONE), string(mfa.ENUMMFADEVICEPOLICYNEWDEVICENOTIFICATION_EMAIL_THEN_SMS), string(mfa.ENUMMFADEVICEPOLICYNEWDEVICENOTIFICATION_SMS_THEN_EMAIL)),
-				Type:             schema.TypeString,
-				Optional:         true,
-				Default:          string(mfa.ENUMMFADEVICEPOLICYNEWDEVICENOTIFICATION_NONE),
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMMFADEVICEPOLICYNEWDEVICENOTIFICATION_NONE), string(mfa.ENUMMFADEVICEPOLICYNEWDEVICENOTIFICATION_EMAIL_THEN_SMS), string(mfa.ENUMMFADEVICEPOLICYNEWDEVICENOTIFICATION_SMS_THEN_EMAIL)}, false)),
-			},
-			"sms": {
-				Description: "SMS OTP authentication policy settings.",
-				Type:        schema.TypeList,
-				MaxItems:    1,
+			"name": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the MFA policy's unique name within the environment.").Description,
 				Required:    true,
-				Elem:        offlineDeviceResourceSchema("sms.0"),
 			},
-			"voice": {
-				Description: "Voice OTP authentication policy settings.",
-				Type:        schema.TypeList,
-				MaxItems:    1,
-				Required:    true,
-				Elem:        offlineDeviceResourceSchema("voice.0"),
+
+			"device_selection": schema.StringAttribute{
+				Description:         deviceSelectionDescription.Description,
+				MarkdownDescription: deviceSelectionDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: stringdefault.StaticString(string(mfa.ENUMMFADEVICEPOLICYSELECTION_DEFAULT_TO_FIRST)),
+
+				Validators: []validator.String{
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumMFADevicePolicySelectionEnumValues)...),
+				},
 			},
-			"email": {
-				Description: "Email OTP authentication policy settings.",
-				Type:        schema.TypeList,
-				MaxItems:    1,
-				Required:    true,
-				Elem:        offlineDeviceResourceSchema("email.0"),
+
+			"new_device_notification": schema.StringAttribute{
+				Description:         newDeviceNotificationDescription.Description,
+				MarkdownDescription: newDeviceNotificationDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: stringdefault.StaticString(string(mfa.ENUMMFADEVICEPOLICYNEWDEVICENOTIFICATION_NONE)),
+
+				Validators: []validator.String{
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumMFADevicePolicyNewDeviceNotificationEnumValues)...),
+				},
 			},
-			"mobile": {
-				Description: "Mobile authenticator device policy settings.  This factor requires embedding the PingOne MFA SDK into a customer facing mobile application, and configuring as a Native application using the `pingone_application` resource.",
-				Type:        schema.TypeList,
-				MaxItems:    1,
-				Required:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"enabled": {
-							Description: "Enabled or disabled in the policy.",
-							Type:        schema.TypeBool,
-							Required:    true,
-						},
-						"otp_failure_count": {
-							Description: "An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.",
-							Type:        schema.TypeInt,
-							Optional:    true,
-							Default:     3,
-						},
-						"otp_failure_cooldown_duration": {
-							Description: "An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.",
-							Type:        schema.TypeInt,
-							Optional:    true,
-							Default:     2,
-						},
-						"otp_failure_cooldown_timeunit": {
-							Description:      fmt.Sprintf("The type of time unit for `otp_failure_cooldown_duration`.  Options are `%s` or `%s`.", string(mfa.ENUMTIMEUNIT_MINUTES), string(mfa.ENUMTIMEUNIT_SECONDS)),
-							Type:             schema.TypeString,
-							Optional:         true,
-							Default:          string(mfa.ENUMTIMEUNIT_MINUTES),
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMTIMEUNIT_MINUTES), string(mfa.ENUMTIMEUNIT_SECONDS)}, false)),
-						},
-						"application": {
-							Description: "Settings for a configured Mobile Application.",
-							Type:        schema.TypeSet,
-							Optional:    true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"id": {
-										Description:      "The mobile application's ID.  Mobile applications are configured with the `pingone_application` resource, as an OIDC `NATIVE` type.",
-										Type:             schema.TypeString,
-										Required:         true,
-										ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-									},
-									"pairing_disabled": {
-										Description: "You can set this parameter to `true` to prevent users from pairing new devices with the relevant method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.",
-										Type:        schema.TypeBool,
+
+			"sms": r.devicePolicyOfflineDeviceSchemaAttribute("SMS OTP"),
+
+			"voice": r.devicePolicyOfflineDeviceSchemaAttribute("voice OTP"),
+
+			"email": r.devicePolicyOfflineDeviceSchemaAttribute("email OTP"),
+
+			"mobile": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of mobile push/OTP device authentication policy settings.").Description,
+				Optional:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"mfa_enabled": schema.BoolAttribute{
+						Description:         usersMfaEnabledDescription.Description,
+						MarkdownDescription: usersMfaEnabledDescription.MarkdownDescription,
+						Required:            true,
+					},
+				},
+			},
+
+			"totp": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+				Optional:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"enabled": schema.BoolAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the TOTP method is enabled or disabled in the policy.").Description,
+						Required:    true,
+					},
+
+					"pairing_disabled": schema.BoolAttribute{
+						Description:         totpPairingDisabledDescription.Description,
+						MarkdownDescription: totpPairingDisabledDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: booldefault.StaticBool(false),
+					},
+
+					"otp": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of TOTP OTP settings.").Description,
+						Optional:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"failure": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of TOTP OTP failure settings.").Description,
+								Optional:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"cool_down": schema.SingleNestedAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of TOTP OTP failure cool down settings.").Description,
 										Optional:    true,
-										Default:     false,
+
+										Attributes: map[string]schema.Attribute{
+											"duration": schema.Int64Attribute{
+												Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.").Description,
+												Required:    true,
+											},
+
+											"time_unit": schema.StringAttribute{
+												Description:         totpOtpFailureCoolDownDescription.Description,
+												MarkdownDescription: totpOtpFailureCoolDownDescription.MarkdownDescription,
+												Required:            true,
+
+												Validators: []validator.String{
+													stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitEnumValues)...),
+												},
+											},
+										},
 									},
-									"push_enabled": {
-										Description: "Specifies whether push notification is enabled or disabled for the policy.",
-										Type:        schema.TypeBool,
+
+									"count": schema.Int64Attribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.").Description,
 										Required:    true,
-									},
-									"push_timeout_duration": {
-										Description:      "An integer that defines the amount of time (in seconds) a user has to respond to a push notification before it expires. Minimum is 40 seconds and maximum is 150 seconds. If this parameter is not provided, the duration is set to 40 seconds.",
-										Type:             schema.TypeInt,
-										Optional:         true,
-										Default:          40,
-										ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(40, 150)),
-									},
-									"push_timeout_timeunit": {
-										Description: "The time unit for the `push_timeout_duration` parameter. Currently, the only permitted value is `SECONDS`.",
-										Type:        schema.TypeString,
-										Computed:    true,
-									},
-									"pairing_key_lifetime_duration": {
-										Description: "The amount of time an issued pairing key can be used until it expires. Minimum is 1 minute and maximum is 48 hours. If this parameter is not provided, the duration is set to 10 minutes.",
-										Type:        schema.TypeInt,
-										Optional:    true,
-										Default:     10,
-									},
-									"pairing_key_lifetime_timeunit": {
-										Description:      fmt.Sprintf("The time unit for the `pairing_key_lifetime_duration` parameter.  Options are `%s` or `%s`.", string(mfa.ENUMTIMEUNITPAIRINGKEYLIFETIME_HOURS), string(mfa.ENUMTIMEUNITPAIRINGKEYLIFETIME_MINUTES)),
-										Type:             schema.TypeString,
-										Optional:         true,
-										ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMTIMEUNITPAIRINGKEYLIFETIME_HOURS), string(mfa.ENUMTIMEUNITPAIRINGKEYLIFETIME_MINUTES)}, false)),
-										Default:          string(mfa.ENUMTIMEUNIT_MINUTES),
-									},
-									"push_limit_count": {
-										Description:      "The number of consecutive push notifications that can be ignored or rejected by a user within a defined period before push notifications are blocked for the application. The minimum value is 1 and the maximum value is 50. If this parameter is not provided, the default value is 5.",
-										Type:             schema.TypeInt,
-										Optional:         true,
-										ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(1, 50)),
-										Default:          5,
-									},
-									"push_limit_lock_duration": {
-										Description:      "The length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is 1 minute and the maximum value is 120 minutes. If this parameter is not provided, the default value is 30 minutes.",
-										Type:             schema.TypeInt,
-										Optional:         true,
-										ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(1)),
-										Default:          30,
-									},
-									"push_limit_lock_duration_timeunit": {
-										Description:      fmt.Sprintf("The time unit for the `push_limit_lock_duration` parameter.  Options are `%s` or `%s`.", string(mfa.ENUMTIMEUNIT_MINUTES), string(mfa.ENUMTIMEUNIT_SECONDS)),
-										Type:             schema.TypeString,
-										Optional:         true,
-										ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMTIMEUNIT_MINUTES), string(mfa.ENUMTIMEUNIT_SECONDS)}, false)),
-										Default:          string(mfa.ENUMTIMEUNIT_MINUTES),
-									},
-									"push_limit_time_period_duration": {
-										Description:      "The time period in which the push notifications are counted towards the defined limit. The minimum value is 1 minute and the maximum value is 120 minutes. If this parameter is not provided, the default value is 10 minutes.",
-										Type:             schema.TypeInt,
-										Optional:         true,
-										ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(1)),
-										Default:          10,
-									},
-									"push_limit_time_period_timeunit": {
-										Description:      fmt.Sprintf("The time unit for the `push_limit_time_period_duration` parameter.  Options are `%s` or `%s`.", string(mfa.ENUMTIMEUNIT_MINUTES), string(mfa.ENUMTIMEUNIT_SECONDS)),
-										Type:             schema.TypeString,
-										Optional:         true,
-										ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMTIMEUNIT_MINUTES), string(mfa.ENUMTIMEUNIT_SECONDS)}, false)),
-										Default:          string(mfa.ENUMTIMEUNIT_MINUTES),
-									},
-									"otp_enabled": {
-										Description: "Specifies whether OTP authentication is enabled or disabled for the policy.",
-										Type:        schema.TypeBool,
-										Required:    true,
-									},
-									"device_authorization_enabled": {
-										Description: "Specifies the enabled or disabled state of automatic MFA for native devices paired with the user, for the specified application.",
-										Type:        schema.TypeBool,
-										Optional:    true,
-									},
-									"device_authorization_extra_verification": {
-										Description:      "Specifies the level of further verification when `device_authorization_enabled` is true. The PingOne platform performs an extra verification check by sending a \"silent\" push notification to the customer native application, and receives a confirmation in return.  Extra verification can be one of the following levels: `permissive`: The PingOne platform performs the extra verification check. Upon timeout or failure to get a response from the native app, the MFA step is treated as successfully completed.  `restrictive`: The PingOne platform performs the extra verification check.The PingOne platform performs the extra verification check. Upon timeout or failure to get a response from the native app, the MFA step is treated as failed.",
-										Type:             schema.TypeString,
-										Optional:         true,
-										ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"permissive", "restrictive"}, false)),
-									},
-									"auto_enrollment_enabled": {
-										Description: "Set to `true` if you want the application to allow Auto Enrollment. Auto Enrollment means that the user can authenticate for the first time from an unpaired device, and the successful authentication will result in the pairing of the device for MFA.",
-										Type:        schema.TypeBool,
-										Optional:    true,
-									},
-									"integrity_detection": {
-										Description:      "Controls how authentication or registration attempts should proceed if a device integrity check does not receive a response. Set the value to `permissive` if you want to allow the process to continue. Set the value to `restrictive` if you want to block the user in such situations.",
-										Type:             schema.TypeString,
-										Optional:         true,
-										ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"permissive", "restrictive"}, false)),
 									},
 								},
 							},
@@ -230,71 +326,125 @@ func ResourceMFADevicePolicy() *schema.Resource {
 					},
 				},
 			},
-			"totp": {
-				Description: "TOTP authenticator policy settings.",
-				Type:        schema.TypeList,
-				MaxItems:    1,
-				Required:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"enabled": {
-							Description: "Enabled or disabled in the policy.",
-							Type:        schema.TypeBool,
-							Required:    true,
-						},
-						"pairing_disabled": {
-							Description: "You can set this parameter to `true` to prevent users from pairing new devices with the relevant method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.",
-							Type:        schema.TypeBool,
-							Optional:    true,
-							Default:     false,
-						},
-						"otp_failure_count": {
-							Description: "An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.",
-							Type:        schema.TypeInt,
-							Optional:    true,
-							Default:     3,
-						},
-						"otp_failure_cooldown_duration": {
-							Description: "An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.",
-							Type:        schema.TypeInt,
-							Optional:    true,
-							Default:     2,
-						},
-						"otp_failure_cooldown_timeunit": {
-							Description:      fmt.Sprintf("The type of time unit for `otp_failure_cooldown_duration`.  Options are `%s` or `%s`.", string(mfa.ENUMTIMEUNIT_MINUTES), string(mfa.ENUMTIMEUNIT_SECONDS)),
-							Type:             schema.TypeString,
-							Optional:         true,
-							Default:          string(mfa.ENUMTIMEUNIT_MINUTES),
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMTIMEUNIT_MINUTES), string(mfa.ENUMTIMEUNIT_SECONDS)}, false)),
-						},
+
+			"fido2": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of FIDO2 device authentication policy settings.").Description,
+				Optional:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"enabled": schema.BoolAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the FIDO2 method is enabled or disabled in the policy.").Description,
+						Required:    true,
+					},
+
+					"pairing_disabled": schema.BoolAttribute{
+						Description:         fido2PairingDisabledDescription.Description,
+						MarkdownDescription: fido2PairingDisabledDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: booldefault.StaticBool(false),
+					},
+
+					"fido2_policy_id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the resource UUID that represents the FIDO2 policy in PingOne. This property can be null / left undefined. When null, the environment's default FIDO2 Policy is used.  Must be a valid PingOne resource ID.").Description,
+						Optional:    true,
+
+						CustomType: pingonetypes.ResourceIDType{},
 					},
 				},
 			},
-			"fido2": {
-				Description: "FIDO2 device authentication policy settings.",
-				Type:        schema.TypeList,
-				MaxItems:    1,
-				Optional:    true,
-				Computed:    true,
+		},
+	}
+}
 
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"enabled": {
-							Description: "Enabled or disabled in the policy.",
-							Type:        schema.TypeBool,
-							Required:    true,
+func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descriptionMethod string) schema.SingleNestedAttribute {
+
+	pairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A boolean that, when set to `true`, prevents users from pairing new devices with the %s method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.", descriptionMethod),
+	).DefaultValue(false)
+
+	otpCoolDownDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the type of time unit for `duration`.",
+	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitEnumValues)
+
+	return schema.SingleNestedAttribute{
+		Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single object that allows configuration of %s device authentication policy settings.", descriptionMethod)).Description,
+		Optional:    true,
+
+		Attributes: map[string]schema.Attribute{
+			"enabled": schema.BoolAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A boolean that specifies whether the %s method is enabled or disabled in the policy.", descriptionMethod)).Description,
+				Required:    true,
+			},
+
+			"pairing_disabled": schema.BoolAttribute{
+				Description:         pairingDisabledDescription.Description,
+				MarkdownDescription: pairingDisabledDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: booldefault.StaticBool(false),
+			},
+
+			"otp": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single object that allows configuration of %s settings.", descriptionMethod)).Description,
+				Optional:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"failure": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single object that allows configuration of %s failure settings.", descriptionMethod)).Description,
+						Optional:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"cool_down": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single object that allows configuration of %s failure cool down settings.", descriptionMethod)).Description,
+								Optional:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"duration": schema.Int64Attribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.").Description,
+										Required:    true,
+									},
+
+									"time_unit": schema.StringAttribute{
+										Description:         otpCoolDownDescription.Description,
+										MarkdownDescription: otpCoolDownDescription.MarkdownDescription,
+										Required:            true,
+
+										Validators: []validator.String{
+											stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitEnumValues)...),
+										},
+									},
+								},
+							},
+
+							"count": schema.Int64Attribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.").Description,
+								Required:    true,
+							},
 						},
-						"pairing_disabled": {
-							Description: "You can set this parameter to `true` to prevent users from pairing new devices with the relevant method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.",
-							Type:        schema.TypeBool,
-							Optional:    true,
-							Default:     false,
-						},
-						"fido2_policy_id": {
-							Description:      "Specifies the UUID that represents the FIDO2 policy in PingOne. This property can be null. When null, the environment's default FIDO2 Policy is used.",
-							Type:             schema.TypeString,
-							Optional:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+					},
+
+					"lifetime": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single object that allows configuration of %s lifetime settings.", descriptionMethod)).Description,
+						Optional:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"duration": schema.Int64Attribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the duration (number of time units) that the passcode is valid before it expires.").Description,
+								Required:    true,
+							},
+
+							"time_unit": schema.StringAttribute{
+								Description:         otpCoolDownDescription.Description,
+								MarkdownDescription: otpCoolDownDescription.MarkdownDescription,
+								Required:            true,
+
+								Validators: []validator.String{
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitEnumValues)...),
+								},
+							},
 						},
 					},
 				},
@@ -303,246 +453,210 @@ func ResourceMFADevicePolicy() *schema.Resource {
 	}
 }
 
-func offlineDeviceResourceSchema(resourcePrefix string) *schema.Resource {
-	return &schema.Resource{
-		Schema: map[string]*schema.Schema{
-			"enabled": {
-				Description: "Enabled or disabled in the policy.",
-				Type:        schema.TypeBool,
-				Required:    true,
-			},
-			"pairing_disabled": {
-				Description: "You can set this parameter to `true` to prevent users from pairing new devices with the relevant method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.",
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     false,
-			},
-			"otp_lifetime_duration": {
-				Description: "An integer that defines turation (number of time units) that the passcode is valid before it expires.",
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Default:     30,
-			},
-			"otp_lifetime_timeunit": {
-				Description:      fmt.Sprintf("The type of time unit for `otp_lifetime_duration`.  Options are `%s` or `%s`.", string(mfa.ENUMTIMEUNIT_MINUTES), string(mfa.ENUMTIMEUNIT_SECONDS)),
-				Type:             schema.TypeString,
-				Optional:         true,
-				Default:          string(mfa.ENUMTIMEUNIT_MINUTES),
-				RequiredWith:     []string{fmt.Sprintf("%s.otp_lifetime_duration", resourcePrefix), fmt.Sprintf("%s.otp_lifetime_timeunit", resourcePrefix)},
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMTIMEUNIT_MINUTES), string(mfa.ENUMTIMEUNIT_SECONDS)}, false)),
-			},
-			"otp_failure_count": {
-				Description: "An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.",
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Default:     3,
-			},
-			"otp_failure_cooldown_duration": {
-				Description:  "An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Note that when using the \"onetime authentication\" feature, the user is not blocked after the maximum number of failures even if you specified a block duration.",
-				Type:         schema.TypeInt,
-				Optional:     true,
-				Default:      0,
-				RequiredWith: []string{fmt.Sprintf("%s.otp_failure_cooldown_duration", resourcePrefix), fmt.Sprintf("%s.otp_failure_cooldown_timeunit", resourcePrefix)},
-			},
-			"otp_failure_cooldown_timeunit": {
-				Description:      fmt.Sprintf("The type of time unit for `otp_failure_cooldown_duration`.  Options are `%s` or `%s`.", string(mfa.ENUMTIMEUNIT_MINUTES), string(mfa.ENUMTIMEUNIT_SECONDS)),
-				Type:             schema.TypeString,
-				Optional:         true,
-				Default:          string(mfa.ENUMTIMEUNIT_MINUTES),
-				RequiredWith:     []string{fmt.Sprintf("%s.otp_failure_cooldown_duration", resourcePrefix), fmt.Sprintf("%s.otp_failure_cooldown_timeunit", resourcePrefix)},
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMTIMEUNIT_MINUTES), string(mfa.ENUMTIMEUNIT_SECONDS)}, false)),
-			},
-		},
+func (r *MFADevicePolicyResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
+	}
+
+	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected the provider client, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
+		)
+
+		return
+	}
+
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
+		)
+		return
 	}
 }
 
-func resourceMFADevicePolicyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.MFAAPIClient
+func (r *MFADevicePolicyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan, state MFADevicePolicyResourceModel
 
-	managementApiClient := p1Client.API.ManagementAPIClient
-
-	var diags diag.Diagnostics
-
-	mfaPolicy, diags := expandMFADevicePolicyPost(ctx, managementApiClient, d)
-	if diags.HasError() {
-		return diags
+	if r.Client.MFAAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
 	}
 
-	resp, diags := sdk.ParseResponse(
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the API
+	mFADevicePolicy, d := plan.expand(ctx)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	var response *mfa.DeviceAuthenticationPolicyPostResponse
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.DeviceAuthenticationPolicyApi.CreateDeviceAuthenticationPolicies(ctx, d.Get("environment_id").(string)).DeviceAuthenticationPolicyPost(*mfaPolicy).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
+			fO, fR, fErr := r.Client.MFAAPIClient.DeviceAuthenticationPolicyApi.CreateDeviceAuthenticationPolicies(ctx, plan.EnvironmentId.ValueString()).DeviceAuthenticationPolicyPost(*mFADevicePolicy).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateDeviceAuthenticationPolicies",
-		sdk.DefaultCustomError,
+		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
-		return diags
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	respObject := resp.(*mfa.DeviceAuthenticationPolicyPostResponse)
+	// Create the state to save
+	state = plan
 
-	d.SetId(respObject.DeviceAuthenticationPolicy.GetId())
-
-	return resourceMFADevicePolicyRead(ctx, d, meta)
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toStateCreate(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourceMFADevicePolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.MFAAPIClient
+func (r *MFADevicePolicyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *MFADevicePolicyResourceModel
 
-	var diags diag.Diagnostics
+	if r.Client.MFAAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
 
-	resp, diags := sdk.ParseResponse(
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	var response *mfa.DeviceAuthenticationPolicy
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.DeviceAuthenticationPolicyApi.ReadOneDeviceAuthenticationPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
+			fO, fR, fErr := r.Client.MFAAPIClient.DeviceAuthenticationPolicyApi.ReadOneDeviceAuthenticationPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneDeviceAuthenticationPolicy",
-		sdk.CustomErrorResourceNotFoundWarning,
+		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
-		return diags
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if resp == nil {
-		d.SetId("")
-		return nil
+	// Remove from state if resource is not found
+	if response == nil {
+		resp.State.RemoveResource(ctx)
+		return
 	}
 
-	respObject := resp.(*mfa.DeviceAuthenticationPolicy)
-
-	d.Set("name", respObject.GetName())
-
-	if v, ok := respObject.GetAuthenticationOk(); ok {
-		d.Set("device_selection", v.GetDeviceSelection())
-	} else {
-		d.Set("device_selection", nil)
-	}
-
-	if v, ok := respObject.GetNewDeviceNotificationOk(); ok {
-		d.Set("new_device_notification", string(*v))
-	} else {
-		d.Set("new_device_notification", nil)
-	}
-
-	if v, ok := respObject.GetSmsOk(); ok {
-		d.Set("sms", flattenMFADevicePolicyOfflineDevice(v))
-	} else {
-		d.Set("sms", nil)
-	}
-
-	if v, ok := respObject.GetVoiceOk(); ok {
-		d.Set("voice", flattenMFADevicePolicyOfflineDevice(v))
-	} else {
-		d.Set("voice", nil)
-	}
-
-	if v, ok := respObject.GetEmailOk(); ok {
-		d.Set("email", flattenMFADevicePolicyOfflineDevice(v))
-	} else {
-		d.Set("email", nil)
-	}
-
-	if v, ok := respObject.GetMobileOk(); ok {
-		d.Set("mobile", flattenMFADevicePolicyMobile(v))
-	} else {
-		d.Set("mobile", nil)
-	}
-
-	if v, ok := respObject.GetTotpOk(); ok {
-		d.Set("totp", flattenMFADevicePolicyTotp(v))
-	} else {
-		d.Set("totp", nil)
-	}
-
-	if v, ok := respObject.GetFido2Ok(); ok {
-		d.Set("fido2", flattenMFADevicePolicyFIDO2Device(v))
-	} else {
-		d.Set("fido2", nil)
-	}
-
-	return diags
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(data.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceMFADevicePolicyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.MFAAPIClient
+func (r *MFADevicePolicyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan, state MFADevicePolicyResourceModel
 
-	managementApiClient := p1Client.API.ManagementAPIClient
-
-	var diags diag.Diagnostics
-
-	mfaPolicy, diags := expandMFADevicePolicy(ctx, managementApiClient, d)
-	if diags.HasError() {
-		return diags
+	if r.Client.MFAAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
 	}
 
-	_, diags = sdk.ParseResponse(
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the API
+	mFADevicePolicy, d := plan.expand(ctx)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	var response *mfa.DeviceAuthenticationPolicy
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.DeviceAuthenticationPolicyApi.UpdateDeviceAuthenticationPolicy(ctx, d.Get("environment_id").(string), d.Id()).DeviceAuthenticationPolicy(*mfaPolicy).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
+			fO, fR, fErr := r.Client.MFAAPIClient.DeviceAuthenticationPolicyApi.UpdateDeviceAuthenticationPolicy(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).DeviceAuthenticationPolicy(*mFADevicePolicy).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
-		"UpdateMFADevicePolicy",
-		sdk.DefaultCustomError,
+		"UpdateDeviceAuthenticationPolicy",
+		framework.DefaultCustomError,
 		nil,
-	)
-	if diags.HasError() {
-		return diags
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	return resourceMFADevicePolicyRead(ctx, d, meta)
+	// Update the state to save
+	state = plan
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourceMFADevicePolicyDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.MFAAPIClient
+func (r *MFADevicePolicyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *MFADevicePolicyResourceModel
 
-	var diags diag.Diagnostics
+	if r.Client.MFAAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
 
-	timeout := 30 * time.Second
-	_, diags = sdk.ParseResponseWithCustomTimeout(
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := apiClient.DeviceAuthenticationPolicyApi.DeleteDeviceAuthenticationPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), nil, fR, fErr)
+			fR, fErr := r.Client.MFAAPIClient.DeviceAuthenticationPolicyApi.DeleteDeviceAuthenticationPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteDeviceAuthenticationPolicy",
-		sdk.CustomErrorResourceNotFoundWarning,
-		func(ctx context.Context, r *http.Response, p1Error *model.P1Error) bool {
-
-			if p1Error != nil && r.StatusCode == http.StatusConflict {
-				if details, ok := p1Error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
-					if target, ok := details[0].GetTargetOk(); ok && details[0].GetCode() == "INVALID_VALUE" && *target == "signOnPolicies" {
-						tflog.Warn(ctx, "Conflict detected when deleting MFA policy.  This is likely due to the policy being referenced by a sign-on policy.  Retrying..")
-
-						return true
-					}
-				}
-			}
-
-			return false
-		},
-		timeout,
-	)
-	if diags.HasError() {
-		return diags
+		framework.CustomErrorResourceNotFoundWarning,
+		nil,
+		nil,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-
-	return diags
 }
 
-func resourceMFADevicePolicyImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func (r *MFADevicePolicyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 
 	idComponents := []framework.ImportComponent{
 		{
@@ -550,552 +664,226 @@ func resourceMFADevicePolicyImport(ctx context.Context, d *schema.ResourceData, 
 			Regexp: verify.P1ResourceIDRegexp,
 		},
 		{
-			Label:  "mfa_device_policy_id",
-			Regexp: verify.P1ResourceIDRegexp,
+			Label:     "mfa_device_policy_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
 		},
 	}
 
-	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
 	if err != nil {
-		return nil, err
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			err.Error(),
+		)
+		return
 	}
 
-	d.Set("environment_id", attributes["environment_id"])
-	d.SetId(attributes["mfa_device_policy_id"])
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
 
-	resourceMFADevicePolicyRead(ctx, d, meta)
-
-	return []*schema.ResourceData{d}, nil
-}
-
-func expandMFADevicePolicyPost(ctx context.Context, apiClient *management.APIClient, d *schema.ResourceData) (*mfa.DeviceAuthenticationPolicyPost, diag.Diagnostics) {
-	var diags diag.Diagnostics
-	mfaPolicyPost := mfa.DeviceAuthenticationPolicyPost{}
-	mfaPolicyPost.DeviceAuthenticationPolicy, diags = expandMFADevicePolicy(ctx, apiClient, d)
-
-	return &mfaPolicyPost, diags
-}
-
-func expandMFADevicePolicy(ctx context.Context, apiClient *management.APIClient, d *schema.ResourceData) (*mfa.DeviceAuthenticationPolicy, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	mobile, diags := expandMFADevicePolicyMobileDevice(d.Get("mobile").([]interface{})[0], ctx, apiClient, d.Get("environment_id").(string))
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	item := mfa.NewDeviceAuthenticationPolicy(
-		d.Get("name").(string),
-		*expandMFADevicePolicyOfflineDevice(d.Get("sms").([]interface{})[0]),
-		*expandMFADevicePolicyOfflineDevice(d.Get("voice").([]interface{})[0]),
-		*expandMFADevicePolicyOfflineDevice(d.Get("email").([]interface{})[0]),
-		*mobile,
-		*expandMFADevicePolicyTOTPDevice(d.Get("totp").([]interface{})[0]),
-		false,
-		false,
-	)
-
-	if v, ok := d.GetOk("fido2"); ok {
-		item.SetFido2(*expandMFADevicePolicyFIDO2Device(v.([]interface{})[0]))
-	}
-
-	if v, ok := d.GetOk("device_selection"); ok {
-		item.SetAuthentication(*mfa.NewDeviceAuthenticationPolicyAuthentication(mfa.EnumMFADevicePolicySelection(v.(string))))
-	}
-
-	if v, ok := d.GetOk("new_device_notification"); ok {
-		item.SetNewDeviceNotification(mfa.EnumMFADevicePolicyNewDeviceNotification(v.(string)))
-	}
-
-	return item, diags
-}
-
-func expandMFADevicePolicyOfflineDevice(v interface{}) *mfa.DeviceAuthenticationPolicyOfflineDevice {
-
-	obj := v.(map[string]interface{})
-
-	otp := *mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtp(
-		*mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpLifeTime(int32(obj["otp_lifetime_duration"].(int)), mfa.EnumTimeUnit(obj["otp_lifetime_timeunit"].(string))),
-		*mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure(
-			int32(obj["otp_failure_count"].(int)),
-			*mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown(int32(obj["otp_failure_cooldown_duration"].(int)), mfa.EnumTimeUnit(obj["otp_failure_cooldown_timeunit"].(string))),
-		),
-	)
-
-	item := mfa.NewDeviceAuthenticationPolicyOfflineDevice(obj["enabled"].(bool), otp)
-
-	if v, ok := obj["pairing_disabled"]; ok {
-		item.SetPairingDisabled(v.(bool))
-	}
-
-	return item
-}
-
-func expandMFADevicePolicyMobileDevice(v interface{}, ctx context.Context, apiClient *management.APIClient, environmentID string) (*mfa.DeviceAuthenticationPolicyMobile, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	obj := v.(map[string]interface{})
-
-	otpStepSizeDuration := 30
-
-	item := mfa.NewDeviceAuthenticationPolicyMobile(
-		obj["enabled"].(bool),
-		*mfa.NewDeviceAuthenticationPolicyMobileOtp(
-			*mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure(
-				int32(obj["otp_failure_count"].(int)),
-				*mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown(int32(obj["otp_failure_cooldown_duration"].(int)), mfa.EnumTimeUnit(obj["otp_failure_cooldown_timeunit"].(string))),
-			),
-			*mfa.NewDeviceAuthenticationPolicyMobileOtpWindow(
-				*mfa.NewDeviceAuthenticationPolicyMobileOtpWindowStepSize(
-					int32(otpStepSizeDuration),
-					mfa.ENUMTIMEUNIT_SECONDS,
-				),
-			),
-		),
-	)
-
-	if c, ok := obj["application"].(*schema.Set); ok && c != nil && len(c.List()) > 0 && c.List()[0] != nil {
-
-		items := make([]mfa.DeviceAuthenticationPolicyMobileApplicationsInner, 0)
-
-		for _, cn := range c.List() {
-
-			c2 := cn.(map[string]interface{})
-
-			item := *mfa.NewDeviceAuthenticationPolicyMobileApplicationsInner(c2["id"].(string))
-
-			application, diags := checkApplicationForMobileApp(ctx, apiClient, environmentID, c2["id"].(string))
-			if diags.HasError() {
-				return nil, diags
-			}
-
-			if c3, ok := c2["pairing_disabled"]; ok {
-				item.SetPairingDisabled(c3.(bool))
-			}
-
-			if c3, ok := c2["push_enabled"].(bool); ok {
-				item.SetPush(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPush(c3))
-			}
-
-			if c3, ok := c2["push_timeout_duration"].(int); ok {
-				item.SetPushTimeout(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushTimeout(int32(c3), mfa.ENUMTIMEUNITPUSHTIMEOUT_SECONDS))
-			}
-
-			pairingKeyLifetimeDuration, pairingKeyLifetimeDurationOk := c2["pairing_key_lifetime_duration"].(int)
-			pairingKeyLifetimeTimeunit, pairingKeyLifetimeTimeunitOk := c2["pairing_key_lifetime_timeunit"].(string)
-			if pairingKeyLifetimeDurationOk && pairingKeyLifetimeTimeunitOk {
-				item.SetPairingKeyLifetime(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPairingKeyLifetime(int32(pairingKeyLifetimeDuration), mfa.EnumTimeUnitPairingKeyLifetime(pairingKeyLifetimeTimeunit)))
-			}
-
-			pushLimit := mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushLimit()
-
-			if c3, ok := c2["push_limit_count"].(int); ok {
-				pushLimit.SetCount(int32(c3))
-			}
-
-			lockDuration, lockDurationOk := c2["push_limit_lock_duration"].(int)
-			lockDurationTimeunit, lockDurationTimeunitOk := c2["push_limit_lock_duration_timeunit"].(string)
-			if lockDurationOk && lockDurationTimeunitOk {
-				pushLimit.SetLockDuration(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushLimitLockDuration(int32(lockDuration), mfa.EnumTimeUnit(lockDurationTimeunit)))
-			}
-
-			timePeriodDuration, timePeriodOk := c2["push_limit_time_period_duration"].(int)
-			timePeriodTimeunit, timePeriodTimeunitOk := c2["push_limit_time_period_timeunit"].(string)
-			if timePeriodOk && timePeriodTimeunitOk {
-				pushLimit.SetTimePeriod(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushLimitTimePeriod(int32(timePeriodDuration), mfa.EnumTimeUnit(timePeriodTimeunit)))
-			}
-
-			item.SetPushLimit(*pushLimit)
-
-			if c3, ok := c2["otp_enabled"].(bool); ok {
-				item.SetOtp(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerOtp(c3))
-			}
-
-			deviceAuthz := *mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerDeviceAuthorization(c2["device_authorization_enabled"].(bool))
-
-			if c3, ok := c2["device_authorization_extra_verification"].(string); ok && c3 != "" {
-				deviceAuthz.SetExtraVerification(mfa.EnumMFADevicePolicyMobileExtraVerification(c3))
-			}
-
-			item.SetDeviceAuthorization(deviceAuthz)
-
-			if c3, ok := c2["auto_enrollment_enabled"].(bool); ok {
-				item.SetAutoEnrollment(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerAutoEnrollment(c3))
-			}
-
-			c3, ok := c2["integrity_detection"].(string)
-			if application.GetMobile().IntegrityDetection.GetMode() == management.ENUMENABLEDSTATUS_ENABLED {
-
-				if ok && c3 != "" {
-					item.SetIntegrityDetection(mfa.EnumMFADevicePolicyMobileIntegrityDetection(c3))
-				} else {
-					// error - this must be set
-					diags = append(diags, diag.Diagnostic{
-						Severity: diag.Error,
-						Summary:  "Integrity detection (`mobile.application.integrity_detection`) must be set when the Application resource has integrity detection enabled",
-						Detail:   "The referenced mobile application (`mobile.application.id`) has integrity detection enabled. This policy must specify the level of integrity detection in the `mobile.application.integrity_detection` parameter.",
-					})
-					return nil, diags
-				}
-			} else {
-				if ok && c3 != "" {
-					// error - this has no effect
-					diags = append(diags, diag.Diagnostic{
-						Severity: diag.Error,
-						Summary:  "Integrity detection (`mobile.application.integrity_detection`) has no effect when the Application resource has integrity detection disabled",
-						Detail:   "The referenced mobile application (`mobile.application.id`) has integrity detection disabled. Setting the `mobile.application.integrity_detection` parameter has no effect.",
-					})
-					return nil, diags
-				}
-			}
-
-			items = append(items, item)
+		if idComponent.PrimaryID {
+			pathKey = "id"
 		}
 
-		item.SetApplications(items)
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
 	}
-
-	return item, diags
 }
 
-func checkApplicationForMobileApp(ctx context.Context, apiClient *management.APIClient, environmentID, appID string) (*management.ApplicationOIDC, diag.Diagnostics) {
+func (p *MFADevicePolicyResourceModel) expand(ctx context.Context) (*mfa.MFADevicePolicy, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	resp, diags := sdk.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.ApplicationsApi.ReadOneApplication(ctx, environmentID, appID).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
-		},
-		"ReadOneApplication",
-		sdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultCreateReadRetryable,
-	)
+	// Pairing
+	var pairingPlan MFADevicePolicyPairingResourceModel
+	diags.Append(p.Pairing.As(ctx, &pairingPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
 	if diags.HasError() {
 		return nil, diags
 	}
+	pairing := mfa.NewMFADevicePolicyPairing(
+		int32(pairingPlan.MaxAllowedDevices.ValueInt64()),
+		mfa.EnumMFADevicePolicyPairingKeyFormat(pairingPlan.PairingKeyFormat.ValueString()),
+	)
 
-	if resp == nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "Application referenced in `mobile.application.id` does not exist",
-		})
-		return nil, diags
-	}
+	// Main object
+	data := mfa.NewMFADevicePolicy(
+		*pairing,
+	)
 
-	respObject := resp.(*management.ReadOneApplication200Response)
-
-	var oidcObject *management.ApplicationOIDC
-
-	// check if oidc
-	if respObject.ApplicationOIDC == nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "Application referenced in `mobile.application.id` is not of type OIDC",
-			Detail:   "To configure a mobile application in PingOne, the application must be an OIDC application of type `Native`, with a package or bundle set.",
-		})
-		return nil, diags
-	} else {
-		oidcObject = respObject.ApplicationOIDC
-	}
-
-	// check if native
-	if respObject.ApplicationOIDC.GetType() != management.ENUMAPPLICATIONTYPE_NATIVE_APP && respObject.ApplicationOIDC.GetType() != management.ENUMAPPLICATIONTYPE_CUSTOM_APP {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "Application referenced in `mobile.application.id` is OIDC, but is not the required `Native` OIDC application type",
-			Detail:   "To configure a mobile application in PingOne, the application must be an OIDC application of type `Native`, with a package or bundle set.",
-		})
-		return nil, diags
-	}
-
-	// check if mobile set and package/bundle set
-	if _, ok := respObject.ApplicationOIDC.GetMobileOk(); !ok {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "Application referenced in `mobile.application.id` does not contain mobile application configuration",
-			Detail:   "To configure a mobile application in PingOne, the application must be an OIDC application of type `Native`, with a package or bundle set.",
-		})
-		return nil, diags
-	}
-
-	if v, ok := respObject.ApplicationOIDC.GetMobileOk(); ok {
-
-		_, bundleIDOk := v.GetBundleIdOk()
-		_, packageNameOk := v.GetPackageNameOk()
-
-		if !bundleIDOk && !packageNameOk {
-
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "Application referenced in `mobile.application.id` does not contain mobile application configuration",
-				Detail:   "To configure a mobile application in PingOne, the application must be an OIDC application of type `Native`, with a package or bundle set.",
-			})
+	// Lockout
+	if !p.Lockout.IsNull() && !p.Lockout.IsUnknown() {
+		var lockoutPlan MFADevicePolicyLockoutResourceModel
+		diags.Append(p.Lockout.As(ctx, &lockoutPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
 			return nil, diags
 		}
+		lockout := mfa.NewMFADevicePolicyLockout(
+			int32(lockoutPlan.FailureCount.ValueInt64()),
+		)
+
+		if !lockoutPlan.DurationSeconds.IsNull() && !lockoutPlan.DurationSeconds.IsUnknown() {
+			lockout.SetDurationSeconds(int32(lockoutPlan.DurationSeconds.ValueInt64()))
+		}
+
+		data.SetLockout(*lockout)
 	}
 
-	return oidcObject, diags
+	// Phone Extensions
+	if !p.PhoneExtensions.IsNull() && !p.PhoneExtensions.IsUnknown() {
+		var phoneExtensionsPlan MFADevicePolicyPhoneExtensionsResourceModel
+		diags.Append(p.PhoneExtensions.As(ctx, &phoneExtensionsPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+		phoneExtensions := mfa.NewMFADevicePolicyPhoneExtensions()
+
+		if !phoneExtensionsPlan.Enabled.IsNull() && !phoneExtensionsPlan.Enabled.IsUnknown() {
+			phoneExtensions.SetEnabled(phoneExtensionsPlan.Enabled.ValueBool())
+		}
+
+		data.SetPhoneExtensions(*phoneExtensions)
+	}
+
+	// Users
+	if !p.Users.IsNull() && !p.Users.IsUnknown() {
+		var usersPlan MFADevicePolicyUsersResourceModel
+		diags.Append(p.Users.As(ctx, &usersPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+		users := mfa.NewMFADevicePolicyUsers()
+
+		if !usersPlan.MFAEnabled.IsNull() && !usersPlan.MFAEnabled.IsUnknown() {
+			users.SetMfaEnabled(usersPlan.MFAEnabled.ValueBool())
+		}
+
+		data.SetUsers(*users)
+	}
+
+	return data, diags
 }
 
-func expandMFADevicePolicyTOTPDevice(v interface{}) *mfa.DeviceAuthenticationPolicyTotp {
+func (p *MFADevicePolicyResourceModel) toState(apiObject *mfa.DeviceAuthenticationPolicy) diag.Diagnostics {
+	var diags diag.Diagnostics
 
-	obj := v.(map[string]interface{})
-
-	item := mfa.NewDeviceAuthenticationPolicyTotp(
-		obj["enabled"].(bool),
-		*mfa.NewDeviceAuthenticationPolicyTotpOtp(
-			*mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure(
-				int32(obj["otp_failure_count"].(int)),
-				*mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown(int32(obj["otp_failure_cooldown_duration"].(int)), mfa.EnumTimeUnit(obj["otp_failure_cooldown_timeunit"].(string))),
-			),
-		),
-	)
-
-	if v, ok := obj["pairing_disabled"]; ok {
-		item.SetPairingDisabled(v.(bool))
+	if apiObject == nil {
+		diags.AddError(
+			"Data object missing",
+			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
+		)
+		return diags
 	}
 
-	return item
+	var d diag.Diagnostics
+
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
+
+	p.Lockout, d = toStateLockout(apiObject.GetLockoutOk())
+	diags.Append(d...)
+
+	p.Pairing, d = toStatePairing(apiObject.GetPairingOk())
+	diags.Append(d...)
+
+	p.PhoneExtensions, d = toStatePhoneExtensions(apiObject.GetPhoneExtensionsOk())
+	diags.Append(d...)
+
+	p.Users, d = toStateUsers(apiObject.GetUsersOk())
+	diags.Append(d...)
+
+	return diags
 }
 
-func expandMFADevicePolicyFIDO2Device(v interface{}) *mfa.DeviceAuthenticationPolicyFido2 {
+func (p *MFADevicePolicyResourceModel) toStateCreate(apiObject *mfa.DeviceAuthenticationPolicyPostResponse) diag.Diagnostics {
+	var diags diag.Diagnostics
 
-	obj := v.(map[string]interface{})
-
-	item := mfa.NewDeviceAuthenticationPolicyFido2(obj["enabled"].(bool))
-
-	if v, ok := obj["fido2_policy_id"].(string); ok {
-		item.SetFido2PolicyId(v)
+	if apiObject == nil {
+		diags.AddError(
+			"Data object missing",
+			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
+		)
+		return diags
 	}
 
-	if v, ok := obj["pairing_disabled"]; ok {
-		item.SetPairingDisabled(v.(bool))
-	}
-
-	return item
+	return p.toState(apiObject.DeviceAuthenticationPolicy)
 }
 
-func flattenMFADevicePolicyOfflineDevice(c *mfa.DeviceAuthenticationPolicyOfflineDevice) []map[string]interface{} {
-	item := map[string]interface{}{
-		"enabled": c.GetEnabled(),
+func toStateLockout(apiObject *mfa.MFADevicePolicyLockout, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(MFADevicePolicyLockoutTFObjectTypes), nil
 	}
 
-	if v, ok := c.GetPairingDisabledOk(); ok {
-		item["pairing_disabled"] = *v
+	o := map[string]attr.Value{
+		"failure_count":    framework.Int32OkToTF(apiObject.GetFailureCountOk()),
+		"duration_seconds": framework.Int32OkToTF(apiObject.GetDurationSecondsOk()),
 	}
 
-	if v, ok := c.GetOtpOk(); ok {
+	objValue, d := types.ObjectValue(MFADevicePolicyLockoutTFObjectTypes, o)
+	diags.Append(d...)
 
-		if v1, ok := v.GetLifeTimeOk(); ok {
-
-			if v2, ok := v1.GetDurationOk(); ok {
-				item["otp_lifetime_duration"] = int(*v2)
-			}
-
-			if v2, ok := v1.GetTimeUnitOk(); ok {
-				item["otp_lifetime_timeunit"] = string(*v2)
-			}
-
-		}
-
-		if v1, ok := v.GetFailureOk(); ok {
-
-			if v2, ok := v1.GetCountOk(); ok {
-				item["otp_failure_count"] = int(*v2)
-			}
-
-			if v2, ok := v1.GetCoolDownOk(); ok {
-
-				if v3, ok := v2.GetDurationOk(); ok {
-					item["otp_failure_cooldown_duration"] = int(*v3)
-				}
-
-				if v3, ok := v2.GetTimeUnitOk(); ok {
-					item["otp_failure_cooldown_timeunit"] = string(*v3)
-				}
-			}
-		}
-
-	}
-
-	return append(make([]map[string]interface{}, 0), item)
+	return objValue, diags
 }
 
-func flattenMFADevicePolicyMobile(c *mfa.DeviceAuthenticationPolicyMobile) []map[string]interface{} {
+func toStatePairing(apiObject *mfa.MFADevicePolicyPairing, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
-	item := map[string]interface{}{
-		"enabled": c.GetEnabled(),
+	if !ok || apiObject == nil {
+		return types.ObjectNull(MFADevicePolicyPairingTFObjectTypes), nil
 	}
 
-	if v, ok := c.GetOtpOk(); ok {
-
-		if v1, ok := v.GetFailureOk(); ok {
-
-			if v2, ok := v1.GetCountOk(); ok {
-				item["otp_failure_count"] = int(*v2)
-			}
-
-			if v2, ok := v1.GetCoolDownOk(); ok {
-
-				if v3, ok := v2.GetDurationOk(); ok {
-					item["otp_failure_cooldown_duration"] = int(*v3)
-				}
-
-				if v3, ok := v2.GetTimeUnitOk(); ok {
-					item["otp_failure_cooldown_timeunit"] = string(*v3)
-				}
-			}
-		}
+	o := map[string]attr.Value{
+		"max_allowed_devices": framework.Int32OkToTF(apiObject.GetMaxAllowedDevicesOk()),
+		"pairing_key_format":  framework.EnumOkToTF(apiObject.GetPairingKeyFormatOk()),
 	}
 
-	if v, ok := c.GetApplicationsOk(); ok {
-		item["application"] = expandMFADevicePolicyMobileApplication(v)
-	}
+	objValue, d := types.ObjectValue(MFADevicePolicyPairingTFObjectTypes, o)
+	diags.Append(d...)
 
-	return append(make([]map[string]interface{}, 0), item)
+	return objValue, diags
 }
 
-func expandMFADevicePolicyMobileApplication(c []mfa.DeviceAuthenticationPolicyMobileApplicationsInner) []map[string]interface{} {
+func toStatePhoneExtensions(apiObject *mfa.MFADevicePolicyPhoneExtensions, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
-	items := make([]map[string]interface{}, 0)
-
-	for _, v := range c {
-
-		item := map[string]interface{}{
-			"id":           v.GetId(),
-			"push_enabled": v.GetPush().Enabled,
-			"otp_enabled":  v.GetOtp().Enabled,
-		}
-
-		if v1, ok := v.GetPairingDisabledOk(); ok {
-			item["pairing_disabled"] = *v1
-		}
-
-		if v1, ok := v.GetDeviceAuthorizationOk(); ok {
-
-			if v2, ok := v1.GetEnabledOk(); ok {
-				item["device_authorization_enabled"] = v2
-			}
-
-			if v2, ok := v1.GetExtraVerificationOk(); ok {
-				item["device_authorization_extra_verification"] = v2
-			}
-		}
-
-		if v1, ok := v.GetPushTimeoutOk(); ok {
-
-			if v2, ok := v1.GetDurationOk(); ok {
-				item["push_timeout_duration"] = v2
-			}
-
-			if v2, ok := v1.GetTimeUnitOk(); ok {
-				item["push_timeout_timeunit"] = v2
-			}
-		}
-
-		if v1, ok := v.GetPairingKeyLifetimeOk(); ok {
-			if v2, ok := v1.GetDurationOk(); ok {
-				item["pairing_key_lifetime_duration"] = v2
-			}
-
-			if v2, ok := v1.GetTimeUnitOk(); ok {
-				item["pairing_key_lifetime_timeunit"] = v2
-			}
-		}
-
-		if v1, ok := v.GetPushLimitOk(); ok {
-
-			if v2, ok := v1.GetCountOk(); ok {
-				item["push_limit_count"] = v2
-			}
-
-			if v2, ok := v1.GetLockDurationOk(); ok {
-				if v3, ok := v2.GetDurationOk(); ok {
-					item["push_limit_lock_duration"] = v3
-				}
-
-				if v3, ok := v2.GetTimeUnitOk(); ok {
-					item["push_limit_lock_duration_timeunit"] = v3
-				}
-			}
-
-			if v2, ok := v1.GetTimePeriodOk(); ok {
-				if v3, ok := v2.GetDurationOk(); ok {
-					item["push_limit_time_period_duration"] = v3
-				}
-
-				if v3, ok := v2.GetTimeUnitOk(); ok {
-					item["push_limit_time_period_timeunit"] = v3
-				}
-			}
-		}
-
-		if v1, ok := v.GetAutoEnrollmentOk(); ok {
-			item["auto_enrollment_enabled"] = v1.GetEnabled()
-		}
-
-		if v1, ok := v.GetIntegrityDetectionOk(); ok {
-			item["integrity_detection"] = string(*v1)
-		}
-
-		items = append(items, item)
-
+	if !ok || apiObject == nil {
+		return types.ObjectNull(MFADevicePolicyPhoneExtensionsTFObjectTypes), nil
 	}
 
-	return items
+	o := map[string]attr.Value{
+		"enabled": framework.BoolOkToTF(apiObject.GetEnabledOk()),
+	}
 
+	objValue, d := types.ObjectValue(MFADevicePolicyPhoneExtensionsTFObjectTypes, o)
+	diags.Append(d...)
+
+	return objValue, diags
 }
 
-func flattenMFADevicePolicyTotp(c *mfa.DeviceAuthenticationPolicyTotp) []map[string]interface{} {
+func toStateUsers(apiObject *mfa.MFADevicePolicyUsers, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
-	item := map[string]interface{}{
-		"enabled": c.GetEnabled(),
+	if !ok || apiObject == nil {
+		return types.ObjectNull(MFADevicePolicyUsersTFObjectTypes), nil
 	}
 
-	if v, ok := c.GetPairingDisabledOk(); ok {
-		item["pairing_disabled"] = *v
+	o := map[string]attr.Value{
+		"mfa_enabled": framework.BoolOkToTF(apiObject.GetMfaEnabledOk()),
 	}
 
-	if v, ok := c.GetOtpOk(); ok {
+	objValue, d := types.ObjectValue(MFADevicePolicyUsersTFObjectTypes, o)
+	diags.Append(d...)
 
-		if v1, ok := v.GetFailureOk(); ok {
-
-			if v2, ok := v1.GetCountOk(); ok {
-				item["otp_failure_count"] = int(*v2)
-			}
-
-			if v2, ok := v1.GetCoolDownOk(); ok {
-
-				if v3, ok := v2.GetDurationOk(); ok {
-					item["otp_failure_cooldown_duration"] = int(*v3)
-				}
-
-				if v3, ok := v2.GetTimeUnitOk(); ok {
-					item["otp_failure_cooldown_timeunit"] = string(*v3)
-				}
-			}
-		}
-
-	}
-
-	return append(make([]map[string]interface{}, 0), item)
-}
-
-func flattenMFADevicePolicyFIDO2Device(c *mfa.DeviceAuthenticationPolicyFido2) []map[string]interface{} {
-
-	item := map[string]interface{}{
-		"enabled": c.GetEnabled(),
-	}
-
-	if v, ok := c.GetPairingDisabledOk(); ok {
-		item["pairing_disabled"] = *v
-	}
-
-	if v, ok := c.GetFido2PolicyIdOk(); ok && *v != "" {
-		item["fido2_policy_id"] = v
-	}
-
-	return append(make([]map[string]interface{}, 0), item)
+	return objValue, diags
 }
