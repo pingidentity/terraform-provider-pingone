@@ -1,0 +1,12 @@
+```release-note:enhancement
+`resource/pingone_credential_type`: Added support for the `management_mode` and `metadata.fields.required` properties.
+```
+
+```release-note:enhancement
+`data_source/pingone_credential_type`: Added support for the `management_mode` and `metadata.fields.required` properties.
+```
+
+```release-note:note
+`resource/pingone_credential_issuance_rule`: A `credential_issuance_rule` cannot be assigned to a `credential_type` that has a `management_mode` of `MANAGED`.
+```
+

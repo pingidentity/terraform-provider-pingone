@@ -34,6 +34,7 @@ data "pingone_credential_type" "example_by_id" {
 - `description` (String) A description of the credential type.
 - `id` (String) The ID of this resource.
 - `issuer_id` (String) Identifier (UUID) of the credential issuer.
+- `management_mode` (String) Specifies the management mode of the credential type.
 - `metadata` (Attributes) An object that contains the names, data types, and other metadata related to the credentia (see [below for nested schema](#nestedatt--metadata))
 - `revoke_on_delete` (Boolean) Specifies whether a user's issued verifiable credentials are automatically revoked when the credential type is deleted.
 - `title` (String) Title of the credential.
@@ -64,6 +65,7 @@ Read-Only:
 - `file_support` (String) Specifies how an image is stored in the credential field.
 - `id` (String) Identifier of the field object.
 - `is_visible` (Boolean) Specifies whether the field should be visible to viewers of the credential.
+- `required` (Boolean) Specifies whether the field is required for the credential.
 - `title` (String) Descriptive text when showing the field.
 - `type` (String) Type of data in the field.
 - `value` (String) The text to appear on the credential for a field.type of Alphanumeric Text.
