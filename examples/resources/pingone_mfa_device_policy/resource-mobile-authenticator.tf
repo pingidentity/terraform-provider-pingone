@@ -66,43 +66,57 @@ resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
     pingone_mfa_application_push_credential.example_apns,
   ]
 
-  mobile {
+  mobile = {
     enabled = true
 
-    otp_failure_count = 3
+    otp = {
+      failure = {
+        count = 3
+      }
+    }
 
-    application {
-      id = pingone_application.my_mobile_application.id
+    applications = {
+      pingone_application.my_mobile_application.id = {
 
-      push_enabled = true
-      otp_enabled  = true
+        push = {
+          enabled = true
+        }
 
-      device_authorization_enabled            = true
-      device_authorization_extra_verification = "restrictive"
+        otp = {
+          enabled = true
+        }
 
-      auto_enrollment_enabled = true
+        device_authorization = {
+          enabled            = true
+          extra_verification = "restrictive"
+        }
 
-      integrity_detection = "restrictive"
+        auto_enrollment = {
+          enabled = true
+        }
+
+        integrity_detection = "restrictive"
+      }
     }
   }
 
-  totp {
+  totp = {
     enabled = true
   }
 
-  fido2 {
+  fido2 = {
     enabled = true
   }
 
-  sms {
+  sms = {
     enabled = false
   }
 
-  voice {
+  voice = {
     enabled = false
   }
 
-  email {
+  email = {
     enabled = false
   }
 }

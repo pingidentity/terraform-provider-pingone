@@ -2,12 +2,12 @@
 page_title: "pingone_mfa_device_policy Resource - terraform-provider-pingone"
 subcategory: "MFA"
 description: |-
-  Resource to create and manage MFA Policies in a PingOne Environment.
+  Resource to create and manage MFA device policies for a PingOne environment.
 ---
 
 # pingone_mfa_device_policy (Resource)
 
-Resource to create and manage MFA Policies in a PingOne Environment.
+Resource to create and manage MFA device policies for a PingOne environment.
 
 ## Example Usage - Basic Policy
 
@@ -22,27 +22,27 @@ resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
   environment_id = pingone_environment.my_environment.id
   name           = "My awesome MFA device policy"
 
-  mobile {
+  mobile = {
     enabled = false
   }
 
-  totp {
+  totp = {
     enabled = true
   }
 
-  fido2 {
+  fido2 = {
     enabled = true
   }
 
-  sms {
+  sms = {
     enabled = false
   }
 
-  voice {
+  voice = {
     enabled = false
   }
 
-  email {
+  email = {
     enabled = false
   }
 }
@@ -121,43 +121,57 @@ resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
     pingone_mfa_application_push_credential.example_apns,
   ]
 
-  mobile {
+  mobile = {
     enabled = true
 
-    otp_failure_count = 3
+    otp = {
+      failure = {
+        count = 3
+      }
+    }
 
-    application {
-      id = pingone_application.my_mobile_application.id
+    applications = {
+      pingone_application.my_mobile_application.id = {
 
-      push_enabled = true
-      otp_enabled  = true
+        push = {
+          enabled = true
+        }
 
-      device_authorization_enabled            = true
-      device_authorization_extra_verification = "restrictive"
+        otp = {
+          enabled = true
+        }
 
-      auto_enrollment_enabled = true
+        device_authorization = {
+          enabled            = true
+          extra_verification = "restrictive"
+        }
 
-      integrity_detection = "restrictive"
+        auto_enrollment = {
+          enabled = true
+        }
+
+        integrity_detection = "restrictive"
+      }
     }
   }
 
-  totp {
+  totp = {
     enabled = true
   }
 
-  fido2 {
+  fido2 = {
     enabled = true
   }
 
-  sms {
+  sms = {
     enabled = false
   }
 
-  voice {
+  voice = {
     enabled = false
   }
 
-  email {
+  email = {
     enabled = false
   }
 }
@@ -168,146 +182,369 @@ resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
 
 ### Required
 
-- `email` (Block List, Min: 1, Max: 1) Email OTP authentication policy settings. (see [below for nested schema](#nestedblock--email))
-- `environment_id` (String) The ID of the environment to create the MFA device policy in.
-- `mobile` (Block List, Min: 1, Max: 1) Mobile authenticator device policy settings.  This factor requires embedding the PingOne MFA SDK into a customer facing mobile application, and configuring as a Native application using the `pingone_application` resource. (see [below for nested schema](#nestedblock--mobile))
-- `name` (String) A string that specifies the MFA policy's name.
-- `sms` (Block List, Min: 1, Max: 1) SMS OTP authentication policy settings. (see [below for nested schema](#nestedblock--sms))
-- `totp` (Block List, Min: 1, Max: 1) TOTP authenticator policy settings. (see [below for nested schema](#nestedblock--totp))
-- `voice` (Block List, Min: 1, Max: 1) Voice OTP authentication policy settings. (see [below for nested schema](#nestedblock--voice))
+- `email` (Attributes) A single object that allows configuration of email OTP device authentication policy settings. (see [below for nested schema](#nestedatt--email))
+- `environment_id` (String) The ID of the environment that contains the MFA device policy to manage.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `mobile` (Attributes) A single object that allows configuration of mobile push/OTP device authentication policy settings.  This factor requires embedding the PingOne MFA SDK into a customer facing mobile application, and configuring as a Native application using the `pingone_application` resource. (see [below for nested schema](#nestedatt--mobile))
+- `name` (String) A string that specifies the MFA policy's unique name within the environment.
+- `sms` (Attributes) A single object that allows configuration of SMS OTP device authentication policy settings. (see [below for nested schema](#nestedatt--sms))
+- `totp` (Attributes) (see [below for nested schema](#nestedatt--totp))
+- `voice` (Attributes) A single object that allows configuration of voice OTP device authentication policy settings. (see [below for nested schema](#nestedatt--voice))
 
 ### Optional
 
-- `device_selection` (String) A string that defines the device selection method. Options are `DEFAULT_TO_FIRST` (this is the default setting for new environments), `PROMPT_TO_SELECT` and `ALWAYS_DISPLAY_DEVICES`. Defaults to `DEFAULT_TO_FIRST`.
-- `fido2` (Block List, Max: 1) FIDO2 device authentication policy settings. (see [below for nested schema](#nestedblock--fido2))
-- `new_device_notification` (String) A string that defines whether a user should be notified if a new authentication method has been added to their account. Options are `NONE` (the default), `EMAIL_THEN_SMS` and `SMS_THEN_EMAIL`. Defaults to `NONE`.
+- `authentication` (Attributes) A single object that allows configuration of authentication settings in the device policy. (see [below for nested schema](#nestedatt--authentication))
+- `fido2` (Attributes) A single object that allows configuration of FIDO2 device authentication policy settings. (see [below for nested schema](#nestedatt--fido2))
+- `new_device_notification` (String) A string that defines whether a user should be notified if a new authentication method has been added to their account.  Options are `EMAIL_THEN_SMS`, `NONE`, `SMS_THEN_EMAIL`.  Defaults to `NONE`.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 
-<a id="nestedblock--email"></a>
+<a id="nestedatt--email"></a>
 ### Nested Schema for `email`
 
 Required:
 
-- `enabled` (Boolean) Enabled or disabled in the policy.
+- `enabled` (Boolean) A boolean that specifies whether the email OTP method is enabled or disabled in the policy.
 
 Optional:
 
-- `otp_failure_cooldown_duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Note that when using the "onetime authentication" feature, the user is not blocked after the maximum number of failures even if you specified a block duration. Defaults to `0`.
-- `otp_failure_cooldown_timeunit` (String) The type of time unit for `otp_failure_cooldown_duration`.  Options are `MINUTES` or `SECONDS`. Defaults to `MINUTES`.
-- `otp_failure_count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Defaults to `3`.
-- `otp_lifetime_duration` (Number) An integer that defines turation (number of time units) that the passcode is valid before it expires. Defaults to `30`.
-- `otp_lifetime_timeunit` (String) The type of time unit for `otp_lifetime_duration`.  Options are `MINUTES` or `SECONDS`. Defaults to `MINUTES`.
-- `pairing_disabled` (Boolean) You can set this parameter to `true` to prevent users from pairing new devices with the relevant method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices. Defaults to `false`.
+- `otp` (Attributes) A single object that allows configuration of email OTP settings. (see [below for nested schema](#nestedatt--email--otp))
+- `pairing_disabled` (Boolean) A boolean that, when set to `true`, prevents users from pairing new devices with the email OTP method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.  Defaults to `false`.
+
+<a id="nestedatt--email--otp"></a>
+### Nested Schema for `email.otp`
+
+Optional:
+
+- `failure` (Attributes) A single object that allows configuration of email OTP failure settings. (see [below for nested schema](#nestedatt--email--otp--failure))
+- `lifetime` (Attributes) A single object that allows configuration of email OTP lifetime settings. (see [below for nested schema](#nestedatt--email--otp--lifetime))
+
+<a id="nestedatt--email--otp--failure"></a>
+### Nested Schema for `email.otp.failure`
+
+Required:
+
+- `cool_down` (Attributes) A single object that allows configuration of email OTP failure cool down settings. (see [below for nested schema](#nestedatt--email--otp--failure--cool_down))
+- `count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.
+
+<a id="nestedatt--email--otp--failure--cool_down"></a>
+### Nested Schema for `email.otp.failure.count`
+
+Required:
+
+- `duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.
 
 
-<a id="nestedblock--mobile"></a>
+
+<a id="nestedatt--email--otp--lifetime"></a>
+### Nested Schema for `email.otp.lifetime`
+
+Required:
+
+- `duration` (Number) An integer that defines the duration (number of time units) that the passcode is valid before it expires.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.
+
+
+
+
+<a id="nestedatt--mobile"></a>
 ### Nested Schema for `mobile`
 
 Required:
 
-- `enabled` (Boolean) Enabled or disabled in the policy.
+- `enabled` (Boolean) A boolean that specifies whether the mobile device method is enabled or disabled in the policy.
 
 Optional:
 
-- `application` (Block Set) Settings for a configured Mobile Application. (see [below for nested schema](#nestedblock--mobile--application))
-- `otp_failure_cooldown_duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Defaults to `2`.
-- `otp_failure_cooldown_timeunit` (String) The type of time unit for `otp_failure_cooldown_duration`.  Options are `MINUTES` or `SECONDS`. Defaults to `MINUTES`.
-- `otp_failure_count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Defaults to `3`.
+- `applications` (Attributes Map) A map of objects that specifies settings for a configured Mobile Application.  The ID of the application should be configured as the map key. (see [below for nested schema](#nestedatt--mobile--applications))
+- `otp` (Attributes) A single object that specifies OTP settings for mobile applications in the policy. (see [below for nested schema](#nestedatt--mobile--otp))
 
-<a id="nestedblock--mobile--application"></a>
-### Nested Schema for `mobile.application`
+<a id="nestedatt--mobile--applications"></a>
+### Nested Schema for `mobile.applications`
 
 Required:
 
-- `id` (String) The mobile application's ID.  Mobile applications are configured with the `pingone_application` resource, as an OIDC `NATIVE` type.
-- `otp_enabled` (Boolean) Specifies whether OTP authentication is enabled or disabled for the policy.
-- `push_enabled` (Boolean) Specifies whether push notification is enabled or disabled for the policy.
+- `integrity_detection` (String) Controls how authentication or registration attempts should proceed if a device integrity check does not receive a response.  Options are `permissive` (if you want to allow the process to continue if a device integrity check does not receive a response), `restrictive` (if you want to block the user if a device integrity check does not receive a response).
+- `pairing_disabled` (Boolean) A boolean that, when set to `true`, prevents users from pairing new devices with the relevant application. You can use this option if you want to phase out an existing mobile application but want to allow users to continue using the application for authentication for existing devices.
 
 Optional:
 
-- `auto_enrollment_enabled` (Boolean) Set to `true` if you want the application to allow Auto Enrollment. Auto Enrollment means that the user can authenticate for the first time from an unpaired device, and the successful authentication will result in the pairing of the device for MFA.
-- `device_authorization_enabled` (Boolean) Specifies the enabled or disabled state of automatic MFA for native devices paired with the user, for the specified application.
-- `device_authorization_extra_verification` (String) Specifies the level of further verification when `device_authorization_enabled` is true. The PingOne platform performs an extra verification check by sending a "silent" push notification to the customer native application, and receives a confirmation in return.  Extra verification can be one of the following levels: `permissive`: The PingOne platform performs the extra verification check. Upon timeout or failure to get a response from the native app, the MFA step is treated as successfully completed.  `restrictive`: The PingOne platform performs the extra verification check.The PingOne platform performs the extra verification check. Upon timeout or failure to get a response from the native app, the MFA step is treated as failed.
-- `integrity_detection` (String) Controls how authentication or registration attempts should proceed if a device integrity check does not receive a response. Set the value to `permissive` if you want to allow the process to continue. Set the value to `restrictive` if you want to block the user in such situations.
-- `pairing_disabled` (Boolean) You can set this parameter to `true` to prevent users from pairing new devices with the relevant method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices. Defaults to `false`.
-- `pairing_key_lifetime_duration` (Number) The amount of time an issued pairing key can be used until it expires. Minimum is 1 minute and maximum is 48 hours. If this parameter is not provided, the duration is set to 10 minutes. Defaults to `10`.
-- `pairing_key_lifetime_timeunit` (String) The time unit for the `pairing_key_lifetime_duration` parameter.  Options are `HOURS` or `MINUTES`. Defaults to `MINUTES`.
-- `push_limit_count` (Number) The number of consecutive push notifications that can be ignored or rejected by a user within a defined period before push notifications are blocked for the application. The minimum value is 1 and the maximum value is 50. If this parameter is not provided, the default value is 5. Defaults to `5`.
-- `push_limit_lock_duration` (Number) The length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is 1 minute and the maximum value is 120 minutes. If this parameter is not provided, the default value is 30 minutes. Defaults to `30`.
-- `push_limit_lock_duration_timeunit` (String) The time unit for the `push_limit_lock_duration` parameter.  Options are `MINUTES` or `SECONDS`. Defaults to `MINUTES`.
-- `push_limit_time_period_duration` (Number) The time period in which the push notifications are counted towards the defined limit. The minimum value is 1 minute and the maximum value is 120 minutes. If this parameter is not provided, the default value is 10 minutes. Defaults to `10`.
-- `push_limit_time_period_timeunit` (String) The time unit for the `push_limit_time_period_duration` parameter.  Options are `MINUTES` or `SECONDS`. Defaults to `MINUTES`.
-- `push_timeout_duration` (Number) An integer that defines the amount of time (in seconds) a user has to respond to a push notification before it expires. Minimum is 40 seconds and maximum is 150 seconds. If this parameter is not provided, the duration is set to 40 seconds. Defaults to `40`.
+- `auto_enrollment` (Attributes) A single object that specifies auto enrollment settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--auto_enrollment))
+- `device_authorization` (Attributes) A single object that specifies device authorization settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--device_authorization))
+- `otp` (Attributes) A single object that specifies OTP settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--otp))
+- `pairing_key_lifetime` (Attributes) A single object that specifies pairing key lifetime settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--pairing_key_lifetime))
+- `push` (Attributes) A single object that specifies push settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--push))
+- `push_limit` (Attributes) A single object that specifies push limit settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--push_limit))
+- `push_timeout` (Attributes) A single object that specifies push timeout settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--push_timeout))
 
-Read-Only:
+<a id="nestedatt--mobile--applications--auto_enrollment"></a>
+### Nested Schema for `mobile.applications.auto_enrollment`
 
-- `push_timeout_timeunit` (String) The time unit for the `push_timeout_duration` parameter. Currently, the only permitted value is `SECONDS`.
+Required:
+
+- `enabled` (Boolean) A boolean that, when set to `true` if you want the application to allow Auto Enrollment. Auto Enrollment means that the user can authenticate for the first time from an unpaired device, and the successful authentication will result in the pairing of the device for MFA.
 
 
+<a id="nestedatt--mobile--applications--device_authorization"></a>
+### Nested Schema for `mobile.applications.device_authorization`
 
-<a id="nestedblock--sms"></a>
+Required:
+
+- `enabled` (Boolean) Specifies the enabled or disabled state of automatic MFA for native devices paired with the user, for the specified application.
+- `extra_verification` (String) Specifies the level of further verification when device authorization is enabled. The PingOne platform performs an extra verification check by sending a "silent" push notification to the customer native application, and receives a confirmation in return.  By default, the PingOne platform does not perform the extra verification check.  Options are `permissive` (the PingOne platform performs the extra verification check. Upon timeout or failure to get a response from the native app, the MFA step is treated as successfully completed), `restrictive` (the PingOne platform performs the extra verification check. Upon timeout or failure to get a response from the native app, the MFA step is treated as failed).
+
+
+<a id="nestedatt--mobile--applications--otp"></a>
+### Nested Schema for `mobile.applications.otp`
+
+Required:
+
+- `enabled` (Boolean) A boolean that specifies whether OTP authentication is enabled or disabled for the application in the policy.
+
+
+<a id="nestedatt--mobile--applications--pairing_key_lifetime"></a>
+### Nested Schema for `mobile.applications.pairing_key_lifetime`
+
+Required:
+
+- `duration` (Number) An integer that defines the amount of time an issued pairing key can be used until it expires. Minimum is 1 minute and maximum is 48 hours. If this parameter is not provided, the duration is set to 10 minutes.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.
+
+
+<a id="nestedatt--mobile--applications--push"></a>
+### Nested Schema for `mobile.applications.push`
+
+Required:
+
+- `enabled` (Boolean) A boolean that specifies whether push notification is enabled or disabled for the application in the policy.
+
+
+<a id="nestedatt--mobile--applications--push_limit"></a>
+### Nested Schema for `mobile.applications.push_limit`
+
+Optional:
+
+- `count` (Number) An integer that specifies the number of consecutive push notifications that can be ignored or rejected by a user within a defined period before push notifications are blocked for the application. The minimum value is "1" and the maximum value is "50". If this parameter is not provided, the default value is "5".
+- `lock_duration` (Attributes) A single object that specifies push limit lock duration settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--push_limit--lock_duration))
+- `time_period` (Attributes) A single object that specifies push limit time period settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--push_limit--time_period))
+
+<a id="nestedatt--mobile--applications--push_limit--lock_duration"></a>
+### Nested Schema for `mobile.applications.push_limit.time_period`
+
+Required:
+
+- `duration` (Number) An integer that defines the length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is `1` minute and the maximum value is `120` minutes. If this parameter is not provided, the default value is `30` minutes.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.
+
+
+<a id="nestedatt--mobile--applications--push_limit--time_period"></a>
+### Nested Schema for `mobile.applications.push_limit.time_period`
+
+Required:
+
+- `duration` (Number) An integer that defines the length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is `1` minute and the maximum value is `120` minutes. If this parameter is not provided, the default value is `30` minutes.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.
+
+
+
+<a id="nestedatt--mobile--applications--push_timeout"></a>
+### Nested Schema for `mobile.applications.push_timeout`
+
+Required:
+
+- `duration` (Number) An integer that defines the length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is `1` minute and the maximum value is `120` minutes. If this parameter is not provided, the default value is `30` minutes.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`. Currently, the only permitted value is `SECONDS`.
+
+
+
+<a id="nestedatt--mobile--otp"></a>
+### Nested Schema for `mobile.otp`
+
+Required:
+
+- `failure` (Attributes) A single object that specifies OTP failure settings for mobile applications in the policy. (see [below for nested schema](#nestedatt--mobile--otp--failure))
+
+<a id="nestedatt--mobile--otp--failure"></a>
+### Nested Schema for `mobile.otp.failure`
+
+Optional:
+
+- `cool_down` (Attributes) A single object that specifies OTP failure cool down settings for mobile applications in the policy. (see [below for nested schema](#nestedatt--mobile--otp--failure--cool_down))
+- `count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. The minimum value is `1`, maximum is `7`, and the default is `3`.
+
+<a id="nestedatt--mobile--otp--failure--cool_down"></a>
+### Nested Schema for `mobile.otp.failure.count`
+
+Required:
+
+- `duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. The minimum value is `2`, maximum is `30`, and the default is `2`. Note that when using the "onetime authentication" feature, the user is not blocked after the maximum number of failures even if you specified a block duration.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.
+
+
+
+
+
+<a id="nestedatt--sms"></a>
 ### Nested Schema for `sms`
 
 Required:
 
-- `enabled` (Boolean) Enabled or disabled in the policy.
+- `enabled` (Boolean) A boolean that specifies whether the SMS OTP method is enabled or disabled in the policy.
 
 Optional:
 
-- `otp_failure_cooldown_duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Note that when using the "onetime authentication" feature, the user is not blocked after the maximum number of failures even if you specified a block duration. Defaults to `0`.
-- `otp_failure_cooldown_timeunit` (String) The type of time unit for `otp_failure_cooldown_duration`.  Options are `MINUTES` or `SECONDS`. Defaults to `MINUTES`.
-- `otp_failure_count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Defaults to `3`.
-- `otp_lifetime_duration` (Number) An integer that defines turation (number of time units) that the passcode is valid before it expires. Defaults to `30`.
-- `otp_lifetime_timeunit` (String) The type of time unit for `otp_lifetime_duration`.  Options are `MINUTES` or `SECONDS`. Defaults to `MINUTES`.
-- `pairing_disabled` (Boolean) You can set this parameter to `true` to prevent users from pairing new devices with the relevant method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices. Defaults to `false`.
+- `otp` (Attributes) A single object that allows configuration of SMS OTP settings. (see [below for nested schema](#nestedatt--sms--otp))
+- `pairing_disabled` (Boolean) A boolean that, when set to `true`, prevents users from pairing new devices with the SMS OTP method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.  Defaults to `false`.
+
+<a id="nestedatt--sms--otp"></a>
+### Nested Schema for `sms.otp`
+
+Optional:
+
+- `failure` (Attributes) A single object that allows configuration of SMS OTP failure settings. (see [below for nested schema](#nestedatt--sms--otp--failure))
+- `lifetime` (Attributes) A single object that allows configuration of SMS OTP lifetime settings. (see [below for nested schema](#nestedatt--sms--otp--lifetime))
+
+<a id="nestedatt--sms--otp--failure"></a>
+### Nested Schema for `sms.otp.failure`
+
+Required:
+
+- `cool_down` (Attributes) A single object that allows configuration of SMS OTP failure cool down settings. (see [below for nested schema](#nestedatt--sms--otp--failure--cool_down))
+- `count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.
+
+<a id="nestedatt--sms--otp--failure--cool_down"></a>
+### Nested Schema for `sms.otp.failure.count`
+
+Required:
+
+- `duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.
 
 
-<a id="nestedblock--totp"></a>
+
+<a id="nestedatt--sms--otp--lifetime"></a>
+### Nested Schema for `sms.otp.lifetime`
+
+Required:
+
+- `duration` (Number) An integer that defines the duration (number of time units) that the passcode is valid before it expires.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.
+
+
+
+
+<a id="nestedatt--totp"></a>
 ### Nested Schema for `totp`
 
 Required:
 
-- `enabled` (Boolean) Enabled or disabled in the policy.
+- `enabled` (Boolean) A boolean that specifies whether the TOTP method is enabled or disabled in the policy.
 
 Optional:
 
-- `otp_failure_cooldown_duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Defaults to `2`.
-- `otp_failure_cooldown_timeunit` (String) The type of time unit for `otp_failure_cooldown_duration`.  Options are `MINUTES` or `SECONDS`. Defaults to `MINUTES`.
-- `otp_failure_count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Defaults to `3`.
-- `pairing_disabled` (Boolean) You can set this parameter to `true` to prevent users from pairing new devices with the relevant method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices. Defaults to `false`.
+- `otp` (Attributes) A single object that allows configuration of TOTP OTP settings. (see [below for nested schema](#nestedatt--totp--otp))
+- `pairing_disabled` (Boolean) A boolean that, when set to `true`, prevents users from pairing new devices with the TOTP method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.  Defaults to `false`.
+
+<a id="nestedatt--totp--otp"></a>
+### Nested Schema for `totp.otp`
+
+Optional:
+
+- `failure` (Attributes) A single object that allows configuration of TOTP OTP failure settings. (see [below for nested schema](#nestedatt--totp--otp--failure))
+
+<a id="nestedatt--totp--otp--failure"></a>
+### Nested Schema for `totp.otp.failure`
+
+Required:
+
+- `count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.
+
+Optional:
+
+- `cool_down` (Attributes) A single object that allows configuration of TOTP OTP failure cool down settings. (see [below for nested schema](#nestedatt--totp--otp--failure--cool_down))
+
+<a id="nestedatt--totp--otp--failure--cool_down"></a>
+### Nested Schema for `totp.otp.failure.cool_down`
+
+Required:
+
+- `duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.
 
 
-<a id="nestedblock--voice"></a>
+
+
+
+<a id="nestedatt--voice"></a>
 ### Nested Schema for `voice`
 
 Required:
 
-- `enabled` (Boolean) Enabled or disabled in the policy.
+- `enabled` (Boolean) A boolean that specifies whether the voice OTP method is enabled or disabled in the policy.
 
 Optional:
 
-- `otp_failure_cooldown_duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Note that when using the "onetime authentication" feature, the user is not blocked after the maximum number of failures even if you specified a block duration. Defaults to `0`.
-- `otp_failure_cooldown_timeunit` (String) The type of time unit for `otp_failure_cooldown_duration`.  Options are `MINUTES` or `SECONDS`. Defaults to `MINUTES`.
-- `otp_failure_count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Defaults to `3`.
-- `otp_lifetime_duration` (Number) An integer that defines turation (number of time units) that the passcode is valid before it expires. Defaults to `30`.
-- `otp_lifetime_timeunit` (String) The type of time unit for `otp_lifetime_duration`.  Options are `MINUTES` or `SECONDS`. Defaults to `MINUTES`.
-- `pairing_disabled` (Boolean) You can set this parameter to `true` to prevent users from pairing new devices with the relevant method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices. Defaults to `false`.
+- `otp` (Attributes) A single object that allows configuration of voice OTP settings. (see [below for nested schema](#nestedatt--voice--otp))
+- `pairing_disabled` (Boolean) A boolean that, when set to `true`, prevents users from pairing new devices with the voice OTP method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.  Defaults to `false`.
+
+<a id="nestedatt--voice--otp"></a>
+### Nested Schema for `voice.otp`
+
+Optional:
+
+- `failure` (Attributes) A single object that allows configuration of voice OTP failure settings. (see [below for nested schema](#nestedatt--voice--otp--failure))
+- `lifetime` (Attributes) A single object that allows configuration of voice OTP lifetime settings. (see [below for nested schema](#nestedatt--voice--otp--lifetime))
+
+<a id="nestedatt--voice--otp--failure"></a>
+### Nested Schema for `voice.otp.failure`
+
+Required:
+
+- `cool_down` (Attributes) A single object that allows configuration of voice OTP failure cool down settings. (see [below for nested schema](#nestedatt--voice--otp--failure--cool_down))
+- `count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.
+
+<a id="nestedatt--voice--otp--failure--cool_down"></a>
+### Nested Schema for `voice.otp.failure.count`
+
+Required:
+
+- `duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.
 
 
-<a id="nestedblock--fido2"></a>
+
+<a id="nestedatt--voice--otp--lifetime"></a>
+### Nested Schema for `voice.otp.lifetime`
+
+Required:
+
+- `duration` (Number) An integer that defines the duration (number of time units) that the passcode is valid before it expires.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.
+
+
+
+
+<a id="nestedatt--authentication"></a>
+### Nested Schema for `authentication`
+
+Optional:
+
+- `device_selection` (String) A string that defines the device selection method.  Options are `ALWAYS_DISPLAY_DEVICES`, `DEFAULT_TO_FIRST`, `PROMPT_TO_SELECT`.  Defaults to `DEFAULT_TO_FIRST`.
+
+
+<a id="nestedatt--fido2"></a>
 ### Nested Schema for `fido2`
 
 Required:
 
-- `enabled` (Boolean) Enabled or disabled in the policy.
+- `enabled` (Boolean) A boolean that specifies whether the FIDO2 method is enabled or disabled in the policy.
 
 Optional:
 
-- `fido2_policy_id` (String) Specifies the UUID that represents the FIDO2 policy in PingOne. This property can be null. When null, the environment's default FIDO2 Policy is used.
-- `pairing_disabled` (Boolean) You can set this parameter to `true` to prevent users from pairing new devices with the relevant method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices. Defaults to `false`.
+- `fido2_policy_id` (String) A string that specifies the resource UUID that represents the FIDO2 policy in PingOne. This property can be null / left undefined. When null, the environment's default FIDO2 Policy is used.  Must be a valid PingOne resource ID.
+- `pairing_disabled` (Boolean) A boolean that, when set to `true`, prevents users from pairing new devices with the FIDO2 method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.  Defaults to `false`.
 
 ## Import
 

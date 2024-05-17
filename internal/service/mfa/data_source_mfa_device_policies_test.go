@@ -55,27 +55,27 @@ resource "pingone_mfa_device_policy" "%[3]s-1" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s-1"
 
-  sms {
+  sms = {
     enabled = true
   }
 
-  voice {
+  voice = {
     enabled = true
   }
 
-  email {
+  email = {
     enabled = true
   }
 
-  mobile {
+  mobile = {
     enabled = true
   }
 
-  totp {
+  totp = {
     enabled = true
   }
 
-  fido2 {
+  fido2 = {
     enabled = true
   }
 
@@ -85,27 +85,27 @@ resource "pingone_mfa_device_policy" "%[3]s-2" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s-2"
 
-  sms {
+  sms = {
     enabled = true
   }
 
-  voice {
+  voice = {
     enabled = true
   }
 
-  email {
+  email = {
     enabled = true
   }
 
-  mobile {
+  mobile = {
     enabled = true
   }
 
-  totp {
+  totp = {
     enabled = true
   }
 
-  fido2 {
+  fido2 = {
     enabled = true
   }
 
