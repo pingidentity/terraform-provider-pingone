@@ -463,7 +463,10 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 								"pairing_disabled": schema.BoolAttribute{
 									Description:         mobileApplicationsPairingDisabledDescription.Description,
 									MarkdownDescription: mobileApplicationsPairingDisabledDescription.MarkdownDescription,
-									Required:            true,
+									Optional:            true,
+									Computed:            true,
+
+									Default: booldefault.StaticBool(false),
 								},
 
 								"pairing_key_lifetime": schema.SingleNestedAttribute{

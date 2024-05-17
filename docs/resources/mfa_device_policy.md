@@ -131,7 +131,7 @@ resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
     }
 
     applications = {
-      pingone_application.my_mobile_application.id = {
+      (pingone_application.my_mobile_application.id) = {
 
         push = {
           enabled = true
@@ -267,13 +267,13 @@ Optional:
 Required:
 
 - `integrity_detection` (String) Controls how authentication or registration attempts should proceed if a device integrity check does not receive a response.  Options are `permissive` (if you want to allow the process to continue if a device integrity check does not receive a response), `restrictive` (if you want to block the user if a device integrity check does not receive a response).
-- `pairing_disabled` (Boolean) A boolean that, when set to `true`, prevents users from pairing new devices with the relevant application. You can use this option if you want to phase out an existing mobile application but want to allow users to continue using the application for authentication for existing devices.
 
 Optional:
 
 - `auto_enrollment` (Attributes) A single object that specifies auto enrollment settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--auto_enrollment))
 - `device_authorization` (Attributes) A single object that specifies device authorization settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--device_authorization))
 - `otp` (Attributes) A single object that specifies OTP settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--otp))
+- `pairing_disabled` (Boolean) A boolean that, when set to `true`, prevents users from pairing new devices with the relevant application. You can use this option if you want to phase out an existing mobile application but want to allow users to continue using the application for authentication for existing devices.
 - `pairing_key_lifetime` (Attributes) A single object that specifies pairing key lifetime settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--pairing_key_lifetime))
 - `push` (Attributes) A single object that specifies push settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--push))
 - `push_limit` (Attributes) A single object that specifies push limit settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--push_limit))

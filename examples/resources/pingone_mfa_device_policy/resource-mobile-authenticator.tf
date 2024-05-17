@@ -76,7 +76,7 @@ resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
     }
 
     applications = {
-      pingone_application.my_mobile_application.id = {
+      (pingone_application.my_mobile_application.id) = {
 
         push = {
           enabled = true
