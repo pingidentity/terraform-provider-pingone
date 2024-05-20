@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
@@ -311,9 +312,13 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 		"A string that specifies the type of time unit for `duration`.",
 	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitEnumValues)
 
+	mobileApplicationsPairingKeyLifetimeTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the type of time unit for `duration`.",
+	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitPairingKeyLifetimeEnumValues)
+
 	durationTimeUnitSecondsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A string that specifies the type of time unit for `duration`. Currently, the only permitted value is `%s`.", mfa.ENUMTIMEUNIT_SECONDS),
-	)
+	).DefaultValue(string(mfa.ENUMTIMEUNIT_SECONDS))
 
 	totpPairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, prevents users from pairing new devices with the TOTP method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.",
@@ -429,7 +434,7 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 										"extra_verification": schema.StringAttribute{
 											Description:         mobileApplicationsDeviceAuthorizationExtraVerificationDescription.Description,
 											MarkdownDescription: mobileApplicationsDeviceAuthorizationExtraVerificationDescription.MarkdownDescription,
-											Required:            true,
+											Optional:            true,
 
 											Validators: []validator.String{
 												stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumMFADevicePolicyMobileExtraVerificationEnumValues)...),
@@ -441,7 +446,7 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 								"integrity_detection": schema.StringAttribute{
 									Description:         mobileApplicationsIntegrityDetectionDescription.Description,
 									MarkdownDescription: mobileApplicationsIntegrityDetectionDescription.MarkdownDescription,
-									Required:            true,
+									Optional:            true,
 
 									Validators: []validator.String{
 										stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumMFADevicePolicyMobileIntegrityDetectionEnumValues)...),
@@ -480,12 +485,12 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 										},
 
 										"time_unit": schema.StringAttribute{
-											Description:         durationTimeUnitMinsSecondsDescription.Description,
-											MarkdownDescription: durationTimeUnitMinsSecondsDescription.MarkdownDescription,
+											Description:         mobileApplicationsPairingKeyLifetimeTimeUnitDescription.Description,
+											MarkdownDescription: mobileApplicationsPairingKeyLifetimeTimeUnitDescription.MarkdownDescription,
 											Required:            true,
 
 											Validators: []validator.String{
-												stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitEnumValues)...),
+												stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitPairingKeyLifetimeEnumValues)...),
 											},
 										},
 									},
@@ -506,6 +511,28 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 								"push_limit": schema.SingleNestedAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies push limit settings for the application in the policy.").Description,
 									Optional:    true,
+									Computed:    true,
+
+									Default: objectdefault.StaticValue(types.ObjectValueMust(
+										MFADevicePolicyMobileApplicationPushLimitTFObjectTypes,
+										map[string]attr.Value{
+											"count": types.Int64Value(mobileApplicationsPushLimitCountDefault),
+											"lock_duration": types.ObjectValueMust(
+												MFADevicePolicyTimePeriodTFObjectTypes,
+												map[string]attr.Value{
+													"duration":  types.Int64Value(30),
+													"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+												},
+											),
+											"time_period": types.ObjectValueMust(
+												MFADevicePolicyTimePeriodTFObjectTypes,
+												map[string]attr.Value{
+													"duration":  types.Int64Value(10),
+													"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+												},
+											),
+										},
+									)),
 
 									Attributes: map[string]schema.Attribute{
 										"count": schema.Int64Attribute{
@@ -582,7 +609,10 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 										"time_unit": schema.StringAttribute{
 											Description:         durationTimeUnitSecondsDescription.Description,
 											MarkdownDescription: durationTimeUnitSecondsDescription.MarkdownDescription,
-											Required:            true,
+											Optional:            true,
+											Computed:            true,
+
+											Default: stringdefault.StaticString(string(mfa.ENUMTIMEUNIT_SECONDS)),
 
 											Validators: []validator.String{
 												stringvalidator.OneOf(string(mfa.ENUMTIMEUNIT_SECONDS)),
@@ -944,7 +974,7 @@ func (r *MFADevicePolicyResource) Create(ctx context.Context, req resource.Creat
 	}
 
 	// Build the model for the API
-	mFADevicePolicy, d := plan.expandCreate(ctx)
+	mFADevicePolicy, d := plan.expandCreate(ctx, r.Client.ManagementAPIClient)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -1038,7 +1068,7 @@ func (r *MFADevicePolicyResource) Update(ctx context.Context, req resource.Updat
 	}
 
 	// Build the model for the API
-	mFADevicePolicy, d := plan.expand(ctx)
+	mFADevicePolicy, d := plan.expand(ctx, r.Client.ManagementAPIClient)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -1138,7 +1168,7 @@ func (r *MFADevicePolicyResource) ImportState(ctx context.Context, req resource.
 	}
 }
 
-func (p *MFADevicePolicyResourceModel) expand(ctx context.Context) (*mfa.DeviceAuthenticationPolicy, diag.Diagnostics) {
+func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *management.APIClient) (*mfa.DeviceAuthenticationPolicy, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
 	// SMS
@@ -1195,7 +1225,7 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context) (*mfa.DeviceA
 	if diags.HasError() {
 		return nil, diags
 	}
-	mobile, d := mobilePlan.expand(ctx)
+	mobile, d := mobilePlan.expand(ctx, apiClient, p.EnvironmentId.ValueString())
 	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
@@ -1272,10 +1302,10 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context) (*mfa.DeviceA
 	return data, diags
 }
 
-func (p *MFADevicePolicyResourceModel) expandCreate(ctx context.Context) (*mfa.DeviceAuthenticationPolicyPost, diag.Diagnostics) {
+func (p *MFADevicePolicyResourceModel) expandCreate(ctx context.Context, apiClient *management.APIClient) (*mfa.DeviceAuthenticationPolicyPost, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data, diags := p.expand(ctx)
+	data, diags := p.expand(ctx, apiClient)
 
 	return &mfa.DeviceAuthenticationPolicyPost{
 		DeviceAuthenticationPolicy: data,
@@ -1381,7 +1411,7 @@ func (p *MFADevicePolicyOfflineDeviceOtpResourceModel) expand(ctx context.Contex
 	return data, diags
 }
 
-func (p *MFADevicePolicyMobileResourceModel) expand(ctx context.Context) (*mfa.DeviceAuthenticationPolicyMobile, diag.Diagnostics) {
+func (p *MFADevicePolicyMobileResourceModel) expand(ctx context.Context, apiClient *management.APIClient, environmentId string) (*mfa.DeviceAuthenticationPolicyMobile, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	// Otp
@@ -1431,13 +1461,15 @@ func (p *MFADevicePolicyMobileResourceModel) expand(ctx context.Context) (*mfa.D
 		applications := make([]mfa.DeviceAuthenticationPolicyMobileApplicationsInner, 0)
 
 		for applicationId, applicationPlan := range applicationsPlan {
-			application, d := applicationPlan.expand(ctx, applicationId)
+			application, d := applicationPlan.expand(ctx, apiClient, environmentId, applicationId)
 			diags.Append(d...)
 			if diags.HasError() {
 				return nil, diags
 			}
 
-			applications = append(applications, *application)
+			if application != nil {
+				applications = append(applications, *application)
+			}
 		}
 
 		data.SetApplications(applications)
@@ -1470,8 +1502,14 @@ func (p *MFADevicePolicyFailureResourceModel) expand(ctx context.Context) (*mfa.
 	return data, diags
 }
 
-func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Context, applicationId string) (*mfa.DeviceAuthenticationPolicyMobileApplicationsInner, diag.Diagnostics) {
+func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Context, apiClient *management.APIClient, environmentId, applicationId string) (*mfa.DeviceAuthenticationPolicyMobileApplicationsInner, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	application, d := checkApplicationForMobileApp(ctx, apiClient, environmentId, applicationId)
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
 
 	data := mfa.NewDeviceAuthenticationPolicyMobileApplicationsInner(
 		applicationId,
@@ -1518,8 +1556,26 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 	}
 
 	// Integrity detection
+	if p.IntegrityDetection.IsNull() && application.GetMobile().IntegrityDetection.GetMode() == management.ENUMENABLEDSTATUS_ENABLED {
+		diags.AddError(
+			"Invalid mobile application integrity detection setting",
+			fmt.Sprintf("An application ID, %s, configured as the map key in `mobile.applications` has integrity detection enabled. This policy must specify the level of integrity detection in the `mobile.application.integrity_detection` parameter.", applicationId),
+		)
+		return nil, diags
+	}
+
 	if !p.IntegrityDetection.IsNull() && !p.IntegrityDetection.IsUnknown() {
 		data.SetIntegrityDetection(mfa.EnumMFADevicePolicyMobileIntegrityDetection(p.IntegrityDetection.ValueString()))
+
+		if application.GetMobile().IntegrityDetection.GetMode() != management.ENUMENABLEDSTATUS_ENABLED {
+			// error - this has no effect
+			diags.AddError(
+				"Mobile application integrity detection setting has no effect",
+				fmt.Sprintf("An application ID, %s, configured as the map key in `mobile.applications` has integrity detection disabled. Setting the `mobile.application.integrity_detection` parameter has no effect.", applicationId),
+			)
+
+			return nil, diags
+		}
 	}
 
 	// OTP
@@ -2125,7 +2181,7 @@ func toStateMfaDevicePolicyMobileApplicationsPushLimit(apiObject *mfa.DeviceAuth
 		return types.ObjectNull(MFADevicePolicyMobileApplicationPushLimitTFObjectTypes), diags
 	}
 
-	timePeriod, d := toStateMfaDevicePolicyMobileApplicationsPushLimitTimePeriod(apiObject.GetLockDurationOk())
+	timePeriod, d := toStateMfaDevicePolicyMobileApplicationsPushLimitTimePeriod(apiObject.GetTimePeriodOk())
 	diags.Append(d...)
 	if diags.HasError() {
 		return types.ObjectNull(MFADevicePolicyMobileApplicationPushLimitTFObjectTypes), diags
@@ -2161,7 +2217,7 @@ func toStateMfaDevicePolicyMobileApplicationsPushLimitLockDuration(apiObject *mf
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileApplicationsPushLimitTimePeriod(apiObject *mfa.DeviceAuthenticationPolicyMobileApplicationsInnerPushLimitLockDuration, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileApplicationsPushLimitTimePeriod(apiObject *mfa.DeviceAuthenticationPolicyMobileApplicationsInnerPushLimitTimePeriod, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2387,4 +2443,75 @@ func toStateMfaDevicePolicyFido2(apiObject *mfa.DeviceAuthenticationPolicyFido2,
 	diags.Append(d...)
 
 	return objValue, diags
+}
+
+func checkApplicationForMobileApp(ctx context.Context, apiClient *management.APIClient, environmentId, applicationId string) (*management.ApplicationOIDC, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var response *management.ReadOneApplication200Response
+	diags.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			fO, fR, fErr := apiClient.ApplicationsApi.ReadOneApplication(ctx, environmentId, applicationId).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, fO, fR, fErr)
+		},
+		"ReadOneApplication",
+		framework.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
+		&response,
+	)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	if response == nil {
+		diags.AddError(
+			"Application not found",
+			fmt.Sprintf("An application ID, %s, configured as the map key in the `mobile.applications` set does not exist", applicationId),
+		)
+
+		return nil, diags
+	}
+
+	var oidcObject *management.ApplicationOIDC
+
+	// check if oidc and native
+	if (response.ApplicationOIDC == nil) || (response.ApplicationOIDC.GetType() != management.ENUMAPPLICATIONTYPE_NATIVE_APP && response.ApplicationOIDC.GetType() != management.ENUMAPPLICATIONTYPE_CUSTOM_APP) {
+		diags.AddError(
+			"Invalid application type",
+			fmt.Sprintf("An application ID, %s, configured as the map key in `mobile.applications` is not of type OIDC.  To configure a mobile application in PingOne, the application must be an OIDC application of type `Native`, with a package or bundle set.", applicationId),
+		)
+		return nil, diags
+	} else {
+		oidcObject = response.ApplicationOIDC
+	}
+
+	// check if mobile set and package/bundle set
+	if _, ok := response.ApplicationOIDC.GetMobileOk(); !ok {
+		diags.AddError(
+			"Missing application configuration",
+			fmt.Sprintf("An application ID, %s, configured as the map key in `mobile.applications` does not contain mobile application configuration.  To configure a mobile application in PingOne, the application must be an OIDC application of type `Native`, with a package or bundle set.", applicationId),
+		)
+
+		return nil, diags
+	}
+
+	if v, ok := response.ApplicationOIDC.GetMobileOk(); ok {
+
+		_, bundleIDOk := v.GetBundleIdOk()
+		_, packageNameOk := v.GetPackageNameOk()
+		_, huaweiAppIdOk := v.GetHuaweiAppIdOk()
+
+		if !bundleIDOk && !packageNameOk && !huaweiAppIdOk {
+			diags.AddError(
+				"Missing application configuration",
+				fmt.Sprintf("An application ID, %s, configured as the map key in `mobile.applications` does not contain mobile application configuration.  To configure a mobile application in PingOne, the application must be an OIDC application of type `Native`, with a package or bundle set.", applicationId),
+			)
+
+			return nil, diags
+		}
+	}
+
+	return oidcObject, diags
 }

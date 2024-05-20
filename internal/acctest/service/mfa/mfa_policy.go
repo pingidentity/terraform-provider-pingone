@@ -61,8 +61,13 @@ func MFADevicePolicy_GetIDs(resourceName string, environmentID, resourceID *stri
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*resourceID = rs.Primary.ID
-		*environmentID = rs.Primary.Attributes["environment_id"]
+		if resourceID != nil {
+			*resourceID = rs.Primary.ID
+		}
+
+		if environmentID != nil {
+			*environmentID = rs.Primary.Attributes["environment_id"]
+		}
 
 		return nil
 	}
@@ -76,5 +81,27 @@ func MFADevicePolicy_RemovalDrift_PreConfig(ctx context.Context, apiClient *mfa.
 	_, err := apiClient.DeviceAuthenticationPolicyApi.DeleteDeviceAuthenticationPolicy(ctx, environmentID, mfaDevicePolicyID).Execute()
 	if err != nil {
 		t.Fatalf("Failed to delete MFA Policy: %v", err)
+	}
+}
+
+func TestCheckMFADevicePolicyApplicationMapResourceAttr(name, applicationResource, keyPattern, value string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[applicationResource]
+		if !ok {
+			return fmt.Errorf("Resource Not found: %s", applicationResource)
+		}
+
+		return resource.TestCheckResourceAttr(name, fmt.Sprintf(keyPattern, rs.Primary.ID), value)(s)
+	}
+}
+
+func TestCheckMFADevicePolicyApplicationMapNoResourceAttr(name, applicationResource, keyPattern string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[applicationResource]
+		if !ok {
+			return fmt.Errorf("Resource Not found: %s", applicationResource)
+		}
+
+		return resource.TestCheckNoResourceAttr(name, fmt.Sprintf(keyPattern, rs.Primary.ID))(s)
 	}
 }

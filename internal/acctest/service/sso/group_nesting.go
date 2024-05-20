@@ -61,9 +61,17 @@ func GroupNesting_GetIDs(resourceName string, environmentID, groupID, resourceID
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*resourceID = rs.Primary.ID
-		*groupID = rs.Primary.Attributes["group_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
+		if resourceID != nil {
+			*resourceID = rs.Primary.ID
+		}
+
+		if groupID != nil {
+			*groupID = rs.Primary.Attributes["group_id"]
+		}
+
+		if environmentID != nil {
+			*environmentID = rs.Primary.Attributes["environment_id"]
+		}
 
 		return nil
 	}

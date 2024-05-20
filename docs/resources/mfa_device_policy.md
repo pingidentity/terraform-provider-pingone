@@ -264,14 +264,11 @@ Optional:
 <a id="nestedatt--mobile--applications"></a>
 ### Nested Schema for `mobile.applications`
 
-Required:
-
-- `integrity_detection` (String) Controls how authentication or registration attempts should proceed if a device integrity check does not receive a response.  Options are `permissive` (if you want to allow the process to continue if a device integrity check does not receive a response), `restrictive` (if you want to block the user if a device integrity check does not receive a response).
-
 Optional:
 
 - `auto_enrollment` (Attributes) A single object that specifies auto enrollment settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--auto_enrollment))
 - `device_authorization` (Attributes) A single object that specifies device authorization settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--device_authorization))
+- `integrity_detection` (String) Controls how authentication or registration attempts should proceed if a device integrity check does not receive a response.  Options are `permissive` (if you want to allow the process to continue if a device integrity check does not receive a response), `restrictive` (if you want to block the user if a device integrity check does not receive a response).
 - `otp` (Attributes) A single object that specifies OTP settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--otp))
 - `pairing_disabled` (Boolean) A boolean that, when set to `true`, prevents users from pairing new devices with the relevant application. You can use this option if you want to phase out an existing mobile application but want to allow users to continue using the application for authentication for existing devices.
 - `pairing_key_lifetime` (Attributes) A single object that specifies pairing key lifetime settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--pairing_key_lifetime))
@@ -293,6 +290,9 @@ Required:
 Required:
 
 - `enabled` (Boolean) Specifies the enabled or disabled state of automatic MFA for native devices paired with the user, for the specified application.
+
+Optional:
+
 - `extra_verification` (String) Specifies the level of further verification when device authorization is enabled. The PingOne platform performs an extra verification check by sending a "silent" push notification to the customer native application, and receives a confirmation in return.  By default, the PingOne platform does not perform the extra verification check.  Options are `permissive` (the PingOne platform performs the extra verification check. Upon timeout or failure to get a response from the native app, the MFA step is treated as successfully completed), `restrictive` (the PingOne platform performs the extra verification check. Upon timeout or failure to get a response from the native app, the MFA step is treated as failed).
 
 
@@ -310,7 +310,7 @@ Required:
 Required:
 
 - `duration` (Number) An integer that defines the amount of time an issued pairing key can be used until it expires. Minimum is 1 minute and maximum is 48 hours. If this parameter is not provided, the duration is set to 10 minutes.
-- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `HOURS`, `MINUTES`.
 
 
 <a id="nestedatt--mobile--applications--push"></a>
@@ -355,7 +355,10 @@ Required:
 Required:
 
 - `duration` (Number) An integer that defines the length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is `1` minute and the maximum value is `120` minutes. If this parameter is not provided, the default value is `30` minutes.
-- `time_unit` (String) A string that specifies the type of time unit for `duration`. Currently, the only permitted value is `SECONDS`.
+
+Optional:
+
+- `time_unit` (String) A string that specifies the type of time unit for `duration`. Currently, the only permitted value is `SECONDS`.  Defaults to `SECONDS`.
 
 
 
