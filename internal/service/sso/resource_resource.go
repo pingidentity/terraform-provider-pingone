@@ -151,10 +151,6 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 				Validators: []validator.String{
 					stringvalidatorinternal.ShouldNotContain("pingone", "pingidentity"),
 				},
-
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
 			},
 
 			"access_token_validity_seconds": schema.Int64Attribute{
