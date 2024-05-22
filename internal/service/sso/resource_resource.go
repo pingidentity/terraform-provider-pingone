@@ -4,332 +4,432 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"regexp"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
-	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func ResourceResource() *schema.Resource {
-	return &schema.Resource{
+// Types
+type ResourceResource serviceClientType
 
+type ResourceResourceModel struct {
+	Id                             pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId                  pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name                           types.String                 `tfsdk:"name"`
+	Description                    types.String                 `tfsdk:"description"`
+	Type                           types.String                 `tfsdk:"type"`
+	Audience                       types.String                 `tfsdk:"audience"`
+	AccessTokenValiditySeconds     types.Int64                  `tfsdk:"access_token_validity_seconds"`
+	ApplicationPermissionsSettings types.Object                 `tfsdk:"application_permissions_settings"`
+	IntrospectEndpointAuthMethod   types.String                 `tfsdk:"introspect_endpoint_auth_method"`
+}
+
+type ResourceApplicationPermissionsSettingsModel struct {
+	ClaimEnabled types.Bool `tfsdk:"claim_enabled"`
+}
+
+var (
+	resourceApplicationPermissionsSettingsTFObjectTypes = map[string]attr.Type{
+		"claim_enabled": types.BoolType,
+	}
+)
+
+// Framework interfaces
+var (
+	_ resource.Resource                = &ResourceResource{}
+	_ resource.ResourceWithConfigure   = &ResourceResource{}
+	_ resource.ResourceWithModifyPlan  = &ResourceResource{}
+	_ resource.ResourceWithImportState = &ResourceResource{}
+)
+
+// New Object
+func NewResourceResource() resource.Resource {
+	return &ResourceResource{}
+}
+
+// Metadata
+func (r *ResourceResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_resource"
+}
+
+// Schema.
+func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+
+	const attrMinLength = 1
+	const accessTokenValiditySecondsDefault = 3600
+	const accessTokenValiditySecondsMin = 300
+	const accessTokenValiditySecondsMinMinutes = accessTokenValiditySecondsMin / 60
+	const accessTokenValiditySecondsMax = 2592000
+	const accessTokenValiditySecondsMaxDays = accessTokenValiditySecondsMax / (60 * 60 * 24)
+
+	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the type of resource.",
+	).AllowedValuesComplex(map[string]string{
+		string(management.ENUMRESOURCETYPE_OPENID_CONNECT): "specifies the built-in platform resource for OpenID Connect",
+		string(management.ENUMRESOURCETYPE_PINGONE_API):    "specifies the built-in platform resource for PingOne",
+		string(management.ENUMRESOURCETYPE_CUSTOM):         "specifies the a resource that has been created by admin",
+	}).AppendMarkdownString(fmt.Sprintf("Only the `%s` resource type can be created. `%s` specifies the built-in platform resource for OpenID Connect. `%s` specifies the built-in platform resource for PingOne.", string(management.ENUMRESOURCETYPE_CUSTOM), string(management.ENUMRESOURCETYPE_OPENID_CONNECT), string(management.ENUMRESOURCETYPE_PINGONE_API)))
+
+	audienceDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies a URL without a fragment or `@ObjectName` and must not contain `pingone` or `pingidentity` (for example, `https://api.myresource.com`). If a URL is not specified, the resource name is used.",
+	)
+
+	accessTokenValiditySecondsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that specifies the number of seconds that the access token is valid.  The minimum value is `%d` seconds (%d minutes); the maximum value is `%d` seconds (%d days).", accessTokenValiditySecondsMin, accessTokenValiditySecondsMinMinutes, accessTokenValiditySecondsMax, accessTokenValiditySecondsMaxDays),
+	).DefaultValue(accessTokenValiditySecondsDefault)
+
+	introspectEndpointAuthMethodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the client authentication methods supported by the token endpoint",
+	).AllowedValuesEnum(management.AllowedEnumResourceIntrospectEndpointAuthMethodEnumValues).DefaultValue(string(management.ENUMRESOURCEINTROSPECTENDPOINTAUTHMETHOD_CLIENT_SECRET_BASIC))
+
+	applicationPermissionsSettingsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies whether application permissions are added to access tokens generated by PingOne.  If not set, the default value for `claim_enabled` is `false`.",
+	)
+
+	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage PingOne OAuth 2.0 resources",
+		Description: "Resource to create and manage PingOne OAuth 2.0 custom resources.",
 
-		CreateContext: resourceResourceCreate,
-		ReadContext:   resourceResourceRead,
-		UpdateContext: resourceResourceUpdate,
-		DeleteContext: resourceResourceDelete,
+		Attributes: map[string]schema.Attribute{
+			"id": framework.Attr_ID(),
 
-		Importer: &schema.ResourceImporter{
-			StateContext: resourceResourceImport,
-		},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create and manage the resource in."),
+			),
 
-		Schema: map[string]*schema.Schema{
-			"environment_id": {
-				Description:      "The ID of the environment to create the resource in.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-				ForceNew:         true,
+			"name": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the resource name, which must be provided and must be unique within an environment.").Description,
+				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+				},
 			},
-			"name": {
-				Description:      "The name of the resource.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
-			},
-			"description": {
-				Description: "A description to apply to the resource.",
-				Type:        schema.TypeString,
+
+			"description": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a description of the resource.").Description,
 				Optional:    true,
 			},
-			"type": {
-				Description: "A string that specifies the type of resource. Options are `OPENID_CONNECT`, `PINGONE_API`, and `CUSTOM`. Only the `CUSTOM` resource type can be created. `OPENID_CONNECT` specifies the built-in platform resource for OpenID Connect. `PINGONE_API` specifies the built-in platform resource for PingOne.",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"audience": {
-				Description:      "A string that specifies a URL without a fragment or `@ObjectName` and must not contain `pingone` or `pingidentity` (for example, `https://api.myresource.com`). If a URL is not specified, the resource name is used.",
-				Type:             schema.TypeString,
-				Optional:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringNotInSlice([]string{"pingone", "pingidentity"}, true)),
-				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
 
-					if d.Get("name").(string) == old && new == "" {
-						return true
-					}
+			"type": schema.StringAttribute{
+				Description:         typeDescription.Description,
+				MarkdownDescription: typeDescription.MarkdownDescription,
+				Computed:            true,
 
-					return false
+				Default: stringdefault.StaticString(string(management.ENUMRESOURCETYPE_CUSTOM)),
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"access_token_validity_seconds": {
-				Description:      "An integer that specifies the number of seconds that the access token is valid. If a value is not specified, the default is 3600. The minimum value is 300 seconds (5 minutes); the maximum value is 2592000 seconds (30 days).",
-				Type:             schema.TypeInt,
-				Optional:         true,
-				Default:          3600,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(300, 2592000)),
+
+			"audience": schema.StringAttribute{
+				Description:         audienceDescription.Description,
+				MarkdownDescription: audienceDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Validators: []validator.String{
+					stringvalidatorinternal.ShouldNotContain("pingone", "pingidentity"),
+				},
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
-			"introspect_endpoint_auth_method": {
-				Description:      fmt.Sprintf("The client authentication methods supported by the token endpoint. Options are `%s`, `%s`, and `%s`.", string(management.ENUMRESOURCEINTROSPECTENDPOINTAUTHMETHOD_NONE), string(management.ENUMRESOURCEINTROSPECTENDPOINTAUTHMETHOD_CLIENT_SECRET_BASIC), string(management.ENUMRESOURCEINTROSPECTENDPOINTAUTHMETHOD_CLIENT_SECRET_POST)),
-				Type:             schema.TypeString,
-				Optional:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMRESOURCEINTROSPECTENDPOINTAUTHMETHOD_NONE), string(management.ENUMRESOURCEINTROSPECTENDPOINTAUTHMETHOD_CLIENT_SECRET_BASIC), string(management.ENUMRESOURCEINTROSPECTENDPOINTAUTHMETHOD_CLIENT_SECRET_POST)}, false)),
-				Default:          string(management.ENUMRESOURCEINTROSPECTENDPOINTAUTHMETHOD_CLIENT_SECRET_BASIC),
+
+			"access_token_validity_seconds": schema.Int64Attribute{
+				Description:         accessTokenValiditySecondsDescription.Description,
+				MarkdownDescription: accessTokenValiditySecondsDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: int64default.StaticInt64(accessTokenValiditySecondsDefault),
+
+				Validators: []validator.Int64{
+					int64validator.Between(accessTokenValiditySecondsMin, accessTokenValiditySecondsMax),
+				},
 			},
-			"client_secret": {
-				Description: "An auto-generated resource client secret. Possible characters are `a-z`, `A-Z`, `0-9`, `-`, `.`, `_`, `~`. The secret has a minimum length of 64 characters per SHA-512 requirements when using the HS512 algorithm to sign ID tokens using the secret as the key.",
-				Type:        schema.TypeString,
-				Computed:    true,
-				Sensitive:   true,
+
+			"introspect_endpoint_auth_method": schema.StringAttribute{
+				Description:         introspectEndpointAuthMethodDescription.Description,
+				MarkdownDescription: introspectEndpointAuthMethodDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Validators: []validator.String{
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumResourceIntrospectEndpointAuthMethodEnumValues)...),
+				},
+
+				Default: stringdefault.StaticString(string(management.ENUMRESOURCEINTROSPECTENDPOINTAUTHMETHOD_CLIENT_SECRET_BASIC)),
+			},
+
+			"application_permissions_settings": schema.SingleNestedAttribute{
+				Description:         applicationPermissionsSettingsDescription.Description,
+				MarkdownDescription: applicationPermissionsSettingsDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: objectdefault.StaticValue(types.ObjectValueMust(
+					resourceApplicationPermissionsSettingsTFObjectTypes,
+					map[string]attr.Value{
+						"claim_enabled": types.BoolValue(false),
+					},
+				)),
+
+				Attributes: map[string]schema.Attribute{
+					"claim_enabled": schema.BoolAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean setting to enable application permission claims in the access token.").Description,
+						Required:    true,
+					},
+				},
 			},
 		},
 	}
 }
 
-func resourceResourceCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
-
-	var diags diag.Diagnostics
-
-	resource := *management.NewResource(d.Get("name").(string)) // Resource |  (optional)
-	resource.SetType(management.ENUMRESOURCETYPE_CUSTOM)
-
-	if v, ok := d.GetOk("description"); ok {
-		resource.SetDescription(v.(string))
+// ModifyPlan
+func (r *ResourceResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	// Destruction plan
+	if req.Plan.Raw.IsNull() {
+		return
 	}
 
-	if v, ok := d.GetOk("audience"); ok {
-		resource.SetAudience(v.(string))
+	var namePlan, audiencePlan types.String
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("audience"), &audiencePlan)...)
+
+	if audiencePlan.IsNull() {
+		resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("name"), &namePlan)...)
+
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("audience"), namePlan)...)
+	}
+}
+
+func (r *ResourceResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
 	}
 
-	if v, ok := d.GetOk("access_token_validity_seconds"); ok {
-		resource.SetAccessTokenValiditySeconds(int32(v.(int)))
+	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected the provider client, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
+		)
+
+		return
 	}
 
-	if v, ok := d.GetOk("introspect_endpoint_auth_method"); ok {
-		resource.SetIntrospectEndpointAuthMethod(management.EnumResourceIntrospectEndpointAuthMethod(v.(string)))
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
+		)
+		return
+	}
+}
+
+func (r *ResourceResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan, state ResourceResourceModel
+
+	if r.Client.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
 	}
 
-	resp, diags := sdk.ParseResponse(
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the API
+	resource, d := plan.expand(ctx)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	var response *management.Resource
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.ResourcesApi.CreateResource(ctx, d.Get("environment_id").(string)).Resource(resource).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.ResourcesApi.CreateResource(ctx, plan.EnvironmentId.ValueString()).Resource(*resource).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateResource",
-		sdk.DefaultCustomError,
+		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
-		return diags
+		&response,
+	)...)
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	respObject := resp.(*management.Resource)
+	// Create the state to save
+	state = plan
 
-	d.SetId(respObject.GetId())
-
-	return resourceResourceRead(ctx, d, meta)
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourceResourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *ResourceResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *ResourceResourceModel
 
-	var diags diag.Diagnostics
+	if r.Client.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
 
-	resp, diags := sdk.ParseResponse(
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	var response *management.Resource
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.ResourcesApi.ReadOneResource(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.ResourcesApi.ReadOneResource(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneResource",
-		sdk.CustomErrorResourceNotFoundWarning,
+		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
-		return diags
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if resp == nil {
-		d.SetId("")
-		return nil
+	// Remove from state if resource is not found
+	if response == nil {
+		resp.State.RemoveResource(ctx)
+		return
 	}
 
-	respObject := resp.(*management.Resource)
-
-	d.Set("name", respObject.GetName())
-
-	if v, ok := respObject.GetDescriptionOk(); ok {
-		d.Set("description", v)
-	} else {
-		d.Set("description", nil)
-	}
-
-	if v, ok := respObject.GetTypeOk(); ok {
-		d.Set("type", string(*v))
-
-		if *v == management.ENUMRESOURCETYPE_CUSTOM {
-			respSecret, diags := sdk.ParseResponse(
-				ctx,
-
-				func() (any, *http.Response, error) {
-					fO, fR, fErr := apiClient.ResourceClientSecretApi.ReadResourceSecret(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
-				},
-				"ReadResourceSecret",
-				sdk.CustomErrorResourceNotFoundWarning,
-				func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
-
-					// The secret may take a short time to propagate
-					if r.StatusCode == 404 {
-						tflog.Warn(ctx, "Resource secret not found, available for retry")
-						return true
-					}
-
-					if p1error != nil {
-						var err error
-
-						// Permissions may not have propagated by this point
-						if m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
-							tflog.Warn(ctx, "Insufficient PingOne privileges detected")
-							return true
-						}
-						if err != nil {
-							tflog.Warn(ctx, "Cannot match error string for retry")
-							return false
-						}
-
-					}
-
-					return false
-				},
-			)
-			if diags.HasError() {
-				return diags
-			}
-
-			respSecretObj := *respSecret.(*management.ResourceSecret)
-
-			if v, ok := respSecretObj.GetSecretOk(); ok {
-				d.Set("client_secret", v)
-			} else {
-				d.Set("client_secret", nil)
-			}
-		} else {
-			d.Set("client_secret", nil)
-		}
-	} else {
-		d.Set("type", nil)
-		d.Set("client_secret", nil)
-	}
-
-	if v, ok := respObject.GetAudienceOk(); ok {
-		d.Set("audience", v)
-	} else {
-		d.Set("audience", nil)
-	}
-
-	if v, ok := respObject.GetAccessTokenValiditySecondsOk(); ok {
-		d.Set("access_token_validity_seconds", v)
-	} else {
-		d.Set("access_token_validity_seconds", nil)
-	}
-
-	if v, ok := respObject.GetIntrospectEndpointAuthMethodOk(); ok {
-		d.Set("introspect_endpoint_auth_method", string(*v))
-	} else {
-		d.Set("introspect_endpoint_auth_method", nil)
-	}
-
-	return diags
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(data.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceResourceUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan, state ResourceResourceModel
 
-	var diags diag.Diagnostics
-
-	resource := *management.NewResource(d.Get("name").(string)) // Resource |  (optional)
-
-	if v, ok := d.GetOk("type"); ok {
-		resource.SetType(management.EnumResourceType(v.(string)))
+	if r.Client.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
 	}
 
-	if v, ok := d.GetOk("description"); ok {
-		resource.SetDescription(v.(string))
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if v, ok := d.GetOk("audience"); ok {
-		resource.SetAudience(v.(string))
-	} else {
-		resource.SetAudience(d.Get("name").(string))
+	// Build the model for the API
+	resource, d := plan.expand(ctx)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if v, ok := d.GetOk("access_token_validity_seconds"); ok {
-		resource.SetAccessTokenValiditySeconds(int32(v.(int)))
-	}
-
-	if v, ok := d.GetOk("introspect_endpoint_auth_method"); ok {
-		resource.SetIntrospectEndpointAuthMethod(management.EnumResourceIntrospectEndpointAuthMethod(v.(string)))
-	}
-
-	_, diags = sdk.ParseResponse(
+	// Run the API call
+	var response *management.Resource
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.ResourcesApi.UpdateResource(ctx, d.Get("environment_id").(string), d.Id()).Resource(resource).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.ResourcesApi.UpdateResource(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Resource(*resource).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateResource",
-		sdk.DefaultCustomError,
+		framework.DefaultCustomError,
 		nil,
-	)
-	if diags.HasError() {
-		return diags
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	return resourceResourceRead(ctx, d, meta)
+	// Create the state to save
+	state = plan
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourceResourceDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *ResourceResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *ResourceResourceModel
 
-	var diags diag.Diagnostics
+	if r.Client.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
 
-	_, diags = sdk.ParseResponse(
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := apiClient.ResourcesApi.DeleteResource(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
+			fR, fErr := r.Client.ManagementAPIClient.ResourcesApi.DeleteResource(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteResource",
-		sdk.CustomErrorResourceNotFoundWarning,
+		framework.CustomErrorResourceNotFoundWarning,
 		nil,
-	)
-	if diags.HasError() {
-		return diags
-	}
+		nil,
+	)...)
 
-	return diags
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
-func resourceResourceImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func (r *ResourceResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 
 	idComponents := []framework.ImportComponent{
 		{
@@ -337,20 +437,121 @@ func resourceResourceImport(ctx context.Context, d *schema.ResourceData, meta in
 			Regexp: verify.P1ResourceIDRegexp,
 		},
 		{
-			Label:  "resource_id",
-			Regexp: verify.P1ResourceIDRegexp,
+			Label:     "resource_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
 		},
 	}
 
-	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
 	if err != nil {
-		return nil, err
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			err.Error(),
+		)
+		return
 	}
 
-	d.Set("environment_id", attributes["environment_id"])
-	d.SetId(attributes["resource_id"])
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
 
-	resourceResourceRead(ctx, d, meta)
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
 
-	return []*schema.ResourceData{d}, nil
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
+}
+
+func (p *ResourceResourceModel) expand(ctx context.Context) (*management.Resource, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := *management.NewResource(
+		p.Name.ValueString(),
+	)
+
+	data.SetType(management.EnumResourceType(p.Type.ValueString()))
+
+	if !p.Description.IsNull() && !p.Description.IsUnknown() {
+		data.SetDescription(p.Description.ValueString())
+	}
+
+	if !p.Audience.IsNull() && !p.Audience.IsUnknown() {
+		data.SetAudience(p.Audience.ValueString())
+	} else {
+		data.SetAudience(p.Name.ValueString())
+	}
+
+	if !p.AccessTokenValiditySeconds.IsNull() && !p.AccessTokenValiditySeconds.IsUnknown() {
+		data.SetAccessTokenValiditySeconds(int32(p.AccessTokenValiditySeconds.ValueInt64()))
+	}
+
+	if !p.IntrospectEndpointAuthMethod.IsNull() && !p.IntrospectEndpointAuthMethod.IsUnknown() {
+		data.SetIntrospectEndpointAuthMethod(management.EnumResourceIntrospectEndpointAuthMethod(p.IntrospectEndpointAuthMethod.ValueString()))
+	}
+
+	if !p.ApplicationPermissionsSettings.IsNull() && !p.ApplicationPermissionsSettings.IsUnknown() {
+		var plan ResourceApplicationPermissionsSettingsModel
+		diags.Append(p.ApplicationPermissionsSettings.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		applicationPermissionsSettings := management.NewResourceApplicationPermissionsSettings()
+
+		if !plan.ClaimEnabled.IsNull() && !plan.ClaimEnabled.IsUnknown() {
+			applicationPermissionsSettings.SetClaimEnabled(plan.ClaimEnabled.ValueBool())
+		}
+
+		data.SetApplicationPermissionsSettings(*applicationPermissionsSettings)
+	}
+
+	return &data, diags
+}
+
+func (p *ResourceResourceModel) toState(apiObject *management.Resource) diag.Diagnostics {
+	var diags, d diag.Diagnostics
+
+	if apiObject == nil {
+		diags.AddError(
+			"Data object missing",
+			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
+		)
+
+		return diags
+	}
+
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
+	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
+	p.Type = framework.EnumOkToTF(apiObject.GetTypeOk())
+	p.Audience = framework.StringOkToTF(apiObject.GetAudienceOk())
+	p.AccessTokenValiditySeconds = framework.Int32OkToTF(apiObject.GetAccessTokenValiditySecondsOk())
+
+	p.ApplicationPermissionsSettings, d = resourceApplicationPermissionsSettingsOk(apiObject.GetApplicationPermissionsSettingsOk())
+	diags.Append(d...)
+
+	p.IntrospectEndpointAuthMethod = framework.EnumOkToTF(apiObject.GetIntrospectEndpointAuthMethodOk())
+
+	return diags
+}
+
+func resourceApplicationPermissionsSettingsOk(apiObject *management.ResourceApplicationPermissionsSettings, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(resourceApplicationPermissionsSettingsTFObjectTypes), diags
+	}
+
+	objMap := map[string]attr.Value{
+		"claim_enabled": framework.BoolOkToTF(apiObject.GetClaimEnabledOk()),
+	}
+
+	returnVar, d := types.ObjectValue(resourceApplicationPermissionsSettingsTFObjectTypes, objMap)
+	diags.Append(d...)
+
+	return returnVar, diags
 }

@@ -27,6 +27,7 @@ func Resources() []func() resource.Resource {
 		NewPopulationDefaultResource,
 		NewPopulationResource,
 		NewResourceAttributeResource,
+		NewResourceResource,
 		NewResourceScopeOpenIDResource,
 		NewResourceScopePingOneAPIResource,
 		NewResourceScopeResource,

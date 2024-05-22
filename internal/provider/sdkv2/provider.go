@@ -150,8 +150,7 @@ func New(version string) func() *schema.Provider {
 				"pingone_notification_template_content": base.ResourceNotificationTemplateContent(),
 
 				"pingone_application_sign_on_policy_assignment": sso.ResourceApplicationSignOnPolicyAssignment(),
-				"pingone_resource":              sso.ResourceResource(),
-				"pingone_sign_on_policy_action": sso.ResourceSignOnPolicyAction(),
+				"pingone_sign_on_policy_action":                 sso.ResourceSignOnPolicyAction(),
 
 				"pingone_mfa_device_policy": mfa.ResourceMFADevicePolicy(),
 			},
