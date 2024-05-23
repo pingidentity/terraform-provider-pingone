@@ -53,7 +53,7 @@ func ApplicationResourcePermission_CheckDestroy(s *terraform.State) error {
 	return nil
 }
 
-func ApplicationResourcePermission_GetIDs(resourceName string, environmentID, oauthResourceID, applicationResourceID, resourceID *string) resource.TestCheckFunc {
+func ApplicationResourcePermission_GetIDs(resourceName string, environmentID, applicationResourceID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -63,10 +63,6 @@ func ApplicationResourcePermission_GetIDs(resourceName string, environmentID, oa
 
 		if resourceID != nil {
 			*resourceID = rs.Primary.ID
-		}
-
-		if oauthResourceID != nil {
-			*oauthResourceID = rs.Primary.Attributes["resource.id"]
 		}
 
 		if applicationResourceID != nil {

@@ -12,7 +12,6 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
-	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -29,7 +28,7 @@ func TestAccApplicationResourcePermission_RemovalDrift(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	var resourcePermissionID, oauthResourceID, applicationResourceID, environmentID string
+	var resourcePermissionID, applicationResourceID, environmentID string
 
 	var p1Client *client.Client
 	var ctx = context.Background()
@@ -46,10 +45,10 @@ func TestAccApplicationResourcePermission_RemovalDrift(t *testing.T) {
 		CheckDestroy:             authorize.ApplicationResourcePermission_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			// Test removal of the resource
+			// Test removal of the permission resource
 			{
 				Config: testAccApplicationResourcePermissionConfig_Custom_Full(resourceName, name),
-				Check:  authorize.ApplicationResourcePermission_GetIDs(resourceFullName, &environmentID, &oauthResourceID, &applicationResourceID, &resourcePermissionID),
+				Check:  authorize.ApplicationResourcePermission_GetIDs(resourceFullName, &environmentID, &applicationResourceID, &resourcePermissionID),
 			},
 			{
 				PreConfig: func() {
@@ -61,11 +60,11 @@ func TestAccApplicationResourcePermission_RemovalDrift(t *testing.T) {
 			// Test removal of the application resource
 			{
 				Config: testAccApplicationResourcePermissionConfig_Custom_Full(resourceName, name),
-				Check:  authorize.ApplicationResourcePermission_GetIDs(resourceFullName, &environmentID, &oauthResourceID, &applicationResourceID, &resourcePermissionID),
+				Check:  authorize.ApplicationResourcePermission_GetIDs(resourceFullName, &environmentID, &applicationResourceID, &resourcePermissionID),
 			},
 			{
 				PreConfig: func() {
-					sso.ApplicationResource_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, oauthResourceID, applicationResourceID)
+					authorize.ApplicationResource_RemovalDrift_PreConfig(ctx, p1Client.API, t, environmentID, applicationResourceID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -73,11 +72,11 @@ func TestAccApplicationResourcePermission_RemovalDrift(t *testing.T) {
 			// Test removal of the resource
 			{
 				Config: testAccApplicationResourcePermissionConfig_Custom_Full(resourceName, name),
-				Check:  authorize.ApplicationResourcePermission_GetIDs(resourceFullName, &environmentID, &oauthResourceID, &applicationResourceID, &resourcePermissionID),
+				Check:  authorize.ApplicationResourcePermission_GetIDs(resourceFullName, &environmentID, &applicationResourceID, &resourcePermissionID),
 			},
 			{
 				PreConfig: func() {
-					sso.Resource_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, oauthResourceID)
+					authorize.ApplicationResource_Resource_RemovalDrift_PreConfig(ctx, p1Client.API, t, environmentID, applicationResourceID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -85,7 +84,7 @@ func TestAccApplicationResourcePermission_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccApplicationResourcePermissionConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  authorize.ApplicationResourcePermission_GetIDs(resourceFullName, &environmentID, &oauthResourceID, &applicationResourceID, &resourcePermissionID),
+				Check:  authorize.ApplicationResourcePermission_GetIDs(resourceFullName, &environmentID, &applicationResourceID, &resourcePermissionID),
 			},
 			{
 				PreConfig: func() {
