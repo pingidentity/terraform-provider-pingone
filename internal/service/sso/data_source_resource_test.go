@@ -40,8 +40,8 @@ func TestAccResourceDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "type", resourceFullName, "type"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "audience", resourceFullName, "audience"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "access_token_validity_seconds", resourceFullName, "access_token_validity_seconds"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "application_permissions_settings", resourceFullName, "application_permissions_settings"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "introspect_endpoint_auth_method", resourceFullName, "introspect_endpoint_auth_method"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "client_secret", resourceFullName, "client_secret"),
 				),
 			},
 		},
@@ -75,7 +75,6 @@ func TestAccResourceDataSource_ByNameSystem(t *testing.T) {
 					resource.TestCheckNoResourceAttr(dataSourceFullName, "audience"),
 					resource.TestCheckNoResourceAttr(dataSourceFullName, "access_token_validity_seconds"),
 					resource.TestCheckNoResourceAttr(dataSourceFullName, "introspect_endpoint_auth_method"),
-					resource.TestCheckNoResourceAttr(dataSourceFullName, "client_secret"),
 				),
 			},
 		},
@@ -111,8 +110,8 @@ func TestAccResourceDataSource_ByIDFull(t *testing.T) {
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "type", resourceFullName, "type"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "audience", resourceFullName, "audience"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "access_token_validity_seconds", resourceFullName, "access_token_validity_seconds"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "application_permissions_settings", resourceFullName, "application_permissions_settings"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "introspect_endpoint_auth_method", resourceFullName, "introspect_endpoint_auth_method"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "client_secret", resourceFullName, "client_secret"),
 				),
 			},
 		},
@@ -157,6 +156,10 @@ resource "pingone_resource" "%[2]s" {
 
   audience                      = "%[3]s"
   access_token_validity_seconds = 7200
+
+  application_permissions_settings = {
+    claim_enabled = true
+  }
 }
 
 data "pingone_resource" "%[2]s" {
@@ -182,6 +185,10 @@ resource "pingone_resource" "%[2]s" {
 
   audience                      = "%[3]s"
   access_token_validity_seconds = 7200
+
+  application_permissions_settings = {
+    claim_enabled = true
+  }
 }
 
 data "pingone_resource" "%[2]s" {
