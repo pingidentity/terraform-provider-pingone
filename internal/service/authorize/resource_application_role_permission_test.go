@@ -47,7 +47,7 @@ func TestAccApplicationRolePermission_RemovalDrift(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: testAccApplicationRolePermissionConfig_Minimal(resourceName, name),
+				Config: testAccApplicationRolePermissionConfig_Full(resourceName, name),
 				Check:  authorize.ApplicationRolePermission_GetIDs(resourceFullName, &environmentID, &applicationRoleID, &applicationRolePermissionID),
 			},
 			{
@@ -59,7 +59,7 @@ func TestAccApplicationRolePermission_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the application role
 			{
-				Config: testAccApplicationRolePermissionConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationRolePermissionConfig_Full(resourceName, name),
 				Check:  authorize.ApplicationRolePermission_GetIDs(resourceFullName, &environmentID, &applicationRoleID, &applicationRolePermissionID),
 			},
 			{
@@ -96,15 +96,12 @@ func TestAccApplicationRolePermission_Full(t *testing.T) {
 	fullCheck := resource.ComposeTestCheckFunc(
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckResourceAttr(resourceFullName, "description", "Test application role"),
-	)
-
-	minimalCheck := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+		resource.TestMatchResourceAttr(resourceFullName, "application_role_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "application_resource_permission_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "permission.id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "permission.action", name),
+		resource.TestMatchResourceAttr(resourceFullName, "permission.resource.id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "permission.resource.name", name),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -121,32 +118,6 @@ func TestAccApplicationRolePermission_Full(t *testing.T) {
 				Config: testAccApplicationRolePermissionConfig_Full(resourceName, name),
 				Check:  fullCheck,
 			},
-			{
-				Config:  testAccApplicationRolePermissionConfig_Full(resourceName, name),
-				Destroy: true,
-			},
-			// Minimal
-			{
-				Config: testAccApplicationRolePermissionConfig_Minimal(resourceName, name),
-				Check:  minimalCheck,
-			},
-			{
-				Config:  testAccApplicationRolePermissionConfig_Minimal(resourceName, name),
-				Destroy: true,
-			},
-			// Change
-			{
-				Config: testAccApplicationRolePermissionConfig_Full(resourceName, name),
-				Check:  fullCheck,
-			},
-			{
-				Config: testAccApplicationRolePermissionConfig_Minimal(resourceName, name),
-				Check:  minimalCheck,
-			},
-			{
-				Config: testAccApplicationRolePermissionConfig_Full(resourceName, name),
-				Check:  fullCheck,
-			},
 			// Test importing the resource
 			{
 				ResourceName: resourceFullName,
@@ -157,7 +128,7 @@ func TestAccApplicationRolePermission_Full(t *testing.T) {
 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
 						}
 
-						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_role_id"], rs.Primary.ID), nil
 					}
 				}(),
 				ImportState:       true,
@@ -186,7 +157,7 @@ func TestAccApplicationRolePermission_BadParameters(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: testAccApplicationRolePermissionConfig_Minimal(resourceName, name),
+				Config: testAccApplicationRolePermissionConfig_Full(resourceName, name),
 			},
 			// Errors
 			{
@@ -202,7 +173,7 @@ func TestAccApplicationRolePermission_BadParameters(t *testing.T) {
 			},
 			{
 				ResourceName:  resourceFullName,
-				ImportStateId: "badformat/badformat",
+				ImportStateId: "badformat/badformat/badformat",
 				ImportState:   true,
 				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
@@ -210,23 +181,81 @@ func TestAccApplicationRolePermission_BadParameters(t *testing.T) {
 	})
 }
 
+func testAccApplicationRolePermissionConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_resource" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  name = "%[4]s"
+}
+
+resource "pingone_application_resource" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  resource_name  = pingone_resource.%[3]s.name
+
+  name = "%[4]s"
+}
+
+resource "pingone_application_resource_permission" "%[3]s" {
+  environment_id          = pingone_environment.%[2]s.id
+  application_resource_id = pingone_application_resource.%[3]s.id
+
+  action = "%[4]s"
+}
+
+
+resource "pingone_authorize_application_role" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  name = "%[4]s"
+}
+
+resource "pingone_authorize_application_role_permission" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  application_role_id                = pingone_authorize_application_role.%[3]s.id
+  application_resource_permission_id = pingone_application_resource_permission.%[3]s.id
+}
+  `, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}
+
 func testAccApplicationRolePermissionConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_authorize_application_role_permission" "%[2]s" {
+resource "pingone_resource" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
-  description    = "Test application role"
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+
+  name = "%[3]s"
 }
 
-func testAccApplicationRolePermissionConfig_Minimal(resourceName, name string) string {
-	return fmt.Sprintf(`
-		%[1]s
+resource "pingone_application_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_name  = pingone_resource.%[2]s.name
+
+  name = "%[3]s"
+}
+
+resource "pingone_application_resource_permission" "%[2]s" {
+  environment_id          = data.pingone_environment.general_test.id
+  application_resource_id = pingone_application_resource.%[2]s.id
+
+  action = "%[3]s"
+}
+
+
+resource "pingone_authorize_application_role" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
 
 resource "pingone_authorize_application_role_permission" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
+
+  application_role_id                = pingone_authorize_application_role.%[2]s.id
+  application_resource_permission_id = pingone_application_resource_permission.%[2]s.id
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

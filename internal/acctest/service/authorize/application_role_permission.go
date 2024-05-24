@@ -36,12 +36,28 @@ func ApplicationRolePermission_CheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, r, err := apiClient.ApplicationRolePermissionsApi.ReadOneApplicationRolePermission(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
+		responseArray, r, err := apiClient.ApplicationRolePermissionsApi.ReadApplicationRolePermissions(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_role_id"]).Execute()
 
 		shouldContinue, err = acctest.CheckForResourceDestroy(r, err)
 		if err != nil {
 			return err
 		}
+
+		if shouldContinue {
+			continue
+		}
+
+		var response *authorize.ApplicationRolePermission
+		if responseArray.Embedded != nil && responseArray.Embedded.Permissions != nil {
+			for _, permission := range responseArray.Embedded.Permissions {
+				if v := permission.ApplicationRolePermission; v != nil && v.GetId() == rs.Primary.ID {
+					response = v
+					break
+				}
+			}
+		}
+
+		shouldContinue = response == nil
 
 		if shouldContinue {
 			continue

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -38,6 +39,21 @@ type ApplicationRolePermissionPermissionResourceResourceModel struct {
 	Id   pingonetypes.ResourceIDValue `tfsdk:"id"`
 	Name types.String                 `tfsdk:"name"`
 }
+
+var (
+	applicationRolePermissionPermissionTFObjectTypes = map[string]attr.Type{
+		"id":     pingonetypes.ResourceIDType{},
+		"action": types.StringType,
+		"resource": types.ObjectType{
+			AttrTypes: applicationRolePermissionPermissionResourceTFObjectTypes,
+		},
+	}
+
+	applicationRolePermissionPermissionResourceTFObjectTypes = map[string]attr.Type{
+		"id":   pingonetypes.ResourceIDType{},
+		"name": types.StringType,
+	}
+)
 
 // Framework interfaces
 var (
@@ -164,7 +180,7 @@ func (r *ApplicationRolePermissionResource) Create(ctx context.Context, req reso
 	}
 
 	// Build the model for the API
-	applicationRolePermission, d := plan.expand(ctx)
+	applicationRolePermission, d := plan.expand()
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -213,21 +229,31 @@ func (r *ApplicationRolePermissionResource) Read(ctx context.Context, req resour
 	}
 
 	// Run the API call
-	var response *authorize.EntityArray
+	var responseArray *authorize.EntityArray
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.ApplicationRolePermissionsApi.ReadApplicationRolePermissions(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.AuthorizeAPIClient.ApplicationRolePermissionsApi.ReadApplicationRolePermissions(ctx, data.EnvironmentId.ValueString(), data.ApplicationRoleId.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadApplicationRolePermissions",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-		&response,
+		&responseArray,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	var response *authorize.ApplicationRolePermission
+	if responseArray.Embedded != nil && responseArray.Embedded.Permissions != nil {
+		for _, permission := range responseArray.Embedded.Permissions {
+			if v := permission.ApplicationRolePermission; v != nil && v.GetId() == data.Id.ValueString() {
+				response = v
+				break
+			}
+		}
 	}
 
 	// Remove from state if resource is not found
@@ -316,7 +342,7 @@ func (r *ApplicationRolePermissionResource) ImportState(ctx context.Context, req
 	}
 }
 
-func (p *ApplicationRolePermissionResourceModel) expand(ctx context.Context) (*authorize.ApplicationRolePermission, diag.Diagnostics) {
+func (p *ApplicationRolePermissionResourceModel) expand() (*authorize.ApplicationRolePermission, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	// Main object
@@ -328,7 +354,7 @@ func (p *ApplicationRolePermissionResourceModel) expand(ctx context.Context) (*a
 }
 
 func (p *ApplicationRolePermissionResourceModel) toState(apiObject *authorize.ApplicationRolePermission) diag.Diagnostics {
-	var diags diag.Diagnostics
+	var diags, d diag.Diagnostics
 
 	if apiObject == nil {
 		diags.AddError(
@@ -340,7 +366,51 @@ func (p *ApplicationRolePermissionResourceModel) toState(apiObject *authorize.Ap
 
 	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
 
-	p.Permission = applicationRolePermissionPermissionOkToTF(apiObject.GetPermissionOk())
+	p.Permission, d = toStateApplicationRolePermissionPermissionOkToTF(apiObject.GetPermissionOk())
+	diags.Append(d...)
 
 	return diags
+}
+
+func toStateApplicationRolePermissionPermissionOkToTF(apiObject *authorize.ApplicationRolePermissionPermission, ok bool) (types.Object, diag.Diagnostics) {
+	var diags, d diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(applicationRolePermissionPermissionTFObjectTypes), diags
+	}
+
+	resourceObj, d := toStateApplicationRolePermissionPermissionResourceOkToTF(apiObject.GetResourceOk())
+	diags.Append(d...)
+	if diags.HasError() {
+		return types.ObjectNull(applicationRolePermissionPermissionTFObjectTypes), diags
+	}
+
+	o := map[string]attr.Value{
+		"id":       framework.PingOneResourceIDOkToTF(apiObject.GetIdOk()),
+		"action":   framework.StringOkToTF(apiObject.GetActionOk()),
+		"resource": resourceObj,
+	}
+
+	returnVar, d := types.ObjectValue(applicationRolePermissionPermissionTFObjectTypes, o)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func toStateApplicationRolePermissionPermissionResourceOkToTF(apiObject *authorize.ApplicationRolePermissionPermissionResource, ok bool) (types.Object, diag.Diagnostics) {
+	var diags, d diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(applicationRolePermissionPermissionResourceTFObjectTypes), diags
+	}
+
+	o := map[string]attr.Value{
+		"id":   framework.PingOneResourceIDOkToTF(apiObject.GetIdOk()),
+		"name": framework.StringOkToTF(apiObject.GetNameOk()),
+	}
+
+	returnVar, d := types.ObjectValue(applicationRolePermissionPermissionResourceTFObjectTypes, o)
+	diags.Append(d...)
+
+	return returnVar, diags
 }
