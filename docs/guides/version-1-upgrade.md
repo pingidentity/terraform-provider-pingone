@@ -2632,6 +2632,63 @@ resource "pingone_password_policy" "my_awesome_password_policy" {
 }
 ```
 
+## Resource: pingone_resource
+
+### `client_secret` computed attribute removed
+
+The `client_secret` attribute has been removed from the `pingone_resource` resource, and is now found in the `pingone_resource_secret` resource and/or data source.  Using the `pingone_resource_secret` resource and data source has the benefit of being able to track the state of, and manage, previous secrets when performing resource secret rotation.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_resource" "my_awesome_custom_resource" {
+  # ... other configuration parameters
+}
+
+locals {
+  my_awesome_resource_client_id     = pingone_resource.my_awesome_custom_resource.id
+  my_awesome_resource_client_secret = pingone_resource.my_awesome_custom_resource.client_secret
+}
+```
+
+New configuration example (using the `pingone_resource_secret` resource):
+
+```terraform
+resource "pingone_resource" "my_awesome_custom_resource" {
+  # ... other configuration parameters
+}
+
+resource "pingone_resource_secret" "my_awesome_custom_resource" {
+  # ... other configuration parameters
+
+  resource_id = pingone_resource.my_awesome_custom_resource.id
+}
+
+locals {
+  my_awesome_resource_client_id     = pingone_resource.my_awesome_custom_resource.id
+  my_awesome_resource_client_secret = pingone_resource_secret.my_awesome_custom_resource.secret
+}
+```
+
+New configuration example (using the `pingone_resource_secret` data source):
+
+```terraform
+resource "pingone_resource" "my_awesome_custom_resource" {
+  # ... other configuration parameters
+}
+
+data "pingone_resource_secret" "my_awesome_custom_resource" {
+  # ... other configuration parameters
+
+  resource_id = pingone_resource.my_awesome_custom_resource.id
+}
+
+locals {
+  my_awesome_resource_client_id     = pingone_resource.my_awesome_custom_resource.id
+  my_awesome_resource_client_secret = data.pingone_resource_secret.my_awesome_custom_resource.secret
+}
+```
+
 ## Resource: pingone_resource_attribute
 
 ### `resource_id` parameter changed
@@ -3086,6 +3143,63 @@ data "pingone_populations" "example_by_data_filter" {
       values = ["My first population", "My second population"]
     }
   ]
+}
+```
+
+## Data Source: pingone_resource
+
+### `client_secret` computed attribute removed
+
+The `client_secret` attribute has been removed from the `pingone_resource` data source, and is now found in the `pingone_resource_secret` resource and/or data source.  Using the `pingone_resource_secret` resource and data source has the benefit of being able to track the state of, and manage, previous secrets when performing resource secret rotation.
+
+Previous configuration example:
+
+```terraform
+data "pingone_resource" "my_awesome_custom_resource" {
+  # ... other configuration parameters
+}
+
+locals {
+  my_awesome_resource_client_id     = data.pingone_resource.my_awesome_custom_resource.id
+  my_awesome_resource_client_secret = data.pingone_resource.my_awesome_custom_resource.client_secret
+}
+```
+
+New configuration example (using the `pingone_resource_secret` resource):
+
+```terraform
+data "pingone_resource" "my_awesome_custom_resource" {
+  # ... other configuration parameters
+}
+
+resource "pingone_resource_secret" "my_awesome_custom_resource" {
+  # ... other configuration parameters
+
+  resource_id = data.pingone_resource.my_awesome_custom_resource.id
+}
+
+locals {
+  my_awesome_resource_client_id     = data.pingone_resource.my_awesome_custom_resource.id
+  my_awesome_resource_client_secret = pingone_resource_secret.my_awesome_custom_resource.secret
+}
+```
+
+New configuration example (using the `pingone_resource_secret` data source):
+
+```terraform
+data "pingone_resource" "my_awesome_custom_resource" {
+  # ... other configuration parameters
+}
+
+data "pingone_resource_secret" "my_awesome_custom_resource" {
+  # ... other configuration parameters
+
+  resource_id = data.pingone_resource.my_awesome_custom_resource.id
+}
+
+locals {
+  my_awesome_resource_client_id     = data.pingone_resource.my_awesome_custom_resource.id
+  my_awesome_resource_client_secret = data.pingone_resource_secret.my_awesome_custom_resource.secret
 }
 ```
 
