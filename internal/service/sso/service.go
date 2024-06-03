@@ -35,6 +35,7 @@ func Resources() []func() resource.Resource {
 		NewResourceSecretResource,
 		NewSchemaAttributeResource,
 		NewSignOnPolicyResource,
+		NewUserApplicationRoleAssignmentResource,
 		NewUserGroupAssignmentResource,
 		NewUserResource,
 	}
