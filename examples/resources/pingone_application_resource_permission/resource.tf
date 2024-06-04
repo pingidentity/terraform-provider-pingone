@@ -10,7 +10,7 @@ resource "pingone_resource" "my_awesome_custom_resource" {
 
 resource "pingone_application_resource" "my_custom_application_resource" {
   environment_id = pingone_environment.my_environment.id
-  resource_name  = pingone_resource.my_resource.name
+  resource_name  = pingone_resource.my_awesome_custom_resource.name
 
   name        = "Invoices"
   description = "My invoices resource application"
@@ -20,6 +20,6 @@ resource "pingone_application_resource_permission" "my_custom_application_resour
   environment_id          = pingone_environment.my_environment.id
   application_resource_id = pingone_application_resource.my_custom_application_resource.id
 
-  action      = "Invoices:Read"
+  action      = "Invoices-Read"
   description = "Read Invoices"
 }
