@@ -44,7 +44,7 @@ resource "pingone_application_resource_permission" "my_custom_application_resour
 
 ### Required
 
-- `action` (String) A string that specifies the action associated with this permission.
+- `action` (String) A string that specifies the action associated with this permission.  The action must contain only Unicode letters, marks, numbers, spaces, forward slashes, dots, apostrophes, underscores, or hyphens.
 - `application_resource_id` (String) The ID of the application resource to create and manage permissions for.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `environment_id` (String) The ID of the environment to create the resource attribute in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 

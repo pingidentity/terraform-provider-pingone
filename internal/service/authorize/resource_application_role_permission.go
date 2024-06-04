@@ -22,17 +22,13 @@ import (
 type ApplicationRolePermissionResource serviceClientType
 
 type ApplicationRolePermissionResourceModel struct {
-	Id                              pingonetypes.ResourceIDValue `tfsdk:"id"`
 	EnvironmentId                   pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	ApplicationRoleId               pingonetypes.ResourceIDValue `tfsdk:"application_role_id"`
 	ApplicationResourcePermissionId pingonetypes.ResourceIDValue `tfsdk:"application_resource_permission_id"`
-	Permission                      types.Object                 `tfsdk:"permission"`
-}
-
-type ApplicationRolePermissionPermissionResourceModel struct {
-	Id       pingonetypes.ResourceIDValue `tfsdk:"id"`
-	Action   types.String                 `tfsdk:"action"`
-	Resource types.Object                 `tfsdk:"resource"`
+	Action                          types.String                 `tfsdk:"action"`
+	Description                     types.String                 `tfsdk:"description"`
+	Key                             types.String                 `tfsdk:"key"`
+	Resource                        types.Object                 `tfsdk:"resource"`
 }
 
 type ApplicationRolePermissionPermissionResourceResourceModel struct {
@@ -41,14 +37,6 @@ type ApplicationRolePermissionPermissionResourceResourceModel struct {
 }
 
 var (
-	applicationRolePermissionPermissionTFObjectTypes = map[string]attr.Type{
-		"id":     pingonetypes.ResourceIDType{},
-		"action": types.StringType,
-		"resource": types.ObjectType{
-			AttrTypes: applicationRolePermissionPermissionResourceTFObjectTypes,
-		},
-	}
-
 	applicationRolePermissionPermissionResourceTFObjectTypes = map[string]attr.Type{
 		"id":   pingonetypes.ResourceIDType{},
 		"name": types.StringType,
@@ -82,8 +70,6 @@ func (r *ApplicationRolePermissionResource) Schema(ctx context.Context, req reso
 		Description: "Resource to create and manage application role permissions in a PingOne environment.",
 
 		Attributes: map[string]schema.Attribute{
-			"id": framework.Attr_ID(),
-
 			"environment_id": framework.Attr_LinkID(
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to configure the application role permission in."),
 			),
@@ -96,40 +82,36 @@ func (r *ApplicationRolePermissionResource) Schema(ctx context.Context, req reso
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the application resource permission to assign to the application role."),
 			),
 
-			"permission": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that describes the assigned application resource permission.").Description,
+			"action": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that describes the action associated with this permission.").Description,
+				Computed:    true,
+			},
+
+			"description": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that describes the description associated with this permission.").Description,
+				Computed:    true,
+			},
+
+			"key": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that describes the composite key associated with this permission assignment.").Description,
+				Computed:    true,
+			},
+
+			"resource": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that describes the assigned application resource.").Description,
 				Computed:    true,
 
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that describes the ID of the permission resource associated with a specified role.").Description,
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that describes the ID of the application resource associated with this permission.").Description,
 						Computed:    true,
 
 						CustomType: pingonetypes.ResourceIDType{},
 					},
 
-					"action": schema.StringAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that describes the action associated with this permission.").Description,
+					"name": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that describes the name of the application resource associated with this permission.").Description,
 						Computed:    true,
-					},
-
-					"resource": schema.SingleNestedAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that describes the assigned application resource.").Description,
-						Computed:    true,
-
-						Attributes: map[string]schema.Attribute{
-							"id": schema.StringAttribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that describes the ID of the application resource associated with this permission.").Description,
-								Computed:    true,
-
-								CustomType: pingonetypes.ResourceIDType{},
-							},
-
-							"name": schema.StringAttribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that describes the name of the application resource associated with this permission.").Description,
-								Computed:    true,
-							},
-						},
 					},
 				},
 			},
@@ -180,11 +162,7 @@ func (r *ApplicationRolePermissionResource) Create(ctx context.Context, req reso
 	}
 
 	// Build the model for the API
-	applicationRolePermission, d := plan.expand()
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	applicationRolePermission := plan.expand()
 
 	// Run the API call
 	var response *authorize.ApplicationRolePermission
@@ -246,10 +224,16 @@ func (r *ApplicationRolePermissionResource) Read(ctx context.Context, req resour
 		return
 	}
 
+	// Remove from state if resource is not found
+	if responseArray == nil {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	var response *authorize.ApplicationRolePermission
 	if responseArray.Embedded != nil && responseArray.Embedded.Permissions != nil {
 		for _, permission := range responseArray.Embedded.Permissions {
-			if v := permission.ApplicationRolePermission; v != nil && v.GetId() == data.Id.ValueString() {
+			if v := permission.ApplicationRolePermission; v != nil && v.GetId() == data.ApplicationResourcePermissionId.ValueString() {
 				response = v
 				break
 			}
@@ -291,7 +275,7 @@ func (r *ApplicationRolePermissionResource) Delete(ctx context.Context, req reso
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := r.Client.AuthorizeAPIClient.ApplicationRolePermissionsApi.DeleteApplicationRolePermission(ctx, data.EnvironmentId.ValueString(), data.ApplicationRoleId.ValueString(), data.Id.ValueString()).Execute()
+			fR, fErr := r.Client.AuthorizeAPIClient.ApplicationRolePermissionsApi.DeleteApplicationRolePermission(ctx, data.EnvironmentId.ValueString(), data.ApplicationRoleId.ValueString(), data.ApplicationResourcePermissionId.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteApplicationRolePermission",
@@ -316,9 +300,8 @@ func (r *ApplicationRolePermissionResource) ImportState(ctx context.Context, req
 			Regexp: verify.P1ResourceIDRegexp,
 		},
 		{
-			Label:     "application_resource_permission_id",
-			Regexp:    verify.P1ResourceIDRegexp,
-			PrimaryID: true,
+			Label:  "application_resource_permission_id",
+			Regexp: verify.P1ResourceIDRegexp,
 		},
 	}
 
@@ -342,15 +325,14 @@ func (r *ApplicationRolePermissionResource) ImportState(ctx context.Context, req
 	}
 }
 
-func (p *ApplicationRolePermissionResourceModel) expand() (*authorize.ApplicationRolePermission, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func (p *ApplicationRolePermissionResourceModel) expand() *authorize.ApplicationRolePermission {
 
 	// Main object
 	data := authorize.NewApplicationRolePermission(
 		p.ApplicationResourcePermissionId.ValueString(),
 	)
 
-	return data, diags
+	return data
 }
 
 func (p *ApplicationRolePermissionResourceModel) toState(apiObject *authorize.ApplicationRolePermission) diag.Diagnostics {
@@ -364,40 +346,18 @@ func (p *ApplicationRolePermissionResourceModel) toState(apiObject *authorize.Ap
 		return diags
 	}
 
-	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.ApplicationResourcePermissionId = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.Action = framework.StringOkToTF(apiObject.GetActionOk())
+	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
+	p.Key = framework.StringOkToTF(apiObject.GetKeyOk())
 
-	p.Permission, d = toStateApplicationRolePermissionPermissionOkToTF(apiObject.GetPermissionOk())
+	p.Resource, d = toStateApplicationRolePermissionPermissionResourceOkToTF(apiObject.GetResourceOk())
 	diags.Append(d...)
 
 	return diags
 }
 
-func toStateApplicationRolePermissionPermissionOkToTF(apiObject *authorize.ApplicationRolePermissionPermission, ok bool) (types.Object, diag.Diagnostics) {
-	var diags, d diag.Diagnostics
-
-	if !ok || apiObject == nil {
-		return types.ObjectNull(applicationRolePermissionPermissionTFObjectTypes), diags
-	}
-
-	resourceObj, d := toStateApplicationRolePermissionPermissionResourceOkToTF(apiObject.GetResourceOk())
-	diags.Append(d...)
-	if diags.HasError() {
-		return types.ObjectNull(applicationRolePermissionPermissionTFObjectTypes), diags
-	}
-
-	o := map[string]attr.Value{
-		"id":       framework.PingOneResourceIDOkToTF(apiObject.GetIdOk()),
-		"action":   framework.StringOkToTF(apiObject.GetActionOk()),
-		"resource": resourceObj,
-	}
-
-	returnVar, d := types.ObjectValue(applicationRolePermissionPermissionTFObjectTypes, o)
-	diags.Append(d...)
-
-	return returnVar, diags
-}
-
-func toStateApplicationRolePermissionPermissionResourceOkToTF(apiObject *authorize.ApplicationRolePermissionPermissionResource, ok bool) (types.Object, diag.Diagnostics) {
+func toStateApplicationRolePermissionPermissionResourceOkToTF(apiObject *authorize.ApplicationRolePermissionResource, ok bool) (types.Object, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
 	if !ok || apiObject == nil {

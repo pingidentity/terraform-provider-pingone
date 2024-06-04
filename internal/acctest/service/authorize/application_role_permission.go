@@ -77,9 +77,9 @@ func ApplicationRolePermission_GetIDs(resourceName string, environmentID, applic
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*resourceID = rs.Primary.ID
 		*applicationRoleID = rs.Primary.Attributes["application_role_id"]
 		*environmentID = rs.Primary.Attributes["environment_id"]
+		*resourceID = rs.Primary.Attributes["application_resource_permission_id"]
 
 		return nil
 	}

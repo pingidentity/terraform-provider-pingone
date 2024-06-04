@@ -121,11 +121,7 @@ func (r *ApplicationRoleResource) Create(ctx context.Context, req resource.Creat
 	}
 
 	// Build the model for the API
-	applicationRole, d := plan.expand(ctx)
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	applicationRole := plan.expand()
 
 	// Run the API call
 	var response *authorize.ApplicationRole
@@ -215,11 +211,7 @@ func (r *ApplicationRoleResource) Update(ctx context.Context, req resource.Updat
 	}
 
 	// Build the model for the API
-	fido2Policy, d := plan.expand(ctx)
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	fido2Policy := plan.expand()
 
 	// Run the API call
 	var response *authorize.ApplicationRole
@@ -315,9 +307,7 @@ func (r *ApplicationRoleResource) ImportState(ctx context.Context, req resource.
 	}
 }
 
-func (p *ApplicationRoleResourceModel) expand(ctx context.Context) (*authorize.ApplicationRole, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
+func (p *ApplicationRoleResourceModel) expand() *authorize.ApplicationRole {
 	// Main object
 	data := authorize.NewApplicationRole(
 		p.Name.ValueString(),
@@ -327,7 +317,7 @@ func (p *ApplicationRoleResourceModel) expand(ctx context.Context) (*authorize.A
 		data.SetDescription(p.Description.ValueString())
 	}
 
-	return data, diags
+	return data
 }
 
 func (p *ApplicationRoleResourceModel) toState(apiObject *authorize.ApplicationRole) diag.Diagnostics {

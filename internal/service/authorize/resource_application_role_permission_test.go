@@ -94,14 +94,14 @@ func TestAccApplicationRolePermission_Full(t *testing.T) {
 	name := resourceName
 
 	fullCheck := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "application_role_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "application_resource_permission_id", verify.P1ResourceIDRegexpFullString),
-		resource.TestMatchResourceAttr(resourceFullName, "permission.id", verify.P1ResourceIDRegexpFullString),
-		resource.TestCheckResourceAttr(resourceFullName, "permission.action", name),
-		resource.TestMatchResourceAttr(resourceFullName, "permission.resource.id", verify.P1ResourceIDRegexpFullString),
-		resource.TestCheckResourceAttr(resourceFullName, "permission.resource.name", name),
+		resource.TestCheckResourceAttr(resourceFullName, "action", name),
+		resource.TestCheckResourceAttr(resourceFullName, "description", "Test permission"),
+		resource.TestCheckResourceAttr(resourceFullName, "key", fmt.Sprintf("%s:%s", name, name)),
+		resource.TestMatchResourceAttr(resourceFullName, "resource.id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "resource.name", name),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -128,11 +128,12 @@ func TestAccApplicationRolePermission_Full(t *testing.T) {
 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
 						}
 
-						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_role_id"], rs.Primary.ID), nil
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_role_id"], rs.Primary.Attributes["application_resource_permission_id"]), nil
 					}
 				}(),
-				ImportState:       true,
-				ImportStateVerify: true,
+				ImportState:                          true,
+				ImportStateVerify:                    true,
+				ImportStateVerifyIdentifierAttribute: "application_resource_permission_id",
 			},
 		},
 	})
@@ -242,7 +243,8 @@ resource "pingone_application_resource_permission" "%[2]s" {
   environment_id          = data.pingone_environment.general_test.id
   application_resource_id = pingone_application_resource.%[2]s.id
 
-  action = "%[3]s"
+  action      = "%[3]s"
+  description = "Test permission"
 }
 
 

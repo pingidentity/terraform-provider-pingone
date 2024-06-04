@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -75,8 +78,12 @@ func (r *ApplicationResourcePermissionResource) Schema(ctx context.Context, req 
 			),
 
 			"action": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the action associated with this permission.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the action associated with this permission.  The action must contain only Unicode letters, marks, numbers, spaces, forward slashes, dots, apostrophes, underscores, or hyphens.").Description,
 				Required:    true,
+
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(regexp.MustCompile(`^[\p{L}\p{M}\p{N} /.'_-]*$`), "The action must contain only Unicode letters, marks, numbers, spaces, forward slashes, dots, apostrophes, underscores, or hyphens"),
+				},
 			},
 
 			"description": schema.StringAttribute{
