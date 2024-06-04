@@ -60,7 +60,6 @@ resource "pingone_user_application_role_assignment" "my_awesome_application_role
 
 ### Read-Only
 
-- `description` (String) A string that represents the description of the application role assigned to the user.
 - `name` (String) A string that represents the name of the application role assigned to the user.
 
 ## Import

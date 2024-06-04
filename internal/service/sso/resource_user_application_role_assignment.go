@@ -25,7 +25,7 @@ type UserApplicationRoleAssignmentResourceModel struct {
 	UserId            pingonetypes.ResourceIDValue `tfsdk:"user_id"`
 	ApplicationRoleId pingonetypes.ResourceIDValue `tfsdk:"application_role_id"`
 	Name              types.String                 `tfsdk:"name"`
-	Description       types.String                 `tfsdk:"description"`
+	// Description       types.String                 `tfsdk:"description"`
 }
 
 // Framework interfaces
@@ -70,10 +70,10 @@ func (r *UserApplicationRoleAssignmentResource) Schema(ctx context.Context, req 
 				Computed:    true,
 			},
 
-			"description": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that represents the description of the application role assigned to the user.").Description,
-				Computed:    true,
-			},
+			// "description": schema.StringAttribute{
+			// 	Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that represents the description of the application role assigned to the user.").Description,
+			// 	Computed:    true,
+			// },
 		},
 	}
 }
@@ -175,11 +175,17 @@ func (r *UserApplicationRoleAssignmentResource) Read(ctx context.Context, req re
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadUserApplicationRoleAssignments",
-		framework.DefaultCustomError,
+		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Remove from state if resource is not found
+	if response == nil {
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -297,7 +303,7 @@ func (p *UserApplicationRoleAssignmentResourceModel) toState(apiObject *manageme
 
 	p.ApplicationRoleId = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
-	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
+	// p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 
 	return diags
 }

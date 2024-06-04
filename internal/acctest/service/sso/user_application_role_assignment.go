@@ -36,6 +36,15 @@ func UserApplicationRoleAssignment_CheckDestroy(s *terraform.State) error {
 			continue
 		}
 
+		shouldContinue, err = acctest.CheckParentUserDestroy(ctx, p1Client.API.ManagementAPIClient, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["user_id"])
+		if err != nil {
+			return err
+		}
+
+		if shouldContinue {
+			continue
+		}
+
 		response, r, err := apiClient.UserApplicationRoleAssignmentsApi.ReadUserApplicationRoleAssignments(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["user_id"]).Execute()
 
 		shouldContinue, err = acctest.CheckForResourceDestroy(r, err)
@@ -71,9 +80,9 @@ func UserApplicationRoleAssignment_GetIDs(resourceName string, environmentID, us
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*resourceID = rs.Primary.ID
 		*userID = rs.Primary.Attributes["user_id"]
 		*environmentID = rs.Primary.Attributes["environment_id"]
+		*resourceID = rs.Primary.Attributes["application_role_id"]
 
 		return nil
 	}
