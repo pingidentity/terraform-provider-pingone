@@ -1,0 +1,1 @@
+$ terraform import pingone_authorize_api_service_operation.example <environment_id>/<api_service_id>/<api_service_operation_id>
