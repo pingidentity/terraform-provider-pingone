@@ -12,17 +12,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
-	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -32,58 +27,87 @@ import (
 type APIServiceOperationResource serviceClientType
 
 type APIServiceOperationResourceModel struct {
-	Id                  pingonetypes.ResourceIDValue `tfsdk:"id"`
-	EnvironmentId       pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	AccessControl       types.Object                 `tfsdk:"access_control"`
-	AuthorizationServer types.Object                 `tfsdk:"authorization_server"`
-	BaseURLs            types.Set                    `tfsdk:"base_urls"`
-	Directory           types.Object                 `tfsdk:"directory"`
-	Name                types.String                 `tfsdk:"name"`
-	PolicyId            pingonetypes.ResourceIDValue `tfsdk:"policy_id"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	APIServiceId  pingonetypes.ResourceIDValue `tfsdk:"api_service_id"`
+	AccessControl types.Object                 `tfsdk:"access_control"`
+	Methods       types.Set                    `tfsdk:"methods"`
+	Paths         types.Set                    `tfsdk:"paths"`
+	Name          types.String                 `tfsdk:"name"`
+	PolicyId      pingonetypes.ResourceIDValue `tfsdk:"policy_id"`
 }
 
 type APIServiceOperationAccessControlResourceModel struct {
-	Custom types.Object `tfsdk:"custom"`
+	Group      types.Object `tfsdk:"group"`
+	Permission types.Object `tfsdk:"permission"`
+	Scope      types.Object `tfsdk:"scope"`
 }
 
-type APIServiceOperationAccessControlCustomResourceModel struct {
-	Enabled types.Bool `tfsdk:"enabled"`
+type APIServiceOperationAccessControlGroupResourceModel struct {
+	Groups types.Set `tfsdk:"groups"`
 }
 
-type APIServiceOperationAuthorizationServerResourceModel struct {
-	ResourceId pingonetypes.ResourceIDValue `tfsdk:"resource_id"`
-	Type       types.String                 `tfsdk:"type"`
+type APIServiceOperationAccessControlGroupGroupsResourceModel struct {
+	Id pingonetypes.ResourceIDValue `tfsdk:"id"`
 }
 
-type APIServiceOperationDirectoryResourceModel struct {
-	Type types.String `tfsdk:"type"`
+type APIServiceOperationAccessControlPermissionResourceModel struct {
+	Id pingonetypes.ResourceIDValue `tfsdk:"id"`
+}
+
+type APIServiceOperationAccessControlScopeResourceModel struct {
+	MatchType types.String `tfsdk:"match_type"`
+	Scopes    types.Set    `tfsdk:"scopes"`
+}
+
+type APIServiceOperationAccessControlScopeScopesResourceModel struct {
+	Id pingonetypes.ResourceIDValue `tfsdk:"id"`
+}
+
+type APIServiceOperationPathResourceModel struct {
+	Pattern types.String `tfsdk:"pattern"`
+	Type    types.String `tfsdk:"type"`
 }
 
 var (
 	apiServiceOperationAccessControlTFObjectTypes = map[string]attr.Type{
-		"custom": types.ObjectType{AttrTypes: apiServiceOperationAccessControlCustomTFObjectTypes},
+		"group":      types.ObjectType{AttrTypes: apiServiceOperationAccessControlGroupTFObjectTypes},
+		"permission": types.ObjectType{AttrTypes: apiServiceOperationAccessControlPermissionTFObjectTypes},
+		"scope":      types.ObjectType{AttrTypes: apiServiceOperationAccessControlScopeTFObjectTypes},
 	}
 
-	apiServiceOperationAccessControlCustomTFObjectTypes = map[string]attr.Type{
-		"enabled": types.BoolType,
+	apiServiceOperationAccessControlGroupTFObjectTypes = map[string]attr.Type{
+		"groups": types.SetType{ElemType: types.ObjectType{AttrTypes: apiServiceOperationAccessControlGroupGroupsTFObjectTypes}},
 	}
 
-	apiServiceOperationAuthorizationServerTFObjectTypes = map[string]attr.Type{
-		"resource_id": pingonetypes.ResourceIDType{},
-		"type":        types.StringType,
+	apiServiceOperationAccessControlGroupGroupsTFObjectTypes = map[string]attr.Type{
+		"id": pingonetypes.ResourceIDType{},
 	}
 
-	apiServiceOperationDirectoryTFObjectTypes = map[string]attr.Type{
-		"type": types.StringType,
+	apiServiceOperationAccessControlPermissionTFObjectTypes = map[string]attr.Type{
+		"id": pingonetypes.ResourceIDType{},
+	}
+
+	apiServiceOperationAccessControlScopeTFObjectTypes = map[string]attr.Type{
+		"match_type": types.StringType,
+		"scopes":     types.SetType{ElemType: types.ObjectType{AttrTypes: apiServiceOperationAccessControlScopeScopesTFObjectTypes}},
+	}
+
+	apiServiceOperationAccessControlScopeScopesTFObjectTypes = map[string]attr.Type{
+		"id": pingonetypes.ResourceIDType{},
+	}
+
+	apiServiceOperationPathTFObjectTypes = map[string]attr.Type{
+		"pattern": types.StringType,
+		"type":    types.StringType,
 	}
 )
 
 // Framework interfaces
 var (
-	_ resource.Resource                   = &APIServiceOperationResource{}
-	_ resource.ResourceWithConfigure      = &APIServiceOperationResource{}
-	_ resource.ResourceWithValidateConfig = &APIServiceOperationResource{}
-	_ resource.ResourceWithImportState    = &APIServiceOperationResource{}
+	_ resource.Resource                = &APIServiceOperationResource{}
+	_ resource.ResourceWithConfigure   = &APIServiceOperationResource{}
+	_ resource.ResourceWithImportState = &APIServiceOperationResource{}
 )
 
 // New Object
@@ -100,35 +124,44 @@ func (r *APIServiceOperationResource) Metadata(ctx context.Context, req resource
 func (r *APIServiceOperationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 
 	const attrMinLength = 1
-	const attrBaseUrlsMaxLength = 256
+	const attrMethodsMaxLength = 10
+	const attrPathsMaxLength = 10
+	const attrPathsPatternMaxLength = 2048
 
-	accessControlCustomEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A boolean that, if set to `true`, means the custom policy will be used for the endpoint.",
-	).DefaultValue(false).RequiresReplace()
+	accessControlScopeMatchTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the match type of the scope rule.",
+	).AllowedValuesComplex(map[string]string{
+		string(authorize.ENUMAPISERVEROPERATIONMATCHTYPE_ALL): "the client must be authorized with all scopes configured in the `scopes` array to obtain access",
+		string(authorize.ENUMAPISERVEROPERATIONMATCHTYPE_ANY): "the client must be authorized with one or more of the scopes configured in the `scopes` array to obtain access",
+	})
 
-	authorizationServerResourceIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the UUID of the custom PingOne resource. The resource defines the characteristics of the OAuth 2.0 access tokens used to get access to the APIs on the API service such as the audience and scopes. This property must identify a PingOne resource with a `type` property value of `CUSTOM`.",
+	accessControlScopeScopesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A set of objects that specify the scopes that define the access requirements for the operation. The client must be authorized with `ANY` or `ALL` of the scopes to be granted access, depending on the `match_type` field value.",
 	)
 
-	authorizationServerTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A string that specifies the type of authorization server that will issue access tokens. Must be the same value as the `directory.type` field. If `%s`, the `resource` field must not be provided.", string(authorize.ENUMAPISERVERAUTHORIZATIONSERVERTYPE_EXTERNAL)),
-	).AllowedValuesEnum(authorize.AllowedEnumAPIServerOperationAuthorizationServerTypeEnumValues).DefaultValue(string(authorize.ENUMAPISERVERAUTHORIZATIONSERVERTYPE_PINGONE_SSO)).RequiresReplace()
+	methodsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The methods that define the operation. No duplicates are allowed. Each element must be a valid HTTP token, according to [RFC 7230](https://datatracker.ietf.org/doc/html/rfc7230), and cannot exceed 64 characters. An empty array is not valid. To indicate that an operation is defined for every method, the `methods` array should be set to null. The `methods` array is limited to 10 entries.",
+	).AllowedValuesEnum(authorize.AllowedEnumAPIServerOperationMethodEnumValues)
 
-	baseUrlsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A set of strings that specifies the possible base URLs that an end-user will use to access the APIs hosted on the customer's API service. Multiple base URLs may be specified to support cases where the same API may be available from multiple URLs (for example, from a user-friendly domain URL and an internal domain URL). Base URLs must be valid absolute URLs with the `https` or `http` scheme. If the path component is non-empty, it must not end in a trailing slash. The path must not contain empty backslash, dot, or double-dot segments. It must not have a query or fragment present, and the host portion of the authority must be a DNS hostname or valid IP (IPv4 or IPv6). The length must be less than or equal to 256 characters.",
+	pathsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A set of objects that specifies the paths that define the operation. The same literal pattern is not allowed within the same operation (the pattern of a `paths` element must be unique as compared to all other patterns in the same `paths` array). However, the same literal pattern is allowed in different operations (for example, OperationA, `/path1`, OperationB, `/path1` is valid). The paths array is limited to 10 entries.",
 	)
 
-	directoryDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A container object for fields related to the user directory used to issue access tokens for accessing the APIs. If not provided, `directory.type` will default to `PINGONE_SSO`.",
+	pathsPatternDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the pattern used to identify the path or paths for the operation. The semantics of the pattern are determined by the type. For any type, the pattern can contain characters that are otherwise invalid in a URL path. Invalid characters are handled by performing matching against a percent-decoded HTTP request target path. This allows an administrator to configure patterns without worrying about percent encoding special characters.\n" +
+			"When the `type` is `PARAMETER`, the syntax outlined in the table below is enforced. Additionally, the pattern must contain a wildcard, double wildcard or named parameter. When the `type` is `EXACT`, the pattern can be any byte sequence except for ASCII control characters such as line feeds or carriage returns. The length of the pattern cannot exceed 2048 characters. The path pattern must not contain empty path segments such as `/../`, `//`, and `/./`.",
 	)
 
-	directoryTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the type of directory that will be used to issue access tokens.",
-	).AllowedValuesEnum(authorize.AllowedEnumAPIServerOperationAuthorizationServerTypeEnumValues).DefaultValue(string(authorize.ENUMAPISERVERAUTHORIZATIONSERVERTYPE_PINGONE_SSO))
+	pathsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the type of the pattern.",
+	).AllowedValuesComplex(map[string]string{
+		string(authorize.ENUMAPISERVEROPERATIONPATHPATTERNTYPE_EXACT):     "the verbatim pattern is compared against the path from the request using a case-sensitive comparison",
+		string(authorize.ENUMAPISERVEROPERATIONPATHPATTERNTYPE_PARAMETER): "the pattern is compared against the path from the request using a case-sensitive comparison, using the syntax below to encode wildcards and named parameters",
+	})
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage API Services for PingOne Authorize in an environment.",
+		Description: "Resource to create and manage API Operations for API Services with PingOne Authorize in an environment.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -137,36 +170,83 @@ func (r *APIServiceOperationResource) Schema(ctx context.Context, req resource.S
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create and manage the API Service in."),
 			),
 
+			"api_service_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the API service to create and manage the API Service operation for."),
+			),
+
 			"access_control": schema.SingleNestedAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies properties related to access control settings of the API service.").Description,
 				Optional:    true,
-				Computed:    true,
-
-				Default: objectdefault.StaticValue(types.ObjectValueMust(
-					apiServiceOperationAccessControlTFObjectTypes,
-					map[string]attr.Value{
-						"custom": types.ObjectValueMust(
-							apiServiceOperationAccessControlCustomTFObjectTypes,
-							map[string]attr.Value{
-								"enabled": types.BoolValue(false),
-							},
-						),
-					},
-				)),
 
 				Attributes: map[string]schema.Attribute{
-					"custom": schema.SingleNestedAttribute{
+					"group": schema.SingleNestedAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that defines if the operation will use custom policy rather than the \"Group\" or \"Scope\" access control requirement.").Description,
-						Required:    true,
+						Optional:    true,
 
 						Attributes: map[string]schema.Attribute{
-							"enabled": schema.BoolAttribute{
+							"groups": schema.SetNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that defines if the operation will use custom policy rather than the \"Group\" or \"Scope\" access control requirement.").Description,
+								Required:    true,
+
+								NestedObject: schema.NestedAttributeObject{
+									Attributes: map[string]schema.Attribute{
+										"id": schema.StringAttribute{
+											Description:         accessControlCustomEnabledDescription.Description,
+											MarkdownDescription: accessControlCustomEnabledDescription.MarkdownDescription,
+											Required:            true,
+
+											CustomType: pingonetypes.ResourceIDType{},
+										},
+									},
+								},
+							},
+						},
+					},
+
+					"permission": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that defines if the operation will use custom policy rather than the \"Group\" or \"Scope\" access control requirement.").Description,
+						Optional:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"id": schema.StringAttribute{
 								Description:         accessControlCustomEnabledDescription.Description,
 								MarkdownDescription: accessControlCustomEnabledDescription.MarkdownDescription,
 								Required:            true,
 
-								PlanModifiers: []planmodifier.Bool{
-									boolplanmodifier.RequiresReplace(),
+								CustomType: pingonetypes.ResourceIDType{},
+							},
+						},
+					},
+
+					"scope": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that defines scope membership requirements of the operation.").Description,
+						Optional:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"match_type": schema.StringAttribute{
+								Description:         accessControlScopeMatchTypeDescription.Description,
+								MarkdownDescription: accessControlScopeMatchTypeDescription.MarkdownDescription,
+								Optional:            true,
+
+								Validators: []validator.String{
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAPIServerOperationMatchTypeEnumValues)...),
+								},
+							},
+
+							"scopes": schema.SetNestedAttribute{
+								Description:         accessControlScopeScopesDescription.Description,
+								MarkdownDescription: accessControlScopeScopesDescription.MarkdownDescription,
+								Required:            true,
+
+								NestedObject: schema.NestedAttributeObject{
+									Attributes: map[string]schema.Attribute{
+										"id": schema.StringAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the scope.  Must be a valid PingOne resource ID.").Description,
+											Required:    true,
+
+											CustomType: pingonetypes.ResourceIDType{},
+										},
+									},
 								},
 							},
 						},
@@ -174,88 +254,58 @@ func (r *APIServiceOperationResource) Schema(ctx context.Context, req resource.S
 				},
 			},
 
-			"authorization_server": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies properties related to the authorization server that will issue access tokens used to access the APIs.").Description,
-				Required:    true,
-
-				Attributes: map[string]schema.Attribute{
-					"resource_id": schema.StringAttribute{
-						Description:         authorizationServerResourceIdDescription.Description,
-						MarkdownDescription: authorizationServerResourceIdDescription.MarkdownDescription,
-						Optional:            true,
-
-						CustomType: pingonetypes.ResourceIDType{},
-
-						Validators: []validator.String{
-							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAPISERVERAUTHORIZATIONSERVERTYPE_PINGONE_SSO)),
-								path.MatchRelative().AtParent().AtName("type"),
-							),
-							stringvalidatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAPISERVERAUTHORIZATIONSERVERTYPE_EXTERNAL)),
-								path.MatchRelative().AtParent().AtName("type"),
-							),
-						},
-					},
-
-					"type": schema.StringAttribute{
-						Description:         authorizationServerTypeDescription.Description,
-						MarkdownDescription: authorizationServerTypeDescription.MarkdownDescription,
-						Required:            true,
-
-						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.RequiresReplace(),
-						},
-
-						Validators: []validator.String{
-							stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAPIServerOperationAuthorizationServerTypeEnumValues)...),
-						},
-					},
-				},
-			},
-
-			"base_urls": schema.SetAttribute{
-				Description:         baseUrlsDescription.Description,
-				MarkdownDescription: baseUrlsDescription.MarkdownDescription,
-				Required:            true,
+			"methods": schema.SetAttribute{
+				Description:         methodsDescription.Description,
+				MarkdownDescription: methodsDescription.MarkdownDescription,
+				Optional:            true,
 
 				ElementType: types.StringType,
 
 				Validators: []validator.Set{
+					setvalidator.SizeAtLeast(attrMinLength),
+					setvalidator.SizeAtMost(attrMethodsMaxLength),
 					setvalidator.ValueStringsAre(
-						stringvalidator.LengthAtMost(attrBaseUrlsMaxLength),
+						stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAPIServerOperationMethodEnumValues)...),
 					),
 				},
 			},
 
-			"directory": schema.SingleNestedAttribute{
-				Description:         directoryDescription.Description,
-				MarkdownDescription: directoryDescription.MarkdownDescription,
-				Optional:            true,
-				Computed:            true,
+			"paths": schema.SetNestedAttribute{
+				Description:         pathsDescription.Description,
+				MarkdownDescription: pathsDescription.MarkdownDescription,
+				Required:            true,
 
-				Default: objectdefault.StaticValue(types.ObjectValueMust(
-					apiServiceOperationDirectoryTFObjectTypes,
-					map[string]attr.Value{
-						"type": types.StringValue(string(authorize.ENUMAPISERVERAUTHORIZATIONSERVERTYPE_PINGONE_SSO)),
-					},
-				)),
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"pattern": schema.StringAttribute{
+							Description:         pathsPatternDescription.Description,
+							MarkdownDescription: pathsPatternDescription.MarkdownDescription,
+							Required:            true,
 
-				Attributes: map[string]schema.Attribute{
-					"type": schema.StringAttribute{
-						Description:         directoryTypeDescription.Description,
-						MarkdownDescription: directoryTypeDescription.MarkdownDescription,
-						Required:            true,
+							Validators: []validator.String{
+								stringvalidator.LengthAtMost(attrPathsPatternMaxLength),
+							},
+						},
 
-						Validators: []validator.String{
-							stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAPIServerOperationAuthorizationServerTypeEnumValues)...),
+						"type": schema.StringAttribute{
+							Description:         pathsTypeDescription.Description,
+							MarkdownDescription: pathsTypeDescription.MarkdownDescription,
+							Required:            true,
+
+							Validators: []validator.String{
+								stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAPIServerOperationPathPatternTypeEnumValues)...),
+							},
 						},
 					},
+				},
+
+				Validators: []validator.Set{
+					setvalidator.SizeAtMost(attrPathsMaxLength),
 				},
 			},
 
 			"name": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the API service resource name. The name value must be unique among all API services, and it must be a valid resource name.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the API service operation name.").Description,
 				Required:    true,
 
 				Validators: []validator.String{
@@ -271,14 +321,6 @@ func (r *APIServiceOperationResource) Schema(ctx context.Context, req resource.S
 			},
 		},
 	}
-}
-
-func (r *APIServiceOperationResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var data APIServiceOperationResourceModel
-
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-
-	resp.Diagnostics.Append(data.validateAPIServiceOperationAuthzServerType(ctx, true)...)
 }
 
 func (r *APIServiceOperationResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -324,11 +366,6 @@ func (r *APIServiceOperationResource) Create(ctx context.Context, req resource.C
 		return
 	}
 
-	resp.Diagnostics.Append(plan.validateAPIServiceOperationAuthzServerType(ctx, false)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	// Build the model for the API
 	apiServiceOperation, d := plan.expand(ctx)
 	resp.Diagnostics.Append(d...)
@@ -342,7 +379,7 @@ func (r *APIServiceOperationResource) Create(ctx context.Context, req resource.C
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.APIServerOperationsApi.CreateAPIServerOperation(ctx, plan.EnvironmentId.ValueString()).APIServerOperation(*apiServiceOperation).Execute()
+			fO, fR, fErr := r.Client.AuthorizeAPIClient.APIServerOperationsApi.CreateAPIServerOperation(ctx, plan.EnvironmentId.ValueString(), plan.APIServiceId.ValueString()).APIServerOperation(*apiServiceOperation).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateAPIServerOperation",
@@ -384,7 +421,7 @@ func (r *APIServiceOperationResource) Read(ctx context.Context, req resource.Rea
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.APIServerOperationsApi.ReadOneAPIServerOperation(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.AuthorizeAPIClient.APIServerOperationsApi.ReadOneAPIServerOperation(ctx, data.EnvironmentId.ValueString(), data.APIServiceId.ValueString(), data.Id.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneAPIServerOperation",
@@ -423,11 +460,6 @@ func (r *APIServiceOperationResource) Update(ctx context.Context, req resource.U
 		return
 	}
 
-	resp.Diagnostics.Append(plan.validateAPIServiceOperationAuthzServerType(ctx, false)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	// Build the model for the API
 	apiServiceOperation, d := plan.expand(ctx)
 	resp.Diagnostics.Append(d...)
@@ -441,7 +473,7 @@ func (r *APIServiceOperationResource) Update(ctx context.Context, req resource.U
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.APIServerOperationsApi.UpdateAPIServerOperation(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).APIServerOperation(*apiServiceOperation).Execute()
+			fO, fR, fErr := r.Client.AuthorizeAPIClient.APIServerOperationsApi.UpdateAPIServerOperation(ctx, plan.EnvironmentId.ValueString(), plan.APIServiceId.ValueString(), plan.Id.ValueString()).APIServerOperation(*apiServiceOperation).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateAPIServerOperation",
@@ -482,7 +514,7 @@ func (r *APIServiceOperationResource) Delete(ctx context.Context, req resource.D
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := r.Client.AuthorizeAPIClient.APIServerOperationsApi.DeleteAPIServerOperation(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fR, fErr := r.Client.AuthorizeAPIClient.APIServerOperationsApi.DeleteAPIServerOperation(ctx, data.EnvironmentId.ValueString(), data.APIServiceId.ValueString(), data.Id.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteAPIServerOperation",
@@ -504,7 +536,11 @@ func (r *APIServiceOperationResource) ImportState(ctx context.Context, req resou
 			Regexp: verify.P1ResourceIDRegexp,
 		},
 		{
-			Label:     "api_service_id",
+			Label:  "api_service_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:     "api_service_operation_id",
 			Regexp:    verify.P1ResourceIDRegexp,
 			PrimaryID: true,
 		},
@@ -530,103 +566,24 @@ func (r *APIServiceOperationResource) ImportState(ctx context.Context, req resou
 	}
 }
 
-func (p *APIServiceOperationResourceModel) validateAPIServiceOperationAuthzServerType(ctx context.Context, allowUnknown bool) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	if !allowUnknown && p.AuthorizationServer.IsUnknown() {
-		diags.AddAttributeError(
-			path.Root("authorization_server"),
-			"Parameter should be declared",
-			"The `authorization_server` parameter is unknown at the time of validation but must be declared.",
-		)
-	}
-
-	if !allowUnknown && p.Directory.IsUnknown() {
-		diags.AddAttributeError(
-			path.Root("directory"),
-			"Parameter should be declared",
-			"The `directory` parameter is unknown at the time of validation but must be declared.",
-		)
-	}
-
-	if !p.AuthorizationServer.IsNull() && !p.Directory.IsNull() {
-
-		var authzServerPlan APIServiceOperationAuthorizationServerResourceModel
-		diags.Append(p.AuthorizationServer.As(ctx, &authzServerPlan, basetypes.ObjectAsOptions{
-			UnhandledNullAsEmpty:    false,
-			UnhandledUnknownAsEmpty: false,
-		})...)
-		if diags.HasError() {
-			return diags
-		}
-
-		if !allowUnknown && authzServerPlan.Type.IsUnknown() {
-			diags.AddAttributeError(
-				path.Root("authorization_server").AtName("type"),
-				"Parameter should be declared",
-				"The `authorization_server.type` parameter is unknown at the time of validation but must be declared.",
-			)
-		}
-
-		var directoryPlan APIServiceOperationDirectoryResourceModel
-		diags.Append(p.Directory.As(ctx, &directoryPlan, basetypes.ObjectAsOptions{
-			UnhandledNullAsEmpty:    false,
-			UnhandledUnknownAsEmpty: false,
-		})...)
-		if diags.HasError() {
-			return diags
-		}
-
-		if !allowUnknown && directoryPlan.Type.IsUnknown() {
-			diags.AddAttributeError(
-				path.Root("directory").AtName("type"),
-				"Parameter should be declared",
-				"The `directory.type` parameter is unknown at the time of validation but must be declared.",
-			)
-		}
-
-		if !authzServerPlan.Type.IsNull() && !directoryPlan.Type.IsNull() && !authzServerPlan.Type.Equal(directoryPlan.Type) {
-			diags.AddAttributeError(
-				path.Root("authorization_server").AtName("type"),
-				"Parameter conflict",
-				fmt.Sprintf("The `authorization_server.type` (value `%s`) and `directory.type` (value `%s`) parameters must be set to the same value.", authzServerPlan.Type.ValueString(), directoryPlan.Type.ValueString()),
-			)
-			diags.AddAttributeError(
-				path.Root("directory").AtName("type"),
-				"Parameter conflict",
-				fmt.Sprintf("The `authorization_server.type` (value `%s`) and `directory.type` (value `%s`) parameters must be set to the same value.", authzServerPlan.Type.ValueString(), directoryPlan.Type.ValueString()),
-			)
-		}
-	}
-
-	return diags
-
-}
-
 func (p *APIServiceOperationResourceModel) expand(ctx context.Context) (*authorize.APIServerOperation, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var authzServerPlan APIServiceOperationAuthorizationServerResourceModel
-	diags.Append(p.AuthorizationServer.As(ctx, &authzServerPlan, basetypes.ObjectAsOptions{
-		UnhandledNullAsEmpty:    false,
-		UnhandledUnknownAsEmpty: false,
-	})...)
+	var pathsPlan []APIServiceOperationPathResourceModel
+	diags.Append(p.Paths.ElementsAs(ctx, &pathsPlan, false)...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
-	var baseUrlsPlan []string
-	diags.Append(p.BaseURLs.ElementsAs(ctx, &baseUrlsPlan, false)...)
-	if diags.HasError() {
-		return nil, diags
-	}
+	paths := make([]authorize.APIServerOperationPathsInner, 0)
 
-	authorizationServer := authzServerPlan.expand()
+	for _, pathPlan := range pathsPlan {
+		paths = append(paths, *pathPlan.expand())
+	}
 
 	data := authorize.NewAPIServerOperation(
-		*authorizationServer,
-		baseUrlsPlan,
 		p.Name.ValueString(),
+		paths,
 	)
 
 	if !p.AccessControl.IsNull() && !p.AccessControl.IsUnknown() {
@@ -648,31 +605,31 @@ func (p *APIServiceOperationResourceModel) expand(ctx context.Context) (*authori
 		data.SetAccessControl(*accessControl)
 	}
 
-	if !p.Directory.IsNull() && !p.Directory.IsUnknown() {
-		var directoryPlan APIServiceOperationDirectoryResourceModel
-		diags.Append(p.Directory.As(ctx, &directoryPlan, basetypes.ObjectAsOptions{
-			UnhandledNullAsEmpty:    false,
-			UnhandledUnknownAsEmpty: false,
-		})...)
+	if !p.Methods.IsNull() && !p.Methods.IsUnknown() {
+		var methodsPlan []string
+		diags.Append(p.Methods.ElementsAs(ctx, &methodsPlan, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		directory := directoryPlan.expand()
+		methods := make([]authorize.EnumAPIServerOperationMethod, 0)
 
-		data.SetDirectory(*directory)
+		for _, methodPlan := range methodsPlan {
+			methods = append(methods, authorize.EnumAPIServerOperationMethod(methodPlan))
+		}
+
+		data.SetMethods(methods)
 	}
 
 	return data, diags
 }
 
-func (p *APIServiceOperationAuthorizationServerResourceModel) expand() *authorize.APIServerOperationAuthorizationServer {
+func (p *APIServiceOperationPathResourceModel) expand() *authorize.APIServerOperationPathsInner {
 
-	data := authorize.NewAPIServerOperationAuthorizationServer(authorize.EnumAPIServerOperationAuthorizationServerType(p.Type.ValueString()))
-
-	if !p.ResourceId.IsNull() && !p.ResourceId.IsUnknown() {
-		data.SetResource(*authorize.NewAPIServerOperationAuthorizationServerResource(p.ResourceId.ValueString()))
-	}
+	data := authorize.NewAPIServerOperationPathsInner(
+		p.Pattern.ValueString(),
+		authorize.EnumAPIServerOperationPathPatternType(p.Type.ValueString()),
+	)
 
 	return data
 }
@@ -682,9 +639,9 @@ func (p *APIServiceOperationAccessControlResourceModel) expand(ctx context.Conte
 
 	data := authorize.NewAPIServerOperationAccessControl()
 
-	if !p.Custom.IsNull() && !p.Custom.IsUnknown() {
-		var customPlan APIServiceOperationAccessControlCustomResourceModel
-		diags.Append(p.Custom.As(ctx, &customPlan, basetypes.ObjectAsOptions{
+	if !p.Group.IsNull() && !p.Group.IsUnknown() {
+		var groupPlan APIServiceOperationAccessControlGroupResourceModel
+		diags.Append(p.Group.As(ctx, &groupPlan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
 		})...)
@@ -692,29 +649,95 @@ func (p *APIServiceOperationAccessControlResourceModel) expand(ctx context.Conte
 			return nil, diags
 		}
 
-		custom := customPlan.expand()
+		group, d := groupPlan.expand(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
 
-		data.SetCustom(*custom)
+		data.SetGroup(*group)
+	}
+
+	if !p.Permission.IsNull() && !p.Permission.IsUnknown() {
+		var permissionPlan APIServiceOperationAccessControlPermissionResourceModel
+		diags.Append(p.Permission.As(ctx, &permissionPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetPermission(*authorize.NewAPIServerOperationAccessControlPermission(permissionPlan.Id.ValueString()))
+	}
+
+	if !p.Scope.IsNull() && !p.Scope.IsUnknown() {
+		var scopePlan APIServiceOperationAccessControlScopeResourceModel
+		diags.Append(p.Scope.As(ctx, &scopePlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		scope, d := scopePlan.expand(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetScope(*scope)
 	}
 
 	return data, diags
 }
 
-func (p *APIServiceOperationAccessControlCustomResourceModel) expand() *authorize.APIServerOperationAccessControlCustom {
-	data := authorize.NewAPIServerOperationAccessControlCustom()
+func (p *APIServiceOperationAccessControlGroupResourceModel) expand(ctx context.Context) (*authorize.APIServerOperationAccessControlGroup, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
-	if !p.Enabled.IsNull() && !p.Enabled.IsUnknown() {
-		data.SetEnabled(p.Enabled.ValueBool())
+	var groupsPlan []APIServiceOperationAccessControlGroupGroupsResourceModel
+	diags.Append(p.Groups.ElementsAs(ctx, &groupsPlan, false)...)
+	if diags.HasError() {
+		return nil, diags
 	}
 
-	return data
+	paths := make([]authorize.APIServerOperationAccessControlGroupGroupsInner, 0)
+
+	for _, groupPlan := range groupsPlan {
+		paths = append(paths, *authorize.NewAPIServerOperationAccessControlGroupGroupsInner(groupPlan.Id.ValueString()))
+	}
+
+	data := authorize.NewAPIServerOperationAccessControlGroup(
+		paths,
+	)
+	return data, diags
 }
 
-func (p *APIServiceOperationDirectoryResourceModel) expand() *authorize.APIServerOperationDirectory {
+func (p *APIServiceOperationAccessControlScopeResourceModel) expand(ctx context.Context) (*authorize.APIServerOperationAccessControlScope, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
-	data := authorize.NewAPIServerOperationDirectory(authorize.EnumAPIServerOperationAuthorizationServerType(p.Type.ValueString()))
+	var scopesPlan []APIServiceOperationAccessControlScopeScopesResourceModel
+	diags.Append(p.Scopes.ElementsAs(ctx, &scopesPlan, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
 
-	return data
+	scopes := make([]authorize.APIServerOperationAccessControlScopeScopesInner, 0)
+
+	for _, scopePlan := range scopesPlan {
+		scopes = append(scopes, *authorize.NewAPIServerOperationAccessControlScopeScopesInner(scopePlan.Id.ValueString()))
+	}
+
+	data := authorize.NewAPIServerOperationAccessControlScope(
+		scopes,
+	)
+
+	if !p.MatchType.IsNull() && !p.MatchType.IsUnknown() {
+		data.SetMatchType(authorize.EnumAPIServerOperationMatchType(p.MatchType.ValueString()))
+	}
+
+	return data, diags
 }
 
 func (p *APIServiceOperationResourceModel) toState(apiObject *authorize.APIServerOperation) diag.Diagnostics {
@@ -734,12 +757,9 @@ func (p *APIServiceOperationResourceModel) toState(apiObject *authorize.APIServe
 	p.AccessControl, d = apiServiceOperationAccessControlOkToTF(apiObject.GetAccessControlOk())
 	diags.Append(d...)
 
-	p.AuthorizationServer, d = apiServiceOperationAuthorizationServerOkToTF(apiObject.GetAuthorizationServerOk())
-	diags.Append(d...)
+	p.Methods = framework.EnumSetOkToTF(apiObject.GetMethodsOk())
 
-	p.BaseURLs = framework.StringSetOkToTF(apiObject.GetBaseUrlsOk())
-
-	p.Directory, d = apiServiceOperationDirectoryOkToTF(apiObject.GetDirectoryOk())
+	p.Paths, d = apiServiceOperationPathsOkToTF(apiObject.GetPathsOk())
 	diags.Append(d...)
 
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
@@ -760,68 +780,167 @@ func apiServiceOperationAccessControlOkToTF(apiObject *authorize.APIServerOperat
 		return types.ObjectNull(apiServiceOperationAccessControlTFObjectTypes), diags
 	}
 
-	custom, d := apiServiceOperationAccessControlCustomOkToTF(apiObject.GetCustomOk())
+	group, d := apiServiceOperationAccessControlGroupOkToTF(apiObject.GetGroupOk())
+	diags.Append(d...)
+	if diags.HasError() {
+		return types.ObjectNull(apiServiceOperationAccessControlTFObjectTypes), diags
+	}
+
+	permission, d := apiServiceOperationAccessControlPermissionOkToTF(apiObject.GetPermissionOk())
+	diags.Append(d...)
+	if diags.HasError() {
+		return types.ObjectNull(apiServiceOperationAccessControlTFObjectTypes), diags
+	}
+
+	scope, d := apiServiceOperationAccessControlScopeOkToTF(apiObject.GetScopeOk())
 	diags.Append(d...)
 	if diags.HasError() {
 		return types.ObjectNull(apiServiceOperationAccessControlTFObjectTypes), diags
 	}
 
 	objValue, d := types.ObjectValue(apiServiceOperationAccessControlTFObjectTypes, map[string]attr.Value{
-		"custom": custom,
+		"group":      group,
+		"permission": permission,
+		"scope":      scope,
 	})
 	diags.Append(d...)
 
 	return objValue, diags
 }
 
-func apiServiceOperationAccessControlCustomOkToTF(apiObject *authorize.APIServerOperationAccessControlCustom, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func apiServiceOperationAccessControlGroupOkToTF(apiObject *authorize.APIServerOperationAccessControlGroup, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
-		return types.ObjectNull(apiServiceOperationAccessControlCustomTFObjectTypes), diags
+		return types.ObjectNull(apiServiceOperationAccessControlGroupTFObjectTypes), diags
 	}
 
-	objValue, d := types.ObjectValue(apiServiceOperationAccessControlCustomTFObjectTypes, map[string]attr.Value{
-		"enabled": framework.BoolOkToTF(apiObject.GetEnabledOk()),
+	groups, d := apiServiceOperationAccessControlGroupGroupsOkToTF(apiObject.GetGroupsOk())
+	diags.Append(d...)
+	if diags.HasError() {
+		return types.ObjectNull(apiServiceOperationAccessControlGroupTFObjectTypes), diags
+	}
+
+	objValue, d := types.ObjectValue(apiServiceOperationAccessControlGroupTFObjectTypes, map[string]attr.Value{
+		"groups": groups,
 	})
 	diags.Append(d...)
 
 	return objValue, diags
 }
 
-func apiServiceOperationAuthorizationServerOkToTF(apiObject *authorize.APIServerOperationAuthorizationServer, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func apiServiceOperationAccessControlScopeOkToTF(apiObject *authorize.APIServerOperationAccessControlScope, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
-		return types.ObjectNull(apiServiceOperationAuthorizationServerTFObjectTypes), diags
+		return types.ObjectNull(apiServiceOperationAccessControlScopeTFObjectTypes), diags
 	}
 
-	resourceId := pingonetypes.NewResourceIDNull()
-
-	if v, ok := apiObject.GetResourceOk(); ok {
-		resourceId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
+	scopes, d := apiServiceOperationAccessControlScopeScopesOkToTF(apiObject.GetScopesOk())
+	diags.Append(d...)
+	if diags.HasError() {
+		return types.ObjectNull(apiServiceOperationAccessControlScopeTFObjectTypes), diags
 	}
 
-	objValue, d := types.ObjectValue(apiServiceOperationAuthorizationServerTFObjectTypes, map[string]attr.Value{
-		"resource_id": resourceId,
-		"type":        framework.EnumOkToTF(apiObject.GetTypeOk()),
+	objValue, d := types.ObjectValue(apiServiceOperationAccessControlScopeTFObjectTypes, map[string]attr.Value{
+		"match_type": framework.EnumOkToTF(apiObject.GetMatchTypeOk()),
+		"scopes":     scopes,
 	})
 	diags.Append(d...)
 
 	return objValue, diags
 }
 
-func apiServiceOperationDirectoryOkToTF(apiObject *authorize.APIServerOperationDirectory, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func apiServiceOperationAccessControlScopeScopesOkToTF(apiObject []authorize.APIServerOperationAccessControlScopeScopesInner, ok bool) (basetypes.SetValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	tfObjType := types.ObjectType{AttrTypes: apiServiceOperationAccessControlScopeScopesTFObjectTypes}
+
+	if !ok || apiObject == nil {
+		return types.SetNull(tfObjType), diags
+	}
+
+	flattenedList := []attr.Value{}
+	for _, v := range apiObject {
+
+		flattenedObj, d := types.ObjectValue(apiServiceOperationAccessControlScopeScopesTFObjectTypes, map[string]attr.Value{
+			"id": framework.PingOneResourceIDOkToTF(v.GetIdOk()),
+		})
+		diags.Append(d...)
+
+		flattenedList = append(flattenedList, flattenedObj)
+	}
+
+	returnVar, d := types.SetValue(tfObjType, flattenedList)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func apiServiceOperationAccessControlPermissionOkToTF(apiObject *authorize.APIServerOperationAccessControlPermission, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
-		return types.ObjectNull(apiServiceOperationDirectoryTFObjectTypes), diags
+		return types.ObjectNull(apiServiceOperationAccessControlPermissionTFObjectTypes), diags
 	}
 
-	objValue, d := types.ObjectValue(apiServiceOperationDirectoryTFObjectTypes, map[string]attr.Value{
-		"type": framework.EnumOkToTF(apiObject.GetTypeOk()),
+	objValue, d := types.ObjectValue(apiServiceOperationAccessControlPermissionTFObjectTypes, map[string]attr.Value{
+		"id": framework.PingOneResourceIDOkToTF(apiObject.GetIdOk()),
 	})
 	diags.Append(d...)
 
 	return objValue, diags
+}
+
+func apiServiceOperationAccessControlGroupGroupsOkToTF(apiObject []authorize.APIServerOperationAccessControlGroupGroupsInner, ok bool) (basetypes.SetValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	tfObjType := types.ObjectType{AttrTypes: apiServiceOperationAccessControlGroupGroupsTFObjectTypes}
+
+	if !ok || apiObject == nil {
+		return types.SetNull(tfObjType), diags
+	}
+
+	flattenedList := []attr.Value{}
+	for _, v := range apiObject {
+
+		flattenedObj, d := types.ObjectValue(apiServiceOperationAccessControlGroupGroupsTFObjectTypes, map[string]attr.Value{
+			"id": framework.PingOneResourceIDOkToTF(v.GetIdOk()),
+		})
+		diags.Append(d...)
+
+		flattenedList = append(flattenedList, flattenedObj)
+	}
+
+	returnVar, d := types.SetValue(tfObjType, flattenedList)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func apiServiceOperationPathsOkToTF(apiObject []authorize.APIServerOperationPathsInner, ok bool) (basetypes.SetValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	tfObjType := types.ObjectType{AttrTypes: apiServiceOperationPathTFObjectTypes}
+
+	if !ok || apiObject == nil {
+		return types.SetNull(tfObjType), diags
+	}
+
+	flattenedList := []attr.Value{}
+	for _, v := range apiObject {
+
+		flattenedObj, d := types.ObjectValue(apiServiceOperationPathTFObjectTypes, map[string]attr.Value{
+			"pattern": framework.StringOkToTF(v.GetPatternOk()),
+			"type":    framework.EnumOkToTF(v.GetTypeOk()),
+		})
+		diags.Append(d...)
+
+		flattenedList = append(flattenedList, flattenedObj)
+	}
+
+	returnVar, d := types.SetValue(tfObjType, flattenedList)
+	diags.Append(d...)
+
+	return returnVar, diags
 }
