@@ -12,6 +12,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -100,7 +104,7 @@ func (r *APIServiceResource) Schema(ctx context.Context, req resource.SchemaRequ
 
 	accessControlCustomEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, if set to `true`, means the custom policy will be used for the endpoint.",
-	).DefaultValue(false)
+	).DefaultValue(false).RequiresReplace()
 
 	authorizationServerResourceIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the UUID of the custom PingOne resource. The resource defines the characteristics of the OAuth 2.0 access tokens used to get access to the APIs on the API service such as the audience and scopes. This property must identify a PingOne resource with a `type` property value of `CUSTOM`.",
@@ -108,7 +112,7 @@ func (r *APIServiceResource) Schema(ctx context.Context, req resource.SchemaRequ
 
 	authorizationServerTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A string that specifies the type of authorization server that will issue access tokens. Must be the same value as the `directory.type` field. If `%s`, the `resource` field must not be provided.", string(authorize.ENUMAPISERVERAUTHORIZATIONSERVERTYPE_EXTERNAL)),
-	).AllowedValuesEnum(authorize.AllowedEnumAPIServerAuthorizationServerTypeEnumValues).DefaultValue(string(authorize.ENUMAPISERVERAUTHORIZATIONSERVERTYPE_PINGONE_SSO))
+	).AllowedValuesEnum(authorize.AllowedEnumAPIServerAuthorizationServerTypeEnumValues).DefaultValue(string(authorize.ENUMAPISERVERAUTHORIZATIONSERVERTYPE_PINGONE_SSO)).RequiresReplace()
 
 	baseUrlsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A set of strings that specifies the possible base URLs that an end-user will use to access the APIs hosted on the customer's API service. Multiple base URLs may be specified to support cases where the same API may be available from multiple URLs (for example, from a user-friendly domain URL and an internal domain URL). Base URLs must be valid absolute URLs with the `https` or `http` scheme. If the path component is non-empty, it must not end in a trailing slash. The path must not contain empty backslash, dot, or double-dot segments. It must not have a query or fragment present, and the host portion of the authority must be a DNS hostname or valid IP (IPv4 or IPv6). The length must be less than or equal to 256 characters.",
@@ -136,6 +140,19 @@ func (r *APIServiceResource) Schema(ctx context.Context, req resource.SchemaRequ
 			"access_control": schema.SingleNestedAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies properties related to access control settings of the API service.").Description,
 				Optional:    true,
+				Computed:    true,
+
+				Default: objectdefault.StaticValue(types.ObjectValueMust(
+					apiServiceAccessControlTFObjectTypes,
+					map[string]attr.Value{
+						"custom": types.ObjectValueMust(
+							apiServiceAccessControlCustomTFObjectTypes,
+							map[string]attr.Value{
+								"enabled": types.BoolValue(false),
+							},
+						),
+					},
+				)),
 
 				Attributes: map[string]schema.Attribute{
 					"custom": schema.SingleNestedAttribute{
@@ -147,6 +164,10 @@ func (r *APIServiceResource) Schema(ctx context.Context, req resource.SchemaRequ
 								Description:         accessControlCustomEnabledDescription.Description,
 								MarkdownDescription: accessControlCustomEnabledDescription.MarkdownDescription,
 								Required:            true,
+
+								PlanModifiers: []planmodifier.Bool{
+									boolplanmodifier.RequiresReplace(),
+								},
 							},
 						},
 					},
@@ -168,11 +189,11 @@ func (r *APIServiceResource) Schema(ctx context.Context, req resource.SchemaRequ
 						Validators: []validator.String{
 							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
 								types.StringValue(string(authorize.ENUMAPISERVERAUTHORIZATIONSERVERTYPE_PINGONE_SSO)),
-								path.MatchRelative().AtName("type"),
+								path.MatchRelative().AtParent().AtName("type"),
 							),
 							stringvalidatorinternal.ConflictsIfMatchesPathValue(
 								types.StringValue(string(authorize.ENUMAPISERVERAUTHORIZATIONSERVERTYPE_EXTERNAL)),
-								path.MatchRelative().AtName("type"),
+								path.MatchRelative().AtParent().AtName("type"),
 							),
 						},
 					},
@@ -181,6 +202,10 @@ func (r *APIServiceResource) Schema(ctx context.Context, req resource.SchemaRequ
 						Description:         authorizationServerTypeDescription.Description,
 						MarkdownDescription: authorizationServerTypeDescription.MarkdownDescription,
 						Required:            true,
+
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.RequiresReplace(),
+						},
 
 						Validators: []validator.String{
 							stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAPIServerAuthorizationServerTypeEnumValues)...),
@@ -207,6 +232,14 @@ func (r *APIServiceResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Description:         directoryDescription.Description,
 				MarkdownDescription: directoryDescription.MarkdownDescription,
 				Optional:            true,
+				Computed:            true,
+
+				Default: objectdefault.StaticValue(types.ObjectValueMust(
+					apiServiceDirectoryTFObjectTypes,
+					map[string]attr.Value{
+						"type": types.StringValue(string(authorize.ENUMAPISERVERAUTHORIZATIONSERVERTYPE_PINGONE_SSO)),
+					},
+				)),
 
 				Attributes: map[string]schema.Attribute{
 					"type": schema.StringAttribute{
@@ -516,7 +549,7 @@ func (p *APIServiceResourceModel) validateAPIServiceAuthzServerType(ctx context.
 		)
 	}
 
-	if !p.AuthorizationServer.IsNull() && !p.Directory.IsUnknown() {
+	if !p.AuthorizationServer.IsNull() && !p.Directory.IsNull() {
 
 		var authzServerPlan APIServiceAuthorizationServerResourceModel
 		diags.Append(p.AuthorizationServer.As(ctx, &authzServerPlan, basetypes.ObjectAsOptions{
@@ -556,12 +589,12 @@ func (p *APIServiceResourceModel) validateAPIServiceAuthzServerType(ctx context.
 			diags.AddAttributeError(
 				path.Root("authorization_server").AtName("type"),
 				"Parameter conflict",
-				"The `authorization_server.type` and `directory.type` parameters must be the same.",
+				fmt.Sprintf("The `authorization_server.type` (value `%s`) and `directory.type` (value `%s`) parameters must be set to the same value.", authzServerPlan.Type.ValueString(), directoryPlan.Type.ValueString()),
 			)
 			diags.AddAttributeError(
-				path.Root("authorization_server").AtName("type"),
+				path.Root("directory").AtName("type"),
 				"Parameter conflict",
-				"The `authorization_server.type` and `directory.type` parameters must be the same.",
+				fmt.Sprintf("The `authorization_server.type` (value `%s`) and `directory.type` (value `%s`) parameters must be set to the same value.", authzServerPlan.Type.ValueString(), directoryPlan.Type.ValueString()),
 			)
 		}
 	}
@@ -659,11 +692,7 @@ func (p *APIServiceAccessControlResourceModel) expand(ctx context.Context) (*aut
 			return nil, diags
 		}
 
-		custom, d := customPlan.expand(ctx)
-		diags.Append(d...)
-		if diags.HasError() {
-			return nil, diags
-		}
+		custom := customPlan.expand()
 
 		data.SetCustom(*custom)
 	}
@@ -671,16 +700,14 @@ func (p *APIServiceAccessControlResourceModel) expand(ctx context.Context) (*aut
 	return data, diags
 }
 
-func (p *APIServiceAccessControlCustomResourceModel) expand(ctx context.Context) (*authorize.APIServerAccessControlCustom, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
+func (p *APIServiceAccessControlCustomResourceModel) expand() *authorize.APIServerAccessControlCustom {
 	data := authorize.NewAPIServerAccessControlCustom()
 
 	if !p.Enabled.IsNull() && !p.Enabled.IsUnknown() {
 		data.SetEnabled(p.Enabled.ValueBool())
 	}
 
-	return data, diags
+	return data
 }
 
 func (p *APIServiceDirectoryResourceModel) expand() *authorize.APIServerDirectory {
@@ -710,7 +737,7 @@ func (p *APIServiceResourceModel) toState(apiObject *authorize.APIServer) diag.D
 	p.AuthorizationServer, d = apiServiceAuthorizationServerOkToTF(apiObject.GetAuthorizationServerOk())
 	diags.Append(d...)
 
-	p.BaseURLs = framework.StringSetOkToTF(apiObject.GetBaseURLsOk())
+	p.BaseURLs = framework.StringSetOkToTF(apiObject.GetBaseUrlsOk())
 
 	p.Directory, d = apiServiceDirectoryOkToTF(apiObject.GetDirectoryOk())
 	diags.Append(d...)

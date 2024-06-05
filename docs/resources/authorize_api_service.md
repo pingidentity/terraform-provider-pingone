@@ -72,7 +72,7 @@ resource "pingone_authorize_api_service" "my_awesome_api_service" {
 
 Required:
 
-- `type` (String) A string that specifies the type of authorization server that will issue access tokens. Must be the same value as the `directory.type` field. If `EXTERNAL`, the `resource` field must not be provided.  Options are `EXTERNAL`, `PINGONE_SSO`.  Defaults to `PINGONE_SSO`.
+- `type` (String) A string that specifies the type of authorization server that will issue access tokens. Must be the same value as the `directory.type` field. If `EXTERNAL`, the `resource` field must not be provided.  Options are `EXTERNAL`, `PINGONE_SSO`.  Defaults to `PINGONE_SSO`.  This field is immutable and will trigger a replace plan if changed.
 
 Optional:
 
@@ -91,7 +91,7 @@ Required:
 
 Required:
 
-- `enabled` (Boolean) A boolean that, if set to `true`, means the custom policy will be used for the endpoint.  Defaults to `false`.
+- `enabled` (Boolean) A boolean that, if set to `true`, means the custom policy will be used for the endpoint.  Defaults to `false`.  This field is immutable and will trigger a replace plan if changed.
 
 
 
