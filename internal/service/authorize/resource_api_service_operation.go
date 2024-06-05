@@ -124,6 +124,7 @@ func (r *APIServiceOperationResource) Metadata(ctx context.Context, req resource
 func (r *APIServiceOperationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 
 	const attrMinLength = 1
+	const attrGroupGroupsMaxLength = 25
 	const attrMethodsMaxLength = 10
 	const attrPathsMaxLength = 10
 	const attrPathsPatternMaxLength = 2048
@@ -144,7 +145,7 @@ func (r *APIServiceOperationResource) Schema(ctx context.Context, req resource.S
 	).AllowedValuesEnum(authorize.AllowedEnumAPIServerOperationMethodEnumValues)
 
 	pathsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A set of objects that specifies the paths that define the operation. The same literal pattern is not allowed within the same operation (the pattern of a `paths` element must be unique as compared to all other patterns in the same `paths` array). However, the same literal pattern is allowed in different operations (for example, OperationA, `/path1`, OperationB, `/path1` is valid). The paths array is limited to 10 entries.",
+		"A set of objects that specifies the paths that define the operation. The same literal pattern is not allowed within the same operation (the pattern of a `paths` element must be unique as compared to all other patterns in the same `paths` array). However, the same literal pattern is allowed in different operations (for example, OperationA, `/path1`, OperationB, `/path1` is valid). This set is limited to 10 entries.",
 	)
 
 	pathsPatternDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -175,43 +176,45 @@ func (r *APIServiceOperationResource) Schema(ctx context.Context, req resource.S
 			),
 
 			"access_control": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies properties related to access control settings of the API service.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies properties related to access control settings of the API service operation.").Description,
 				Optional:    true,
 
 				Attributes: map[string]schema.Attribute{
 					"group": schema.SingleNestedAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that defines if the operation will use custom policy rather than the \"Group\" or \"Scope\" access control requirement.").Description,
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that defines the group membership requirements for the operation.").Description,
 						Optional:    true,
 
 						Attributes: map[string]schema.Attribute{
 							"groups": schema.SetNestedAttribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that defines if the operation will use custom policy rather than the \"Group\" or \"Scope\" access control requirement.").Description,
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A set of objects that define the access requirements for the operation. The end user must be a member of one or more of these groups to gain access to the operation. The ID must reference a group that exists at the time the data is persisted. There is no referential integrity between a group and this configuration. If a group is subsequently deleted, the access control configuration will continue to reference that group. The set must not contain more than 25 elements.").Description,
 								Required:    true,
 
 								NestedObject: schema.NestedAttributeObject{
 									Attributes: map[string]schema.Attribute{
 										"id": schema.StringAttribute{
-											Description:         accessControlCustomEnabledDescription.Description,
-											MarkdownDescription: accessControlCustomEnabledDescription.MarkdownDescription,
-											Required:            true,
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the UUID that represents the ID of the PingOne group. Must be a valid PingOne resource ID.").Description,
+											Required:    true,
 
 											CustomType: pingonetypes.ResourceIDType{},
 										},
 									},
+								},
+
+								Validators: []validator.Set{
+									setvalidator.SizeAtMost(attrGroupGroupsMaxLength),
 								},
 							},
 						},
 					},
 
 					"permission": schema.SingleNestedAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that defines if the operation will use custom policy rather than the \"Group\" or \"Scope\" access control requirement.").Description,
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that defines permission requirements for the operation.").Description,
 						Optional:    true,
 
 						Attributes: map[string]schema.Attribute{
 							"id": schema.StringAttribute{
-								Description:         accessControlCustomEnabledDescription.Description,
-								MarkdownDescription: accessControlCustomEnabledDescription.MarkdownDescription,
-								Required:            true,
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application permission ID that defines the access requirements for the operation. The end user must be entitled to the specified application permission to gain access to the operation.  Must be a valid PingOne resource ID.").Description,
+								Required:    true,
 
 								CustomType: pingonetypes.ResourceIDType{},
 							},
@@ -219,7 +222,7 @@ func (r *APIServiceOperationResource) Schema(ctx context.Context, req resource.S
 					},
 
 					"scope": schema.SingleNestedAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that defines scope membership requirements of the operation.").Description,
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that defines scope membership requirements for the operation.").Description,
 						Optional:    true,
 
 						Attributes: map[string]schema.Attribute{

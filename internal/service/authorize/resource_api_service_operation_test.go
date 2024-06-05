@@ -98,16 +98,69 @@ func TestAccAPIServiceOperation_Full(t *testing.T) {
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "access_control.custom.enabled", "true"),
-			resource.TestMatchResourceAttr(resourceFullName, "authorization_server.resource_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "authorization_server.type", "PINGONE_SSO"),
-			resource.TestCheckResourceAttr(resourceFullName, "base_urls.#", "3"),
-			resource.TestCheckTypeSetElemAttr(resourceFullName, "base_urls.*", fmt.Sprintf("https://api.bxretail.org/%s", name)),
-			resource.TestCheckTypeSetElemAttr(resourceFullName, "base_urls.*", fmt.Sprintf("https://api.bxretail.org/%s/1", name)),
-			resource.TestCheckTypeSetElemAttr(resourceFullName, "base_urls.*", fmt.Sprintf("https://api.bxretail.org/%s/2", name)),
-			resource.TestCheckResourceAttr(resourceFullName, "directory.type", "PINGONE_SSO"),
+			resource.TestMatchResourceAttr(resourceFullName, "api_service_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "access_control.group.groups.#", "2"),
+			resource.TestMatchResourceAttr(resourceFullName, "access_control.group.groups.0.id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "access_control.group.groups.1.id", verify.P1ResourceIDRegexpFullString),
+			//resource.TestMatchResourceAttr(resourceFullName, "access_control.permission.id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "access_control.scope.match_type", "ALL"),
+			resource.TestCheckResourceAttr(resourceFullName, "access_control.scope.scopes.#", "2"),
+			resource.TestMatchResourceAttr(resourceFullName, "access_control.scope.scopes.0.id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "access_control.scope.scopes.1.id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "methods.#", "3"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "methods.*", "GET"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "methods.*", "POST"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "methods.*", "PUT"),
+			resource.TestCheckResourceAttr(resourceFullName, "paths.#", "3"),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "paths.*", map[string]string{
+				"pattern": "/test/1",
+				"type":    "EXACT",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "paths.*", map[string]string{
+				"pattern": "/test/{variable}/*",
+				"type":    "PARAMETER",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "paths.*", map[string]string{
+				"pattern": "/test/2",
+				"type":    "EXACT",
+			}),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-			resource.TestMatchResourceAttr(resourceFullName, "policy_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckNoResourceAttr(resourceFullName, "policy_id"),
+		),
+	}
+
+	updateStep := resource.TestStep{
+		Config: testAccAPIServiceOperationConfig_Full_Update(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "api_service_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "access_control.group.groups.#", "3"),
+			resource.TestMatchResourceAttr(resourceFullName, "access_control.group.groups.0.id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "access_control.group.groups.1.id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "access_control.group.groups.2.id", verify.P1ResourceIDRegexpFullString),
+			//resource.TestMatchResourceAttr(resourceFullName, "access_control.permission.id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "access_control.scope.match_type", "ANY"),
+			resource.TestCheckResourceAttr(resourceFullName, "access_control.scope.scopes.#", "3"),
+			resource.TestMatchResourceAttr(resourceFullName, "access_control.scope.scopes.0.id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "access_control.scope.scopes.1.id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "access_control.scope.scopes.2.id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "methods.#", "4"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "methods.*", "GET"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "methods.*", "POST"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "methods.*", "PUT"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "methods.*", "DELETE"),
+			resource.TestCheckResourceAttr(resourceFullName, "paths.#", "2"),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "paths.*", map[string]string{
+				"pattern": "/test/1",
+				"type":    "EXACT",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "paths.*", map[string]string{
+				"pattern": "/test/{variable}/*",
+				"type":    "PARAMETER",
+			}),
+			resource.TestCheckResourceAttr(resourceFullName, "name", name),
+			resource.TestCheckNoResourceAttr(resourceFullName, "policy_id"),
 		),
 	}
 
@@ -116,15 +169,20 @@ func TestAccAPIServiceOperation_Full(t *testing.T) {
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "access_control.custom.enabled", "true"),
-			resource.TestMatchResourceAttr(resourceFullName, "authorization_server.resource_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "authorization_server.type", "PINGONE_SSO"),
-			resource.TestCheckResourceAttr(resourceFullName, "base_urls.#", "2"),
-			resource.TestCheckTypeSetElemAttr(resourceFullName, "base_urls.*", fmt.Sprintf("https://api.bxretail.org/%s", name)),
-			resource.TestCheckTypeSetElemAttr(resourceFullName, "base_urls.*", fmt.Sprintf("https://api.bxretail.org/%s/1", name)),
-			resource.TestCheckResourceAttr(resourceFullName, "directory.type", "PINGONE_SSO"),
+			resource.TestMatchResourceAttr(resourceFullName, "api_service_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckNoResourceAttr(resourceFullName, "access_control"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "methods"),
+			resource.TestCheckResourceAttr(resourceFullName, "paths.#", "2"),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "paths.*", map[string]string{
+				"pattern": "/test/1",
+				"type":    "EXACT",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "paths.*", map[string]string{
+				"pattern": "/test/2",
+				"type":    "EXACT",
+			}),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-			resource.TestMatchResourceAttr(resourceFullName, "policy_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckNoResourceAttr(resourceFullName, "policy_id"),
 		),
 	}
 
@@ -153,6 +211,7 @@ func TestAccAPIServiceOperation_Full(t *testing.T) {
 			fullStep,
 			minimalStep,
 			fullStep,
+			updateStep,
 			// Test importing the resource
 			{
 				ResourceName: resourceFullName,
@@ -163,7 +222,7 @@ func TestAccAPIServiceOperation_Full(t *testing.T) {
 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
 						}
 
-						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["api_service_id"], rs.Primary.ID), nil
 					}
 				}(),
 				ImportState:       true,
@@ -243,13 +302,185 @@ resource "pingone_authorize_api_service" "%[3]s" {
     resource_id = pingone_resource.%[3]s.id
     type        = "PINGONE_SSO"
   }
+}
+
+resource "pingone_authorize_api_service_operation" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  api_service_id = pingone_authorize_api_service.%[3]s.id
+
+  name = "%[4]s"
+
+  paths = [
+    {
+      pattern = "/test/1"
+      type    = "EXACT"
+    },
+    {
+      pattern = "/test/2"
+      type    = "EXACT"
+    }
+  ]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccAPIServiceOperationConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
-		%[1]s
+%[1]s
 
+%[2]s
+
+resource "pingone_authorize_api_service_operation" "%[3]s" {
+  environment_id = data.pingone_environment.general_test.id
+  api_service_id = pingone_authorize_api_service.%[3]s.id
+
+  name = "%[4]s"
+
+  access_control = {
+    group = {
+      groups = [
+        {
+          id = pingone_group.%[3]s-1.id
+        },
+        {
+          id = pingone_group.%[3]s-2.id
+        },
+      ]
+    }
+
+    // permission = {
+    // 	id = "permissionid"
+    // }
+
+    scope = {
+      match_type = "ALL"
+      scopes = [
+        {
+          id = pingone_resource_scope.%[3]s-1.id
+        },
+        {
+          id = pingone_resource_scope.%[3]s-2.id
+        },
+      ]
+    }
+  }
+
+  methods = [
+    "POST",
+    "GET",
+    "PUT",
+  ]
+
+  paths = [
+    {
+      pattern = "/test/1"
+      type    = "EXACT"
+    },
+    {
+      pattern = "/test/{variable}/*"
+      type    = "PARAMETER"
+    },
+    {
+      pattern = "/test/2"
+      type    = "EXACT"
+    }
+  ]
+}`, acctest.GenericSandboxEnvironment(), testAccAPIServiceOperationConfig_Full_SharedHCL(resourceName, name), resourceName, name)
+}
+
+func testAccAPIServiceOperationConfig_Full_Update(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+%[2]s
+
+resource "pingone_authorize_api_service_operation" "%[3]s" {
+  environment_id = data.pingone_environment.general_test.id
+  api_service_id = pingone_authorize_api_service.%[3]s.id
+
+  name = "%[4]s"
+
+  access_control = {
+    group = {
+      groups = [
+        {
+          id = pingone_group.%[3]s-1.id
+        },
+        {
+          id = pingone_group.%[3]s-3.id
+        },
+        {
+          id = pingone_group.%[3]s-2.id
+        },
+      ]
+    }
+
+    // permission = {
+    // 	id = "permissionid"
+    // }
+
+    scope = {
+      match_type = "ANY"
+      scopes = [
+        {
+          id = pingone_resource_scope.%[3]s-1.id
+        },
+        {
+          id = pingone_resource_scope.%[3]s-3.id
+        },
+        {
+          id = pingone_resource_scope.%[3]s-2.id
+        },
+      ]
+    }
+  }
+
+  methods = [
+    "POST",
+    "PUT",
+    "GET",
+    "DELETE",
+  ]
+
+  paths = [
+    {
+      pattern = "/test/1"
+      type    = "EXACT"
+    },
+    {
+      pattern = "/test/{variable}/*"
+      type    = "PARAMETER"
+    },
+  ]
+}`, acctest.GenericSandboxEnvironment(), testAccAPIServiceOperationConfig_Full_SharedHCL(resourceName, name), resourceName, name)
+}
+
+func testAccAPIServiceOperationConfig_Minimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+%[2]s
+
+resource "pingone_authorize_api_service_operation" "%[3]s" {
+  environment_id = data.pingone_environment.general_test.id
+  api_service_id = pingone_authorize_api_service.%[3]s.id
+
+  name = "%[4]s"
+
+  paths = [
+    {
+      pattern = "/test/1"
+      type    = "EXACT"
+    },
+    {
+      pattern = "/test/2"
+      type    = "EXACT"
+    }
+  ]
+}`, acctest.GenericSandboxEnvironment(), testAccAPIServiceOperationConfig_Full_SharedHCL(resourceName, name), resourceName, name)
+}
+
+func testAccAPIServiceOperationConfig_Full_SharedHCL(resourceName, name string) string {
+	return fmt.Sprintf(`
 resource "pingone_resource" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
@@ -259,16 +490,31 @@ resource "pingone_resource" "%[2]s" {
   access_token_validity_seconds = 3600
 }
 
+resource "pingone_resource_scope" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  name = "%[3]s-1"
+}
+
+resource "pingone_resource_scope" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  name = "%[3]s-2"
+}
+
+resource "pingone_resource_scope" "%[2]s-3" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  name = "%[3]s-3"
+}
+
 resource "pingone_authorize_api_service" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
   name = "%[3]s"
-
-  access_control = {
-    custom = {
-      enabled = true
-    }
-  }
 
   base_urls = [
     "https://api.bxretail.org/%[3]s",
@@ -284,41 +530,23 @@ resource "pingone_authorize_api_service" "%[2]s" {
   directory = {
     type = "PINGONE_SSO"
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccAPIServiceOperationConfig_Minimal(resourceName, name string) string {
-	return fmt.Sprintf(`
-		%[1]s
-
-resource "pingone_resource" "%[2]s" {
+resource "pingone_group" "%[2]s-1" {
   environment_id = data.pingone_environment.general_test.id
 
-  name = "%[3]s"
-
-  audience                      = "%[3]s"
-  access_token_validity_seconds = 3600
+  name = "%[3]s-1"
 }
 
-resource "pingone_authorize_api_service" "%[2]s" {
+resource "pingone_group" "%[2]s-2" {
   environment_id = data.pingone_environment.general_test.id
 
-  name = "%[3]s"
+  name = "%[3]s-2"
+}
 
-  access_control = {
-    custom = {
-      enabled = true
-    }
-  }
+resource "pingone_group" "%[2]s-3" {
+  environment_id = data.pingone_environment.general_test.id
 
-  base_urls = [
-    "https://api.bxretail.org/%[3]s",
-    "https://api.bxretail.org/%[3]s/1"
-  ]
-
-  authorization_server = {
-    resource_id = pingone_resource.%[2]s.id
-    type        = "PINGONE_SSO"
-  }
+  name = "%[3]s-3"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
