@@ -61,10 +61,21 @@ func AgreementLocalizationRevision_GetIDs(resourceName string, environmentID, ag
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*resourceID = rs.Primary.ID
-		*agreementLocalizationID = rs.Primary.Attributes["agreement_localization_id"]
-		*agreementID = rs.Primary.Attributes["agreement_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
+		if resourceID != nil {
+			*resourceID = rs.Primary.ID
+		}
+
+		if agreementLocalizationID != nil {
+			*agreementLocalizationID = rs.Primary.Attributes["agreement_localization_id"]
+		}
+
+		if agreementID != nil {
+			*agreementID = rs.Primary.Attributes["agreement_id"]
+		}
+
+		if environmentID != nil {
+			*environmentID = rs.Primary.Attributes["environment_id"]
+		}
 
 		return nil
 	}

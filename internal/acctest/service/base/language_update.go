@@ -19,8 +19,13 @@ func LanguageUpdate_GetIDs(resourceName string, environmentID, languageID *strin
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*languageID = rs.Primary.Attributes["language_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
+		if languageID != nil {
+			*languageID = rs.Primary.Attributes["language_id"]
+		}
+
+		if environmentID != nil {
+			*environmentID = rs.Primary.Attributes["environment_id"]
+		}
 
 		return nil
 	}

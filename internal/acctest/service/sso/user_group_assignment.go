@@ -61,9 +61,17 @@ func UserGroupAssignment_GetIDs(resourceName string, environmentID, userID, grou
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*environmentID = rs.Primary.Attributes["environment_id"]
-		*userID = rs.Primary.Attributes["user_id"]
-		*groupID = rs.Primary.Attributes["group_id"]
+		if environmentID != nil {
+			*environmentID = rs.Primary.Attributes["environment_id"]
+		}
+
+		if userID != nil {
+			*userID = rs.Primary.Attributes["user_id"]
+		}
+
+		if groupID != nil {
+			*groupID = rs.Primary.Attributes["group_id"]
+		}
 
 		return nil
 	}

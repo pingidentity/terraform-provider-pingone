@@ -121,7 +121,7 @@ func (r *RolesDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (p *RolesDataSourceModel) toState(v []management.Role) diag.Diagnostics {
+func (p *RolesDataSourceModel) toState(v []management.EntityArrayEmbeddedRolesInner) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if v == nil {
@@ -135,7 +135,7 @@ func (p *RolesDataSourceModel) toState(v []management.Role) diag.Diagnostics {
 
 	list := make([]string, 0)
 	for _, item := range v {
-		list = append(list, item.GetId())
+		list = append(list, item.Role.GetId())
 	}
 
 	var d diag.Diagnostics

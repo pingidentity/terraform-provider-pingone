@@ -396,6 +396,12 @@ func CheckParentEnvironmentDestroy(ctx context.Context, apiClient *management.AP
 	return CheckForResourceDestroy(r, err)
 }
 
+func CheckParentUserDestroy(ctx context.Context, apiClient *management.APIClient, environmentID, userID string) (bool, error) {
+	_, r, err := apiClient.UsersApi.ReadUser(ctx, environmentID, userID).Execute()
+
+	return CheckForResourceDestroy(r, err)
+}
+
 func CheckForResourceDestroy(r *http.Response, err error) (bool, error) {
 	defaultDestroyHttpCode := 404
 	return CheckForResourceDestroyCustomHTTPCode(r, err, defaultDestroyHttpCode)

@@ -19,8 +19,13 @@ func BrandingSettings_GetIDs(resourceName string, environmentID, resourceID *str
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*resourceID = rs.Primary.ID
-		*environmentID = rs.Primary.Attributes["environment_id"]
+		if resourceID != nil {
+			*resourceID = rs.Primary.ID
+		}
+
+		if environmentID != nil {
+			*environmentID = rs.Primary.Attributes["environment_id"]
+		}
 
 		return nil
 	}

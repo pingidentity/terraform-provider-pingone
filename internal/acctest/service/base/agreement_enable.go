@@ -63,8 +63,13 @@ func AgreementEnable_GetIDs(resourceName string, environmentID, agreementID *str
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*agreementID = rs.Primary.Attributes["agreement_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
+		if agreementID != nil {
+			*agreementID = rs.Primary.Attributes["agreement_id"]
+		}
+
+		if environmentID != nil {
+			*environmentID = rs.Primary.Attributes["environment_id"]
+		}
 
 		return nil
 	}
