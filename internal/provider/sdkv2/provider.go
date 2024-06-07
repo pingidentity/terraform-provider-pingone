@@ -10,7 +10,6 @@ import (
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/base"
-	"github.com/pingidentity/terraform-provider-pingone/internal/service/mfa"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
 )
 

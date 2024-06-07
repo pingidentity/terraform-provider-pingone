@@ -22,7 +22,9 @@ func NotificationSettings_GetIDs(resourceName string, resourceID *string) resour
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*resourceID = rs.Primary.ID
+		if resourceID != nil {
+			*resourceID = rs.Primary.ID
+		}
 
 		return nil
 	}

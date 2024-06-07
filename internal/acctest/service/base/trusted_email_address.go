@@ -61,9 +61,17 @@ func TrustedEmailAddress_GetIDs(resourceName string, environmentID, emailDomainI
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*resourceID = rs.Primary.ID
-		*emailDomainID = rs.Primary.Attributes["email_domain_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
+		if resourceID != nil {
+			*resourceID = rs.Primary.ID
+		}
+
+		if emailDomainID != nil {
+			*emailDomainID = rs.Primary.Attributes["email_domain_id"]
+		}
+
+		if environmentID != nil {
+			*environmentID = rs.Primary.Attributes["environment_id"]
+		}
 
 		return nil
 	}
