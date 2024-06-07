@@ -3,8 +3,6 @@ package client
 import (
 	"context"
 	"fmt"
-	"os"
-	"strings"
 
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone"
 )
@@ -18,8 +16,8 @@ func (c *Config) APIClient(ctx context.Context, version string) (*Client, error)
 
 	userAgent := fmt.Sprintf("terraform-provider-pingone/%s", version)
 
-	if v := strings.TrimSpace(os.Getenv("PINGONE_TF_APPEND_USER_AGENT")); v != "" {
-		userAgent += fmt.Sprintf(" %s", v)
+	if v := c.UserAgentAppend; v != nil && *v != "" {
+		userAgent += fmt.Sprintf(" %s", *v)
 	}
 
 	config := &pingone.Config{

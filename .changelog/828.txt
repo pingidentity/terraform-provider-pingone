@@ -6,6 +6,10 @@ Replaced the `region` parameter (and `PINGONE_REGION` environment variable) with
 Support the new `AU` tenant region with the `com.au` top level domain.
 ```
 
+```release-note:enhancement
+Inclusion of a new optional provider parameter `append_user_agent` to append a custom string to the `User-Agent` header when making API requests to the PingOne service.
+```
+
 ```release-note:breaking-change
 Removed the `global_options.environment.production_type_force_delete` provider configuration parameter.  To protect against accidental data loss, environments that are of type `PRODUCTION` must be manually removed outside of Terraform.
 ```

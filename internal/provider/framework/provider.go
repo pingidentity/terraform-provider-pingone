@@ -44,6 +44,7 @@ type pingOneProviderModel struct {
 	ClientSecret     types.String `tfsdk:"client_secret"`
 	EnvironmentID    types.String `tfsdk:"environment_id"`
 	APIAccessToken   types.String `tfsdk:"api_access_token"`
+	AppendUserAgent  types.String `tfsdk:"append_user_agent"`
 	RegionCode       types.String `tfsdk:"region_code"`
 	ServiceEndpoints types.List   `tfsdk:"service_endpoints"`
 	GlobalOptions    types.List   `tfsdk:"global_options"`
@@ -118,6 +119,10 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 		"Full URL for the http/https proxy service, for example `http://127.0.0.1:8090`.  Default value can be set with the `HTTP_PROXY` or `HTTPS_PROXY` environment variables.",
 	)
 
+	appendUserAgentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A custom string value to append to the end of the `User-Agent` header when making API requests to the PingOne service. Default value can be set with the `PINGONE_TF_APPEND_USER_AGENT` environment variable.",
+	)
+
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"client_id": schema.StringAttribute{
@@ -153,6 +158,12 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 			"http_proxy": schema.StringAttribute{
 				Description:         httpProxyDescription.Description,
 				MarkdownDescription: httpProxyDescription.MarkdownDescription,
+				Optional:            true,
+			},
+
+			"append_user_agent": schema.StringAttribute{
+				Description:         appendUserAgentDescription.Description,
+				MarkdownDescription: appendUserAgentDescription.MarkdownDescription,
 				Optional:            true,
 			},
 		},
@@ -251,13 +262,19 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		regionCode = management.EnumRegionCode(data.RegionCode.ValueString())
 	}
 
+	var userAgent string
+	if v := strings.TrimSpace(os.Getenv("PINGONE_TF_APPEND_USER_AGENT")); v != "" {
+		userAgent = v
+	}
+
 	config := &pingone.Config{
-		ClientID:      data.ClientID.ValueString(),
-		ClientSecret:  data.ClientSecret.ValueString(),
-		EnvironmentID: data.EnvironmentID.ValueString(),
-		AccessToken:   data.APIAccessToken.ValueString(),
-		RegionCode:    &regionCode,
-		GlobalOptions: globalOptions,
+		ClientID:        data.ClientID.ValueString(),
+		ClientSecret:    data.ClientSecret.ValueString(),
+		EnvironmentID:   data.EnvironmentID.ValueString(),
+		AccessToken:     data.APIAccessToken.ValueString(),
+		RegionCode:      &regionCode,
+		GlobalOptions:   globalOptions,
+		UserAgentAppend: &userAgent,
 	}
 
 	if !data.HTTPProxy.IsNull() {
@@ -312,6 +329,12 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 			}
 		}
 
+	}
+
+	if !data.AppendUserAgent.IsNull() {
+		config.UserAgentAppend = data.AppendUserAgent.ValueStringPointer()
+	} else if v := strings.TrimSpace(os.Getenv("PINGONE_TF_APPEND_USER_AGENT")); v != "" {
+		config.UserAgentAppend = &v
 	}
 
 	if resp.Diagnostics.HasError() {

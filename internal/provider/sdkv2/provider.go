@@ -3,6 +3,7 @@ package sdkv2
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -65,6 +66,11 @@ func New(version string) func() *schema.Provider {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "Full URL for the http/https proxy service, for example `http://127.0.0.1:8090`.  Default value can be set with the `HTTP_PROXY` or `HTTPS_PROXY` environment variables.",
+				},
+				"append_user_agent": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "A custom string value to append to the end of the `User-Agent` header when making API requests to the PingOne service. Default value can be set with the `PINGONE_TF_APPEND_USER_AGENT` environment variable.",
 				},
 				"global_options": {
 					Type:        schema.TypeList,
@@ -198,6 +204,12 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 					config.GlobalOptions.Population.ContainsUsersForceDelete = v
 				}
 			}
+		}
+
+		if v, ok := d.Get("append_user_agent").(string); ok && v != "" {
+			config.UserAgentAppend = &v
+		} else if v := strings.TrimSpace(os.Getenv("PINGONE_TF_APPEND_USER_AGENT")); v != "" {
+			config.UserAgentAppend = &v
 		}
 
 		client, err := config.APIClient(ctx, version)

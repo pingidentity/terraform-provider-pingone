@@ -12,6 +12,7 @@ type Config struct {
 	AuthHostnameOverride *string
 	ProxyURL             *string
 	GlobalOptions        *GlobalOptions
+	UserAgentAppend      *string
 }
 
 type GlobalOptions struct {
