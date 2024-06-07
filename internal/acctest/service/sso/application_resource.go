@@ -61,9 +61,17 @@ func ApplicationResource_GetIDs(resourceName string, environmentID, customResour
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*resourceID = rs.Primary.ID
-		*customResourceID = rs.Primary.Attributes["resource_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
+		if resourceID != nil {
+			*resourceID = rs.Primary.ID
+		}
+
+		if customResourceID != nil {
+			*customResourceID = rs.Primary.Attributes["resource_id"]
+		}
+
+		if environmentID != nil {
+			*environmentID = rs.Primary.Attributes["environment_id"]
+		}
 
 		return nil
 	}

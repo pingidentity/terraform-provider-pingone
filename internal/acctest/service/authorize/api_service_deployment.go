@@ -19,8 +19,13 @@ func APIServiceDeployment_GetIDs(resourceName string, environmentID, resourceID 
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*environmentID = rs.Primary.Attributes["environment_id"]
-		*resourceID = rs.Primary.Attributes["api_service_id"]
+		if environmentID != nil {
+			*environmentID = rs.Primary.Attributes["environment_id"]
+		}
+
+		if resourceID != nil {
+			*resourceID = rs.Primary.Attributes["api_service_id"]
+		}
 
 		return nil
 	}
