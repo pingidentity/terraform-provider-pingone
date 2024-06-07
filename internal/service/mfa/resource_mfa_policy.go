@@ -729,20 +729,12 @@ func expandMFAPolicyMobileDevice(v interface{}, ctx context.Context, apiClient *
 
 	obj := v.(map[string]interface{})
 
-	otpStepSizeDuration := 30
-
 	item := mfa.NewDeviceAuthenticationPolicyMobile(
 		obj["enabled"].(bool),
 		*mfa.NewDeviceAuthenticationPolicyMobileOtp(
 			*mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure(
 				int32(obj["otp_failure_count"].(int)),
 				*mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown(int32(obj["otp_failure_cooldown_duration"].(int)), mfa.EnumTimeUnit(obj["otp_failure_cooldown_timeunit"].(string))),
-			),
-			*mfa.NewDeviceAuthenticationPolicyMobileOtpWindow(
-				*mfa.NewDeviceAuthenticationPolicyMobileOtpWindowStepSize(
-					int32(otpStepSizeDuration),
-					mfa.ENUMTIMEUNIT_SECONDS,
-				),
 			),
 		),
 	)

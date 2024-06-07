@@ -207,9 +207,8 @@ func (r *RoleDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 			found := false
 			for _, roleItem := range roles {
 
-				if string(roleItem.GetName()) == data.Name.ValueString() {
-					roleItem := roleItem
-					role = &roleItem
+				if string(roleItem.Role.GetName()) == data.Name.ValueString() {
+					role = roleItem.Role
 					found = true
 					break
 				}
