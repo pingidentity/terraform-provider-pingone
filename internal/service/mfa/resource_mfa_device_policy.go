@@ -249,9 +249,16 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 	const mobileApplicationsPushLimitCountMin = 1
 	const mobileApplicationsPushLimitCountMax = 50
 
+	const mobileApplicationsPushLimitLockDurationDurationDefault = 30
+	const mobileApplicationsPushLimitTimePeriodDurationDefault = 10
+	const mobileApplicationsOtpFailureCoolDownDurationDefault = 2
+
 	const mobileOtpFailureCountDefault = 3
 	const mobileOtpFailureCountMin = 1
 	const mobileOtpFailureCountMax = 7
+
+	const totpOtpFailureCountDefault = 3
+	const totpOtpFailureCoolDownDurationDefault = 2
 
 	// schema descriptions and validation settings
 	deviceSelectionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -520,14 +527,14 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 											"lock_duration": types.ObjectValueMust(
 												MFADevicePolicyTimePeriodTFObjectTypes,
 												map[string]attr.Value{
-													"duration":  types.Int64Value(30),
+													"duration":  types.Int64Value(mobileApplicationsPushLimitLockDurationDurationDefault),
 													"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
 												},
 											),
 											"time_period": types.ObjectValueMust(
 												MFADevicePolicyTimePeriodTFObjectTypes,
 												map[string]attr.Value{
-													"duration":  types.Int64Value(10),
+													"duration":  types.Int64Value(mobileApplicationsPushLimitTimePeriodDurationDefault),
 													"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
 												},
 											),
@@ -639,7 +646,7 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 										"cool_down": types.ObjectValueMust(
 											MFADevicePolicyTimePeriodTFObjectTypes,
 											map[string]attr.Value{
-												"duration":  types.Int64Value(2),
+												"duration":  types.Int64Value(mobileApplicationsOtpFailureCoolDownDurationDefault),
 												"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
 											},
 										),
@@ -726,11 +733,11 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 								"failure": types.ObjectValueMust(
 									MFADevicePolicyTotpOtpFailureTFObjectTypes,
 									map[string]attr.Value{
-										"count": types.Int64Value(3),
+										"count": types.Int64Value(totpOtpFailureCountDefault),
 										"cool_down": types.ObjectValueMust(
 											MFADevicePolicyTimePeriodTFObjectTypes,
 											map[string]attr.Value{
-												"duration":  types.Int64Value(2),
+												"duration":  types.Int64Value(totpOtpFailureCoolDownDurationDefault),
 												"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
 											},
 										),
@@ -811,6 +818,10 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 
 func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descriptionMethod string) schema.SingleNestedAttribute {
 
+	const otpFailureCountDefault = 3
+	const otpFailureCoolDownDurationDefault = 0
+	const otpLifetimeDurationDefault = 30
+
 	pairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A boolean that, when set to `true`, prevents users from pairing new devices with the %s method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.", descriptionMethod),
 	).DefaultValue(false)
@@ -849,11 +860,11 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 						"failure": types.ObjectValueMust(
 							MFADevicePolicyFailureTFObjectTypes,
 							map[string]attr.Value{
-								"count": types.Int64Value(3),
+								"count": types.Int64Value(otpFailureCountDefault),
 								"cool_down": types.ObjectValueMust(
 									MFADevicePolicyTimePeriodTFObjectTypes,
 									map[string]attr.Value{
-										"duration":  types.Int64Value(0),
+										"duration":  types.Int64Value(otpFailureCoolDownDurationDefault),
 										"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
 									},
 								),
@@ -862,7 +873,7 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 						"lifetime": types.ObjectValueMust(
 							MFADevicePolicyTimePeriodTFObjectTypes,
 							map[string]attr.Value{
-								"duration":  types.Int64Value(30),
+								"duration":  types.Int64Value(otpLifetimeDurationDefault),
 								"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
 							},
 						),
