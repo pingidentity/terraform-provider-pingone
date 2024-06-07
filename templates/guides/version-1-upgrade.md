@@ -19,9 +19,9 @@ This parameter was previously deprecated and has been removed.
 
 This parameter has been removed to mitigate the potential for accidental data loss.  In order to delete environments that are of type `PRODUCTION`, this must be done manually through the web console.  Where environments need to be removed in Terraform, ensure that they do not contain production data, and set their type as `SANDBOX`.
 
-### `region` parameter removed
+### `region` (with `PINGONE_REGION` environment variable) parameter removed
 
-The `region` parameter has been removed and replaced with `region_code`.  The following lists the mapping between the legacy `region` and new `region_code` values:
+The `region` parameter (with the `PINGONE_REGION` environment variable) has been removed and replaced with `region_code` (with the `PINGONE_REGION_CODE` environment variable).  The following lists the mapping between the legacy `region` and new `region_code` values:
 
 | Tenant Type                                  | Legacy `region` value | Replacement `region_code` value |
 | -------------------------------------------- | --------------------- | ------------------------------- |
