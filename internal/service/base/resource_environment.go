@@ -115,7 +115,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 	).AllowedValuesComplex(map[string]string{
 		string(management.ENUMENVIRONMENTTYPE_SANDBOX):    "for a development/testing environment",
 		string(management.ENUMENVIRONMENTTYPE_PRODUCTION): "for environments that require protection from deletion",
-	}).DefaultValue(string(management.ENUMENVIRONMENTTYPE_SANDBOX))
+	}).AppendMarkdownString("Once an environment has been set as `PRODUCTION` type, it cannot be reset back to `SANDBOX` within Terraform.  Administrators must log in to the web admin console to override the data protection features of `PRODUCTION` environments.").DefaultValue(string(management.ENUMENVIRONMENTTYPE_SANDBOX))
 
 	regionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the region to create the environment in.  Should be consistent with the PingOne organisation region.",
@@ -395,12 +395,11 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 	}
 
 	if !req.State.Raw.IsNull() && !state.Type.IsNull() && state.Type.Equal(types.StringValue(string(management.ENUMENVIRONMENTTYPE_PRODUCTION))) && !state.Type.Equal(plan.Type) {
-		if r.options.Population.ContainsUsersForceDelete && !r.options.Environment.ProductionTypeForceDelete {
-			resp.Diagnostics.AddWarning(
-				"Data protection notice",
-				fmt.Sprintf("The plan for environment %[1]s is to change the environment type away from \"PRODUCTION\", and the provider configuration is set to force delete populations if they contain users.  This may result in the loss of user data.  Please ensure this configuration is intentional and that you have a backup of any data you wish to retain.", plan.Id.ValueString()),
-			)
-		}
+		resp.Diagnostics.AddError(
+			"Data protection notice - The environment type cannot be changed from PRODUCTION to SANDBOX",
+			fmt.Sprintf("The plan for environment %[1]s is to change the environment type away from \"PRODUCTION\".  This may result in the loss of user data.  The environment cannot be changed away from a `PRODUCTION` type in the Terraform provider and must be completed as a manual activity in the admin console.", plan.Id.ValueString()),
+		)
+		return
 	}
 
 	var servicePlan []environmentServiceModel
@@ -732,38 +731,41 @@ func (r *EnvironmentResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 
 	// Run the API call
-	resp.Diagnostics.Append(deleteEnvironment(ctx, r.Client.ManagementAPIClient, data.Id.ValueString(), r.options.Environment.ProductionTypeForceDelete)...)
+	deletedEnv, d := deleteEnvironment(ctx, r.Client.ManagementAPIClient, data.Id.ValueString())
+	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	deleteStateConf := &retry.StateChangeConf{
-		Pending: []string{
-			"200",
-			"403",
-		},
-		Target: []string{
-			"404",
-		},
-		Refresh: func() (interface{}, string, error) {
-			resp, r, _ := r.Client.ManagementAPIClient.EnvironmentsApi.ReadOneEnvironment(ctx, data.Id.ValueString()).Execute()
+	if deletedEnv {
+		deleteStateConf := &retry.StateChangeConf{
+			Pending: []string{
+				"200",
+				"403",
+			},
+			Target: []string{
+				"404",
+			},
+			Refresh: func() (interface{}, string, error) {
+				resp, r, _ := r.Client.ManagementAPIClient.EnvironmentsApi.ReadOneEnvironment(ctx, data.Id.ValueString()).Execute()
 
-			base := 10
-			return resp, strconv.FormatInt(int64(r.StatusCode), base), nil
-		},
-		Timeout:                   20 * time.Minute,
-		Delay:                     1 * time.Second,
-		MinTimeout:                500 * time.Millisecond,
-		ContinuousTargetOccurence: 2,
-	}
-	_, err := deleteStateConf.WaitForStateContext(ctx)
-	if err != nil {
-		resp.Diagnostics.AddWarning(
-			"Environment Delete Timeout",
-			fmt.Sprintf("Error waiting for environment (%s) to be deleted: %s", data.Id.ValueString(), err),
-		)
+				base := 10
+				return resp, strconv.FormatInt(int64(r.StatusCode), base), nil
+			},
+			Timeout:                   20 * time.Minute,
+			Delay:                     1 * time.Second,
+			MinTimeout:                500 * time.Millisecond,
+			ContinuousTargetOccurence: 2,
+		}
+		_, err := deleteStateConf.WaitForStateContext(ctx)
+		if err != nil {
+			resp.Diagnostics.AddWarning(
+				"Environment Delete Timeout",
+				fmt.Sprintf("Error waiting for environment (%s) to be deleted: %s", data.Id.ValueString(), err),
+			)
 
-		return
+			return
+		}
 	}
 
 }
@@ -798,7 +800,7 @@ func (r *EnvironmentResource) ImportState(ctx context.Context, req resource.Impo
 	}
 }
 
-func deleteEnvironment(ctx context.Context, apiClient *management.APIClient, environmentId string, forceDelete bool) diag.Diagnostics {
+func deleteEnvironment(ctx context.Context, apiClient *management.APIClient, environmentId string) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var environmentResponse *management.Environment
@@ -815,45 +817,34 @@ func deleteEnvironment(ctx context.Context, apiClient *management.APIClient, env
 		&environmentResponse,
 	)...)
 	if diags.HasError() {
-		return diags
+		return false, diags
 	}
 
-	// If we have a production environment, it won't destroy successfully without a switch to "SANDBOX".  We check our provider config for a force delete flag before we do this
-	if environmentResponse.GetType() == management.ENUMENVIRONMENTTYPE_PRODUCTION && forceDelete {
-
-		updateEnvironmentTypeRequest := *management.NewUpdateEnvironmentTypeRequest()
-		updateEnvironmentTypeRequest.SetType("SANDBOX")
+	var deletedEnv bool
+	// If we have a production environment, it won't destroy successfully without a switch to "SANDBOX".
+	if environmentResponse.GetType() == management.ENUMENVIRONMENTTYPE_PRODUCTION {
+		diags.AddWarning(
+			"Data protection notice",
+			"The environment being destroyed is marked as a `PRODUCTION` type, which is protected to prevent accidental data loss.  The environment has been removed from Terraform state and is no longer managed by Terraform, but has been left in place in the PingOne service.",
+		)
+		deletedEnv = false
+	} else {
 		diags.Append(framework.ParseResponse(
 			ctx,
+
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := apiClient.EnvironmentsApi.UpdateEnvironmentType(ctx, environmentId).UpdateEnvironmentTypeRequest(updateEnvironmentTypeRequest).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, fO, fR, fErr)
+				fR, fErr := apiClient.EnvironmentsApi.DeleteEnvironment(ctx, environmentId).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, nil, fR, fErr)
 			},
-			"UpdateEnvironmentType",
+			"DeleteEnvironment",
 			framework.CustomErrorResourceNotFoundWarning,
-			nil,
+			sdk.DefaultCreateReadRetryable,
 			nil,
 		)...)
-		if diags.HasError() {
-			return diags
-		}
-
+		deletedEnv = true
 	}
 
-	diags.Append(framework.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			fR, fErr := apiClient.EnvironmentsApi.DeleteEnvironment(ctx, environmentId).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, nil, fR, fErr)
-		},
-		"DeleteEnvironment",
-		framework.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultCreateReadRetryable,
-		nil,
-	)...)
-
-	return diags
+	return deletedEnv, diags
 }
 
 func (p *environmentResourceModel) expand(ctx context.Context) (*management.Environment, diag.Diagnostics) {

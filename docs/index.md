@@ -116,7 +116,7 @@ $ export PINGONE_TF_APPEND_USER_AGENT="Jenkins/2.426.2"
 
 The PingOne provider provides global options to override API behaviours in PingOne, for example to override data protection features for development, testing and demo use cases.
 
-The following example shows how to configure the provider with global options to force-delete populations that contain users not managed by Terraform, and force-delete environments if they are of type `PRODUCTION`.
+The following example shows how to configure the provider with global options to force-delete populations that contain users not managed by Terraform.  Note this only applies to environments that are of type `SANDBOX`.
 
 ```terraform
 provider "pingone" {
@@ -126,11 +126,6 @@ provider "pingone" {
   region         = var.region
 
   global_options {
-
-    environment {
-      // This option should not be used in environments that contain production data.  Data loss may occur.
-      production_type_force_delete = true
-    }
 
     population {
       // This option should not be used in environments that contain production data.  Data loss may occur.
@@ -157,7 +152,6 @@ provider "pingone" {
 
 Optional:
 
-- `environment` (Block List) A single block containing global configuration items to override environment resource settings in PingOne. (see [below for nested schema](#nestedblock--global_options-environment))
 - `population` (Block List) A single block containing configuration items to override population resource settings in PingOne. (see [below for nested schema](#nestedblock--global_options))
 
 <a id="nestedblock--service_endpoints"></a>
@@ -167,13 +161,6 @@ Required:
 
 - `api_hostname` (String) Hostname for the PingOne management service API.  Default value can be set with the `PINGONE_API_SERVICE_HOSTNAME` environment variable.
 - `auth_hostname` (String) Hostname for the PingOne authentication service API.  Default value can be set with the `PINGONE_AUTH_SERVICE_HOSTNAME` environment variable.
-
-<a id="nestedblock--global_options-environment"></a>
-### Nested Schema for `global_options.environment`
-
-Optional:
-
-- `production_type_force_delete` (Boolean) Choose whether to force-delete any configuration that has a `PRODUCTION` type parameter.  The platform default is that `PRODUCTION` type configuration will not destroy without intervention to protect stored data.  By default this parameter is set to `false` and can be overridden with the `PINGONE_FORCE_DELETE_PRODUCTION_TYPE` environment variable. This option should not be set to `true` when the environment contains production data. Data loss may occur.
 
 <a id="nestedblock--global_options-population"></a>
 ### Nested Schema for `global_options.population`

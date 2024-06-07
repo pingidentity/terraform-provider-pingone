@@ -17,9 +17,7 @@ type GlobalOptions struct {
 	Population  *PopulationOptions
 }
 
-type EnvironmentOptions struct {
-	ProductionTypeForceDelete bool
-}
+type EnvironmentOptions struct{}
 
 type PopulationOptions struct {
 	ContainsUsersForceDelete bool

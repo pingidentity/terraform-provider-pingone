@@ -72,21 +72,6 @@ func New(version string) func() *schema.Provider {
 					Description: "A single block containing configuration items to override API behaviours in PingOne.",
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
-							"environment": {
-								Type:        schema.TypeList,
-								Optional:    true,
-								MaxItems:    1,
-								Description: "A single block containing global configuration items to override environment resource settings in PingOne.",
-								Elem: &schema.Resource{
-									Schema: map[string]*schema.Schema{
-										"production_type_force_delete": {
-											Type:        schema.TypeBool,
-											Optional:    true,
-											Description: "Choose whether to force-delete any configuration that has a `PRODUCTION` type parameter.  The platform default is that `PRODUCTION` type configuration will not destroy without intervention to protect stored data.  By default this parameter is set to `false` and can be overridden with the `PINGONE_FORCE_DELETE_PRODUCTION_TYPE` environment variable.",
-										},
-									},
-								},
-							},
 							"population": {
 								Type:        schema.TypeList,
 								Optional:    true,
@@ -186,9 +171,6 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 		}
 
 		config.GlobalOptions = &client.GlobalOptions{
-			Environment: &client.EnvironmentOptions{
-				ProductionTypeForceDelete: false,
-			},
 			Population: &client.PopulationOptions{
 				ContainsUsersForceDelete: false,
 			},
@@ -209,13 +191,6 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 		}
 
 		if v, ok := d.Get("global_options").([]interface{}); ok && len(v) > 0 && v[0] != nil {
-
-			if v, ok := d.Get("environment").([]interface{}); ok && len(v) > 0 && v[0] != nil {
-				if v, ok := d.Get("production_type_force_delete").(bool); ok {
-					config.GlobalOptions.Environment.ProductionTypeForceDelete = v
-				}
-			}
-
 			if v, ok := d.Get("population").([]interface{}); ok && len(v) > 0 && v[0] != nil {
 				if v, ok := d.Get("contains_users_force_delete").(bool); ok {
 					config.GlobalOptions.Population.ContainsUsersForceDelete = v

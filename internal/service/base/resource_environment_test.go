@@ -235,60 +235,6 @@ func TestAccEnvironment_NonCompatibleRegion(t *testing.T) {
 	})
 }
 
-func TestAccEnvironment_DeleteProductionEnvironmentProtection(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGenEnvironment()
-	//resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
-
-	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := os.Getenv("PINGONE_REGION")
-
-	// os.Setenv("PINGONE_FORCE_DELETE_PRODUCTION_TYPE", "false")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { t.Skipf("Test to be defined") },
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.Environment_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config:      testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, region, licenseID),
-				ExpectError: regexp.MustCompile(`Not defined`),
-			},
-		},
-	})
-}
-
-func TestAccEnvironment_DeleteProductionEnvironment(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGenEnvironment()
-	// resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
-
-	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := os.Getenv("PINGONE_REGION")
-
-	// os.Setenv("PINGONE_FORCE_DELETE_PRODUCTION_TYPE", "true")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { t.Skipf("Test to be defined") },
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.Environment_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config:      testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, region, licenseID),
-				ExpectError: regexp.MustCompile(`Not defined`),
-			},
-		},
-	})
-}
-
 func TestAccEnvironment_EnvironmentTypeSwitching(t *testing.T) {
 	t.Parallel()
 
@@ -305,7 +251,7 @@ func TestAccEnvironment_EnvironmentTypeSwitching(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.Environment_CheckDestroy,
+		CheckDestroy:             nil,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -321,10 +267,8 @@ func TestAccEnvironment_EnvironmentTypeSwitching(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccEnvironmentConfig_MinimalWithType(resourceName, name, "SANDBOX", licenseID),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "type", "SANDBOX"),
-				),
+				Config:      testAccEnvironmentConfig_MinimalWithType(resourceName, name, "SANDBOX", licenseID),
+				ExpectError: regexp.MustCompile(`Data protection notice - The environment type cannot be changed from PRODUCTION to SANDBOX`),
 			},
 		},
 	})

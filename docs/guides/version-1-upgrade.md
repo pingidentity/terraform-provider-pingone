@@ -13,7 +13,11 @@ Version 1.0.0 of the PingOne Terraform provider is a major release that introduc
 
 ### `force_delete_production_type` optional parameter removed
 
-This parameter was previously deprecated and has been removed.  Use the `global_options.environment.production_type_force_delete` parameter going forward.
+This parameter was previously deprecated and has been removed.
+
+### `global_options.environment.production_type_force_delete` optional parameter removed
+
+This parameter has been removed to mitigate the potential for accidental data loss.  In order to delete environments that are of type `PRODUCTION`, this must be done manually through the web console.  Where environments need to be removed in Terraform, ensure that they do not contain production data, and set their type as `SANDBOX`.
 
 ## Resource: pingone_application
 

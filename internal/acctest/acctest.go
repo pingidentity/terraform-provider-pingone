@@ -288,9 +288,6 @@ func TestClient(ctx context.Context) (*client.Client, error) {
 		EnvironmentID: os.Getenv("PINGONE_ENVIRONMENT_ID"),
 		Region:        os.Getenv("PINGONE_REGION"),
 		GlobalOptions: &client.GlobalOptions{
-			Environment: &client.EnvironmentOptions{
-				ProductionTypeForceDelete: false,
-			},
 			Population: &client.PopulationOptions{
 				ContainsUsersForceDelete: false,
 			},

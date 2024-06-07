@@ -433,11 +433,6 @@ func (r *PopulationResource) checkEnvironmentControls(ctx context.Context, envir
 	var diags diag.Diagnostics
 
 	if r.options.Population.ContainsUsersForceDelete {
-		// If the environment options are to force delete production types, then return true, because this will delete the population anyway
-		if r.options.Environment.ProductionTypeForceDelete {
-			return true, diags
-		}
-
 		// Check if the environment is a sandbox type.  We'll only delete users in sandbox environments
 		var environmentResponse *management.Environment
 		diags.Append(framework.ParseResponse(
@@ -462,7 +457,7 @@ func (r *PopulationResource) checkEnvironmentControls(ctx context.Context, envir
 			diags.AddWarning(
 				"Data protection notice",
 				fmt.Sprintf("For data protection reasons, the provider configuration `global_options.population.contains_users_force_delete` has no effect on environment ID %[1]s as it has a type set to `PRODUCTION`.  Users in this population will not be deleted.\n"+
-					"If you wish to force delete population %[2]s in environment %[1]s, please set the environment type to \"SANDBOX\" or set the `global_options.environment.production_type_force_delete` provider setting to `true`.", environmentID, populationID),
+					"If you wish to force delete population %[2]s in environment %[1]s, please review and remove user data manually.", environmentID, populationID),
 			)
 		}
 	}
