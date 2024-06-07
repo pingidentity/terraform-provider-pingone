@@ -965,6 +965,7 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.client_secret", "dummyclientsecret1"),
 			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.discovery_endpoint", "https://www.pingidentity.com/discovery"),
 			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.issuer", "https://www.pingidentity.com/issuer"),
+			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.pkce_method", "S256"),
 			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.jwks_endpoint", "https://www.pingidentity.com/jwks"),
 			resource.TestCheckTypeSetElemAttr(resourceFullName, "openid_connect.scopes.*", "openid"),
 			resource.TestCheckTypeSetElemAttr(resourceFullName, "openid_connect.scopes.*", "scope1"),
@@ -995,6 +996,7 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.client_secret", "dummyclientsecret2"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "openid_connect.discovery_endpoint"),
 			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.issuer", "https://www.pingidentity.com/issuer2"),
+			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.pkce_method", "NONE"),
 			resource.TestCheckResourceAttr(resourceFullName, "openid_connect.jwks_endpoint", "https://www.pingidentity.com/jwks2"),
 			resource.TestCheckTypeSetElemAttr(resourceFullName, "openid_connect.scopes.*", "openid"),
 			resource.TestCheckTypeSetElemAttr(resourceFullName, "openid_connect.scopes.*", "scope3"),
@@ -1676,6 +1678,7 @@ resource "pingone_identity_provider" "%[2]s" {
     client_secret              = "dummyclientsecret1"
     discovery_endpoint         = "https://www.pingidentity.com/discovery"
     issuer                     = "https://www.pingidentity.com/issuer"
+    pkce_method                = "S256"
     jwks_endpoint              = "https://www.pingidentity.com/jwks"
     scopes                     = ["openid", "scope1", "scope2"]
     token_endpoint             = "https://www.pingidentity.com/token"
