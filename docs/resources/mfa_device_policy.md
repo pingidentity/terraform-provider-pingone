@@ -211,6 +211,7 @@ Optional:
 
 - `otp` (Attributes) A single object that allows configuration of email OTP settings. (see [below for nested schema](#nestedatt--email--otp))
 - `pairing_disabled` (Boolean) A boolean that, when set to `true`, prevents users from pairing new devices with the email OTP method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.  Defaults to `false`.
+- `prompt_for_nickname_on_pairing` (Boolean) A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.
 
 <a id="nestedatt--email--otp"></a>
 ### Nested Schema for `email.otp`
@@ -260,6 +261,7 @@ Optional:
 
 - `applications` (Attributes Map) A map of objects that specifies settings for a configured Mobile Application.  The ID of the application should be configured as the map key. (see [below for nested schema](#nestedatt--mobile--applications))
 - `otp` (Attributes) A single object that specifies OTP settings for mobile applications in the policy. (see [below for nested schema](#nestedatt--mobile--otp))
+- `prompt_for_nickname_on_pairing` (Boolean) A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.
 
 <a id="nestedatt--mobile--applications"></a>
 ### Nested Schema for `mobile.applications`
@@ -400,6 +402,7 @@ Optional:
 
 - `otp` (Attributes) A single object that allows configuration of SMS OTP settings. (see [below for nested schema](#nestedatt--sms--otp))
 - `pairing_disabled` (Boolean) A boolean that, when set to `true`, prevents users from pairing new devices with the SMS OTP method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.  Defaults to `false`.
+- `prompt_for_nickname_on_pairing` (Boolean) A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.
 
 <a id="nestedatt--sms--otp"></a>
 ### Nested Schema for `sms.otp`
@@ -449,6 +452,7 @@ Optional:
 
 - `otp` (Attributes) A single object that allows configuration of TOTP OTP settings. (see [below for nested schema](#nestedatt--totp--otp))
 - `pairing_disabled` (Boolean) A boolean that, when set to `true`, prevents users from pairing new devices with the TOTP method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.  Defaults to `false`.
+- `prompt_for_nickname_on_pairing` (Boolean) A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.
 
 <a id="nestedatt--totp--otp"></a>
 ### Nested Schema for `totp.otp`
@@ -491,6 +495,7 @@ Optional:
 
 - `otp` (Attributes) A single object that allows configuration of voice OTP settings. (see [below for nested schema](#nestedatt--voice--otp))
 - `pairing_disabled` (Boolean) A boolean that, when set to `true`, prevents users from pairing new devices with the voice OTP method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.  Defaults to `false`.
+- `prompt_for_nickname_on_pairing` (Boolean) A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.
 
 <a id="nestedatt--voice--otp"></a>
 ### Nested Schema for `voice.otp`
@@ -548,6 +553,7 @@ Optional:
 
 - `fido2_policy_id` (String) A string that specifies the resource UUID that represents the FIDO2 policy in PingOne. This property can be null / left undefined. When null, the environment's default FIDO2 Policy is used.  Must be a valid PingOne resource ID.
 - `pairing_disabled` (Boolean) A boolean that, when set to `true`, prevents users from pairing new devices with the FIDO2 method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.  Defaults to `false`.
+- `prompt_for_nickname_on_pairing` (Boolean) A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.
 
 ## Import
 

@@ -55,9 +55,10 @@ type MFADevicePolicyEmailResourceModel MFADevicePolicyOfflineDeviceResourceModel
 type MFADevicePolicyTotpResourceModel MFADevicePolicyOfflineDeviceResourceModel
 
 type MFADevicePolicyOfflineDeviceResourceModel struct {
-	Enabled         types.Bool   `tfsdk:"enabled"`
-	Otp             types.Object `tfsdk:"otp"`
-	PairingDisabled types.Bool   `tfsdk:"pairing_disabled"`
+	Enabled                    types.Bool   `tfsdk:"enabled"`
+	Otp                        types.Object `tfsdk:"otp"`
+	PairingDisabled            types.Bool   `tfsdk:"pairing_disabled"`
+	PromptForNicknameOnPairing types.Bool   `tfsdk:"prompt_for_nickname_on_pairing"`
 }
 
 type MFADevicePolicyOfflineDeviceOtpResourceModel struct {
@@ -84,15 +85,17 @@ type MFADevicePolicyTimePeriodResourceModel struct {
 }
 
 type MFADevicePolicyFido2ResourceModel struct {
-	Enabled         types.Bool                   `tfsdk:"enabled"`
-	Fido2PolicyId   pingonetypes.ResourceIDValue `tfsdk:"fido2_policy_id"`
-	PairingDisabled types.Bool                   `tfsdk:"pairing_disabled"`
+	Enabled                    types.Bool                   `tfsdk:"enabled"`
+	Fido2PolicyId              pingonetypes.ResourceIDValue `tfsdk:"fido2_policy_id"`
+	PairingDisabled            types.Bool                   `tfsdk:"pairing_disabled"`
+	PromptForNicknameOnPairing types.Bool                   `tfsdk:"prompt_for_nickname_on_pairing"`
 }
 
 type MFADevicePolicyMobileResourceModel struct {
-	Applications types.Map    `tfsdk:"applications"`
-	Enabled      types.Bool   `tfsdk:"enabled"`
-	Otp          types.Object `tfsdk:"otp"`
+	Applications               types.Map    `tfsdk:"applications"`
+	Enabled                    types.Bool   `tfsdk:"enabled"`
+	Otp                        types.Object `tfsdk:"otp"`
+	PromptForNicknameOnPairing types.Bool   `tfsdk:"prompt_for_nickname_on_pairing"`
 }
 
 type MFADevicePolicyMobileApplicationResourceModel struct {
@@ -134,9 +137,10 @@ var (
 	}
 
 	MFADevicePolicyOfflineDeviceTFObjectTypes = map[string]attr.Type{
-		"enabled":          types.BoolType,
-		"otp":              types.ObjectType{AttrTypes: MFADevicePolicyOfflineDeviceOtpTFObjectTypes},
-		"pairing_disabled": types.BoolType,
+		"enabled":                        types.BoolType,
+		"otp":                            types.ObjectType{AttrTypes: MFADevicePolicyOfflineDeviceOtpTFObjectTypes},
+		"pairing_disabled":               types.BoolType,
+		"prompt_for_nickname_on_pairing": types.BoolType,
 	}
 
 	MFADevicePolicyOfflineDeviceOtpTFObjectTypes = map[string]attr.Type{
@@ -155,9 +159,10 @@ var (
 	}
 
 	MFADevicePolicyMobileTFObjectTypes = map[string]attr.Type{
-		"applications": types.MapType{ElemType: types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationTFObjectTypes}},
-		"enabled":      types.BoolType,
-		"otp":          types.ObjectType{AttrTypes: MFADevicePolicyMobileOtpTFObjectTypes},
+		"applications":                   types.MapType{ElemType: types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationTFObjectTypes}},
+		"enabled":                        types.BoolType,
+		"otp":                            types.ObjectType{AttrTypes: MFADevicePolicyMobileOtpTFObjectTypes},
+		"prompt_for_nickname_on_pairing": types.BoolType,
 	}
 
 	MFADevicePolicyMobileApplicationTFObjectTypes = map[string]attr.Type{
@@ -205,9 +210,10 @@ var (
 	}
 
 	MFADevicePolicyTotpTFObjectTypes = map[string]attr.Type{
-		"enabled":          types.BoolType,
-		"otp":              types.ObjectType{AttrTypes: MFADevicePolicyTotpOtpTFObjectTypes},
-		"pairing_disabled": types.BoolType,
+		"enabled":                        types.BoolType,
+		"otp":                            types.ObjectType{AttrTypes: MFADevicePolicyTotpOtpTFObjectTypes},
+		"pairing_disabled":               types.BoolType,
+		"prompt_for_nickname_on_pairing": types.BoolType,
 	}
 
 	MFADevicePolicyTotpOtpTFObjectTypes = map[string]attr.Type{
@@ -220,9 +226,10 @@ var (
 	}
 
 	MFADevicePolicyFido2TFObjectTypes = map[string]attr.Type{
-		"enabled":          types.BoolType,
-		"fido2_policy_id":  pingonetypes.ResourceIDType{},
-		"pairing_disabled": types.BoolType,
+		"enabled":                        types.BoolType,
+		"fido2_policy_id":                pingonetypes.ResourceIDType{},
+		"pairing_disabled":               types.BoolType,
+		"prompt_for_nickname_on_pairing": types.BoolType,
 	}
 )
 
@@ -334,6 +341,10 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 	fido2PairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, prevents users from pairing new devices with the FIDO2 method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.",
 	).DefaultValue(false)
+
+	promptForNicknameOnPairingDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.",
+	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -700,6 +711,12 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 							},
 						},
 					},
+
+					"prompt_for_nickname_on_pairing": schema.BoolAttribute{
+						Description:         promptForNicknameOnPairingDescription.Description,
+						MarkdownDescription: promptForNicknameOnPairingDescription.MarkdownDescription,
+						Optional:            true,
+					},
 				},
 			},
 
@@ -782,6 +799,12 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 							},
 						},
 					},
+
+					"prompt_for_nickname_on_pairing": schema.BoolAttribute{
+						Description:         promptForNicknameOnPairingDescription.Description,
+						MarkdownDescription: promptForNicknameOnPairingDescription.MarkdownDescription,
+						Optional:            true,
+					},
 				},
 			},
 
@@ -810,6 +833,12 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 
 						CustomType: pingonetypes.ResourceIDType{},
 					},
+
+					"prompt_for_nickname_on_pairing": schema.BoolAttribute{
+						Description:         promptForNicknameOnPairingDescription.Description,
+						MarkdownDescription: promptForNicknameOnPairingDescription.MarkdownDescription,
+						Optional:            true,
+					},
 				},
 			},
 		},
@@ -829,6 +858,10 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 	otpCoolDownDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of time unit for `duration`.",
 	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitEnumValues)
+
+	promptForNicknameOnPairingDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.",
+	)
 
 	return schema.SingleNestedAttribute{
 		Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single object that allows configuration of %s device authentication policy settings.", descriptionMethod)).Description,
@@ -937,6 +970,15 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 						},
 					},
 				},
+			},
+
+			"prompt_for_nickname_on_pairing": schema.BoolAttribute{
+				Description:         promptForNicknameOnPairingDescription.Description,
+				MarkdownDescription: promptForNicknameOnPairingDescription.MarkdownDescription,
+				Optional:            true,
+				// Computed:            true,
+
+				// Default: booldefault.StaticBool(false),
 			},
 		},
 	}
@@ -1365,6 +1407,10 @@ func (p *MFADevicePolicyOfflineDeviceResourceModel) expand(ctx context.Context) 
 		data.SetPairingDisabled(p.PairingDisabled.ValueBool())
 	}
 
+	if !p.PromptForNicknameOnPairing.IsNull() && !p.PromptForNicknameOnPairing.IsUnknown() {
+		data.SetPromptForNicknameOnPairing(p.PromptForNicknameOnPairing.ValueBool())
+	}
+
 	return data, diags
 }
 
@@ -1484,6 +1530,10 @@ func (p *MFADevicePolicyMobileResourceModel) expand(ctx context.Context, apiClie
 		}
 
 		data.SetApplications(applications)
+	}
+
+	if !p.PromptForNicknameOnPairing.IsNull() && !p.PromptForNicknameOnPairing.IsUnknown() {
+		data.SetPromptForNicknameOnPairing(p.PromptForNicknameOnPairing.ValueBool())
 	}
 
 	return data, diags
@@ -1780,6 +1830,10 @@ func (p *MFADevicePolicyTotpResourceModel) expand(ctx context.Context) (*mfa.Dev
 		data.SetPairingDisabled(p.PairingDisabled.ValueBool())
 	}
 
+	if !p.PromptForNicknameOnPairing.IsNull() && !p.PromptForNicknameOnPairing.IsUnknown() {
+		data.SetPromptForNicknameOnPairing(p.PromptForNicknameOnPairing.ValueBool())
+	}
+
 	return data, diags
 }
 
@@ -1795,6 +1849,10 @@ func (p *MFADevicePolicyFido2ResourceModel) expand() *mfa.DeviceAuthenticationPo
 
 	if !p.Fido2PolicyId.IsNull() && !p.Fido2PolicyId.IsUnknown() {
 		data.SetFido2PolicyId(p.Fido2PolicyId.ValueString())
+	}
+
+	if !p.PromptForNicknameOnPairing.IsNull() && !p.PromptForNicknameOnPairing.IsUnknown() {
+		data.SetPromptForNicknameOnPairing(p.PromptForNicknameOnPairing.ValueBool())
 	}
 
 	return data
@@ -1888,9 +1946,10 @@ func toStateMfaDevicePolicyOfflineDevice(apiObject *mfa.DeviceAuthenticationPoli
 	}
 
 	o := map[string]attr.Value{
-		"enabled":          framework.BoolOkToTF(apiObject.GetEnabledOk()),
-		"otp":              otp,
-		"pairing_disabled": framework.BoolOkToTF(apiObject.GetPairingDisabledOk()),
+		"enabled":                        framework.BoolOkToTF(apiObject.GetEnabledOk()),
+		"otp":                            otp,
+		"pairing_disabled":               framework.BoolOkToTF(apiObject.GetPairingDisabledOk()),
+		"prompt_for_nickname_on_pairing": framework.BoolOkToTF(apiObject.GetPromptForNicknameOnPairingOk()),
 	}
 
 	objValue, d := types.ObjectValue(MFADevicePolicyOfflineDeviceTFObjectTypes, o)
@@ -2021,9 +2080,10 @@ func toStateMfaDevicePolicyMobile(apiObject *mfa.DeviceAuthenticationPolicyMobil
 	}
 
 	o := map[string]attr.Value{
-		"applications": applications,
-		"enabled":      framework.BoolOkToTF(apiObject.GetEnabledOk()),
-		"otp":          otp,
+		"applications":                   applications,
+		"enabled":                        framework.BoolOkToTF(apiObject.GetEnabledOk()),
+		"otp":                            otp,
+		"prompt_for_nickname_on_pairing": framework.BoolOkToTF(apiObject.GetPromptForNicknameOnPairingOk()),
 	}
 
 	objValue, d := types.ObjectValue(MFADevicePolicyMobileTFObjectTypes, o)
@@ -2361,9 +2421,10 @@ func toStateMfaDevicePolicyTotp(apiObject *mfa.DeviceAuthenticationPolicyTotp, o
 	}
 
 	o := map[string]attr.Value{
-		"enabled":          framework.BoolOkToTF(apiObject.GetEnabledOk()),
-		"otp":              otp,
-		"pairing_disabled": framework.BoolOkToTF(apiObject.GetPairingDisabledOk()),
+		"enabled":                        framework.BoolOkToTF(apiObject.GetEnabledOk()),
+		"otp":                            otp,
+		"pairing_disabled":               framework.BoolOkToTF(apiObject.GetPairingDisabledOk()),
+		"prompt_for_nickname_on_pairing": framework.BoolOkToTF(apiObject.GetPromptForNicknameOnPairingOk()),
 	}
 
 	objValue, d := types.ObjectValue(MFADevicePolicyTotpTFObjectTypes, o)
@@ -2445,9 +2506,10 @@ func toStateMfaDevicePolicyFido2(apiObject *mfa.DeviceAuthenticationPolicyFido2,
 	}
 
 	o := map[string]attr.Value{
-		"enabled":          framework.BoolOkToTF(apiObject.GetEnabledOk()),
-		"fido2_policy_id":  framework.PingOneResourceIDOkToTF(apiObject.GetFido2PolicyIdOk()),
-		"pairing_disabled": framework.BoolOkToTF(apiObject.GetPairingDisabledOk()),
+		"enabled":                        framework.BoolOkToTF(apiObject.GetEnabledOk()),
+		"fido2_policy_id":                framework.PingOneResourceIDOkToTF(apiObject.GetFido2PolicyIdOk()),
+		"pairing_disabled":               framework.BoolOkToTF(apiObject.GetPairingDisabledOk()),
+		"prompt_for_nickname_on_pairing": framework.BoolOkToTF(apiObject.GetPromptForNicknameOnPairingOk()),
 	}
 
 	objValue, d := types.ObjectValue(MFADevicePolicyFido2TFObjectTypes, o)

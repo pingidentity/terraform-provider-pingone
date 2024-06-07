@@ -93,3 +93,7 @@
 ```release-note:breaking-change
 `resource/pingone_mfa_device_policy`: Moved `{email,sms,voice}.otp_lifetime_timeunit` to `{email,sms,voice}.otp.lifetime.time_unit`.
 ```
+
+```release-note:enhancement
+`resource/pingone_mfa_device_policy`: Added `prompt_for_nickname_on_pairing` for each device method, which provides a prompt for users to provide nicknames for devices on pairing.
+```
