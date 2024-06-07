@@ -1,0 +1,15 @@
+```release-note:breaking-change
+Replaced the `region` parameter (and `PINGONE_REGION` environment variable) with `region_code` (defaulted with the `PINGONE_REGION_CODE` environment variable).  See the Upgrade Guide for details.
+```
+
+```release-note:enhancement
+Support the new `AU` tenant region with the `com.au` top level domain.
+```
+
+```release-note:breaking-change
+Removed the `global_options.environment.production_type_force_delete` provider configuration parameter.  To protect against accidental data loss, environments that are of type `PRODUCTION` must be manually removed outside of Terraform.
+```
+
+```release-note:breaking-change
+`resource/pingone_environment`: Environments that are of type `PRODUCTION` can no longer be set to `SANDBOX` in Terraform.  To protect against accidental data loss, environments that are of type `PRODUCTION` must be manually changed to type `SANDBOX` outside of Terraform.
+```
