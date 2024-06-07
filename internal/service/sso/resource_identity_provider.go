@@ -104,6 +104,7 @@ type IdentityProviderOIDCResourceModel struct {
 	ClientSecret            types.String `tfsdk:"client_secret"`
 	DiscoveryEndpoint       types.String `tfsdk:"discovery_endpoint"`
 	Issuer                  types.String `tfsdk:"issuer"`
+	PkceMethod              types.String `tfsdk:"pkce_method"`
 	JwksEndpoint            types.String `tfsdk:"jwks_endpoint"`
 	Scopes                  types.Set    `tfsdk:"scopes"`
 	TokenEndpoint           types.String `tfsdk:"token_endpoint"`
@@ -155,6 +156,7 @@ var (
 		"client_secret":              types.StringType,
 		"discovery_endpoint":         types.StringType,
 		"issuer":                     types.StringType,
+		"pkce_method":                types.StringType,
 		"jwks_endpoint":              types.StringType,
 		"scopes":                     types.SetType{ElemType: types.StringType},
 		"token_endpoint":             types.StringType,
@@ -232,6 +234,10 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 	paypalClientEnvironmentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the PayPal environment.",
 	).AllowedValues("sandbox", "live")
+
+	oidcPkceMethodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the method for PKCE. This value auto-populates from a discovery endpoint if the OpenID Provider includes `S256` in its `code_challenge_methods_supported` claim. The plain method is not currently supported.",
+	).AllowedValuesEnum(management.AllowedEnumIdentityProviderPKCEMethodEnumValues).DefaultValue(string(management.ENUMIDENTITYPROVIDERPKCEMETHOD_NONE))
 
 	oidcTokenEndpointAuthMethodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the OIDC identity provider's token endpoint authentication method.",
@@ -566,6 +572,19 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 
 						Validators: []validator.String{
 							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+						},
+					},
+
+					"pkce_method": schema.StringAttribute{
+						Description:         oidcPkceMethodDescription.Description,
+						MarkdownDescription: oidcPkceMethodDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: stringdefault.StaticString(string(management.ENUMIDENTITYPROVIDERPKCEMETHOD_NONE)),
+
+						Validators: []validator.String{
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumIdentityProviderPKCEMethodEnumValues)...),
 						},
 					},
 
@@ -1415,6 +1434,10 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 			idpData.SetIssuer(plan.Issuer.ValueString())
 		}
 
+		if !plan.PkceMethod.IsNull() && !plan.PkceMethod.IsUnknown() {
+			idpData.SetPkceMethod(management.EnumIdentityProviderPKCEMethod(plan.PkceMethod.ValueString()))
+		}
+
 		if !plan.JwksEndpoint.IsNull() && !plan.JwksEndpoint.IsUnknown() {
 			idpData.SetJwksEndpoint(plan.JwksEndpoint.ValueString())
 		}
@@ -1727,6 +1750,7 @@ func identityProviderOIDCToTF(idpApiObject *management.IdentityProviderOIDC) (ty
 		"client_secret":              framework.StringOkToTF(idpApiObject.GetClientSecretOk()),
 		"discovery_endpoint":         framework.StringOkToTF(idpApiObject.GetDiscoveryEndpointOk()),
 		"issuer":                     framework.StringOkToTF(idpApiObject.GetIssuerOk()),
+		"pkce_method":                framework.EnumOkToTF(idpApiObject.GetPkceMethodOk()),
 		"jwks_endpoint":              framework.StringOkToTF(idpApiObject.GetJwksEndpointOk()),
 		"scopes":                     framework.StringSetOkToTF(idpApiObject.GetScopesOk()),
 		"token_endpoint":             framework.StringOkToTF(idpApiObject.GetTokenEndpointOk()),
