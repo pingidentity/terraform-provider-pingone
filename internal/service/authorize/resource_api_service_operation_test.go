@@ -415,7 +415,7 @@ resource "pingone_authorize_api_service_operation" "%[3]s" {
     }
 
     permission = {
-     	id = pingone_authorize_application_role_permission.%[3]s.application_resource_permission_id
+      id = pingone_authorize_application_role_permission.%[3]s.application_resource_permission_id
     }
 
     scope = {
