@@ -13,14 +13,14 @@ require (
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-mux v0.15.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.33.0
-	github.com/patrickcping/pingone-go-sdk-v2 v0.11.9
-	github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement v0.3.1
-	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.4.1
-	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.7.0
-	github.com/patrickcping/pingone-go-sdk-v2/management v0.39.0
-	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.18.3
-	github.com/patrickcping/pingone-go-sdk-v2/risk v0.14.1
-	github.com/patrickcping/pingone-go-sdk-v2/verify v0.4.1
+	github.com/hashicorp/terraform-plugin-testing v1.7.0
+	github.com/patrickcping/pingone-go-sdk-v2 v0.12.0
+	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.5.0
+	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.8.0
+	github.com/patrickcping/pingone-go-sdk-v2/management v0.40.0
+	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.19.0
+	github.com/patrickcping/pingone-go-sdk-v2/risk v0.15.0
+	github.com/patrickcping/pingone-go-sdk-v2/verify v0.5.0
 )
 
 require (
@@ -53,7 +53,6 @@ require (
 	github.com/hashicorp/logutils v1.0.0 // indirect
 	github.com/hashicorp/terraform-exec v0.20.0 // indirect
 	github.com/hashicorp/terraform-json v0.21.0 // indirect
-	github.com/hashicorp/terraform-plugin-testing v1.7.0
 	github.com/hashicorp/terraform-registry-address v0.2.3 // indirect
 	github.com/hashicorp/terraform-svchost v0.1.1 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
@@ -72,7 +71,7 @@ require (
 	golang.org/x/crypto v0.21.0 // indirect
 	golang.org/x/mod v0.15.0 // indirect
 	golang.org/x/net v0.23.0 // indirect
-	golang.org/x/oauth2 v0.19.0 // indirect
+	golang.org/x/oauth2 v0.21.0 // indirect
 	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect

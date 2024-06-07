@@ -19,7 +19,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/patrickcping/pingone-go-sdk-v2/agreementmanagement"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -272,25 +271,6 @@ func (r *AgreementLocalizationRevisionResource) Read(ctx context.Context, req re
 	var agreementText string
 	if !data.Text.IsNull() {
 		agreementText = data.Text.ValueString()
-	} else {
-		var agreementTextResponse *agreementmanagement.AgreementRevisionText
-		resp.Diagnostics.Append(framework.ParseResponse(
-			ctx,
-
-			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.AgreementManagementAPIClient.AgreementRevisionsResourcesApi.ReadOneAgreementLanguageRevision(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString(), data.Id.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
-			},
-			"ReadOneAgreementLanguageRevision",
-			framework.CustomErrorResourceNotFoundWarning,
-			sdk.DefaultCreateReadRetryable,
-			&agreementTextResponse,
-		)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		agreementText = agreementTextResponse.GetData()
 	}
 
 	// Save updated data into Terraform state
