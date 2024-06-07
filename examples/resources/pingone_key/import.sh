@@ -1,1 +1,1 @@
-$ terraform import pingone_key.example <environment_id>/<key_id>
+terraform import pingone_key.example <environment_id>/<key_id>

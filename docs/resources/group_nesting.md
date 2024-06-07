@@ -64,5 +64,5 @@ resource "pingone_group_nesting" "my_group_nesting" {
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-$ terraform import pingone_group_nesting.example <environment_id>/<group_id>/<group_nesting_id>
+terraform import pingone_group_nesting.example <environment_id>/<group_id>/<group_nesting_id>
 ```

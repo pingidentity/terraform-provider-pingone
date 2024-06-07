@@ -113,5 +113,5 @@ resource "pingone_application_resource_grant" "my_awesome_spa_custom_resource_gr
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-$ terraform import pingone_application_resource_grant.example <environment_id>/<application_id>/<grant_id>
+terraform import pingone_application_resource_grant.example <environment_id>/<application_id>/<grant_id>
 ```
