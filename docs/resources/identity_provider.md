@@ -186,6 +186,7 @@ Required:
 Optional:
 
 - `discovery_endpoint` (String) A string that specifies the OIDC identity provider's discovery endpoint. This value must be a URL that uses https.
+- `pkce_method` (String) A string that specifies the method for PKCE. This value auto-populates from a discovery endpoint if the OpenID Provider includes `S256` in its `code_challenge_methods_supported` claim. The plain method is not currently supported.  Options are `NONE`, `S256`.  Defaults to `NONE`.
 - `token_endpoint_auth_method` (String) A string that specifies the OIDC identity provider's token endpoint authentication method.  Options are `CLIENT_SECRET_BASIC`, `CLIENT_SECRET_POST`, `NONE`.  Defaults to `CLIENT_SECRET_BASIC`.
 - `userinfo_endpoint` (String) A string that specifies the OIDC identity provider's userInfo endpoint. This value must be a URL that uses https.
 
