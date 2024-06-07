@@ -102,7 +102,7 @@ func TestAccAPIServiceOperation_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "access_control.group.groups.#", "2"),
 			resource.TestMatchResourceAttr(resourceFullName, "access_control.group.groups.0.id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "access_control.group.groups.1.id", verify.P1ResourceIDRegexpFullString),
-			//resource.TestMatchResourceAttr(resourceFullName, "access_control.permission.id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckNoResourceAttr(resourceFullName, "access_control.permission"),
 			resource.TestCheckResourceAttr(resourceFullName, "access_control.scope.match_type", "ALL"),
 			resource.TestCheckResourceAttr(resourceFullName, "access_control.scope.scopes.#", "2"),
 			resource.TestMatchResourceAttr(resourceFullName, "access_control.scope.scopes.0.id", verify.P1ResourceIDRegexpFullString),
@@ -139,7 +139,7 @@ func TestAccAPIServiceOperation_Full(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "access_control.group.groups.0.id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "access_control.group.groups.1.id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "access_control.group.groups.2.id", verify.P1ResourceIDRegexpFullString),
-			//resource.TestMatchResourceAttr(resourceFullName, "access_control.permission.id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "access_control.permission.id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "access_control.scope.match_type", "ANY"),
 			resource.TestCheckResourceAttr(resourceFullName, "access_control.scope.scopes.#", "3"),
 			resource.TestMatchResourceAttr(resourceFullName, "access_control.scope.scopes.0.id", verify.P1ResourceIDRegexpFullString),
@@ -414,9 +414,9 @@ resource "pingone_authorize_api_service_operation" "%[3]s" {
       ]
     }
 
-    // permission = {
-    // 	id = "permissionid"
-    // }
+    permission = {
+     	id = pingone_authorize_application_role_permission.%[3]s.application_resource_permission_id
+    }
 
     scope = {
       match_type = "ANY"
@@ -548,5 +548,34 @@ resource "pingone_group" "%[2]s-3" {
   environment_id = data.pingone_environment.general_test.id
 
   name = "%[3]s-3"
+}
+
+resource "pingone_application_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_name  = pingone_resource.%[2]s.name
+
+  name = "%[3]s"
+}
+
+resource "pingone_application_resource_permission" "%[2]s" {
+  environment_id          = data.pingone_environment.general_test.id
+  application_resource_id = pingone_application_resource.%[2]s.id
+
+  action      = "%[3]s"
+  description = "Test permission"
+}
+
+
+resource "pingone_authorize_application_role" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_authorize_application_role_permission" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  application_role_id                = pingone_authorize_application_role.%[2]s.id
+  application_resource_permission_id = pingone_application_resource_permission.%[2]s.id
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

@@ -218,8 +218,7 @@ resource "pingone_authorize_application_role_permission" "%[3]s" {
 
   application_role_id                = pingone_authorize_application_role.%[3]s.id
   application_resource_permission_id = pingone_application_resource_permission.%[3]s.id
-}
-  `, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccApplicationRolePermissionConfig_Full(resourceName, name string) string {
