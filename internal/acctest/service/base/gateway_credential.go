@@ -61,9 +61,17 @@ func GatewayCredential_GetIDs(resourceName string, environmentID, gatewayID, res
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*resourceID = rs.Primary.ID
-		*gatewayID = rs.Primary.Attributes["gateway_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
+		if resourceID != nil {
+			*resourceID = rs.Primary.ID
+		}
+
+		if gatewayID != nil {
+			*gatewayID = rs.Primary.Attributes["gateway_id"]
+		}
+
+		if environmentID != nil {
+			*environmentID = rs.Primary.Attributes["environment_id"]
+		}
 
 		return nil
 	}

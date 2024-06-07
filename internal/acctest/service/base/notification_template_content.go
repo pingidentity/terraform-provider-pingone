@@ -61,9 +61,17 @@ func NotificationTemplateContent_GetIDs(resourceName string, environmentID, temp
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*resourceID = rs.Primary.ID
-		*templateName = rs.Primary.Attributes["template_name"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
+		if resourceID != nil {
+			*resourceID = rs.Primary.ID
+		}
+
+		if templateName != nil {
+			*templateName = rs.Primary.Attributes["template_name"]
+		}
+
+		if environmentID != nil {
+			*environmentID = rs.Primary.Attributes["environment_id"]
+		}
 
 		return nil
 	}

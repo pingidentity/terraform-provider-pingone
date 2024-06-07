@@ -2129,6 +2129,171 @@ Review the [Upgrade MFA Policies to use FIDO2 with Passkeys](./upgrade-mfa-polic
 
 The `pingone_mfa_policy` resource has been renamed to `pingone_mfa_device_policy` to better align with the console and API experience.
 
+### `device_selection` moved
+
+This parameter `device_selection` has been moved to `authentication.device_selection`.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  device_selection = "DEFAULT_TO_FIRST"
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  authentication = {
+    device_selection = "DEFAULT_TO_FIRST"
+  }
+}
+```
+
+### `email` schema type change
+
+This parameter `email` was previously a block data type, and is now a single nested object type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  email {
+    # ... other configuration parameters
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  email = {
+    # ... other configuration parameters
+  }
+}
+```
+
+### `email.otp_failure_cooldown_duration`, `email.otp_failure_cooldown_timeunit` and `email.otp_failure_cooldown_count` moved
+
+The parameters `email.otp_failure_cooldown_duration`, `email.otp_failure_cooldown_timeunit` and `email.otp_failure_cooldown_count` have been moved to a new object, `email.otp.failure.*`
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  email {
+    # ... other configuration parameters
+
+    otp_failure_cooldown_duration = 2
+    otp_failure_cooldown_timeunit = "MINUTES"
+    otp_failure_count             = 3
+
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  email = {
+    # ... other configuration parameters
+
+    otp = {
+      failure = {
+        count = 3
+
+        cool_down = {
+          duration  = 2
+          time_unit = "MINUTES"
+        }
+      }
+    }
+  }
+}
+```
+
+### `email.otp_lifetime_duration` and `email.otp_lifetime_timeunit` moved
+
+The parameters `email.otp_lifetime_duration` and `email.otp_lifetime_timeunit` have been moved to a new object, `email.otp.lifetime.*`
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  email {
+    # ... other configuration parameters
+
+    otp_lifetime_duration = 2
+    otp_lifetime_timeunit = "MINUTES"
+
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  email = {
+    # ... other configuration parameters
+
+    otp = {
+      lifetime = {
+        duration  = 2
+        time_unit = "MINUTES"
+      }
+    }
+  }
+}
+```
+
+### `fido2` schema type change
+
+This parameter `fido2` was previously a block data type, and is now a single nested object type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  fido2 {
+    # ... other configuration parameters
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  fido2 = {
+    # ... other configuration parameters
+  }
+}
+```
+
 ### `platform` optional parameter removed
 
 This parameter was previously deprecated and has been removed.  Use the `fido2` parameter going forward.
@@ -2136,6 +2301,808 @@ This parameter was previously deprecated and has been removed.  Use the `fido2` 
 ### `security_key` optional parameter removed
 
 This parameter was previously deprecated and has been removed.  Use the `fido2` parameter going forward.
+
+### `mobile` schema type change
+
+This parameter `mobile` was previously a block data type, and is now a single nested object type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  mobile {
+    # ... other configuration parameters
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  mobile = {
+    # ... other configuration parameters
+  }
+}
+```
+
+### `mobile.application` rename and schema type change
+
+This parameter `mobile.application` has been renamed to `mobile.applications` and was previously a block set data type, and is now a map of objects data type.  The `id` parameter of the application is now the map key for the application object as shown in the example.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  mobile {
+    # ... other configuration parameters
+
+    application {
+      # ... other configuration parameters
+
+      id = pingone_application.my_mobile_application.id
+
+      push_enabled = true
+      otp_enabled  = true
+    }
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  mobile = {
+    # ... other configuration parameters
+
+    applications = {
+      (pingone_application.my_mobile_application.id) = {
+        # ... other configuration parameters
+
+        push = {
+          enabled = true
+        }
+
+        otp = {
+          enabled  = true
+        }
+      }
+    }
+  }
+}
+```
+
+### `mobile.application.auto_enrollment_enabled` moved
+
+This parameters `mobile.application.auto_enrollment_enabled` have been moved to `mobile.applications.*.auto_enrollment.enabled`.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  mobile {
+    # ... other configuration parameters
+
+    application {
+      # ... other configuration parameters
+
+      auto_enrollment_enabled = true
+    }
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  mobile = {
+    # ... other configuration parameters
+
+    applications = {
+      (pingone_application.my_mobile_application.id) = {
+        # ... other configuration parameters
+
+        auto_enrollment = {
+          enabled = true
+        }
+      }
+    }
+  }
+}
+```
+
+### `mobile.application.device_authorization_enabled` moved
+
+This parameter `mobile.application.device_authorization_enabled` has been moved to `mobile.applications.*.device_authorization.enabled`.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  mobile {
+    # ... other configuration parameters
+
+    application {
+      # ... other configuration parameters
+
+      device_authorization_enabled = true
+    }
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  mobile = {
+    # ... other configuration parameters
+
+    applications = {
+      (pingone_application.my_mobile_application.id) = {
+        # ... other configuration parameters
+
+        device_authorization = {
+          enabled = true
+        }
+      }
+    }
+  }
+}
+```
+
+### `mobile.application.device_authorization_extra_verification` moved
+
+This parameter `mobile.application.device_authorization_extra_verification` has been moved to `mobile.applications.*.device_authorization.extra_verification`.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  mobile {
+    # ... other configuration parameters
+
+    application {
+      # ... other configuration parameters
+
+      device_authorization_extra_verification = "permissive"
+    }
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  mobile = {
+    # ... other configuration parameters
+
+    applications = {
+      (pingone_application.my_mobile_application.id) = {
+        # ... other configuration parameters
+
+        device_authorization = {
+          enabled            = true
+          extra_verification = "permissive"
+        }
+      }
+    }
+  }
+}
+```
+
+### `mobile.application.otp_enabled` moved
+
+This parameter `mobile.application.otp_enabled` has been moved to `mobile.applications.*.otp.enabled`.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  mobile {
+    # ... other configuration parameters
+
+    application {
+      # ... other configuration parameters
+
+      id = pingone_application.my_mobile_application.id
+
+      push_enabled = true
+      otp_enabled  = true
+    }
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  mobile = {
+    # ... other configuration parameters
+
+    applications = {
+      (pingone_application.my_mobile_application.id) = {
+        # ... other configuration parameters
+
+        push = {
+          enabled = true
+        }
+
+        otp = {
+          enabled  = true
+        }
+      }
+    }
+  }
+}
+```
+
+### `mobile.application.pairing_key_lifetime_duration` and `mobile.application.pairing_key_lifetime_timeunit` moved
+
+This parameters `mobile.application.pairing_key_lifetime_duration` and `mobile.application.pairing_key_lifetime_timeunit` have been moved to `mobile.applications.*.pairing_key_lifetime`.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  mobile {
+    # ... other configuration parameters
+
+    application {
+      # ... other configuration parameters
+
+      pairing_key_lifetime_duration = "10"
+      pairing_key_lifetime_timeunit = "MINUTES"
+    }
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  mobile = {
+    # ... other configuration parameters
+
+    applications = {
+      (pingone_application.my_mobile_application.id) = {
+        # ... other configuration parameters
+
+        pairing_key_lifetime = {
+          duration = "10"
+          time_unit = "MINUTES"
+        }
+      }
+    }
+  }
+}
+```
+
+### `mobile.application.push_enabled` moved
+
+This parameter `mobile.application.push_enabled` has been moved to `mobile.applications.*.push.enabled`.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  mobile {
+    # ... other configuration parameters
+
+    application {
+      # ... other configuration parameters
+
+      id = pingone_application.my_mobile_application.id
+
+      push_enabled = true
+      otp_enabled  = true
+    }
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  mobile = {
+    # ... other configuration parameters
+
+    applications = {
+      (pingone_application.my_mobile_application.id) = {
+        # ... other configuration parameters
+
+        push = {
+          enabled = true
+        }
+
+        otp = {
+          enabled  = true
+        }
+      }
+    }
+  }
+}
+```
+
+### `mobile.application.push_limit_count`, `mobile.application.push_limit_lock_duration`, `mobile.application.push_limit_lock_duration_timeunit`, `mobile.application.push_limit_time_period_duration` and `mobile.application.push_limit_time_period_timeunit` moved
+
+This parameters `mobile.application.push_limit_count`, `mobile.application.push_limit_lock_duration`, `mobile.application.push_limit_lock_duration_timeunit`, `mobile.application.push_limit_time_period_duration` and `mobile.application.push_limit_time_period_timeunit` have been moved to `mobile.applications.*.push_limit`.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  mobile {
+    # ... other configuration parameters
+
+    application {
+      # ... other configuration parameters
+
+      push_limit_count                  = 5
+      push_limit_lock_duration          = 30
+      push_limit_lock_duration_timeunit = "MINUTES"
+      push_limit_time_period_duration   = 10
+      push_limit_time_period_timeunit   = "MINUTES"
+    }
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  mobile = {
+    # ... other configuration parameters
+
+    applications = {
+      (pingone_application.my_mobile_application.id) = {
+        # ... other configuration parameters
+
+        push_limit = {
+          count = 5
+
+          lock_duration = {
+            duration  = 30
+            time_unit = "MINUTES"
+          }
+
+          time_period = {
+            duration  = 10
+            time_unit = "MINUTES"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+### `mobile.application.push_timeout_duration` and `mobile.application.push_timeout_timeunit` moved
+
+This parameters `mobile.application.push_timeout_duration` and `mobile.application.push_timeout_timeunit` have been moved to `mobile.applications.*.push_timeout`.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  mobile {
+    # ... other configuration parameters
+
+    application {
+      # ... other configuration parameters
+
+      push_timeout_duration = 40
+      push_timeout_timeunit = "SECONDS"
+    }
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  mobile = {
+    # ... other configuration parameters
+
+    applications = {
+      (pingone_application.my_mobile_application.id) = {
+        # ... other configuration parameters
+
+        push_timeout = {
+          duration  = 40
+          time_unit = "SECONDS"
+        }
+      }
+    }
+  }
+}
+```
+
+### `mobile.otp_failure_cooldown_duration`, `mobile.otp_failure_cooldown_timeunit` and `mobile.otp_failure_cooldown_count` moved
+
+The parameters `mobile.otp_failure_cooldown_duration`, `mobile.otp_failure_cooldown_timeunit` and `mobile.otp_failure_cooldown_count` have been moved to a new object, `mobile.otp.failure.*`
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  mobile {
+    # ... other configuration parameters
+
+    otp_failure_cooldown_duration = 2
+    otp_failure_cooldown_timeunit = "MINUTES"
+    otp_failure_count             = 3
+
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  mobile = {
+    # ... other configuration parameters
+
+    otp = {
+      failure = {
+        count = 3
+
+        cool_down = {
+          duration  = 2
+          time_unit = "MINUTES"
+        }
+      }
+    }
+  }
+}
+```
+
+### `sms` schema type change
+
+This parameter `sms` was previously a block data type, and is now a single nested object type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  sms {
+    # ... other configuration parameters
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  sms = {
+    # ... other configuration parameters
+  }
+}
+```
+
+### `sms.otp_failure_cooldown_duration`, `sms.otp_failure_cooldown_timeunit` and `sms.otp_failure_cooldown_count` moved
+
+The parameters `sms.otp_failure_cooldown_duration`, `sms.otp_failure_cooldown_timeunit` and `sms.otp_failure_cooldown_count` have been moved to a new object, `sms.otp.failure.*`
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  sms {
+    # ... other configuration parameters
+
+    otp_failure_cooldown_duration = 2
+    otp_failure_cooldown_timeunit = "MINUTES"
+    otp_failure_count             = 3
+
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  sms = {
+    # ... other configuration parameters
+
+    otp = {
+      failure = {
+        count = 3
+
+        cool_down = {
+          duration  = 2
+          time_unit = "MINUTES"
+        }
+      }
+    }
+  }
+}
+```
+
+### `sms.otp_lifetime_duration` and `sms.otp_lifetime_timeunit` moved
+
+The parameters `sms.otp_lifetime_duration` and `sms.otp_lifetime_timeunit` have been moved to a new object, `sms.otp.lifetime.*`
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  sms {
+    # ... other configuration parameters
+
+    otp_lifetime_duration = 2
+    otp_lifetime_timeunit = "MINUTES"
+
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  sms = {
+    # ... other configuration parameters
+
+    otp = {
+      lifetime = {
+        duration  = 2
+        time_unit = "MINUTES"
+      }
+    }
+  }
+}
+```
+
+### `totp` schema type change
+
+This parameter `totp` was previously a block data type, and is now a single nested object type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  totp {
+    # ... other configuration parameters
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  totp = {
+    # ... other configuration parameters
+  }
+}
+```
+
+### `totp.otp_failure_cooldown_duration`, `totp.otp_failure_cooldown_timeunit` and `totp.otp_failure_cooldown_count` moved
+
+The parameters `totp.otp_failure_cooldown_duration`, `totp.otp_failure_cooldown_timeunit` and `totp.otp_failure_cooldown_count` have been moved to a new object, `totp.otp.failure.*`
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  totp {
+    # ... other configuration parameters
+
+    otp_failure_cooldown_duration = 2
+    otp_failure_cooldown_timeunit = "MINUTES"
+    otp_failure_count             = 3
+
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  totp = {
+    # ... other configuration parameters
+
+    otp = {
+      failure = {
+        count = 3
+
+        cool_down = {
+          duration  = 2
+          time_unit = "MINUTES"
+        }
+      }
+    }
+  }
+}
+```
+
+### `voice` schema type change
+
+This parameter `voice` was previously a block data type, and is now a single nested object type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  voice {
+    # ... other configuration parameters
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  voice = {
+    # ... other configuration parameters
+  }
+}
+```
+
+### `voice.otp_failure_cooldown_duration`, `voice.otp_failure_cooldown_timeunit` and `voice.otp_failure_cooldown_count` moved
+
+The parameters `voice.otp_failure_cooldown_duration`, `voice.otp_failure_cooldown_timeunit` and `voice.otp_failure_cooldown_count` have been moved to a new object, `voice.otp.failure.*`
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  voice {
+    # ... other configuration parameters
+
+    otp_failure_cooldown_duration = 2
+    otp_failure_cooldown_timeunit = "MINUTES"
+    otp_failure_count             = 3
+
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  voice = {
+    # ... other configuration parameters
+
+    otp = {
+      failure = {
+        count = 3
+
+        cool_down = {
+          duration  = 2
+          time_unit = "MINUTES"
+        }
+      }
+    }
+  }
+}
+```
+
+### `voice.otp_lifetime_duration` and `voice.otp_lifetime_timeunit` moved
+
+The parameters `voice.otp_lifetime_duration` and `voice.otp_lifetime_timeunit` have been moved to a new object, `voice.otp.lifetime.*`
+
+Previous configuration example:
+
+```terraform
+resource "pingone_mfa_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  voice {
+    # ... other configuration parameters
+
+    otp_lifetime_duration = 2
+    otp_lifetime_timeunit = "MINUTES"
+
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
+  # ... other configuration parameters
+
+  voice = {
+    # ... other configuration parameters
+
+    otp = {
+      lifetime = {
+        duration  = 2
+        time_unit = "MINUTES"
+      }
+    }
+  }
+}
+```
 
 ## Resource: pingone_mfa_settings
 
@@ -2632,6 +3599,63 @@ resource "pingone_password_policy" "my_awesome_password_policy" {
 }
 ```
 
+## Resource: pingone_resource
+
+### `client_secret` computed attribute removed
+
+The `client_secret` attribute has been removed from the `pingone_resource` resource, and is now found in the `pingone_resource_secret` resource and/or data source.  Using the `pingone_resource_secret` resource and data source has the benefit of being able to track the state of, and manage, previous secrets when performing resource secret rotation.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_resource" "my_awesome_custom_resource" {
+  # ... other configuration parameters
+}
+
+locals {
+  my_awesome_resource_client_id     = pingone_resource.my_awesome_custom_resource.id
+  my_awesome_resource_client_secret = pingone_resource.my_awesome_custom_resource.client_secret
+}
+```
+
+New configuration example (using the `pingone_resource_secret` resource):
+
+```terraform
+resource "pingone_resource" "my_awesome_custom_resource" {
+  # ... other configuration parameters
+}
+
+resource "pingone_resource_secret" "my_awesome_custom_resource" {
+  # ... other configuration parameters
+
+  resource_id = pingone_resource.my_awesome_custom_resource.id
+}
+
+locals {
+  my_awesome_resource_client_id     = pingone_resource.my_awesome_custom_resource.id
+  my_awesome_resource_client_secret = pingone_resource_secret.my_awesome_custom_resource.secret
+}
+```
+
+New configuration example (using the `pingone_resource_secret` data source):
+
+```terraform
+resource "pingone_resource" "my_awesome_custom_resource" {
+  # ... other configuration parameters
+}
+
+data "pingone_resource_secret" "my_awesome_custom_resource" {
+  # ... other configuration parameters
+
+  resource_id = pingone_resource.my_awesome_custom_resource.id
+}
+
+locals {
+  my_awesome_resource_client_id     = pingone_resource.my_awesome_custom_resource.id
+  my_awesome_resource_client_secret = data.pingone_resource_secret.my_awesome_custom_resource.secret
+}
+```
+
 ## Resource: pingone_resource_attribute
 
 ### `resource_id` parameter changed
@@ -3086,6 +4110,63 @@ data "pingone_populations" "example_by_data_filter" {
       values = ["My first population", "My second population"]
     }
   ]
+}
+```
+
+## Data Source: pingone_resource
+
+### `client_secret` computed attribute removed
+
+The `client_secret` attribute has been removed from the `pingone_resource` data source, and is now found in the `pingone_resource_secret` resource and/or data source.  Using the `pingone_resource_secret` resource and data source has the benefit of being able to track the state of, and manage, previous secrets when performing resource secret rotation.
+
+Previous configuration example:
+
+```terraform
+data "pingone_resource" "my_awesome_custom_resource" {
+  # ... other configuration parameters
+}
+
+locals {
+  my_awesome_resource_client_id     = data.pingone_resource.my_awesome_custom_resource.id
+  my_awesome_resource_client_secret = data.pingone_resource.my_awesome_custom_resource.client_secret
+}
+```
+
+New configuration example (using the `pingone_resource_secret` resource):
+
+```terraform
+data "pingone_resource" "my_awesome_custom_resource" {
+  # ... other configuration parameters
+}
+
+resource "pingone_resource_secret" "my_awesome_custom_resource" {
+  # ... other configuration parameters
+
+  resource_id = data.pingone_resource.my_awesome_custom_resource.id
+}
+
+locals {
+  my_awesome_resource_client_id     = data.pingone_resource.my_awesome_custom_resource.id
+  my_awesome_resource_client_secret = pingone_resource_secret.my_awesome_custom_resource.secret
+}
+```
+
+New configuration example (using the `pingone_resource_secret` data source):
+
+```terraform
+data "pingone_resource" "my_awesome_custom_resource" {
+  # ... other configuration parameters
+}
+
+data "pingone_resource_secret" "my_awesome_custom_resource" {
+  # ... other configuration parameters
+
+  resource_id = data.pingone_resource.my_awesome_custom_resource.id
+}
+
+locals {
+  my_awesome_resource_client_id     = data.pingone_resource.my_awesome_custom_resource.id
+  my_awesome_resource_client_secret = data.pingone_resource_secret.my_awesome_custom_resource.secret
 }
 ```
 

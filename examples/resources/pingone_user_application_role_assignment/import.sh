@@ -1,0 +1,1 @@
+$ terraform import pingone_user_application_role_assignment.example <environment_id>/<user_id>/<application_role_id>

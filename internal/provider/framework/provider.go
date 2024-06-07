@@ -17,7 +17,6 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/client"
 	pingone "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
-	"github.com/pingidentity/terraform-provider-pingone/internal/service/agreementmanagement"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/credentials"
@@ -389,7 +388,6 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 
 func (p *pingOneProvider) Resources(ctx context.Context) []func() resource.Resource {
 	v := make([]func() resource.Resource, 0)
-	v = append(v, agreementmanagement.Resources()...)
 	v = append(v, authorize.Resources()...)
 	v = append(v, base.Resources()...)
 	v = append(v, mfa.Resources()...)
@@ -402,7 +400,6 @@ func (p *pingOneProvider) Resources(ctx context.Context) []func() resource.Resou
 
 func (p *pingOneProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	v := make([]func() datasource.DataSource, 0)
-	v = append(v, agreementmanagement.DataSources()...)
 	v = append(v, authorize.DataSources()...)
 	v = append(v, base.DataSources()...)
 	v = append(v, mfa.DataSources()...)

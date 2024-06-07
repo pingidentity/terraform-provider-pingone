@@ -61,9 +61,17 @@ func SchemaAttribute_GetIDs(resourceName string, environmentID, schemaID, resour
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*resourceID = rs.Primary.ID
-		*schemaID = rs.Primary.Attributes["schema_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
+		if resourceID != nil {
+			*resourceID = rs.Primary.ID
+		}
+
+		if schemaID != nil {
+			*schemaID = rs.Primary.Attributes["schema_id"]
+		}
+
+		if environmentID != nil {
+			*environmentID = rs.Primary.Attributes["environment_id"]
+		}
 
 		return nil
 	}
