@@ -1,3 +1,32 @@
+## 0.29.0 (Unreleased)
+
+NOTES:
+
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` 0.4.1 => 0.5.0 ([#827](https://github.com/pingidentity/terraform-provider-pingone/issues/827))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` 0.7.0 => 0.8.0 ([#827](https://github.com/pingidentity/terraform-provider-pingone/issues/827))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.39.0 => 0.40.0 ([#827](https://github.com/pingidentity/terraform-provider-pingone/issues/827))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` 0.18.3 => 0.19.0 ([#827](https://github.com/pingidentity/terraform-provider-pingone/issues/827))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` 0.14.1 => 0.15.0 ([#827](https://github.com/pingidentity/terraform-provider-pingone/issues/827))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/verify` 0.4.1 => 0.5.0 ([#827](https://github.com/pingidentity/terraform-provider-pingone/issues/827))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.11.9 => 0.12.0 ([#827](https://github.com/pingidentity/terraform-provider-pingone/issues/827))
+
+## 0.28.0 (13 May 2024)
+
+NOTES:
+
+* `resource/pingone_credential_issuance_rule`: A `credential_issuance_rule` cannot be assigned to a `credential_type` that has a `management_mode` of `MANAGED`. ([#804](https://github.com/pingidentity/terraform-provider-pingone/issues/804))
+* bump `github.com/hashicorp/terraform-plugin-framework` 1.7.0 => 1.8.0 ([#810](https://github.com/pingidentity/terraform-provider-pingone/issues/810))
+* bump `github.com/hashicorp/terraform-plugin-go` 0.22.1 => 0.22.2 ([#810](https://github.com/pingidentity/terraform-provider-pingone/issues/810))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` 0.6.2 => 0.7.0 ([#810](https://github.com/pingidentity/terraform-provider-pingone/issues/810))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.38.0 => 0.39.0 ([#810](https://github.com/pingidentity/terraform-provider-pingone/issues/810))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.11.8 => 0.11.9 ([#810](https://github.com/pingidentity/terraform-provider-pingone/issues/810))
+* bump `golang.org/x/net` 0.22.0 => 0.23.0 ([#810](https://github.com/pingidentity/terraform-provider-pingone/issues/810))
+
+ENHANCEMENTS:
+
+* `data_source/pingone_credential_type`: Added support for the `management_mode` and `metadata.fields.required` properties. ([#804](https://github.com/pingidentity/terraform-provider-pingone/issues/804))
+* `resource/pingone_credential_type`: Added support for the `management_mode` and `metadata.fields.required` properties. ([#804](https://github.com/pingidentity/terraform-provider-pingone/issues/804))
+
 ## 0.27.1 (12 April 2024)
 
 BUG FIXES:
