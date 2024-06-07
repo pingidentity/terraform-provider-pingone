@@ -1,0 +1,1 @@
+$ terraform import pingone_application_resource_permission.example <environment_id>/<application_resource_id>/<application_resource_permission_id>

@@ -1,0 +1,27 @@
+```release-note:note
+`resource/pingone_resource`: Migrated to plugin framework.
+```
+
+```release-note:enhancement
+`data_source/pingone_resource`: Added support for the `application_permissions_settings` attribute.
+```
+
+```release-note:enhancement
+`resource/pingone_resource`: Added support for the `application_permissions_settings` property to be able to add permissions to access tokens.
+```
+
+```release-note:breaking-change
+`resource/pingone_resource`: Removed the `client_secret` attribute. Use the `pingone_resource_secret` resource or data source going forward.
+```
+
+```release-note:breaking-change
+`data_source/pingone_resource`: Removed the `client_secret` attribute. Use the `pingone_resource_secret` resource or data source going forward.
+```
+
+```release-note:new-resource
+pingone_resource_secret
+```
+
+```release-note:new-data-source
+pingone_resource_secret
+```

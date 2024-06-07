@@ -1,0 +1,3 @@
+```release-note:new-resource
+pingone_authorize_application_role_permission
+```
