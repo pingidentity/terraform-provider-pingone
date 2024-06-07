@@ -1,0 +1,99 @@
+```release-note:note
+`resource/pingone_mfa_device_policy`: Migrated to plugin framework.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_device_policy`: Changed the data types of `email`, `voice`, `sms`, `totp`, `mobile` and `fido2` from list of objects to single object type.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_device_policy`: Moved `device_selection` to `authentication.device_selection`.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_device_policy`: Renamed `mobile.application` to `mobile.applications` and changed the data type to a map of objects.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_device_policy`: Moved `mobile.application.push_enabled` to `mobile.applications.*.push.enabled`.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_device_policy`: Moved `mobile.application.otp_enabled` to `mobile.applications.*.otp.enabled`.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_device_policy`: Moved `mobile.application.device_authorization_enabled` to `mobile.applications.*.device_authorization.enabled`.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_device_policy`: Moved `mobile.application.device_authorization_extra_verification` to `mobile.applications.*.device_authorization.extra_verification`.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_device_policy`: Moved `mobile.application.pairing_key_lifetime_duration` to `mobile.applications.*.pairing_key_lifetime.duration`.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_device_policy`: Moved `mobile.application.pairing_key_lifetime_timeunit` to `mobile.applications.*.pairing_key_lifetime.time_unit`.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_device_policy`: Moved `mobile.application.push_limit_count` to `mobile.applications.*.push_limit.count`.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_device_policy`: Moved `mobile.application.push_limit_lock_duration` to `mobile.applications.*.push_limit.lock_duration.duration`.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_device_policy`: Moved `mobile.application.push_limit_lock_timeunit` to `mobile.applications.*.push_limit.lock_duration.time_unit`.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_device_policy`: Moved `mobile.application.push_limit_time_period_duration` to `mobile.applications.*.push_limit.time_period.duration`.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_device_policy`: Moved `mobile.application.push_limit_time_period_timeunit` to `mobile.applications.*.push_limit.time_period.time_unit`.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_device_policy`: Moved `mobile.application.push_timeout_duration` to `mobile.applications.*.push_timeout.duration`.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_device_policy`: Moved `mobile.application.push_timeout_timeunit` to `mobile.applications.*.push_timeout_time_unit`.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_device_policy`: Moved `mobile.application.auto_enrollment_enabled` to `mobile.applications.*.auto_enrollment.enabled`.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_device_policy`: Moved `{email,sms,voice,mobile,totp}.otp_failure_cooldown_duration` to `{email,sms,voice,mobile,totp}.otp.failure.cool_down.duration`.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_device_policy`: Moved `{email,sms,voice,mobile,totp}.otp_failure_cooldown_timeunit` to `{email,sms,voice,mobile,totp}.otp.failure.cool_down.time_unit`.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_device_policy`: Moved `{email,sms,voice,mobile,totp}.otp_failure_count` to `{email,sms,voice,mobile,totp}.otp.failure.count`.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_device_policy`: Moved `{email,sms,voice}.otp_lifetime_duration` to `{email,sms,voice}.otp.lifetime_duration.duration`.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_device_policy`: Moved `{email,sms,voice}.otp_lifetime_duration` to `{email,sms,voice}.otp.lifetime.duration`.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_device_policy`: Moved `{email,sms,voice}.otp_lifetime_timeunit` to `{email,sms,voice}.otp.lifetime.time_unit`.
+```
+
+```release-note:enhancement
+`resource/pingone_mfa_device_policy`: Added `prompt_for_nickname_on_pairing` for each device method, which provides a prompt for users to provide nicknames for devices on pairing.
+```

@@ -61,9 +61,17 @@ func SignOnPolicyAction_GetIDs(resourceName string, environmentID, signOnPolicyI
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*resourceID = rs.Primary.ID
-		*signOnPolicyID = rs.Primary.Attributes["sign_on_policy_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
+		if resourceID != nil {
+			*resourceID = rs.Primary.ID
+		}
+
+		if signOnPolicyID != nil {
+			*signOnPolicyID = rs.Primary.Attributes["sign_on_policy_id"]
+		}
+
+		if environmentID != nil {
+			*environmentID = rs.Primary.Attributes["environment_id"]
+		}
 
 		return nil
 	}
