@@ -12,6 +12,7 @@ type serviceClientType struct {
 
 func Resources() []func() resource.Resource {
 	return []func() resource.Resource{
+		NewAPIServiceDeploymentResource,
 		NewAPIServiceOperationResource,
 		NewAPIServiceResource,
 		NewApplicationResourcePermissionResource,
