@@ -1,11 +1,13 @@
 package client
 
+import "github.com/patrickcping/pingone-go-sdk-v2/management"
+
 type Config struct {
 	ClientID             string
 	ClientSecret         string
 	EnvironmentID        string
 	AccessToken          string
-	Region               string
+	RegionCode           *management.EnumRegionCode
 	APIHostnameOverride  *string
 	AuthHostnameOverride *string
 	ProxyURL             *string

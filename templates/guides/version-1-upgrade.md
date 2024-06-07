@@ -19,6 +19,18 @@ This parameter was previously deprecated and has been removed.
 
 This parameter has been removed to mitigate the potential for accidental data loss.  In order to delete environments that are of type `PRODUCTION`, this must be done manually through the web console.  Where environments need to be removed in Terraform, ensure that they do not contain production data, and set their type as `SANDBOX`.
 
+### `region` parameter removed
+
+The `region` parameter has been removed and replaced with `region_code`.  The following lists the mapping between the legacy `region` and new `region_code` values:
+
+| Tenant Type                                  | Legacy `region` value | Replacement `region_code` value |
+| -------------------------------------------- | --------------------- | ------------------------------- |
+| Asia-Pacific with `.asia` top level domain   | `AsiaPacific`         | `AP`                            |
+| Asia-Pacific with `.com.au` top level domain | N/a                   | `AU`                            |
+| Canada with `.ca` top level domain           | `Canada`              | `CA`                            |
+| Europe with `.eu` top level domain           | `Europe`              | `EU`                            |
+| North America with `.com` top level domain   | `NorthAmerica`        | `NA`                            |
+
 ## Resource: pingone_application
 
 ### `access_control_group_options` parameter data type change

@@ -2,6 +2,8 @@ package framework
 
 import (
 	"context"
+	"os"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -12,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/client"
 	pingone "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -41,7 +44,7 @@ type pingOneProviderModel struct {
 	ClientSecret     types.String `tfsdk:"client_secret"`
 	EnvironmentID    types.String `tfsdk:"environment_id"`
 	APIAccessToken   types.String `tfsdk:"api_access_token"`
-	Region           types.String `tfsdk:"region"`
+	RegionCode       types.String `tfsdk:"region_code"`
 	ServiceEndpoints types.List   `tfsdk:"service_endpoints"`
 	GlobalOptions    types.List   `tfsdk:"global_options"`
 	HTTPProxy        types.String `tfsdk:"http_proxy"`
@@ -83,8 +86,8 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 		"The access token used for provider resource management against the PingOne management API.  Default value can be set with the `PINGONE_API_ACCESS_TOKEN` environment variable.  Must provide only one of `api_access_token` (when obtaining the worker token outside of the provider) and `client_id` (when the provider should fetch the worker token during operations).",
 	)
 
-	regionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The PingOne region to use.  Options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.  Default value can be set with the `PINGONE_REGION` environment variable.",
+	regionCodeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The PingOne region to use, which selects the appropriate service endpoints.  Options are `AP` (for Asia-Pacific `.asia` tenants), `AU` (for Asia-Pacific `.com.au` tenants), `CA` (for Canada `.ca` tenants), `EU` (for Europe `.eu` tenants) and `NA` (for North America `.com` tenants).  Default value can be set with the `PINGONE_REGION_CODE` environment variable.",
 	)
 
 	globalOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -141,9 +144,9 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 				Optional:            true,
 			},
 
-			"region": schema.StringAttribute{
-				Description:         regionDescription.Description,
-				MarkdownDescription: regionDescription.MarkdownDescription,
+			"region_code": schema.StringAttribute{
+				Description:         regionCodeDescription.Description,
+				MarkdownDescription: regionCodeDescription.MarkdownDescription,
 				Optional:            true,
 			},
 
@@ -230,10 +233,22 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 	// Set the defaults
 	tflog.Info(ctx, "[v6] Provider setting defaults..")
 
+	if v := strings.TrimSpace(os.Getenv("PINGONE_REGION")); v != "" {
+		resp.Diagnostics.AddWarning(
+			"Deprecated PINGONE_REGION environment variable",
+			"The PINGONE_REGION environment variable is now deprecated and should be replaced with the PINGONE_REGION_CODE environment variable.\n\nOptions for the PINGONE_REGION_CODE environment variable are `AP` (`.asia` tenants), `AU` (`.com.au` tenants), `CA` (`.ca` tenants), `EU` (`.eu` tenants) and `NA` (`.com` tenants).",
+		)
+	}
+
 	globalOptions := &client.GlobalOptions{
 		Population: &client.PopulationOptions{
 			ContainsUsersForceDelete: false,
 		},
+	}
+
+	var regionCode management.EnumRegionCode
+	if !data.RegionCode.IsNull() && !data.RegionCode.IsUnknown() {
+		regionCode = management.EnumRegionCode(data.RegionCode.ValueString())
 	}
 
 	config := &pingone.Config{
@@ -241,7 +256,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		ClientSecret:  data.ClientSecret.ValueString(),
 		EnvironmentID: data.EnvironmentID.ValueString(),
 		AccessToken:   data.APIAccessToken.ValueString(),
-		Region:        data.Region.ValueString(),
+		RegionCode:    &regionCode,
 		GlobalOptions: globalOptions,
 	}
 

@@ -282,11 +282,13 @@ func ResourceNameGenEnvironment() string {
 
 func TestClient(ctx context.Context) (*client.Client, error) {
 
+	regionCode := management.EnumRegionCode(os.Getenv("PINGONE_REGION_CODE"))
+
 	config := &client.Config{
 		ClientID:      os.Getenv("PINGONE_CLIENT_ID"),
 		ClientSecret:  os.Getenv("PINGONE_CLIENT_SECRET"),
 		EnvironmentID: os.Getenv("PINGONE_ENVIRONMENT_ID"),
-		Region:        os.Getenv("PINGONE_REGION"),
+		RegionCode:    &regionCode,
 		GlobalOptions: &client.GlobalOptions{
 			Population: &client.PopulationOptions{
 				ContainsUsersForceDelete: false,
