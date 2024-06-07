@@ -14,7 +14,6 @@ func Resources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewAPIServiceOperationResource,
 		NewAPIServiceResource,
-		NewAPIServiceResource,
 		NewApplicationResourcePermissionResource,
 		NewApplicationRolePermissionResource,
 		NewApplicationRoleResource,
