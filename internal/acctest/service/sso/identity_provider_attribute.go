@@ -61,9 +61,17 @@ func IdentityProviderAttribute_GetIDs(resourceName string, environmentID, identi
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*resourceID = rs.Primary.ID
-		*identityProviderID = rs.Primary.Attributes["identity_provider_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
+		if resourceID != nil {
+			*resourceID = rs.Primary.ID
+		}
+
+		if identityProviderID != nil {
+			*identityProviderID = rs.Primary.Attributes["identity_provider_id"]
+		}
+
+		if environmentID != nil {
+			*environmentID = rs.Primary.Attributes["environment_id"]
+		}
 
 		return nil
 	}

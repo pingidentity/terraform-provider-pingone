@@ -61,9 +61,17 @@ func ApplicationFlowPolicyAssignment_GetIDs(resourceName string, environmentID, 
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*resourceID = rs.Primary.ID
-		*applicationID = rs.Primary.Attributes["application_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
+		if resourceID != nil {
+			*resourceID = rs.Primary.ID
+		}
+
+		if applicationID != nil {
+			*applicationID = rs.Primary.Attributes["application_id"]
+		}
+
+		if environmentID != nil {
+			*environmentID = rs.Primary.Attributes["environment_id"]
+		}
 
 		return nil
 	}

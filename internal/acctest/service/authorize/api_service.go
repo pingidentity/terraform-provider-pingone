@@ -70,7 +70,7 @@ func APIService_GetIDs(resourceName string, environmentID, resourceID *string) r
 
 func APIService_RemovalDrift_PreConfig(ctx context.Context, apiClient *authorize.APIClient, t *testing.T, environmentID, apiServiceID string) {
 	if environmentID == "" || apiServiceID == "" {
-		t.Fatalf("One of environment ID or decision endpoint ID cannot be determined. Environment ID: %s, API Service ID: %s", environmentID, apiServiceID)
+		t.Fatalf("One of environment ID or API service ID cannot be determined. Environment ID: %s, API Service ID: %s", environmentID, apiServiceID)
 	}
 
 	_, err := apiClient.APIServersApi.DeleteAPIServer(ctx, environmentID, apiServiceID).Execute()

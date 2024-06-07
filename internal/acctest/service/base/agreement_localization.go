@@ -61,9 +61,17 @@ func AgreementLocalization_GetIDs(resourceName string, environmentID, agreementI
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*resourceID = rs.Primary.ID
-		*agreementID = rs.Primary.Attributes["agreement_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
+		if resourceID != nil {
+			*resourceID = rs.Primary.ID
+		}
+
+		if agreementID != nil {
+			*agreementID = rs.Primary.Attributes["agreement_id"]
+		}
+
+		if environmentID != nil {
+			*environmentID = rs.Primary.Attributes["environment_id"]
+		}
 
 		return nil
 	}

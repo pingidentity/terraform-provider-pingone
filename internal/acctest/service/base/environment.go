@@ -51,7 +51,9 @@ func Environment_GetIDs(resourceName string, resourceID *string) resource.TestCh
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*resourceID = rs.Primary.ID
+		if resourceID != nil {
+			*resourceID = rs.Primary.ID
+		}
 
 		return nil
 	}

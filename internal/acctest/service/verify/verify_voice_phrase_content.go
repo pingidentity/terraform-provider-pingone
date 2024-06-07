@@ -61,9 +61,17 @@ func VerifyVoicePhraseContent_GetIDs(resourceName string, environmentID, voicePh
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*resourceID = rs.Primary.ID
-		*voicePhraseID = rs.Primary.Attributes["voice_phrase_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
+		if resourceID != nil {
+			*resourceID = rs.Primary.ID
+		}
+
+		if voicePhraseID != nil {
+			*voicePhraseID = rs.Primary.Attributes["voice_phrase_id"]
+		}
+
+		if environmentID != nil {
+			*environmentID = rs.Primary.Attributes["environment_id"]
+		}
 
 		return nil
 	}
