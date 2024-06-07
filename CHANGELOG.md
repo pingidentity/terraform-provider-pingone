@@ -1,5 +1,15 @@
 ## 0.29.0 (Unreleased)
 
+NOTES:
+
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` 0.4.1 => 0.5.0 ([#827](https://github.com/pingidentity/terraform-provider-pingone/issues/827))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` 0.7.0 => 0.8.0 ([#827](https://github.com/pingidentity/terraform-provider-pingone/issues/827))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.39.0 => 0.40.0 ([#827](https://github.com/pingidentity/terraform-provider-pingone/issues/827))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` 0.18.3 => 0.19.0 ([#827](https://github.com/pingidentity/terraform-provider-pingone/issues/827))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` 0.14.1 => 0.15.0 ([#827](https://github.com/pingidentity/terraform-provider-pingone/issues/827))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/verify` 0.4.1 => 0.5.0 ([#827](https://github.com/pingidentity/terraform-provider-pingone/issues/827))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.11.9 => 0.12.0 ([#827](https://github.com/pingidentity/terraform-provider-pingone/issues/827))
+
 ## 0.28.0 (13 May 2024)
 
 NOTES:
