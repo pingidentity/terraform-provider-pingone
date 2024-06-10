@@ -25,6 +25,7 @@ func Resources() []func() resource.Resource {
 		NewIdentityProviderAttributeResource,
 		NewIdentityProviderResource,
 		NewPasswordPolicyResource,
+		NewPopulationDefaultIdpResource,
 		NewPopulationDefaultResource,
 		NewPopulationResource,
 		NewResourceAttributeResource,
