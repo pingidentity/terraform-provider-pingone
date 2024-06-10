@@ -1081,9 +1081,10 @@ func TestAccIdentityProvider_SAML(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "saml.authentication_request_signed", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "saml.idp_entity_id", fmt.Sprintf("idp:%s", name)),
 			resource.TestCheckResourceAttr(resourceFullName, "saml.sp_entity_id", fmt.Sprintf("sp:%s", name)),
-			resource.TestCheckResourceAttr(resourceFullName, "saml.idp_verification_certificate_ids.#", "1"),
-			resource.TestMatchResourceAttr(resourceFullName, "saml.idp_verification_certificate_ids.0", verify.P1ResourceIDRegexpFullString),
-			resource.TestMatchResourceAttr(resourceFullName, "saml.sp_signing_key_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "saml.idp_verification.certificates.#", "1"),
+			resource.TestMatchResourceAttr(resourceFullName, "saml.idp_verification.certificates.0.id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "saml.sp_signing.key.id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "saml.sp_signing.algorithm", "SHA512withRSA"),
 			resource.TestCheckResourceAttr(resourceFullName, "saml.sso_binding", "HTTP_POST"),
 			resource.TestCheckResourceAttr(resourceFullName, "saml.sso_endpoint", "https://www.pingidentity.com/sso"),
 			resource.TestCheckResourceAttr(resourceFullName, "saml.slo_binding", "HTTP_REDIRECT"),
@@ -1110,8 +1111,9 @@ func TestAccIdentityProvider_SAML(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "saml.authentication_request_signed", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "saml.idp_entity_id", fmt.Sprintf("idp:%s-1", name)),
 			resource.TestCheckResourceAttr(resourceFullName, "saml.sp_entity_id", fmt.Sprintf("sp:%s-1", name)),
-			resource.TestMatchResourceAttr(resourceFullName, "saml.idp_verification_certificate_ids.0", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckNoResourceAttr(resourceFullName, "saml.sp_signing_key_id"),
+			resource.TestCheckResourceAttr(resourceFullName, "saml.idp_verification.certificates.#", "1"),
+			resource.TestMatchResourceAttr(resourceFullName, "saml.idp_verification.certificates.0.id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckNoResourceAttr(resourceFullName, "saml.sp_signing"),
 			resource.TestCheckResourceAttr(resourceFullName, "saml.sso_binding", "HTTP_REDIRECT"),
 			resource.TestCheckResourceAttr(resourceFullName, "saml.sso_endpoint", "https://www.pingidentity.com/sso1"),
 			resource.TestCheckResourceAttr(resourceFullName, "saml.slo_binding", "HTTP_POST"),
@@ -1740,20 +1742,30 @@ resource "pingone_identity_provider" "%[2]s" {
   name           = "%[3]s"
 
   saml = {
-    authentication_request_signed    = true
-    idp_entity_id                    = "idp:%[3]s"
-    sp_entity_id                     = "sp:%[3]s"
-    idp_verification_certificate_ids = [pingone_certificate.%[2]s.id]
-    sp_signing_key_id                = pingone_key.%[2]s.id
-    sso_binding                      = "HTTP_POST"
-    sso_endpoint                     = "https://www.pingidentity.com/sso"
-    slo_binding                      = "HTTP_REDIRECT"
-    slo_endpoint                     = "https://dummy-slo-endpoint.pingidentity.com"
-    slo_response_endpoint            = "https://dummy-slo-response-endpoint.pingidentity.com"
-    slo_window                       = 1
+    authentication_request_signed = true
+    idp_entity_id                 = "idp:%[3]s"
+    sp_entity_id                  = "sp:%[3]s"
+    idp_verification = {
+      certificates = [
+        {
+          id = pingone_certificate.%[2]s.id
+        }
+      ]
+    }
+    sp_signing = {
+      key = {
+        id = pingone_key.%[2]s.id
+      }
+      algorithm = "SHA512withRSA"
+    }
+    sso_binding           = "HTTP_POST"
+    sso_endpoint          = "https://www.pingidentity.com/sso"
+    slo_binding           = "HTTP_REDIRECT"
+    slo_endpoint          = "https://dummy-slo-endpoint.pingidentity.com"
+    slo_response_endpoint = "https://dummy-slo-response-endpoint.pingidentity.com"
+    slo_window            = 1
   }
-}
-		`, acctest.GenericSandboxEnvironment(), resourceName, name, pem)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, pem)
 }
 
 func testAccIdentityProviderConfig_SAMLMinimal(resourceName, name, pem string) string {
@@ -1775,11 +1787,17 @@ resource "pingone_identity_provider" "%[2]s" {
   name           = "%[3]s1"
 
   saml = {
-    idp_entity_id                    = "idp:%[3]s-1"
-    sp_entity_id                     = "sp:%[3]s-1"
-    idp_verification_certificate_ids = [pingone_certificate.%[2]s.id]
-    sso_binding                      = "HTTP_REDIRECT"
-    sso_endpoint                     = "https://www.pingidentity.com/sso1"
+    idp_entity_id = "idp:%[3]s-1"
+    sp_entity_id  = "sp:%[3]s-1"
+    idp_verification = {
+      certificates = [
+        {
+          id = pingone_certificate.%[2]s.id
+        }
+      ]
+    }
+    sso_binding  = "HTTP_REDIRECT"
+    sso_endpoint = "https://www.pingidentity.com/sso1"
   }
 }
 		`, acctest.GenericSandboxEnvironment(), resourceName, name, pem)

@@ -113,17 +113,34 @@ type IdentityProviderOIDCResourceModel struct {
 }
 
 type IdentityProviderSAMLResourceModel struct {
-	AuthenticationRequestSigned   types.Bool                   `tfsdk:"authentication_request_signed"`
-	IdpEntityId                   types.String                 `tfsdk:"idp_entity_id"`
-	SpEntityId                    types.String                 `tfsdk:"sp_entity_id"`
-	IdpVerificationCertificateIds types.Set                    `tfsdk:"idp_verification_certificate_ids"`
-	SpSigningKeyId                pingonetypes.ResourceIDValue `tfsdk:"sp_signing_key_id"`
-	SsoBinding                    types.String                 `tfsdk:"sso_binding"`
-	SsoEndpoint                   types.String                 `tfsdk:"sso_endpoint"`
-	SloBinding                    types.String                 `tfsdk:"slo_binding"`
-	SloEndpoint                   types.String                 `tfsdk:"slo_endpoint"`
-	SloResponseEndpoint           types.String                 `tfsdk:"slo_response_endpoint"`
-	SloWindow                     types.Int64                  `tfsdk:"slo_window"`
+	AuthenticationRequestSigned types.Bool   `tfsdk:"authentication_request_signed"`
+	IdpEntityId                 types.String `tfsdk:"idp_entity_id"`
+	SpEntityId                  types.String `tfsdk:"sp_entity_id"`
+	IdpVerification             types.Object `tfsdk:"idp_verification"`
+	SpSigning                   types.Object `tfsdk:"sp_signing"`
+	SsoBinding                  types.String `tfsdk:"sso_binding"`
+	SsoEndpoint                 types.String `tfsdk:"sso_endpoint"`
+	SloBinding                  types.String `tfsdk:"slo_binding"`
+	SloEndpoint                 types.String `tfsdk:"slo_endpoint"`
+	SloResponseEndpoint         types.String `tfsdk:"slo_response_endpoint"`
+	SloWindow                   types.Int64  `tfsdk:"slo_window"`
+}
+
+type IdentityProviderSAMLResourceIdPVerificationModel struct {
+	Certificates types.Set `tfsdk:"certificates"`
+}
+
+type IdentityProviderSAMLResourceIdPVerificationCertificatesModel struct {
+	Id pingonetypes.ResourceIDValue `tfsdk:"id"`
+}
+
+type IdentityProviderSAMLResourceSpSigningModel struct {
+	Key       types.Object `tfsdk:"key"`
+	Algorithm types.String `tfsdk:"algorithm"`
+}
+
+type IdentityProviderSAMLResourceSpSigningKeyModel struct {
+	Id pingonetypes.ResourceIDValue `tfsdk:"id"`
 }
 
 var (
@@ -165,17 +182,34 @@ var (
 	}
 
 	identityProviderSAMLTFObjectTypes = map[string]attr.Type{
-		"authentication_request_signed":    types.BoolType,
-		"idp_entity_id":                    types.StringType,
-		"sp_entity_id":                     types.StringType,
-		"idp_verification_certificate_ids": types.SetType{ElemType: pingonetypes.ResourceIDType{}},
-		"sp_signing_key_id":                pingonetypes.ResourceIDType{},
-		"sso_binding":                      types.StringType,
-		"sso_endpoint":                     types.StringType,
-		"slo_binding":                      types.StringType,
-		"slo_endpoint":                     types.StringType,
-		"slo_response_endpoint":            types.StringType,
-		"slo_window":                       types.Int64Type,
+		"authentication_request_signed": types.BoolType,
+		"idp_entity_id":                 types.StringType,
+		"sp_entity_id":                  types.StringType,
+		"idp_verification":              types.ObjectType{AttrTypes: identityProviderSAMLIdPVerificationTFObjectTypes},
+		"sp_signing":                    types.ObjectType{AttrTypes: identityProviderSAMLSpSigningTFObjectTypes},
+		"sso_binding":                   types.StringType,
+		"sso_endpoint":                  types.StringType,
+		"slo_binding":                   types.StringType,
+		"slo_endpoint":                  types.StringType,
+		"slo_response_endpoint":         types.StringType,
+		"slo_window":                    types.Int64Type,
+	}
+
+	identityProviderSAMLIdPVerificationTFObjectTypes = map[string]attr.Type{
+		"certificates": types.SetType{ElemType: types.ObjectType{AttrTypes: identityProviderSAMLIdPVerificationCertificateTFObjectTypes}},
+	}
+
+	identityProviderSAMLIdPVerificationCertificateTFObjectTypes = map[string]attr.Type{
+		"id": pingonetypes.ResourceIDType{},
+	}
+
+	identityProviderSAMLSpSigningTFObjectTypes = map[string]attr.Type{
+		"key":       types.ObjectType{AttrTypes: identityProviderSAMLSpSigningKeyTFObjectTypes},
+		"algorithm": types.StringType,
+	}
+
+	identityProviderSAMLSpSigningKeyTFObjectTypes = map[string]attr.Type{
+		"id": pingonetypes.ResourceIDType{},
 	}
 )
 
@@ -250,6 +284,14 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 	samlIdpEntityIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the entity ID URI that is checked against the `issuerId` tag in the incoming response.",
 	)
+
+	samlSpSigningDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies settings for SAML assertion signing, including the key and the signature algorithm.  Required when `authentication_request_signed` is set to `true`.",
+	)
+
+	samlSpSigningAlgorithmDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The signing key algorithm used by PingOne. The value will depend on which key algorithm and signature algorithm you chose when creating your signing key.",
+	).AllowedValuesEnum(management.AllowedEnumIdentityProviderSAMLSigningAlgorithmEnumValues)
 
 	samlSSOBindingDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the binding for the authentication request.",
@@ -678,22 +720,64 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 						},
 					},
 
-					"idp_verification_certificate_ids": schema.SetAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("An unordered list that specifies the identity provider's certificate IDs used to verify the signature on the signed assertion from the identity provider. Signing is done with a private key and verified with a public key.  Items must be valid PingOne resource IDs.").Description,
+					"idp_verification": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies settings for SAML IdP verification, including the list of IdP certificates used to verify the signature on the signed assertion of the identity provider.").Description,
 						Required:    true,
 
-						ElementType: pingonetypes.ResourceIDType{},
+						Attributes: map[string]schema.Attribute{
+							"certificates": schema.SetNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("An unordered list that specifies the identity provider's certificate IDs used to verify the signature on the signed assertion from the identity provider. Signing is done with a private key and verified with a public key.").Description,
+								Required:    true,
 
-						Validators: []validator.Set{
-							setvalidator.SizeAtLeast(attrMinLength),
+								NestedObject: schema.NestedAttributeObject{
+
+									Attributes: map[string]schema.Attribute{
+										"id": schema.StringAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the identity provider's certificate ID used to verify the signature on the signed assertion from the identity provider.  Must be a valid PingOne resource ID.").Description,
+											Required:    true,
+
+											CustomType: pingonetypes.ResourceIDType{},
+										},
+									},
+								},
+
+								Validators: []validator.Set{
+									setvalidator.SizeAtLeast(attrMinLength),
+								},
+							},
 						},
 					},
 
-					"sp_signing_key_id": schema.StringAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the service provider's signing key ID.  Must be a valid PingOne resource ID.").Description,
-						Optional:    true,
+					"sp_signing": schema.SingleNestedAttribute{
+						Description:         samlSpSigningDescription.Description,
+						MarkdownDescription: samlSpSigningDescription.MarkdownDescription,
+						Optional:            true,
 
-						CustomType: pingonetypes.ResourceIDType{},
+						Attributes: map[string]schema.Attribute{
+							"algorithm": schema.StringAttribute{
+								Description:         samlSpSigningAlgorithmDescription.Description,
+								MarkdownDescription: samlSpSigningAlgorithmDescription.MarkdownDescription,
+								Optional:            true,
+
+								Validators: []validator.String{
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumIdentityProviderSAMLSigningAlgorithmEnumValues)...),
+								},
+							},
+
+							"key": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies settings for the SAML Sp Signing key.").Description,
+								Required:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"id": schema.StringAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the service provider's signing key ID.  Must be a valid PingOne resource ID.").Description,
+										Required:    true,
+
+										CustomType: pingonetypes.ResourceIDType{},
+									},
+								},
+							},
+						},
 					},
 
 					"sso_binding": schema.StringAttribute{
@@ -1501,25 +1585,41 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 			idpData.SetSpEntityId(plan.SpEntityId.ValueString())
 		}
 
-		if !plan.IdpVerificationCertificateIds.IsNull() && !plan.IdpVerificationCertificateIds.IsUnknown() {
-			var certificateIdsPlan []string
-			diags.Append(plan.IdpVerificationCertificateIds.ElementsAs(ctx, &certificateIdsPlan, false)...)
+		if !plan.IdpVerification.IsNull() && !plan.IdpVerification.IsUnknown() {
+			var idpVerificationPlan IdentityProviderSAMLResourceIdPVerificationModel
+			diags.Append(plan.IdpVerification.As(ctx, &idpVerificationPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
 			if diags.HasError() {
 				return nil, diags
 			}
 
-			idpVerificationCertificates := make([]management.IdentityProviderSAMLAllOfIdpVerificationCertificates, 0)
-			for _, v := range certificateIdsPlan {
-				idpVerificationCertificates = append(idpVerificationCertificates, *management.NewIdentityProviderSAMLAllOfIdpVerificationCertificates(v))
+			idpVerification, d := idpVerificationPlan.expand(ctx)
+			diags.Append(d...)
+			if diags.HasError() {
+				return nil, diags
 			}
 
-			idpVerifcation := management.NewIdentityProviderSAMLAllOfIdpVerification(idpVerificationCertificates)
-			idpData.SetIdpVerification(*idpVerifcation)
+			idpData.SetIdpVerification(*idpVerification)
 		}
 
-		if !plan.SpSigningKeyId.IsNull() && !plan.SpSigningKeyId.IsUnknown() {
-			spSigningKey := management.NewIdentityProviderSAMLAllOfSpSigningKey(plan.SpSigningKeyId.ValueString())
-			spSigning := management.NewIdentityProviderSAMLAllOfSpSigning(*spSigningKey)
+		if !plan.SpSigning.IsNull() && !plan.SpSigning.IsUnknown() {
+			var spSigningPlan IdentityProviderSAMLResourceSpSigningModel
+			diags.Append(plan.SpSigning.As(ctx, &spSigningPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			spSigning, d := spSigningPlan.expand(ctx)
+			diags.Append(d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
 			idpData.SetSpSigning(*spSigning)
 		}
 
@@ -1565,6 +1665,53 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 		)
 
 		return nil, diags
+	}
+
+	return data, diags
+}
+
+func (p *IdentityProviderSAMLResourceIdPVerificationModel) expand(ctx context.Context) (*management.IdentityProviderSAMLAllOfIdpVerification, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var certificatesPlan []IdentityProviderSAMLResourceIdPVerificationCertificatesModel
+	diags.Append(p.Certificates.ElementsAs(ctx, &certificatesPlan, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	certificates := make([]management.IdentityProviderSAMLAllOfIdpVerificationCertificates, 0)
+	for _, certificatePlan := range certificatesPlan {
+		certificate := management.NewIdentityProviderSAMLAllOfIdpVerificationCertificates(certificatePlan.Id.ValueString())
+		certificates = append(certificates, *certificate)
+	}
+
+	data := management.NewIdentityProviderSAMLAllOfIdpVerification(
+		certificates,
+	)
+
+	return data, diags
+}
+
+func (p *IdentityProviderSAMLResourceSpSigningModel) expand(ctx context.Context) (*management.IdentityProviderSAMLAllOfSpSigning, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var keyPlan IdentityProviderSAMLResourceSpSigningKeyModel
+	diags.Append(p.Key.As(ctx, &keyPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	key := management.NewIdentityProviderSAMLAllOfSpSigningKey(keyPlan.Id.ValueString())
+
+	data := management.NewIdentityProviderSAMLAllOfSpSigning(
+		*key,
+	)
+
+	if !p.Algorithm.IsNull() && !p.Algorithm.IsUnknown() {
+		data.SetAlgorithm(management.EnumIdentityProviderSAMLSigningAlgorithm(p.Algorithm.ValueString()))
 	}
 
 	return data, diags
@@ -1771,10 +1918,24 @@ func identityProviderSAMLToTF(idpApiObject *management.IdentityProviderSAML) (ty
 		return types.ObjectNull(identityProviderSAMLTFObjectTypes), diags
 	}
 
+	idpVerification, d := identityProviderSAMLIdPVerificationOkToTF(idpApiObject.GetIdpVerificationOk())
+	diags.Append(d...)
+	if diags.HasError() {
+		return types.ObjectNull(identityProviderSAMLTFObjectTypes), diags
+	}
+
+	spSigning, d := identityProviderSAMLSpSigningOkToTF(idpApiObject.GetSpSigningOk())
+	diags.Append(d...)
+	if diags.HasError() {
+		return types.ObjectNull(identityProviderSAMLTFObjectTypes), diags
+	}
+
 	attributesMap := map[string]attr.Value{
 		"authentication_request_signed": framework.BoolOkToTF(idpApiObject.GetAuthnRequestSignedOk()),
 		"idp_entity_id":                 framework.StringOkToTF(idpApiObject.GetIdpEntityIdOk()),
 		"sp_entity_id":                  framework.StringOkToTF(idpApiObject.GetSpEntityIdOk()),
+		"idp_verification":              idpVerification,
+		"sp_signing":                    spSigning,
 		"sso_binding":                   framework.EnumOkToTF(idpApiObject.GetSsoBindingOk()),
 		"sso_endpoint":                  framework.StringOkToTF(idpApiObject.GetSsoEndpointOk()),
 		"slo_binding":                   framework.EnumOkToTF(idpApiObject.GetSloBindingOk()),
@@ -1783,26 +1944,99 @@ func identityProviderSAMLToTF(idpApiObject *management.IdentityProviderSAML) (ty
 		"slo_window":                    framework.Int32OkToTF(idpApiObject.GetSloWindowOk()),
 	}
 
-	attributesMap["idp_verification_certificate_ids"] = types.SetNull(pingonetypes.ResourceIDType{})
-	if v, ok := idpApiObject.GetIdpVerificationOk(); ok {
-		if c, ok := v.GetCertificatesOk(); ok {
-			ids := make([]string, 0)
-			for _, certificate := range c {
-				ids = append(ids, certificate.GetId())
-			}
-
-			attributesMap["idp_verification_certificate_ids"] = framework.PingOneResourceIDSetToTF(ids)
-		}
-	}
-
-	attributesMap["sp_signing_key_id"] = pingonetypes.NewResourceIDNull()
-	if v, ok := idpApiObject.GetSpSigningOk(); ok {
-		if c, ok := v.GetKeyOk(); ok {
-			attributesMap["sp_signing_key_id"] = framework.PingOneResourceIDOkToTF(c.GetIdOk())
-		}
-	}
-
 	returnVar, d := types.ObjectValue(identityProviderSAMLTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func identityProviderSAMLIdPVerificationOkToTF(apiObject *management.IdentityProviderSAMLAllOfIdpVerification, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(identityProviderSAMLIdPVerificationTFObjectTypes), diags
+	}
+
+	certificates, d := identityProviderSAMLIdPVerificationCertificatesOkToTF(apiObject.GetCertificatesOk())
+	diags.Append(d...)
+	if diags.HasError() {
+		return types.ObjectNull(identityProviderSAMLIdPVerificationTFObjectTypes), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"certificates": certificates,
+	}
+
+	returnVar, d := types.ObjectValue(identityProviderSAMLIdPVerificationTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func identityProviderSAMLIdPVerificationCertificatesOkToTF(apiObject []management.IdentityProviderSAMLAllOfIdpVerificationCertificates, ok bool) (types.Set, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	tfObjType := types.ObjectType{AttrTypes: identityProviderSAMLIdPVerificationCertificateTFObjectTypes}
+
+	if !ok || len(apiObject) == 0 {
+		return types.SetNull(tfObjType), diags
+	}
+
+	flattenedList := []attr.Value{}
+	for _, v := range apiObject {
+
+		objMap := map[string]attr.Value{
+			"id": framework.PingOneResourceIDOkToTF(v.GetIdOk()),
+		}
+
+		flattenedObj, d := types.ObjectValue(identityProviderSAMLIdPVerificationCertificateTFObjectTypes, objMap)
+		diags.Append(d...)
+
+		flattenedList = append(flattenedList, flattenedObj)
+	}
+
+	returnVar, d := types.SetValue(tfObjType, flattenedList)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func identityProviderSAMLSpSigningOkToTF(apiObject *management.IdentityProviderSAMLAllOfSpSigning, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(identityProviderSAMLSpSigningTFObjectTypes), diags
+	}
+
+	key, d := identityProviderSAMLSpSigningKeyOkToTF(apiObject.GetKeyOk())
+	diags.Append(d...)
+	if diags.HasError() {
+		return types.ObjectNull(identityProviderSAMLSpSigningTFObjectTypes), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"key":       key,
+		"algorithm": framework.EnumOkToTF(apiObject.GetAlgorithmOk()),
+	}
+
+	returnVar, d := types.ObjectValue(identityProviderSAMLSpSigningTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func identityProviderSAMLSpSigningKeyOkToTF(apiObject *management.IdentityProviderSAMLAllOfSpSigningKey, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(identityProviderSAMLSpSigningKeyTFObjectTypes), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"id": framework.PingOneResourceIDOkToTF(apiObject.GetIdOk()),
+	}
+
+	returnVar, d := types.ObjectValue(identityProviderSAMLSpSigningKeyTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags

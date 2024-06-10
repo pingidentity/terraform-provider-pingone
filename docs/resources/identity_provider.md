@@ -207,7 +207,7 @@ Required:
 Required:
 
 - `idp_entity_id` (String) A string that specifies the entity ID URI that is checked against the `issuerId` tag in the incoming response.
-- `idp_verification_certificate_ids` (Set of String) An unordered list that specifies the identity provider's certificate IDs used to verify the signature on the signed assertion from the identity provider. Signing is done with a private key and verified with a public key.  Items must be valid PingOne resource IDs.
+- `idp_verification` (Attributes) A single object that specifies settings for SAML IdP verification, including the list of IdP certificates used to verify the signature on the signed assertion of the identity provider. (see [below for nested schema](#nestedatt--saml--idp_verification))
 - `sp_entity_id` (String) A string that specifies the service provider's entity ID, used to look up the application.
 - `sso_binding` (String) A string that specifies the binding for the authentication request.  Options are `HTTP_POST`, `HTTP_REDIRECT`.
 - `sso_endpoint` (String) A string that specifies the SSO endpoint for the authentication request.  This value must be a URL that uses http or https.
@@ -219,7 +219,43 @@ Optional:
 - `slo_endpoint` (String) A string that specifies the logout endpoint URL. This is an optional property. However, if a logout endpoint URL is not defined, logout actions result in an error.  This value must be a URL that uses http or https.
 - `slo_response_endpoint` (String) A string that specifies the endpoint URL to submit the logout response.  If a value is not provided, the `slo_endpoint` property value is used to submit SLO response.  This value must be a URL that uses http or https.
 - `slo_window` (Number) An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request. The minimum value is `1` hour and the maximum is `24` hours.
-- `sp_signing_key_id` (String) A string that specifies the service provider's signing key ID.  Must be a valid PingOne resource ID.
+- `sp_signing` (Attributes) A single object that specifies settings for SAML assertion signing, including the key and the signature algorithm.  Required when `authentication_request_signed` is set to `true`. (see [below for nested schema](#nestedatt--saml--sp_signing))
+
+<a id="nestedatt--saml--idp_verification"></a>
+### Nested Schema for `saml.idp_verification`
+
+Required:
+
+- `certificates` (Attributes Set) An unordered list that specifies the identity provider's certificate IDs used to verify the signature on the signed assertion from the identity provider. Signing is done with a private key and verified with a public key. (see [below for nested schema](#nestedatt--saml--idp_verification--certificates))
+
+<a id="nestedatt--saml--idp_verification--certificates"></a>
+### Nested Schema for `saml.idp_verification.certificates`
+
+Required:
+
+- `id` (String) A string that specifies the identity provider's certificate ID used to verify the signature on the signed assertion from the identity provider.  Must be a valid PingOne resource ID.
+
+
+
+<a id="nestedatt--saml--sp_signing"></a>
+### Nested Schema for `saml.sp_signing`
+
+Required:
+
+- `key` (Attributes) A single object that specifies settings for the SAML Sp Signing key. (see [below for nested schema](#nestedatt--saml--sp_signing--key))
+
+Optional:
+
+- `algorithm` (String) The signing key algorithm used by PingOne. The value will depend on which key algorithm and signature algorithm you chose when creating your signing key.  Options are `SHA256withECDSA`, `SHA256withRSA`, `SHA384withECDSA`, `SHA384withRSA`, `SHA512eithEDCSA`, `SHA512withRSA`.
+
+<a id="nestedatt--saml--sp_signing--key"></a>
+### Nested Schema for `saml.sp_signing.key`
+
+Required:
+
+- `id` (String) A string that specifies the service provider's signing key ID.  Must be a valid PingOne resource ID.
+
+
 
 
 <a id="nestedatt--twitter"></a>
