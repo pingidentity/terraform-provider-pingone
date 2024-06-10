@@ -20,6 +20,7 @@ var IPv6RegexpFull = regexp.MustCompile(fmt.Sprintf(`^%s$`, IPv6Regexp.String())
 var IPv4IPv6Regexp = regexp.MustCompile(fmt.Sprintf(`%s|%s`, IPv4RegexpFull.String(), IPv6RegexpFull.String()))
 var HexColorCode = regexp.MustCompile(`^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$`)
 
+var IsDomain = regexp.MustCompile(`^(?:[\w-]+\.)+[a-z]{2,}$`)
 var urlRegexStringWithoutProtocol = `(?:[\w-]+\.)+[a-z]{2,}(?:\/[\w.-]+)*(?:\/[\w\:.-]+)?\/?(?:\?.*)?$`
 var IsURLWithHTTPorHTTPS = regexp.MustCompile(fmt.Sprintf(`^http[s]{0,1}:\/\/%s`, urlRegexStringWithoutProtocol))
 var IsURLWithHTTPS = regexp.MustCompile(fmt.Sprintf(`^https:\/\/%s`, urlRegexStringWithoutProtocol))

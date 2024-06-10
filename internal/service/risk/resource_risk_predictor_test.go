@@ -275,6 +275,146 @@ func TestAccRiskPredictor_Composite(t *testing.T) {
 	})
 }
 
+func TestAccRiskPredictor_Adversary_In_The_Middle(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := resourceName
+
+	fullCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "ADVERSARY_IN_THE_MIDDLE"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_adversary_in_the_middle.allowed_domain_list.#", "3"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_adversary_in_the_middle.allowed_domain_list.*", "domain1.com"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_adversary_in_the_middle.allowed_domain_list.*", "domain2.com"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_adversary_in_the_middle.allowed_domain_list.*", "domain3.com"),
+	)
+
+	minimalCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "ADVERSARY_IN_THE_MIDDLE"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "default.result.level"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_adversary_in_the_middle.allowed_domain_list.#", "0"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			{
+				Config: testAccRiskPredictorConfig_Adversary_In_The_Middle_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_Adversary_In_The_Middle_Full(resourceName, name),
+				Destroy: true,
+			},
+			// Minimal
+			{
+				Config: testAccRiskPredictorConfig_Adversary_In_The_Middle_Minimal(resourceName, name),
+				Check:  minimalCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_Adversary_In_The_Middle_Minimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			{
+				Config: testAccRiskPredictorConfig_Adversary_In_The_Middle_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_Adversary_In_The_Middle_Minimal(resourceName, name),
+				Check:  minimalCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_Adversary_In_The_Middle_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccRiskPredictor_Adversary_In_The_Middle_OverwriteUndeletable(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := resourceName
+	compactName := "adversaryInTheMiddle"
+
+	fullCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "name", name),
+		resource.TestCheckResourceAttr(resourceFullName, "compact_name", "adversaryInTheMiddle"),
+		resource.TestCheckResourceAttr(resourceFullName, "type", "ADVERSARY_IN_THE_MIDDLE"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_adversary_in_the_middle.allowed_domain_list.#", "3"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_adversary_in_the_middle.allowed_domain_list.*", "domain1.com"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_adversary_in_the_middle.allowed_domain_list.*", "domain2.com"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "predictor_adversary_in_the_middle.allowed_domain_list.*", "domain3.com"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroyUndeletable,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			{
+				Config: testAccRiskPredictorConfig_Adversary_In_The_Middle_OverwriteUndeletable(resourceName, name, compactName),
+				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccRiskPredictor_Anonymous_Network(t *testing.T) {
 	t.Parallel()
 
@@ -1260,6 +1400,140 @@ func TestAccRiskPredictor_NewDevice_OverwriteUndeletable(t *testing.T) {
 	})
 }
 
+func TestAccRiskPredictor_Email_Reputation(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := resourceName
+
+	fullCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "EMAIL_REPUTATION"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_email_reputation.#", "0"),
+	)
+
+	minimalCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "EMAIL_REPUTATION"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "default.result.level"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_email_reputation.#", "0"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			{
+				Config: testAccRiskPredictorConfig_Email_Reputation_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_Email_Reputation_Full(resourceName, name),
+				Destroy: true,
+			},
+			// Minimal
+			{
+				Config: testAccRiskPredictorConfig_Email_Reputation_Minimal(resourceName, name),
+				Check:  minimalCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_Email_Reputation_Minimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			{
+				Config: testAccRiskPredictorConfig_Email_Reputation_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_Email_Reputation_Minimal(resourceName, name),
+				Check:  minimalCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_Email_Reputation_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccRiskPredictor_Email_Reputation_OverwriteUndeletable(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := resourceName
+	compactName := "emailReputation"
+
+	fullCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "name", name),
+		resource.TestCheckResourceAttr(resourceFullName, "compact_name", "emailReputation"),
+		resource.TestCheckResourceAttr(resourceFullName, "type", "EMAIL_REPUTATION"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_email_reputation.#", "0"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroyUndeletable,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			{
+				Config: testAccRiskPredictorConfig_Email_Reputation_OverwriteUndeletable(resourceName, name, compactName),
+				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccRiskPredictor_SuspiciousDevice(t *testing.T) {
 	t.Parallel()
 
@@ -2060,6 +2334,75 @@ func testAccRiskPredictorConfig_Minimal(resourceName, name string) string {
 	return testAccRiskPredictorConfig_Anonymous_Network_Minimal(resourceName, name)
 }
 
+func testAccRiskPredictorConfig_Adversary_In_The_Middle_Full(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+  description  = "When my wife is upset, I let her colour in my black and white tattoos.  She just needs a shoulder to crayon.."
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  predictor_adversary_in_the_middle = {
+    allowed_domain_list = [
+      "domain2.com",
+      "domain1.com",
+      "domain3.com",
+    ]
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_Adversary_In_The_Middle_Minimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+
+  predictor_adversary_in_the_middle = {}
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_Adversary_In_The_Middle_OverwriteUndeletable(resourceName, name, compactName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[4]s"
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  predictor_adversary_in_the_middle = {
+    allowed_domain_list = [
+      "domain2.com",
+      "domain1.com",
+      "domain3.com",
+    ]
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
+}
+
 func testAccRiskPredictorConfig_Anonymous_Network_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -2712,6 +3055,63 @@ resource "pingone_risk_predictor" "%[2]s" {
     activation_at = "%[5]s"
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName, activationAt)
+}
+
+func testAccRiskPredictorConfig_Email_Reputation_Full(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+  description  = "The neighbours said their dog will retrieve sticks from 10 miles away.  Sounds far fetched to me."
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  predictor_email_reputation = {}
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_Email_Reputation_Minimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+
+  predictor_email_reputation = {}
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorConfig_Email_Reputation_OverwriteUndeletable(resourceName, name, compactName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[4]s"
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  predictor_email_reputation = {}
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
 }
 
 func testAccRiskPredictorConfig_SuspiciousDevice_Full(resourceName, name string) string {
