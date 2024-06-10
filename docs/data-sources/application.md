@@ -85,6 +85,10 @@ Read-Only:
 - `allow_wildcards_in_redirect_uris` (Boolean) A boolean to specify whether wildcards are allowed in redirect URIs. For more information, see [Wildcards in Redirect URIs](https://docs.pingidentity.com/csh?context=p1_c_wildcard_redirect_uri).
 - `certificate_based_authentication` (Attributes) Certificate based authentication settings. (see [below for nested schema](#nestedatt--oidc_options--certificate_based_authentication))
 - `cors_settings` (Attributes) A single object that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings. (see [below for nested schema](#nestedatt--oidc_options--cors_settings))
+- `device_custom_verification_uri` (String) A string that specifies an optional custom verification URI that is returned for the `/device_authorization` endpoint.
+- `device_path_id` (String) A string that describes a unique identifier within an environment for a device authorization grant flow to provide a short identifier to the application. This property is ignored when the `device_custom_verification_uri` property is configured.
+- `device_polling_interval` (Number) An integer that specifies the frequency (in seconds) for the client to poll the `/as/token` endpoint.
+- `device_timeout` (Number) An integer that specifies the length of time (in seconds) that the `userCode` and `deviceCode` returned by the `/device_authorization` endpoint are valid.
 - `grant_types` (Set of String) A list that specifies the grant type for the authorization request.
 - `home_page_url` (String) The custom home page URL for the application.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.
 - `initiate_login_uri` (String) A string that specifies the URI to use for third-parties to begin the sign-on process for the application.
