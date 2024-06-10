@@ -81,6 +81,22 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 		"The custom home page URL for the application.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.",
 	)
 
+	oidcOptionsDevicePathIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that describes a unique identifier within an environment for a device authorization grant flow to provide a short identifier to the application. This property is ignored when the `device_custom_verification_uri` property is configured.",
+	)
+
+	oidcOptionsDeviceCustomVerificationUriDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies an optional custom verification URI that is returned for the `/device_authorization` endpoint.",
+	)
+
+	oidcOptionsDeviceTimeoutDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the length of time (in seconds) that the `userCode` and `deviceCode` returned by the `/device_authorization` endpoint are valid.",
+	)
+
+	oidcOptionsDevicePollingIntervalDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the frequency (in seconds) for the client to poll the `/as/token` endpoint.",
+	)
+
 	oidcJwksDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_authn_method`. This property is required when `token_endpoint_authn_method` is `PRIVATE_KEY_JWT` and the `jwks_url` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks_url` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).",
 	)
@@ -235,6 +251,26 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 					"home_page_url": schema.StringAttribute{
 						Description:         oidcHomePageURLDescription.Description,
 						MarkdownDescription: oidcHomePageURLDescription.MarkdownDescription,
+						Computed:            true,
+					},
+					"device_path_id": schema.StringAttribute{
+						Description:         oidcOptionsDevicePathIdDescription.Description,
+						MarkdownDescription: oidcOptionsDevicePathIdDescription.MarkdownDescription,
+						Computed:            true,
+					},
+					"device_custom_verification_uri": schema.StringAttribute{
+						Description:         oidcOptionsDeviceCustomVerificationUriDescription.Description,
+						MarkdownDescription: oidcOptionsDeviceCustomVerificationUriDescription.MarkdownDescription,
+						Computed:            true,
+					},
+					"device_timeout": schema.Int64Attribute{
+						Description:         oidcOptionsDeviceTimeoutDescription.Description,
+						MarkdownDescription: oidcOptionsDeviceTimeoutDescription.MarkdownDescription,
+						Computed:            true,
+					},
+					"device_polling_interval": schema.Int64Attribute{
+						Description:         oidcOptionsDevicePollingIntervalDescription.Description,
+						MarkdownDescription: oidcOptionsDevicePollingIntervalDescription.MarkdownDescription,
 						Computed:            true,
 					},
 					"initiate_login_uri": schema.StringAttribute{

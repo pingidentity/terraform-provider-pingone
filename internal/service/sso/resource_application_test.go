@@ -1137,6 +1137,10 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "IMPLICIT"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "REFRESH_TOKEN"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.device_path_id"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.device_custom_verification_uri"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_timeout", "600"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_polling_interval", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "3"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "TOKEN"),
@@ -1228,6 +1232,10 @@ func TestAccApplication_OIDCMinimalCustom(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.grant_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "CLIENT_CREDENTIALS"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.device_path_id"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.device_custom_verification_uri"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_timeout", "600"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_polling_interval", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
@@ -1298,6 +1306,10 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "IMPLICIT"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "REFRESH_TOKEN"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.device_path_id"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.device_custom_verification_uri"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_timeout", "600"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_polling_interval", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "3"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "TOKEN"),
@@ -1352,6 +1364,10 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.grant_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "CLIENT_CREDENTIALS"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.device_path_id"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.device_custom_verification_uri"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_timeout", "600"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_polling_interval", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
@@ -1398,6 +1414,10 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "IMPLICIT"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "REFRESH_TOKEN"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.device_path_id"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.device_custom_verification_uri"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_timeout", "600"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_polling_interval", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "3"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "TOKEN"),
@@ -1434,6 +1454,72 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccApplication_OIDCCustom_Device(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+
+	name := resourceName
+
+	testStepFull := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_Custom_Device_Full(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.grant_types.#", "2"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "DEVICE_CODE"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "REFRESH_TOKEN"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_path_id", "mobileAppId-1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_custom_verification_uri", "https://pingidentity.com/verification1"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_timeout", "500"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_polling_interval", "10"),
+		),
+	}
+
+	testStepMinimal := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_Custom_Device_Minimal(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.grant_types.#", "1"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "DEVICE_CODE"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.device_path_id"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.device_custom_verification_uri"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_timeout", "600"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_polling_interval", "5"),
+		),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.Application_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// With
+			testStepFull,
+			{
+				Config:  testAccApplicationConfig_OIDC_Custom_Device_Full(resourceName, name),
+				Destroy: true,
+			},
+			// Without
+			testStepMinimal,
+			{
+				Config:  testAccApplicationConfig_OIDC_Custom_Device_Minimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			testStepFull,
+			testStepMinimal,
+			testStepFull,
+			{
+				Config:  testAccApplicationConfig_OIDC_Custom_Device_Full(resourceName, name),
+				Destroy: true,
 			},
 		},
 	})
@@ -3761,6 +3847,47 @@ resource "pingone_application" "%[2]s" {
   oidc_options = {
     type                        = "CUSTOM_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationConfig_OIDC_Custom_Device_Full(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options = {
+    type                        = "CUSTOM_APP"
+    grant_types                 = ["DEVICE_CODE", "REFRESH_TOKEN"]
+    token_endpoint_authn_method = "NONE"
+
+    device_path_id                 = "mobileAppId-1"
+    device_custom_verification_uri = "https://pingidentity.com/verification1"
+    device_timeout                 = 500
+    device_polling_interval        = 10
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationConfig_OIDC_Custom_Device_Minimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options = {
+    type                        = "CUSTOM_APP"
+    grant_types                 = ["DEVICE_CODE"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
   }
 }

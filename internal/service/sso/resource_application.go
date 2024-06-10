@@ -69,9 +69,15 @@ type ApplicationOIDCOptionsResourceModel struct {
 	AllowWildcardsInRedirectUris                  types.Bool   `tfsdk:"allow_wildcards_in_redirect_uris"`
 	CertificateBasedAuthentication                types.Object `tfsdk:"certificate_based_authentication"`
 	CorsSettings                                  types.Object `tfsdk:"cors_settings"`
+	DevicePathId                                  types.String `tfsdk:"device_path_id"`
+	DeviceCustomVerificationUri                   types.String `tfsdk:"device_custom_verification_uri"`
+	DeviceTimeout                                 types.Int64  `tfsdk:"device_timeout"`
+	DevicePollingInterval                         types.Int64  `tfsdk:"device_polling_interval"`
 	GrantTypes                                    types.Set    `tfsdk:"grant_types"`
 	HomePageUrl                                   types.String `tfsdk:"home_page_url"`
 	InitiateLoginUri                              types.String `tfsdk:"initiate_login_uri"`
+	Jwks                                          types.String `tfsdk:"jwks"`
+	JwksUrl                                       types.String `tfsdk:"jwks_url"`
 	MobileApp                                     types.Object `tfsdk:"mobile_app"`
 	ParRequirement                                types.String `tfsdk:"par_requirement"`
 	ParTimeout                                    types.Int64  `tfsdk:"par_timeout"`
@@ -84,8 +90,6 @@ type ApplicationOIDCOptionsResourceModel struct {
 	RequireSignedRequestObject                    types.Bool   `tfsdk:"require_signed_request_object"`
 	ResponseTypes                                 types.Set    `tfsdk:"response_types"`
 	SupportUnsignedRequestObject                  types.Bool   `tfsdk:"support_unsigned_request_object"`
-	Jwks                                          types.String `tfsdk:"jwks"`
-	JwksUrl                                       types.String `tfsdk:"jwks_url"`
 	TargetLinkUri                                 types.String `tfsdk:"target_link_uri"`
 	TokenEndpointAuthnMethod                      types.String `tfsdk:"token_endpoint_authn_method"`
 	Type                                          types.String `tfsdk:"type"`
@@ -170,9 +174,15 @@ var (
 		"allow_wildcards_in_redirect_uris":                   types.BoolType,
 		"certificate_based_authentication":                   types.ObjectType{AttrTypes: applicationOidcOptionsCertificateAuthenticationTFObjectTypes},
 		"cors_settings":                                      types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
+		"device_path_id":                                     types.StringType,
+		"device_custom_verification_uri":                     types.StringType,
+		"device_timeout":                                     types.Int64Type,
+		"device_polling_interval":                            types.Int64Type,
 		"grant_types":                                        types.SetType{ElemType: types.StringType},
 		"home_page_url":                                      types.StringType,
 		"initiate_login_uri":                                 types.StringType,
+		"jwks_url":                                           types.StringType,
+		"jwks":                                               types.StringType,
 		"mobile_app":                                         types.ObjectType{AttrTypes: applicationOidcMobileAppTFObjectTypes},
 		"par_requirement":                                    types.StringType,
 		"par_timeout":                                        types.Int64Type,
@@ -185,8 +195,6 @@ var (
 		"require_signed_request_object":                      types.BoolType,
 		"response_types":                                     types.SetType{ElemType: types.StringType},
 		"support_unsigned_request_object":                    types.BoolType,
-		"jwks":                                               types.StringType,
-		"jwks_url":                                           types.StringType,
 		"target_link_uri":                                    types.StringType,
 		"token_endpoint_authn_method":                        types.StringType,
 		"type":                                               types.StringType,
@@ -351,6 +359,30 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 		"A string that specifies the custom home page URL for the application.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.",
 	)
 
+	const oidcOptionsDevicePathIdMin = 1
+	const oidcOptionsDevicePathIdMax = 50
+	oidcOptionsDevicePathIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A string that specifies a unique identifier within an environment for a device authorization grant flow to provide a short identifier to the application. This property is ignored when the `device_custom_verification_uri` property is configured. The string can contain any letters, numbers, and some special characters (regex: `a-zA-Z0-9_-`). It can have a length of no more than `%[2]d` characters (min/max=`%[1]d`/`%[2]d`).", oidcOptionsDevicePathIdMin, oidcOptionsDevicePathIdMax),
+	)
+
+	oidcOptionsDeviceCustomVerificationUriDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies an optional custom verification URI that is returned for the `/device_authorization` endpoint.",
+	)
+
+	const oidcOptionsDeviceTimeoutDefault = 600
+	const oidcOptionsDeviceTimeoutMin = 1
+	const oidcOptionsDeviceTimeoutMax = 3600
+	oidcOptionsDeviceTimeoutDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that specifies the length of time (in seconds) that the `userCode` and `deviceCode` returned by the `/device_authorization` endpoint are valid. This property is required only for applications in which the `grant_types` property is set to `%[1]s`. The default value is `%[2]d` seconds. It can have a value of no more than `%[4]d` seconds (min/max=`%[3]d`/`%[4]d`).", management.ENUMAPPLICATIONOIDCGRANTTYPE_DEVICE_CODE, oidcOptionsDeviceTimeoutDefault, oidcOptionsDeviceTimeoutMin, oidcOptionsDeviceTimeoutMax),
+	)
+
+	const oidcOptionsDevicePollingIntervalDefault = 5
+	const oidcOptionsDevicePollingIntervalMin = 1
+	const oidcOptionsDevicePollingIntervalMax = 60
+	oidcOptionsDevicePollingIntervalDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that specifies the frequency (in seconds) for the client to poll the `/as/token` endpoint. This property is required only for applications in which the `grant_types` property is set to `%[1]s`. The default value is `%[2]d` seconds. It can have a value of no more than `%[4]d` seconds (min/max=`%[3]d`/`%[4]d`).", management.ENUMAPPLICATIONOIDCGRANTTYPE_DEVICE_CODE, oidcOptionsDevicePollingIntervalDefault, oidcOptionsDevicePollingIntervalMin, oidcOptionsDevicePollingIntervalMax),
+	)
+
 	oidcOptionsInitiateLoginUriDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the URI to use for third-parties to begin the sign-on process for the application. If specified, PingOne redirects users to this URI to initiate SSO to PingOne. The application is responsible for implementing the relevant OIDC flow when the initiate login URI is requested. This property is required if you want the application to appear in the PingOne Application Portal. See the OIDC specification section of [Initiating Login from a Third Party](https://openid.net/specs/openid-connect-core-1_0.html#ThirdPartyInitiatedLogin) for more information.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.",
 	)
@@ -369,12 +401,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 	oidcOptionsGrantTypesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A list that specifies the grant type for the authorization request.",
-	).AllowedValuesEnum([]string{
-		string(management.ENUMAPPLICATIONOIDCGRANTTYPE_AUTHORIZATION_CODE),
-		string(management.ENUMAPPLICATIONOIDCGRANTTYPE_IMPLICIT),
-		string(management.ENUMAPPLICATIONOIDCGRANTTYPE_REFRESH_TOKEN),
-		string(management.ENUMAPPLICATIONOIDCGRANTTYPE_CLIENT_CREDENTIALS),
-	})
+	).AllowedValuesEnum(management.AllowedEnumApplicationOIDCGrantTypeEnumValues)
 
 	oidcOptionsResponseTypesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A list that specifies the code or token type returned by an authorization request.",
@@ -778,6 +805,49 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 						Validators: []validator.String{
 							stringvalidator.RegexMatches(regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(https:\/\/).*)`), "Expected value to have a url with schema of \"https\".  \"http\" urls are permitted when using localhost hosts \"localhost\" and \"127.0.0.1\"."),
+						},
+					},
+
+					"device_path_id": schema.StringAttribute{
+						Description:         oidcOptionsDevicePathIdDescription.Description,
+						MarkdownDescription: oidcOptionsDevicePathIdDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(regexp.MustCompile(`^[a-zA-Z0-9_-]*`), "The string can contain any letters, numbers, underscore and dash characters"),
+							stringvalidator.LengthBetween(oidcOptionsDevicePathIdMin, oidcOptionsDevicePathIdMax),
+						},
+					},
+
+					"device_custom_verification_uri": schema.StringAttribute{
+						Description:         oidcOptionsDeviceCustomVerificationUriDescription.Description,
+						MarkdownDescription: oidcOptionsDeviceCustomVerificationUriDescription.MarkdownDescription,
+						Optional:            true,
+					},
+
+					"device_timeout": schema.Int64Attribute{
+						Description:         oidcOptionsDeviceTimeoutDescription.Description,
+						MarkdownDescription: oidcOptionsDeviceTimeoutDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: int64default.StaticInt64(oidcOptionsDeviceTimeoutDefault),
+
+						Validators: []validator.Int64{
+							int64validator.Between(oidcOptionsDeviceTimeoutMin, oidcOptionsDeviceTimeoutMax),
+						},
+					},
+
+					"device_polling_interval": schema.Int64Attribute{
+						Description:         oidcOptionsDevicePollingIntervalDescription.Description,
+						MarkdownDescription: oidcOptionsDevicePollingIntervalDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: int64default.StaticInt64(oidcOptionsDevicePollingIntervalDefault),
+
+						Validators: []validator.Int64{
+							int64validator.Between(oidcOptionsDevicePollingIntervalMin, oidcOptionsDevicePollingIntervalMax),
 						},
 					},
 
@@ -1967,6 +2037,22 @@ func (p *ApplicationResourceModel) expandApplicationOIDC(ctx context.Context) (*
 
 		if !plan.HomePageUrl.IsNull() && !plan.HomePageUrl.IsUnknown() {
 			data.SetHomePageUrl(plan.HomePageUrl.ValueString())
+		}
+
+		if !plan.DevicePathId.IsNull() && !plan.DevicePathId.IsUnknown() {
+			data.SetDevicePathId(plan.DevicePathId.ValueString())
+		}
+
+		if !plan.DeviceCustomVerificationUri.IsNull() && !plan.DeviceCustomVerificationUri.IsUnknown() {
+			data.SetDeviceCustomVerificationUri(plan.DeviceCustomVerificationUri.ValueString())
+		}
+
+		if !plan.DeviceTimeout.IsNull() && !plan.DeviceTimeout.IsUnknown() {
+			data.SetDeviceTimeout(int32(plan.DeviceTimeout.ValueInt64()))
+		}
+
+		if !plan.DevicePollingInterval.IsNull() && !plan.DevicePollingInterval.IsUnknown() {
+			data.SetDevicePollingInterval(int32(plan.DevicePollingInterval.ValueInt64()))
 		}
 
 		if !plan.InitiateLoginUri.IsNull() && !plan.InitiateLoginUri.IsUnknown() {
