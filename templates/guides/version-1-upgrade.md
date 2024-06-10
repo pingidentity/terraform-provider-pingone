@@ -1895,6 +1895,78 @@ resource "pingone_identity_provider" "my_awesome_identity_provider" {
 }
 ```
 
+### `saml.idp_verification_certificate_ids` parameter moved
+
+The `saml.idp_verification_certificate_ids` parameter has been moved to `saml.idp_verification.certificates.*.id`
+
+Previous configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  saml {
+    idp_verification_certificate_ids = [
+      var.saml_idp_verification_certificate_id_1,
+      var.saml_idp_verification_certificate_id_2,
+    ]
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  saml = {
+    idp_verification = {
+      certificates = [
+        {
+          id = var.saml_idp_verification_certificate_id_1
+        },
+        {
+          id = var.saml_idp_verification_certificate_id_2
+        }
+      ]
+    }
+  }
+}
+```
+
+### `saml.sp_signing_key_id` parameter moved
+
+The `saml.sp_signing_key_id` parameter has been moved to `saml.sp_signing.key.id`
+
+Previous configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  saml {
+    sp_signing_key_id = var.saml_sp_signing_key_id
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_identity_provider" "my_awesome_identity_provider" {
+  # ... other configuration parameters
+
+  saml = {
+    sp_signing = {
+      key = {
+        id = var.saml_sp_signing_key_id
+      }
+    }
+  }
+}
+```
+
 ### `twitter` parameter data type change
 
 The `twitter` parameter is now a nested object type and no longer a block type.
