@@ -1,13 +1,13 @@
 ---
 page_title: "pingone_population_default_identity_provider Resource - terraform-provider-pingone"
-subcategory: "Authorize"
+subcategory: "SSO"
 description: |-
-  Resource to create and manage a default Identity Provider for a given population in a PingOne environment.
+  Resource to create and manage the default Identity Provider for a given population in a PingOne environment.
 ---
 
 # pingone_population_default_identity_provider (Resource)
 
-Resource to create and manage a default Identity Provider for a given population in a PingOne environment.
+Resource to create and manage the default Identity Provider for a given population in a PingOne environment.
 
 ## Example Usage
 
@@ -53,16 +53,15 @@ resource "pingone_population_default_identity_provider" "my_awesome_population" 
 
 ### Required
 
-- `environment_id` (String) The ID of the environment that contains the population to assign a default Identity provider for.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
-- `population_id` (String) The ID of the population to assign the default Identity Provider for.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `environment_id` (String) The ID of the environment that contains the population to assign a default Identity provider to.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `population_id` (String) The ID of the population to assign the default Identity Provider to.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Optional
 
-- `identity_provider_id` (String) The ID of the Identity Provider to assign as the default for the given population.  To specify PingOne as the default identity provider, leave this value unset.  Must be a valid PingOne resource ID.
+- `identity_provider_id` (String) The ID of the Identity Provider to assign as the default for the given population.  To specify PingOne as the default identity provider, leave this field undefined, or assign a null value.  When defined, must be a valid PingOne resource ID.
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
 - `type` (String) The type of the Identity Provider.
 
 ## Import

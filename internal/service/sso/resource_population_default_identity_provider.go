@@ -51,21 +51,19 @@ func (r *PopulationDefaultIdpResource) Schema(ctx context.Context, req resource.
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage a default Identity Provider for a given population in a PingOne environment.",
+		Description: "Resource to create and manage the default Identity Provider for a given population in a PingOne environment.",
 
 		Attributes: map[string]schema.Attribute{
-			"id": framework.Attr_ID(),
-
 			"environment_id": framework.Attr_LinkID(
-				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment that contains the population to assign a default Identity provider for."),
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment that contains the population to assign a default Identity provider to."),
 			),
 
 			"population_id": framework.Attr_LinkID(
-				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the population to assign the default Identity Provider for."),
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the population to assign the default Identity Provider to."),
 			),
 
 			"identity_provider_id": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("The ID of the Identity Provider to assign as the default for the given population.  To specify PingOne as the default identity provider, leave this value unset.  Must be a valid PingOne resource ID.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The ID of the Identity Provider to assign as the default for the given population.  To specify PingOne as the default identity provider, leave this field undefined, or assign a null value.  When defined, must be a valid PingOne resource ID.").Description,
 				Optional:    true,
 
 				CustomType: pingonetypes.ResourceIDType{},
@@ -285,9 +283,8 @@ func (r *PopulationDefaultIdpResource) ImportState(ctx context.Context, req reso
 			Regexp: verify.P1ResourceIDRegexp,
 		},
 		{
-			Label:     "population_id",
-			Regexp:    verify.P1ResourceIDRegexp,
-			PrimaryID: true,
+			Label:  "population_id",
+			Regexp: verify.P1ResourceIDRegexp,
 		},
 	}
 
