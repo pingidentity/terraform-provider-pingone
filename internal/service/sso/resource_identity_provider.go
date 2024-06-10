@@ -196,7 +196,7 @@ var (
 	}
 
 	identityProviderSAMLIdPVerificationTFObjectTypes = map[string]attr.Type{
-		"certificates": types.SetType{ElemType: pingonetypes.ResourceIDType{}},
+		"certificates": types.SetType{ElemType: types.ObjectType{AttrTypes: identityProviderSAMLIdPVerificationCertificateTFObjectTypes}},
 	}
 
 	identityProviderSAMLIdPVerificationCertificateTFObjectTypes = map[string]attr.Type{
@@ -283,6 +283,10 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 
 	samlIdpEntityIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the entity ID URI that is checked against the `issuerId` tag in the incoming response.",
+	)
+
+	samlSpSigningDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies settings for SAML assertion signing, including the key and the signature algorithm.  Required when `authentication_request_signed` is set to `true`.",
 	)
 
 	samlSpSigningAlgorithmDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -745,8 +749,9 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 					},
 
 					"sp_signing": schema.SingleNestedAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies settings for SAML assertion signing, including the key and the signature algorithm.").Description,
-						Optional:    true,
+						Description:         samlSpSigningDescription.Description,
+						MarkdownDescription: samlSpSigningDescription.MarkdownDescription,
+						Optional:            true,
 
 						Attributes: map[string]schema.Attribute{
 							"algorithm": schema.StringAttribute{
@@ -761,7 +766,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 
 							"key": schema.SingleNestedAttribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies settings for the SAML Sp Signing key.").Description,
-								Optional:    true,
+								Required:    true,
 
 								Attributes: map[string]schema.Attribute{
 									"id": schema.StringAttribute{

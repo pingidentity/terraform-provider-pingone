@@ -219,7 +219,7 @@ Optional:
 - `slo_endpoint` (String) A string that specifies the logout endpoint URL. This is an optional property. However, if a logout endpoint URL is not defined, logout actions result in an error.  This value must be a URL that uses http or https.
 - `slo_response_endpoint` (String) A string that specifies the endpoint URL to submit the logout response.  If a value is not provided, the `slo_endpoint` property value is used to submit SLO response.  This value must be a URL that uses http or https.
 - `slo_window` (Number) An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request. The minimum value is `1` hour and the maximum is `24` hours.
-- `sp_signing` (Attributes) A single object that specifies settings for SAML assertion signing, including the key and the signature algorithm. (see [below for nested schema](#nestedatt--saml--sp_signing))
+- `sp_signing` (Attributes) A single object that specifies settings for SAML assertion signing, including the key and the signature algorithm.  Required when `authentication_request_signed` is set to `true`. (see [below for nested schema](#nestedatt--saml--sp_signing))
 
 <a id="nestedatt--saml--idp_verification"></a>
 ### Nested Schema for `saml.idp_verification`
@@ -240,10 +240,13 @@ Required:
 <a id="nestedatt--saml--sp_signing"></a>
 ### Nested Schema for `saml.sp_signing`
 
+Required:
+
+- `key` (Attributes) A single object that specifies settings for the SAML Sp Signing key. (see [below for nested schema](#nestedatt--saml--sp_signing--key))
+
 Optional:
 
 - `algorithm` (String) The signing key algorithm used by PingOne. The value will depend on which key algorithm and signature algorithm you chose when creating your signing key.  Options are `SHA256withECDSA`, `SHA256withRSA`, `SHA384withECDSA`, `SHA384withRSA`, `SHA512eithEDCSA`, `SHA512withRSA`.
-- `key` (Attributes) A single object that specifies settings for the SAML Sp Signing key. (see [below for nested schema](#nestedatt--saml--sp_signing--key))
 
 <a id="nestedatt--saml--sp_signing--key"></a>
 ### Nested Schema for `saml.sp_signing.key`
