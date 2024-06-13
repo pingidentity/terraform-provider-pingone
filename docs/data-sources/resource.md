@@ -34,8 +34,8 @@ data "pingone_resource" "example_by_id" {
 
 ### Optional
 
-- `name` (String) The name of the resource.  At least one of the following must be defined: `resource_id`, `name`.
-- `resource_id` (String) The ID of the resource.  At least one of the following must be defined: `resource_id`, `name`.  Must be a valid PingOne resource ID.
+- `name` (String) The name of the resource.  Exactly one of the following must be defined: `resource_id`, `name`.
+- `resource_id` (String) The ID of the resource.  Exactly one of the following must be defined: `resource_id`, `name`.  Must be a valid PingOne resource ID.
 
 ### Read-Only
 

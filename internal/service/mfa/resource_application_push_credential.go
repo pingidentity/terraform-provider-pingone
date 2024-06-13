@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -80,6 +79,18 @@ func (r *ApplicationPushCredentialResource) Schema(ctx context.Context, req reso
 		"A string in JSON format that represents the service account credentials of Firebase cloud messaging service.",
 	)
 
+	fcmDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies the credential settings for the Firebase Cloud Messaging service.",
+	).RequiresReplaceNestedAttributes()
+
+	apnsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies the credential settings for the Apple Push Notification Service.",
+	).RequiresReplaceNestedAttributes()
+
+	hmsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies the credential settings for Huawei Moble Service push messaging.",
+	).RequiresReplaceNestedAttributes()
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage push credentials for a mobile MFA application configured in PingOne.",
@@ -96,7 +107,8 @@ func (r *ApplicationPushCredentialResource) Schema(ctx context.Context, req reso
 			),
 
 			"fcm": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the credential settings for the Firebase Cloud Messaging service.").Description,
+				Description:         fcmDescription.Description,
+				MarkdownDescription: fcmDescription.MarkdownDescription,
 
 				Optional: true,
 
@@ -120,11 +132,7 @@ func (r *ApplicationPushCredentialResource) Schema(ctx context.Context, req reso
 				},
 
 				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.RequiresReplaceIf(
-						objectplanmodifierinternal.RequiresReplaceIfNowNull(),
-						"The attribute has been previously defined.  To nullify the attribute, this will change the credential type and it must be replaced.",
-						"The attribute has been previously defined.  To nullify the attribute, this will change the credential type and it must be replaced.",
-					),
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
 				},
 
 				Validators: []validator.Object{
@@ -137,7 +145,8 @@ func (r *ApplicationPushCredentialResource) Schema(ctx context.Context, req reso
 			},
 
 			"apns": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the credential settings for the Apple Push Notification Service.").Description,
+				Description:         apnsDescription.Description,
+				MarkdownDescription: apnsDescription.MarkdownDescription,
 
 				Optional: true,
 
@@ -173,11 +182,7 @@ func (r *ApplicationPushCredentialResource) Schema(ctx context.Context, req reso
 				},
 
 				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.RequiresReplaceIf(
-						objectplanmodifierinternal.RequiresReplaceIfNowNull(),
-						"The attribute has been previously defined.  To nullify the attribute, this will change the credential type and it must be replaced.",
-						"The attribute has been previously defined.  To nullify the attribute, this will change the credential type and it must be replaced.",
-					),
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
 				},
 
 				Validators: []validator.Object{
@@ -190,7 +195,8 @@ func (r *ApplicationPushCredentialResource) Schema(ctx context.Context, req reso
 			},
 
 			"hms": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the credential settings for Huawei Moble Service push messaging.").Description,
+				Description:         hmsDescription.Description,
+				MarkdownDescription: hmsDescription.MarkdownDescription,
 
 				Optional: true,
 
@@ -217,11 +223,7 @@ func (r *ApplicationPushCredentialResource) Schema(ctx context.Context, req reso
 				},
 
 				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.RequiresReplaceIf(
-						objectplanmodifierinternal.RequiresReplaceIfNowNull(),
-						"The attribute has been previously defined.  To nullify the attribute, this will change the credential type and it must be replaced.",
-						"The attribute has been previously defined.  To nullify the attribute, this will change the credential type and it must be replaced.",
-					),
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
 				},
 
 				Validators: []validator.Object{

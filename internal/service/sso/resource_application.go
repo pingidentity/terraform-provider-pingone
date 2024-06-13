@@ -29,6 +29,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	objectplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectplanmodifier"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -334,7 +335,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 	externalLinkOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that specifies External link application specific settings.",
-	).ExactlyOneOf(appTypesExactlyOneOf)
+	).ExactlyOneOf(appTypesExactlyOneOf).RequiresReplaceNestedAttributes()
 
 	externalLinkOptionsHomePageURLDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the custom home page URL for the application.  Both `http://` and `https://` URLs are permitted.",
@@ -342,7 +343,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 	oidcOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that specifies OIDC/OAuth application specific settings.",
-	).ExactlyOneOf(appTypesExactlyOneOf)
+	).ExactlyOneOf(appTypesExactlyOneOf).RequiresReplaceNestedAttributes()
 
 	oidcOptionsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type associated with the application.",
@@ -551,7 +552,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 	samlOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that specifies SAML application specific settings.",
-	).ExactlyOneOf(appTypesExactlyOneOf)
+	).ExactlyOneOf(appTypesExactlyOneOf).RequiresReplaceNestedAttributes()
 
 	samlOptionsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type associated with the application.",
@@ -768,6 +769,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						path.MatchRelative().AtParent().AtName("oidc_options"),
 						path.MatchRelative().AtParent().AtName("saml_options"),
 					),
+				},
+
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
 				},
 			},
 
@@ -1315,6 +1320,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						path.MatchRelative().AtParent().AtName("saml_options"),
 					),
 				},
+
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
+				},
 			},
 
 			"saml_options": schema.SingleNestedAttribute{
@@ -1502,6 +1511,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						path.MatchRelative().AtParent().AtName("oidc_options"),
 						path.MatchRelative().AtParent().AtName("saml_options"),
 					),
+				},
+
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
 				},
 			},
 		},

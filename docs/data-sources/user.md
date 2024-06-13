@@ -40,9 +40,9 @@ data "pingone_user" "example_by_id" {
 
 ### Optional
 
-- `email` (String) A string that specifies the user's email address. For more information about email address formatting, see section 3.4 of [RFC 2822, Internet Message Format](http://www.faqs.org/rfcs/rfc2822.html).  At least one of the following must be defined: `user_id`, `username`, `email`.
-- `user_id` (String) A string that specifies the ID of the user.  Must be a valid PingOne resource ID.  At least one of the following must be defined: `user_id`, `username`, `email`.
-- `username` (String) A string that specifies the user name, which is unique within an environment. The `username` must either be a well-formed email address or a string. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace.  At least one of the following must be defined: `user_id`, `username`, `email`.
+- `email` (String) A string that specifies the user's email address. For more information about email address formatting, see section 3.4 of [RFC 2822, Internet Message Format](http://www.faqs.org/rfcs/rfc2822.html).  Exactly one of the following must be defined: `user_id`, `username`, `email`.
+- `user_id` (String) A string that specifies the ID of the user.  Must be a valid PingOne resource ID.  Exactly one of the following must be defined: `user_id`, `username`, `email`.
+- `username` (String) A string that specifies the user name, which is unique within an environment. The `username` must either be a well-formed email address or a string. The string can contain any letters, numbers, combining characters, math and currency symbols, dingbats and drawing characters, and invisible whitespace.  Exactly one of the following must be defined: `user_id`, `username`, `email`.
 
 ### Read-Only
 

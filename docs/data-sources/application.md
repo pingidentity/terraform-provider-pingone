@@ -32,8 +32,8 @@ data "pingone_application" "example_by_id" {
 
 ### Optional
 
-- `application_id` (String) The identifier (UUID) of the application.  At least one of the following must be defined: `application_id`, `name`.  Must be a valid PingOne resource ID.
-- `name` (String) The name of the application.  At least one of the following must be defined: `application_id`, `name`.
+- `application_id` (String) The identifier (UUID) of the application.  Exactly one of the following must be defined: `application_id`, `name`.  Must be a valid PingOne resource ID.
+- `name` (String) The name of the application.  Exactly one of the following must be defined: `application_id`, `name`.
 
 ### Read-Only
 
