@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_risk_predictor`: Fixed issue that forced replacement of a resource if a mutable field changed within a "resource type" object.
+```
