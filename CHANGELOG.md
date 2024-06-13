@@ -10,6 +10,10 @@ NOTES:
 * bump `github.com/patrickcping/pingone-go-sdk-v2/verify` 0.4.1 => 0.5.0 ([#827](https://github.com/pingidentity/terraform-provider-pingone/issues/827))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` 0.11.9 => 0.12.0 ([#827](https://github.com/pingidentity/terraform-provider-pingone/issues/827))
 
+BUG FIXES:
+
+* `resource/pingone_risk_predictor`: Fixed issue that forced replacement of a resource if a mutable field changed within a "resource type" object. ([#838](https://github.com/pingidentity/terraform-provider-pingone/issues/838))
+
 ## 0.28.0 (13 May 2024)
 
 NOTES:
