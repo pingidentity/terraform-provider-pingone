@@ -136,7 +136,7 @@ Required:
 
 Optional:
 
-- `category` (String) A string that specifies what type of banner should be displayed to the user.  Options are `APPROVE_AND_OPEN_APP` (when the Approve button is clicked, authentication is completed and the user is taken to the relevant application), `BANNER_BUTTONS` (the banner contains both Approve and Deny buttons), `WITHOUT_BANNER_BUTTONS` (when the user clicks the banner, they are taken to an application that contains the necessary approval controls).  Defaults to `DOC ERROR: Unknown default data type`.  Note that to use the non-default push banners, you must implement them in your application code, using the PingOne SDK. For details, see the [README for iOS](https://github.com/pingidentity/pingone-mobile-sdk-ios/#171-push-notifications-categories) and the [README for Android](https://github.com/pingidentity/pingone-mobile-sdk-android).
+- `category` (String) A string that specifies what type of banner should be displayed to the user.  Options are `APPROVE_AND_OPEN_APP` (when the Approve button is clicked, authentication is completed and the user is taken to the relevant application), `BANNER_BUTTONS` (the banner contains both Approve and Deny buttons), `WITHOUT_BANNER_BUTTONS` (when the user clicks the banner, they are taken to an application that contains the necessary approval controls).  Defaults to `BANNER_BUTTONS`.  Note that to use the non-default push banners, you must implement them in your application code, using the PingOne SDK. For details, see the [README for iOS](https://github.com/pingidentity/pingone-mobile-sdk-ios/#171-push-notifications-categories) and the [README for Android](https://github.com/pingidentity/pingone-mobile-sdk-android).
 
 
 <a id="nestedatt--sms"></a>

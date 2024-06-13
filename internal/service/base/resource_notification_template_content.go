@@ -199,7 +199,7 @@ func (r *NotificationTemplateContentResource) Schema(ctx context.Context, req re
 		string(management.ENUMTEMPLATECONTENTPUSHCATEGORY_BANNER_BUTTONS):         "the banner contains both Approve and Deny buttons",
 		string(management.ENUMTEMPLATECONTENTPUSHCATEGORY_WITHOUT_BANNER_BUTTONS): "when the user clicks the banner, they are taken to an application that contains the necessary approval controls",
 		string(management.ENUMTEMPLATECONTENTPUSHCATEGORY_APPROVE_AND_OPEN_APP):   "when the Approve button is clicked, authentication is completed and the user is taken to the relevant application",
-	}).DefaultValue(management.ENUMTEMPLATECONTENTPUSHCATEGORY_BANNER_BUTTONS).AppendMarkdownString("Note that to use the non-default push banners, you must implement them in your application code, using the PingOne SDK. For details, see the [README for iOS](https://github.com/pingidentity/pingone-mobile-sdk-ios/#171-push-notifications-categories) and the [README for Android](https://github.com/pingidentity/pingone-mobile-sdk-android).")
+	}).DefaultValue(string(management.ENUMTEMPLATECONTENTPUSHCATEGORY_BANNER_BUTTONS)).AppendMarkdownString("Note that to use the non-default push banners, you must implement them in your application code, using the PingOne SDK. For details, see the [README for iOS](https://github.com/pingidentity/pingone-mobile-sdk-ios/#171-push-notifications-categories) and the [README for Android](https://github.com/pingidentity/pingone-mobile-sdk-android).")
 
 	const pushBodyMinLength = 1
 	const pushBodyMaxLength = 400
