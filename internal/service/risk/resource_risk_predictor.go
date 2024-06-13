@@ -669,7 +669,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				Validators: predictorObjectValidators,
 
 				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.RequiresReplace(),
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
 				},
 			},
 
@@ -897,7 +897,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				Validators: predictorObjectValidators,
 
 				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.RequiresReplace(),
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
 				},
 			},
 
@@ -913,7 +913,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				Validators: predictorObjectValidators,
 
 				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.RequiresReplace(),
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
 				},
 			},
 
@@ -929,53 +929,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				Validators: predictorObjectValidators,
 
 				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.RequiresReplace(),
-				},
-			},
-
-			"predictor_email_reputation": schema.SingleNestedAttribute{
-				Description:         predictorEmailReputationDescription.Description,
-				MarkdownDescription: predictorEmailReputationDescription.MarkdownDescription,
-				Optional:            true,
-
-				Attributes: map[string]schema.Attribute{},
-
-				Validators: predictorObjectValidators,
-
-				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.RequiresReplace(),
-				},
-			},
-
-			"predictor_geovelocity": schema.SingleNestedAttribute{
-				Description:         predictorGeovelocityDescription.Description,
-				MarkdownDescription: predictorGeovelocityDescription.MarkdownDescription,
-				Optional:            true,
-
-				Attributes: map[string]schema.Attribute{
-					"allowed_cidr_list": allowedCIDRSchemaAttribute(),
-				},
-
-				Validators: predictorObjectValidators,
-
-				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.RequiresReplace(),
-				},
-			},
-
-			"predictor_ip_reputation": schema.SingleNestedAttribute{
-				Description:         predictorIPReputationDescription.Description,
-				MarkdownDescription: predictorIPReputationDescription.MarkdownDescription,
-				Optional:            true,
-
-				Attributes: map[string]schema.Attribute{
-					"allowed_cidr_list": allowedCIDRSchemaAttribute(),
-				},
-
-				Validators: predictorObjectValidators,
-
-				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.RequiresReplace(),
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
 				},
 			},
 
