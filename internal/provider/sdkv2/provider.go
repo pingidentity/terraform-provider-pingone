@@ -126,12 +126,11 @@ func New(version string) func() *schema.Provider {
 			ResourcesMap: map[string]*schema.Resource{
 				"pingone_authorize_decision_endpoint": authorize.ResourceDecisionEndpoint(),
 
-				"pingone_certificate":                   base.ResourceCertificate(),
-				"pingone_certificate_signing_response":  base.ResourceCertificateSigningResponse(),
-				"pingone_gateway_credential":            base.ResourceGatewayCredential(),
-				"pingone_language":                      base.ResourceLanguage(),
-				"pingone_language_update":               base.ResourceLanguageUpdate(),
-				"pingone_notification_template_content": base.ResourceNotificationTemplateContent(),
+				"pingone_certificate":                  base.ResourceCertificate(),
+				"pingone_certificate_signing_response": base.ResourceCertificateSigningResponse(),
+				"pingone_gateway_credential":           base.ResourceGatewayCredential(),
+				"pingone_language":                     base.ResourceLanguage(),
+				"pingone_language_update":              base.ResourceLanguageUpdate(),
 
 				"pingone_application_sign_on_policy_assignment": sso.ResourceApplicationSignOnPolicyAssignment(),
 				"pingone_sign_on_policy_action":                 sso.ResourceSignOnPolicyAction(),

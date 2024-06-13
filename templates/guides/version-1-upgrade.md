@@ -3387,6 +3387,222 @@ resource "pingone_notification_settings_email" "my_awesome_email_settings" {
 }
 ```
 
+## Resource: pingone_notification_template_content
+
+### `email` parameter data type change
+
+The `email` parameter is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_notification_template_content" "email" {
+  # ... other configuration parameters
+
+  email {
+    body    = "Please approve this transaction with passcode $${otp}."
+    subject = "BX Retail Transaction Request"
+
+    from {
+      name    = "BX Retail"
+      address = "noreply@bxretail.org"
+    }
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_notification_template_content" "email" {
+  # ... other configuration parameters
+
+  email = {
+    body    = "Please approve this transaction with passcode $${otp}."
+    subject = "BX Retail Transaction Request"
+
+    from = {
+      name    = "BX Retail"
+      address = "noreply@bxretail.org"
+    }
+  }
+}
+```
+
+### `email.from` parameter data type change
+
+The `email.from` parameter is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_notification_template_content" "email" {
+  # ... other configuration parameters
+
+  email {
+    body    = "Please approve this transaction with passcode $${otp}."
+    subject = "BX Retail Transaction Request"
+
+    from {
+      name    = "BX Retail"
+      address = "noreply@bxretail.org"
+    }
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_notification_template_content" "email" {
+  # ... other configuration parameters
+
+  email = {
+    body    = "Please approve this transaction with passcode $${otp}."
+    subject = "BX Retail Transaction Request"
+
+    from = {
+      name    = "BX Retail"
+      address = "noreply@bxretail.org"
+    }
+  }
+}
+```
+
+### `email.reply_to` parameter data type change
+
+The `email.reply_to` parameter is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_notification_template_content" "email" {
+  # ... other configuration parameters
+
+  email {
+    # ... other configuration parameters
+
+    body    = "Please approve this transaction with passcode $${otp}."
+    subject = "BX Retail Transaction Request"
+
+    reply_to {
+      name    = "BX Retail"
+      address = "reply@bxretail.org"
+    }
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_notification_template_content" "email" {
+  # ... other configuration parameters
+
+  email = {
+    # ... other configuration parameters
+
+    body    = "Please approve this transaction with passcode $${otp}."
+    subject = "BX Retail Transaction Request"
+
+    reply_to = {
+      name    = "BX Retail"
+      address = "reply@bxretail.org"
+    }
+  }
+}
+```
+
+### `push` parameter data type change
+
+The `push` parameter is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_notification_template_content" "email" {
+  # ... other configuration parameters
+
+  push {
+    body  = "Please approve this transaction."
+    title = "BX Retail Transaction Request"
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_notification_template_content" "email" {
+  # ... other configuration parameters
+
+  push = {
+    body  = "Please approve this transaction."
+    title = "BX Retail Transaction Request"
+  }
+}
+```
+
+### `sms` parameter data type change
+
+The `sms` parameter is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_notification_template_content" "email" {
+  # ... other configuration parameters
+
+  sms {
+    content = "Please approve this transaction with passcode $${otp}."
+    sender  = "BX Retail"
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_notification_template_content" "email" {
+  # ... other configuration parameters
+
+  sms = {
+    content = "Please approve this transaction with passcode $${otp}."
+    sender  = "BX Retail"
+  }
+}
+```
+
+### `voice` parameter data type change
+
+The `voice` parameter is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_notification_template_content" "email" {
+  # ... other configuration parameters
+
+  voice {
+    content = "Hello <pause1sec> your authentication code is <sayCharValue>$${otp}</sayCharValue><pause1sec><pause1sec><repeatMessage val=2>I repeat <pause1sec>your code is <sayCharValue>$${otp}</sayCharValue></repeatMessage>"
+    type    = "Alice"
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_notification_template_content" "email" {
+  # ... other configuration parameters
+
+  voice = {
+    content = "Hello <pause1sec> your authentication code is <sayCharValue>$${otp}</sayCharValue><pause1sec><pause1sec><repeatMessage val=2>I repeat <pause1sec>your code is <sayCharValue>$${otp}</sayCharValue></repeatMessage>"
+    type    = "Alice"
+  }
+}
+```
+
 ## Resource: pingone_password_policy
 
 ### `account_lockout` parameter rename and data type change

@@ -37,6 +37,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/risk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	objectplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectplanmodifier"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	riskservicehelpers "github.com/pingidentity/terraform-provider-pingone/internal/service/risk/helpers"
@@ -684,7 +685,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				Validators: predictorObjectValidators,
 
 				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.RequiresReplace(),
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
 				},
 			},
 
@@ -698,7 +699,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				Validators: predictorObjectValidators,
 
 				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.RequiresReplace(),
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
 				},
 			},
 
@@ -743,7 +744,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				Validators: predictorObjectValidators,
 
 				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.RequiresReplace(),
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
 				},
 			},
 
@@ -836,7 +837,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				Validators: predictorObjectValidators,
 
 				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.RequiresReplace(),
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
 				},
 			},
 
@@ -877,6 +878,52 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 							),
 						},
 					},
+				},
+
+				Validators: predictorObjectValidators,
+
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
+				},
+			},
+
+			"predictor_email_reputation": schema.SingleNestedAttribute{
+				Description:         predictorEmailReputationDescription.Description,
+				MarkdownDescription: predictorEmailReputationDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{},
+
+				Validators: predictorObjectValidators,
+
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.RequiresReplace(),
+				},
+			},
+
+			"predictor_geovelocity": schema.SingleNestedAttribute{
+				Description:         predictorGeovelocityDescription.Description,
+				MarkdownDescription: predictorGeovelocityDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"allowed_cidr_list": allowedCIDRSchemaAttribute(),
+				},
+
+				Validators: predictorObjectValidators,
+
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.RequiresReplace(),
+				},
+			},
+
+			"predictor_ip_reputation": schema.SingleNestedAttribute{
+				Description:         predictorIPReputationDescription.Description,
+				MarkdownDescription: predictorIPReputationDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"allowed_cidr_list": allowedCIDRSchemaAttribute(),
 				},
 
 				Validators: predictorObjectValidators,
@@ -976,7 +1023,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				Validators: predictorObjectValidators,
 
 				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.RequiresReplace(),
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
 				},
 			},
 
@@ -1007,7 +1054,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				Validators: predictorObjectValidators,
 
 				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.RequiresReplace(),
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
 				},
 			},
 
@@ -1221,7 +1268,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				Validators: predictorObjectValidators,
 
 				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.RequiresReplace(),
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
 				},
 			},
 		},
