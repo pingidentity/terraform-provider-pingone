@@ -5,16 +5,13 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
-	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -95,11 +92,12 @@ func TestAccNotificationTemplateContent_OverrideDefaultLocale(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "template_name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "locale", locale),
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
-		resource.TestCheckResourceAttr(resourceFullName, "variant", ""),
-		resource.TestCheckResourceAttr(resourceFullName, "email.#", "0"),
-		resource.TestCheckResourceAttr(resourceFullName, "push.#", "1"),
-		resource.TestCheckResourceAttr(resourceFullName, "sms.#", "0"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.#", "0"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "variant"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "email"),
+		resource.TestCheckResourceAttrSet(resourceFullName, "push.body"),
+		resource.TestCheckResourceAttrSet(resourceFullName, "push.title"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "sms"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "voice"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -164,11 +162,12 @@ func TestAccNotificationTemplateContent_NewLocale(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "template_name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "locale", locale),
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
-		resource.TestCheckResourceAttr(resourceFullName, "variant", ""),
-		resource.TestCheckResourceAttr(resourceFullName, "email.#", "0"),
-		resource.TestCheckResourceAttr(resourceFullName, "push.#", "1"),
-		resource.TestCheckResourceAttr(resourceFullName, "sms.#", "0"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.#", "0"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "variant"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "email"),
+		resource.TestCheckResourceAttr(resourceFullName, "push.body", "Min - Please approve this transaction."),
+		resource.TestCheckResourceAttr(resourceFullName, "push.title", "Min - BX Retail Transaction Request"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "sms"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "voice"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -244,10 +243,11 @@ func TestAccNotificationTemplateContent_NewVariant(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "locale", locale),
 		resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 		resource.TestCheckResourceAttr(resourceFullName, "variant", variant),
-		resource.TestCheckResourceAttr(resourceFullName, "email.#", "1"),
-		resource.TestCheckResourceAttr(resourceFullName, "push.#", "0"),
-		resource.TestCheckResourceAttr(resourceFullName, "sms.#", "0"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.#", "0"),
+		resource.TestCheckResourceAttrSet(resourceFullName, "email.body"),
+		resource.TestCheckResourceAttrSet(resourceFullName, "email.subject"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "push"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "sms"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "voice"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -343,7 +343,7 @@ func TestAccNotificationTemplateContent_ChangeVariant(t *testing.T) {
 			{
 				Config: testAccNotificationTemplateContentConfig_NoVariant_Minimal(environmentName, licenseID, resourceName, name, locale),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "variant", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "variant"),
 				),
 			},
 			{
@@ -383,11 +383,11 @@ func TestAccNotificationTemplateContent_InvalidData(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccNotificationTemplateContentConfig_DefaultVariant_Push_Minimal(environmentName, licenseID, resourceName, name.Invalid, locale.Valid),
-				ExpectError: regexp.MustCompile(fmt.Sprintf(`expected template_name to be one of \["%s"\], got strong_authentication_doesnotexist`, strings.Join(utils.EnumSliceToStringSlice(management.AllowedEnumTemplateNameEnumValues), "\" \""))),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value Match`),
 			},
 			{
 				Config:      testAccNotificationTemplateContentConfig_DefaultVariant_Push_Minimal(environmentName, licenseID, resourceName, name.Valid, locale.Invalid),
-				ExpectError: regexp.MustCompile(`expected locale to be one of \["af" "af-ZA" "ar" "ar-AE" "ar-BH" "ar-DZ" "ar-EG" "ar-IQ" "ar-JO" "ar-KW" "ar-LB" "ar-LY" "ar-MA" "ar-OM" "ar-QA" "ar-SA" "ar-SY" "ar-TN" "ar-YE" "az" "az-AZ" "be" "be-BY" "bg" "bg-BG" "bs-BA" "ca" "ca-ES" "cs" "cs-CZ" "cy" "cy-GB" "da" "da-DK" "de" "de-AT" "de-CH" "de-DE" "de-LI" "de-LU" "dv" "dv-MV" "el" "el-GR" "en" "en-AU" "en-BZ" "en-CA" "en-CB" "en-GB" "en-IE" "en-JM" "en-NZ" "en-PH" "en-TT" "en-US" "en-ZA" "en-ZW" "eo" "es" "es-AR" "es-BO" "es-CL" "es-CO" "es-CR" "es-DO" "es-EC" "es-ES" "es-GT" "es-HN" "es-MX" "es-NI" "es-PA" "es-PE" "es-PR" "es-PY" "es-SV" "es-UY" "es-VE" "et" "et-EE" "eu" "eu-ES" "fa" "fa-IR" "fi" "fi-FI" "fo" "fo-FO" "fr" "fr-BE" "fr-CA" "fr-CH" "fr-FR" "fr-LU" "fr-MC" "gl" "gl-ES" "gu" "gu-IN" "he" "he-IL" "hi" "hi-IN" "hr" "hr-BA" "hr-HR" "hu" "hu-HU" "hy" "hy-AM" "id" "id-ID" "is" "is-IS" "it" "it-CH" "it-IT" "ja" "ja-JP" "ka" "ka-GE" "kk" "kk-KZ" "kn" "kn-IN" "ko" "ko-KR" "kok" "kok-IN" "ky" "ky-KG" "lt" "lt-LT" "lv" "lv-LV" "mi" "mi-NZ" "mk" "mk-MK" "mn" "mn-MN" "mr" "mr-IN" "ms" "ms-BN" "ms-MY" "mt" "mt-MT" "nb" "nb-NO" "nl" "nl-BE" "nl-NL" "nn-NO" "ns" "ns-ZA" "pa" "pa-IN" "pl" "pl-PL" "ps" "ps-AR" "pt" "pt-BR" "pt-PT" "qu" "qu-BO" "qu-EC" "qu-PE" "ro" "ro-RO" "ru" "ru-RU" "sa" "sa-IN" "se" "se-FI" "se-NO" "se-SE" "sk" "sk-SK" "sl" "sl-SI" "sq" "sq-AL" "sr-BA" "sr-SP" "sv" "sv-FI" "sv-SE" "sw" "sw-KE" "syr" "syr-SY" "ta" "ta-IN" "te" "te-IN" "th" "th-TH" "tl" "tl-PH" "tn" "tn-ZA" "tr" "tr-TR" "tt" "tt-RU" "ts" "uk" "uk-UA" "ur" "ur-PK" "uz" "uz-UZ" "vi" "vi-VN" "xh" "xh-ZA" "zh" "zh-CN" "zh-HK" "zh-MO" "zh-SG" "zh-TW" "zu" "zu-ZA"\], got en-ZZ`),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value Match`),
 			},
 			{
 				Config:      testAccNotificationTemplateContentConfig_DuplicateLocale(environmentName, licenseID, resourceName, name.Valid, "en"),
@@ -418,34 +418,32 @@ func TestAccNotificationTemplateContent_Email(t *testing.T) {
 		Minimal: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "template_name", template.Valid),
 			resource.TestCheckResourceAttr(resourceFullName, "locale", locale),
-			resource.TestCheckResourceAttr(resourceFullName, "email.#", "1"),
-			resource.TestCheckResourceAttr(resourceFullName, "email.0.subject", "Min - Verify your email address"),
-			resource.TestCheckResourceAttr(resourceFullName, "email.0.body", "Min - <p>\n\tUse the code provided to verify your email address with PingOne. If you think you received this email in error, contact your supervisor.\n\t</p>\n\t<p>\n\tTo verify your email address:\n\t<ol type=\"1\">\n\t  <li>Sign-on to the self-service portal. For instructions, see <a href=\"https://docs.pingidentity.com/bundle/pingone/page/snd1631892368614.html\">Managing your PingOne user profile</a>.</li>\n\t  <li>Enter your verification code in the <b>Contact</b> section: ${code}</li>\n\t  <li>Click <b>Verify</b>.</li>\n\t</ol>\n\t</p>\n"),
-			resource.TestCheckResourceAttr(resourceFullName, "email.0.from.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "email.0.reply_to.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "email.0.character_set", "UTF-8"),
-			resource.TestCheckResourceAttr(resourceFullName, "email.0.content_type", "text/html"),
-			resource.TestCheckResourceAttr(resourceFullName, "push.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "sms.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "voice.#", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "email.subject", "Min - Verify your email address"),
+			resource.TestCheckResourceAttr(resourceFullName, "email.body", "Min - <p>\n\tUse the code provided to verify your email address with PingOne. If you think you received this email in error, contact your supervisor.\n\t</p>\n\t<p>\n\tTo verify your email address:\n\t<ol type=\"1\">\n\t  <li>Sign-on to the self-service portal. For instructions, see <a href=\"https://docs.pingidentity.com/bundle/pingone/page/snd1631892368614.html\">Managing your PingOne user profile</a>.</li>\n\t  <li>Enter your verification code in the <b>Contact</b> section: ${code}</li>\n\t  <li>Click <b>Verify</b>.</li>\n\t</ol>\n\t</p>\n"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "email.from"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "email.reply_to"),
+			resource.TestCheckResourceAttr(resourceFullName, "email.character_set", "UTF-8"),
+			resource.TestCheckResourceAttr(resourceFullName, "email.content_type", "text/html"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "push"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "sms"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "voice"),
 		),
 		Full: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "template_name", template.Valid),
 			resource.TestCheckResourceAttr(resourceFullName, "locale", locale),
-			resource.TestCheckResourceAttr(resourceFullName, "email.#", "1"),
-			resource.TestCheckResourceAttr(resourceFullName, "email.0.subject", "Full - Verify your email address"),
-			resource.TestCheckResourceAttr(resourceFullName, "email.0.body", "Full - <p>\n\tUse the code provided to verify your email address with PingOne. If you think you received this email in error, contact your supervisor.\n\t</p>\n\t<p>\n\tTo verify your email address:\n\t<ol type=\"1\">\n\t  <li>Sign-on to the self-service portal. For instructions, see <a href=\"https://docs.pingidentity.com/bundle/pingone/page/snd1631892368614.html\">Managing your PingOne user profile</a>.</li>\n\t  <li>Enter your verification code in the <b>Contact</b> section: ${code}</li>\n\t  <li>Click <b>Verify</b>.</li>\n\t</ol>\n\t</p>\n"),
-			// resource.TestCheckResourceAttr(resourceFullName, "email.0.from.#", "1"),
-			// resource.TestCheckResourceAttr(resourceFullName, "email.0.from.0.name", "BX Retail"),
-			// resource.TestCheckResourceAttr(resourceFullName, "email.0.from.0.address", "noreply@bxretail.org"),
-			// resource.TestCheckResourceAttr(resourceFullName, "email.0.reply_to.#", "1"),
-			// resource.TestCheckResourceAttr(resourceFullName, "email.0.reply_to.0.name", "BX Retail Reply"),
-			// resource.TestCheckResourceAttr(resourceFullName, "email.0.reply_to.0.address", "reply@bxretail.org"),
-			resource.TestCheckResourceAttr(resourceFullName, "email.0.character_set", "iso-8859-5"),
-			resource.TestCheckResourceAttr(resourceFullName, "email.0.content_type", "text/plain"),
-			resource.TestCheckResourceAttr(resourceFullName, "push.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "sms.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "voice.#", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "email.subject", "Full - Verify your email address"),
+			resource.TestCheckResourceAttr(resourceFullName, "email.body", "Full - <p>\n\tUse the code provided to verify your email address with PingOne. If you think you received this email in error, contact your supervisor.\n\t</p>\n\t<p>\n\tTo verify your email address:\n\t<ol type=\"1\">\n\t  <li>Sign-on to the self-service portal. For instructions, see <a href=\"https://docs.pingidentity.com/bundle/pingone/page/snd1631892368614.html\">Managing your PingOne user profile</a>.</li>\n\t  <li>Enter your verification code in the <b>Contact</b> section: ${code}</li>\n\t  <li>Click <b>Verify</b>.</li>\n\t</ol>\n\t</p>\n"),
+			// resource.TestCheckResourceAttr(resourceFullName, "email.from.#", "1"),
+			// resource.TestCheckResourceAttr(resourceFullName, "email.from.name", "BX Retail"),
+			// resource.TestCheckResourceAttr(resourceFullName, "email.from.address", "noreply@bxretail.org"),
+			// resource.TestCheckResourceAttr(resourceFullName, "email.reply_to.#", "1"),
+			// resource.TestCheckResourceAttr(resourceFullName, "email.reply_to.name", "BX Retail Reply"),
+			// resource.TestCheckResourceAttr(resourceFullName, "email.reply_to.address", "reply@bxretail.org"),
+			resource.TestCheckResourceAttr(resourceFullName, "email.character_set", "iso-8859-5"),
+			resource.TestCheckResourceAttr(resourceFullName, "email.content_type", "text/plain"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "push"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "sms"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "voice"),
 		),
 	}
 
@@ -515,24 +513,22 @@ func TestAccNotificationTemplateContent_Push(t *testing.T) {
 		Minimal: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "template_name", template.Valid),
 			resource.TestCheckResourceAttr(resourceFullName, "locale", locale),
-			resource.TestCheckResourceAttr(resourceFullName, "email.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "push.#", "1"),
-			resource.TestCheckResourceAttr(resourceFullName, "push.0.body", "Min - Please approve this transaction."),
-			resource.TestCheckResourceAttr(resourceFullName, "push.0.title", "Min - BX Retail Transaction Request"),
-			resource.TestCheckResourceAttr(resourceFullName, "push.0.category", "BANNER_BUTTONS"),
-			resource.TestCheckResourceAttr(resourceFullName, "sms.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "voice.#", "0"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "email"),
+			resource.TestCheckResourceAttr(resourceFullName, "push.body", "Min - Please approve this transaction."),
+			resource.TestCheckResourceAttr(resourceFullName, "push.title", "Min - BX Retail Transaction Request"),
+			resource.TestCheckResourceAttr(resourceFullName, "push.category", "BANNER_BUTTONS"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "sms"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "voice"),
 		),
 		Full: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "template_name", template.Valid),
 			resource.TestCheckResourceAttr(resourceFullName, "locale", locale),
-			resource.TestCheckResourceAttr(resourceFullName, "email.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "push.#", "1"),
-			resource.TestCheckResourceAttr(resourceFullName, "push.0.body", "Full - Please approve this transaction."),
-			resource.TestCheckResourceAttr(resourceFullName, "push.0.title", "Full - BX Retail Transaction Request"),
-			resource.TestCheckResourceAttr(resourceFullName, "push.0.category", "WITHOUT_BANNER_BUTTONS"),
-			resource.TestCheckResourceAttr(resourceFullName, "sms.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "voice.#", "0"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "email"),
+			resource.TestCheckResourceAttr(resourceFullName, "push.body", "Full - Please approve this transaction."),
+			resource.TestCheckResourceAttr(resourceFullName, "push.title", "Full - BX Retail Transaction Request"),
+			resource.TestCheckResourceAttr(resourceFullName, "push.category", "WITHOUT_BANNER_BUTTONS"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "sms"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "voice"),
 		),
 	}
 
@@ -611,22 +607,20 @@ func TestAccNotificationTemplateContent_SMS(t *testing.T) {
 		Minimal: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "template_name", template.Valid),
 			resource.TestCheckResourceAttr(resourceFullName, "locale", locale),
-			resource.TestCheckResourceAttr(resourceFullName, "email.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "push.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "sms.#", "1"),
-			resource.TestCheckResourceAttr(resourceFullName, "sms.0.content", "Min - Please approve this transaction with passcode ${otp}."),
-			resource.TestCheckResourceAttr(resourceFullName, "sms.0.sender", ""),
-			resource.TestCheckResourceAttr(resourceFullName, "voice.#", "0"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "email"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "push"),
+			resource.TestCheckResourceAttr(resourceFullName, "sms.content", "Min - Please approve this transaction with passcode ${otp}."),
+			resource.TestCheckNoResourceAttr(resourceFullName, "sms.sender"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "voice"),
 		),
 		Full: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "template_name", template.Valid),
 			resource.TestCheckResourceAttr(resourceFullName, "locale", locale),
-			resource.TestCheckResourceAttr(resourceFullName, "email.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "push.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "sms.#", "1"),
-			resource.TestCheckResourceAttr(resourceFullName, "sms.0.content", "Full - Please approve this transaction with passcode ${otp}."),
-			resource.TestCheckResourceAttr(resourceFullName, "sms.0.sender", "BX Retail"),
-			resource.TestCheckResourceAttr(resourceFullName, "voice.#", "0"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "email"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "push"),
+			resource.TestCheckResourceAttr(resourceFullName, "sms.content", "Full - Please approve this transaction with passcode ${otp}."),
+			resource.TestCheckResourceAttr(resourceFullName, "sms.sender", "BX Retail"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "voice"),
 		),
 	}
 
@@ -705,22 +699,20 @@ func TestAccNotificationTemplateContent_Voice(t *testing.T) {
 		Minimal: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "template_name", template.Valid),
 			resource.TestCheckResourceAttr(resourceFullName, "locale", locale),
-			resource.TestCheckResourceAttr(resourceFullName, "email.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "push.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "sms.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "voice.#", "1"),
-			resource.TestCheckResourceAttr(resourceFullName, "voice.0.content", "Min - Hello <pause1sec> your authentication code is <sayCharValue>${otp}</sayCharValue><pause1sec><pause1sec><repeatMessage val=2>I repeat <pause1sec>your code is <sayCharValue>${otp}</sayCharValue></repeatMessage>"),
-			resource.TestCheckResourceAttr(resourceFullName, "voice.0.type", "Alice"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "email"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "push"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "sms"),
+			resource.TestCheckResourceAttr(resourceFullName, "voice.content", "Min - Hello <pause1sec> your authentication code is <sayCharValue>${otp}</sayCharValue><pause1sec><pause1sec><repeatMessage val=2>I repeat <pause1sec>your code is <sayCharValue>${otp}</sayCharValue></repeatMessage>"),
+			resource.TestCheckResourceAttr(resourceFullName, "voice.type", "Alice"),
 		),
 		Full: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "template_name", template.Valid),
 			resource.TestCheckResourceAttr(resourceFullName, "locale", locale),
-			resource.TestCheckResourceAttr(resourceFullName, "email.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "push.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "sms.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "voice.#", "1"),
-			resource.TestCheckResourceAttr(resourceFullName, "voice.0.content", "Full - Hello <pause1sec> your authentication code is <sayCharValue>${otp}</sayCharValue><pause1sec><pause1sec><repeatMessage val=2>I repeat <pause1sec>your code is <sayCharValue>${otp}</sayCharValue></repeatMessage>"),
-			resource.TestCheckResourceAttr(resourceFullName, "voice.0.type", "Man"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "email"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "push"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "sms"),
+			resource.TestCheckResourceAttr(resourceFullName, "voice.content", "Full - Hello <pause1sec> your authentication code is <sayCharValue>${otp}</sayCharValue><pause1sec><pause1sec><repeatMessage val=2>I repeat <pause1sec>your code is <sayCharValue>${otp}</sayCharValue></repeatMessage>"),
+			resource.TestCheckResourceAttr(resourceFullName, "voice.type", "Man"),
 		),
 	}
 
@@ -809,19 +801,19 @@ func TestAccNotificationTemplateContent_BadParameters(t *testing.T) {
 			{
 				ResourceName: resourceFullName,
 				ImportState:  true,
-				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/template_name/notification_template_content_id" and must match regex: .*`),
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "/",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/template_name/notification_template_content_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "badformat/badformat/badformat",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/template_name/notification_template_content_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})
@@ -842,7 +834,7 @@ resource "pingone_notification_template_content" "%[3]s" {
   template_name  = "%[4]s"
   locale         = "%[5]s"
 
-  push {
+  push = {
     body  = "Min - Please approve this transaction."
     title = "Min - BX Retail Transaction Request"
   }
@@ -863,7 +855,7 @@ resource "pingone_notification_template_content" "%[3]s" {
   locale         = "%[5]s"
   variant        = "%[6]s"
 
-  email {
+  email = {
     body    = <<EOT
 Test $${code.value}
 EOT
@@ -881,7 +873,7 @@ resource "pingone_notification_template_content" "%[3]s" {
   template_name  = "%[4]s"
   locale         = "%[5]s"
 
-  email {
+  email = {
     body    = <<EOT
 Test $${code.value}
 EOT
@@ -900,7 +892,7 @@ resource "pingone_notification_template_content" "%[3]s-1" {
   locale         = "%[5]s"
   variant        = "test-duplicate-locale"
 
-  push {
+  push = {
     body  = "1 - Please approve this transaction."
     title = "1 - BX Retail Transaction Request"
   }
@@ -912,7 +904,7 @@ resource "pingone_notification_template_content" "%[3]s-2" {
   locale         = "%[5]s"
   variant        = "test-duplicate-locale"
 
-  push {
+  push = {
     body  = "2 - Please approve this transaction."
     title = "2 - BX Retail Transaction Request"
   }
@@ -933,7 +925,7 @@ resource "pingone_notification_template_content" "%[3]s" {
   template_name  = "%[4]s"
   locale         = "%[5]s"
 
-  email {
+  email = {
     body    = <<EOT
 Min - <p>
 	Use the code provided to verify your email address with PingOne. If you think you received this email in error, contact your supervisor.
@@ -961,7 +953,7 @@ resource "pingone_notification_template_content" "%[3]s" {
   template_name  = "%[4]s"
   locale         = "%[5]s"
 
-  email {
+  email = {
     body    = <<EOT
 Full - <p>
 	Use the code provided to verify your email address with PingOne. If you think you received this email in error, contact your supervisor.
@@ -977,12 +969,12 @@ Full - <p>
 EOT
     subject = "Full - Verify your email address"
 
-    // from {
+    // from = {
     //   name    = "BX Retail"
     //   address = "noreply@bxretail.org"
     // }
 
-    // reply_to {
+    // reply_to = {
     //   name    = "BX Retail Reply"
     //   address = "reply@bxretail.org"
     // }
@@ -1002,7 +994,7 @@ resource "pingone_notification_template_content" "%[3]s" {
   template_name  = "%[4]s"
   locale         = "%[5]s"
 
-  push {
+  push = {
     body  = "Min - Please approve this transaction."
     title = "Min - BX Retail Transaction Request"
   }
@@ -1018,7 +1010,7 @@ resource "pingone_notification_template_content" "%[3]s" {
   template_name  = "%[4]s"
   locale         = "%[5]s"
 
-  push {
+  push = {
     body  = "Full - Please approve this transaction."
     title = "Full - BX Retail Transaction Request"
 
@@ -1036,7 +1028,7 @@ resource "pingone_notification_template_content" "%[3]s" {
   template_name  = "%[4]s"
   locale         = "%[5]s"
 
-  sms {
+  sms = {
     content = "Min - Please approve this transaction with passcode $${otp}."
   }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
@@ -1051,7 +1043,7 @@ resource "pingone_notification_template_content" "%[3]s" {
   template_name  = "%[4]s"
   locale         = "%[5]s"
 
-  sms {
+  sms = {
     content = "Full - Please approve this transaction with passcode $${otp}."
     sender  = "BX Retail"
   }
@@ -1067,7 +1059,7 @@ resource "pingone_notification_template_content" "%[3]s" {
   template_name  = "%[4]s"
   locale         = "%[5]s"
 
-  voice {
+  voice = {
     content = "Min - Hello <pause1sec> your authentication code is <sayCharValue>$${otp}</sayCharValue><pause1sec><pause1sec><repeatMessage val=2>I repeat <pause1sec>your code is <sayCharValue>$${otp}</sayCharValue></repeatMessage>"
   }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
@@ -1082,7 +1074,7 @@ resource "pingone_notification_template_content" "%[3]s" {
   template_name  = "%[4]s"
   locale         = "%[5]s"
 
-  voice {
+  voice = {
     content = "Full - Hello <pause1sec> your authentication code is <sayCharValue>$${otp}</sayCharValue><pause1sec><pause1sec><repeatMessage val=2>I repeat <pause1sec>your code is <sayCharValue>$${otp}</sayCharValue></repeatMessage>"
     type    = "Man"
   }

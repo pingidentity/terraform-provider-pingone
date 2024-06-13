@@ -7,473 +7,730 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
-	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func ResourceNotificationTemplateContent() *schema.Resource {
-	return &schema.Resource{
+// Types
+type NotificationTemplateContentResource serviceClientType
 
-		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage PingOne notification template contents for push, SMS, email and voice notifications.",
+type NotificationTemplateContentResourceModel struct {
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	TemplateName  types.String                 `tfsdk:"template_name"`
+	Locale        types.String                 `tfsdk:"locale"`
+	Default       types.Bool                   `tfsdk:"default"`
+	Variant       types.String                 `tfsdk:"variant"`
+	Email         types.Object                 `tfsdk:"email"`
+	Push          types.Object                 `tfsdk:"push"`
+	Sms           types.Object                 `tfsdk:"sms"`
+	Voice         types.Object                 `tfsdk:"voice"`
+}
 
-		CreateContext: resourceNotificationTemplateContentCreate,
-		ReadContext:   resourceNotificationTemplateContentRead,
-		UpdateContext: resourceNotificationTemplateContentUpdate,
-		DeleteContext: resourceNotificationTemplateContentDelete,
+type NotificationTemplateContentEmailResourceModel struct {
+	Body         types.String `tfsdk:"body"`
+	From         types.Object `tfsdk:"from"`
+	Subject      types.String `tfsdk:"subject"`
+	ReplyTo      types.Object `tfsdk:"reply_to"`
+	CharacterSet types.String `tfsdk:"character_set"`
+	ContentType  types.String `tfsdk:"content_type"`
+}
 
-		Importer: &schema.ResourceImporter{
-			StateContext: resourceNotificationTemplateContentImport,
+type NotificationTemplateContentEmailAddressResourceModel struct {
+	Name    types.String `tfsdk:"name"`
+	Address types.String `tfsdk:"address"`
+}
+
+type NotificationTemplateContentPushResourceModel struct {
+	Category types.String `tfsdk:"category"`
+	Body     types.String `tfsdk:"body"`
+	Title    types.String `tfsdk:"title"`
+}
+
+type NotificationTemplateContentSmsResourceModel struct {
+	Content types.String `tfsdk:"content"`
+	Sender  types.String `tfsdk:"sender"`
+}
+
+type NotificationTemplateContentVoiceResourceModel struct {
+	Content types.String `tfsdk:"content"`
+	Type    types.String `tfsdk:"type"`
+}
+
+var (
+	notificationTemplateContentEmailTFObjectTypes = map[string]attr.Type{
+		"body": types.StringType,
+		"from": types.ObjectType{
+			AttrTypes: notificationTemplateContentEmailAddressTFObjectTypes,
 		},
+		"subject": types.StringType,
+		"reply_to": types.ObjectType{
+			AttrTypes: notificationTemplateContentEmailAddressTFObjectTypes,
+		},
+		"character_set": types.StringType,
+		"content_type":  types.StringType,
+	}
 
-		Schema: map[string]*schema.Schema{
-			"environment_id": {
-				Description:      "The ID of the environment to manage notification template contents in.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-				ForceNew:         true,
+	notificationTemplateContentEmailAddressTFObjectTypes = map[string]attr.Type{
+		"name":    types.StringType,
+		"address": types.StringType,
+	}
+
+	notificationTemplateContentPushTFObjectTypes = map[string]attr.Type{
+		"category": types.StringType,
+		"body":     types.StringType,
+		"title":    types.StringType,
+	}
+
+	notificationTemplateContentSmsTFObjectTypes = map[string]attr.Type{
+		"content": types.StringType,
+		"sender":  types.StringType,
+	}
+
+	notificationTemplateContentVoiceTFObjectTypes = map[string]attr.Type{
+		"content": types.StringType,
+		"type":    types.StringType,
+	}
+)
+
+// Framework interfaces
+var (
+	_ resource.Resource                = &NotificationTemplateContentResource{}
+	_ resource.ResourceWithConfigure   = &NotificationTemplateContentResource{}
+	_ resource.ResourceWithImportState = &NotificationTemplateContentResource{}
+)
+
+// New Object
+func NewNotificationTemplateContentResource() resource.Resource {
+	return &NotificationTemplateContentResource{}
+}
+
+// Metadata
+func (r *NotificationTemplateContentResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_notification_template_content"
+}
+
+// Schema.
+func (r *NotificationTemplateContentResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+
+	const attrMinLength = 1
+
+	templateNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the ID of the template to manage localised contents for.",
+	).AllowedValuesEnum(management.AllowedEnumTemplateNameEnumValues).RequiresReplace()
+
+	localeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies an ISO standard language code. For more information about standard language codes, see [ISO Language Code Table](http://www.lingoes.net/en/translator/langcode.htm).",
+	).AllowedValuesEnum(verify.FullIsoList()).RequiresReplace()
+
+	const variantMinLength = 1
+	const variantMaxLength = 100
+	variantDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A string that specifies the unique user-defined name for each content variant that uses the same template + `deliveryMethod` + `locale` combination.  This property is case insensitive and has a limit of %d characters.", variantMaxLength),
+	)
+
+	emailDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies properties for the `email` delivery method.  Exactly one of `email`, `push`, `sms` or `voice` must be specified.",
+	)
+
+	const emailBodyMinLength = 1
+	const emailBodyMaxLength = 100000
+
+	emailFromDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies properties for the email sender.",
+	)
+
+	emailFromNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the email's sender name.  If the environment uses the Ping Identity email sender, the name `PingOne` is used. You can configure other email sender names per environment.",
+	)
+
+	emailFromAddressDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the sender email address. If the environment uses the Ping Identity email sender, or if the address field is empty, the address `noreply@pingidentity.com` is used.  You can configure other email sender addresses per environment.",
+	)
+
+	const emailSubjectMinLength = 1
+	const emailSubjectMaxLength = 256
+
+	emailReplyToDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies properties for the email \"reply to\" address.",
+	)
+
+	emailReplyToNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the email's \"reply to\" name.  If the environment uses the Ping Identity email sender, the name `PingOne` is used.  You can configure other email \"reply to\" names per environment.",
+	)
+
+	emailReplyToAddressDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the \"reply to\" email address.  If the environment uses the Ping Identity email sender, or if the address field is empty, the address `noreply@pingidentity.com` is used.  You can configure other email \"reply to\" addresses per environment.",
+	)
+
+	emailCharacterSetDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the email's character set.",
+	).DefaultValue("UTF-8")
+
+	emailContentTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the email's content-type.",
+	).DefaultValue("text/html")
+
+	pushDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies properties for the `push` delivery method.  Exactly one of `email`, `push`, `sms` or `voice` must be specified.",
+	)
+
+	pushCategoryDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies what type of banner should be displayed to the user.",
+	).AllowedValuesComplex(map[string]string{
+		string(management.ENUMTEMPLATECONTENTPUSHCATEGORY_BANNER_BUTTONS):         "the banner contains both Approve and Deny buttons",
+		string(management.ENUMTEMPLATECONTENTPUSHCATEGORY_WITHOUT_BANNER_BUTTONS): "when the user clicks the banner, they are taken to an application that contains the necessary approval controls",
+		string(management.ENUMTEMPLATECONTENTPUSHCATEGORY_APPROVE_AND_OPEN_APP):   "when the Approve button is clicked, authentication is completed and the user is taken to the relevant application",
+	}).DefaultValue(management.ENUMTEMPLATECONTENTPUSHCATEGORY_BANNER_BUTTONS).AppendMarkdownString("Note that to use the non-default push banners, you must implement them in your application code, using the PingOne SDK. For details, see the [README for iOS](https://github.com/pingidentity/pingone-mobile-sdk-ios/#171-push-notifications-categories) and the [README for Android](https://github.com/pingidentity/pingone-mobile-sdk-android).")
+
+	const pushBodyMinLength = 1
+	const pushBodyMaxLength = 400
+
+	const pushTitleMinLength = 1
+	const pushTitleMaxLength = 200
+
+	smsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies properties for the `sms` delivery method.  Exactly one of `email`, `push`, `sms` or `voice` must be specified.",
+	)
+
+	smsSenderDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the SMS sender ID. This property can contain only alphanumeric characters and spaces, and its length cannot exceed 11 characters. In some countries, it is impossible to send an SMS with an alphanumeric sender ID. For those countries, the sender ID must be empty. For SMS recipients in specific countries, refer to Twilio's documentation on [International support for Alphanumeric Sender ID](https://support.twilio.com/hc/en-us/articles/223133767-International-support-for-Alphanumeric-Sender-ID).",
+	)
+
+	voiceDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies properties for the `voice` delivery method.  Exactly one of `email`, `push`, `sms` or `voice` must be specified.",
+	)
+
+	const voiceContentMinLength = 1
+	const voiceContentMaxLength = 1024
+
+	voiceTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the voice type desired for the message. Out of the box options include `Man`, `Woman`, `Alice` (Twilio only), `Amazon Polly`, or your own user-defined custom string. In the case that the selected voice type is not supported by the provider in the desired locale, another voice type will be automatically selected. Additional charges may be incurred for these selections, as determined by the sender.",
+	)
+
+	resp.Schema = schema.Schema{
+		// This description is used by the documentation generator and the language server.
+		Description: "Resource to create and manage PingOne notification template contents for push, SMS, email and voice notifications in an environment.",
+
+		Attributes: map[string]schema.Attribute{
+			"id": framework.Attr_ID(),
+
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to manage notification template contents in."),
+			),
+
+			"template_name": schema.StringAttribute{
+				Description:         templateNameDescription.Description,
+				MarkdownDescription: templateNameDescription.MarkdownDescription,
+				Required:            true,
+
+				Validators: []validator.String{
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumTemplateNameEnumValues)...),
+				},
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
-			"template_name": {
-				Description:      fmt.Sprintf("The ID of the template to manage localised contents for.  Options are `%s`.", strings.Join(utils.EnumSliceToStringSlice(management.AllowedEnumTemplateNameEnumValues), "`, `")),
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(utils.EnumSliceToStringSlice(management.AllowedEnumTemplateNameEnumValues), false)),
-				ForceNew:         true,
+
+			"locale": schema.StringAttribute{
+				Description:         localeDescription.Description,
+				MarkdownDescription: localeDescription.MarkdownDescription,
+				Required:            true,
+
+				Validators: []validator.String{
+					stringvalidator.OneOf(verify.FullIsoList()...),
+				},
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
-			"locale": {
-				Description:      "An ISO standard language code. For more information about standard language codes, see [ISO Language Code Table](http://www.lingoes.net/en/translator/langcode.htm).",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(verify.FullIsoList(), false)),
-				ForceNew:         true,
-			},
-			"default": {
-				Description: "Specifies whether the template is a predefined default template.",
-				Type:        schema.TypeBool,
+
+			"default": schema.BoolAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the template is a predefined default template.").Description,
 				Computed:    true,
 			},
-			"variant": {
-				Description:      "Holds the unique user-defined name for each content variant that uses the same template + `deliveryMethod` + `locale` combination.  This property is case insensitive and has a limit of 100 characters.",
-				Type:             schema.TypeString,
-				Optional:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(1, 100)),
+
+			"variant": schema.StringAttribute{
+				Description:         variantDescription.Description,
+				MarkdownDescription: variantDescription.MarkdownDescription,
+				Optional:            true,
+
+				Validators: []validator.String{
+					stringvalidator.LengthBetween(variantMinLength, variantMaxLength),
+				},
 			},
-			"email": {
-				Description:  "A block that specifies the content settings for the `email` delivery method.",
-				Type:         schema.TypeList,
-				MaxItems:     1,
-				Optional:     true,
-				ForceNew:     true,
-				ExactlyOneOf: []string{"email", "push", "sms", "voice"},
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"body": {
-							Description:      "A string representing the email body. Email text can contain HTML but cannot be larger than 100 kB.  Use of variables is supported.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(1, 100000)),
+
+			"email": schema.SingleNestedAttribute{
+				Description:         emailDescription.Description,
+				MarkdownDescription: emailDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"body": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string representing the email body. Email text can contain HTML but cannot be larger than 100 kB.  Use of variables is supported.").Description,
+						Required:    true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthBetween(emailBodyMinLength, emailBodyMaxLength),
 						},
-						"from": {
-							Description: "A block that specifies the sender settings for the `email` delivery method.",
-							Type:        schema.TypeList,
-							MaxItems:    1,
-							Optional:    true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"name": {
-										Description: "The email's sender name.  If the environment uses the Ping Identity email sender, the name `PingOne` is used. You can configure other email sender names per environment.",
-										Type:        schema.TypeString,
-										Optional:    true,
-										Default:     "PingOne",
-									},
-									"address": {
-										Description: "The sender email address. If the environment uses the Ping Identity email sender, or if the address field is empty, the address `noreply@pingidentity.com` is used.  You can configure other email sender addresses per environment.",
-										Type:        schema.TypeString,
-										Optional:    true,
-										Default:     "noreply@pingidentity.com",
-									},
+					},
+
+					"from": schema.SingleNestedAttribute{
+						Description:         emailFromDescription.Description,
+						MarkdownDescription: emailFromDescription.MarkdownDescription,
+						Optional:            true,
+
+						Attributes: map[string]schema.Attribute{
+							"name": schema.StringAttribute{
+								Description:         emailFromNameDescription.Description,
+								MarkdownDescription: emailFromNameDescription.MarkdownDescription,
+								Optional:            true,
+								Computed:            true,
+
+								Default: stringdefault.StaticString("PingOne"),
+
+								Validators: []validator.String{
+									stringvalidator.AtLeastOneOf(
+										path.MatchRelative().AtParent().AtName("name"),
+										path.MatchRelative().AtParent().AtName("address"),
+									),
+								},
+							},
+
+							"address": schema.StringAttribute{
+								Description:         emailFromAddressDescription.Description,
+								MarkdownDescription: emailFromAddressDescription.MarkdownDescription,
+								Optional:            true,
+								Computed:            true,
+
+								Default: stringdefault.StaticString("noreply@pingidentity.com"),
+
+								Validators: []validator.String{
+									stringvalidator.AtLeastOneOf(
+										path.MatchRelative().AtParent().AtName("name"),
+										path.MatchRelative().AtParent().AtName("address"),
+									),
 								},
 							},
 						},
-						"subject": {
-							Description:      "The email's subject line. Cannot exceed 256 characters. Can include variables.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(1, 256)),
+					},
+
+					"subject": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string representing the email's subject line. Cannot exceed 256 characters. Can include variables.").Description,
+						Required:    true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthBetween(emailSubjectMinLength, emailSubjectMaxLength),
 						},
-						"reply_to": {
-							Description: "A block that specifies the reply-to settings for the `email` delivery method.",
-							Type:        schema.TypeList,
-							MaxItems:    1,
-							Optional:    true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"name": {
-										Description: "The email's \"reply to\" name.  If the environment uses the Ping Identity email sender, the name `PingOne` is used.  You can configure other email \"reply to\" names per environment.",
-										Type:        schema.TypeString,
-										Optional:    true,
-										Computed:    true,
-									},
-									"address": {
-										Description: "The \"reply to\" email address.  If the environment uses the Ping Identity email sender, or if the address field is empty, the address `noreply@pingidentity.com` is used.  You can configure other email \"reply to\" addresses per environment.",
-										Type:        schema.TypeString,
-										Optional:    true,
-										Computed:    true,
-									},
+					},
+
+					"reply_to": schema.SingleNestedAttribute{
+						Description:         emailReplyToDescription.Description,
+						MarkdownDescription: emailReplyToDescription.MarkdownDescription,
+						Optional:            true,
+
+						Attributes: map[string]schema.Attribute{
+							"name": schema.StringAttribute{
+								Description:         emailReplyToNameDescription.Description,
+								MarkdownDescription: emailReplyToNameDescription.MarkdownDescription,
+								Optional:            true,
+								Computed:            true,
+
+								Default: stringdefault.StaticString("PingOne"),
+
+								Validators: []validator.String{
+									stringvalidator.AtLeastOneOf(
+										path.MatchRelative().AtParent().AtName("name"),
+										path.MatchRelative().AtParent().AtName("address"),
+									),
+								},
+							},
+
+							"address": schema.StringAttribute{
+								Description:         emailReplyToAddressDescription.Description,
+								MarkdownDescription: emailReplyToAddressDescription.MarkdownDescription,
+								Optional:            true,
+								Computed:            true,
+
+								Default: stringdefault.StaticString("noreply@pingidentity.com"),
+
+								Validators: []validator.String{
+									stringvalidator.AtLeastOneOf(
+										path.MatchRelative().AtParent().AtName("name"),
+										path.MatchRelative().AtParent().AtName("address"),
+									),
 								},
 							},
 						},
-						"character_set": {
-							Description: "The email's character set.",
-							Type:        schema.TypeString,
-							Optional:    true,
-							Default:     "UTF-8",
-							// TODO: ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(1, 256)),
+					},
+
+					"character_set": schema.StringAttribute{
+						Description:         emailCharacterSetDescription.Description,
+						MarkdownDescription: emailCharacterSetDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: stringdefault.StaticString("UTF-8"),
+					},
+
+					"content_type": schema.StringAttribute{
+						Description:         emailContentTypeDescription.Description,
+						MarkdownDescription: emailContentTypeDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: stringdefault.StaticString("text/html"),
+					},
+				},
+
+				Validators: []validator.Object{
+					objectvalidator.ExactlyOneOf(
+						path.MatchRelative().AtParent().AtName("email"),
+						path.MatchRelative().AtParent().AtName("push"),
+						path.MatchRelative().AtParent().AtName("sms"),
+						path.MatchRelative().AtParent().AtName("voice"),
+					),
+				},
+			},
+
+			"push": schema.SingleNestedAttribute{
+				Description:         pushDescription.Description,
+				MarkdownDescription: pushDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"category": schema.StringAttribute{
+						Description:         pushCategoryDescription.Description,
+						MarkdownDescription: pushCategoryDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: stringdefault.StaticString(string(management.ENUMTEMPLATECONTENTPUSHCATEGORY_BANNER_BUTTONS)),
+
+						Validators: []validator.String{
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumTemplateContentPushCategoryEnumValues)...),
 						},
-						"content_type": {
-							Description: "The email's content-type.",
-							Type:        schema.TypeString,
-							Optional:    true,
-							Default:     "text/html",
-							// TODO: ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(1, 256)),
+					},
+
+					"body": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the push notification text. This can include variables.").Description,
+						Required:    true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthBetween(pushBodyMinLength, pushBodyMaxLength),
+						},
+					},
+
+					"title": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the push notification title. This can include variables.").Description,
+						Required:    true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthBetween(pushTitleMinLength, pushTitleMaxLength),
 						},
 					},
 				},
-			},
-			"push": {
-				Description:  "A block that specifies the content settings for the mobile `push` delivery method.",
-				Type:         schema.TypeList,
-				MaxItems:     1,
-				Optional:     true,
-				ForceNew:     true,
-				ExactlyOneOf: []string{"email", "push", "sms", "voice"},
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"category": {
-							Description:      fmt.Sprintf("For Push content, you can specify what type of banner should be displayed to the user. The available options are `%s` (the banner contains both Approve and Deny buttons), `%s` (when the user clicks the banner, they are taken to an application that contains the necessary approval controls), `%s` (when the Approve button is clicked, authentication is completed and the user is taken to the relevant application).  If this parameter is not provided, the default is `%s`. Note that to use the non-default push banners, you must implement them in your application code, using the PingOne SDK. For details, see the [README for iOS](https://github.com/pingidentity/pingone-mobile-sdk-ios/#171-push-notifications-categories) and the [README for Android](https://github.com/pingidentity/pingone-mobile-sdk-android).", string(management.ENUMTEMPLATECONTENTPUSHCATEGORY_BANNER_BUTTONS), string(management.ENUMTEMPLATECONTENTPUSHCATEGORY_WITHOUT_BANNER_BUTTONS), string(management.ENUMTEMPLATECONTENTPUSHCATEGORY_APPROVE_AND_OPEN_APP), string(management.ENUMTEMPLATECONTENTPUSHCATEGORY_BANNER_BUTTONS)),
-							Type:             schema.TypeString,
-							Optional:         true,
-							Default:          management.ENUMTEMPLATECONTENTPUSHCATEGORY_BANNER_BUTTONS,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMTEMPLATECONTENTPUSHCATEGORY_BANNER_BUTTONS), string(management.ENUMTEMPLATECONTENTPUSHCATEGORY_WITHOUT_BANNER_BUTTONS), string(management.ENUMTEMPLATECONTENTPUSHCATEGORY_APPROVE_AND_OPEN_APP)}, false)),
-						},
-						"body": {
-							Description:      "The push notification text. This can include variables.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(1, 400)),
-						},
-						"title": {
-							Description:      "The push notification title. This can include variables.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(1, 200)),
-						},
-					},
+
+				Validators: []validator.Object{
+					objectvalidator.ExactlyOneOf(
+						path.MatchRelative().AtParent().AtName("email"),
+						path.MatchRelative().AtParent().AtName("push"),
+						path.MatchRelative().AtParent().AtName("sms"),
+						path.MatchRelative().AtParent().AtName("voice"),
+					),
 				},
 			},
-			"sms": {
-				Description:  "A block that specifies the content settings for the `SMS` delivery method.",
-				Type:         schema.TypeList,
-				MaxItems:     1,
-				Optional:     true,
-				ForceNew:     true,
-				ExactlyOneOf: []string{"email", "push", "sms", "voice"},
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"content": {
-							Description: "The SMS text. UC-2 encoding is used for text that contains non GSM-7 characters. UC-2 encoded text cannot exceed 67 characters. GSM-7 encoded text cannot exceed 153 characters. This can include variables.",
-							Type:        schema.TypeString,
-							Required:    true,
-							// ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(1, 153)),
-						},
-						"sender": {
-							Description: "The SMS sender ID. This property can contain only alphanumeric characters and spaces, and its length cannot exceed 11 characters. In some countries, it is impossible to send an SMS with an alphanumeric sender ID. For those countries, the sender ID must be empty. For SMS recipients in specific countries, refer to Twilio's documentation on [International support for Alphanumeric Sender ID](https://support.twilio.com/hc/en-us/articles/223133767-International-support-for-Alphanumeric-Sender-ID).",
-							Type:        schema.TypeString,
-							Optional:    true,
-							// TODO: ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(1, 400)),
-						},
+
+			"sms": schema.SingleNestedAttribute{
+				Description:         smsDescription.Description,
+				MarkdownDescription: smsDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"content": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the SMS text. UC-2 encoding is used for text that contains non GSM-7 characters. UC-2 encoded text cannot exceed 67 characters. GSM-7 encoded text cannot exceed 153 characters. This can include variables.").Description,
+						Required:    true,
+					},
+
+					"sender": schema.StringAttribute{
+						Description:         smsSenderDescription.Description,
+						MarkdownDescription: smsSenderDescription.MarkdownDescription,
+						Optional:            true,
 					},
 				},
+
+				Validators: []validator.Object{
+					objectvalidator.ExactlyOneOf(
+						path.MatchRelative().AtParent().AtName("email"),
+						path.MatchRelative().AtParent().AtName("push"),
+						path.MatchRelative().AtParent().AtName("sms"),
+						path.MatchRelative().AtParent().AtName("voice"),
+					),
+				},
 			},
-			"voice": {
-				Description:  "A block that specifies the content settings for the `voice` delivery method.",
-				Type:         schema.TypeList,
-				MaxItems:     1,
-				Optional:     true,
-				ForceNew:     true,
-				ExactlyOneOf: []string{"email", "push", "sms", "voice"},
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"content": {
-							Description:      "The voice text to read.  This can include variables.",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(1, 1024)),
-						},
-						"type": {
-							Description: "The voice type desired for the message. Out of the box options include `Man`, `Woman`, `Alice` (Twilio only), `Amazon Polly`, or your own user-defined custom string. In the case that the selected voice type is not supported by the provider in the desired locale, another voice type will be automatically selected. Additional charges may be incurred for these selections, as determined by the sender.",
-							Type:        schema.TypeString,
-							Optional:    true,
-							Default:     "Alice",
+
+			"voice": schema.SingleNestedAttribute{
+				Description:         voiceDescription.Description,
+				MarkdownDescription: voiceDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"content": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the voice text to read. This can include variables.").Description,
+						Required:    true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthBetween(voiceContentMinLength, voiceContentMaxLength),
 						},
 					},
+
+					"type": schema.StringAttribute{
+						Description:         voiceTypeDescription.Description,
+						MarkdownDescription: voiceTypeDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: stringdefault.StaticString("Alice"),
+					},
+				},
+
+				Validators: []validator.Object{
+					objectvalidator.ExactlyOneOf(
+						path.MatchRelative().AtParent().AtName("email"),
+						path.MatchRelative().AtParent().AtName("push"),
+						path.MatchRelative().AtParent().AtName("sms"),
+						path.MatchRelative().AtParent().AtName("voice"),
+					),
 				},
 			},
 		},
 	}
 }
 
-func resourceNotificationTemplateContentCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
-
-	var diags diag.Diagnostics
-
-	templateContent, diags := expandNotificationTemplateContent(d)
-	if diags.HasError() {
-		return diags
+func (r *NotificationTemplateContentResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
 	}
 
-	resp, diags := sdk.ParseResponse(
+	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected the provider client, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
+		)
+
+		return
+	}
+
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
+		)
+		return
+	}
+}
+
+func (r *NotificationTemplateContentResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan, state NotificationTemplateContentResourceModel
+
+	if r.Client.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the API
+	notificationTemplateContent, d := plan.expand(ctx)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API calls
+	var response *management.TemplateContent
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.NotificationsTemplatesApi.CreateContent(ctx, d.Get("environment_id").(string), management.EnumTemplateName(d.Get("template_name").(string))).TemplateContent(*templateContent).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.NotificationsTemplatesApi.CreateContent(ctx, plan.EnvironmentId.ValueString(), management.EnumTemplateName(plan.TemplateName.ValueString())).TemplateContent(*notificationTemplateContent).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateContent",
 		notificationTemplateCustomWriteError,
 		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
-		return diags
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	respObject := resp.(*management.TemplateContent)
+	// Create the state to save
+	state = plan
 
-	if respObject.TemplateContentEmail != nil && respObject.TemplateContentEmail.GetId() != "" {
-		d.SetId(respObject.TemplateContentEmail.GetId())
-	} else if respObject.TemplateContentPush != nil && respObject.TemplateContentPush.GetId() != "" {
-		d.SetId(respObject.TemplateContentPush.GetId())
-	} else if respObject.TemplateContentSMS != nil && respObject.TemplateContentSMS.GetId() != "" {
-		d.SetId(respObject.TemplateContentSMS.GetId())
-	} else if respObject.TemplateContentVoice != nil && respObject.TemplateContentVoice.GetId() != "" {
-		d.SetId(respObject.TemplateContentVoice.GetId())
-	} else {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "Notification Template Content Delivery method type not supported in the provider.  Please raise an issue with the provider maintainers.",
-		})
-
-		return diags
-	}
-
-	return resourceNotificationTemplateContentRead(ctx, d, meta)
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourceNotificationTemplateContentRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *NotificationTemplateContentResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *NotificationTemplateContentResourceModel
 
-	var diags diag.Diagnostics
+	if r.Client.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
 
-	resp, diags := sdk.ParseResponse(
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	var response *management.TemplateContent
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.NotificationsTemplatesApi.ReadOneContent(ctx, d.Get("environment_id").(string), management.EnumTemplateName(d.Get("template_name").(string)), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.NotificationsTemplatesApi.ReadOneContent(ctx, data.EnvironmentId.ValueString(), management.EnumTemplateName(data.TemplateName.ValueString()), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneContent",
-		sdk.CustomErrorResourceNotFoundWarning,
+		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
-		return diags
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if resp == nil {
-		d.SetId("")
-		return nil
+	// Remove from state if resource is not found
+	if response == nil {
+		resp.State.RemoveResource(ctx)
+		return
 	}
 
-	respObject := resp.(*management.TemplateContent)
-
-	if respObject.TemplateContentEmail != nil && respObject.TemplateContentEmail.GetId() != "" {
-
-		if v, ok := respObject.TemplateContentEmail.GetLocaleOk(); ok {
-			d.Set("locale", v)
-		} else {
-			d.Set("locale", nil)
-		}
-
-		if v, ok := respObject.TemplateContentEmail.GetDefaultOk(); ok {
-			d.Set("default", v)
-		} else {
-			d.Set("default", nil)
-		}
-
-		if v, ok := respObject.TemplateContentEmail.GetVariantOk(); ok {
-			d.Set("variant", v)
-		} else {
-			d.Set("variant", nil)
-		}
-
-		d.Set("email", flattenNotificationTemplateContentDeliveryMethodEmail(respObject.TemplateContentEmail))
-		d.Set("sms", nil)
-		d.Set("push", nil)
-		d.Set("voice", nil)
-
-	} else if respObject.TemplateContentPush != nil && respObject.TemplateContentPush.GetId() != "" {
-
-		if v, ok := respObject.TemplateContentPush.GetLocaleOk(); ok {
-			d.Set("locale", v)
-		} else {
-			d.Set("locale", nil)
-		}
-
-		if v, ok := respObject.TemplateContentPush.GetDefaultOk(); ok {
-			d.Set("default", v)
-		} else {
-			d.Set("default", nil)
-		}
-
-		if v, ok := respObject.TemplateContentPush.GetVariantOk(); ok {
-			d.Set("variant", v)
-		} else {
-			d.Set("variant", nil)
-		}
-
-		d.Set("email", nil)
-		d.Set("sms", nil)
-		d.Set("push", flattenNotificationTemplateContentDeliveryMethodPush(respObject.TemplateContentPush))
-		d.Set("voice", nil)
-
-	} else if respObject.TemplateContentSMS != nil && respObject.TemplateContentSMS.GetId() != "" {
-
-		if v, ok := respObject.TemplateContentSMS.GetLocaleOk(); ok {
-			d.Set("locale", v)
-		} else {
-			d.Set("locale", nil)
-		}
-
-		if v, ok := respObject.TemplateContentSMS.GetDefaultOk(); ok {
-			d.Set("default", v)
-		} else {
-			d.Set("default", nil)
-		}
-
-		if v, ok := respObject.TemplateContentSMS.GetVariantOk(); ok {
-			d.Set("variant", v)
-		} else {
-			d.Set("variant", nil)
-		}
-
-		d.Set("email", nil)
-		d.Set("sms", flattenNotificationTemplateContentDeliveryMethodSMS(respObject.TemplateContentSMS))
-		d.Set("push", nil)
-		d.Set("voice", nil)
-
-	} else if respObject.TemplateContentVoice != nil && respObject.TemplateContentVoice.GetId() != "" {
-
-		if v, ok := respObject.TemplateContentVoice.GetLocaleOk(); ok {
-			d.Set("locale", v)
-		} else {
-			d.Set("locale", nil)
-		}
-
-		if v, ok := respObject.TemplateContentVoice.GetDefaultOk(); ok {
-			d.Set("default", v)
-		} else {
-			d.Set("default", nil)
-		}
-
-		if v, ok := respObject.TemplateContentVoice.GetVariantOk(); ok {
-			d.Set("variant", v)
-		} else {
-			d.Set("variant", nil)
-		}
-
-		d.Set("email", nil)
-		d.Set("sms", nil)
-		d.Set("push", nil)
-		d.Set("voice", flattenNotificationTemplateContentDeliveryMethodVoice(respObject.TemplateContentVoice))
-
-	} else {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "Notification Template Content Delivery method type not supported in the provider.  Please raise an issue with the provider maintainers.",
-		})
-
-		return diags
-	}
-
-	return diags
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(data.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceNotificationTemplateContentUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *NotificationTemplateContentResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan, state NotificationTemplateContentResourceModel
 
-	var diags diag.Diagnostics
-
-	templateContent, diags := expandNotificationTemplateContent(d)
-	if diags.HasError() {
-		return diags
+	if r.Client.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
 	}
 
-	_, diags = sdk.ParseResponse(
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the API
+	notificationTemplateContent, d := plan.expand(ctx)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	var response *management.TemplateContent
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.NotificationsTemplatesApi.UpdateContent(ctx, d.Get("environment_id").(string), management.EnumTemplateName(d.Get("template_name").(string)), d.Id()).TemplateContent(*templateContent).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.NotificationsTemplatesApi.UpdateContent(ctx, plan.EnvironmentId.ValueString(), management.EnumTemplateName(plan.TemplateName.ValueString()), plan.Id.ValueString()).TemplateContent(*notificationTemplateContent).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateContent",
 		notificationTemplateCustomWriteError,
-		nil,
-	)
-	if diags.HasError() {
-		return diags
+		sdk.DefaultCreateReadRetryable,
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	return resourceNotificationTemplateContentRead(ctx, d, meta)
+	// Create the state to save
+	state = plan
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourceNotificationTemplateContentDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *NotificationTemplateContentResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *NotificationTemplateContentResourceModel
 
-	var diags diag.Diagnostics
+	if r.Client.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
 
-	_, diags = sdk.ParseResponse(
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := apiClient.NotificationsTemplatesApi.DeleteContent(ctx, d.Get("environment_id").(string), management.EnumTemplateName(d.Get("template_name").(string)), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
+			fR, fErr := r.Client.ManagementAPIClient.NotificationsTemplatesApi.DeleteContent(ctx, data.EnvironmentId.ValueString(), management.EnumTemplateName(data.TemplateName.ValueString()), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteContent",
-		sdk.CustomErrorResourceNotFoundWarning,
+		framework.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
 		nil,
-	)
-	if diags.HasError() {
-		return diags
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-
-	return diags
 }
 
-func resourceNotificationTemplateContentImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func (r *NotificationTemplateContentResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 
 	idComponents := []framework.ImportComponent{
 		{
@@ -485,23 +742,30 @@ func resourceNotificationTemplateContentImport(ctx context.Context, d *schema.Re
 			Regexp: regexp.MustCompile(fmt.Sprintf("(%s)", strings.Join(utils.EnumSliceToStringSlice(management.AllowedEnumTemplateNameEnumValues), "|"))),
 		},
 		{
-			Label:  "notification_template_content_id",
-			Regexp: verify.P1ResourceIDRegexp,
+			Label:     "template_content_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
 		},
 	}
 
-	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
 	if err != nil {
-		return nil, err
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			err.Error(),
+		)
+		return
 	}
 
-	d.Set("environment_id", attributes["environment_id"])
-	d.Set("template_name", attributes["template_name"])
-	d.SetId(attributes["notification_template_content_id"])
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
 
-	resourceNotificationTemplateContentRead(ctx, d, meta)
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
 
-	return []*schema.ResourceData{d}, nil
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
 func notificationTemplateCustomWriteError(error model.P1Error) diag.Diagnostics {
@@ -511,36 +775,40 @@ func notificationTemplateCustomWriteError(error model.P1Error) diag.Diagnostics 
 
 		// Delivery method not applicable to the template
 		if target, ok := details[0].GetTargetOk(); ok && details[0].GetCode() == "INVALID_VALUE" && *target == "deliveryMethod" {
-			diags = diag.FromErr(fmt.Errorf("The configured delivery method does not apply to the selected template."))
+			diags.AddError(
+				"The configured delivery method does not apply to the selected template.",
+				"Please ensure that the delivery method (`email`, `sms`, `push`, `voice`) is applicable to the selected template.",
+			)
 
 			return diags
 		}
 
 		// Language not likely added
 		if target, ok := details[0].GetTargetOk(); ok && details[0].GetCode() == "INVALID_VALUE" && *target == "language" {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "The locale is not valid for the environment.",
-				Detail:   "Please ensure that the associated language for the locale been created with the `pingone_language` resource.",
-			})
+			diags.AddError(
+				"The locale is not valid for the environment.",
+				"Please ensure that the associated language for the locale been created with the `pingone_language` resource.",
+			)
 
 			return diags
 		}
 
 		// Not all variables set
 		if message, ok := details[0].GetMessageOk(); ok && details[0].GetCode() == "REQUIRED_VALUE" {
-			diags = diag.FromErr(fmt.Errorf(*message))
+			diags.AddError(
+				"Content body is missing a required value.",
+				*message,
+			)
 
 			return diags
 		}
 
 		// Custom notification content already exists
 		if _, ok := details[0].GetMessageOk(); ok && details[0].GetCode() == "UNIQUENESS_VIOLATION" {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "Customized content for the template, locale and variant combination already exists.",
-				Detail:   "Please ensure that:\n\t1.\tThe notification content for the template, locale and variant is not being managed by another process and is conflicting.\n\t2.\tAny custom content for the combination has been restored to default values. See [Editing a notification](https://docs.pingidentity.com/r/en-us/pingone/p1_c_edit_notification) for more details.",
-			})
+			diags.AddError(
+				"Customized content for the template, locale and variant combination already exists.",
+				"Please ensure that:\n\t1.\tThe notification content for the template, locale and variant is not being managed by another process and is conflicting.\n\t2.\tAny custom content for the combination has been restored to default values. See [Editing a notification](https://docs.pingidentity.com/r/en-us/pingone/p1_c_edit_notification) for more details.",
+			)
 
 			return diags
 		}
@@ -549,346 +817,396 @@ func notificationTemplateCustomWriteError(error model.P1Error) diag.Diagnostics 
 	return nil
 }
 
-func expandNotificationTemplateContent(d *schema.ResourceData) (*management.TemplateContent, diag.Diagnostics) {
+func (p *NotificationTemplateContentResourceModel) expand(ctx context.Context) (*management.TemplateContent, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	templateContentRequest := &management.TemplateContent{}
+	data := management.TemplateContent{}
 
-	if v, ok := d.GetOk("email"); ok {
-		var templateContent *management.TemplateContentEmail
-		common := management.NewTemplateContentCommon(d.Get("locale").(string), management.ENUMTEMPLATECONTENTDELIVERYMETHOD_EMAIL)
+	if !p.Email.IsNull() && !p.Email.IsUnknown() {
 
-		if v1, ok := d.Get("variant").(string); ok && v1 != "" {
-			common.SetVariant(v1)
+		var providerPlan NotificationTemplateContentEmailResourceModel
+		diags.Append(p.Email.As(ctx, &providerPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
 		}
 
-		templateContent, diags = expandNotificationTemplateContentEmail(v.([]interface{}), common)
-		templateContentRequest.TemplateContentEmail = templateContent
-	}
+		email := management.NewTemplateContentEmail(
+			p.Locale.ValueString(),
+			management.ENUMTEMPLATECONTENTDELIVERYMETHOD_EMAIL,
+			providerPlan.Body.ValueString(),
+		)
 
-	if v, ok := d.GetOk("push"); ok {
-		var templateContent *management.TemplateContentPush
-		common := management.NewTemplateContentCommon(d.Get("locale").(string), management.ENUMTEMPLATECONTENTDELIVERYMETHOD_PUSH)
-
-		if v1, ok := d.Get("variant").(string); ok && v1 != "" {
-			common.SetVariant(v1)
+		if !p.Variant.IsNull() && !p.Variant.IsUnknown() {
+			email.SetVariant(p.Variant.ValueString())
 		}
 
-		templateContent, diags = expandNotificationTemplateContentPush(v.([]interface{}), common)
-		templateContentRequest.TemplateContentPush = templateContent
-	}
+		// Email specific
+		if !providerPlan.From.IsNull() && !providerPlan.From.IsUnknown() {
+			var fromPlan NotificationTemplateContentEmailAddressResourceModel
+			diags.Append(providerPlan.From.As(ctx, &fromPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
 
-	if v, ok := d.GetOk("sms"); ok {
-		var templateContent *management.TemplateContentSMS
-		common := management.NewTemplateContentCommon(d.Get("locale").(string), management.ENUMTEMPLATECONTENTDELIVERYMETHOD_SMS)
+			from := fromPlan.expandFrom()
 
-		if v1, ok := d.Get("variant").(string); ok && v1 != "" {
-			common.SetVariant(v1)
+			email.SetFrom(*from)
 		}
 
-		templateContent, diags = expandNotificationTemplateContentSMS(v.([]interface{}), common)
-		templateContentRequest.TemplateContentSMS = templateContent
-	}
-
-	if v, ok := d.GetOk("voice"); ok {
-		var templateContent *management.TemplateContentVoice
-		common := management.NewTemplateContentCommon(d.Get("locale").(string), management.ENUMTEMPLATECONTENTDELIVERYMETHOD_VOICE)
-
-		if v1, ok := d.Get("variant").(string); ok && v1 != "" {
-			common.SetVariant(v1)
+		if !providerPlan.Subject.IsNull() && !providerPlan.Subject.IsUnknown() {
+			email.SetSubject(providerPlan.Subject.ValueString())
 		}
 
-		templateContent, diags = expandNotificationTemplateContentVoice(v.([]interface{}), common)
-		templateContentRequest.TemplateContentVoice = templateContent
+		if !providerPlan.ReplyTo.IsNull() && !providerPlan.ReplyTo.IsUnknown() {
+			var replyToPlan NotificationTemplateContentEmailAddressResourceModel
+			diags.Append(providerPlan.ReplyTo.As(ctx, &replyToPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			replyTo := replyToPlan.expandReplyTo()
+
+			email.SetReplyTo(*replyTo)
+		}
+
+		if !providerPlan.CharacterSet.IsNull() && !providerPlan.CharacterSet.IsUnknown() {
+			email.SetCharset(providerPlan.CharacterSet.ValueString())
+		}
+
+		if !providerPlan.ContentType.IsNull() && !providerPlan.ContentType.IsUnknown() {
+			email.SetEmailContentType(providerPlan.ContentType.ValueString())
+		}
+
+		data.TemplateContentEmail = email
 	}
+
+	if !p.Push.IsNull() && !p.Push.IsUnknown() {
+
+		var providerPlan NotificationTemplateContentPushResourceModel
+		diags.Append(p.Push.As(ctx, &providerPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		push := management.NewTemplateContentPush(
+			p.Locale.ValueString(),
+			management.ENUMTEMPLATECONTENTDELIVERYMETHOD_PUSH,
+			providerPlan.Title.ValueString(),
+			providerPlan.Body.ValueString(),
+		)
+
+		if !p.Variant.IsNull() && !p.Variant.IsUnknown() {
+			push.SetVariant(p.Variant.ValueString())
+		}
+
+		// Push specific
+		if !providerPlan.Category.IsNull() && !providerPlan.Category.IsUnknown() {
+			push.SetPushCategory(management.EnumTemplateContentPushCategory(providerPlan.Category.ValueString()))
+		}
+
+		data.TemplateContentPush = push
+	}
+
+	if !p.Sms.IsNull() && !p.Sms.IsUnknown() {
+
+		var providerPlan NotificationTemplateContentSmsResourceModel
+		diags.Append(p.Sms.As(ctx, &providerPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		sms := management.NewTemplateContentSMS(
+			p.Locale.ValueString(),
+			management.ENUMTEMPLATECONTENTDELIVERYMETHOD_SMS,
+			providerPlan.Content.ValueString(),
+		)
+
+		if !p.Variant.IsNull() && !p.Variant.IsUnknown() {
+			sms.SetVariant(p.Variant.ValueString())
+		}
+
+		// SMS specific
+		if !providerPlan.Sender.IsNull() && !providerPlan.Sender.IsUnknown() {
+			sms.SetSender(providerPlan.Sender.ValueString())
+		}
+
+		data.TemplateContentSMS = sms
+	}
+
+	if !p.Voice.IsNull() && !p.Voice.IsUnknown() {
+
+		var providerPlan NotificationTemplateContentVoiceResourceModel
+		diags.Append(p.Voice.As(ctx, &providerPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		voice := management.NewTemplateContentVoice(
+			p.Locale.ValueString(),
+			management.ENUMTEMPLATECONTENTDELIVERYMETHOD_VOICE,
+			providerPlan.Content.ValueString(),
+		)
+
+		if !p.Variant.IsNull() && !p.Variant.IsUnknown() {
+			voice.SetVariant(p.Variant.ValueString())
+		}
+
+		// Voice specific
+		if !providerPlan.Type.IsNull() && !providerPlan.Type.IsUnknown() {
+			voice.SetVoice(providerPlan.Type.ValueString())
+		}
+
+		data.TemplateContentVoice = voice
+	}
+
+	return &data, diags
+}
+
+func (p *NotificationTemplateContentEmailAddressResourceModel) expandFrom() *management.TemplateContentEmailAllOfFrom {
+
+	data := management.NewTemplateContentEmailAllOfFrom()
+
+	if !p.Name.IsNull() && !p.Name.IsUnknown() {
+		data.SetName(p.Name.ValueString())
+	}
+
+	if !p.Address.IsNull() && !p.Address.IsUnknown() {
+		data.SetAddress(p.Address.ValueString())
+	}
+
+	return data
+}
+
+func (p *NotificationTemplateContentEmailAddressResourceModel) expandReplyTo() *management.TemplateContentEmailAllOfReplyTo {
+
+	data := management.NewTemplateContentEmailAllOfReplyTo()
+
+	if !p.Name.IsNull() && !p.Name.IsUnknown() {
+		data.SetName(p.Name.ValueString())
+	}
+
+	if !p.Address.IsNull() && !p.Address.IsUnknown() {
+		data.SetAddress(p.Address.ValueString())
+	}
+
+	return data
+}
+
+func (p *NotificationTemplateContentResourceModel) toState(apiObject *management.TemplateContent) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if apiObject == nil {
+		diags.AddError(
+			"Data object missing",
+			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
+		)
+
+		return diags
+	}
+
+	apiObjectCommon := management.TemplateContentCommon{}
+
+	if v := apiObject.TemplateContentEmail; v != nil {
+		apiObjectCommon = management.TemplateContentCommon{
+			Id:             v.Id,
+			Default:        v.Default,
+			Locale:         v.Locale,
+			DeliveryMethod: v.DeliveryMethod,
+			Variant:        v.Variant,
+		}
+	}
+
+	if v := apiObject.TemplateContentPush; v != nil {
+		apiObjectCommon = management.TemplateContentCommon{
+			Id:             v.Id,
+			Default:        v.Default,
+			Locale:         v.Locale,
+			DeliveryMethod: v.DeliveryMethod,
+			Variant:        v.Variant,
+		}
+	}
+
+	if v := apiObject.TemplateContentSMS; v != nil {
+		apiObjectCommon = management.TemplateContentCommon{
+			Id:             v.Id,
+			Default:        v.Default,
+			Locale:         v.Locale,
+			DeliveryMethod: v.DeliveryMethod,
+			Variant:        v.Variant,
+		}
+	}
+
+	if v := apiObject.TemplateContentVoice; v != nil {
+		apiObjectCommon = management.TemplateContentCommon{
+			Id:             v.Id,
+			Default:        v.Default,
+			Locale:         v.Locale,
+			DeliveryMethod: v.DeliveryMethod,
+			Variant:        v.Variant,
+		}
+	}
+
+	p.Id = framework.PingOneResourceIDOkToTF(apiObjectCommon.GetIdOk())
+	p.Locale = framework.StringOkToTF(apiObjectCommon.GetLocaleOk())
+	p.Default = framework.BoolOkToTF(apiObjectCommon.GetDefaultOk())
+	p.Variant = framework.StringOkToTF(apiObjectCommon.GetVariantOk())
+
+	var d diag.Diagnostics
+
+	p.Email, d = toStateNotificationTemplateContentEmailToTF(apiObject.TemplateContentEmail)
+	diags.Append(d...)
+
+	p.Push, d = toStateNotificationTemplateContentPushToTF(apiObject.TemplateContentPush)
+	diags.Append(d...)
+
+	p.Sms, d = toStateNotificationTemplateContentSmsToTF(apiObject.TemplateContentSMS)
+	diags.Append(d...)
+
+	p.Voice, d = toStateNotificationTemplateContentVoiceToTF(apiObject.TemplateContentVoice)
+	diags.Append(d...)
+
+	return diags
+}
+
+func toStateNotificationTemplateContentEmailToTF(apiObject *management.TemplateContentEmail) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if apiObject == nil {
+		return types.ObjectNull(notificationTemplateContentEmailTFObjectTypes), diags
+	}
+
+	from, d := toStateNotificationTemplateContentEmailFromToTF(apiObject.GetFromOk())
+	diags.Append(d...)
 	if diags.HasError() {
-		return nil, diags
+		return types.ObjectNull(notificationTemplateContentEmailTFObjectTypes), diags
 	}
 
-	return templateContentRequest, diags
+	replyTo, d := toStateNotificationTemplateContentEmailReplyToToTF(apiObject.GetReplyToOk())
+	diags.Append(d...)
+	if diags.HasError() {
+		return types.ObjectNull(notificationTemplateContentEmailTFObjectTypes), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"body":          framework.StringOkToTF(apiObject.GetBodyOk()),
+		"from":          from,
+		"subject":       framework.StringOkToTF(apiObject.GetSubjectOk()),
+		"reply_to":      replyTo,
+		"character_set": framework.StringOkToTF(apiObject.GetCharsetOk()),
+		"content_type":  framework.StringOkToTF(apiObject.GetEmailContentTypeOk()),
+	}
+
+	returnVar, d := types.ObjectValue(notificationTemplateContentEmailTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
 }
 
-func expandNotificationTemplateContentEmail(d []interface{}, common *management.TemplateContentCommon) (*management.TemplateContentEmail, diag.Diagnostics) {
+func toStateNotificationTemplateContentEmailFromToTF(apiObject *management.TemplateContentEmailAllOfFrom, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var templateContent management.TemplateContentEmail
-
-	if len(d) > 0 && d[0] != nil {
-		options := d[0].(map[string]interface{})
-
-		templateContent = *management.NewTemplateContentEmail(common.GetLocale(), common.GetDeliveryMethod(), options["body"].(string))
-
-		// From common
-		if v1, ok := common.GetVariantOk(); ok && v1 != nil && *v1 != "" {
-			templateContent.SetVariant(*v1)
-		}
-
-		// From the block
-		if v, ok := options["from"].([]interface{}); ok && len(v) > 0 && v[0] != nil {
-			fromOptions := v[0].(map[string]interface{})
-
-			from := management.NewTemplateContentEmailAllOfFrom()
-
-			if v1, ok := fromOptions["name"].(string); ok && v1 != "" {
-				from.SetName(v1)
-			}
-
-			if v1, ok := fromOptions["address"].(string); ok && v1 != "" {
-				from.SetAddress(v1)
-			}
-
-			templateContent.SetFrom(*from)
-		}
-
-		if v, ok := options["subject"].(string); ok && v != "" {
-			templateContent.SetSubject(v)
-		}
-
-		if v, ok := options["reply_to"].([]interface{}); ok && len(v) > 0 && v[0] != nil {
-			replyToOptions := v[0].(map[string]interface{})
-
-			replyTo := management.NewTemplateContentEmailAllOfReplyTo()
-
-			if v1, ok := replyToOptions["name"].(string); ok && v1 != "" {
-				replyTo.SetName(v1)
-			}
-
-			if v1, ok := replyToOptions["address"].(string); ok && v1 != "" {
-				replyTo.SetAddress(v1)
-			}
-
-			templateContent.SetReplyTo(*replyTo)
-		}
-
-		if v, ok := options["character_set"].(string); ok && v != "" {
-			templateContent.SetCharset(v)
-		}
-
-		if v, ok := options["content_type"].(string); ok && v != "" {
-			templateContent.SetEmailContentType(v)
-		}
-
-	} else {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("%s notification template content options not available", common.GetDeliveryMethod()),
-		})
-
-		return nil, diags
+	if !ok || apiObject == nil {
+		return types.ObjectNull(notificationTemplateContentEmailAddressTFObjectTypes), diags
 	}
 
-	return &templateContent, diags
+	attributesMap := map[string]attr.Value{
+		"name":    framework.StringOkToTF(apiObject.GetNameOk()),
+		"address": framework.StringOkToTF(apiObject.GetAddressOk()),
+	}
+
+	returnVar, d := types.ObjectValue(notificationTemplateContentEmailAddressTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
 }
 
-func expandNotificationTemplateContentPush(d []interface{}, common *management.TemplateContentCommon) (*management.TemplateContentPush, diag.Diagnostics) {
+func toStateNotificationTemplateContentEmailReplyToToTF(apiObject *management.TemplateContentEmailAllOfReplyTo, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var templateContent management.TemplateContentPush
-
-	if len(d) > 0 && d[0] != nil {
-		options := d[0].(map[string]interface{})
-
-		templateContent = *management.NewTemplateContentPush(common.GetLocale(), common.GetDeliveryMethod(), options["title"].(string), options["body"].(string))
-
-		// From common
-		if v1, ok := common.GetVariantOk(); ok {
-			templateContent.SetVariant(*v1)
-		}
-
-		// From the block
-		if v, ok := options["category"].(string); ok && v != "" {
-			templateContent.SetPushCategory(management.EnumTemplateContentPushCategory(v))
-		}
-
-	} else {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("%s notification template content options not available", common.GetDeliveryMethod()),
-		})
-
-		return nil, diags
+	if !ok || apiObject == nil {
+		return types.ObjectNull(notificationTemplateContentEmailAddressTFObjectTypes), diags
 	}
 
-	return &templateContent, diags
+	attributesMap := map[string]attr.Value{
+		"name":    framework.StringOkToTF(apiObject.GetNameOk()),
+		"address": framework.StringOkToTF(apiObject.GetAddressOk()),
+	}
+
+	returnVar, d := types.ObjectValue(notificationTemplateContentEmailAddressTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
 }
 
-func expandNotificationTemplateContentSMS(d []interface{}, common *management.TemplateContentCommon) (*management.TemplateContentSMS, diag.Diagnostics) {
+func toStateNotificationTemplateContentPushToTF(apiObject *management.TemplateContentPush) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var templateContent management.TemplateContentSMS
-
-	if len(d) > 0 && d[0] != nil {
-		options := d[0].(map[string]interface{})
-
-		templateContent = *management.NewTemplateContentSMS(common.GetLocale(), common.GetDeliveryMethod(), options["content"].(string))
-
-		// From common
-		if v1, ok := common.GetVariantOk(); ok {
-			templateContent.SetVariant(*v1)
-		}
-
-		// From the block
-		if v, ok := options["sender"].(string); ok && v != "" {
-			templateContent.SetSender(v)
-		}
-
-	} else {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("%s notification template content options not available", common.GetDeliveryMethod()),
-		})
-
-		return nil, diags
+	if apiObject == nil {
+		return types.ObjectNull(notificationTemplateContentPushTFObjectTypes), diags
 	}
 
-	return &templateContent, diags
+	attributesMap := map[string]attr.Value{
+		"category": framework.EnumOkToTF(apiObject.GetPushCategoryOk()),
+		"body":     framework.StringOkToTF(apiObject.GetBodyOk()),
+		"title":    framework.StringOkToTF(apiObject.GetTitleOk()),
+	}
+
+	returnVar, d := types.ObjectValue(notificationTemplateContentPushTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
 }
 
-func expandNotificationTemplateContentVoice(d []interface{}, common *management.TemplateContentCommon) (*management.TemplateContentVoice, diag.Diagnostics) {
+func toStateNotificationTemplateContentSmsToTF(apiObject *management.TemplateContentSMS) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var templateContent management.TemplateContentVoice
-
-	if len(d) > 0 && d[0] != nil {
-		options := d[0].(map[string]interface{})
-
-		templateContent = *management.NewTemplateContentVoice(common.GetLocale(), common.GetDeliveryMethod(), options["content"].(string))
-
-		// From common
-		if v1, ok := common.GetVariantOk(); ok {
-			templateContent.SetVariant(*v1)
-		}
-
-		// From the block
-		if v, ok := options["type"].(string); ok && v != "" {
-			templateContent.SetVoice(v)
-		}
-
-	} else {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("%s notification template content options not available", common.GetDeliveryMethod()),
-		})
-
-		return nil, diags
+	if apiObject == nil {
+		return types.ObjectNull(notificationTemplateContentSmsTFObjectTypes), diags
 	}
 
-	return &templateContent, diags
+	attributesMap := map[string]attr.Value{
+		"content": framework.StringOkToTF(apiObject.GetContentOk()),
+		"sender":  framework.EnumOkToTF(apiObject.GetSenderOk()),
+	}
+
+	returnVar, d := types.ObjectValue(notificationTemplateContentSmsTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
 }
 
-func flattenNotificationTemplateContentDeliveryMethodEmail(d *management.TemplateContentEmail) []interface{} {
-	// Required
-	item := map[string]interface{}{
-		"body":    d.GetBody(),
-		"subject": d.GetSubject(),
+func toStateNotificationTemplateContentVoiceToTF(apiObject *management.TemplateContentVoice) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if apiObject == nil {
+		return types.ObjectNull(notificationTemplateContentVoiceTFObjectTypes), diags
 	}
 
-	// Optional
-	if v, ok := d.GetFromOk(); ok {
-
-		from := map[string]interface{}{
-			"name":    nil,
-			"address": nil,
-		}
-
-		if c, ok := v.GetNameOk(); ok {
-			from["name"] = c
-		}
-
-		if c, ok := v.GetAddressOk(); ok {
-			from["address"] = c
-		}
-
-		fromItems := make([]interface{}, 0)
-		item["from"] = append(fromItems, from)
-	} else {
-		item["from"] = nil
+	attributesMap := map[string]attr.Value{
+		"content": framework.StringOkToTF(apiObject.GetContentOk()),
+		"type":    framework.EnumOkToTF(apiObject.GetVoiceOk()),
 	}
 
-	if v, ok := d.GetReplyToOk(); ok {
-		replyTo := map[string]interface{}{
-			"name":    nil,
-			"address": nil,
-		}
+	returnVar, d := types.ObjectValue(notificationTemplateContentVoiceTFObjectTypes, attributesMap)
+	diags.Append(d...)
 
-		if c, ok := v.GetNameOk(); ok {
-			replyTo["name"] = c
-		}
-
-		if c, ok := v.GetAddressOk(); ok {
-			replyTo["address"] = c
-		}
-
-		replyToItems := make([]interface{}, 0)
-		item["reply_to"] = append(replyToItems, replyTo)
-	} else {
-		item["reply_to"] = nil
-	}
-
-	if v, ok := d.GetCharsetOk(); ok {
-		item["character_set"] = v
-	} else {
-		item["character_set"] = nil
-	}
-
-	if v, ok := d.GetEmailContentTypeOk(); ok {
-		item["content_type"] = v
-	} else {
-		item["content_type"] = nil
-	}
-
-	items := make([]interface{}, 0)
-	return append(items, item)
-}
-
-func flattenNotificationTemplateContentDeliveryMethodPush(d *management.TemplateContentPush) []interface{} {
-	// Required
-	item := map[string]interface{}{
-		"body":  d.GetBody(),
-		"title": d.GetTitle(),
-	}
-
-	// Optional
-	if v, ok := d.GetPushCategoryOk(); ok {
-		item["category"] = string(*v)
-	} else {
-		item["category"] = nil
-	}
-
-	items := make([]interface{}, 0)
-	return append(items, item)
-}
-
-func flattenNotificationTemplateContentDeliveryMethodSMS(d *management.TemplateContentSMS) []interface{} {
-	// Required
-	item := map[string]interface{}{
-		"content": d.GetContent(),
-	}
-
-	// Optional
-	if v, ok := d.GetSenderOk(); ok {
-		item["sender"] = v
-	} else {
-		item["sender"] = nil
-	}
-
-	items := make([]interface{}, 0)
-	return append(items, item)
-}
-
-func flattenNotificationTemplateContentDeliveryMethodVoice(d *management.TemplateContentVoice) []interface{} {
-	// Required
-	item := map[string]interface{}{
-		"content": d.GetContent(),
-	}
-
-	// Optional
-	if v, ok := d.GetVoiceOk(); ok {
-		item["type"] = v
-	} else {
-		item["type"] = nil
-	}
-
-	items := make([]interface{}, 0)
-	return append(items, item)
+	return returnVar, diags
 }
