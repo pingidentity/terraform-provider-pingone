@@ -32,8 +32,8 @@ data "pingone_verify_voice_phrase" "find_by_name_example" {
 
 ### Optional
 
-- `display_name` (String) Name of the voice phrase container displayed in PingOne Admin UI or other administrative interface managing the container.  At least one of the following must be defined: `voice_phrase_id`, `display_name`.
-- `voice_phrase_id` (String) Identifier (UUID) associated with the voice phrase.  At least one of the following must be defined: `voice_phrase_id`, `display_name`.
+- `display_name` (String) Name of the voice phrase container displayed in PingOne Admin UI or other administrative interface managing the container.  Exactly one of the following must be defined: `voice_phrase_id`, `display_name`.
+- `voice_phrase_id` (String) Identifier (UUID) associated with the voice phrase.  Exactly one of the following must be defined: `voice_phrase_id`, `display_name`.
 
 ### Read-Only
 

@@ -27,6 +27,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	objectplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectplanmodifier"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -205,7 +206,7 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 		"provider_custom",
 		"provider_custom_twilio",
 		"provider_custom_syniverse",
-	})
+	}).RequiresReplaceNestedAttributes()
 
 	providerCustomAuthenticationMethodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The custom provider account's authentication method.",
@@ -295,7 +296,7 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 		"provider_custom",
 		"provider_custom_twilio",
 		"provider_custom_syniverse",
-	})
+	}).RequiresReplaceNestedAttributes()
 
 	providerCustomTwilioAuthTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The secret key of the Twilio account.",
@@ -312,7 +313,7 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 		"provider_custom",
 		"provider_custom_twilio",
 		"provider_custom_syniverse",
-	})
+	}).RequiresReplaceNestedAttributes()
 
 	providerCustomSyniverseAuthTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The secret key of the Syniverse account.",
@@ -624,6 +625,10 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 					},
 				},
 
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
+				},
+
 				Validators: []validator.Object{
 					objectvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("provider_custom"),
@@ -779,6 +784,10 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 					},
 				},
 
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
+				},
+
 				Validators: []validator.Object{
 					objectvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("provider_custom"),
@@ -914,6 +923,10 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 							},
 						},
 					},
+				},
+
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
 				},
 
 				Validators: []validator.Object{

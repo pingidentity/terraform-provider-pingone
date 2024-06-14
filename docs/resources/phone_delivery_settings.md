@@ -101,9 +101,9 @@ resource "pingone_phone_delivery_settings" "my_awesome_custom_provider" {
 
 ### Optional
 
-- `provider_custom` (Attributes) A single nested attribute with attributes that describe custom phone delivery settings.  At least one of the following must be defined: `provider_custom`, `provider_custom_twilio`, `provider_custom_syniverse`. (see [below for nested schema](#nestedatt--provider_custom))
-- `provider_custom_syniverse` (Attributes) A single nested attribute with attributes that describe phone delivery settings for a custom syniverse account.  At least one of the following must be defined: `provider_custom`, `provider_custom_twilio`, `provider_custom_syniverse`. (see [below for nested schema](#nestedatt--provider_custom_syniverse))
-- `provider_custom_twilio` (Attributes) A single nested attribute with attributes that describe phone delivery settings for a custom Twilio account.  At least one of the following must be defined: `provider_custom`, `provider_custom_twilio`, `provider_custom_syniverse`. (see [below for nested schema](#nestedatt--provider_custom_twilio))
+- `provider_custom` (Attributes) A single nested attribute with attributes that describe custom phone delivery settings.  Exactly one of the following must be defined: `provider_custom`, `provider_custom_twilio`, `provider_custom_syniverse`.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules. (see [below for nested schema](#nestedatt--provider_custom))
+- `provider_custom_syniverse` (Attributes) A single nested attribute with attributes that describe phone delivery settings for a custom syniverse account.  Exactly one of the following must be defined: `provider_custom`, `provider_custom_twilio`, `provider_custom_syniverse`.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules. (see [below for nested schema](#nestedatt--provider_custom_syniverse))
+- `provider_custom_twilio` (Attributes) A single nested attribute with attributes that describe phone delivery settings for a custom Twilio account.  Exactly one of the following must be defined: `provider_custom`, `provider_custom_twilio`, `provider_custom_syniverse`.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules. (see [below for nested schema](#nestedatt--provider_custom_twilio))
 
 ### Read-Only
 

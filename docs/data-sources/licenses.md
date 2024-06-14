@@ -42,8 +42,8 @@ data "pingone_licenses" "my_licenses_by_data_filter" {
 
 ### Optional
 
-- `data_filters` (Attributes List) Individual data filters to apply to the license selection.  If the attribute filter is `status`, available values are `ACTIVE`, `EXPIRED`, `FUTURE` and `TERMINATED`.  Allowed attributes to filter: `name`, `package`, `status`.  At least one of the following must be defined: `scim_filter`, `data_filters`. (see [below for nested schema](#nestedatt--data_filters))
-- `scim_filter` (String) A SCIM filter to apply to the license selection.  A SCIM filter offers the greatest flexibility in filtering licenses.  If the attribute filter is `status`, available values are `ACTIVE`, `EXPIRED`, `FUTURE` and `TERMINATED`.  The SCIM filter can use the following attributes: `name`, `package`, `status`.  At least one of the following must be defined: `scim_filter`, `data_filters`.
+- `data_filters` (Attributes List) Individual data filters to apply to the license selection.  If the attribute filter is `status`, available values are `ACTIVE`, `EXPIRED`, `FUTURE` and `TERMINATED`.  Allowed attributes to filter: `name`, `package`, `status`.  Exactly one of the following must be defined: `scim_filter`, `data_filters`. (see [below for nested schema](#nestedatt--data_filters))
+- `scim_filter` (String) A SCIM filter to apply to the license selection.  A SCIM filter offers the greatest flexibility in filtering licenses.  If the attribute filter is `status`, available values are `ACTIVE`, `EXPIRED`, `FUTURE` and `TERMINATED`.  The SCIM filter can use the following attributes: `name`, `package`, `status`.  Exactly one of the following must be defined: `scim_filter`, `data_filters`.
 
 ### Read-Only
 

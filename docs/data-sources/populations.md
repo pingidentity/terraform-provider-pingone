@@ -39,8 +39,8 @@ data "pingone_populations" "by_data_filter" {
 
 ### Optional
 
-- `data_filters` (Attributes List) Individual data filters to apply to the population selection.  Allowed attributes to filter: `id`, `name`.  At least one of the following must be defined: `scim_filter`, `data_filters`. (see [below for nested schema](#nestedatt--data_filters))
-- `scim_filter` (String) A SCIM filter to apply to the population selection.  A SCIM filter offers the greatest flexibility in filtering populations.  The SCIM filter can use the following attributes: `id`, `name`.  At least one of the following must be defined: `scim_filter`, `data_filters`.
+- `data_filters` (Attributes List) Individual data filters to apply to the population selection.  Allowed attributes to filter: `id`, `name`.  Exactly one of the following must be defined: `scim_filter`, `data_filters`. (see [below for nested schema](#nestedatt--data_filters))
+- `scim_filter` (String) A SCIM filter to apply to the population selection.  A SCIM filter offers the greatest flexibility in filtering populations.  The SCIM filter can use the following attributes: `id`, `name`.  Exactly one of the following must be defined: `scim_filter`, `data_filters`.
 
 ### Read-Only
 

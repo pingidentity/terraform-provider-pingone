@@ -34,8 +34,8 @@ data "pingone_password_policy" "example_by_id" {
 
 ### Optional
 
-- `name` (String) A string that specifies the name of the password policy to retrieve configuration for.  At least one of the following must be defined: `password_policy_id`, `name`.
-- `password_policy_id` (String) A string that specifies the ID of the password policy to retrieve configuration for.  Must be a valid PingOne resource ID.  At least one of the following must be defined: `password_policy_id`, `name`.
+- `name` (String) A string that specifies the name of the password policy to retrieve configuration for.  Exactly one of the following must be defined: `password_policy_id`, `name`.
+- `password_policy_id` (String) A string that specifies the ID of the password policy to retrieve configuration for.  Must be a valid PingOne resource ID.  Exactly one of the following must be defined: `password_policy_id`, `name`.
 
 ### Read-Only
 
