@@ -627,6 +627,16 @@ EOT
   usage_type = "SIGNING"
 }
 
+resource "pingone_certificate" "%[3]s-enc" {
+  environment_id = pingone_environment.%[2]s.id
+
+  pem_file = <<EOT
+%[7]s
+EOT
+
+  usage_type = "ENCRYPTION"
+}
+
 resource "pingone_application" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
@@ -659,6 +669,13 @@ resource "pingone_application" "%[3]s" {
     acs_urls           = ["https://www.pingidentity.com", "https://pingidentity.com"]
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:%[3]s"
+
+    sp_encryption {
+      algorithm = "AES_256"
+      certificate {
+        id = pingone_certificate.%[3]s-enc.id
+      }
+    }
 
     assertion_signed_enabled       = false
     idp_signing_key_id             = pingone_key.%[3]s.id

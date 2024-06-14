@@ -3039,6 +3039,8 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_endpoint", "https://www.pingidentity.com/sloendpoint"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_response_endpoint", "https://www.pingidentity.com/sloresponseendpoint"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_window", "3"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_encryption.0.algorithm", "AES_256"),
+					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.sp_encryption.0.certificate.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_entity_id", fmt.Sprintf("sp:entity:%s", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification_certificate_ids.#", "2"),
 					resource.TestMatchResourceAttr(resourceFullName, "saml_options.0.sp_verification_certificate_ids.0", verify.P1ResourceIDRegexpFullString),
@@ -3142,6 +3144,7 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_endpoint", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_response_endpoint", ""),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.slo_window", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_encryption.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_entity_id", fmt.Sprintf("sp:entity:%s", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification_certificate_ids.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.0.sp_verification.#", "0"),
@@ -4573,6 +4576,16 @@ EOT
   usage_type = "SIGNING"
 }
 
+resource "pingone_certificate" "%[3]s-enc" {
+  environment_id = pingone_environment.%[2]s.id
+
+  pem_file = <<EOT
+%[7]s
+EOT
+
+  usage_type = "ENCRYPTION"
+}
+
 resource "pingone_application" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
@@ -4605,6 +4618,13 @@ resource "pingone_application" "%[3]s" {
     acs_urls           = ["https://www.pingidentity.com", "https://pingidentity.com"]
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:%[3]s"
+
+    sp_encryption {
+      algorithm = "AES_256"
+      certificate {
+        id = pingone_certificate.%[3]s-enc.id
+      }
+    }
 
     assertion_signed_enabled       = false
     idp_signing_key_id             = pingone_key.%[3]s.id
@@ -4696,6 +4716,15 @@ EOT
   usage_type = "SIGNING"
 }
 
+resource "pingone_certificate" "%[3]s-enc" {
+  environment_id = pingone_environment.%[2]s.id
+
+  pem_file = <<EOT
+%[7]s
+EOT
+
+  usage_type = "ENCRYPTION"
+}
 
 resource "pingone_application" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id

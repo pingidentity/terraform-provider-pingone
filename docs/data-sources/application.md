@@ -190,6 +190,7 @@ Read-Only:
 - `slo_endpoint` (String) A string that specifies the logout endpoint URL.
 - `slo_response_endpoint` (String) A string that specifies the endpoint URL to submit the logout response.
 - `slo_window` (Number) An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request.
+- `sp_encryption` (Attributes List) A single block object that specifies settings for PingOne to encrypt SAML assertions to be sent to the application. Assertions are not encrypted by default. (see [below for nested schema](#nestedatt--saml_options--sp_encryption))
 - `sp_entity_id` (String) A string that specifies the service provider entity ID used to lookup the application. This is a required property and is unique within the environment.
 - `sp_verification` (Attributes List) A single list item that specifies SP signature verification settings. (see [below for nested schema](#nestedatt--saml_options--sp_verification))
 - `sp_verification_certificate_ids` (Set of String, Deprecated) **Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `sp_verification.certificate_ids` attribute going forward.  A list that specifies the certificate IDs used to verify the service provider signature.
@@ -211,6 +212,23 @@ Read-Only:
 
 - `algorithm` (String) A string that specifies the signature algorithm of the key.
 - `key_id` (String) An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.
+
+
+<a id="nestedatt--saml_options--sp_encryption"></a>
+### Nested Schema for `saml_options.sp_encryption`
+
+Read-Only:
+
+- `algorithm` (String) The algorithm to use when encrypting assertions.  Options are `EC`, `RSA`, `UNKNOWN`.
+- `certificate` (Attributes List) A single block object that specifies the certificate settings used to encrypt SAML assertions. (see [below for nested schema](#nestedatt--saml_options--sp_encryption--certificate))
+
+<a id="nestedatt--saml_options--sp_encryption--certificate"></a>
+### Nested Schema for `saml_options.sp_encryption.certificate`
+
+Read-Only:
+
+- `id` (String) A string that specifies the unique identifier of the encryption public certificate that has been uploaded to PingOne.
+
 
 
 <a id="nestedatt--saml_options--sp_verification"></a>

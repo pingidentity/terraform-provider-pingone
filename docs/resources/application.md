@@ -352,6 +352,7 @@ Optional:
 - `slo_endpoint` (String) A string that specifies the logout endpoint URL. This is an optional property. However, if a logout endpoint URL is not defined, logout actions result in an error.
 - `slo_response_endpoint` (String) A string that specifies the endpoint URL to submit the logout response. If a value is not provided, the `slo_endpoint` property value is used to submit SLO response.
 - `slo_window` (Number) An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request. The minimum value is `1` hour and the maximum is `24` hours.
+- `sp_encryption` (Block List, Max: 1) A single block object that specifies settings for PingOne to encrypt SAML assertions to be sent to the application. Assertions are not encrypted by default. (see [below for nested schema](#nestedblock--saml_options--sp_encryption))
 - `sp_verification` (Block List, Max: 1) A single block item that specifies SP signature verification settings. (see [below for nested schema](#nestedblock--saml_options--sp_verification))
 - `sp_verification_certificate_ids` (Set of String, Deprecated) **Deprecation Notice** This field is deprecated and will be removed in a future release.  Please use the `sp_verification.certificate_ids` parameter going forward.  A list that specifies the certificate IDs used to verify the service provider signature.
 - `type` (String) A string that specifies the type associated with the application.  Options are `WEB_APP` and `CUSTOM_APP`. Defaults to `WEB_APP`.
@@ -375,6 +376,23 @@ Required:
 
 - `algorithm` (String) Specifies the signature algorithm of the key. For RSA keys, options are `SHA256withRSA`, `SHA384withRSA` and `SHA512withRSA`. For elliptical curve (EC) keys, options are `SHA256withECDSA`, `SHA384withECDSA` and `SHA512withECDSA`.
 - `key_id` (String) An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.
+
+
+<a id="nestedblock--saml_options--sp_encryption"></a>
+### Nested Schema for `saml_options.sp_encryption`
+
+Required:
+
+- `algorithm` (String) The algorithm to use when encrypting assertions. Options are `AES_128`, `AES_256` and `TRIPLEDES`.
+- `certificate` (Block List, Min: 1, Max: 1) A single block object that specifies the certificate settings used to encrypt SAML assertions. (see [below for nested schema](#nestedblock--saml_options--sp_encryption--certificate))
+
+<a id="nestedblock--saml_options--sp_encryption--certificate"></a>
+### Nested Schema for `saml_options.sp_encryption.certificate`
+
+Required:
+
+- `id` (String) A string that specifies the unique identifier of the encryption public certificate that has been uploaded to PingOne.
+
 
 
 <a id="nestedblock--saml_options--sp_verification"></a>
