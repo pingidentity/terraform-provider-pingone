@@ -387,7 +387,7 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 
 	if plan.Region.IsUnknown() {
 
-		if r.region.Region == "" {
+		if r.region.APICode == "" {
 			resp.Diagnostics.AddError(
 				"Cannot determine the default region",
 				"The PingOne region default value cannot be determined.  This is always a bug in the provider.  Please report this issue to the provider maintainers.",
@@ -395,7 +395,7 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 			return
 		}
 
-		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("region"), types.StringValue(r.region.Region))...)
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("region"), types.StringValue(string(r.region.APICode)))...)
 	}
 
 	if !req.State.Raw.IsNull() && !state.Type.IsNull() && state.Type.Equal(types.StringValue(string(management.ENUMENVIRONMENTTYPE_PRODUCTION))) && !state.Type.Equal(plan.Type) {
@@ -865,7 +865,7 @@ func (p *environmentResourceModel) expand(ctx context.Context) (*management.Envi
 			String: &v,
 		}
 	} else {
-		regionCode := model.FindRegionByName(p.Region.ValueString()).APICode
+		regionCode := management.EnumRegionCode(p.Region.ValueString())
 		region = management.EnvironmentRegion{
 			EnumRegionCode: &regionCode,
 		}
@@ -1121,13 +1121,8 @@ func environmentCreateCustomErrorHandler(error model.P1Error) diag.Diagnostics {
 	// Invalid region
 	if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 		if target, ok := details[0].GetTargetOk(); ok && *target == "region" {
-			allowedRegions := make([]string, 0)
-			for _, allowedRegion := range details[0].GetInnerError().AllowedValues {
-				allowedRegions = append(allowedRegions, model.FindRegionByAPICode(management.EnumRegionCode(allowedRegion)).Region)
-			}
-
 			diags.AddError(
-				fmt.Sprintf("Incompatible environment region for the organization tenant.  Allowed regions: %v.", allowedRegions),
+				fmt.Sprintf("Incompatible environment region for the organization tenant.  Allowed regions: %v.", details[0].GetInnerError().AllowedValues),
 				"Ensure the region parameter is correctly set.  If the region parameter is correctly set in the resource creation, please raise an issue with the provider maintainers.",
 			)
 
