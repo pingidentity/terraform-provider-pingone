@@ -257,11 +257,6 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		},
 	}
 
-	var regionCode management.EnumRegionCode
-	if !data.RegionCode.IsNull() && !data.RegionCode.IsUnknown() {
-		regionCode = management.EnumRegionCode(data.RegionCode.ValueString())
-	}
-
 	var userAgent string
 	if v := strings.TrimSpace(os.Getenv("PINGONE_TF_APPEND_USER_AGENT")); v != "" {
 		userAgent = v
@@ -272,9 +267,13 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		ClientSecret:    data.ClientSecret.ValueString(),
 		EnvironmentID:   data.EnvironmentID.ValueString(),
 		AccessToken:     data.APIAccessToken.ValueString(),
-		RegionCode:      &regionCode,
 		GlobalOptions:   globalOptions,
 		UserAgentAppend: &userAgent,
+	}
+
+	if !data.RegionCode.IsNull() && !data.RegionCode.IsUnknown() {
+		regionCode := management.EnumRegionCode(data.RegionCode.ValueString())
+		config.RegionCode = &regionCode
 	}
 
 	if !data.HTTPProxy.IsNull() {
