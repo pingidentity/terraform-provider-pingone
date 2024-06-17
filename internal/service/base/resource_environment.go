@@ -119,7 +119,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 
 	regionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the region to create the environment in.  Should be consistent with the PingOne organisation region.",
-	).AllowedValues(`AsiaPacific`, `Canada`, `Europe`, `NorthAmerica`).AppendMarkdownString("Will default to the region specified in the provider configuration if not specified, or can be set with the `PINGONE_REGION` environment variable.")
+	).AllowedValuesEnum(management.AllowedEnumRegionCodeEnumValues).AppendMarkdownString("Will default to the region specified in the provider configuration if not specified, or can be set with the `PINGONE_REGION_CODE` environment variable.")
 
 	solutionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A string that specifies the solution context of the environment.  Leave blank for a custom, non-workforce solution context.  Valid options are `%s`, or no value for custom solution context.  Workforce solution environments are not yet supported in this provider resource, but can be fetched using the `pingone_environment` datasource.", string(management.ENUMSOLUTIONTYPE_CUSTOMER)),
@@ -210,12 +210,16 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 						return framework.StringToTF(v)
 					}
 
+					if v := os.Getenv("PINGONE_REGION_CODE"); v != "" {
+						return framework.StringToTF(v)
+					}
+
 					if v := os.Getenv("PINGONE_REGION"); v != "" {
 						return framework.StringToTF(v)
 					}
 
-					if r.region.Region != "" {
-						return types.StringValue(r.region.Region)
+					if r.region.APICode != "" {
+						return types.StringValue(string(r.region.APICode))
 					}
 
 					return types.StringUnknown()
@@ -235,7 +239,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 								}
 							}
 
-							return model.RegionsAvailableList()
+							return utils.EnumSliceToStringSlice(management.AllowedEnumRegionCodeEnumValues)
 						}()...),
 				},
 			},
