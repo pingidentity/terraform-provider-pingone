@@ -2,7 +2,7 @@ provider "pingone" {
   client_id      = var.client_id
   client_secret  = var.client_secret
   environment_id = var.environment_id
-  region         = var.region
+  region_code    = var.region_code
 
   global_options {
 

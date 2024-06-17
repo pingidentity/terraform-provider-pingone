@@ -119,7 +119,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 
 	regionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the region to create the environment in.  Should be consistent with the PingOne organisation region.",
-	).AllowedValues(`AsiaPacific`, `Canada`, `Europe`, `NorthAmerica`).AppendMarkdownString("Will default to the region specified in the provider configuration if not specified, or can be set with the `PINGONE_REGION` environment variable.")
+	).AllowedValuesEnum(management.AllowedEnumRegionCodeEnumValues).AppendMarkdownString("Will default to the region specified in the provider configuration if not specified, or can be set with the `PINGONE_REGION_CODE` environment variable.")
 
 	solutionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A string that specifies the solution context of the environment.  Leave blank for a custom, non-workforce solution context.  Valid options are `%s`, or no value for custom solution context.  Workforce solution environments are not yet supported in this provider resource, but can be fetched using the `pingone_environment` datasource.", string(management.ENUMSOLUTIONTYPE_CUSTOMER)),
@@ -187,13 +187,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 				Default:  stringdefault.StaticString(string(management.ENUMENVIRONMENTTYPE_SANDBOX)),
 
 				Validators: []validator.String{
-					stringvalidator.OneOf(func() []string {
-						strings := make([]string, 0)
-						for _, v := range management.AllowedEnumEnvironmentTypeEnumValues {
-							strings = append(strings, string(v))
-						}
-						return strings
-					}()...),
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumEnvironmentTypeEnumValues)...),
 				},
 			},
 
@@ -210,12 +204,16 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 						return framework.StringToTF(v)
 					}
 
-					if v := os.Getenv("PINGONE_REGION"); v != "" {
+					if v := os.Getenv("PINGONE_REGION_CODE"); v != "" {
 						return framework.StringToTF(v)
 					}
 
-					if r.region.Region != "" {
-						return types.StringValue(r.region.Region)
+					if v := os.Getenv("PINGONE_REGION"); v != "" {
+						return types.StringValue(string(model.FindRegionByName(v).APICode))
+					}
+
+					if r.region.APICode != "" {
+						return types.StringValue(string(r.region.APICode))
 					}
 
 					return types.StringUnknown()
@@ -235,7 +233,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 								}
 							}
 
-							return model.RegionsAvailableList()
+							return utils.EnumSliceToStringSlice(management.AllowedEnumRegionCodeEnumValues)
 						}()...),
 				},
 			},
@@ -383,7 +381,7 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 
 	if plan.Region.IsUnknown() {
 
-		if r.region.Region == "" {
+		if r.region.APICode == "" {
 			resp.Diagnostics.AddError(
 				"Cannot determine the default region",
 				"The PingOne region default value cannot be determined.  This is always a bug in the provider.  Please report this issue to the provider maintainers.",
@@ -391,7 +389,7 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 			return
 		}
 
-		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("region"), types.StringValue(r.region.Region))...)
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("region"), types.StringValue(string(r.region.APICode)))...)
 	}
 
 	if !req.State.Raw.IsNull() && !state.Type.IsNull() && state.Type.Equal(types.StringValue(string(management.ENUMENVIRONMENTTYPE_PRODUCTION))) && !state.Type.Equal(plan.Type) {
@@ -477,7 +475,7 @@ func (r *EnvironmentResource) Configure(ctx context.Context, req resource.Config
 func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state environmentResourceModel
 
-	if r.Client == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -530,7 +528,7 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 func (r *EnvironmentResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *environmentResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -593,7 +591,7 @@ func (r *EnvironmentResource) Read(ctx context.Context, req resource.ReadRequest
 func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state environmentResourceModel
 
-	if r.Client == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -717,7 +715,7 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 func (r *EnvironmentResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *environmentResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -861,7 +859,7 @@ func (p *environmentResourceModel) expand(ctx context.Context) (*management.Envi
 			String: &v,
 		}
 	} else {
-		regionCode := model.FindRegionByName(p.Region.ValueString()).APICode
+		regionCode := management.EnumRegionCode(p.Region.ValueString())
 		region = management.EnvironmentRegion{
 			EnumRegionCode: &regionCode,
 		}
@@ -1008,16 +1006,7 @@ func (p *environmentResourceModel) toState(environmentApiObject *management.Envi
 	p.Name = framework.StringOkToTF(environmentApiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(environmentApiObject.GetDescriptionOk())
 	p.Type = framework.EnumOkToTF(environmentApiObject.GetTypeOk())
-
-	if v, ok := environmentApiObject.GetRegionOk(); ok {
-		if v.EnumRegionCode != nil {
-			p.Region = enumRegionCodeToTF(v.EnumRegionCode)
-		}
-
-		if v.String != nil {
-			p.Region = framework.StringToTF(*v.String)
-		}
-	}
+	p.Region = framework.EnumOkToTF(environmentApiObject.GetRegionOk())
 
 	if v, ok := environmentApiObject.GetLicenseOk(); ok {
 		p.LicenseId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
@@ -1120,27 +1109,14 @@ func toStateEnvironmentServicesBookmark(bookmarks []management.BillOfMaterialsPr
 
 }
 
-func enumRegionCodeToTF(v *management.EnumRegionCode) basetypes.StringValue {
-	if v == nil {
-		return types.StringNull()
-	} else {
-		return types.StringValue(model.FindRegionByAPICode(*v).Region)
-	}
-}
-
 func environmentCreateCustomErrorHandler(error model.P1Error) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	// Invalid region
 	if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 		if target, ok := details[0].GetTargetOk(); ok && *target == "region" {
-			allowedRegions := make([]string, 0)
-			for _, allowedRegion := range details[0].GetInnerError().AllowedValues {
-				allowedRegions = append(allowedRegions, model.FindRegionByAPICode(management.EnumRegionCode(allowedRegion)).Region)
-			}
-
 			diags.AddError(
-				fmt.Sprintf("Incompatible environment region for the organization tenant.  Allowed regions: %v.", allowedRegions),
+				fmt.Sprintf("Incompatible environment region for the organization tenant.  Allowed regions: %v.", details[0].GetInnerError().AllowedValues),
 				"Ensure the region parameter is correctly set.  If the region parameter is correctly set in the resource creation, please raise an issue with the provider maintainers.",
 			)
 

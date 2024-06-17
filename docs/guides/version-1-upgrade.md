@@ -19,6 +19,18 @@ This parameter was previously deprecated and has been removed.
 
 This parameter has been removed to mitigate the potential for accidental data loss.  In order to delete environments that are of type `PRODUCTION`, this must be done manually through the web console.  Where environments need to be removed in Terraform, ensure that they do not contain production data, and set their type as `SANDBOX`.
 
+### `region` (with `PINGONE_REGION` environment variable) parameter removed
+
+The `region` parameter (with the `PINGONE_REGION` environment variable) has been removed and replaced with `region_code` (with the `PINGONE_REGION_CODE` environment variable).  The following lists the mapping between the legacy `region` and new `region_code` values:
+
+| Tenant Type                                  | Legacy `region` value | Replacement `region_code` value |
+| -------------------------------------------- | --------------------- | ------------------------------- |
+| Asia-Pacific with `.asia` top level domain   | `AsiaPacific`         | `AP`                            |
+| Asia-Pacific with `.com.au` top level domain | N/a                   | `AU`                            |
+| Canada with `.ca` top level domain           | `Canada`              | `CA`                            |
+| Europe with `.eu` top level domain           | `Europe`              | `EU`                            |
+| North America with `.com` top level domain   | `NorthAmerica`        | `NA`                            |
+
 ## Resource: pingone_application
 
 ### `access_control_group_options` parameter data type change
@@ -1069,6 +1081,30 @@ This parameter was previously deprecated and has been removed.  Default populati
 ### `default_population_id` computed attribute removed
 
 This attribute was previously deprecated and has been removed.  Default populations are managed with the `pingone_population_default` resource.
+
+### `region` parameter ENUM values changed
+
+The `region` parameter's values now aligns with the API request/response payload values.  Possible values are `AP` (for Asia-Pacific `.asia` environments), `AU` (for Asia-Pacific `.com.au` environments), `CA` (for Canada `.ca` environments), `EU` (for Europe `.eu` environments) and `NA` (for North America `.com` environments).
+
+Previous configuration example:
+
+```terraform
+resource "pingone_environment" "my_environment" {
+  # ... other configuration parameters
+  
+  region = "NorthAmerica"
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_environment" "my_environment" {
+  # ... other configuration parameters
+  
+  region = "NA"
+}
+```
 
 ### `service` block parameter renamed, data type changed and made a required parameter
 
@@ -4146,6 +4182,10 @@ The `saml_options.sp_verification` computed attribute is now a nested object typ
 This parameter was previously deprecated and has been removed.  Use the `saml_options.sp_verification.certificate_ids` attribute going forward.
 
 ## Data Source: pingone_environment
+
+### `region` parameter ENUM values changed
+
+The `region` computed attribute's values now aligns with the API request/response payload values.  Possible values are `AP` (for Asia-Pacific `.asia` environments), `AU` (for Asia-Pacific `.com.au` environments), `CA` (for Canada `.ca` environments), `EU` (for Europe `.eu` environments) and `NA` (for North America `.com` environments).
 
 ### `service` computed attribute rename and data type change
 

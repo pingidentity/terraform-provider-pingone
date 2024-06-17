@@ -35,7 +35,7 @@ data "pingone_environment" "example_by_id" {
 - `id` (String) The ID of this resource.
 - `license_id` (String) A string that specifies the ID of a valid license applied to the environment.
 - `organization_id` (String) A string that specifies the ID of the PingOne organization tenant to which the environment belongs.
-- `region` (String) The region the environment is created in.  Valid options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.
+- `region` (String) The region the environment is created in.  Options are `AP`, `AU`, `CA`, `EU`, `NA`.
 - `services` (Attributes Set) A set of objects that specify the services that are enabled in the environment. (see [below for nested schema](#nestedatt--services))
 - `solution` (String) The solution context of the environment.  Blank or null values indicate a custom, non-workforce solution context.  Valid options are `CUSTOMER`, `WORKFORCE` or no value for custom solution context.
 - `type` (String) The type of the environment.  Options are `SANDBOX` for a development/testing environment and `PRODUCTION` for environments that require protection from deletion.

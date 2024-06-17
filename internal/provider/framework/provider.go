@@ -2,8 +2,11 @@ package framework
 
 import (
 	"context"
+	"os"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -12,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/client"
 	pingone "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -22,6 +26,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/risk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/verify"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
 // Ensure PingOneProvider satisfies various provider interfaces.
@@ -41,7 +46,8 @@ type pingOneProviderModel struct {
 	ClientSecret     types.String `tfsdk:"client_secret"`
 	EnvironmentID    types.String `tfsdk:"environment_id"`
 	APIAccessToken   types.String `tfsdk:"api_access_token"`
-	Region           types.String `tfsdk:"region"`
+	AppendUserAgent  types.String `tfsdk:"append_user_agent"`
+	RegionCode       types.String `tfsdk:"region_code"`
 	ServiceEndpoints types.List   `tfsdk:"service_endpoints"`
 	GlobalOptions    types.List   `tfsdk:"global_options"`
 	HTTPProxy        types.String `tfsdk:"http_proxy"`
@@ -83,8 +89,8 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 		"The access token used for provider resource management against the PingOne management API.  Default value can be set with the `PINGONE_API_ACCESS_TOKEN` environment variable.  Must provide only one of `api_access_token` (when obtaining the worker token outside of the provider) and `client_id` (when the provider should fetch the worker token during operations).",
 	)
 
-	regionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The PingOne region to use.  Options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.  Default value can be set with the `PINGONE_REGION` environment variable.",
+	regionCodeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The PingOne region to use, which selects the appropriate service endpoints.  Options are `AP` (for Asia-Pacific `.asia` tenants), `AU` (for Asia-Pacific `.com.au` tenants), `CA` (for Canada `.ca` tenants), `EU` (for Europe `.eu` tenants) and `NA` (for North America `.com` tenants).  Default value can be set with the `PINGONE_REGION_CODE` environment variable.",
 	)
 
 	globalOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -115,6 +121,10 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 		"Full URL for the http/https proxy service, for example `http://127.0.0.1:8090`.  Default value can be set with the `HTTP_PROXY` or `HTTPS_PROXY` environment variables.",
 	)
 
+	appendUserAgentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A custom string value to append to the end of the `User-Agent` header when making API requests to the PingOne service. Default value can be set with the `PINGONE_TF_APPEND_USER_AGENT` environment variable.",
+	)
+
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"client_id": schema.StringAttribute{
@@ -141,15 +151,25 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 				Optional:            true,
 			},
 
-			"region": schema.StringAttribute{
-				Description:         regionDescription.Description,
-				MarkdownDescription: regionDescription.MarkdownDescription,
+			"region_code": schema.StringAttribute{
+				Description:         regionCodeDescription.Description,
+				MarkdownDescription: regionCodeDescription.MarkdownDescription,
 				Optional:            true,
+
+				Validators: []validator.String{
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumRegionCodeEnumValues)...),
+				},
 			},
 
 			"http_proxy": schema.StringAttribute{
 				Description:         httpProxyDescription.Description,
 				MarkdownDescription: httpProxyDescription.MarkdownDescription,
+				Optional:            true,
+			},
+
+			"append_user_agent": schema.StringAttribute{
+				Description:         appendUserAgentDescription.Description,
+				MarkdownDescription: appendUserAgentDescription.MarkdownDescription,
 				Optional:            true,
 			},
 		},
@@ -230,19 +250,36 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 	// Set the defaults
 	tflog.Info(ctx, "[v6] Provider setting defaults..")
 
+	if v := strings.TrimSpace(os.Getenv("PINGONE_REGION")); v != "" {
+		resp.Diagnostics.AddWarning(
+			"Deprecated PINGONE_REGION environment variable",
+			"The PINGONE_REGION environment variable is now deprecated and should be replaced with the PINGONE_REGION_CODE environment variable.\n\nOptions for the PINGONE_REGION_CODE environment variable are `AP` (`.asia` tenants), `AU` (`.com.au` tenants), `CA` (`.ca` tenants), `EU` (`.eu` tenants) and `NA` (`.com` tenants).",
+		)
+	}
+
 	globalOptions := &client.GlobalOptions{
 		Population: &client.PopulationOptions{
 			ContainsUsersForceDelete: false,
 		},
 	}
 
+	var userAgent string
+	if v := strings.TrimSpace(os.Getenv("PINGONE_TF_APPEND_USER_AGENT")); v != "" {
+		userAgent = v
+	}
+
 	config := &pingone.Config{
-		ClientID:      data.ClientID.ValueString(),
-		ClientSecret:  data.ClientSecret.ValueString(),
-		EnvironmentID: data.EnvironmentID.ValueString(),
-		AccessToken:   data.APIAccessToken.ValueString(),
-		Region:        data.Region.ValueString(),
-		GlobalOptions: globalOptions,
+		ClientID:        data.ClientID.ValueString(),
+		ClientSecret:    data.ClientSecret.ValueString(),
+		EnvironmentID:   data.EnvironmentID.ValueString(),
+		AccessToken:     data.APIAccessToken.ValueString(),
+		GlobalOptions:   globalOptions,
+		UserAgentAppend: &userAgent,
+	}
+
+	if !data.RegionCode.IsNull() && !data.RegionCode.IsUnknown() {
+		regionCode := management.EnumRegionCode(data.RegionCode.ValueString())
+		config.RegionCode = &regionCode
 	}
 
 	if !data.HTTPProxy.IsNull() {
@@ -297,6 +334,12 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 			}
 		}
 
+	}
+
+	if !data.AppendUserAgent.IsNull() {
+		config.UserAgentAppend = data.AppendUserAgent.ValueStringPointer()
+	} else if v := strings.TrimSpace(os.Getenv("PINGONE_TF_APPEND_USER_AGENT")); v != "" {
+		config.UserAgentAppend = &v
 	}
 
 	if resp.Diagnostics.HasError() {

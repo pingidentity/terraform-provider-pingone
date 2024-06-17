@@ -22,7 +22,7 @@ func TestAccEnvironmentDataSource_ByNameFull(t *testing.T) {
 	name := resourceName
 	description := "Test description"
 	environmentType := "SANDBOX"
-	region := os.Getenv("PINGONE_REGION")
+	region := os.Getenv("PINGONE_REGION_CODE")
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	solution := "CUSTOMER"
@@ -74,7 +74,7 @@ func TestAccEnvironmentDataSource_ByNameMinimal(t *testing.T) {
 	name := resourceName
 	environmentType := "SANDBOX"
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := os.Getenv("PINGONE_REGION")
+	region := os.Getenv("PINGONE_REGION_CODE")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -115,7 +115,7 @@ func TestAccEnvironmentDataSource_ByIDFull(t *testing.T) {
 	name := resourceName
 	description := "Test description"
 	environmentType := "SANDBOX"
-	region := os.Getenv("PINGONE_REGION")
+	region := os.Getenv("PINGONE_REGION_CODE")
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	solution := "CUSTOMER"
@@ -167,7 +167,7 @@ func TestAccEnvironmentDataSource_ByIDMinimal(t *testing.T) {
 	name := resourceName
 	environmentType := "SANDBOX"
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := os.Getenv("PINGONE_REGION")
+	region := os.Getenv("PINGONE_REGION_CODE")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {

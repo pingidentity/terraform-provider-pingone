@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
@@ -67,7 +68,7 @@ func TestAccEnvironment_Full(t *testing.T) {
 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
 
 	name := resourceName
-	region := os.Getenv("PINGONE_REGION")
+	region := os.Getenv("PINGONE_REGION_CODE")
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	fullStepVariant1 := resource.TestStep{
@@ -168,7 +169,7 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 	name := resourceName
 	environmentType := "SANDBOX"
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := os.Getenv("PINGONE_REGION")
+	region := os.Getenv("PINGONE_REGION_CODE")
 
 	minimalStep := resource.TestStep{
 		Config: testAccEnvironmentConfig_Minimal(resourceName, name, licenseID),
@@ -211,10 +212,10 @@ func TestAccEnvironment_NonCompatibleRegion(t *testing.T) {
 	name := resourceName
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := "NorthAmerica"
+	region := "NA"
 
-	if os.Getenv("PINGONE_REGION") == "NorthAmerica" {
-		region = "Europe"
+	if os.Getenv("PINGONE_REGION_CODE") == "NA" {
+		region = "EU"
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -229,7 +230,7 @@ func TestAccEnvironment_NonCompatibleRegion(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, region, licenseID),
-				ExpectError: regexp.MustCompile(fmt.Sprintf(`Incompatible environment region for the organization tenant.  Allowed regions: \[%s\].`, model.FindRegionByName(os.Getenv("PINGONE_REGION")).Region)),
+				ExpectError: regexp.MustCompile(fmt.Sprintf(`Incompatible environment region for the organization tenant.  Allowed regions: \[%s\].`, model.FindRegionByAPICode(management.EnumRegionCode(os.Getenv("PINGONE_REGION_CODE"))).APICode)),
 			},
 		},
 	})
@@ -281,7 +282,7 @@ func TestAccEnvironment_ServiceSwitching(t *testing.T) {
 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
 
 	name := resourceName
-	region := os.Getenv("PINGONE_REGION")
+	region := os.Getenv("PINGONE_REGION_CODE")
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{

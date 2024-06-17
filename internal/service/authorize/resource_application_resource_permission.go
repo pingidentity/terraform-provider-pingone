@@ -142,7 +142,7 @@ func (r *ApplicationResourcePermissionResource) Configure(ctx context.Context, r
 func (r *ApplicationResourcePermissionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state ApplicationResourcePermissionResourceModel
 
-	if r.Client.AuthorizeAPIClient == nil {
+	if r.Client == nil || r.Client.AuthorizeAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -187,7 +187,7 @@ func (r *ApplicationResourcePermissionResource) Create(ctx context.Context, req 
 func (r *ApplicationResourcePermissionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *ApplicationResourcePermissionResourceModel
 
-	if r.Client.AuthorizeAPIClient == nil {
+	if r.Client == nil || r.Client.AuthorizeAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -232,7 +232,7 @@ func (r *ApplicationResourcePermissionResource) Read(ctx context.Context, req re
 func (r *ApplicationResourcePermissionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state ApplicationResourcePermissionResourceModel
 
-	if r.Client.AuthorizeAPIClient == nil {
+	if r.Client == nil || r.Client.AuthorizeAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -277,7 +277,7 @@ func (r *ApplicationResourcePermissionResource) Update(ctx context.Context, req 
 func (r *ApplicationResourcePermissionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *ApplicationResourcePermissionResourceModel
 
-	if r.Client.AuthorizeAPIClient == nil {
+	if r.Client == nil || r.Client.AuthorizeAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")

@@ -1366,7 +1366,7 @@ func (r *RiskPredictorResource) Configure(ctx context.Context, req resource.Conf
 func (r *RiskPredictorResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state riskPredictorResourceModel
 
-	if r.Client.RiskAPIClient == nil {
+	if r.Client == nil || r.Client.RiskAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1430,7 +1430,7 @@ func (r *RiskPredictorResource) Create(ctx context.Context, req resource.CreateR
 func (r *RiskPredictorResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *riskPredictorResourceModel
 
-	if r.Client.RiskAPIClient == nil {
+	if r.Client == nil || r.Client.RiskAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1475,7 +1475,7 @@ func (r *RiskPredictorResource) Read(ctx context.Context, req resource.ReadReque
 func (r *RiskPredictorResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state riskPredictorResourceModel
 
-	if r.Client.RiskAPIClient == nil {
+	if r.Client == nil || r.Client.RiskAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1524,7 +1524,7 @@ func (r *RiskPredictorResource) Update(ctx context.Context, req resource.UpdateR
 func (r *RiskPredictorResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *riskPredictorResourceModel
 
-	if r.Client.RiskAPIClient == nil {
+	if r.Client == nil || r.Client.RiskAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
