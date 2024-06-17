@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -25,6 +26,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/risk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/verify"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
 // Ensure PingOneProvider satisfies various provider interfaces.
@@ -153,6 +155,10 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 				Description:         regionCodeDescription.Description,
 				MarkdownDescription: regionCodeDescription.MarkdownDescription,
 				Optional:            true,
+
+				Validators: []validator.String{
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumRegionCodeEnumValues)...),
+				},
 			},
 
 			"http_proxy": schema.StringAttribute{

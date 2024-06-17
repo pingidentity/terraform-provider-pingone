@@ -187,13 +187,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 				Default:  stringdefault.StaticString(string(management.ENUMENVIRONMENTTYPE_SANDBOX)),
 
 				Validators: []validator.String{
-					stringvalidator.OneOf(func() []string {
-						strings := make([]string, 0)
-						for _, v := range management.AllowedEnumEnvironmentTypeEnumValues {
-							strings = append(strings, string(v))
-						}
-						return strings
-					}()...),
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumEnvironmentTypeEnumValues)...),
 				},
 			},
 
@@ -215,7 +209,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 					}
 
 					if v := os.Getenv("PINGONE_REGION"); v != "" {
-						return framework.StringToTF(v)
+						return types.StringValue(string(model.FindRegionByName(v).APICode))
 					}
 
 					if r.region.APICode != "" {
