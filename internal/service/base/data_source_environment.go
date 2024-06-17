@@ -64,8 +64,8 @@ func (r *EnvironmentDataSource) Schema(ctx context.Context, req datasource.Schem
 	)
 
 	regionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The region the environment is created in.  Valid options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.",
-	)
+		"The region the environment is created in.",
+	).AllowedValuesEnum(management.AllowedEnumRegionCodeEnumValues)
 
 	solutionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("The solution context of the environment.  Blank or null values indicate a custom, non-workforce solution context.  Valid options are `%s`, `%s` or no value for custom solution context.", string(management.ENUMSOLUTIONTYPE_CUSTOMER), string(management.ENUMSOLUTIONTYPE_WORKFORCE)),
@@ -369,16 +369,7 @@ func (p *EnvironmentDataSourceModel) toState(environmentApiObject *management.En
 	p.Name = framework.StringOkToTF(environmentApiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(environmentApiObject.GetDescriptionOk())
 	p.Type = framework.EnumOkToTF(environmentApiObject.GetTypeOk())
-
-	if v, ok := environmentApiObject.GetRegionOk(); ok {
-		if v.EnumRegionCode != nil {
-			p.Region = enumRegionCodeToTF(v.EnumRegionCode)
-		}
-
-		if v.String != nil {
-			p.Region = framework.StringToTF(*v.String)
-		}
-	}
+	p.Region = framework.EnumOkToTF(environmentApiObject.GetRegionOk())
 
 	if v, ok := environmentApiObject.GetLicenseOk(); ok {
 		p.LicenseId = framework.PingOneResourceIDOkToTF(v.GetIdOk())

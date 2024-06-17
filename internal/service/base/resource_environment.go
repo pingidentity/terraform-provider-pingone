@@ -1012,16 +1012,7 @@ func (p *environmentResourceModel) toState(environmentApiObject *management.Envi
 	p.Name = framework.StringOkToTF(environmentApiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(environmentApiObject.GetDescriptionOk())
 	p.Type = framework.EnumOkToTF(environmentApiObject.GetTypeOk())
-
-	if v, ok := environmentApiObject.GetRegionOk(); ok {
-		if v.EnumRegionCode != nil {
-			p.Region = enumRegionCodeToTF(v.EnumRegionCode)
-		}
-
-		if v.String != nil {
-			p.Region = framework.StringToTF(*v.String)
-		}
-	}
+	p.Region = framework.EnumOkToTF(environmentApiObject.GetRegionOk())
 
 	if v, ok := environmentApiObject.GetLicenseOk(); ok {
 		p.LicenseId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
@@ -1122,14 +1113,6 @@ func toStateEnvironmentServicesBookmark(bookmarks []management.BillOfMaterialsPr
 
 	return returnVar, diags
 
-}
-
-func enumRegionCodeToTF(v *management.EnumRegionCode) basetypes.StringValue {
-	if v == nil {
-		return types.StringNull()
-	} else {
-		return types.StringValue(model.FindRegionByAPICode(*v).Region)
-	}
 }
 
 func environmentCreateCustomErrorHandler(error model.P1Error) diag.Diagnostics {
