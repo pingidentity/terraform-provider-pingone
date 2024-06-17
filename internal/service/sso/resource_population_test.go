@@ -246,16 +246,10 @@ func TestAccPopulation_DataProtection(t *testing.T) {
 			},
 			{
 				Config: testAccPopulationConfig_DataProtection_Sandbox(environmentName, licenseID, resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-				),
-			},
-			{
-				Config: testAccPopulationConfig_DataProtection_Sandbox(environmentName, licenseID, resourceName, name),
 				PreConfig: func() {
 					sso.User_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, userID)
 				},
-				Destroy: true,
+				ExpectError: regexp.MustCompile("Data protection notice - The environment type cannot be changed from PRODUCTION to SANDBOX"),
 			},
 		},
 	})

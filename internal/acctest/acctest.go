@@ -390,9 +390,22 @@ func DaVinciFlowPolicySandboxEnvironment() string {
 }
 
 func CheckParentEnvironmentDestroy(ctx context.Context, apiClient *management.APIClient, environmentID string) (bool, error) {
-	_, r, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentID).Execute()
+	environment, r, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentID).Execute()
 
-	return CheckForResourceDestroy(r, err)
+	destroyed, err := CheckForResourceDestroy(r, err)
+	if err != nil {
+		return destroyed, err
+	}
+
+	if destroyed {
+		return destroyed, nil
+	} else {
+		if environment != nil && environment.Type == management.ENUMENVIRONMENTTYPE_PRODUCTION {
+			return true, nil
+		} else {
+			return false, nil
+		}
+	}
 }
 
 func CheckParentUserDestroy(ctx context.Context, apiClient *management.APIClient, environmentID, userID string) (bool, error) {
