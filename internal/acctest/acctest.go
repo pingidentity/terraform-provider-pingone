@@ -93,8 +93,8 @@ func PreCheckClient(t *testing.T) {
 		t.Fatal("PINGONE_ENVIRONMENT_ID is missing and must be set")
 	}
 
-	if v := os.Getenv("PINGONE_REGION"); v == "" {
-		t.Fatal("PINGONE_REGION is missing and must be set")
+	if v := os.Getenv("PINGONE_REGION_CODE"); v == "" {
+		t.Fatal("PINGONE_REGION_CODE is missing and must be set")
 	}
 }
 
@@ -143,7 +143,7 @@ func PreCheckDomainVerification(t *testing.T) {
 }
 
 func PreCheckRegionSupportsWorkforce(t *testing.T) {
-	if v := os.Getenv("PINGONE_REGION"); v == "Canada" {
+	if v := os.Getenv("PINGONE_REGION_CODE"); v == "CA" {
 		t.Skipf("Workforce environment not supported in the Canada region")
 	}
 }
