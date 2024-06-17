@@ -311,7 +311,7 @@ func (r *APIServiceResource) Configure(ctx context.Context, req resource.Configu
 func (r *APIServiceResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state APIServiceResourceModel
 
-	if r.Client.AuthorizeAPIClient == nil {
+	if r.Client == nil || r.Client.AuthorizeAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -365,7 +365,7 @@ func (r *APIServiceResource) Create(ctx context.Context, req resource.CreateRequ
 func (r *APIServiceResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *APIServiceResourceModel
 
-	if r.Client.AuthorizeAPIClient == nil {
+	if r.Client == nil || r.Client.AuthorizeAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -410,7 +410,7 @@ func (r *APIServiceResource) Read(ctx context.Context, req resource.ReadRequest,
 func (r *APIServiceResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state APIServiceResourceModel
 
-	if r.Client.AuthorizeAPIClient == nil {
+	if r.Client == nil || r.Client.AuthorizeAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -464,7 +464,7 @@ func (r *APIServiceResource) Update(ctx context.Context, req resource.UpdateRequ
 func (r *APIServiceResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *APIServiceResourceModel
 
-	if r.Client.AuthorizeAPIClient == nil {
+	if r.Client == nil || r.Client.AuthorizeAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")

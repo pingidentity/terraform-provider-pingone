@@ -285,7 +285,7 @@ func (r *APIServiceDeploymentResource) Configure(ctx context.Context, req resour
 func (r *APIServiceDeploymentResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state APIServiceDeploymentResourceModel
 
-	if r.Client.AuthorizeAPIClient == nil {
+	if r.Client == nil || r.Client.AuthorizeAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -327,7 +327,7 @@ func (r *APIServiceDeploymentResource) Create(ctx context.Context, req resource.
 func (r *APIServiceDeploymentResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *APIServiceDeploymentResourceModel
 
-	if r.Client.AuthorizeAPIClient == nil {
+	if r.Client == nil || r.Client.AuthorizeAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -372,7 +372,7 @@ func (r *APIServiceDeploymentResource) Read(ctx context.Context, req resource.Re
 func (r *APIServiceDeploymentResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state APIServiceDeploymentResourceModel
 
-	if r.Client.AuthorizeAPIClient == nil {
+	if r.Client == nil || r.Client.AuthorizeAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
