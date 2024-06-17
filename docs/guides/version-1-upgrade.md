@@ -1082,6 +1082,30 @@ This parameter was previously deprecated and has been removed.  Default populati
 
 This attribute was previously deprecated and has been removed.  Default populations are managed with the `pingone_population_default` resource.
 
+### `region` parameter ENUM values changed
+
+The `region` parameter's values now aligns with the API request/response payload values.  Possible values are `AP` (for Asia-Pacific `.asia` environments), `AU` (for Asia-Pacific `.com.au` environments), `CA` (for Canada `.ca` environments), `EU` (for Europe `.eu` environments) and `NA` (for North America `.com` environments).
+
+Previous configuration example:
+
+```terraform
+resource "pingone_environment" "my_environment" {
+  # ... other configuration parameters
+  
+  region = "NorthAmerica"
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_environment" "my_environment" {
+  # ... other configuration parameters
+  
+  region = "NA"
+}
+```
+
 ### `service` block parameter renamed, data type changed and made a required parameter
 
 The `service` parameter has been renamed to `services` and is now a required parameter.  The data type is now a nested object type and no longer a block type.
@@ -3870,6 +3894,10 @@ The `saml_options.sp_verification` computed attribute is now a nested object typ
 This parameter was previously deprecated and has been removed.  Use the `saml_options.sp_verification.certificate_ids` attribute going forward.
 
 ## Data Source: pingone_environment
+
+### `region` parameter ENUM values changed
+
+The `region` computed attribute's values now aligns with the API request/response payload values.  Possible values are `AP` (for Asia-Pacific `.asia` environments), `AU` (for Asia-Pacific `.com.au` environments), `CA` (for Canada `.ca` environments), `EU` (for Europe `.eu` environments) and `NA` (for North America `.com` environments).
 
 ### `service` computed attribute rename and data type change
 
