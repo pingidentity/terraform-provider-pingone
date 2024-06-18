@@ -18,6 +18,11 @@ NOTES:
 * bump `github.com/patrickcping/pingone-go-sdk-v2` 0.11.9 => 0.12.0 ([#827](https://github.com/pingidentity/terraform-provider-pingone/issues/827))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.0 => 0.12.1 ([#842](https://github.com/pingidentity/terraform-provider-pingone/issues/842))
 
+ENHANCEMENTS:
+
+* `data_source/pingone_application`: Added support for encrypted SAML application assertions. ([#840](https://github.com/pingidentity/terraform-provider-pingone/issues/840))
+* `resource/pingone_application`: Added support for encrypted SAML application assertions. ([#840](https://github.com/pingidentity/terraform-provider-pingone/issues/840))
+
 BUG FIXES:
 
 * `resource/pingone_risk_predictor`: Fixed issue that forced replacement of a resource if a mutable field changed within a "resource type" object. ([#838](https://github.com/pingidentity/terraform-provider-pingone/issues/838))
