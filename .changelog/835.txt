@@ -1,0 +1,3 @@
+```release-note:enhancement
+`resource/pingone_risk_predictor`: Added support for the `ADVERSARY_IN_THE_MIDDLE` and `EMAIL_REPUTATION` predictors.
+```
