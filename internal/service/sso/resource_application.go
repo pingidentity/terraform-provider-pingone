@@ -2141,7 +2141,7 @@ func flattenSpEncryptionCertificateSettings(s *management.ApplicationSAMLAllOfSp
 	item := map[string]interface{}{}
 
 	if v, ok := s.GetIdOk(); ok {
-		item["id"] = string(*v)
+		item["id"] = v
 	} else {
 		item["id"] = nil
 	}
