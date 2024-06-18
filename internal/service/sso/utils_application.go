@@ -310,6 +310,9 @@ func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Ob
 	idpSigningKey, d := applicationSamlIdpSigningKeyOkToTF(apiObject.GetIdpSigningOk())
 	diags.Append(d...)
 
+	spEncryption, d := applicationSamlSpEncryptionOkToTF(apiObject.GetSpEncryptionOk())
+	diags.Append(d...)
+
 	spVerification, d := applicationSamlSpVerificationOkToTF(apiObject.GetSpVerificationOk())
 	diags.Append(d...)
 
@@ -328,6 +331,7 @@ func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Ob
 		"slo_endpoint":                   framework.StringOkToTF(apiObject.GetSloEndpointOk()),
 		"slo_response_endpoint":          framework.StringOkToTF(apiObject.GetSloResponseEndpointOk()),
 		"slo_window":                     framework.Int32OkToTF(apiObject.GetSloWindowOk()),
+		"sp_encryption":                  spEncryption,
 		"sp_entity_id":                   framework.StringOkToTF(apiObject.GetSpEntityIdOk()),
 		"sp_verification":                spVerification,
 		"type":                           framework.EnumOkToTF(apiObject.GetTypeOk()),
@@ -356,6 +360,44 @@ func applicationSamlIdpSigningKeyOkToTF(apiObject *management.ApplicationSAMLAll
 	}
 
 	returnVar, d := types.ObjectValue(applicationSamlOptionsIdpSigningKeyTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func applicationSamlSpEncryptionOkToTF(apiObject *management.ApplicationSAMLAllOfSpEncryption, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(applicationSamlOptionsSpEncryptionTFObjectTypes), diags
+	}
+
+	certificate, d := applicationSamlSpEncryptionCertificateOkToTF(apiObject.GetCertificateOk())
+	diags.Append(d...)
+
+	attributesMap := map[string]attr.Value{
+		"algorithm":   framework.EnumOkToTF(apiObject.GetAlgorithmOk()),
+		"certificate": certificate,
+	}
+
+	returnVar, d := types.ObjectValue(applicationSamlOptionsSpEncryptionTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func applicationSamlSpEncryptionCertificateOkToTF(apiObject *management.ApplicationSAMLAllOfSpEncryptionCertificate, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(applicationSamlOptionsSpEncryptionCertificateTFObjectTypes), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"id": framework.PingOneResourceIDOkToTF(apiObject.GetIdOk()),
+	}
+
+	returnVar, d := types.ObjectValue(applicationSamlOptionsSpEncryptionCertificateTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags

@@ -149,6 +149,7 @@ type ApplicationSAMLOptionsResourceModel struct {
 	SloEndpoint                 types.String `tfsdk:"slo_endpoint"`
 	SloResponseEndpoint         types.String `tfsdk:"slo_response_endpoint"`
 	SloWindow                   types.Int64  `tfsdk:"slo_window"`
+	SpEncryption                types.Object `tfsdk:"sp_encryption"`
 	SpEntityId                  types.String `tfsdk:"sp_entity_id"`
 	SpVerification              types.Object `tfsdk:"sp_verification"`
 	Type                        types.String `tfsdk:"type"`
@@ -157,6 +158,15 @@ type ApplicationSAMLOptionsResourceModel struct {
 type ApplicationSAMLOptionsIdpSigningKeyResourceModel struct {
 	Algorithm types.String                 `tfsdk:"algorithm"`
 	KeyId     pingonetypes.ResourceIDValue `tfsdk:"key_id"`
+}
+
+type ApplicationSAMLOptionsSpEncryptionResourceModel struct {
+	Algorithm   types.String `tfsdk:"algorithm"`
+	Certificate types.Object `tfsdk:"certificate"`
+}
+
+type ApplicationSAMLOptionsSpEncryptionCertificateResourceModel struct {
+	Id pingonetypes.ResourceIDValue `tfsdk:"id"`
 }
 
 type ApplicationSAMLOptionsSpVerificationResourceModel struct {
@@ -249,6 +259,7 @@ var (
 		"slo_endpoint":                   types.StringType,
 		"slo_response_endpoint":          types.StringType,
 		"slo_window":                     types.Int64Type,
+		"sp_encryption":                  types.ObjectType{AttrTypes: applicationSamlOptionsSpEncryptionTFObjectTypes},
 		"sp_entity_id":                   types.StringType,
 		"sp_verification":                types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes},
 		"type":                           types.StringType,
@@ -257,6 +268,15 @@ var (
 	applicationSamlOptionsIdpSigningKeyTFObjectTypes = map[string]attr.Type{
 		"algorithm": types.StringType,
 		"key_id":    pingonetypes.ResourceIDType{},
+	}
+
+	applicationSamlOptionsSpEncryptionTFObjectTypes = map[string]attr.Type{
+		"algorithm":   types.StringType,
+		"certificate": types.ObjectType{AttrTypes: applicationSamlOptionsSpEncryptionCertificateTFObjectTypes},
+	}
+
+	applicationSamlOptionsSpEncryptionCertificateTFObjectTypes = map[string]attr.Type{
+		"id": pingonetypes.ResourceIDType{},
 	}
 
 	applicationSamlOptionsSpVerificationTFObjectTypes = map[string]attr.Type{
@@ -600,6 +620,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	samlOptionsIdpSigningKeyAlgorithmDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("Specifies the signature algorithm of the key. For RSA keys, options are `%s`, `%s` and `%s`. For elliptical curve (EC) keys, options are `%s`, `%s` and `%s`.", string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_ECDSA)),
 	)
+
+	samlSpEncryptionAlgorithmDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The algorithm to use when encrypting assertions.",
+	).AllowedValuesEnum(management.AllowedEnumCertificateKeyAlgorithmEnumValues)
 
 	samlOptionsSpVerificationAuthnRequestSignedDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the Authn Request signing should be enforced.",
@@ -1447,6 +1471,36 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 						Validators: []validator.Int64{
 							int64validator.Between(samlOptionsSloWindowMin, samlOptionsSloWindowMax),
+						},
+					},
+
+					"sp_encryption": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies settings for PingOne to encrypt SAML assertions to be sent to the application. Assertions are not encrypted by default.").Description,
+						Optional:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"algorithm": schema.StringAttribute{
+								Description:         samlSpEncryptionAlgorithmDescription.Description,
+								MarkdownDescription: samlSpEncryptionAlgorithmDescription.MarkdownDescription,
+								Required:            true,
+
+								Validators: []validator.String{
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumCertificateKeyEncryptionAlgorithmEnumValues)...),
+								},
+							},
+
+							"certificate": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the certificate settings used to encrypt SAML assertions.").Description,
+								Required:    true,
+								Attributes: map[string]schema.Attribute{
+									"id": schema.StringAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the unique identifier of the encryption public certificate that has been uploaded to PingOne.").Description,
+										Required:    true,
+
+										CustomType: pingonetypes.ResourceIDType{},
+									},
+								},
+							},
 						},
 					},
 
@@ -2509,6 +2563,35 @@ func (p *ApplicationResourceModel) expandApplicationSAML(ctx context.Context) (*
 
 		if !plan.SloWindow.IsNull() && !plan.SloWindow.IsUnknown() {
 			data.SetSloWindow(int32(plan.SloWindow.ValueInt64()))
+		}
+
+		if !plan.SpEncryption.IsNull() && !plan.SpEncryption.IsUnknown() {
+			var spEncryptionPlan ApplicationSAMLOptionsSpEncryptionResourceModel
+
+			diags.Append(plan.SpEncryption.As(ctx, &spEncryptionPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			var spEncryptionCertificatePlan ApplicationSAMLOptionsSpEncryptionCertificateResourceModel
+
+			diags.Append(spEncryptionPlan.Certificate.As(ctx, &spEncryptionCertificatePlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			spEncryption := management.NewApplicationSAMLAllOfSpEncryption(
+				management.EnumCertificateKeyEncryptionAlgorithm(spEncryptionPlan.Algorithm.ValueString()),
+				*management.NewApplicationSAMLAllOfSpEncryptionCertificate(spEncryptionCertificatePlan.Id.ValueString()),
+			)
+
+			data.SetSpEncryption(*spEncryption)
 		}
 
 		if !plan.SpVerification.IsNull() && !plan.SpVerification.IsUnknown() {
