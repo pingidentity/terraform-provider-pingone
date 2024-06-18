@@ -623,7 +623,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 	samlSpEncryptionAlgorithmDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The algorithm to use when encrypting assertions.",
-	).AllowedValuesEnum(management.AllowedEnumCertificateKeyAlgorithmEnumValues)
+	).AllowedValuesEnum(management.AllowedEnumCertificateKeyEncryptionAlgorithmEnumValues)
 
 	samlOptionsSpVerificationAuthnRequestSignedDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the Authn Request signing should be enforced.",

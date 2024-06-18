@@ -629,10 +629,10 @@ EOT
 
 resource "pingone_certificate" "%[3]s-enc" {
   environment_id = pingone_environment.%[2]s.id
-  pem_file = <<EOT
+  pem_file       = <<EOT
 %[7]s
 EOT
-  usage_type = "ENCRYPTION"
+  usage_type     = "ENCRYPTION"
 }
 
 resource "pingone_application" "%[3]s" {
@@ -668,7 +668,7 @@ resource "pingone_application" "%[3]s" {
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:%[3]s"
 
-	sp_encryption = {
+    sp_encryption = {
       algorithm = "AES_256"
       certificate = {
         id = pingone_certificate.%[3]s-enc.id

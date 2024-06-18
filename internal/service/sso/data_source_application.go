@@ -135,7 +135,7 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 
 	samlSpEncryptionAlgorithmDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The algorithm to use when encrypting assertions.",
-	).AllowedValuesEnum(management.AllowedEnumCertificateKeyAlgorithmEnumValues)
+	).AllowedValuesEnum(management.AllowedEnumCertificateKeyEncryptionAlgorithmEnumValues)
 
 	samlDefaultTargetUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specfies a default URL used as the `RelayState` parameter by the IdP to deep link into the application after authentication. This value can be overridden by the `applicationUrl` query parameter for [GET Identity Provider Initiated SSO](https://apidocs.pingidentity.com/pingone/platform/v1/api/#get-identity-provider-initiated-sso). Although both of these parameters are generally URLs, because they are used as deep links, this is not enforced. If neither `defaultTargetUrl` nor `applicationUrl` is specified during a SAML authentication flow, no `RelayState` value is supplied to the application. The `defaultTargetUrl` (or the `applicationUrl`) value is passed to the SAML application’s ACS URL as a separate `RelayState` key value (not within the SAMLResponse key value).",
