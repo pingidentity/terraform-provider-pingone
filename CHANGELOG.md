@@ -2,13 +2,21 @@
 
 NOTES:
 
+* bump `github.com/hashicorp/terraform-plugin-framework` 1.8.0 => 1.9.0 ([#842](https://github.com/pingidentity/terraform-provider-pingone/issues/842))
+* bump `github.com/hashicorp/terraform-plugin-go` 0.22.2 => 0.23.0 ([#842](https://github.com/pingidentity/terraform-provider-pingone/issues/842))
+* bump `github.com/hashicorp/terraform-plugin-mux` 0.15.0 => 0.16.0 ([#842](https://github.com/pingidentity/terraform-provider-pingone/issues/842))
+* bump `github.com/hashicorp/terraform-plugin-sdk/v2` 2.33.0 => 2.34.0 ([#842](https://github.com/pingidentity/terraform-provider-pingone/issues/842))
+* bump `github.com/hashicorp/terraform-plugin-testing` 1.7.0 => 1.8.0 ([#842](https://github.com/pingidentity/terraform-provider-pingone/issues/842))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` 0.4.1 => 0.5.0 ([#827](https://github.com/pingidentity/terraform-provider-pingone/issues/827))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` 0.7.0 => 0.8.0 ([#827](https://github.com/pingidentity/terraform-provider-pingone/issues/827))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.39.0 => 0.40.0 ([#827](https://github.com/pingidentity/terraform-provider-pingone/issues/827))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.40.0 => 0.41.0 ([#842](https://github.com/pingidentity/terraform-provider-pingone/issues/842))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` 0.18.3 => 0.19.0 ([#827](https://github.com/pingidentity/terraform-provider-pingone/issues/827))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/risk` 0.14.1 => 0.15.0 ([#827](https://github.com/pingidentity/terraform-provider-pingone/issues/827))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` 0.15.0 => 0.15.1 ([#842](https://github.com/pingidentity/terraform-provider-pingone/issues/842))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/verify` 0.4.1 => 0.5.0 ([#827](https://github.com/pingidentity/terraform-provider-pingone/issues/827))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` 0.11.9 => 0.12.0 ([#827](https://github.com/pingidentity/terraform-provider-pingone/issues/827))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.0 => 0.12.1 ([#842](https://github.com/pingidentity/terraform-provider-pingone/issues/842))
 
 BUG FIXES:
 
