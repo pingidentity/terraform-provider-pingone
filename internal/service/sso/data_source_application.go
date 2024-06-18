@@ -127,6 +127,7 @@ var (
 		"slo_endpoint":                    types.StringType,
 		"slo_response_endpoint":           types.StringType,
 		"slo_window":                      types.Int64Type,
+		"sp_encryption":                   types.ListType{ElemType: types.ObjectType{AttrTypes: applicationSamlOptionsSpEncryptionTFObjectTypes}},
 		"sp_entity_id":                    types.StringType,
 		"sp_verification_certificate_ids": types.SetType{ElemType: types.StringType},
 		"sp_verification":                 types.ListType{ElemType: types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes}},
@@ -136,6 +137,15 @@ var (
 	applicationSamlOptionsIdpSigningKeyTFObjectTypes = map[string]attr.Type{
 		"algorithm": types.StringType,
 		"key_id":    types.StringType,
+	}
+
+	applicationSamlOptionsSpEncryptionTFObjectTypes = map[string]attr.Type{
+		"algorithm":   types.StringType,
+		"certificate": types.ListType{ElemType: types.ObjectType{AttrTypes: applicationSamlOptionsSpEncryptionCertificateTFObjectTypes}},
+	}
+
+	applicationSamlOptionsSpEncryptionCertificateTFObjectTypes = map[string]attr.Type{
+		"id": types.StringType,
 	}
 
 	applicationSamlOptionsSpVerificationTFObjectTypes = map[string]attr.Type{
@@ -232,6 +242,10 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 	samlEnableRequestedAuthnContextDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether `requestedAuthnContext` is taken into account in policy decision-making.",
 	)
+
+	spEncryptionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The algorithm to use when encrypting assertions.",
+	).AllowedValuesEnum(management.AllowedEnumCertificateKeyAlgorithmEnumValues)
 
 	samlDefaultTargetUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specfies a default URL used as the `RelayState` parameter by the IdP to deep link into the application after authentication. This value can be overridden by the `applicationUrl` query parameter for [GET Identity Provider Initiated SSO](https://apidocs.pingidentity.com/pingone/platform/v1/api/#get-identity-provider-initiated-sso). Although both of these parameters are generally URLs, because they are used as deep links, this is not enforced. If neither `defaultTargetUrl` nor `applicationUrl` is specified during a SAML authentication flow, no `RelayState` value is supplied to the application. The `defaultTargetUrl` (or the `applicationUrl`) value is passed to the SAML application’s ACS URL as a separate `RelayState` key value (not within the SAMLResponse key value).",
@@ -638,6 +652,31 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						"slo_window": schema.Int64Attribute{
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request.").Description,
 							Computed:    true,
+						},
+						"sp_encryption": schema.ListNestedAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A single block object that specifies settings for PingOne to encrypt SAML assertions to be sent to the application. Assertions are not encrypted by default.").Description,
+							Computed:    true,
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"algorithm": schema.StringAttribute{
+										Description:         spEncryptionDescription.Description,
+										MarkdownDescription: spEncryptionDescription.MarkdownDescription,
+										Computed:            true,
+									},
+									"certificate": schema.ListNestedAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("A single block object that specifies the certificate settings used to encrypt SAML assertions.").Description,
+										Computed:    true,
+										NestedObject: schema.NestedAttributeObject{
+											Attributes: map[string]schema.Attribute{
+												"id": schema.StringAttribute{
+													Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the unique identifier of the encryption public certificate that has been uploaded to PingOne.").Description,
+													Computed:    true,
+												},
+											},
+										},
+									},
+								},
+							},
 						},
 						"sp_entity_id": schema.StringAttribute{
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the service provider entity ID used to lookup the application. This is a required property and is unique within the environment.").Description,
@@ -1271,6 +1310,38 @@ func (p *applicationDataSourceModel) toStateSAMLOptions(apiObject *management.Ap
 	idpSigningKeyObj, d := types.ListValue(types.ObjectType{AttrTypes: applicationSamlOptionsIdpSigningKeyTFObjectTypes}, append([]attr.Value{}, flattenedObj))
 	diags.Append(d...)
 
+	// SP Encryption
+	spEncryption := map[string]attr.Value{}
+	if v, ok := apiObject.GetSpEncryptionOk(); ok {
+		spEncryption["algorithm"] = framework.EnumOkToTF(v.GetAlgorithmOk())
+
+		if j, ok := v.GetCertificateOk(); ok {
+
+			// SP Encryption
+			spEncryptionCertificate := map[string]attr.Value{}
+			if k, ok := j.GetIdOk(); ok {
+				spEncryptionCertificate["id"] = framework.StringToTF(*k)
+			} else {
+				spEncryptionCertificate["id"] = types.StringNull()
+			}
+			flattenedspEncryptionCertificateObj, d := types.ObjectValue(applicationSamlOptionsSpEncryptionCertificateTFObjectTypes, spEncryptionCertificate)
+			diags.Append(d...)
+
+			spEncryptionCertObj, d := types.ListValue(types.ObjectType{AttrTypes: applicationSamlOptionsSpEncryptionCertificateTFObjectTypes}, append([]attr.Value{}, flattenedspEncryptionCertificateObj))
+			diags.Append(d...)
+
+			spEncryption["certificate"] = spEncryptionCertObj
+		}
+	} else {
+		spEncryption["algorithm"] = types.StringNull()
+		spEncryption["certificate"] = types.ListNull(types.ObjectType{AttrTypes: applicationSamlOptionsSpEncryptionCertificateTFObjectTypes})
+	}
+	flattenedspEncryptionObj, d := types.ObjectValue(applicationSamlOptionsSpEncryptionTFObjectTypes, spEncryption)
+	diags.Append(d...)
+
+	spEncryptionObj, d := types.ListValue(types.ObjectType{AttrTypes: applicationSamlOptionsSpEncryptionTFObjectTypes}, append([]attr.Value{}, flattenedspEncryptionObj))
+	diags.Append(d...)
+
 	// SP Verification
 	var idList []string
 	spVerification := map[string]attr.Value{}
@@ -1317,6 +1388,7 @@ func (p *applicationDataSourceModel) toStateSAMLOptions(apiObject *management.Ap
 		"acs_urls":                        framework.EnumSetOkToTF(apiObject.GetAcsUrlsOk()),
 		"assertion_duration":              framework.Int32OkToTF(apiObject.GetAssertionDurationOk()),
 		"sp_entity_id":                    framework.StringOkToTF(apiObject.GetSpEntityIdOk()),
+		"sp_encryption":                   spEncryptionObj,
 		"home_page_url":                   framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
 		"assertion_signed_enabled":        framework.BoolOkToTF(apiObject.GetAssertionSignedOk()),
 		"default_target_url":              framework.StringOkToTF(apiObject.GetDefaultTargetUrlOk()),

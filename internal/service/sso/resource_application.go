@@ -642,6 +642,38 @@ func ResourceApplication() *schema.Resource {
 							Optional:         true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(1, 24)),
 						},
+						"sp_encryption": {
+							Description: "A single block object that specifies settings for PingOne to encrypt SAML assertions to be sent to the application. Assertions are not encrypted by default.",
+							Type:        schema.TypeList,
+							MaxItems:    1,
+							Optional:    true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"algorithm": {
+										Description:      fmt.Sprintf("The algorithm to use when encrypting assertions. Options are `%s`, `%s` and `%s`.", string(management.ENUMCERTIFICATEKEYENCRYPTIONALGORITHM_AES_128), string(management.ENUMCERTIFICATEKEYENCRYPTIONALGORITHM_AES_256), string(management.ENUMCERTIFICATEKEYENCRYPTIONALGORITHM_TRIPLEDES)),
+										Type:             schema.TypeString,
+										ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(management.ENUMCERTIFICATEKEYENCRYPTIONALGORITHM_AES_128), string(management.ENUMCERTIFICATEKEYENCRYPTIONALGORITHM_AES_256), string(management.ENUMCERTIFICATEKEYENCRYPTIONALGORITHM_TRIPLEDES)}, false)),
+										Required:         true,
+									},
+									"certificate": {
+										Description: "A single block object that specifies the certificate settings used to encrypt SAML assertions.",
+										Type:        schema.TypeList,
+										MaxItems:    1,
+										Required:    true,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"id": {
+													Description:      "A string that specifies the unique identifier of the encryption public certificate that has been uploaded to PingOne.",
+													Type:             schema.TypeString,
+													Required:         true,
+													ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
+												},
+											},
+										},
+									},
+								},
+							},
+						},
 						"sp_entity_id": {
 							Description: "A string that specifies the service provider entity ID used to lookup the application. This is a required property and is unique within the environment.",
 							Type:        schema.TypeString,
@@ -1736,6 +1768,23 @@ func expandApplicationSAML(d *schema.ResourceData) (*management.ApplicationSAML,
 			application.SetSpVerification(*spVerification)
 		}
 
+		if v1, ok := samlOptions["sp_encryption"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
+			spEncryptionOptions := v1[0].(map[string]interface{})
+
+			if v2, ok := spEncryptionOptions["certificate"].([]interface{}); ok && v2 != nil && len(v2) > 0 && v2[0] != nil {
+				spEncryptionCertificateOptions := v2[0].(map[string]interface{})
+
+				certificate := management.NewApplicationSAMLAllOfSpEncryptionCertificate(spEncryptionCertificateOptions["id"].(string))
+
+				spEncryption := management.NewApplicationSAMLAllOfSpEncryption(
+					management.EnumCertificateKeyEncryptionAlgorithm(spEncryptionOptions["algorithm"].(string)),
+					*certificate,
+				)
+
+				application.SetSpEncryption(*spEncryption)
+			}
+		}
+
 	} else {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -2067,6 +2116,40 @@ func flattenKerberos(kerberos *management.ApplicationOIDCAllOfKerberos) interfac
 	return append(items, item)
 }
 
+func flattenSpEncryptionSettings(s *management.ApplicationSAMLAllOfSpEncryption) interface{} {
+
+	item := map[string]interface{}{}
+
+	if v, ok := s.GetAlgorithmOk(); ok {
+		item["algorithm"] = string(*v)
+	} else {
+		item["algorithm"] = nil
+	}
+
+	if v, ok := s.GetCertificateOk(); ok {
+		item["certificate"] = flattenSpEncryptionCertificateSettings(v)
+	} else {
+		item["certificate"] = nil
+	}
+
+	items := make([]interface{}, 0)
+	return append(items, item)
+}
+
+func flattenSpEncryptionCertificateSettings(s *management.ApplicationSAMLAllOfSpEncryptionCertificate) interface{} {
+
+	item := map[string]interface{}{}
+
+	if v, ok := s.GetIdOk(); ok {
+		item["id"] = v
+	} else {
+		item["id"] = nil
+	}
+
+	items := make([]interface{}, 0)
+	return append(items, item)
+}
+
 func flattenCorsSettings(s *management.ApplicationCorsSettings) interface{} {
 
 	item := map[string]interface{}{}
@@ -2291,6 +2374,12 @@ func flattenSAMLOptions(application *management.ApplicationSAML) interface{} {
 	} else {
 		item["sp_verification"] = nil
 		item["sp_verification_certificate_ids"] = nil
+	}
+
+	if v, ok := application.GetSpEncryptionOk(); ok {
+		item["sp_encryption"] = flattenSpEncryptionSettings(v)
+	} else {
+		item["sp_encryption"] = nil
 	}
 
 	if v, ok := application.GetCorsSettingsOk(); ok {
