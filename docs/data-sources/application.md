@@ -32,8 +32,8 @@ data "pingone_application" "example_by_id" {
 
 ### Optional
 
-- `application_id` (String) The identifier (UUID) of the application.  At least one of the following must be defined: `application_id`, `name`.  Must be a valid PingOne resource ID.
-- `name` (String) The name of the application.  At least one of the following must be defined: `application_id`, `name`.
+- `application_id` (String) The identifier (UUID) of the application.  Exactly one of the following must be defined: `application_id`, `name`.  Must be a valid PingOne resource ID.
+- `name` (String) The name of the application.  Exactly one of the following must be defined: `application_id`, `name`.
 
 ### Read-Only
 
@@ -192,6 +192,7 @@ Read-Only:
 - `slo_endpoint` (String) A string that specifies the logout endpoint URL.
 - `slo_response_endpoint` (String) A string that specifies the endpoint URL to submit the logout response.
 - `slo_window` (Number) An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request.
+- `sp_encryption` (Attributes) A single object that specifies settings for PingOne to encrypt SAML assertions to be sent to the application. Assertions are not encrypted by default. (see [below for nested schema](#nestedatt--saml_options--sp_encryption))
 - `sp_entity_id` (String) A string that specifies the service provider entity ID used to lookup the application. This is a required property and is unique within the environment.
 - `sp_verification` (Attributes) A single object that specifies SP signature verification settings. (see [below for nested schema](#nestedatt--saml_options--sp_verification))
 - `type` (String) A string that specifies the type associated with the application.
@@ -212,6 +213,23 @@ Read-Only:
 
 - `algorithm` (String) A string that specifies the signature algorithm of the key.
 - `key_id` (String) An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.
+
+
+<a id="nestedatt--saml_options--sp_encryption"></a>
+### Nested Schema for `saml_options.sp_encryption`
+
+Read-Only:
+
+- `algorithm` (String) The algorithm to use when encrypting assertions.  Options are `AES_128`, `AES_256`, `TRIPLEDES`.
+- `certificate` (Attributes) A single object that specifies the certificate settings used to encrypt SAML assertions. (see [below for nested schema](#nestedatt--saml_options--sp_encryption--certificate))
+
+<a id="nestedatt--saml_options--sp_encryption--certificate"></a>
+### Nested Schema for `saml_options.sp_encryption.certificate`
+
+Read-Only:
+
+- `id` (String) A string that specifies the unique identifier of the encryption public certificate that has been uploaded to PingOne.
+
 
 
 <a id="nestedatt--saml_options--sp_verification"></a>

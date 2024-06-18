@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
@@ -126,7 +127,7 @@ func (r *PopulationResource) Configure(ctx context.Context, req resource.Configu
 func (r *PopulationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state PopulationResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -161,7 +162,7 @@ func (r *PopulationResource) Create(ctx context.Context, req resource.CreateRequ
 func (r *PopulationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *PopulationResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -206,7 +207,7 @@ func (r *PopulationResource) Read(ctx context.Context, req resource.ReadRequest,
 func (r *PopulationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state PopulationResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -251,7 +252,7 @@ func (r *PopulationResource) Update(ctx context.Context, req resource.UpdateRequ
 func (r *PopulationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *PopulationResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -287,7 +288,7 @@ func (r *PopulationResource) Delete(ctx context.Context, req resource.DeleteRequ
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeletePopulation",
-		framework.CustomErrorResourceNotFoundWarning,
+		populationDeleteCustomErrorHandler,
 		nil,
 		nil,
 	)...)
@@ -295,6 +296,28 @@ func (r *PopulationResource) Delete(ctx context.Context, req resource.DeleteRequ
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+func populationDeleteCustomErrorHandler(error model.P1Error) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// Env must contain at least one population
+	if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+		if code, ok := details[0].GetCodeOk(); ok && *code == "CONSTRAINT_VIOLATION" {
+			if message, ok := details[0].GetMessageOk(); ok {
+				if m, err := regexp.MatchString(`must contain at least one population`, *message); err == nil && m {
+					diags.AddWarning(
+						"Constraint violation",
+						fmt.Sprintf("A constraint violation error was encountered: %s\n\nThe population has been removed from Terraform state, but has been left in place in the environment.", error.GetMessage()),
+					)
+
+					return diags
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 func (r *PopulationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

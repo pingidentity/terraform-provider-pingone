@@ -27,6 +27,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	objectplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectplanmodifier"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -205,7 +206,7 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 		"provider_custom",
 		"provider_custom_twilio",
 		"provider_custom_syniverse",
-	})
+	}).RequiresReplaceNestedAttributes()
 
 	providerCustomAuthenticationMethodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The custom provider account's authentication method.",
@@ -295,7 +296,7 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 		"provider_custom",
 		"provider_custom_twilio",
 		"provider_custom_syniverse",
-	})
+	}).RequiresReplaceNestedAttributes()
 
 	providerCustomTwilioAuthTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The secret key of the Twilio account.",
@@ -312,7 +313,7 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 		"provider_custom",
 		"provider_custom_twilio",
 		"provider_custom_syniverse",
-	})
+	}).RequiresReplaceNestedAttributes()
 
 	providerCustomSyniverseAuthTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The secret key of the Syniverse account.",
@@ -624,6 +625,10 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 					},
 				},
 
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
+				},
+
 				Validators: []validator.Object{
 					objectvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("provider_custom"),
@@ -779,6 +784,10 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 					},
 				},
 
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
+				},
+
 				Validators: []validator.Object{
 					objectvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("provider_custom"),
@@ -916,6 +925,10 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 					},
 				},
 
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
+				},
+
 				Validators: []validator.Object{
 					objectvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("provider_custom"),
@@ -975,7 +988,7 @@ func (r *PhoneDeliverySettingsResource) Configure(ctx context.Context, req resou
 func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state PhoneDeliverySettingsResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1062,7 +1075,7 @@ func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource
 func (r *PhoneDeliverySettingsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *PhoneDeliverySettingsResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1107,7 +1120,7 @@ func (r *PhoneDeliverySettingsResource) Read(ctx context.Context, req resource.R
 func (r *PhoneDeliverySettingsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state PhoneDeliverySettingsResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1156,7 +1169,7 @@ func (r *PhoneDeliverySettingsResource) Update(ctx context.Context, req resource
 func (r *PhoneDeliverySettingsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *PhoneDeliverySettingsResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")

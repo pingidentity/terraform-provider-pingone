@@ -32,8 +32,8 @@ data "pingone_gateway" "example_by_id" {
 
 ### Optional
 
-- `gateway_id` (String) The identifier (UUID) of the gateway.  At least one of the following must be defined: `gateway_id`, `name`.  Must be a valid PingOne resource ID.
-- `name` (String) The name of the gateway.  At least one of the following must be defined: `gateway_id`, `name`.
+- `gateway_id` (String) The identifier (UUID) of the gateway.  Exactly one of the following must be defined: `gateway_id`, `name`.  Must be a valid PingOne resource ID.
+- `name` (String) The name of the gateway.  Exactly one of the following must be defined: `gateway_id`, `name`.
 
 ### Read-Only
 

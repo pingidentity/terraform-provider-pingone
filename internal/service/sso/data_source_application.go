@@ -133,6 +133,10 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 		"A boolean that specifies whether `requestedAuthnContext` is taken into account in policy decision-making.",
 	)
 
+	samlSpEncryptionAlgorithmDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The algorithm to use when encrypting assertions.",
+	).AllowedValuesEnum(management.AllowedEnumCertificateKeyEncryptionAlgorithmEnumValues)
+
 	samlDefaultTargetUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specfies a default URL used as the `RelayState` parameter by the IdP to deep link into the application after authentication. This value can be overridden by the `applicationUrl` query parameter for [GET Identity Provider Initiated SSO](https://apidocs.pingidentity.com/pingone/platform/v1/api/#get-identity-provider-initiated-sso). Although both of these parameters are generally URLs, because they are used as deep links, this is not enforced. If neither `defaultTargetUrl` nor `applicationUrl` is specified during a SAML authentication flow, no `RelayState` value is supplied to the application. The `defaultTargetUrl` (or the `applicationUrl`) value is passed to the SAML application’s ACS URL as a separate `RelayState` key value (not within the SAMLResponse key value).",
 	)
@@ -539,6 +543,30 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request.").Description,
 						Computed:    true,
 					},
+					"sp_encryption": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies settings for PingOne to encrypt SAML assertions to be sent to the application. Assertions are not encrypted by default.").Description,
+						Computed:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"algorithm": schema.StringAttribute{
+								Description:         samlSpEncryptionAlgorithmDescription.Description,
+								MarkdownDescription: samlSpEncryptionAlgorithmDescription.MarkdownDescription,
+								Computed:            true,
+							},
+							"certificate": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the certificate settings used to encrypt SAML assertions.").Description,
+								Computed:    true,
+								Attributes: map[string]schema.Attribute{
+									"id": schema.StringAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the unique identifier of the encryption public certificate that has been uploaded to PingOne.").Description,
+										Computed:    true,
+
+										CustomType: pingonetypes.ResourceIDType{},
+									},
+								},
+							},
+						},
+					},
 					"sp_entity_id": schema.StringAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the service provider entity ID used to lookup the application. This is a required property and is unique within the environment.").Description,
 						Computed:    true,
@@ -634,7 +662,7 @@ func (r *ApplicationDataSource) Configure(ctx context.Context, req datasource.Co
 func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *applicationDataSourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")

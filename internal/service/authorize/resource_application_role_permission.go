@@ -148,7 +148,7 @@ func (r *ApplicationRolePermissionResource) Configure(ctx context.Context, req r
 func (r *ApplicationRolePermissionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state ApplicationRolePermissionResourceModel
 
-	if r.Client.AuthorizeAPIClient == nil {
+	if r.Client == nil || r.Client.AuthorizeAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -193,7 +193,7 @@ func (r *ApplicationRolePermissionResource) Create(ctx context.Context, req reso
 func (r *ApplicationRolePermissionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *ApplicationRolePermissionResourceModel
 
-	if r.Client.AuthorizeAPIClient == nil {
+	if r.Client == nil || r.Client.AuthorizeAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -257,7 +257,7 @@ func (r *ApplicationRolePermissionResource) Update(ctx context.Context, req reso
 func (r *ApplicationRolePermissionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *ApplicationRolePermissionResourceModel
 
-	if r.Client.AuthorizeAPIClient == nil {
+	if r.Client == nil || r.Client.AuthorizeAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")

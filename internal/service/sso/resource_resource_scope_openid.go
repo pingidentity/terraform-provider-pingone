@@ -136,7 +136,7 @@ func (r *ResourceScopeOpenIDResource) Configure(ctx context.Context, req resourc
 func (r *ResourceScopeOpenIDResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state ResourceScopeOpenIDResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -212,7 +212,7 @@ func (r *ResourceScopeOpenIDResource) Create(ctx context.Context, req resource.C
 func (r *ResourceScopeOpenIDResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *ResourceScopeOpenIDResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -269,7 +269,7 @@ func (r *ResourceScopeOpenIDResource) Read(ctx context.Context, req resource.Rea
 func (r *ResourceScopeOpenIDResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state ResourceScopeOpenIDResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -324,7 +324,7 @@ func (r *ResourceScopeOpenIDResource) Update(ctx context.Context, req resource.U
 func (r *ResourceScopeOpenIDResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *ResourceScopeOpenIDResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")

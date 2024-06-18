@@ -112,7 +112,7 @@ func (r SchemaAttributeDescription) ConflictsWith(fieldPaths []string) SchemaAtt
 }
 
 func (r SchemaAttributeDescription) ExactlyOneOf(fieldPaths []string) SchemaAttributeDescription {
-	return r.AppendSliceValues("At least one of the following must be defined:", fieldPaths)
+	return r.AppendSliceValues("Exactly one of the following must be defined:", fieldPaths)
 }
 
 func (r SchemaAttributeDescription) RequiresReplace() SchemaAttributeDescription {
@@ -120,7 +120,7 @@ func (r SchemaAttributeDescription) RequiresReplace() SchemaAttributeDescription
 }
 
 func (r SchemaAttributeDescription) RequiresReplaceNestedAttributes() SchemaAttributeDescription {
-	return r.AppendMarkdownString("This object is immutable.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules.")
+	return r.AppendMarkdownString("If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules.")
 }
 
 func (r SchemaAttributeDescription) AppendSliceValues(pretext string, values []string) SchemaAttributeDescription {

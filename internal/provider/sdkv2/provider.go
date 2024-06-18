@@ -3,10 +3,12 @@ package sdkv2
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/base"
@@ -55,15 +57,20 @@ func New(version string) func() *schema.Provider {
 					Optional:    true,
 					Description: "The access token used for provider resource management against the PingOne management API.  Default value can be set with the `PINGONE_API_ACCESS_TOKEN` environment variable.  Must provide only one of `api_access_token` (when obtaining the worker token outside of the provider) and `client_id` (when the provider should fetch the worker token during operations).",
 				},
-				"region": {
+				"region_code": {
 					Type:        schema.TypeString,
 					Optional:    true,
-					Description: "The PingOne region to use.  Options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.  Default value can be set with the `PINGONE_REGION` environment variable.",
+					Description: "The PingOne region to use, which selects the appropriate service endpoints.  Options are `AP` (for Asia-Pacific `.asia` tenants), `AU` (for Asia-Pacific `.com.au` tenants), `CA` (for Canada `.ca` tenants), `EU` (for Europe `.eu` tenants) and `NA` (for North America `.com` tenants).  Default value can be set with the `PINGONE_REGION_CODE` environment variable.",
 				},
 				"http_proxy": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "Full URL for the http/https proxy service, for example `http://127.0.0.1:8090`.  Default value can be set with the `HTTP_PROXY` or `HTTPS_PROXY` environment variables.",
+				},
+				"append_user_agent": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "A custom string value to append to the end of the `User-Agent` header when making API requests to the PingOne service. Default value can be set with the `PINGONE_TF_APPEND_USER_AGENT` environment variable.",
 				},
 				"global_options": {
 					Type:        schema.TypeList,
@@ -165,8 +172,9 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 			config.AccessToken = v
 		}
 
-		if v, ok := d.Get("region").(string); ok && v != "" {
-			config.Region = v
+		if v, ok := d.Get("region_code").(string); ok && v != "" {
+			regionCode := management.EnumRegionCode(v)
+			config.RegionCode = &regionCode
 		}
 
 		config.GlobalOptions = &client.GlobalOptions{
@@ -195,6 +203,12 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 					config.GlobalOptions.Population.ContainsUsersForceDelete = v
 				}
 			}
+		}
+
+		if v, ok := d.Get("append_user_agent").(string); ok && v != "" {
+			config.UserAgentAppend = &v
+		} else if v := strings.TrimSpace(os.Getenv("PINGONE_TF_APPEND_USER_AGENT")); v != "" {
+			config.UserAgentAppend = &v
 		}
 
 		client, err := config.APIClient(ctx, version)

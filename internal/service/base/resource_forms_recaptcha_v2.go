@@ -120,7 +120,7 @@ func (r *FormsRecaptchaV2Resource) Configure(ctx context.Context, req resource.C
 func (r *FormsRecaptchaV2Resource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state formsRecaptchaV2ResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -165,7 +165,7 @@ func (r *FormsRecaptchaV2Resource) Create(ctx context.Context, req resource.Crea
 func (r *FormsRecaptchaV2Resource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *formsRecaptchaV2ResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -210,7 +210,7 @@ func (r *FormsRecaptchaV2Resource) Read(ctx context.Context, req resource.ReadRe
 func (r *FormsRecaptchaV2Resource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state formsRecaptchaV2ResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -255,7 +255,7 @@ func (r *FormsRecaptchaV2Resource) Update(ctx context.Context, req resource.Upda
 func (r *FormsRecaptchaV2Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *formsRecaptchaV2ResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")

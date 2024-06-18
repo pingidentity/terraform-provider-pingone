@@ -90,9 +90,9 @@ resource "pingone_mfa_application_push_credential" "example_hms" {
 
 ### Optional
 
-- `apns` (Attributes) A single object that specifies the credential settings for the Apple Push Notification Service. (see [below for nested schema](#nestedatt--apns))
-- `fcm` (Attributes) A single object that specifies the credential settings for the Firebase Cloud Messaging service. (see [below for nested schema](#nestedatt--fcm))
-- `hms` (Attributes) A single object that specifies the credential settings for Huawei Moble Service push messaging. (see [below for nested schema](#nestedatt--hms))
+- `apns` (Attributes) A single object that specifies the credential settings for the Apple Push Notification Service.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules. (see [below for nested schema](#nestedatt--apns))
+- `fcm` (Attributes) A single object that specifies the credential settings for the Firebase Cloud Messaging service.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules. (see [below for nested schema](#nestedatt--fcm))
+- `hms` (Attributes) A single object that specifies the credential settings for Huawei Moble Service push messaging.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules. (see [below for nested schema](#nestedatt--hms))
 
 ### Read-Only
 

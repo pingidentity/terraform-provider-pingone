@@ -93,8 +93,8 @@ func PreCheckClient(t *testing.T) {
 		t.Fatal("PINGONE_ENVIRONMENT_ID is missing and must be set")
 	}
 
-	if v := os.Getenv("PINGONE_REGION"); v == "" {
-		t.Fatal("PINGONE_REGION is missing and must be set")
+	if v := os.Getenv("PINGONE_REGION_CODE"); v == "" {
+		t.Fatal("PINGONE_REGION_CODE is missing and must be set")
 	}
 }
 
@@ -143,7 +143,7 @@ func PreCheckDomainVerification(t *testing.T) {
 }
 
 func PreCheckRegionSupportsWorkforce(t *testing.T) {
-	if v := os.Getenv("PINGONE_REGION"); v == "Canada" {
+	if v := os.Getenv("PINGONE_REGION_CODE"); v == "CA" {
 		t.Skipf("Workforce environment not supported in the Canada region")
 	}
 }
@@ -282,11 +282,13 @@ func ResourceNameGenEnvironment() string {
 
 func TestClient(ctx context.Context) (*client.Client, error) {
 
+	regionCode := management.EnumRegionCode(os.Getenv("PINGONE_REGION_CODE"))
+
 	config := &client.Config{
 		ClientID:      os.Getenv("PINGONE_CLIENT_ID"),
 		ClientSecret:  os.Getenv("PINGONE_CLIENT_SECRET"),
 		EnvironmentID: os.Getenv("PINGONE_ENVIRONMENT_ID"),
-		Region:        os.Getenv("PINGONE_REGION"),
+		RegionCode:    &regionCode,
 		GlobalOptions: &client.GlobalOptions{
 			Population: &client.PopulationOptions{
 				ContainsUsersForceDelete: false,
@@ -388,9 +390,22 @@ func DaVinciFlowPolicySandboxEnvironment() string {
 }
 
 func CheckParentEnvironmentDestroy(ctx context.Context, apiClient *management.APIClient, environmentID string) (bool, error) {
-	_, r, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentID).Execute()
+	environment, r, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentID).Execute()
 
-	return CheckForResourceDestroy(r, err)
+	destroyed, err := CheckForResourceDestroy(r, err)
+	if err != nil {
+		return destroyed, err
+	}
+
+	if destroyed {
+		return destroyed, nil
+	} else {
+		if environment != nil && environment.Type == management.ENUMENVIRONMENTTYPE_PRODUCTION {
+			return true, nil
+		} else {
+			return false, nil
+		}
+	}
 }
 
 func CheckParentUserDestroy(ctx context.Context, apiClient *management.APIClient, environmentID, userID string) (bool, error) {

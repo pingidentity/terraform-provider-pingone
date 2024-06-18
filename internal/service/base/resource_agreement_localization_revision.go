@@ -182,7 +182,7 @@ func (r *AgreementLocalizationRevisionResource) Configure(ctx context.Context, r
 func (r *AgreementLocalizationRevisionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state AgreementLocalizationRevisionResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -231,7 +231,7 @@ func (r *AgreementLocalizationRevisionResource) Create(ctx context.Context, req 
 func (r *AgreementLocalizationRevisionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *AgreementLocalizationRevisionResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -284,7 +284,7 @@ func (r *AgreementLocalizationRevisionResource) Update(ctx context.Context, req 
 func (r *AgreementLocalizationRevisionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *AgreementLocalizationRevisionResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")

@@ -1772,6 +1772,18 @@ func testAccIdentityProviderConfig_SAMLMinimal(resourceName, name, pem string) s
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_key" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                = "%[3]s"
+  algorithm           = "EC"
+  key_length          = 256
+  signature_algorithm = "SHA384withECDSA"
+  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}
+
 resource "pingone_certificate" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 

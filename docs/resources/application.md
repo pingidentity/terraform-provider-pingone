@@ -228,12 +228,12 @@ resource "pingone_application" "my_awesome_external_link" {
 - `access_control_role_type` (String) A string that specifies the user role required to access the application.  A user is an admin user if the user has one or more admin roles assigned, such as `Organization Admin`, `Environment Admin`, `Identity Data Admin`, or `Client Application Developer`.  Options are `ADMIN_USERS_ONLY`.
 - `description` (String) A string that specifies the description of the application.
 - `enabled` (Boolean) A boolean that specifies whether the application is enabled in the environment.  Defaults to `false`.
-- `external_link_options` (Attributes) A single object that specifies External link application specific settings.  At least one of the following must be defined: `external_link_options`, `oidc_options`, `saml_options`. (see [below for nested schema](#nestedatt--external_link_options))
+- `external_link_options` (Attributes) A single object that specifies External link application specific settings.  Exactly one of the following must be defined: `external_link_options`, `oidc_options`, `saml_options`.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules. (see [below for nested schema](#nestedatt--external_link_options))
 - `hidden_from_app_portal` (Boolean) A boolean to specify whether the application is hidden in the application portal despite the configured group access policy.  Defaults to `false`.
 - `icon` (Attributes) A single object that specifies settings for the application icon. (see [below for nested schema](#nestedatt--icon))
 - `login_page_url` (String) A string that specifies the custom login page URL for the application. If you set the `login_page_url` property for applications in an environment that sets a custom domain, the URL should include the top-level domain and at least one additional domain level. **Warning** To avoid issues with third-party cookies in some browsers, a custom domain must be used, giving your PingOne environment the same parent domain as your authentication application. For more information about custom domains, see Custom domains.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.
-- `oidc_options` (Attributes) A single object that specifies OIDC/OAuth application specific settings.  At least one of the following must be defined: `external_link_options`, `oidc_options`, `saml_options`. (see [below for nested schema](#nestedatt--oidc_options))
-- `saml_options` (Attributes) A single object that specifies SAML application specific settings.  At least one of the following must be defined: `external_link_options`, `oidc_options`, `saml_options`. (see [below for nested schema](#nestedatt--saml_options))
+- `oidc_options` (Attributes) A single object that specifies OIDC/OAuth application specific settings.  Exactly one of the following must be defined: `external_link_options`, `oidc_options`, `saml_options`.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules. (see [below for nested schema](#nestedatt--oidc_options))
+- `saml_options` (Attributes) A single object that specifies SAML application specific settings.  Exactly one of the following must be defined: `external_link_options`, `oidc_options`, `saml_options`.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules. (see [below for nested schema](#nestedatt--saml_options))
 - `tags` (Set of String) An array of strings that specifies the list of labels associated with the application.  Options are `PING_FED_CONNECTION_INTEGRATION`.  Conflicts with `external_link_options`, `saml_options`.
 
 ### Read-Only
@@ -398,6 +398,7 @@ Optional:
 - `slo_endpoint` (String) A string that specifies the logout endpoint URL. This is an optional property. However, if a logout endpoint URL is not defined, logout actions result in an error.
 - `slo_response_endpoint` (String) A string that specifies the endpoint URL to submit the logout response. If a value is not provided, the `slo_endpoint` property value is used to submit SLO response.
 - `slo_window` (Number) An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request.  The minimum value is `0` hour and the maximum is `24` hours.
+- `sp_encryption` (Attributes) A single object that specifies settings for PingOne to encrypt SAML assertions to be sent to the application. Assertions are not encrypted by default. (see [below for nested schema](#nestedatt--saml_options--sp_encryption))
 - `sp_verification` (Attributes) A single object item that specifies SP signature verification settings. (see [below for nested schema](#nestedatt--saml_options--sp_verification))
 - `type` (String) A string that specifies the type associated with the application.  Options are `CUSTOM_APP`, `WEB_APP`.  Defaults to `WEB_APP`.  This field is immutable and will trigger a replace plan if changed.
 
@@ -420,6 +421,23 @@ Required:
 Optional:
 
 - `origins` (Set of String) A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value must be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 address.  Subdomains may use the wildcard (`*`) to match any string.  Must be non-empty when `behavior` is `ALLOW_SPECIFIC_ORIGINS` and must be omitted or empty when `behavior` is `ALLOW_NO_ORIGINS`.  Limited to 20 values.
+
+
+<a id="nestedatt--saml_options--sp_encryption"></a>
+### Nested Schema for `saml_options.sp_encryption`
+
+Required:
+
+- `algorithm` (String) The algorithm to use when encrypting assertions.  Options are `AES_128`, `AES_256`, `TRIPLEDES`.
+- `certificate` (Attributes) A single object that specifies the certificate settings used to encrypt SAML assertions. (see [below for nested schema](#nestedatt--saml_options--sp_encryption--certificate))
+
+<a id="nestedatt--saml_options--sp_encryption--certificate"></a>
+### Nested Schema for `saml_options.sp_encryption.certificate`
+
+Required:
+
+- `id` (String) A string that specifies the unique identifier of the encryption public certificate that has been uploaded to PingOne.
+
 
 
 <a id="nestedatt--saml_options--sp_verification"></a>

@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
@@ -115,7 +118,7 @@ func (r *ApplicationRoleAssignmentResource) Configure(ctx context.Context, req r
 func (r *ApplicationRoleAssignmentResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state ApplicationRoleAssignmentResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -189,7 +192,7 @@ func (r *ApplicationRoleAssignmentResource) Create(ctx context.Context, req reso
 func (r *ApplicationRoleAssignmentResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *ApplicationRoleAssignmentResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -258,7 +261,7 @@ func (r *ApplicationRoleAssignmentResource) Update(ctx context.Context, req reso
 func (r *ApplicationRoleAssignmentResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *ApplicationRoleAssignmentResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -271,32 +274,53 @@ func (r *ApplicationRoleAssignmentResource) Delete(ctx context.Context, req reso
 		return
 	}
 
-	if data.ReadOnly.Equal(types.BoolValue(true)) {
-		resp.Diagnostics.AddError(
-			"Cannot destroy read only role assignment",
-			fmt.Sprintf("Role assignment %s cannot be deleted as it is read only", data.Id.ValueString()),
+	deleteStateConf := &retry.StateChangeConf{
+		Pending: []string{
+			"400",
+		},
+		Target: []string{
+			"204",
+			"404",
+		},
+		Refresh: func() (interface{}, string, error) {
+			var fR *http.Response
+			var fErr error
+			resp.Diagnostics.Append(framework.ParseResponse(
+				ctx,
+
+				func() (any, *http.Response, error) {
+					fR, fErr = r.Client.ManagementAPIClient.ApplicationRoleAssignmentsApi.DeleteApplicationRoleAssignment(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+				},
+				"DeleteApplicationRoleAssignment",
+				framework.CustomErrorResourceNotFoundWarning,
+				nil,
+				nil,
+			)...)
+
+			statusCode := ""
+			if fR != nil {
+				base := 10
+				statusCode = strconv.FormatInt(int64(fR.StatusCode), base)
+			}
+
+			return resp, statusCode, fErr
+		},
+		Timeout:                   20 * time.Minute,
+		Delay:                     1 * time.Second,
+		MinTimeout:                500 * time.Millisecond,
+		ContinuousTargetOccurence: 2,
+	}
+	_, err := deleteStateConf.WaitForStateContext(ctx)
+	if err != nil {
+		resp.Diagnostics.AddWarning(
+			"Role Assignment Delete Error",
+			fmt.Sprintf("Error waiting for application role assignment (%s) to be deleted: %s", data.Id.ValueString(), err),
 		)
 
 		return
 	}
 
-	// Run the API call
-	resp.Diagnostics.Append(framework.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			fR, fErr := r.Client.ManagementAPIClient.ApplicationRoleAssignmentsApi.DeleteApplicationRoleAssignment(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
-		},
-		"DeleteApplicationRoleAssignment",
-		framework.CustomErrorResourceNotFoundWarning,
-		nil,
-		nil,
-	)...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
 }
 
 func (r *ApplicationRoleAssignmentResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

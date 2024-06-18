@@ -42,7 +42,7 @@ provider "pingone" {
   client_id      = var.client_id
   client_secret  = var.client_secret
   environment_id = var.environment_id
-  region         = var.region
+  region_code    = var.region_code
 }
 
 resource "pingone_environment" "my_environment" {
@@ -71,11 +71,11 @@ resource "pingone_environment" "my_environment" {
 ```
 
 ```shell
-$ export PINGONE_CLIENT_ID="admin-client-id-value"
-$ export PINGONE_CLIENT_SECRET="admin-client-secret-value"
-$ export PINGONE_ENVIRONMENT_ID="admin-environment-id-value"
-$ export PINGONE_REGION="admin-environment-region-code"
-$ terraform plan
+export PINGONE_CLIENT_ID="admin-client-id-value"
+export PINGONE_CLIENT_SECRET="admin-client-secret-value"
+export PINGONE_ENVIRONMENT_ID="admin-environment-id-value"
+export PINGONE_REGION_CODE="AP | AU | CA | EU | NA"
+terraform plan
 ```
 
 ### Authenticate using an environment variable access token
@@ -99,9 +99,9 @@ resource "pingone_environment" "my_environment" {
 ```
 
 ```shell
-$ export PINGONE_API_ACCESS_TOKEN="worker-access-token-value"
-$ export PINGONE_REGION="admin-environment-region-code"
-$ terraform plan
+export PINGONE_API_ACCESS_TOKEN="worker-access-token-value"
+export PINGONE_REGION_CODE="AP | AU | CA | EU | NA"
+terraform plan
 ```
 
 ## Custom User Agent information
@@ -109,7 +109,7 @@ $ terraform plan
 The PingOne provider allows custom information to be appended to the default user agent string (that includes Terraform provider version information) by setting the `PINGONE_TF_APPEND_USER_AGENT` environment variable.  This can be useful when troubleshooting issues with Ping Identity Support, or adding context to HTTP requests.
 
 ```shell
-$ export PINGONE_TF_APPEND_USER_AGENT="Jenkins/2.426.2"
+export PINGONE_TF_APPEND_USER_AGENT="Jenkins/2.426.2"
 ```
 
 ## Global Options
@@ -123,7 +123,7 @@ provider "pingone" {
   client_id      = var.client_id
   client_secret  = var.client_secret
   environment_id = var.environment_id
-  region         = var.region
+  region_code    = var.region_code
 
   global_options {
 
@@ -144,8 +144,9 @@ provider "pingone" {
 - `environment_id` (String) Environment ID for the worker app client.  Default value can be set with the `PINGONE_ENVIRONMENT_ID` environment variable.  Must be configured with `client_id` and `client_secret`.
 - `global_options` (Block List) A single block containing configuration items to override API behaviours in PingOne. (see [below for nested schema](#nestedblock--global_options))
 - `http_proxy` (String) Full URL for the http/https proxy service, for example `http://127.0.0.1:8090`.  Default value can be set with the `HTTP_PROXY` or `HTTPS_PROXY` environment variables.
-- `region` (String) The PingOne region to use.  Options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.  Default value can be set with the `PINGONE_REGION` environment variable.
+- `region_code` (String) The PingOne region to use, which selects the appropriate service endpoints.  Options are `AP` (for Asia-Pacific `.asia` tenants), `AU` (for Asia-Pacific `.com.au` tenants), `CA` (for Canada `.ca` tenants), `EU` (for Europe `.eu` tenants) and `NA` (for North America `.com` tenants).  Default value can be set with the `PINGONE_REGION_CODE` environment variable.
 - `service_endpoints` (Block List) A single block containing configuration items to override the service API endpoints of PingOne. (see [below for nested schema](#nestedblock--service_endpoints))
+- `append_user_agent` (String) A custom string value to append to the end of the `User-Agent` header when making API requests to the PingOne service. Default value can be set with the `PINGONE_TF_APPEND_USER_AGENT` environment variable.
 
 <a id="nestedblock--global_options"></a>
 ### Nested Schema for `global_options`

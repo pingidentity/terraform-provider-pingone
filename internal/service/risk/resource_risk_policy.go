@@ -970,7 +970,7 @@ func (r *RiskPolicyResource) Configure(ctx context.Context, req resource.Configu
 func (r *RiskPolicyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state riskPolicyResourceModel
 
-	if r.Client.RiskAPIClient == nil {
+	if r.Client == nil || r.Client.RiskAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1037,7 +1037,7 @@ func (r *RiskPolicyResource) Create(ctx context.Context, req resource.CreateRequ
 func (r *RiskPolicyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *riskPolicyResourceModel
 
-	if r.Client.RiskAPIClient == nil {
+	if r.Client == nil || r.Client.RiskAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1082,7 +1082,7 @@ func (r *RiskPolicyResource) Read(ctx context.Context, req resource.ReadRequest,
 func (r *RiskPolicyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state riskPolicyResourceModel
 
-	if r.Client.RiskAPIClient == nil {
+	if r.Client == nil || r.Client.RiskAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1131,7 +1131,7 @@ func (r *RiskPolicyResource) Update(ctx context.Context, req resource.UpdateRequ
 func (r *RiskPolicyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *riskPolicyResourceModel
 
-	if r.Client.RiskAPIClient == nil {
+	if r.Client == nil || r.Client.RiskAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")

@@ -29,6 +29,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	objectplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectplanmodifier"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -148,6 +149,7 @@ type ApplicationSAMLOptionsResourceModel struct {
 	SloEndpoint                 types.String `tfsdk:"slo_endpoint"`
 	SloResponseEndpoint         types.String `tfsdk:"slo_response_endpoint"`
 	SloWindow                   types.Int64  `tfsdk:"slo_window"`
+	SpEncryption                types.Object `tfsdk:"sp_encryption"`
 	SpEntityId                  types.String `tfsdk:"sp_entity_id"`
 	SpVerification              types.Object `tfsdk:"sp_verification"`
 	Type                        types.String `tfsdk:"type"`
@@ -156,6 +158,15 @@ type ApplicationSAMLOptionsResourceModel struct {
 type ApplicationSAMLOptionsIdpSigningKeyResourceModel struct {
 	Algorithm types.String                 `tfsdk:"algorithm"`
 	KeyId     pingonetypes.ResourceIDValue `tfsdk:"key_id"`
+}
+
+type ApplicationSAMLOptionsSpEncryptionResourceModel struct {
+	Algorithm   types.String `tfsdk:"algorithm"`
+	Certificate types.Object `tfsdk:"certificate"`
+}
+
+type ApplicationSAMLOptionsSpEncryptionCertificateResourceModel struct {
+	Id pingonetypes.ResourceIDValue `tfsdk:"id"`
 }
 
 type ApplicationSAMLOptionsSpVerificationResourceModel struct {
@@ -248,6 +259,7 @@ var (
 		"slo_endpoint":                   types.StringType,
 		"slo_response_endpoint":          types.StringType,
 		"slo_window":                     types.Int64Type,
+		"sp_encryption":                  types.ObjectType{AttrTypes: applicationSamlOptionsSpEncryptionTFObjectTypes},
 		"sp_entity_id":                   types.StringType,
 		"sp_verification":                types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes},
 		"type":                           types.StringType,
@@ -256,6 +268,15 @@ var (
 	applicationSamlOptionsIdpSigningKeyTFObjectTypes = map[string]attr.Type{
 		"algorithm": types.StringType,
 		"key_id":    pingonetypes.ResourceIDType{},
+	}
+
+	applicationSamlOptionsSpEncryptionTFObjectTypes = map[string]attr.Type{
+		"algorithm":   types.StringType,
+		"certificate": types.ObjectType{AttrTypes: applicationSamlOptionsSpEncryptionCertificateTFObjectTypes},
+	}
+
+	applicationSamlOptionsSpEncryptionCertificateTFObjectTypes = map[string]attr.Type{
+		"id": pingonetypes.ResourceIDType{},
 	}
 
 	applicationSamlOptionsSpVerificationTFObjectTypes = map[string]attr.Type{
@@ -334,7 +355,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 	externalLinkOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that specifies External link application specific settings.",
-	).ExactlyOneOf(appTypesExactlyOneOf)
+	).ExactlyOneOf(appTypesExactlyOneOf).RequiresReplaceNestedAttributes()
 
 	externalLinkOptionsHomePageURLDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the custom home page URL for the application.  Both `http://` and `https://` URLs are permitted.",
@@ -342,7 +363,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 	oidcOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that specifies OIDC/OAuth application specific settings.",
-	).ExactlyOneOf(appTypesExactlyOneOf)
+	).ExactlyOneOf(appTypesExactlyOneOf).RequiresReplaceNestedAttributes()
 
 	oidcOptionsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type associated with the application.",
@@ -551,7 +572,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 	samlOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that specifies SAML application specific settings.",
-	).ExactlyOneOf(appTypesExactlyOneOf)
+	).ExactlyOneOf(appTypesExactlyOneOf).RequiresReplaceNestedAttributes()
 
 	samlOptionsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type associated with the application.",
@@ -599,6 +620,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	samlOptionsIdpSigningKeyAlgorithmDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("Specifies the signature algorithm of the key. For RSA keys, options are `%s`, `%s` and `%s`. For elliptical curve (EC) keys, options are `%s`, `%s` and `%s`.", string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_ECDSA)),
 	)
+
+	samlSpEncryptionAlgorithmDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The algorithm to use when encrypting assertions.",
+	).AllowedValuesEnum(management.AllowedEnumCertificateKeyEncryptionAlgorithmEnumValues)
 
 	samlOptionsSpVerificationAuthnRequestSignedDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the Authn Request signing should be enforced.",
@@ -768,6 +793,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						path.MatchRelative().AtParent().AtName("oidc_options"),
 						path.MatchRelative().AtParent().AtName("saml_options"),
 					),
+				},
+
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
 				},
 			},
 
@@ -1315,6 +1344,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						path.MatchRelative().AtParent().AtName("saml_options"),
 					),
 				},
+
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
+				},
 			},
 
 			"saml_options": schema.SingleNestedAttribute{
@@ -1441,6 +1474,36 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						},
 					},
 
+					"sp_encryption": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies settings for PingOne to encrypt SAML assertions to be sent to the application. Assertions are not encrypted by default.").Description,
+						Optional:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"algorithm": schema.StringAttribute{
+								Description:         samlSpEncryptionAlgorithmDescription.Description,
+								MarkdownDescription: samlSpEncryptionAlgorithmDescription.MarkdownDescription,
+								Required:            true,
+
+								Validators: []validator.String{
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumCertificateKeyEncryptionAlgorithmEnumValues)...),
+								},
+							},
+
+							"certificate": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the certificate settings used to encrypt SAML assertions.").Description,
+								Required:    true,
+								Attributes: map[string]schema.Attribute{
+									"id": schema.StringAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the unique identifier of the encryption public certificate that has been uploaded to PingOne.").Description,
+										Required:    true,
+
+										CustomType: pingonetypes.ResourceIDType{},
+									},
+								},
+							},
+						},
+					},
+
 					"sp_entity_id": schema.StringAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the service provider entity ID used to lookup the application. This is a required property and is unique within the environment.").Description,
 						Required:    true,
@@ -1502,6 +1565,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						path.MatchRelative().AtParent().AtName("oidc_options"),
 						path.MatchRelative().AtParent().AtName("saml_options"),
 					),
+				},
+
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
 				},
 			},
 		},
@@ -1644,7 +1711,7 @@ func (r *ApplicationResource) ValidateConfig(ctx context.Context, req resource.V
 func (r *ApplicationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state ApplicationResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1724,7 +1791,7 @@ func (r *ApplicationResource) Create(ctx context.Context, req resource.CreateReq
 func (r *ApplicationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *ApplicationResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1769,7 +1836,7 @@ func (r *ApplicationResource) Read(ctx context.Context, req resource.ReadRequest
 func (r *ApplicationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state ApplicationResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1818,7 +1885,7 @@ func (r *ApplicationResource) Update(ctx context.Context, req resource.UpdateReq
 func (r *ApplicationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *ApplicationResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -2496,6 +2563,35 @@ func (p *ApplicationResourceModel) expandApplicationSAML(ctx context.Context) (*
 
 		if !plan.SloWindow.IsNull() && !plan.SloWindow.IsUnknown() {
 			data.SetSloWindow(int32(plan.SloWindow.ValueInt64()))
+		}
+
+		if !plan.SpEncryption.IsNull() && !plan.SpEncryption.IsUnknown() {
+			var spEncryptionPlan ApplicationSAMLOptionsSpEncryptionResourceModel
+
+			diags.Append(plan.SpEncryption.As(ctx, &spEncryptionPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			var spEncryptionCertificatePlan ApplicationSAMLOptionsSpEncryptionCertificateResourceModel
+
+			diags.Append(spEncryptionPlan.Certificate.As(ctx, &spEncryptionCertificatePlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			spEncryption := management.NewApplicationSAMLAllOfSpEncryption(
+				management.EnumCertificateKeyEncryptionAlgorithm(spEncryptionPlan.Algorithm.ValueString()),
+				*management.NewApplicationSAMLAllOfSpEncryptionCertificate(spEncryptionCertificatePlan.Id.ValueString()),
+			)
+
+			data.SetSpEncryption(*spEncryption)
 		}
 
 		if !plan.SpVerification.IsNull() && !plan.SpVerification.IsUnknown() {

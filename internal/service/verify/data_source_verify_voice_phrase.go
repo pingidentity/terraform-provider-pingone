@@ -147,7 +147,7 @@ func (r *VoicePhraseDataSource) Configure(ctx context.Context, req datasource.Co
 func (r *VoicePhraseDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *voicePhraseDataSourceModel
 
-	if r.Client.VerifyAPIClient == nil {
+	if r.Client == nil || r.Client.VerifyAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")

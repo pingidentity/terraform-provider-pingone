@@ -34,8 +34,8 @@ data "pingone_trusted_email_domain" "example_by_id" {
 
 ### Optional
 
-- `domain_name` (String) A string that specifies the domain name to use, which must be provided and must be unique within an environment (for example, `demo.bxretail.org`).  At least one of the following must be defined: `trusted_email_domain_id`, `domain_name`.
-- `trusted_email_domain_id` (String) The ID of the trusted email domain.  Must be a valid PingOne resource ID.  At least one of the following must be defined: `trusted_email_domain_id`, `domain_name`.
+- `domain_name` (String) A string that specifies the domain name to use, which must be provided and must be unique within an environment (for example, `demo.bxretail.org`).  Exactly one of the following must be defined: `trusted_email_domain_id`, `domain_name`.
+- `trusted_email_domain_id` (String) The ID of the trusted email domain.  Must be a valid PingOne resource ID.  Exactly one of the following must be defined: `trusted_email_domain_id`, `domain_name`.
 
 ### Read-Only
 
