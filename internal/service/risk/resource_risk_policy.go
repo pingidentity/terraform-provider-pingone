@@ -1153,7 +1153,7 @@ func (r *RiskPolicyResource) Delete(ctx context.Context, req resource.DeleteRequ
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteRiskPolicySet",
-		framework.CustomErrorResourceNotFoundWarning,
+		riskPolicyDeleteCustomError,
 		nil,
 		nil,
 	)...)
@@ -1168,6 +1168,7 @@ func (r *RiskPolicyResource) Delete(ctx context.Context, req resource.DeleteRequ
 		},
 		Target: []string{
 			"404",
+			"defaulted",
 		},
 		Refresh: func() (interface{}, string, error) {
 			base := 10
@@ -1180,6 +1181,10 @@ func (r *RiskPolicyResource) Delete(ctx context.Context, req resource.DeleteRequ
 					return risk.RiskPolicySet{}, strconv.FormatInt(int64(r.StatusCode), base), nil
 				}
 				return nil, strconv.FormatInt(int64(r.StatusCode), base), err
+			}
+
+			if defaultConfig, ok := fO.GetDefaultOk(); ok && *defaultConfig {
+				return resp, "defaulted", nil
 			}
 
 			return resp, strconv.FormatInt(int64(r.StatusCode), base), nil
@@ -1198,6 +1203,24 @@ func (r *RiskPolicyResource) Delete(ctx context.Context, req resource.DeleteRequ
 
 		return
 	}
+}
+
+var riskPolicyDeleteCustomError = func(p1Error model.P1Error) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// Undeletable default risk policy
+	if v, ok := p1Error.GetDetailsOk(); ok && v != nil && len(v) > 0 {
+		if v[0].GetCode() == "CONSTRAINT_VIOLATION" {
+			if match, _ := regexp.MatchString("remove default policy", v[0].GetMessage()); match {
+
+				diags.AddWarning("Cannot delete the default risk policy", "Due to API restrictions, the provider cannot delete the default risk policy for an environment.  The policy has been removed from Terraform state but has been left in place in the PingOne service.")
+
+				return diags
+			}
+		}
+	}
+
+	return framework.CustomErrorResourceNotFoundWarning(p1Error)
 }
 
 func (r *RiskPolicyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
