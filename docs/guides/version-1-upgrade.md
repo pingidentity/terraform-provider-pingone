@@ -1,15 +1,37 @@
 ---
 layout: ""
-page_title: "PingOne Terraform Provider Version 1 Upgrade Guide"
+page_title: "Version 1 Upgrade Guide (from version 0)"
 description: |-
   Version 1.0.0 of the PingOne Terraform provider is a major release that introduces breaking changes to existing HCL.  This guide describes the changes that are required to upgrade v0.* PingOne Terraform provider releases to v1.0.0 onwards.
 ---
 
-# PingOne Terraform Provider Version 1 Upgrade Guide
+# PingOne Terraform Provider Version 1 Upgrade Guide (from version 0)
 
-Version 1.0.0 of the PingOne Terraform provider is a major release that introduces breaking changes to existing HCL. This guide describes the changes that are required to upgrade v0.* PingOne Terraform provider releases to v1.0.0 onwards.
+Version 1.0.0 of the PingOne Terraform provider is a major release that introduces breaking changes to existing HCL. This guide describes the changes that are required to upgrade v0.* PingOne Terraform provider releases to v1.*.
 
-## Provider Configuration
+## Why have schemas changed?
+
+As part of ensuring the ongoing maintainability of the Terraform provider integration and to solve functional issues, some resource schemas have changed going to version `1` from version `0`.
+
+The schemas may have changed in different ways, described in the following sections.
+
+### Removal of previously deprecated fields
+
+Removal of deprecated fields are expected on each major release going forward.  Ping maintains a deprecation and release strategy according to [Terraform provider creation best practices](https://developer.hashicorp.com/terraform/plugin/best-practices/versioning).
+
+### Re-alignment of the Terraform schema with the API schema for some resources
+
+Some resources have differing schemas between the Terraform HCL schema and the underlying API schema.  Re-alignment to the API simplifies writing HCL where developers are familiar with the API schema but also reduces ongoing maintenance overheads on the provider going forward.
+
+Some re-alignment changes have been necessary in this major release. Further re-alignment to the API will be handled through backward-compatible deprecation, allowing a gradual approach to cutover.
+
+### Data type changes
+
+The most common data type change is changing block type fields (`example { ... }`) to nested object fields (`example = { ... }` for single objects or `example = [ { ... }, { ... } ]` for lists/sets of objects).  These data type changes ensure that the provider remains aligned with Terraform's strategic integration Framework SDK, which ensures that customers immediately benefit from the latest Terraform features as they become available.
+
+These data type changes are a one-time set of changes from `v0` to `v1` and are not expected in future major releases.
+
+## Provider Configuration Changes
 
 ### `force_delete_production_type` optional parameter removed
 
@@ -1280,7 +1302,7 @@ resource "pingone_gateway" "my_awesome_gateway" {
 
 ### `user_type` parameter rename and data type change
 
-The `user_type` parameter has been renamed to `user_types` and is now a map of objects data type and no longer a block set of objects type.  The map key of the new data type is the name of the user type (previously the `user_type.name` parameter).
+The `user_type` parameter has been renamed to `user_types` and is now a map of objects data type and no longer a block set of objects type, to ensure that differences of embedded objects can be correctly correlated between plan and state (ref: [Issue #753](https://github.com/pingidentity/terraform-provider-pingone/issues/753)).  The map key of the new data type is the name of the user type (previously the `user_type.name` parameter).
 
 Previous configuration example:
 
