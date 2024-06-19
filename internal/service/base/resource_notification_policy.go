@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
@@ -21,6 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
@@ -558,13 +560,31 @@ func (r *NotificationPolicyResource) Delete(ctx context.Context, req resource.De
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteNotificationsPolicy",
-		framework.CustomErrorResourceNotFoundWarning,
+		notificationPolicyDeleteCustomError,
 		sdk.DefaultCreateReadRetryable,
 		nil,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+var notificationPolicyDeleteCustomError = func(p1Error model.P1Error) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// Undeletable default notifications policy
+	if v, ok := p1Error.GetDetailsOk(); ok && v != nil && len(v) > 0 {
+		if v[0].GetCode() == "CONSTRAINT_VIOLATION" {
+			if match, _ := regexp.MatchString("remove default notifications policy", v[0].GetMessage()); match {
+
+				diags.AddWarning("Cannot delete the default notifications policy", "Due to API restrictions, the provider cannot delete the default notifications policy for an environment.  The policy has been removed from Terraform state but has been left in place in the PingOne service.")
+
+				return diags
+			}
+		}
+	}
+
+	return framework.CustomErrorResourceNotFoundWarning(p1Error)
 }
 
 func (r *NotificationPolicyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
