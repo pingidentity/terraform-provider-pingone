@@ -190,6 +190,7 @@ ENHANCEMENTS:
 * `resource/pingone_identity_provider`: Added ability to set the SP signing key algorithm. ([#830](https://github.com/pingidentity/terraform-provider-pingone/issues/830))
 * `resource/pingone_identity_provider`: Added the `pkce_method` property for OIDC Identity Providers. ([#829](https://github.com/pingidentity/terraform-provider-pingone/issues/829))
 * `resource/pingone_mfa_device_policy`: Added `prompt_for_nickname_on_pairing` for each device method, which provides a prompt for users to provide nicknames for devices on pairing. ([#809](https://github.com/pingidentity/terraform-provider-pingone/issues/809))
+* `resource/pingone_mfa_device_policy`: Added the `default` field to track (in state) whether the policy is the default for the environment. ([#844](https://github.com/pingidentity/terraform-provider-pingone/issues/844))
 * `resource/pingone_mfa_settings`: Added `users.mfa_enabled` that, when set to `true`, will enable MFA by default for new users. ([#797](https://github.com/pingidentity/terraform-provider-pingone/issues/797))
 * `resource/pingone_resource`: Added support for the `application_permissions_settings` property to be able to add permissions to access tokens. ([#819](https://github.com/pingidentity/terraform-provider-pingone/issues/819))
 * `resource/pingone_risk_predictor`: Added support for the `ADVERSARY_IN_THE_MIDDLE` and `EMAIL_REPUTATION` predictors. ([#835](https://github.com/pingidentity/terraform-provider-pingone/issues/835))
@@ -200,3 +201,5 @@ BUG FIXES:
 * `resource/pingone_application`: Fixed state inconsistency issue when retrieving an application's client secret. ([#781](https://github.com/pingidentity/terraform-provider-pingone/issues/781))
 * `resource/pingone_custom_domain_verify`: Fixed ineffectual `timeouts` configuration. ([#786](https://github.com/pingidentity/terraform-provider-pingone/issues/786))
 * `resource/pingone_gateway`: Fixed issue that, when updating a `user_types` object, Terraform re-creates the full `user_types` object instead of updating the object in place. ([#798](https://github.com/pingidentity/terraform-provider-pingone/issues/798))
+* `resource/pingone_mfa_device_policy`: Resource can now be modified with Terraform if the `default` property is modified to `true` in the console or by API directly. ([#844](https://github.com/pingidentity/terraform-provider-pingone/issues/844))
+* `resource/pingone_verify_policy`: Resource can now be modified with Terraform if the `default` property is modified to `true` in the console or by API directly. ([#844](https://github.com/pingidentity/terraform-provider-pingone/issues/844))
