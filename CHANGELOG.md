@@ -5,6 +5,7 @@ BREAKING CHANGES:
 * Removed the provider parameter `force_delete_production_type`.  Use the `global_options.environment.production_type_force_delete` parameter going forward. ([#787](https://github.com/pingidentity/terraform-provider-pingone/issues/787))
 * Renamed the `pingone_mfa_policies` data source to `pingone_mfa_device_policies`. ([#788](https://github.com/pingidentity/terraform-provider-pingone/issues/788))
 * Renamed the `pingone_mfa_policy` resource to `pingone_mfa_device_policy`. ([#788](https://github.com/pingidentity/terraform-provider-pingone/issues/788))
+* Renamed the `pingone_role_assignment_user` resource to `pingone_user_role_assignment`. ([#843](https://github.com/pingidentity/terraform-provider-pingone/issues/843))
 * Replaced the `region` parameter (and `PINGONE_REGION` environment variable) with `region_code` (defaulted with the `PINGONE_REGION_CODE` environment variable).  See the Upgrade Guide for details. ([#828](https://github.com/pingidentity/terraform-provider-pingone/issues/828))
 * `data-source/pingone_application`: Changed the `access_control_group_options` attribute data type. ([#682](https://github.com/pingidentity/terraform-provider-pingone/issues/682))
 * `data-source/pingone_application`: Changed the `external_link_options` attribute data type. ([#682](https://github.com/pingidentity/terraform-provider-pingone/issues/682))
