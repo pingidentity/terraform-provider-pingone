@@ -50,7 +50,7 @@ func NewUserRoleAssignmentResource() resource.Resource {
 
 // Metadata
 func (r *UserRoleAssignmentResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_role_assignment_user"
+	resp.TypeName = req.ProviderTypeName + "_user_role_assignment"
 }
 
 // Schema.

@@ -20,7 +20,7 @@ func TestAccRoleAssignmentUser_RemovalDrift(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_role_assignment_user.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_user_role_assignment.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 
@@ -89,7 +89,7 @@ func TestAccRoleAssignmentUser_Population(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_role_assignment_user.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_user_role_assignment.%s", resourceName)
 
 	name := resourceName
 
@@ -146,7 +146,7 @@ func TestAccRoleAssignmentUser_Organisation(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_role_assignment_user.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_user_role_assignment.%s", resourceName)
 
 	name := resourceName
 	organisationID := os.Getenv("PINGONE_ORGANIZATION_ID")
@@ -239,7 +239,7 @@ func TestAccRoleAssignmentUser_Environment(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_role_assignment_user.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_user_role_assignment.%s", resourceName)
 
 	name := resourceName
 
@@ -332,7 +332,7 @@ func TestAccRoleAssignmentUser_BadParameters(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_role_assignment_user.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_user_role_assignment.%s", resourceName)
 
 	name := resourceName
 
@@ -393,7 +393,7 @@ data "pingone_role" "%[3]s" {
   name = "%[5]s"
 }
 
-resource "pingone_role_assignment_user" "%[3]s" {
+resource "pingone_user_role_assignment" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   user_id        = pingone_user.%[3]s.id
   role_id        = data.pingone_role.%[3]s.id
@@ -424,7 +424,7 @@ data "pingone_role" "%[2]s" {
   name = "%[4]s"
 }
 
-resource "pingone_role_assignment_user" "%[2]s" {
+resource "pingone_user_role_assignment" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   user_id        = pingone_user.%[2]s.id
   role_id        = data.pingone_role.%[2]s.id
@@ -455,7 +455,7 @@ data "pingone_role" "%[2]s" {
   name = "%[4]s"
 }
 
-resource "pingone_role_assignment_user" "%[2]s" {
+resource "pingone_user_role_assignment" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   user_id        = pingone_user.%[2]s.id
   role_id        = data.pingone_role.%[2]s.id
@@ -486,7 +486,7 @@ data "pingone_role" "%[2]s" {
   name = "%[4]s"
 }
 
-resource "pingone_role_assignment_user" "%[2]s" {
+resource "pingone_user_role_assignment" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   user_id        = pingone_user.%[2]s.id
   role_id        = data.pingone_role.%[2]s.id
