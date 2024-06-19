@@ -17,6 +17,7 @@ func Resources() []func() resource.Resource {
 		NewAgreementLocalizationResource,
 		NewAgreementLocalizationRevisionResource,
 		NewAgreementResource,
+		NewAlertChannelResource,
 		NewBrandingSettingsResource,
 		NewBrandingThemeDefaultResource,
 		NewBrandingThemeResource,
