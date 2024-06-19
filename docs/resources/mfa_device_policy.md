@@ -198,6 +198,7 @@ resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
 
 ### Read-Only
 
+- `default` (Boolean) A boolean that specifies whether this MFA device policy is enforced as the default within the environment. When set to `true`, all other MFA device policies are `false`.  Defaults to `false`.
 - `id` (String) The ID of this resource.
 
 <a id="nestedatt--email"></a>

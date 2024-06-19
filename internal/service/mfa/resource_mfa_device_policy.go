@@ -13,8 +13,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -37,6 +39,7 @@ type MFADevicePolicyResourceModel struct {
 	Name                  types.String                 `tfsdk:"name"`
 	Authentication        types.Object                 `tfsdk:"authentication"`
 	NewDeviceNotification types.String                 `tfsdk:"new_device_notification"`
+	Default               types.Bool                   `tfsdk:"default"`
 	Sms                   types.Object                 `tfsdk:"sms"`
 	Voice                 types.Object                 `tfsdk:"voice"`
 	Email                 types.Object                 `tfsdk:"email"`
@@ -276,6 +279,10 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 		"A string that defines whether a user should be notified if a new authentication method has been added to their account.",
 	).AllowedValuesEnum(mfa.AllowedEnumMFADevicePolicyNewDeviceNotificationEnumValues).DefaultValue(string(mfa.ENUMMFADEVICEPOLICYNEWDEVICENOTIFICATION_NONE))
 
+	defaultDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether this MFA device policy is enforced as the default within the environment. When set to `true`, all other MFA device policies are `false`.",
+	).DefaultValue(false)
+
 	mobileDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that allows configuration of mobile push/OTP device authentication policy settings.  This factor requires embedding the PingOne MFA SDK into a customer facing mobile application, and configuring as a Native application using the `pingone_application` resource.",
 	)
@@ -400,6 +407,16 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 
 				Validators: []validator.String{
 					stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumMFADevicePolicyNewDeviceNotificationEnumValues)...),
+				},
+			},
+
+			"default": schema.BoolAttribute{
+				Description:         defaultDescription.Description,
+				MarkdownDescription: defaultDescription.MarkdownDescription,
+				Computed:            true,
+
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
 				},
 			},
 
@@ -1352,6 +1369,12 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 		)
 	}
 
+	if !p.Default.IsNull() && !p.Default.IsUnknown() {
+		data.SetDefault(p.Default.ValueBool())
+	} else {
+		data.SetDefault(false)
+	}
+
 	return data, diags
 }
 
@@ -1879,6 +1902,8 @@ func (p *MFADevicePolicyResourceModel) toState(apiObject *mfa.DeviceAuthenticati
 	diags.Append(d...)
 
 	p.NewDeviceNotification = framework.EnumOkToTF(apiObject.GetNewDeviceNotificationOk())
+
+	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())
 
 	p.Sms, d = toStateMfaDevicePolicySms(apiObject.GetSmsOk())
 	diags.Append(d...)
