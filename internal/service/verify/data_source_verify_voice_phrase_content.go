@@ -5,30 +5,29 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
 type VoicePhraseContentDataSource serviceClientType
 
 type voicePhraseContentDataSourceModel struct {
-	Id                   types.String `tfsdk:"id"`
-	EnvironmentId        types.String `tfsdk:"environment_id"`
-	VoicePhraseContentId types.String `tfsdk:"voice_phrase_content_id"`
-	VoicePhraseId        types.String `tfsdk:"voice_phrase_id"`
-	Locale               types.String `tfsdk:"locale"`
-	Content              types.String `tfsdk:"content"`
-	CreatedAt            types.String `tfsdk:"created_at"`
-	UpdatedAt            types.String `tfsdk:"updated_at"`
+	Id                   pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId        pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	VoicePhraseContentId pingonetypes.ResourceIDValue `tfsdk:"voice_phrase_content_id"`
+	VoicePhraseId        pingonetypes.ResourceIDValue `tfsdk:"voice_phrase_id"`
+	Locale               types.String                 `tfsdk:"locale"`
+	Content              types.String                 `tfsdk:"content"`
+	CreatedAt            timetypes.RFC3339            `tfsdk:"created_at"`
+	UpdatedAt            timetypes.RFC3339            `tfsdk:"updated_at"`
 }
 
 // Framework interfaces
@@ -71,20 +70,16 @@ func (r *VoicePhraseContentDataSource) Schema(ctx context.Context, req datasourc
 			"voice_phrase_content_id": schema.StringAttribute{
 				Description: "Identifier (UUID) associated with the voice phrase content.",
 				Required:    true,
-				Validators: []validator.String{
-					validation.P1ResourceIDValidator(),
-				},
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"voice_phrase_id": schema.StringAttribute{
 				Description:         phraseIdDescription.Description,
 				MarkdownDescription: phraseIdDescription.MarkdownDescription,
 				Required:            true,
-				Validators: []validator.String{
-					stringvalidator.Any(
-						validation.P1ResourceIDValidator(),
-					),
-				},
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"locale": schema.StringAttribute{
@@ -101,11 +96,15 @@ func (r *VoicePhraseContentDataSource) Schema(ctx context.Context, req datasourc
 			"created_at": schema.StringAttribute{
 				Description: "Date and time the verify phrase content was created.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 
 			"updated_at": schema.StringAttribute{
 				Description: "Date and time the verify phrase content was updated. Can be null.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 		},
 	}
@@ -140,7 +139,7 @@ func (r *VoicePhraseContentDataSource) Configure(ctx context.Context, req dataso
 func (r *VoicePhraseContentDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *voicePhraseContentDataSourceModel
 
-	if r.Client.VerifyAPIClient == nil {
+	if r.Client == nil || r.Client.VerifyAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -188,10 +187,10 @@ func (p *voicePhraseContentDataSourceModel) toState(apiObject *verify.VoicePhras
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.VoicePhraseContentId = framework.StringOkToTF(apiObject.GetIdOk())
-	p.VoicePhraseId = framework.StringToTF(apiObject.GetVoicePhrase().Id)
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
+	p.VoicePhraseContentId = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.VoicePhraseId = framework.PingOneResourceIDToTF(apiObject.GetVoicePhrase().Id)
 	p.Locale = framework.StringOkToTF(apiObject.GetLocaleOk())
 	p.Content = framework.StringOkToTF(apiObject.GetContentOk())
 	p.CreatedAt = framework.TimeOkToTF(apiObject.GetCreatedAtOk())

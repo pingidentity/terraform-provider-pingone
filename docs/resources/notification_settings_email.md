@@ -26,7 +26,7 @@ resource "pingone_notification_settings_email" "my_awesome_smtp_settings" {
   username = var.smtp_server_username
   password = var.smtp_server_password
 
-  from {
+  from = {
     email_address = "services@bxretail.org"
     name          = "Customer Services"
   }
@@ -39,6 +39,7 @@ resource "pingone_notification_settings_email" "my_awesome_smtp_settings" {
 ### Required
 
 - `environment_id` (String) The ID of the environment to configure email settings in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `from` (Attributes) A required single block that specifies the email sender's "from" name and email address. (see [below for nested schema](#nestedatt--from))
 - `host` (String) A string that specifies the organization's SMTP server.
 - `password` (String, Sensitive) A string that specifies the organization's SMTP server's password.
 - `port` (Number) An integer that specifies the port used by the organization's SMTP server to send emails (default: `465`). Note that the protocol used depends upon the port specified. If you specify port `25`, `587`, or `2525`, SMTP with `STARTTLS` is used. Otherwise, `SMTPS` is used.
@@ -46,15 +47,14 @@ resource "pingone_notification_settings_email" "my_awesome_smtp_settings" {
 
 ### Optional
 
-- `from` (Block List) A required single block that specifies the email sender's "from" name and email address. (see [below for nested schema](#nestedblock--from))
-- `reply_to` (Block List) A single block that specifies the email sender's "reply to" name and email address. (see [below for nested schema](#nestedblock--reply_to))
+- `reply_to` (Attributes) A single block that specifies the email sender's "reply to" name and email address. (see [below for nested schema](#nestedatt--reply_to))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 - `protocol` (String) A string that specifies the current protocol in use.
 
-<a id="nestedblock--from"></a>
+<a id="nestedatt--from"></a>
 ### Nested Schema for `from`
 
 Required:
@@ -66,7 +66,7 @@ Optional:
 - `name` (String) A string that specifies the email sender's "from" name.
 
 
-<a id="nestedblock--reply_to"></a>
+<a id="nestedatt--reply_to"></a>
 ### Nested Schema for `reply_to`
 
 Required:
@@ -82,5 +82,5 @@ Optional:
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-$ terraform import pingone_notification_settings_email.example <environment_id>
+terraform import pingone_notification_settings_email.example <environment_id>
 ```

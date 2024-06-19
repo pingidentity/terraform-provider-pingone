@@ -73,7 +73,7 @@ func TestAccApplicationSecret_RemovalDrift(t *testing.T) {
 	})
 }
 
-func TestAccApplicationSecret_Full(t *testing.T) {
+func TestAccApplicationSecret_Basic(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -86,6 +86,9 @@ func TestAccApplicationSecret_Full(t *testing.T) {
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckNoResourceAttr(resourceFullName, "previous.secret"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "previous.expires_at"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "previous.last_used"),
 			resource.TestMatchResourceAttr(resourceFullName, "secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 		),
 	}
@@ -122,7 +125,7 @@ func TestAccApplicationSecret_Full(t *testing.T) {
 	})
 }
 
-func TestAccApplicationSecret_MultipleRotation(t *testing.T) {
+func TestAccApplicationSecret_Rotation(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -130,26 +133,53 @@ func TestAccApplicationSecret_MultipleRotation(t *testing.T) {
 
 	name := resourceName
 
-	fullStep := resource.TestStep{
-		Config: testAccApplicationSecretConfig_MultipleRotation(resourceName, name),
-		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestMatchResourceAttr(resourceFullName, "secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
-		),
-	}
-
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.ApplicationSecret_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				VersionConstraint: "0.11.1",
+				Source:            "hashicorp/time",
+			},
+		},
+		CheckDestroy: sso.ApplicationSecret_CheckDestroy,
+		ErrorCheck:   acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Single from new
-			fullStep,
+			{
+				Config: testAccApplicationSecretConfig_Rotation1(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckNoResourceAttr(resourceFullName, "previous.secret"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "previous.expires_at"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "previous.last_used"),
+					resource.TestMatchResourceAttr(resourceFullName, "secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
+				),
+			},
+			{
+				Config: testAccApplicationSecretConfig_Rotation2(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "previous.secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
+					resource.TestMatchResourceAttr(resourceFullName, "previous.expires_at", verify.RFC3339Regexp),
+					resource.TestCheckNoResourceAttr(resourceFullName, "previous.last_used"),
+					resource.TestMatchResourceAttr(resourceFullName, "secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
+				),
+			},
+			{
+				Config:  testAccApplicationSecretConfig_Rotation2(resourceName, name),
+				Destroy: true,
+			},
+			{
+				Config: testAccApplicationSecretConfig_Rotation2(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "previous.secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
+					resource.TestMatchResourceAttr(resourceFullName, "previous.expires_at", verify.RFC3339Regexp),
+					resource.TestCheckNoResourceAttr(resourceFullName, "previous.last_used"),
+					resource.TestMatchResourceAttr(resourceFullName, "secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
+				),
+			},
 			// Test importing the resource
 			{
 				ResourceName: resourceFullName,
@@ -280,7 +310,7 @@ resource "pingone_application" "%[3]s" {
   name           = "%[4]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "WEB_APP"
     grant_types                 = ["AUTHORIZATION_CODE", "REFRESH_TOKEN"]
     response_types              = ["CODE"]
@@ -305,7 +335,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -320,7 +350,7 @@ resource "pingone_application_secret" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationSecretConfig_MultipleRotation(resourceName, name string) string {
+func testAccApplicationSecretConfig_Rotation1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -329,7 +359,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -338,16 +368,41 @@ resource "pingone_application" "%[2]s" {
   }
 }
 
-resource "pingone_application_secret" "%[2]s-pre" {
+resource "pingone_application_secret" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationSecretConfig_Rotation2(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options = {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+
+resource "time_offset" "%[2]s" {
+  offset_minutes = 10
 }
 
 resource "pingone_application_secret" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
 
-  depends_on = [pingone_application_secret.%[2]s-pre]
+  previous = {
+    expires_at = time_offset.%[2]s.rfc3339
+  }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -360,7 +415,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -388,7 +443,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -416,7 +471,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -445,7 +500,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]

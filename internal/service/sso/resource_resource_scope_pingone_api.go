@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -24,12 +25,12 @@ import (
 type ResourceScopePingOneAPIResource serviceClientType
 
 type ResourceScopePingOneAPIResourceModel struct {
-	Id               types.String `tfsdk:"id"`
-	EnvironmentId    types.String `tfsdk:"environment_id"`
-	ResourceId       types.String `tfsdk:"resource_id"`
-	Name             types.String `tfsdk:"name"`
-	Description      types.String `tfsdk:"description"`
-	SchemaAttributes types.Set    `tfsdk:"schema_attributes"`
+	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ResourceId       pingonetypes.ResourceIDValue `tfsdk:"resource_id"`
+	Name             types.String                 `tfsdk:"name"`
+	Description      types.String                 `tfsdk:"description"`
+	SchemaAttributes types.Set                    `tfsdk:"schema_attributes"`
 }
 
 // Framework interfaces
@@ -109,6 +110,8 @@ func (r *ResourceScopePingOneAPIResource) Schema(ctx context.Context, req resour
 			"resource_id": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("The ID of the PingOne API resource.").Description,
 				Computed:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 		},
 	}
@@ -143,7 +146,7 @@ func (r *ResourceScopePingOneAPIResource) Configure(ctx context.Context, req res
 func (r *ResourceScopePingOneAPIResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state ResourceScopePingOneAPIResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -162,7 +165,7 @@ func (r *ResourceScopePingOneAPIResource) Create(ctx context.Context, req resour
 		return
 	}
 
-	plan.ResourceId = framework.StringOkToTF(resource.GetIdOk())
+	plan.ResourceId = framework.PingOneResourceIDOkToTF(resource.GetIdOk())
 
 	// Build the model for the API
 	resourceScope, d := plan.expand(ctx, r.Client.ManagementAPIClient, *resource)
@@ -219,7 +222,7 @@ func (r *ResourceScopePingOneAPIResource) Create(ctx context.Context, req resour
 func (r *ResourceScopePingOneAPIResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *ResourceScopePingOneAPIResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -276,7 +279,7 @@ func (r *ResourceScopePingOneAPIResource) Read(ctx context.Context, req resource
 func (r *ResourceScopePingOneAPIResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state ResourceScopePingOneAPIResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -295,7 +298,7 @@ func (r *ResourceScopePingOneAPIResource) Update(ctx context.Context, req resour
 		return
 	}
 
-	plan.ResourceId = framework.StringOkToTF(resource.GetIdOk())
+	plan.ResourceId = framework.PingOneResourceIDOkToTF(resource.GetIdOk())
 
 	// Build the model for the API
 	resourceScope, d := plan.expand(ctx, r.Client.ManagementAPIClient, *resource)
@@ -333,7 +336,7 @@ func (r *ResourceScopePingOneAPIResource) Update(ctx context.Context, req resour
 func (r *ResourceScopePingOneAPIResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *ResourceScopePingOneAPIResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -503,12 +506,12 @@ func (p *ResourceScopePingOneAPIResourceModel) toState(apiObject *management.Res
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
 
 	if v, ok := apiObject.GetResourceOk(); ok {
-		p.ResourceId = framework.StringOkToTF(v.GetIdOk())
+		p.ResourceId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	} else {
-		p.ResourceId = types.StringNull()
+		p.ResourceId = pingonetypes.NewResourceIDNull()
 	}
 
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())

@@ -20,15 +20,16 @@ data "pingone_licenses" "my_licenses_by_scim_filter" {
 data "pingone_licenses" "my_licenses_by_data_filter" {
   organization_id = var.organization_id
 
-  data_filter {
-    name   = "name"
-    values = ["My License"]
-  }
-
-  data_filter {
-    name   = "status"
-    values = ["ACTIVE"]
-  }
+  data_filters = [
+    {
+      name   = "name"
+      values = ["My License"]
+    },
+    {
+      name   = "status"
+      values = ["ACTIVE"]
+    }
+  ]
 }
 ```
 
@@ -41,16 +42,16 @@ data "pingone_licenses" "my_licenses_by_data_filter" {
 
 ### Optional
 
-- `data_filter` (Block List) Individual data filters to apply to the license selection.  If the attribute filter is `status`, available values are `ACTIVE`, `EXPIRED`, `FUTURE` and `TERMINATED`.  Allowed attributes to filter: `name`, `package`, `status` (see [below for nested schema](#nestedblock--data_filter))
-- `scim_filter` (String) A SCIM filter to apply to the license selection.  A SCIM filter offers the greatest flexibility in filtering licenses.  If the attribute filter is `status`, available values are `ACTIVE`, `EXPIRED`, `FUTURE` and `TERMINATED`.  The SCIM filter can use the following attributes: `name`, `package`, `status`.
+- `data_filters` (Attributes List) Individual data filters to apply to the license selection.  If the attribute filter is `status`, available values are `ACTIVE`, `EXPIRED`, `FUTURE` and `TERMINATED`.  Allowed attributes to filter: `name`, `package`, `status`.  Exactly one of the following must be defined: `scim_filter`, `data_filters`. (see [below for nested schema](#nestedatt--data_filters))
+- `scim_filter` (String) A SCIM filter to apply to the license selection.  A SCIM filter offers the greatest flexibility in filtering licenses.  If the attribute filter is `status`, available values are `ACTIVE`, `EXPIRED`, `FUTURE` and `TERMINATED`.  The SCIM filter can use the following attributes: `name`, `package`, `status`.  Exactly one of the following must be defined: `scim_filter`, `data_filters`.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 - `ids` (List of String) The list of resulting IDs of licenses that have been successfully retrieved and filtered.
 
-<a id="nestedblock--data_filter"></a>
-### Nested Schema for `data_filter`
+<a id="nestedatt--data_filters"></a>
+### Nested Schema for `data_filters`
 
 Required:
 

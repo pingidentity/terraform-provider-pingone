@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_application`: Added support for the `DEVICE_CODE` grant type for OIDC applications.
+```
+
+```release-note:enhancement
+`data-source/pingone_application`: Added support for the `DEVICE_CODE` grant type for OIDC applications.
+```

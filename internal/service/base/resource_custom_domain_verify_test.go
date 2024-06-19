@@ -53,7 +53,7 @@ resource "pingone_custom_domain_verify" "%[3]s" {
 
   custom_domain_id = pingone_custom_domain.%[3]s.id
 
-  timeouts {
+  timeouts = {
     create = "5s"
   }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)

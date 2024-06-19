@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"slices"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -25,6 +26,8 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	objectplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectplanmodifier"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -36,14 +39,14 @@ import (
 type PhoneDeliverySettingsResource serviceClientType
 
 type PhoneDeliverySettingsResourceModel struct {
-	Id                      types.String `tfsdk:"id"`
-	EnvironmentId           types.String `tfsdk:"environment_id"`
-	ProviderType            types.String `tfsdk:"provider_type"`
-	ProviderCustom          types.Object `tfsdk:"provider_custom"`
-	ProviderCustomTwilio    types.Object `tfsdk:"provider_custom_twilio"`
-	ProviderCustomSyniverse types.Object `tfsdk:"provider_custom_syniverse"`
-	CreatedAt               types.String `tfsdk:"created_at"`
-	UpdatedAt               types.String `tfsdk:"updated_at"`
+	Id                      pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId           pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ProviderType            types.String                 `tfsdk:"provider_type"`
+	ProviderCustom          types.Object                 `tfsdk:"provider_custom"`
+	ProviderCustomTwilio    types.Object                 `tfsdk:"provider_custom_twilio"`
+	ProviderCustomSyniverse types.Object                 `tfsdk:"provider_custom_syniverse"`
+	CreatedAt               timetypes.RFC3339            `tfsdk:"created_at"`
+	UpdatedAt               timetypes.RFC3339            `tfsdk:"updated_at"`
 }
 
 type PhoneDeliverySettingsProviderCustomResourceModel struct {
@@ -203,7 +206,7 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 		"provider_custom",
 		"provider_custom_twilio",
 		"provider_custom_syniverse",
-	})
+	}).RequiresReplaceNestedAttributes()
 
 	providerCustomAuthenticationMethodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The custom provider account's authentication method.",
@@ -293,7 +296,7 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 		"provider_custom",
 		"provider_custom_twilio",
 		"provider_custom_syniverse",
-	})
+	}).RequiresReplaceNestedAttributes()
 
 	providerCustomTwilioAuthTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The secret key of the Twilio account.",
@@ -310,7 +313,7 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 		"provider_custom",
 		"provider_custom_twilio",
 		"provider_custom_syniverse",
-	})
+	}).RequiresReplaceNestedAttributes()
 
 	providerCustomSyniverseAuthTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The secret key of the Syniverse account.",
@@ -622,6 +625,10 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 					},
 				},
 
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
+				},
+
 				Validators: []validator.Object{
 					objectvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("provider_custom"),
@@ -777,6 +784,10 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 					},
 				},
 
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
+				},
+
 				Validators: []validator.Object{
 					objectvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("provider_custom"),
@@ -914,6 +925,10 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 					},
 				},
 
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
+				},
+
 				Validators: []validator.Object{
 					objectvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("provider_custom"),
@@ -927,6 +942,8 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 				Description: "A string that specifies the time the resource was created.",
 				Computed:    true,
 
+				CustomType: timetypes.RFC3339Type{},
+
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -935,6 +952,8 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 			"updated_at": schema.StringAttribute{
 				Description: "A string that specifies the time the resource was last updated.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 		},
 	}
@@ -969,7 +988,7 @@ func (r *PhoneDeliverySettingsResource) Configure(ctx context.Context, req resou
 func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state PhoneDeliverySettingsResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1056,7 +1075,7 @@ func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource
 func (r *PhoneDeliverySettingsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *PhoneDeliverySettingsResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1101,7 +1120,7 @@ func (r *PhoneDeliverySettingsResource) Read(ctx context.Context, req resource.R
 func (r *PhoneDeliverySettingsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state PhoneDeliverySettingsResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1150,7 +1169,7 @@ func (r *PhoneDeliverySettingsResource) Update(ctx context.Context, req resource
 func (r *PhoneDeliverySettingsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *PhoneDeliverySettingsResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1534,8 +1553,8 @@ func (p *PhoneDeliverySettingsResourceModel) toState(ctx context.Context, apiObj
 		}
 	}
 
-	p.Id = framework.StringOkToTF(apiObjectCommon.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObjectCommon.GetEnvironment().Id)
+	p.Id = framework.PingOneResourceIDOkToTF(apiObjectCommon.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObjectCommon.GetEnvironment().Id)
 	p.ProviderType = framework.EnumOkToTF(apiObjectCommon.GetProviderOk())
 	p.CreatedAt = framework.TimeOkToTF(apiObjectCommon.GetCreatedAtOk())
 	p.UpdatedAt = framework.TimeOkToTF(apiObjectCommon.GetUpdatedAtOk())

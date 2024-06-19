@@ -22,7 +22,9 @@ func MFASettings_GetIDs(resourceName string, environmentID *string) resource.Tes
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*environmentID = rs.Primary.Attributes["environment_id"]
+		if environmentID != nil {
+			*environmentID = rs.Primary.Attributes["environment_id"]
+		}
 
 		return nil
 	}

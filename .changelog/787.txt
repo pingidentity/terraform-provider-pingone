@@ -1,0 +1,3 @@
+```release-note:breaking-change
+Removed the provider parameter `force_delete_production_type`.  Use the `global_options.environment.production_type_force_delete` parameter going forward.
+```

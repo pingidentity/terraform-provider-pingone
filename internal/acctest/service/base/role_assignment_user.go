@@ -61,9 +61,17 @@ func RoleAssignmentUser_GetIDs(resourceName string, environmentID, userID, resou
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*resourceID = rs.Primary.ID
-		*userID = rs.Primary.Attributes["user_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
+		if resourceID != nil {
+			*resourceID = rs.Primary.ID
+		}
+
+		if userID != nil {
+			*userID = rs.Primary.Attributes["user_id"]
+		}
+
+		if environmentID != nil {
+			*environmentID = rs.Primary.Attributes["environment_id"]
+		}
 
 		return nil
 	}

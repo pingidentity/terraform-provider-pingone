@@ -15,22 +15,22 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
 type ResourceScopeDataSource serviceClientType
 
 type ResourceScopeDataSourceModel struct {
-	Id               types.String `tfsdk:"id"`
-	EnvironmentId    types.String `tfsdk:"environment_id"`
-	ResourceId       types.String `tfsdk:"resource_id"`
-	ResourceScopeId  types.String `tfsdk:"resource_scope_id"`
-	Name             types.String `tfsdk:"name"`
-	Description      types.String `tfsdk:"description"`
-	SchemaAttributes types.Set    `tfsdk:"schema_attributes"`
-	MappedClaims     types.Set    `tfsdk:"mapped_claims"`
+	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ResourceId       pingonetypes.ResourceIDValue `tfsdk:"resource_id"`
+	ResourceScopeId  pingonetypes.ResourceIDValue `tfsdk:"resource_scope_id"`
+	Name             types.String                 `tfsdk:"name"`
+	Description      types.String                 `tfsdk:"description"`
+	SchemaAttributes types.Set                    `tfsdk:"schema_attributes"`
+	MappedClaims     types.Set                    `tfsdk:"mapped_claims"`
 }
 
 // Framework interfaces
@@ -89,9 +89,11 @@ func (r *ResourceScopeDataSource) Schema(ctx context.Context, req datasource.Sch
 				MarkdownDescription: resourceScopeIdDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
-					verify.P1ResourceIDValidator(),
 				},
 			},
 
@@ -159,7 +161,7 @@ func (r *ResourceScopeDataSource) Configure(ctx context.Context, req datasource.
 func (r *ResourceScopeDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *ResourceScopeDataSourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -217,9 +219,9 @@ func (p *ResourceScopeDataSourceModel) toState(apiObject *management.ResourceSco
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	p.ResourceId = framework.StringToTF(apiObject.GetId())
-	p.ResourceScopeId = framework.StringToTF(apiObject.GetId())
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.ResourceId = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.ResourceScopeId = framework.PingOneResourceIDToTF(apiObject.GetId())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.SchemaAttributes = framework.StringSetOkToTF(apiObject.GetSchemaAttributesOk())

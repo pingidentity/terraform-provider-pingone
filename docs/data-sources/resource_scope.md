@@ -43,8 +43,8 @@ data "pingone_resource_scope" "example_by_id" {
 
 ### Optional
 
-- `name` (String) The name of the resource scope.  At least one of the following must be defined: `resource_scope_id`, `name`.
-- `resource_scope_id` (String) The ID of the resource scope.  At least one of the following must be defined: `resource_scope_id`, `name`.  Must be a valid PingOne resource ID.
+- `name` (String) The name of the resource scope.  Exactly one of the following must be defined: `resource_scope_id`, `name`.
+- `resource_scope_id` (String) The ID of the resource scope.  Exactly one of the following must be defined: `resource_scope_id`, `name`.  Must be a valid PingOne resource ID.
 
 ### Read-Only
 

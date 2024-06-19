@@ -61,10 +61,21 @@ func CredentialIssuanceRule_GetIDs(resourceName string, environmentID, credentia
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*resourceID = rs.Primary.ID
-		*credentialTypeID = rs.Primary.Attributes["credential_type_id"]
-		*digitalWalletApplicationID = rs.Primary.Attributes["digital_wallet_application_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
+		if resourceID != nil {
+			*resourceID = rs.Primary.ID
+		}
+
+		if credentialTypeID != nil {
+			*credentialTypeID = rs.Primary.Attributes["credential_type_id"]
+		}
+
+		if digitalWalletApplicationID != nil {
+			*digitalWalletApplicationID = rs.Primary.Attributes["digital_wallet_application_id"]
+		}
+
+		if environmentID != nil {
+			*environmentID = rs.Primary.Attributes["environment_id"]
+		}
 
 		return nil
 	}

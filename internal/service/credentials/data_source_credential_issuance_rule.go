@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -20,15 +21,15 @@ import (
 type CredentialIssuanceRuleDataSource serviceClientType
 
 type CredentialIssuanceRuleDataSourceModel struct {
-	Id                         types.String `tfsdk:"id"`
-	EnvironmentId              types.String `tfsdk:"environment_id"`
-	CredentialTypeId           types.String `tfsdk:"credential_type_id"`
-	CredentialIssuanceRuleId   types.String `tfsdk:"credential_issuance_rule_id"`
-	DigitalWalletApplicationId types.String `tfsdk:"digital_wallet_application_id"`
-	Automation                 types.Object `tfsdk:"automation"`
-	Filter                     types.Object `tfsdk:"filter"`
-	Notification               types.Object `tfsdk:"notification"`
-	Status                     types.String `tfsdk:"status"`
+	Id                         pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId              pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	CredentialTypeId           pingonetypes.ResourceIDValue `tfsdk:"credential_type_id"`
+	CredentialIssuanceRuleId   pingonetypes.ResourceIDValue `tfsdk:"credential_issuance_rule_id"`
+	DigitalWalletApplicationId pingonetypes.ResourceIDValue `tfsdk:"digital_wallet_application_id"`
+	Automation                 types.Object                 `tfsdk:"automation"`
+	Filter                     types.Object                 `tfsdk:"filter"`
+	Notification               types.Object                 `tfsdk:"notification"`
+	Status                     types.String                 `tfsdk:"status"`
 }
 
 type FilterDataSourceModel struct {
@@ -55,8 +56,8 @@ type NotificationTemplateDataSourceModel struct {
 
 var (
 	filterDataSourceServiceTFObjectTypes = map[string]attr.Type{
-		"group_ids":      types.SetType{ElemType: types.StringType},
-		"population_ids": types.SetType{ElemType: types.StringType},
+		"group_ids":      types.SetType{ElemType: pingonetypes.ResourceIDType{}},
+		"population_ids": types.SetType{ElemType: pingonetypes.ResourceIDType{}},
 		"scim":           types.StringType,
 	}
 
@@ -115,6 +116,8 @@ func (r *CredentialIssuanceRuleDataSource) Schema(ctx context.Context, req datas
 			"digital_wallet_application_id": schema.StringAttribute{
 				Description: "The ID of the digital wallet application correlated to the credential issuance rule.",
 				Computed:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"status": schema.StringAttribute{
@@ -127,12 +130,12 @@ func (r *CredentialIssuanceRuleDataSource) Schema(ctx context.Context, req datas
 				Computed:    true,
 				Attributes: map[string]schema.Attribute{
 					"group_ids": schema.SetAttribute{
-						ElementType: types.StringType,
+						ElementType: pingonetypes.ResourceIDType{},
 						Description: "Array of one or more identifiers (UUIDs) of groups, any of which a user must belong for the credential issuance rule to apply.",
 						Computed:    true,
 					},
 					"population_ids": schema.SetAttribute{
-						ElementType: types.StringType,
+						ElementType: pingonetypes.ResourceIDType{},
 						Description: "Array of one or more identifiers (UUIDs) of populations, any of which a user must belong for the credential issuance rule to apply.",
 						Computed:    true,
 					},
@@ -220,7 +223,7 @@ func (r *CredentialIssuanceRuleDataSource) Configure(ctx context.Context, req da
 func (r *CredentialIssuanceRuleDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *CredentialIssuanceRuleDataSourceModel
 
-	if r.Client.CredentialsAPIClient == nil {
+	if r.Client == nil || r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -269,11 +272,11 @@ func (p *CredentialIssuanceRuleDataSourceModel) toState(apiObject *credentials.C
 	}
 
 	// core issuance rule attributes
-	p.Id = framework.StringToTF(apiObject.GetId())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.DigitalWalletApplicationId = framework.StringToTF(apiObject.GetDigitalWalletApplication().Id)
-	p.CredentialTypeId = framework.StringToTF(apiObject.CredentialType.GetId())
-	p.CredentialIssuanceRuleId = framework.StringToTF(apiObject.GetId())
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
+	p.DigitalWalletApplicationId = framework.PingOneResourceIDToTF(apiObject.GetDigitalWalletApplication().Id)
+	p.CredentialTypeId = framework.PingOneResourceIDToTF(apiObject.CredentialType.GetId())
+	p.CredentialIssuanceRuleId = framework.PingOneResourceIDToTF(apiObject.GetId())
 	p.Status = framework.EnumOkToTF(apiObject.GetStatusOk())
 
 	// automation object
@@ -320,8 +323,8 @@ func toStateFilterDataSource(filter *credentials.CredentialIssuanceRuleFilter, o
 	}
 
 	filterMap := map[string]attr.Value{
-		"population_ids": framework.StringSetOkToTF(filter.GetPopulationIdsOk()),
-		"group_ids":      framework.StringSetOkToTF(filter.GetGroupIdsOk()),
+		"population_ids": framework.PingOneResourceIDSetOkToTF(filter.GetPopulationIdsOk()),
+		"group_ids":      framework.PingOneResourceIDSetOkToTF(filter.GetGroupIdsOk()),
 		"scim":           framework.StringOkToTF(filter.GetScimOk()),
 	}
 	flattenedObj, d := types.ObjectValue(filterDataSourceServiceTFObjectTypes, filterMap)

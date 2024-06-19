@@ -138,7 +138,7 @@ func TestAccRiskPolicy_Full(t *testing.T) {
 		// 	acctest.PreCheckClient(t)
 		// 	acctest.PreCheckNoFeatureFlag(t)
 		// },
-		PreCheck:                 func() { t.Skipf("STAGING-22374") },
+		PreCheck:                 func() { t.Skipf("PND-5900") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -228,7 +228,7 @@ func TestAccRiskPolicy_Scores(t *testing.T) {
 		// 	acctest.PreCheckClient(t)
 		// 	acctest.PreCheckNoFeatureFlag(t)
 		// },
-		PreCheck:                 func() { t.Skipf("STAGING-22374") },
+		PreCheck:                 func() { t.Skipf("PND-5900") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -347,7 +347,7 @@ func TestAccRiskPolicy_Weights(t *testing.T) {
 		// 	acctest.PreCheckClient(t)
 		// 	acctest.PreCheckNoFeatureFlag(t)
 		// },
-		PreCheck:                 func() { t.Skipf("STAGING-22374") },
+		PreCheck:                 func() { t.Skipf("PND-5900") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -466,7 +466,7 @@ func TestAccRiskPolicy_ChangeType(t *testing.T) {
 		// 	acctest.PreCheckClient(t)
 		// 	acctest.PreCheckNoFeatureFlag(t)
 		// },
-		PreCheck:                 func() { t.Skipf("STAGING-22374") },
+		PreCheck:                 func() { t.Skipf("PND-5900") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -550,7 +550,7 @@ func TestAccRiskPolicy_PolicyOverrides(t *testing.T) {
 		// 	acctest.PreCheckClient(t)
 		// 	acctest.PreCheckNoFeatureFlag(t)
 		// },
-		PreCheck:                 func() { t.Skipf("STAGING-22374") },
+		PreCheck:                 func() { t.Skipf("PND-5900") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),

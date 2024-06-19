@@ -16,23 +16,23 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
 
 // Types
 type EnvironmentDataSource serviceClientType
 
 type EnvironmentDataSourceModel struct {
-	Id             types.String `tfsdk:"id"`
-	EnvironmentId  types.String `tfsdk:"environment_id"`
-	Name           types.String `tfsdk:"name"`
-	Description    types.String `tfsdk:"description"`
-	Type           types.String `tfsdk:"type"`
-	Region         types.String `tfsdk:"region"`
-	LicenseId      types.String `tfsdk:"license_id"`
-	OrganizationId types.String `tfsdk:"organization_id"`
-	Solution       types.String `tfsdk:"solution"`
-	Services       types.Set    `tfsdk:"service"`
+	Id             pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId  pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name           types.String                 `tfsdk:"name"`
+	Description    types.String                 `tfsdk:"description"`
+	Type           types.String                 `tfsdk:"type"`
+	Region         types.String                 `tfsdk:"region"`
+	LicenseId      pingonetypes.ResourceIDValue `tfsdk:"license_id"`
+	OrganizationId pingonetypes.ResourceIDValue `tfsdk:"organization_id"`
+	Solution       types.String                 `tfsdk:"solution"`
+	Services       types.Set                    `tfsdk:"services"`
 }
 
 // Framework interfaces
@@ -55,13 +55,17 @@ func (r *EnvironmentDataSource) Schema(ctx context.Context, req datasource.Schem
 
 	nameLength := 1
 
+	nameDescription := framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the name of the environment to retrieve. Either `environment_id`, or `name` can be used to retrieve the environment, but cannot be set together.")
+
+	environmentIdDescription := framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to retrieve. Either `environment_id`, or `name` can be used to retrieve the environment, but cannot be set together.")
+
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("The type of the environment.  Options are `%s` for a development/testing environment and `%s` for environments that require protection from deletion.", management.ENUMENVIRONMENTTYPE_SANDBOX, management.ENUMENVIRONMENTTYPE_PRODUCTION),
 	)
 
 	regionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The region the environment is created in.  Valid options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.",
-	)
+		"The region the environment is created in.",
+	).AllowedValuesEnum(management.AllowedEnumRegionCodeEnumValues)
 
 	solutionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("The solution context of the environment.  Blank or null values indicate a custom, non-workforce solution context.  Valid options are `%s`, `%s` or no value for custom solution context.", string(management.ENUMSOLUTIONTYPE_CUSTOMER), string(management.ENUMSOLUTIONTYPE_WORKFORCE)),
@@ -97,17 +101,21 @@ func (r *EnvironmentDataSource) Schema(ctx context.Context, req datasource.Schem
 			"id": framework.Attr_ID(),
 
 			"environment_id": schema.StringAttribute{
-				Description: "The ID of the environment to retrieve. Either `environment_id`, or `name` can be used to retrieve the environment, but cannot be set together.",
-				Optional:    true,
+				Description:         environmentIdDescription.Description,
+				MarkdownDescription: environmentIdDescription.MarkdownDescription,
+				Optional:            true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
-					verify.P1ResourceIDValidator(),
 				},
 			},
 
 			"name": schema.StringAttribute{
-				Description: "A string that specifies the name of the environment to retrieve. Either `environment_id`, or `name` can be used to retrieve the environment, but cannot be set together.",
-				Optional:    true,
+				Description:         nameDescription.Description,
+				MarkdownDescription: nameDescription.MarkdownDescription,
+				Optional:            true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("environment_id")),
 					stringvalidator.LengthAtLeast(nameLength),
@@ -115,7 +123,7 @@ func (r *EnvironmentDataSource) Schema(ctx context.Context, req datasource.Schem
 			},
 
 			"description": schema.StringAttribute{
-				Description: "A string that specifies the description of the environment.",
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the description of the environment.").Description,
 				Computed:    true,
 			},
 
@@ -132,13 +140,17 @@ func (r *EnvironmentDataSource) Schema(ctx context.Context, req datasource.Schem
 			},
 
 			"license_id": schema.StringAttribute{
-				Description: "An ID of a valid license applied to the environment.",
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of a valid license applied to the environment.").Description,
 				Computed:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"organization_id": schema.StringAttribute{
-				Description: "The ID of the PingOne organization tenant to which the environment belongs.",
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the PingOne organization tenant to which the environment belongs.").Description,
 				Computed:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"solution": schema.StringAttribute{
@@ -146,13 +158,12 @@ func (r *EnvironmentDataSource) Schema(ctx context.Context, req datasource.Schem
 				MarkdownDescription: solutionDescription.MarkdownDescription,
 				Computed:            true,
 			},
-		},
 
-		Blocks: map[string]schema.Block{
-			"service": schema.SetNestedBlock{
-				Description: "The services that are enabled in the environment.",
+			"services": schema.SetNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A set of objects that specify the services that are enabled in the environment.").Description,
+				Computed:    true,
 
-				NestedObject: schema.NestedBlockObject{
+				NestedObject: schema.NestedAttributeObject{
 
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
@@ -175,22 +186,21 @@ func (r *EnvironmentDataSource) Schema(ctx context.Context, req datasource.Schem
 
 							Computed: true,
 						},
-					},
 
-					Blocks: map[string]schema.Block{
-						"bookmark": schema.SetNestedBlock{
-							Description: "Custom bookmark links for the service.",
+						"bookmarks": schema.SetNestedAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A set of objects that specify custom bookmark links for the service.").Description,
+							Computed:    true,
 
-							NestedObject: schema.NestedBlockObject{
+							NestedObject: schema.NestedAttributeObject{
 
 								Attributes: map[string]schema.Attribute{
 									"name": schema.StringAttribute{
-										Description: "Bookmark name.",
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the bookmark name.").Description,
 										Computed:    true,
 									},
 
 									"url": schema.StringAttribute{
-										Description: "Bookmark URL.",
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the bookmark URL.").Description,
 										Computed:    true,
 									},
 								},
@@ -232,7 +242,7 @@ func (r *EnvironmentDataSource) Configure(ctx context.Context, req datasource.Co
 func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *EnvironmentDataSourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -354,30 +364,21 @@ func (p *EnvironmentDataSourceModel) toState(environmentApiObject *management.En
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(environmentApiObject.GetIdOk())
-	p.EnvironmentId = framework.StringOkToTF(environmentApiObject.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(environmentApiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDOkToTF(environmentApiObject.GetIdOk())
 	p.Name = framework.StringOkToTF(environmentApiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(environmentApiObject.GetDescriptionOk())
 	p.Type = framework.EnumOkToTF(environmentApiObject.GetTypeOk())
-
-	if v, ok := environmentApiObject.GetRegionOk(); ok {
-		if v.EnumRegionCode != nil {
-			p.Region = enumRegionCodeToTF(v.EnumRegionCode)
-		}
-
-		if v.String != nil {
-			p.Region = framework.StringToTF(*v.String)
-		}
-	}
+	p.Region = framework.EnumOkToTF(environmentApiObject.GetRegionOk())
 
 	if v, ok := environmentApiObject.GetLicenseOk(); ok {
-		p.LicenseId = framework.StringOkToTF(v.GetIdOk())
+		p.LicenseId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	}
 
 	if v, ok := environmentApiObject.GetOrganizationOk(); ok {
-		p.OrganizationId = framework.StringOkToTF(v.GetIdOk())
+		p.OrganizationId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	} else {
-		p.OrganizationId = types.StringNull()
+		p.OrganizationId = pingonetypes.NewResourceIDNull()
 	}
 
 	p.Solution = framework.EnumOkToTF(servicesApiObject.GetSolutionTypeOk())

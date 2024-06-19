@@ -15,6 +15,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -22,12 +23,12 @@ import (
 type CustomDomainVerifyResource serviceClientType
 
 type CustomDomainVerifyResourceModel struct {
-	Id             types.String   `tfsdk:"id"`
-	EnvironmentId  types.String   `tfsdk:"environment_id"`
-	CustomDomainId types.String   `tfsdk:"custom_domain_id"`
-	DomainName     types.String   `tfsdk:"domain_name"`
-	Status         types.String   `tfsdk:"status"`
-	Timeouts       timeouts.Value `tfsdk:"timeouts"`
+	Id             pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId  pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	CustomDomainId pingonetypes.ResourceIDValue `tfsdk:"custom_domain_id"`
+	DomainName     types.String                 `tfsdk:"domain_name"`
+	Status         types.String                 `tfsdk:"status"`
+	Timeouts       timeouts.Value               `tfsdk:"timeouts"`
 }
 
 // Framework interfaces
@@ -80,11 +81,10 @@ func (r *CustomDomainVerifyResource) Schema(ctx context.Context, req resource.Sc
 				Description:         statusDescription.Description,
 				Computed:            true,
 			},
-		},
 
-		Blocks: map[string]schema.Block{
-			"timeouts": timeouts.Block(ctx, timeouts.Opts{
-				Create: true,
+			"timeouts": timeouts.Attributes(ctx, timeouts.Opts{
+				Create:            true,
+				CreateDescription: "A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as \"30s\" or \"2h45m\", as a time to wait for DNS record changes to propagate for validation. Valid time units are \"s\" (seconds), \"m\" (minutes), \"h\" (hours). The default is 60 minutes.",
 			}),
 		},
 	}
@@ -119,7 +119,7 @@ func (r *CustomDomainVerifyResource) Configure(ctx context.Context, req resource
 func (r *CustomDomainVerifyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state CustomDomainVerifyResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -132,7 +132,13 @@ func (r *CustomDomainVerifyResource) Create(ctx context.Context, req resource.Cr
 		return
 	}
 
-	timeoutValue := 60
+	defaultTimeout := 60
+
+	timeout, d := plan.Timeouts.Create(ctx, time.Duration(defaultTimeout)*time.Minute)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Run the API call
 	var response *management.CustomDomain
@@ -174,7 +180,7 @@ func (r *CustomDomainVerifyResource) Create(ctx context.Context, req resource.Cr
 		},
 		sdk.DefaultCreateReadRetryable,
 		&response,
-		time.Duration(timeoutValue)*time.Minute, // 60 mins
+		timeout,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -191,7 +197,7 @@ func (r *CustomDomainVerifyResource) Create(ctx context.Context, req resource.Cr
 func (r *CustomDomainVerifyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *CustomDomainVerifyResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -251,8 +257,8 @@ func (p *CustomDomainVerifyResourceModel) toState(apiObject *management.CustomDo
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.DomainName = framework.StringOkToTF(apiObject.GetDomainNameOk())
 	p.Status = framework.EnumOkToTF(apiObject.GetStatusOk())
 

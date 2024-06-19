@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -14,18 +15,19 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
 
 // Types
 type CredentialIssuerProfileDataSource serviceClientType
 
 type CredentialIssuerProfileDataSourceModel struct {
-	Id                    types.String `tfsdk:"id"`
-	EnvironmentId         types.String `tfsdk:"environment_id"`
-	ApplicationInstanceId types.String `tfsdk:"application_instance_id"`
-	CreatedAt             types.String `tfsdk:"created_at"`
-	UpdatedAt             types.String `tfsdk:"updated_at"`
-	Name                  types.String `tfsdk:"name"`
+	Id                    pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId         pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ApplicationInstanceId pingonetypes.ResourceIDValue `tfsdk:"application_instance_id"`
+	CreatedAt             timetypes.RFC3339            `tfsdk:"created_at"`
+	UpdatedAt             timetypes.RFC3339            `tfsdk:"updated_at"`
+	Name                  types.String                 `tfsdk:"name"`
 }
 
 // Framework interfaces
@@ -60,16 +62,22 @@ func (r *CredentialIssuerProfileDataSource) Schema(ctx context.Context, req data
 			"application_instance_id": schema.StringAttribute{
 				Description: "Identifier (UUID) of the application instance registered with the PingOne platform service. This enables the client to send messages to the service.",
 				Computed:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"created_at": schema.StringAttribute{
 				Description: "Date and time the issuer profile was created.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 
 			"updated_at": schema.StringAttribute{
 				Description: "Date and time the issuer profile was last updated.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 
 			"name": schema.StringAttribute{
@@ -109,7 +117,7 @@ func (r *CredentialIssuerProfileDataSource) Configure(ctx context.Context, req d
 func (r *CredentialIssuerProfileDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *CredentialIssuerProfileDataSourceModel
 
-	if r.Client.CredentialsAPIClient == nil {
+	if r.Client == nil || r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -157,9 +165,9 @@ func (p *CredentialIssuerProfileDataSourceModel) toState(apiObject *credentials.
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.ApplicationInstanceId = framework.StringToTF(apiObject.ApplicationInstance.GetId())
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
+	p.ApplicationInstanceId = framework.PingOneResourceIDToTF(apiObject.ApplicationInstance.GetId())
 	p.CreatedAt = framework.TimeOkToTF(apiObject.GetCreatedAtOk())
 	p.UpdatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())

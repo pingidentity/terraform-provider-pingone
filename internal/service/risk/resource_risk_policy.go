@@ -34,6 +34,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/risk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	int64validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int64validator"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
@@ -46,15 +47,15 @@ import (
 type RiskPolicyResource serviceClientType
 
 type riskPolicyResourceModel struct {
-	Id                  types.String `tfsdk:"id"`
-	EnvironmentId       types.String `tfsdk:"environment_id"`
-	Name                types.String `tfsdk:"name"`
-	DefaultResult       types.Object `tfsdk:"default_result"`
-	Default             types.Bool   `tfsdk:"default"`
-	EvaluatedPredictors types.Set    `tfsdk:"evaluated_predictors"`
-	PolicyWeights       types.Object `tfsdk:"policy_weights"`
-	PolicyScores        types.Object `tfsdk:"policy_scores"`
-	Overrides           types.List   `tfsdk:"overrides"`
+	Id                  pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId       pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name                types.String                 `tfsdk:"name"`
+	DefaultResult       types.Object                 `tfsdk:"default_result"`
+	Default             types.Bool                   `tfsdk:"default"`
+	EvaluatedPredictors types.Set                    `tfsdk:"evaluated_predictors"`
+	PolicyWeights       types.Object                 `tfsdk:"policy_weights"`
+	PolicyScores        types.Object                 `tfsdk:"policy_scores"`
+	Overrides           types.List                   `tfsdk:"overrides"`
 }
 
 type riskPolicyResourceDefaultResultModel struct {
@@ -969,7 +970,7 @@ func (r *RiskPolicyResource) Configure(ctx context.Context, req resource.Configu
 func (r *RiskPolicyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state riskPolicyResourceModel
 
-	if r.Client.RiskAPIClient == nil {
+	if r.Client == nil || r.Client.RiskAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1036,7 +1037,7 @@ func (r *RiskPolicyResource) Create(ctx context.Context, req resource.CreateRequ
 func (r *RiskPolicyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *riskPolicyResourceModel
 
-	if r.Client.RiskAPIClient == nil {
+	if r.Client == nil || r.Client.RiskAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1081,7 +1082,7 @@ func (r *RiskPolicyResource) Read(ctx context.Context, req resource.ReadRequest,
 func (r *RiskPolicyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state riskPolicyResourceModel
 
-	if r.Client.RiskAPIClient == nil {
+	if r.Client == nil || r.Client.RiskAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1130,7 +1131,7 @@ func (r *RiskPolicyResource) Update(ctx context.Context, req resource.UpdateRequ
 func (r *RiskPolicyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *riskPolicyResourceModel
 
-	if r.Client.RiskAPIClient == nil {
+	if r.Client == nil || r.Client.RiskAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1575,8 +1576,8 @@ func (p *riskPolicyResourceModel) toState(apiObject *risk.RiskPolicySet) diag.Di
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 
 	// Default block

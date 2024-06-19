@@ -23,7 +23,7 @@ resource "pingone_application" "my_awesome_spa" {
   name           = "My Awesome Single Page App"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -62,7 +62,7 @@ resource "pingone_application" "my_awesome_spa" {
   name           = "My Awesome Single Page App"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -121,7 +121,7 @@ resource "pingone_application" "my_awesome_spa" {
   name           = "My Awesome Single Page App"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -186,17 +186,17 @@ resource "pingone_application" "my_awesome_saml_app" {
   name           = "My Awesome SAML App"
   enabled        = true
 
-  saml_options {
+  saml_options = {
     acs_urls           = ["https://my-saas-app.com"]
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:localhost"
 
-    idp_signing_key {
+    idp_signing_key = {
       key_id    = pingone_key.my_awesome_key.id
       algorithm = pingone_key.my_awesome_key.signature_algorithm
     }
 
-    sp_verification {
+    sp_verification = {
       certificate_ids = [var.sp_verification_certificate_id]
     }
   }
@@ -247,5 +247,5 @@ resource "pingone_application_attribute_mapping" "bar" {
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-$ terraform import pingone_application_attribute_mapping.example <environment_id>/<application_id>/<attribute_mapping_id>
+terraform import pingone_application_attribute_mapping.example <environment_id>/<application_id>/<attribute_mapping_id>
 ```

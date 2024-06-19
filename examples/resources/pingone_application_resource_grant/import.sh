@@ -1,1 +1,1 @@
-$ terraform import pingone_application_resource_grant.example <environment_id>/<application_id>/<grant_id>
+terraform import pingone_application_resource_grant.example <environment_id>/<application_id>/<grant_id>

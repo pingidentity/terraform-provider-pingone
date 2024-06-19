@@ -1,1 +1,1 @@
-$ terraform import pingone_user_group_assignment.example <environment_id>/<user_id>/<group_id>
+terraform import pingone_user_group_assignment.example <environment_id>/<user_id>/<group_id>

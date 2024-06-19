@@ -15,22 +15,22 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
 type GroupDataSource serviceClientType
 
 type GroupDataSourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	GroupId       types.String `tfsdk:"group_id"`
-	Name          types.String `tfsdk:"name"`
-	Description   types.String `tfsdk:"description"`
-	PopulationId  types.String `tfsdk:"population_id"`
-	UserFilter    types.String `tfsdk:"user_filter"`
-	ExternalId    types.String `tfsdk:"external_id"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	GroupId       pingonetypes.ResourceIDValue `tfsdk:"group_id"`
+	Name          types.String                 `tfsdk:"name"`
+	Description   types.String                 `tfsdk:"description"`
+	PopulationId  pingonetypes.ResourceIDValue `tfsdk:"population_id"`
+	UserFilter    types.String                 `tfsdk:"user_filter"`
+	ExternalId    types.String                 `tfsdk:"external_id"`
 }
 
 // Framework interfaces
@@ -71,18 +71,19 @@ func (r *GroupDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 			"environment_id": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment that is configured with the group.  Must be a valid PingOne resource ID.").Description,
 				Required:    true,
-				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
-				},
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"group_id": schema.StringAttribute{
 				Description:         groupIdDescription.Description,
 				MarkdownDescription: groupIdDescription.MarkdownDescription,
 				Optional:            true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
-					verify.P1ResourceIDValidator(),
 				},
 			},
 
@@ -104,6 +105,8 @@ func (r *GroupDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 			"population_id": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the population that the group is assigned to.").Description,
 				Computed:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"user_filter": schema.StringAttribute{
@@ -148,7 +151,7 @@ func (r *GroupDataSource) Configure(ctx context.Context, req datasource.Configur
 func (r *GroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *GroupDataSourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -235,15 +238,15 @@ func (p *GroupDataSourceModel) toState(apiObject *management.Group) diag.Diagnos
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	p.GroupId = framework.StringToTF(apiObject.GetId())
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.GroupId = framework.PingOneResourceIDToTF(apiObject.GetId())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 
 	if v, ok := apiObject.GetPopulationOk(); ok && v != nil {
-		p.PopulationId = framework.StringOkToTF(v.GetIdOk())
+		p.PopulationId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	} else {
-		p.PopulationId = types.StringNull()
+		p.PopulationId = pingonetypes.NewResourceIDNull()
 	}
 
 	p.UserFilter = framework.StringOkToTF(apiObject.GetUserFilterOk())

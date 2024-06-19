@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -27,6 +28,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -36,38 +38,37 @@ import (
 type UserResource serviceClientType
 
 type UserResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Username      types.String `tfsdk:"username"`
-	Email         types.String `tfsdk:"email"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Username      types.String                 `tfsdk:"username"`
+	Email         types.String                 `tfsdk:"email"`
 	//EmailVerified     types.Bool   `tfsdk:"email_verified"`
-	Status            types.String `tfsdk:"status"`
-	Enabled           types.Bool   `tfsdk:"enabled"`
-	PopulationId      types.String `tfsdk:"population_id"`
-	Account           types.Object `tfsdk:"account"`
-	Address           types.Object `tfsdk:"address"`
-	ExternalId        types.String `tfsdk:"external_id"`
-	IdentityProvider  types.Object `tfsdk:"identity_provider"`
-	Lifecycle         types.Object `tfsdk:"user_lifecycle"`
-	Locale            types.String `tfsdk:"locale"`
-	MFAEnabled        types.Bool   `tfsdk:"mfa_enabled"`
-	MobilePhone       types.String `tfsdk:"mobile_phone"`
-	Name              types.Object `tfsdk:"name"`
-	Nickname          types.String `tfsdk:"nickname"`
-	Password          types.Object `tfsdk:"password"`
-	Photo             types.Object `tfsdk:"photo"`
-	PreferredLanguage types.String `tfsdk:"preferred_language"`
-	PrimaryPhone      types.String `tfsdk:"primary_phone"`
-	Timezone          types.String `tfsdk:"timezone"`
-	Title             types.String `tfsdk:"title"`
-	Type              types.String `tfsdk:"type"`
-	VerifyStatus      types.String `tfsdk:"verify_status"`
+	Enabled           types.Bool                   `tfsdk:"enabled"`
+	PopulationId      pingonetypes.ResourceIDValue `tfsdk:"population_id"`
+	Account           types.Object                 `tfsdk:"account"`
+	Address           types.Object                 `tfsdk:"address"`
+	ExternalId        types.String                 `tfsdk:"external_id"`
+	IdentityProvider  types.Object                 `tfsdk:"identity_provider"`
+	Lifecycle         types.Object                 `tfsdk:"user_lifecycle"`
+	Locale            types.String                 `tfsdk:"locale"`
+	MFAEnabled        types.Bool                   `tfsdk:"mfa_enabled"`
+	MobilePhone       types.String                 `tfsdk:"mobile_phone"`
+	Name              types.Object                 `tfsdk:"name"`
+	Nickname          types.String                 `tfsdk:"nickname"`
+	Password          types.Object                 `tfsdk:"password"`
+	Photo             types.Object                 `tfsdk:"photo"`
+	PreferredLanguage types.String                 `tfsdk:"preferred_language"`
+	PrimaryPhone      types.String                 `tfsdk:"primary_phone"`
+	Timezone          types.String                 `tfsdk:"timezone"`
+	Title             types.String                 `tfsdk:"title"`
+	Type              types.String                 `tfsdk:"type"`
+	VerifyStatus      types.String                 `tfsdk:"verify_status"`
 }
 
 type UserAccountResourceModel struct {
-	CanAuthenticate types.Bool   `tfsdk:"can_authenticate"`
-	LockedAt        types.String `tfsdk:"locked_at"`
-	Status          types.String `tfsdk:"status"`
+	CanAuthenticate types.Bool        `tfsdk:"can_authenticate"`
+	LockedAt        timetypes.RFC3339 `tfsdk:"locked_at"`
+	Status          types.String      `tfsdk:"status"`
 }
 
 type UserAddressResourceModel struct {
@@ -79,8 +80,8 @@ type UserAddressResourceModel struct {
 }
 
 type UserIdentityProviderResourceModel struct {
-	Id   types.String `tfsdk:"id"`
-	Type types.String `tfsdk:"type"`
+	Id   pingonetypes.ResourceIDValue `tfsdk:"id"`
+	Type types.String                 `tfsdk:"type"`
 }
 
 type UserLifecycleResourceModel struct {
@@ -108,10 +109,10 @@ type UserPasswordExternalResourceModel struct {
 }
 
 type UserPasswordExternalGatewayResourceModel struct {
-	Id                    types.String `tfsdk:"id"`
-	Type                  types.String `tfsdk:"type"`
-	UserTypeId            types.String `tfsdk:"user_type_id"`
-	CorrelationAttributes types.Map    `tfsdk:"correlation_attributes"`
+	Id                    pingonetypes.ResourceIDValue `tfsdk:"id"`
+	Type                  types.String                 `tfsdk:"type"`
+	UserTypeId            pingonetypes.ResourceIDValue `tfsdk:"user_type_id"`
+	CorrelationAttributes types.Map                    `tfsdk:"correlation_attributes"`
 }
 
 type UserPhotoResourceModel struct {
@@ -121,7 +122,7 @@ type UserPhotoResourceModel struct {
 var (
 	userAccountTFObjectTypes = map[string]attr.Type{
 		"can_authenticate": types.BoolType,
-		"locked_at":        types.StringType,
+		"locked_at":        timetypes.RFC3339Type{},
 		"status":           types.StringType,
 	}
 
@@ -134,7 +135,7 @@ var (
 	}
 
 	userIdentityProviderTFObjectTypes = map[string]attr.Type{
-		"id":   types.StringType,
+		"id":   pingonetypes.ResourceIDType{},
 		"type": types.StringType,
 	}
 
@@ -167,9 +168,9 @@ var (
 	}
 
 	userPasswordExternalGatewayTFObjectTypes = map[string]attr.Type{
-		"id":           types.StringType,
+		"id":           pingonetypes.ResourceIDType{},
 		"type":         types.StringType,
-		"user_type_id": types.StringType,
+		"user_type_id": pingonetypes.ResourceIDType{},
 		"correlation_attributes": types.MapType{
 			ElemType: types.StringType,
 		},
@@ -226,10 +227,6 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	emailDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the user's email address, which must be provided and valid. For more information about email address formatting, see section 3.4 of [RFC 2822, Internet Message Format](http://www.faqs.org/rfcs/rfc2822.html).",
 	)
-
-	statusDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"**Deprecation notice**: This attribute is deprecated and will be removed in a future release. Please use the `enabled` attribute instead.  The enabled status of the user.",
-	).AllowedValues("ENABLED", "DISABLED").DefaultValue("ENABLED")
 
 	enabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the user is enabled. This attribute is set to `true` by default when the user is created.",
@@ -393,22 +390,6 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			// 	},
 			// },
 
-			"status": schema.StringAttribute{
-				Description:         statusDescription.Description,
-				MarkdownDescription: statusDescription.MarkdownDescription,
-				Optional:            true,
-				Computed:            true,
-				DeprecationMessage:  "This attribute is deprecated and will be removed in a future release. Please use the `enabled` attribute instead.",
-
-				Validators: []validator.String{
-					stringvalidator.OneOf("ENABLED", "DISABLED"),
-				},
-
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-
 			"enabled": schema.BoolAttribute{
 				Description:         enabledDescription.Description,
 				MarkdownDescription: enabledDescription.MarkdownDescription,
@@ -424,9 +405,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				).Description,
 				Required: true,
 
-				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
-				},
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"account": schema.SingleNestedAttribute{
@@ -453,6 +432,8 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 						PlanModifiers: []planmodifier.String{
 							stringplanmodifier.UseStateForUnknown(),
 						},
+
+						CustomType: timetypes.RFC3339Type{},
 					},
 
 					"status": schema.StringAttribute{
@@ -559,7 +540,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 
 				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
 					o := map[string]attr.Value{
-						"id":   types.StringNull(),
+						"id":   pingonetypes.NewResourceIDNull(),
 						"type": types.StringValue(string(management.ENUMIDENTITYPROVIDER_PING_ONE)),
 					}
 
@@ -574,6 +555,8 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 						Description:         identityProviderIdDescription.Description,
 						MarkdownDescription: identityProviderIdDescription.MarkdownDescription,
 						Optional:            true,
+
+						CustomType: pingonetypes.ResourceIDType{},
 
 						PlanModifiers: []planmodifier.String{
 							stringplanmodifier.RequiresReplace(),
@@ -799,9 +782,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 										).Description,
 										Optional: true,
 
-										Validators: []validator.String{
-											verify.P1ResourceIDValidator(),
-										},
+										CustomType: pingonetypes.ResourceIDType{},
 									},
 
 									"type": schema.StringAttribute{
@@ -820,9 +801,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 										).Description,
 										Optional: true,
 
-										Validators: []validator.String{
-											verify.P1ResourceIDValidator(),
-										},
+										CustomType: pingonetypes.ResourceIDType{},
 									},
 
 									"correlation_attributes": schema.MapAttribute{
@@ -947,23 +926,11 @@ func (r *UserResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 	// 	resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("email_verified"), types.BoolNull())...)
 	// }
 
-	// Deprecated start
-	if !plan.Enabled.IsNull() && !plan.Enabled.IsUnknown() {
-		var statusValue types.String
-		if plan.Enabled.ValueBool() {
-			statusValue = framework.StringToTF("ENABLED")
-		} else {
-			statusValue = framework.StringToTF("DISABLED")
-		}
-		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("status"), statusValue)...)
-	}
-	// Deprecated end
-
 	if plan.Account.IsNull() || plan.Account.IsUnknown() {
 
 		o := map[string]attr.Value{
 			"can_authenticate": types.BoolValue(true),
-			"locked_at":        types.StringNull(),
+			"locked_at":        timetypes.NewRFC3339Null(),
 			"status":           types.StringValue(string(management.ENUMUSERSTATUS_OK)),
 		}
 
@@ -982,7 +949,7 @@ func (r *UserResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 		resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root("account"), &accountPlan)...)
 
 		if !accountPlan.Status.Equal(types.StringValue("LOCKED")) {
-			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("account").AtName("locked_at"), types.StringNull())...)
+			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("account").AtName("locked_at"), timetypes.NewRFC3339Null())...)
 		}
 	}
 }
@@ -1016,7 +983,7 @@ func (r *UserResource) Configure(ctx context.Context, req resource.ConfigureRequ
 func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state UserResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1145,7 +1112,7 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *UserResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1210,7 +1177,7 @@ func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state UserResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1356,7 +1323,7 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 func (r *UserResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *UserResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1444,12 +1411,6 @@ func (p *UserResourceModel) expand(ctx context.Context, isUpdate bool) (*managem
 	userData.SetPopulation(population)
 
 	userEnabledData := management.NewUserEnabled()
-	if p.Status.ValueString() == "ENABLED" {
-		userEnabledData.SetEnabled(true)
-	} else {
-		userEnabledData.SetEnabled(false)
-	}
-
 	if !p.Enabled.IsNull() && !p.Enabled.IsUnknown() {
 		userEnabledData.SetEnabled(p.Enabled.ValueBool())
 	}
@@ -1688,24 +1649,16 @@ func (p *UserResourceModel) toState(ctx context.Context, apiObject *management.U
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringOkToTF(apiObject.Environment.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDOkToTF(apiObject.Environment.GetIdOk())
 	p.Username = framework.StringOkToTF(apiObject.GetUsernameOk())
 	p.Email = framework.StringOkToTF(apiObject.GetEmailOk())
 	//p.EmailVerified = framework.BoolOkToTF(apiObject.GetEmailVerifiedOk())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
 
-	// deprecated start
-	if v, ok := apiObject.GetEnabledOk(); ok && *v {
-		p.Status = framework.StringToTF("ENABLED")
-	} else {
-		p.Status = framework.StringToTF("DISABLED")
-	}
-	// deprecated end
-
 	var d diag.Diagnostics
 
-	p.PopulationId = framework.StringOkToTF(apiObject.Population.GetIdOk())
+	p.PopulationId = framework.PingOneResourceIDOkToTF(apiObject.Population.GetIdOk())
 	p.Account, d = p.userAccountOkToTF(apiObject.GetAccountOk())
 	diags = append(diags, d...)
 
@@ -1793,7 +1746,7 @@ func (p *UserResourceModel) userIdentityProviderOkToTF(apiObject *management.Use
 	}
 
 	objMap := map[string]attr.Value{
-		"id":   framework.StringOkToTF(apiObject.GetIdOk()),
+		"id":   framework.PingOneResourceIDOkToTF(apiObject.GetIdOk()),
 		"type": framework.EnumOkToTF(apiObject.GetTypeOk()),
 	}
 

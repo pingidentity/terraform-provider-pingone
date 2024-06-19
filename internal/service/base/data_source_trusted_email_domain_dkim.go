@@ -5,72 +5,115 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
-	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
 
-func DatasourceTrustedEmailDomainDKIM() *schema.Resource {
-	return &schema.Resource{
+// Types
+type TrustedEmailDomainDKIMDataSource serviceClientType
 
+type TrustedEmailDomainDKIMDataSourceModel struct {
+	EnvironmentId        pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	TrustedEmailDomainId pingonetypes.ResourceIDValue `tfsdk:"trusted_email_domain_id"`
+	Type                 types.String                 `tfsdk:"type"`
+	Regions              types.Set                    `tfsdk:"regions"`
+}
+
+var (
+	trustedEmailDomainDKIMRegionTFObjectTypes = map[string]attr.Type{
+		"name":   types.StringType,
+		"status": types.StringType,
+		"tokens": types.SetType{
+			ElemType: types.ObjectType{
+				AttrTypes: trustedEmailDomainDKIMRegionTokenTFObjectTypes,
+			},
+		},
+	}
+
+	trustedEmailDomainDKIMRegionTokenTFObjectTypes = map[string]attr.Type{
+		"key":   types.StringType,
+		"value": types.StringType,
+	}
+)
+
+// Framework interfaces
+var (
+	_ datasource.DataSource = &TrustedEmailDomainDKIMDataSource{}
+)
+
+// New Object
+func NewTrustedEmailDomainDKIMDataSource() datasource.DataSource {
+	return &TrustedEmailDomainDKIMDataSource{}
+}
+
+// Metadata
+func (r *TrustedEmailDomainDKIMDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_trusted_email_domain_dkim"
+}
+
+// Schema
+func (r *TrustedEmailDomainDKIMDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+
+	const minAttrLength = 1
+
+	regionStatusDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The status of the email domain ownership.",
+	).AllowedValuesEnum(management.AllowedEnumTrustedEmailStatusEnumValues)
+
+	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Datasource to retrieve Trusted Email Domain DKIM status.",
+		Description: "Datasource to retrieve the Trusted Email Domain DKIM status for an environment.",
 
-		ReadContext: datasourcePingOneTrustedEmailDomainDKIMRead,
+		Attributes: map[string]schema.Attribute{
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to retrieve trusted email domain DKIM verification for."),
+			),
 
-		Schema: map[string]*schema.Schema{
-			"environment_id": {
-				Description:      "The ID of the environment.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-			},
-			"trusted_email_domain_id": {
-				Description:      "A string that specifies the auto-generated ID of the email domain.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-			},
-			"type": {
-				Description: "A string that specifies the type of DNS record.",
-				Type:        schema.TypeString,
+			"trusted_email_domain_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the auto-generated ID of the email domain."),
+			),
+
+			"type": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the type of DNS record.").Description,
 				Computed:    true,
 			},
-			"region": {
-				Description: "The regions collection specifies the properties for the 4 AWS SES regions that are used for sending email for the environment. The regions are determined by the geography where this environment was provisioned (North America, Canada, Europe & Asia-Pacific).",
-				Type:        schema.TypeSet,
+
+			"regions": schema.SetNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The regions collection specifies the properties for the 4 AWS SES regions that are used for sending email for the environment. The regions are determined by the geography where this environment was provisioned (North America, Canada, Europe & Asia-Pacific).").Description,
 				Computed:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": {
-							Description: "The name of the region.",
-							Type:        schema.TypeString,
+
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the name of the region.").Description,
 							Computed:    true,
 						},
-						"status": {
-							Description: fmt.Sprintf("The status of the email domain ownership. Possible values are %s and %s", string(management.ENUMTRUSTEDEMAILSTATUS_ACTIVE), string(management.ENUMTRUSTEDEMAILSTATUS_VERIFICATION_REQUIRED)),
-							Type:        schema.TypeString,
-							Computed:    true,
+
+						"status": schema.StringAttribute{
+							Description:         regionStatusDescription.Description,
+							MarkdownDescription: regionStatusDescription.MarkdownDescription,
+							Computed:            true,
 						},
-						"token": {
-							Description: "A collection of key and value pairs.",
-							Type:        schema.TypeSet,
+
+						"tokens": schema.SetNestedAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A collection of key and value pairs.").Description,
 							Computed:    true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"key": {
-										Description: "Record name.",
-										Type:        schema.TypeString,
+
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"key": schema.StringAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("Record name.").Description,
 										Computed:    true,
 									},
-									"value": {
-										Description: "Record value.",
-										Type:        schema.TypeString,
+
+									"value": schema.StringAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("Record value.").Description,
 										Computed:    true,
 									},
 								},
@@ -83,67 +126,150 @@ func DatasourceTrustedEmailDomainDKIM() *schema.Resource {
 	}
 }
 
-func datasourcePingOneTrustedEmailDomainDKIMRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.ManagementAPIClient
+func (r *TrustedEmailDomainDKIMDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
+	}
 
-	var diags diag.Diagnostics
+	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected the provider client, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
+		)
 
-	resp, diags := sdk.ParseResponse(
+		return
+	}
+
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
+		)
+		return
+	}
+}
+
+func (r *TrustedEmailDomainDKIMDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data *TrustedEmailDomainDKIMDataSourceModel
+
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var role *management.EmailDomainDKIMStatus
+
+	// Run the API call
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.TrustedEmailDomainsApi.ReadTrustedEmailDomainDKIMStatus(ctx, d.Get("environment_id").(string), d.Get("trusted_email_domain_id").(string)).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			return r.Client.ManagementAPIClient.TrustedEmailDomainsApi.ReadTrustedEmailDomainDKIMStatus(ctx, data.EnvironmentId.ValueString(), data.TrustedEmailDomainId.ValueString()).Execute()
 		},
 		"ReadTrustedEmailDomainDKIMStatus",
-		sdk.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
+		framework.DefaultCustomError,
+		nil,
+		&role,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(data.toState(role)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (p *TrustedEmailDomainDKIMDataSourceModel) toState(v *management.EmailDomainDKIMStatus) diag.Diagnostics {
+	var diags, d diag.Diagnostics
+
+	if v == nil {
+		diags.AddError(
+			"Data object missing",
+			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
+		)
+
 		return diags
 	}
 
-	respObject := resp.(*management.EmailDomainDKIMStatus)
+	p.Type = framework.StringOkToTF(v.GetTypeOk())
 
-	d.SetId(d.Get("trusted_email_domain_id").(string))
-
-	d.Set("type", respObject.GetType())
-	d.Set("region", flattenDKIMRegions(respObject.GetRegions()))
+	p.Regions, d = toStateTrustedEmailDomainDKIMRegionOkToTF(v.GetRegionsOk())
+	diags.Append(d...)
 
 	return diags
 }
 
-func flattenDKIMRegions(c []management.EmailDomainDKIMStatusRegionsInner) []interface{} {
+func toStateTrustedEmailDomainDKIMRegionOkToTF(regions []management.EmailDomainDKIMStatusRegionsInner, ok bool) (types.Set, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	tfObjType := types.ObjectType{AttrTypes: trustedEmailDomainDKIMRegionTFObjectTypes}
 
-	items := make([]interface{}, 0)
-
-	for _, v := range c {
-		// Required
-		items = append(items, map[string]interface{}{
-			"name":   v.GetName(),
-			"status": string(v.GetStatus()),
-			"token":  flattenDKIMRegionTokens(v.GetTokens()),
-		})
-
+	if !ok {
+		return types.SetNull(tfObjType), diags
 	}
 
-	return items
+	flattenedList := []attr.Value{}
+	for _, v := range regions {
 
+		tokens, d := toStateTrustedEmailDomainDKIMRegionTokensOkToTF(v.GetTokensOk())
+		diags.Append(d...)
+		if diags.HasError() {
+			return types.SetNull(tfObjType), diags
+		}
+
+		region := map[string]attr.Value{
+			"name":   framework.StringOkToTF(v.GetNameOk()),
+			"status": framework.EnumOkToTF(v.GetStatusOk()),
+			"tokens": tokens,
+		}
+
+		flattenedObj, d := types.ObjectValue(trustedEmailDomainDKIMRegionTFObjectTypes, region)
+		diags.Append(d...)
+
+		flattenedList = append(flattenedList, flattenedObj)
+	}
+
+	returnVar, d := types.SetValue(tfObjType, flattenedList)
+	diags.Append(d...)
+
+	return returnVar, diags
 }
 
-func flattenDKIMRegionTokens(c []management.EmailDomainDKIMStatusRegionsInnerTokensInner) []interface{} {
+func toStateTrustedEmailDomainDKIMRegionTokensOkToTF(tokens []management.EmailDomainDKIMStatusRegionsInnerTokensInner, ok bool) (types.Set, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	tfObjType := types.ObjectType{AttrTypes: trustedEmailDomainDKIMRegionTokenTFObjectTypes}
 
-	items := make([]interface{}, 0)
-
-	for _, v := range c {
-		// Required
-		items = append(items, map[string]interface{}{
-			"key":   v.GetKey(),
-			"value": v.GetValue(),
-		})
-
+	if !ok {
+		return types.SetNull(tfObjType), diags
 	}
 
-	return items
+	flattenedList := []attr.Value{}
+	for _, v := range tokens {
+
+		token := map[string]attr.Value{
+			"key":   framework.StringOkToTF(v.GetKeyOk()),
+			"value": framework.StringOkToTF(v.GetValueOk()),
+		}
+
+		flattenedObj, d := types.ObjectValue(trustedEmailDomainDKIMRegionTokenTFObjectTypes, token)
+		diags.Append(d...)
+
+		flattenedList = append(flattenedList, flattenedObj)
+	}
+
+	returnVar, d := types.SetValue(tfObjType, flattenedList)
+	diags.Append(d...)
+
+	return returnVar, diags
 }

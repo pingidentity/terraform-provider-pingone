@@ -14,8 +14,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -27,11 +29,11 @@ type PopulationResource struct {
 }
 
 type PopulationResourceModel struct {
-	Id               types.String `tfsdk:"id"`
-	EnvironmentId    types.String `tfsdk:"environment_id"`
-	Name             types.String `tfsdk:"name"`
-	Description      types.String `tfsdk:"description"`
-	PasswordPolicyId types.String `tfsdk:"password_policy_id"`
+	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name             types.String                 `tfsdk:"name"`
+	Description      types.String                 `tfsdk:"description"`
+	PasswordPolicyId pingonetypes.ResourceIDValue `tfsdk:"password_policy_id"`
 }
 
 // Framework interfaces
@@ -85,9 +87,7 @@ func (r *PopulationResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of a password policy to assign to the population.  Must be a valid PingOne resource ID.").Description,
 				Optional:    true,
 
-				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
-				},
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 		},
 	}
@@ -127,7 +127,7 @@ func (r *PopulationResource) Configure(ctx context.Context, req resource.Configu
 func (r *PopulationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state PopulationResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -162,7 +162,7 @@ func (r *PopulationResource) Create(ctx context.Context, req resource.CreateRequ
 func (r *PopulationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *PopulationResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -207,7 +207,7 @@ func (r *PopulationResource) Read(ctx context.Context, req resource.ReadRequest,
 func (r *PopulationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state PopulationResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -252,7 +252,7 @@ func (r *PopulationResource) Update(ctx context.Context, req resource.UpdateRequ
 func (r *PopulationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *PopulationResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -288,7 +288,7 @@ func (r *PopulationResource) Delete(ctx context.Context, req resource.DeleteRequ
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeletePopulation",
-		framework.CustomErrorResourceNotFoundWarning,
+		populationDeleteCustomErrorHandler,
 		nil,
 		nil,
 	)...)
@@ -296,6 +296,28 @@ func (r *PopulationResource) Delete(ctx context.Context, req resource.DeleteRequ
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+func populationDeleteCustomErrorHandler(error model.P1Error) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// Env must contain at least one population
+	if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+		if code, ok := details[0].GetCodeOk(); ok && *code == "CONSTRAINT_VIOLATION" {
+			if message, ok := details[0].GetMessageOk(); ok {
+				if m, err := regexp.MatchString(`must contain at least one population`, *message); err == nil && m {
+					diags.AddWarning(
+						"Constraint violation",
+						fmt.Sprintf("A constraint violation error was encountered: %s\n\nThe population has been removed from Terraform state, but has been left in place in the environment.", error.GetMessage()),
+					)
+
+					return diags
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 func (r *PopulationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -361,15 +383,15 @@ func (p *PopulationResourceModel) toState(apiObject *management.Population) diag
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringOkToTF(apiObject.Environment.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDOkToTF(apiObject.Environment.GetIdOk())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 
 	if v, ok := apiObject.GetPasswordPolicyOk(); ok {
-		p.PasswordPolicyId = framework.StringOkToTF(v.GetIdOk())
+		p.PasswordPolicyId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	} else {
-		p.PasswordPolicyId = types.StringNull()
+		p.PasswordPolicyId = pingonetypes.NewResourceIDNull()
 	}
 
 	return diags
@@ -434,11 +456,6 @@ func (r *PopulationResource) checkEnvironmentControls(ctx context.Context, envir
 	var diags diag.Diagnostics
 
 	if r.options.Population.ContainsUsersForceDelete {
-		// If the environment options are to force delete production types, then return true, because this will delete the population anyway
-		if r.options.Environment.ProductionTypeForceDelete {
-			return true, diags
-		}
-
 		// Check if the environment is a sandbox type.  We'll only delete users in sandbox environments
 		var environmentResponse *management.Environment
 		diags.Append(framework.ParseResponse(
@@ -463,7 +480,7 @@ func (r *PopulationResource) checkEnvironmentControls(ctx context.Context, envir
 			diags.AddWarning(
 				"Data protection notice",
 				fmt.Sprintf("For data protection reasons, the provider configuration `global_options.population.contains_users_force_delete` has no effect on environment ID %[1]s as it has a type set to `PRODUCTION`.  Users in this population will not be deleted.\n"+
-					"If you wish to force delete population %[2]s in environment %[1]s, please set the environment type to \"SANDBOX\" or set the `global_options.environment.production_type_force_delete` provider setting to `true`.", environmentID, populationID),
+					"If you wish to force delete population %[2]s in environment %[1]s, please review and remove user data manually.", environmentID, populationID),
 			)
 		}
 	}

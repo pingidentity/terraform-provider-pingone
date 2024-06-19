@@ -1,0 +1,7 @@
+```release-note:breaking-change
+`resource/pingone_resource_attribute`: Changed parameter `resource_id` to be read-only.  Use the `resource_name` parameter going forward.
+```
+
+```release-note:breaking-change
+`resource/pingone_resource_attribute`: Changed parameter `resource_name` to be a required parameter.
+```

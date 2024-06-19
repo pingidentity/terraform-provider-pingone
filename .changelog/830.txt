@@ -1,0 +1,11 @@
+```release-note:enhancement
+`resource/pingone_identity_provider`: Added ability to set the SP signing key algorithm.
+```
+
+```release-note:breaking-change
+`resource/pingone_identity_provider`: Replaced `saml.sp_signing_key_id` with `saml.sp_signing.key.id`.
+```
+
+```release-note:breaking-change
+`resource/pingone_identity_provider`: Replaced `saml.idp_verification_certificate_ids` with `saml.idp_verification.certificates.*.id`.
+```

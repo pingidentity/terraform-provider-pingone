@@ -19,6 +19,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	customboolvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -27,15 +28,15 @@ import (
 type ResourceAttributeResource serviceClientType
 
 type ResourceAttributeResourceModel struct {
-	Id              types.String `tfsdk:"id"`
-	EnvironmentId   types.String `tfsdk:"environment_id"`
-	ResourceId      types.String `tfsdk:"resource_id"`
-	ResourceName    types.String `tfsdk:"resource_name"`
-	Name            types.String `tfsdk:"name"`
-	Type            types.String `tfsdk:"type"`
-	Value           types.String `tfsdk:"value"`
-	IDTokenEnabled  types.Bool   `tfsdk:"id_token_enabled"`
-	UserinfoEnabled types.Bool   `tfsdk:"userinfo_enabled"`
+	Id              pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId   pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ResourceId      pingonetypes.ResourceIDValue `tfsdk:"resource_id"`
+	ResourceName    types.String                 `tfsdk:"resource_name"`
+	Name            types.String                 `tfsdk:"name"`
+	Type            types.String                 `tfsdk:"type"`
+	Value           types.String                 `tfsdk:"value"`
+	IDTokenEnabled  types.Bool                   `tfsdk:"id_token_enabled"`
+	UserinfoEnabled types.Bool                   `tfsdk:"userinfo_enabled"`
 }
 
 type coreResourceAttributeType struct {
@@ -77,12 +78,12 @@ func (r *ResourceAttributeResource) Schema(ctx context.Context, req resource.Sch
 	const attrMinLength = 1
 
 	resourceIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"**Deprecation Notice**: This parameter is deprecated and will be made read-only in a future release.  This attribute should be replaced with the `resource_name` parameter instead.  The ID of the resource to assign the resource attribute to.",
-	).ExactlyOneOf([]string{"resource_id", "resource_name"}).AppendMarkdownString("Must be a valid PingOne resource ID.").RequiresReplace()
+		"The ID of the resource that the attribute is assigned to.",
+	)
 
 	resourceNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The name of the resource to assign the resource attribute to.  The built-in OpenID Connect resource name is `openid`.",
-	).ExactlyOneOf([]string{"resource_id", "resource_name"}).RequiresReplace()
+	).RequiresReplace()
 
 	nameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A string that specifies the name of the resource attribute to map a value for. When the resource's type property is `OPENID_CONNECT`, the following are reserved names and cannot be used: %s.  The resource will also override the default configured values for a resource, rather than creating new attributes.  For resources of type `CUSTOM`, the `sub` name is overridden.  For resources of type `OPENID_CONNECT`, the following names are overridden: %s.", verify.IllegalOIDCAttributeNameString(), verify.OverrideOIDCAttributeNameString()),
@@ -118,38 +119,22 @@ func (r *ResourceAttributeResource) Schema(ctx context.Context, req resource.Sch
 			"resource_id": schema.StringAttribute{
 				Description:         resourceIdDescription.Description,
 				MarkdownDescription: resourceIdDescription.MarkdownDescription,
-				DeprecationMessage:  "This parameter is deprecated and will be made read-only in a future release.  This attribute should be replaced with the `resource_name` parameter instead.",
-				Optional:            true,
 				Computed:            true,
 
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
+				CustomType: pingonetypes.ResourceIDType{},
 
-				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
-					stringvalidator.ExactlyOneOf(
-						path.MatchRoot("resource_id"),
-						path.MatchRoot("resource_name"),
-					),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 
 			"resource_name": schema.StringAttribute{
 				Description:         resourceNameDescription.Description,
 				MarkdownDescription: resourceNameDescription.MarkdownDescription,
-				Optional:            true,
-				Computed:            true,
+				Required:            true,
 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
-				},
-
-				Validators: []validator.String{
-					stringvalidator.ExactlyOneOf(
-						path.MatchRoot("resource_id"),
-						path.MatchRoot("resource_name"),
-					),
 				},
 			},
 
@@ -243,7 +228,7 @@ func (r *ResourceAttributeResource) Configure(ctx context.Context, req resource.
 func (r *ResourceAttributeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state ResourceAttributeResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -256,22 +241,14 @@ func (r *ResourceAttributeResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	var resourceResponse *management.Resource
-	var d diag.Diagnostics
-	if !plan.ResourceId.IsNull() && !plan.ResourceId.IsUnknown() {
-		resourceResponse, d = fetchResourceFromID(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), plan.ResourceId.ValueString(), false)
-	}
-
-	if !plan.ResourceName.IsNull() && !plan.ResourceName.IsUnknown() {
-		resourceResponse, d = fetchResourceFromName(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), plan.ResourceName.ValueString(), false)
-	}
+	resourceResponse, d := fetchResourceFromName(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), plan.ResourceName.ValueString(), false)
 
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	plan.ResourceId = framework.StringOkToTF(resourceResponse.GetIdOk())
+	plan.ResourceId = framework.PingOneResourceIDOkToTF(resourceResponse.GetIdOk())
 
 	_, isCoreAttribute := plan.isCoreAttribute(resourceResponse.GetType())
 	isOverriddenAttribute := plan.isOverriddenAttribute(resourceResponse.GetType())
@@ -332,7 +309,7 @@ func (r *ResourceAttributeResource) Create(ctx context.Context, req resource.Cre
 func (r *ResourceAttributeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *ResourceAttributeResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -349,9 +326,7 @@ func (r *ResourceAttributeResource) Read(ctx context.Context, req resource.ReadR
 	var d diag.Diagnostics
 	if !data.ResourceId.IsNull() && !data.ResourceId.IsUnknown() {
 		resourceResponse, d = fetchResourceFromID(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), true)
-	}
-
-	if !data.ResourceName.IsNull() && !data.ResourceName.IsUnknown() {
+	} else {
 		resourceResponse, d = fetchResourceFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), data.ResourceName.ValueString(), true)
 	}
 
@@ -398,7 +373,7 @@ func (r *ResourceAttributeResource) Read(ctx context.Context, req resource.ReadR
 func (r *ResourceAttributeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state ResourceAttributeResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -415,9 +390,7 @@ func (r *ResourceAttributeResource) Update(ctx context.Context, req resource.Upd
 	var d diag.Diagnostics
 	if !plan.ResourceId.IsNull() && !plan.ResourceId.IsUnknown() {
 		resourceResponse, d = fetchResourceFromID(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), plan.ResourceId.ValueString(), false)
-	}
-
-	if !plan.ResourceName.IsNull() && !plan.ResourceName.IsUnknown() {
+	} else {
 		resourceResponse, d = fetchResourceFromName(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), plan.ResourceName.ValueString(), false)
 	}
 
@@ -470,7 +443,7 @@ func (r *ResourceAttributeResource) Update(ctx context.Context, req resource.Upd
 func (r *ResourceAttributeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *ResourceAttributeResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -487,9 +460,7 @@ func (r *ResourceAttributeResource) Delete(ctx context.Context, req resource.Del
 	var d diag.Diagnostics
 	if !data.ResourceId.IsNull() && !data.ResourceId.IsUnknown() {
 		resource, d = fetchResourceFromID(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), true)
-	}
-
-	if !data.ResourceName.IsNull() && !data.ResourceName.IsUnknown() {
+	} else {
 		resource, d = fetchResourceFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), data.ResourceName.ValueString(), true)
 	}
 
@@ -740,8 +711,8 @@ func (p *ResourceAttributeResourceModel) toState(apiObject *management.ResourceA
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.ResourceId = framework.StringOkToTF(resourceApiObject.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.ResourceId = framework.PingOneResourceIDOkToTF(resourceApiObject.GetIdOk())
 	p.ResourceName = framework.StringOkToTF(resourceApiObject.GetNameOk())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Value = framework.StringOkToTF(apiObject.GetValueOk())

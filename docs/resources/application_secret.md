@@ -44,16 +44,29 @@ resource "pingone_application_secret" "foo" {
 
 ### Optional
 
+- `previous` (Attributes) An object that specifies the previous secret, when it expires, and when it was last used. (see [below for nested schema](#nestedatt--previous))
 - `regenerate_trigger_values` (Map of String) A meta-argument map of values that, if any values are changed, will force regeneration of the application secret.  Adding values to and removing values from the map will not trigger a secret regeneration.  This parameter can be used to control time-based rotation using Terraform.
 
 ### Read-Only
 
 - `secret` (String, Sensitive) The application secret used to authenticate to the authorization server.
 
+<a id="nestedatt--previous"></a>
+### Nested Schema for `previous`
+
+Optional:
+
+- `expires_at` (String) A timestamp that specifies how long this secret is saved (and can be used) before it expires. Supported time range is 1 minute to 30 days.
+
+Read-Only:
+
+- `last_used` (String) A timestamp that specifies when the previous secret was last used.
+- `secret` (String, Sensitive) A string that specifies the previous application secret. This property is returned in the response if the previous secret is not expired.
+
 ## Import
 
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-$ terraform import pingone_application_secret.example <environment_id>/<application_id>
+terraform import pingone_application_secret.example <environment_id>/<application_id>
 ```

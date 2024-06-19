@@ -1,1 +1,1 @@
-$ terraform import pingone_branding_theme.example <environment_id>/<branding_theme_id>
+terraform import pingone_branding_theme.example <environment_id>/<branding_theme_id>

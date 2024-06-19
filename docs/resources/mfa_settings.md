@@ -2,12 +2,12 @@
 page_title: "pingone_mfa_settings Resource - terraform-provider-pingone"
 subcategory: "MFA"
 description: |-
-  Resource to create and manage a PingOne Environment's MFA Settings
+  Resource to manage the MFA settings for a PingOne environment.
 ---
 
 # pingone_mfa_settings (Resource)
 
-Resource to create and manage a PingOne Environment's MFA Settings
+Resource to manage the MFA settings for a PingOne environment.
 
 ~> Only one `pingone_mfa_settings` resource should be configured for an environment.  If multiple `pingone_mfa_settings` resource definitions exist in HCL code, these are likely to conflict with each other on apply.
 
@@ -17,18 +17,23 @@ Resource to create and manage a PingOne Environment's MFA Settings
 resource "pingone_mfa_settings" "mfa_settings" {
   environment_id = pingone_environment.my_environment.id
 
-  pairing {
+  pairing = {
     max_allowed_devices = 5
     pairing_key_format  = "ALPHANUMERIC"
   }
 
-  lockout {
+  lockout = {
     failure_count    = 5
     duration_seconds = 600
   }
 
-  phone_extensions_enabled = true
+  phone_extensions = {
+    enabled = true
+  }
 
+  users = {
+    mfa_enabled = true
+  }
 }
 ```
 
@@ -37,40 +42,28 @@ resource "pingone_mfa_settings" "mfa_settings" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to create the sign on policy in.
-- `pairing` (Block List, Min: 1, Max: 1) An object that contains pairing settings. (see [below for nested schema](#nestedblock--pairing))
+- `environment_id` (String) The ID of the environment to manage MFA settings for.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `pairing` (Attributes) A single object that contains information about the MFA policy device pairing settings. (see [below for nested schema](#nestedatt--pairing))
 
 ### Optional
 
-- `authentication` (Block List, Max: 1, Deprecated) **This property is deprecated.**  Device selection settings should now be configured on the device policy, the `pingone_mfa_policy` resource. An object that contains the device selection settings. (see [below for nested schema](#nestedblock--authentication))
-- `lockout` (Block List, Max: 1) An object that contains lockout settings. (see [below for nested schema](#nestedblock--lockout))
-- `phone_extensions_enabled` (Boolean) A boolean when set to `true` allows one-time passwords to be delivered via voice to phone numbers that include extensions. Set to `false` to disable support for extensions. Defaults to `false`.
+- `lockout` (Attributes) A single object that contains information about the MFA policy lockout settings. (see [below for nested schema](#nestedatt--lockout))
+- `phone_extensions` (Attributes) A single object that contains settings for phone extension support. (see [below for nested schema](#nestedatt--phone_extensions))
+- `users` (Attributes) A single object that contains information about the default settings for new users. (see [below for nested schema](#nestedatt--users))
 
-### Read-Only
-
-- `id` (String) The ID of this resource.
-
-<a id="nestedblock--pairing"></a>
+<a id="nestedatt--pairing"></a>
 ### Nested Schema for `pairing`
 
 Required:
 
-- `pairing_key_format` (String) String that controls the type of pairing key issued. The valid values are `NUMERIC` (12-digit key) and `ALPHANUMERIC` (16-character alphanumeric key).
+- `pairing_key_format` (String) A string that controls the type of pairing key issued.  Options are `ALPHANUMERIC` (16-character alphanumeric key), `NUMERIC` (12-digit key).
 
 Optional:
 
-- `max_allowed_devices` (Number) An integer that defines the maximum number of MFA devices each user can have. This can be any number up to 15. The default value is 5. Defaults to `5`.
+- `max_allowed_devices` (Number) An integer that defines the maximum number of MFA devices each user can have. This can be any number up to 15. The default value is 5.  All devices that are Active or Blocked are subject to this limit.
 
 
-<a id="nestedblock--authentication"></a>
-### Nested Schema for `authentication`
-
-Required:
-
-- `device_selection` (String, Deprecated) **This property is deprecated.**  Device selection settings should now be configured on the device policy, the `pingone_mfa_policy` resource.  A string that defines the device selection method. Options are `DEFAULT_TO_FIRST` (this is the default setting for new environments) and `PROMPT_TO_SELECT`.
-
-
-<a id="nestedblock--lockout"></a>
+<a id="nestedatt--lockout"></a>
 ### Nested Schema for `lockout`
 
 Required:
@@ -79,12 +72,28 @@ Required:
 
 Optional:
 
-- `duration_seconds` (Number) An integer that defines the number of seconds to keep the account in a locked state.
+- `duration_seconds` (Number) An integer that defines the number of seconds to keep the account in a locked state
+
+
+<a id="nestedatt--phone_extensions"></a>
+### Nested Schema for `phone_extensions`
+
+Required:
+
+- `enabled` (Boolean) A boolean when set to `true` to allow one-time passwords to be delivered via voice to phone numbers that include extensions. Set to `false` to disable support for phone numbers with extensions. By default, support for extensions is disabled.
+
+
+<a id="nestedatt--users"></a>
+### Nested Schema for `users`
+
+Required:
+
+- `mfa_enabled` (Boolean) A boolean that, when set to `true`, will enable MFA by default for new users.
 
 ## Import
 
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-$ terraform import pingone_mfa_settings.example <environment_id>
+terraform import pingone_mfa_settings.example <environment_id>
 ```

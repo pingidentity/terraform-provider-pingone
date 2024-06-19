@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
@@ -67,7 +68,7 @@ func TestAccEnvironment_Full(t *testing.T) {
 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
 
 	name := resourceName
-	region := os.Getenv("PINGONE_REGION")
+	region := os.Getenv("PINGONE_REGION_CODE")
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	fullStepVariant1 := resource.TestStep{
@@ -82,23 +83,18 @@ func TestAccEnvironment_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
 			resource.TestMatchResourceAttr(resourceFullName, "organization_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "solution", "CUSTOMER"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "default_population_id"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.name"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.description"),
-			resource.TestCheckResourceAttr(resourceFullName, "service.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
-				"type":        "SSO",
-				"console_url": "",
-				"bookmark.#":  "0",
+			resource.TestCheckResourceAttr(resourceFullName, "services.#", "2"),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
+				"type": "SSO",
 			}),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
-				"type":            "PingFederate",
-				"console_url":     "https://my-console-url",
-				"bookmark.#":      "2",
-				"bookmark.0.name": "Bookmark 1",
-				"bookmark.0.url":  "https://my-bookmark-1",
-				"bookmark.1.name": "Bookmark 2",
-				"bookmark.1.url":  "https://my-bookmark-2",
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
+				"type":             "PingFederate",
+				"console_url":      "https://my-console-url",
+				"bookmarks.#":      "2",
+				"bookmarks.0.name": "Bookmark 1",
+				"bookmarks.0.url":  "https://my-bookmark-1",
+				"bookmarks.1.name": "Bookmark 2",
+				"bookmarks.1.url":  "https://my-bookmark-2",
 			}),
 		),
 	}
@@ -115,23 +111,18 @@ func TestAccEnvironment_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
 			resource.TestMatchResourceAttr(resourceFullName, "organization_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "solution", "CUSTOMER"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "default_population_id"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.name"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.description"),
-			resource.TestCheckResourceAttr(resourceFullName, "service.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
-				"type":        "SSO",
-				"console_url": "",
-				"bookmark.#":  "0",
+			resource.TestCheckResourceAttr(resourceFullName, "services.#", "2"),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
+				"type": "SSO",
 			}),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
-				"type":            "PingFederate",
-				"console_url":     "https://my-console-url",
-				"bookmark.#":      "2",
-				"bookmark.0.name": "Bookmark 1",
-				"bookmark.0.url":  "https://my-bookmark-1",
-				"bookmark.1.name": "Bookmark 2",
-				"bookmark.1.url":  "https://my-bookmark-2",
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
+				"type":             "PingFederate",
+				"console_url":      "https://my-console-url",
+				"bookmarks.#":      "2",
+				"bookmarks.0.name": "Bookmark 1",
+				"bookmarks.0.url":  "https://my-bookmark-1",
+				"bookmarks.1.name": "Bookmark 2",
+				"bookmarks.1.url":  "https://my-bookmark-2",
 			}),
 		),
 	}
@@ -178,7 +169,7 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 	name := resourceName
 	environmentType := "SANDBOX"
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := os.Getenv("PINGONE_REGION")
+	region := os.Getenv("PINGONE_REGION_CODE")
 
 	minimalStep := resource.TestStep{
 		Config: testAccEnvironmentConfig_Minimal(resourceName, name, licenseID),
@@ -191,14 +182,9 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 			resource.TestCheckNoResourceAttr(resourceFullName, "solution"),
 			resource.TestCheckResourceAttr(resourceFullName, "license_id", licenseID),
 			resource.TestMatchResourceAttr(resourceFullName, "organization_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckNoResourceAttr(resourceFullName, "default_population_id"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.name"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "default_population.0.description"),
-			resource.TestCheckResourceAttr(resourceFullName, "service.#", "1"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
-				"type":        "SSO",
-				"console_url": "",
-				"bookmark.#":  "0",
+			resource.TestCheckResourceAttr(resourceFullName, "services.#", "1"),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
+				"type": "SSO",
 			}),
 		),
 	}
@@ -226,10 +212,10 @@ func TestAccEnvironment_NonCompatibleRegion(t *testing.T) {
 	name := resourceName
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := "NorthAmerica"
+	region := "NA"
 
-	if os.Getenv("PINGONE_REGION") == "NorthAmerica" {
-		region = "Europe"
+	if os.Getenv("PINGONE_REGION_CODE") == "NA" {
+		region = "EU"
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -244,102 +230,11 @@ func TestAccEnvironment_NonCompatibleRegion(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, region, licenseID),
-				ExpectError: regexp.MustCompile(fmt.Sprintf(`Incompatible environment region for the organization tenant.  Allowed regions: \[%s\].`, model.FindRegionByName(os.Getenv("PINGONE_REGION")).Region)),
+				ExpectError: regexp.MustCompile(fmt.Sprintf(`Incompatible environment region for the organization tenant.  Allowed regions: \[%s\].`, model.FindRegionByAPICode(management.EnumRegionCode(os.Getenv("PINGONE_REGION_CODE"))).APICode)),
 			},
 		},
 	})
 }
-
-func TestAccEnvironment_DeleteProductionEnvironmentProtection(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGenEnvironment()
-	//resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
-
-	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := os.Getenv("PINGONE_REGION")
-
-	// os.Setenv("PINGONE_FORCE_DELETE_PRODUCTION_TYPE", "false")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { t.Skipf("Test to be defined") },
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.Environment_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config:      testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, region, licenseID),
-				ExpectError: regexp.MustCompile(`Not defined`),
-			},
-		},
-	})
-}
-
-func TestAccEnvironment_DeleteProductionEnvironment(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGenEnvironment()
-	// resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
-
-	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := os.Getenv("PINGONE_REGION")
-
-	// os.Setenv("PINGONE_FORCE_DELETE_PRODUCTION_TYPE", "true")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { t.Skipf("Test to be defined") },
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.Environment_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config:      testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, region, licenseID),
-				ExpectError: regexp.MustCompile(`Not defined`),
-			},
-		},
-	})
-}
-
-///////////////////
-// Deprecated start
-
-func TestAccEnvironment_MinimalWithPopulation(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGenEnvironment()
-	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
-
-	name := resourceName
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
-		},
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.Environment_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccEnvironmentConfig_MinimalWithPopulation(resourceName, name, licenseID),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "default_population_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "default_population.0.description", fmt.Sprintf("%s description", name)),
-				),
-			},
-		},
-	})
-}
-
-// Deprecated end
-///////////////////
 
 func TestAccEnvironment_EnvironmentTypeSwitching(t *testing.T) {
 	t.Parallel()
@@ -357,7 +252,7 @@ func TestAccEnvironment_EnvironmentTypeSwitching(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.Environment_CheckDestroy,
+		CheckDestroy:             nil,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -373,10 +268,8 @@ func TestAccEnvironment_EnvironmentTypeSwitching(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccEnvironmentConfig_MinimalWithType(resourceName, name, "SANDBOX", licenseID),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "type", "SANDBOX"),
-				),
+				Config:      testAccEnvironmentConfig_MinimalWithType(resourceName, name, "SANDBOX", licenseID),
+				ExpectError: regexp.MustCompile(`Data protection notice - The environment type cannot be changed from PRODUCTION to SANDBOX`),
 			},
 		},
 	})
@@ -389,7 +282,7 @@ func TestAccEnvironment_ServiceSwitching(t *testing.T) {
 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
 
 	name := resourceName
-	region := os.Getenv("PINGONE_REGION")
+	region := os.Getenv("PINGONE_REGION_CODE")
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
@@ -405,31 +298,27 @@ func TestAccEnvironment_ServiceSwitching(t *testing.T) {
 			{
 				Config: testAccEnvironmentConfig_Minimal(resourceName, name, licenseID),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "service.#", "1"),
-					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
-						"type":        "SSO",
-						"console_url": "",
-						"bookmark.#":  "0",
+					resource.TestCheckResourceAttr(resourceFullName, "services.#", "1"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
+						"type": "SSO",
 					}),
 				),
 			},
 			{
 				Config: testAccEnvironmentConfig_Full(resourceName, name, region, licenseID),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "service.#", "2"),
-					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
-						"type":        "SSO",
-						"console_url": "",
-						"bookmark.#":  "0",
+					resource.TestCheckResourceAttr(resourceFullName, "services.#", "2"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
+						"type": "SSO",
 					}),
-					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
-						"type":            "PingFederate",
-						"console_url":     "https://my-console-url",
-						"bookmark.#":      "2",
-						"bookmark.0.name": "Bookmark 1",
-						"bookmark.0.url":  "https://my-bookmark-1",
-						"bookmark.1.name": "Bookmark 2",
-						"bookmark.1.url":  "https://my-bookmark-2",
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
+						"type":             "PingFederate",
+						"console_url":      "https://my-console-url",
+						"bookmarks.#":      "2",
+						"bookmarks.0.name": "Bookmark 1",
+						"bookmarks.0.url":  "https://my-bookmark-1",
+						"bookmarks.1.name": "Bookmark 2",
+						"bookmarks.1.url":  "https://my-bookmark-2",
 					}),
 				),
 			},
@@ -463,31 +352,31 @@ func TestAccEnvironment_Services(t *testing.T) {
 			{
 				Config: testAccEnvironmentConfig_DynamicServices(resourceName, name, licenseID, services1),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "service.#", "12"), // check all the custom services provision, except the WORKFORCE services
+					resource.TestCheckResourceAttr(resourceFullName, "services.#", "12"), // check all the custom services provision, except the WORKFORCE services
 				),
 			},
 			{
 				Config: testAccEnvironmentConfig_DynamicServices(resourceName, name, licenseID, services2),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "service.#", "4"), // check they can be modified downward
+					resource.TestCheckResourceAttr(resourceFullName, "services.#", "4"), // check they can be modified downward
 				),
 			},
 			{
 				Config: testAccEnvironmentConfig_DynamicServices(resourceName, name, licenseID, services3),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "service.#", "9"), // check they can be modified upward
+					resource.TestCheckResourceAttr(resourceFullName, "services.#", "9"), // check they can be modified upward
 				),
 			},
 			{
 				Config: testAccEnvironmentConfig_Minimal(resourceName, name, licenseID),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "service.#", "1"), // check they can be defaulted
+					resource.TestCheckResourceAttr(resourceFullName, "services.#", "1"), // check they can be defaulted
 				),
 			},
 			{
 				Config: testAccEnvironmentConfig_DynamicServices(resourceName, name, licenseID, services3),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "service.#", "9"), // check they can be un-defaulted
+					resource.TestCheckResourceAttr(resourceFullName, "services.#", "9"), // check they can be un-defaulted
 				),
 			},
 		},
@@ -516,13 +405,11 @@ func TestAccEnvironment_ServicesTags(t *testing.T) {
 			{
 				Config: testAccEnvironmentConfig_DVTags(resourceName, name, licenseID),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "service.#", "2"),
-					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service.*", map[string]string{
-						"type":        "DaVinci",
-						"console_url": "",
-						"bookmark.#":  "0",
-						"tags.#":      "1",
-						"tags.0":      "DAVINCI_MINIMAL",
+					resource.TestCheckResourceAttr(resourceFullName, "services.#", "2"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
+						"type":   "DaVinci",
+						"tags.#": "1",
+						"tags.0": "DAVINCI_MINIMAL",
 					}),
 				),
 			},
@@ -575,27 +462,31 @@ resource "pingone_environment" "%[1]s" {
   license_id  = "%[4]s"
   solution    = "CUSTOMER"
 
-  service {
-    type = "SSO"
-  }
-
-  service {
-    type        = "PingFederate"
-    console_url = "https://my-console-url"
-    bookmark {
-      name = "Bookmark 1"
-      url  = "https://my-bookmark-1"
+  services = [
+    {
+      type = "SSO"
+    },
+    {
+      type        = "PingFederate"
+      console_url = "https://my-console-url"
+      bookmarks = [
+        {
+          name = "Bookmark 1"
+          url  = "https://my-bookmark-1"
+        },
+        {
+          name = "Bookmark 2"
+          url  = "https://my-bookmark-2"
+        }
+      ]
     }
-    bookmark {
-      name = "Bookmark 2"
-      url  = "https://my-bookmark-2"
-    }
-  }
+  ]
 }`, resourceName, name, region, licenseID)
 }
 
 func testAccEnvironmentConfig_DynamicServices(resourceName, name, licenseID string, services []string) string {
 	return fmt.Sprintf(`
+
 
 variable "services_%[1]s" {
   type    = list(string)
@@ -606,13 +497,11 @@ resource "pingone_environment" "%[1]s" {
   name       = "%[2]s"
   license_id = "%[3]s"
 
-  dynamic "service" {
-    for_each = toset(var.services_%[1]s)
-
-    content {
-      type = service.key
+  services = [
+    for serviceType in var.services_%[1]s : {
+      type = serviceType
     }
-  }
+  ]
 }`, resourceName, name, licenseID, strings.Join(services, "\",\""))
 }
 
@@ -622,27 +511,15 @@ resource "pingone_environment" "%[1]s" {
   name       = "%[2]s"
   license_id = "%[3]s"
 
-  service {
-    type = "SSO"
-  }
-
-  service {
-    type = "DaVinci"
-    tags = ["DAVINCI_MINIMAL"]
-  }
-}`, resourceName, name, licenseID)
-}
-
-func testAccEnvironmentConfig_MinimalWithPopulation(resourceName, name, licenseID string) string {
-	return fmt.Sprintf(`
-resource "pingone_environment" "%[1]s" {
-  name       = "%[2]s"
-  license_id = "%[3]s"
-
-  default_population {
-    name        = "%[2]s"
-    description = "%[2]s description"
-  }
+  services = [
+    {
+      type = "SSO"
+    },
+    {
+      type = "DaVinci"
+      tags = ["DAVINCI_MINIMAL"]
+    }
+  ]
 }`, resourceName, name, licenseID)
 }
 
@@ -651,6 +528,12 @@ func testAccEnvironmentConfig_Minimal(resourceName, name, licenseID string) stri
 resource "pingone_environment" "%[1]s" {
   name       = "%[2]s"
   license_id = "%[3]s"
+
+  services = [
+    {
+      type = "SSO"
+    }
+  ]
 }`, resourceName, name, licenseID)
 }
 
@@ -660,6 +543,12 @@ resource "pingone_environment" "%[1]s" {
   name       = "%[2]s"
   type       = "%[3]s"
   license_id = "%[4]s"
+
+  services = [
+    {
+      type = "SSO"
+    }
+  ]
 }`, resourceName, name, environmentType, licenseID)
 }
 
@@ -669,5 +558,11 @@ resource "pingone_environment" "%[1]s" {
   name       = "%[2]s"
   region     = "%[3]s"
   license_id = "%[4]s"
+
+  services = [
+    {
+      type = "SSO"
+    }
+  ]
 }`, resourceName, name, region, licenseID)
 }

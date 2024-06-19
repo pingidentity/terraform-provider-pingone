@@ -25,6 +25,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	boolvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	objectvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
 	setplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setplanmodifier"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
@@ -37,22 +38,22 @@ import (
 type SchemaAttributeResource serviceClientType
 
 type SchemaAttributeResourceModelV1 struct {
-	Id               types.String `tfsdk:"id"`
-	EnvironmentId    types.String `tfsdk:"environment_id"`
-	Description      types.String `tfsdk:"description"`
-	DisplayName      types.String `tfsdk:"display_name"`
-	Enabled          types.Bool   `tfsdk:"enabled"`
-	EnumeratedValues types.Set    `tfsdk:"enumerated_values"`
-	LdapAttribute    types.String `tfsdk:"ldap_attribute"`
-	Multivalued      types.Bool   `tfsdk:"multivalued"`
-	Name             types.String `tfsdk:"name"`
-	RegexValidation  types.Object `tfsdk:"regex_validation"`
-	Required         types.Bool   `tfsdk:"required"`
-	SchemaId         types.String `tfsdk:"schema_id"`
-	SchemaName       types.String `tfsdk:"schema_name"`
-	SchemaType       types.String `tfsdk:"schema_type"`
-	Type             types.String `tfsdk:"type"`
-	Unique           types.Bool   `tfsdk:"unique"`
+	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Description      types.String                 `tfsdk:"description"`
+	DisplayName      types.String                 `tfsdk:"display_name"`
+	Enabled          types.Bool                   `tfsdk:"enabled"`
+	EnumeratedValues types.Set                    `tfsdk:"enumerated_values"`
+	LdapAttribute    types.String                 `tfsdk:"ldap_attribute"`
+	Multivalued      types.Bool                   `tfsdk:"multivalued"`
+	Name             types.String                 `tfsdk:"name"`
+	RegexValidation  types.Object                 `tfsdk:"regex_validation"`
+	Required         types.Bool                   `tfsdk:"required"`
+	SchemaId         pingonetypes.ResourceIDValue `tfsdk:"schema_id"`
+	SchemaName       types.String                 `tfsdk:"schema_name"`
+	SchemaType       types.String                 `tfsdk:"schema_type"`
+	Type             types.String                 `tfsdk:"type"`
+	Unique           types.Bool                   `tfsdk:"unique"`
 }
 
 type SchemaAttributeEnumeratedValuesResourceModel struct {
@@ -108,12 +109,12 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 	const schemaName = "User"
 
 	schemaIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"**Deprecation Notice**: This parameter is deprecated and will be made read-only in a future release.  This attribute can be removed (the resource will default to the `User` schema), or the `schema_name` parameter can be defined instead.  The ID of the schema to apply the schema attribute to.",
-	).AppendMarkdownString("Must be a valid PingOne resource ID.").ConflictsWith([]string{"schema_name"})
+		"The ID of the schema the schema attribute is applied to.",
+	)
 
 	schemaNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The name of the schema to apply the schema attribute to.",
-	).AllowedValues(schemaName).DefaultValue(schemaName).ConflictsWith([]string{"schema_id"})
+	).AllowedValues(schemaName).DefaultValue(schemaName)
 
 	enabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Indicates whether or not the attribute is enabled.",
@@ -164,20 +165,12 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 			"schema_id": schema.StringAttribute{
 				Description:         schemaIdDescription.Description,
 				MarkdownDescription: schemaIdDescription.MarkdownDescription,
-				DeprecationMessage:  "This parameter is deprecated and will be made read-only in a future release.  This attribute can be removed (the resource will default to the `User` schema), or the `schema_name` parameter can be defined instead.",
-				Optional:            true,
 				Computed:            true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
-				},
-
-				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
-					stringvalidator.ConflictsWith(
-						path.MatchRoot("schema_id"),
-						path.MatchRoot("schema_name"),
-					),
 				},
 			},
 
@@ -195,10 +188,6 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 
 				Validators: []validator.String{
 					stringvalidator.OneOf(schemaName),
-					stringvalidator.ConflictsWith(
-						path.MatchRoot("schema_id"),
-						path.MatchRoot("schema_name"),
-					),
 				},
 			},
 
@@ -431,7 +420,7 @@ func (r *SchemaAttributeResource) Configure(ctx context.Context, req resource.Co
 func (r *SchemaAttributeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state SchemaAttributeResourceModelV1
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -488,7 +477,7 @@ func (r *SchemaAttributeResource) Create(ctx context.Context, req resource.Creat
 func (r *SchemaAttributeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *SchemaAttributeResourceModelV1
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -556,7 +545,7 @@ func (r *SchemaAttributeResource) Read(ctx context.Context, req resource.ReadReq
 func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state SchemaAttributeResourceModelV1
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -612,7 +601,7 @@ func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.Updat
 func (r *SchemaAttributeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *SchemaAttributeResourceModelV1
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -805,8 +794,8 @@ func (p *SchemaAttributeResourceModelV1) toState(apiObject *management.SchemaAtt
 
 	var d diag.Diagnostics
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringOkToTF(apiObject.Environment.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDOkToTF(apiObject.Environment.GetIdOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.DisplayName = framework.StringOkToTF(apiObject.GetDisplayNameOk())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
@@ -822,7 +811,7 @@ func (p *SchemaAttributeResourceModelV1) toState(apiObject *management.SchemaAtt
 	diags.Append(d...)
 
 	p.Required = framework.BoolOkToTF(apiObject.GetRequiredOk())
-	p.SchemaId = framework.StringOkToTF(apiObject.Schema.GetIdOk())
+	p.SchemaId = framework.PingOneResourceIDOkToTF(apiObject.Schema.GetIdOk())
 	p.SchemaName = framework.StringOkToTF(schemaApiObject.GetNameOk())
 	p.SchemaType = framework.EnumOkToTF(apiObject.GetSchemaTypeOk())
 	p.Type = framework.EnumOkToTF(apiObject.GetTypeOk())

@@ -87,8 +87,7 @@ func fetchResourceFromName(ctx context.Context, apiClient *management.APIClient,
 
 		found := false
 		for _, resourceItem := range resources {
-
-			if resourceItem.Resource.GetName() == resourceName {
+			if resourceItem.Resource != nil && resourceItem.Resource.GetName() == resourceName {
 				resource = *resourceItem.Resource
 				found = true
 				break

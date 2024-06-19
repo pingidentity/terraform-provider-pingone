@@ -1,1 +1,1 @@
-$ terraform import pingone_key_rotation_policy.example <environment_id>/<key_rotation_policy_id>
+terraform import pingone_key_rotation_policy.example <environment_id>/<key_rotation_policy_id>

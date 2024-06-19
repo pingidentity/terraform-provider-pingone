@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -22,18 +23,18 @@ import (
 type AgreementLocalizationDataSource serviceClientType
 
 type AgreementLocalizationDataSourceModel struct {
-	Id                      types.String `tfsdk:"id"`
-	EnvironmentId           types.String `tfsdk:"environment_id"`
-	AgreementId             types.String `tfsdk:"agreement_id"`
-	AgreementLocalizationId types.String `tfsdk:"agreement_localization_id"`
-	LanguageId              types.String `tfsdk:"language_id"`
-	DisplayName             types.String `tfsdk:"display_name"`
-	Locale                  types.String `tfsdk:"locale"`
-	Enabled                 types.Bool   `tfsdk:"enabled"`
-	UXTextCheckboxAccept    types.String `tfsdk:"text_checkbox_accept"`
-	UXTextButtonContinue    types.String `tfsdk:"text_button_continue"`
-	UXTextButtonDecline     types.String `tfsdk:"text_button_decline"`
-	CurrentRevisionId       types.String `tfsdk:"current_revision_id"`
+	Id                      pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId           pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	AgreementId             pingonetypes.ResourceIDValue `tfsdk:"agreement_id"`
+	AgreementLocalizationId pingonetypes.ResourceIDValue `tfsdk:"agreement_localization_id"`
+	LanguageId              pingonetypes.ResourceIDValue `tfsdk:"language_id"`
+	DisplayName             types.String                 `tfsdk:"display_name"`
+	Locale                  types.String                 `tfsdk:"locale"`
+	Enabled                 types.Bool                   `tfsdk:"enabled"`
+	UXTextCheckboxAccept    types.String                 `tfsdk:"text_checkbox_accept"`
+	UXTextButtonContinue    types.String                 `tfsdk:"text_button_continue"`
+	UXTextButtonDecline     types.String                 `tfsdk:"text_button_decline"`
+	CurrentRevisionId       pingonetypes.ResourceIDValue `tfsdk:"current_revision_id"`
 }
 
 // Framework interfaces
@@ -74,12 +75,14 @@ func (r *AgreementLocalizationDataSource) Schema(ctx context.Context, req dataso
 			"agreement_localization_id": schema.StringAttribute{
 				Description: "The ID of the agreement localization language to retrieve. Either `agreement_localization_id`, `display_name` or `locale` can be used to retrieve the agreement localization, but cannot be set together.",
 				Optional:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("display_name"),
 						path.MatchRelative().AtParent().AtName("locale"),
 					),
-					verify.P1ResourceIDValidator(),
 				},
 			},
 
@@ -110,6 +113,8 @@ func (r *AgreementLocalizationDataSource) Schema(ctx context.Context, req dataso
 			"language_id": schema.StringAttribute{
 				Description: "The ID of the language used for the agreement localization.",
 				Computed:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"enabled": schema.BoolAttribute{
@@ -135,6 +140,8 @@ func (r *AgreementLocalizationDataSource) Schema(ctx context.Context, req dataso
 			"current_revision_id": schema.StringAttribute{
 				Description: "A string that specifies the UUID of the current revision associated with this agreement localization resource. The current revision is the one shown to users for new consents in the language.",
 				Computed:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 		},
 	}
@@ -169,7 +176,7 @@ func (r *AgreementLocalizationDataSource) Configure(ctx context.Context, req dat
 func (r *AgreementLocalizationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *AgreementLocalizationDataSourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -290,9 +297,9 @@ func (p *AgreementLocalizationDataSourceModel) toState(apiObject *management.Agr
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	p.AgreementLocalizationId = framework.StringToTF(apiObject.GetId())
-	p.LanguageId = framework.StringToTF(languageId)
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.AgreementLocalizationId = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.LanguageId = framework.PingOneResourceIDToTF(languageId)
 	p.DisplayName = framework.StringOkToTF(apiObject.GetDisplayNameOk())
 	p.Locale = framework.StringOkToTF(apiObject.GetLocaleOk())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
@@ -304,9 +311,9 @@ func (p *AgreementLocalizationDataSourceModel) toState(apiObject *management.Agr
 	}
 
 	if v, ok := apiObject.GetCurrentRevisionOk(); ok {
-		p.CurrentRevisionId = framework.StringOkToTF(v.GetIdOk())
+		p.CurrentRevisionId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	} else {
-		p.CurrentRevisionId = types.StringNull()
+		p.CurrentRevisionId = pingonetypes.NewResourceIDNull()
 	}
 
 	return diags

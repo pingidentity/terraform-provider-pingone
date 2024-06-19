@@ -133,7 +133,7 @@ func TestAccResource_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "audience", fmt.Sprintf("%s-1", name)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_token_validity_seconds", "7200"),
 					resource.TestCheckResourceAttr(resourceFullName, "introspect_endpoint_auth_method", "CLIENT_SECRET_POST"),
-					resource.TestMatchResourceAttr(resourceFullName, "client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
+					resource.TestCheckResourceAttr(resourceFullName, "application_permissions_settings.claim_enabled", "true"),
 				),
 			},
 			// Test importing the resource
@@ -179,12 +179,12 @@ func TestAccResource_Minimal(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 					resource.TestCheckResourceAttr(resourceFullName, "type", "CUSTOM"),
 					resource.TestCheckResourceAttr(resourceFullName, "audience", name),
 					resource.TestCheckResourceAttr(resourceFullName, "access_token_validity_seconds", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "introspect_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
-					resource.TestMatchResourceAttr(resourceFullName, "client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
+					resource.TestCheckResourceAttr(resourceFullName, "application_permissions_settings.claim_enabled", "false"),
 				),
 			},
 		},
@@ -212,12 +212,12 @@ func TestAccResource_Change(t *testing.T) {
 				Config: testAccResourceConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 					resource.TestCheckResourceAttr(resourceFullName, "type", "CUSTOM"),
 					resource.TestCheckResourceAttr(resourceFullName, "audience", name),
 					resource.TestCheckResourceAttr(resourceFullName, "access_token_validity_seconds", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "introspect_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
-					resource.TestMatchResourceAttr(resourceFullName, "client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
+					resource.TestCheckResourceAttr(resourceFullName, "application_permissions_settings.claim_enabled", "false"),
 				),
 			},
 			{
@@ -229,19 +229,19 @@ func TestAccResource_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "audience", fmt.Sprintf("%s-1", name)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_token_validity_seconds", "7200"),
 					resource.TestCheckResourceAttr(resourceFullName, "introspect_endpoint_auth_method", "CLIENT_SECRET_POST"),
-					resource.TestMatchResourceAttr(resourceFullName, "client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
+					resource.TestCheckResourceAttr(resourceFullName, "application_permissions_settings.claim_enabled", "true"),
 				),
 			},
 			{
 				Config: testAccResourceConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
+					resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 					resource.TestCheckResourceAttr(resourceFullName, "type", "CUSTOM"),
 					resource.TestCheckResourceAttr(resourceFullName, "audience", name),
 					resource.TestCheckResourceAttr(resourceFullName, "access_token_validity_seconds", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "introspect_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
-					resource.TestMatchResourceAttr(resourceFullName, "client_secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
+					resource.TestCheckResourceAttr(resourceFullName, "application_permissions_settings.claim_enabled", "false"),
 				),
 			},
 		},
@@ -273,19 +273,19 @@ func TestAccResource_BadParameters(t *testing.T) {
 			{
 				ResourceName: resourceFullName,
 				ImportState:  true,
-				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/resource_id" and must match regex: .*`),
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "/",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/resource_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "badformat/badformat",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/resource_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})
@@ -316,6 +316,10 @@ resource "pingone_resource" "%[2]s" {
   access_token_validity_seconds = 7200
 
   introspect_endpoint_auth_method = "CLIENT_SECRET_POST"
+
+  application_permissions_settings = {
+    claim_enabled = true
+  }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
