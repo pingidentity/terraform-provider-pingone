@@ -1,0 +1,11 @@
+```release-note:bug
+`resource/pingone_verify_policy`: Resource can now be modified with Terraform if the `default` property is modified to `true` in the console or by API directly.
+```
+
+```release-note:bug
+`resource/pingone_mfa_device_policy`: Resource can now be modified with Terraform if the `default` property is modified to `true` in the console or by API directly.
+```
+
+```release-note:enhancement
+`resource/pingone_mfa_device_policy`: Added the `default` field to track (in state) whether the policy is the default for the environment.
+```

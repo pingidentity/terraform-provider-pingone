@@ -1381,6 +1381,7 @@ func TestAccMFADevicePolicy_DataModel(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 				),
 			},
 			{
@@ -1396,6 +1397,7 @@ func TestAccMFADevicePolicy_DataModel(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "PROMPT_TO_SELECT"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 				),
 			},
 			{
@@ -1411,6 +1413,7 @@ func TestAccMFADevicePolicy_DataModel(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "PROMPT_TO_SELECT"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 				),
 			},
 			{
@@ -1421,6 +1424,7 @@ func TestAccMFADevicePolicy_DataModel(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 				),
 			},
 			{
@@ -1431,6 +1435,7 @@ func TestAccMFADevicePolicy_DataModel(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "PROMPT_TO_SELECT"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
 				),
 			},
 		},
