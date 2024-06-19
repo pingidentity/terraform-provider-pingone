@@ -1,5 +1,7 @@
 ## 0.29.0 (19 June 2024)
 
+**IMPORTANT** The 0.29.0 release is the final release of the `v0` major version.  The next production release will be the `v1.0` release.  Please review the [upgrade guide](https://registry.terraform.io/providers/pingidentity/pingone/1.0.0-rc1/docs/guides/version-1-upgrade) for details on preparing for breaking changes to the Terraform schema.
+
 NOTES:
 
 * bump `github.com/hashicorp/terraform-plugin-framework` 1.8.0 => 1.9.0 ([#842](https://github.com/pingidentity/terraform-provider-pingone/issues/842))

@@ -9,6 +9,10 @@ description: |-
 
 The PingOne provider interacts with the configuration of the PingOne platform via the management API. The provider requires credentials from worker application client before it can be used.
 
+!> This `v1.0.0-rc1` release is a pre-release (candidate) build release and is not stable for production use.  The latest stable build for production use is `v0.29`.  The documentation for `v0.29` can be found [here](https://registry.terraform.io/providers/pingidentity/pingone/0.29.0/docs).
+
+~> This `v1.0.0-rc1` release is a pre-release (candidate) build release and can be used prepare for the upgrade from `v0.*` to `v1.*` of the provider.  Please review the [upgrade guide](https://registry.terraform.io/providers/pingidentity/pingone/1.0.0-rc1/docs/guides/version-1-upgrade) for details on breaking changes to the Terraform schema.
+
 ## Getting Started
 
 To get started using the PingOne Terraform provider, first you'll need an active PingOne cloud subscription.  Get instant access with a [PingOne trial account](https://www.pingidentity.com/en/try-ping.html), or read more about Ping Identity at [pingidentity.com](https://www.pingidentity.com)
