@@ -1,11 +1,11 @@
 ---
-page_title: "pingone_role_assignment_user Resource - terraform-provider-pingone"
+page_title: "pingone_user_role_assignment Resource - terraform-provider-pingone"
 subcategory: "Platform"
 description: |-
   Resource to create and manage PingOne admin role assignments to administrator defined users.
 ---
 
-# pingone_role_assignment_user (Resource)
+# pingone_user_role_assignment (Resource)
 
 Resource to create and manage PingOne admin role assignments to administrator defined users.
 
@@ -30,7 +30,7 @@ data "pingone_role" "identity_data_admin" {
   name = "Identity Data Admin"
 }
 
-resource "pingone_role_assignment_user" "population_identity_data_admin_to_user" {
+resource "pingone_user_role_assignment" "population_identity_data_admin_to_user" {
   environment_id = pingone_environment.my_environment.id
   user_id        = var.user_id
   role_id        = data.pingone_role.identity_data_admin.id
@@ -50,7 +50,7 @@ data "pingone_role" "environment_admin" {
   name = "Environment Admin"
 }
 
-resource "pingone_role_assignment_user" "single_environment_admin_to_user" {
+resource "pingone_user_role_assignment" "single_environment_admin_to_user" {
   environment_id = pingone_environment.my_environment.id
   user_id        = var.user_id
   role_id        = data.pingone_role.environment_admin.id
@@ -70,7 +70,7 @@ data "pingone_role" "environment_admin" {
   name = "Environment Admin"
 }
 
-resource "pingone_role_assignment_user" "organization_environment_admin_to_user" {
+resource "pingone_user_role_assignment" "organization_environment_admin_to_user" {
   environment_id = pingone_environment.my_environment.id
   user_id        = var.user_id
   role_id        = data.pingone_role.environment_admin.id
@@ -106,5 +106,5 @@ resource "pingone_role_assignment_user" "organization_environment_admin_to_user"
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-terraform import pingone_role_assignment_user.example <environment_id>/<user_id>/<role_assignment_id>
+terraform import pingone_user_role_assignment.example <environment_id>/<user_id>/<role_assignment_id>
 ```

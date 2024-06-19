@@ -23,7 +23,7 @@ func RoleAssignmentUser_CheckDestroy(s *terraform.State) error {
 	apiClient := p1Client.API.ManagementAPIClient
 
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_role_assignment_user" {
+		if rs.Type != "pingone_user_role_assignment" {
 			continue
 		}
 

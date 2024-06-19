@@ -4016,6 +4016,12 @@ This parameter was previously deprecated and has now been made read only.  Use t
 
 This parameter was previously optional and has now been made a required field.
 
+## Resource: pingone_role_assignment_user (now pingone_user_role_assignment)
+
+### Resource renamed to `pingone_user_role_assignment`
+
+The `pingone_role_assignment_user` resource has been renamed to `pingone_user_role_assignment` to better align with other resources of the same nature.
+
 ## Resource: pingone_schema_attribute
 
 ### `schema_id` parameter changed

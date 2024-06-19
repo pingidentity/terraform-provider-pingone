@@ -127,7 +127,7 @@ data "pingone_role" "identity_data_admin" {
   name = "Identity Data Admin"
 }
 
-resource "pingone_role_assignment_user" "%[2]s-1" {
+resource "pingone_user_role_assignment" "%[2]s-1" {
   environment_id = data.pingone_environment.general_test.id
   user_id        = pingone_user.%[2]s.id
   role_id        = data.pingone_role.environment_admin.id
@@ -135,7 +135,7 @@ resource "pingone_role_assignment_user" "%[2]s-1" {
   scope_organization_id = "%[4]s"
 }
 
-resource "pingone_role_assignment_user" "%[2]s-2" {
+resource "pingone_user_role_assignment" "%[2]s-2" {
   environment_id = data.pingone_environment.general_test.id
   user_id        = pingone_user.%[2]s.id
   role_id        = data.pingone_role.client_application_developer.id
@@ -143,7 +143,7 @@ resource "pingone_role_assignment_user" "%[2]s-2" {
   scope_environment_id = data.pingone_environment.general_test.id
 }
 
-resource "pingone_role_assignment_user" "%[2]s-3" {
+resource "pingone_user_role_assignment" "%[2]s-3" {
   environment_id = data.pingone_environment.general_test.id
   user_id        = pingone_user.%[2]s.id
   role_id        = data.pingone_role.identity_data_admin.id
@@ -157,9 +157,9 @@ data "pingone_user_role_assignments" "%[2]s" {
   user_id = pingone_user.%[2]s.id
 
   depends_on = [
-    pingone_role_assignment_user.%[2]s-1,
-    pingone_role_assignment_user.%[2]s-2,
-    pingone_role_assignment_user.%[2]s-3,
+    pingone_user_role_assignment.%[2]s-1,
+    pingone_user_role_assignment.%[2]s-2,
+    pingone_user_role_assignment.%[2]s-3,
   ]
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name, organisationID)
