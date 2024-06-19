@@ -33,6 +33,50 @@ These data type changes are a one-time set of changes from `v0` to `v1` and are 
 
 ## Provider Configuration Changes
 
+### Major Version Change
+
+Customers can keep operating existing `v0.*` releases until ready to upgrade to `v1.*`.  Staying on the existing `v0.*` releases can be achieved using the following syntax:
+
+```terraform
+terraform {
+  required_providers {
+    pingone = {
+      source  = "pingidentity/pingone"
+      version = "~> 0.29"
+    }
+  }
+}
+
+provider "pingone" {
+  client_id      = var.client_id
+  client_secret  = var.client_secret
+  environment_id = var.environment_id
+  region         = var.region
+}
+```
+
+It is highly recommended to go through the guide and make updates to each impacted resource before changing the version, as there are backward-incompatible changes.  Once ready however, the version can be incremented as follows:
+
+```terraform
+terraform {
+  required_providers {
+    pingone = {
+      source  = "pingidentity/pingone"
+      version = "~> 1.0"
+    }
+  }
+}
+
+provider "pingone" {
+  client_id      = var.client_id
+  client_secret  = var.client_secret
+  environment_id = var.environment_id
+  region_code    = var.region_code
+}
+```
+
+Ping recommends using [Provider version control](https://terraform.pingidentity.com/best-practices/#use-provider-version-control), detailed in the [Terraform best practices guide](https://terraform.pingidentity.com/best-practices/).
+
 ### `force_delete_production_type` optional parameter removed
 
 This parameter was previously deprecated and has been removed.
