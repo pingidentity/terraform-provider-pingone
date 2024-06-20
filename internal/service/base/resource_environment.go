@@ -122,8 +122,8 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 	).AllowedValuesEnum(management.AllowedEnumRegionCodeEnumValues).AppendMarkdownString("Will default to the region specified in the provider configuration if not specified, or can be set with the `PINGONE_REGION_CODE` environment variable.")
 
 	solutionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A string that specifies the solution context of the environment.  Leave blank for a custom, non-workforce solution context.  Valid options are `%s`, or no value for custom solution context.  Workforce solution environments are not yet supported in this provider resource, but can be fetched using the `pingone_environment` datasource.", string(management.ENUMSOLUTIONTYPE_CUSTOMER)),
-	).RequiresReplace()
+		"A string that specifies the solution context of the environment.  Leave undefined for a custom, non-workforce solution context.",
+	).AllowedValuesEnum(management.AllowedEnumSolutionTypeEnumValues).RequiresReplace()
 
 	servicesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A set of objects that specify the services to enable in the environment.",
@@ -263,6 +263,10 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 				MarkdownDescription: solutionDescription.MarkdownDescription,
 
 				Optional: true,
+
+				Validators: []validator.String{
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumSolutionTypeEnumValues)...),
+				},
 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
