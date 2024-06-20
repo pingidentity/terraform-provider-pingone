@@ -27,7 +27,7 @@ func TestAccAlertChannel_RemovalDrift(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	var AlertChannelID, environmentID string
+	var alertChannelID, environmentID string
 
 	var p1Client *client.Client
 	var ctx = context.Background()
@@ -47,11 +47,11 @@ func TestAccAlertChannel_RemovalDrift(t *testing.T) {
 			// Configure
 			{
 				Config: testAccAlertChannelConfig_Minimal(resourceName, name),
-				Check:  base.AlertChannel_GetIDs(resourceFullName, &environmentID, &AlertChannelID),
+				Check:  base.AlertChannel_GetIDs(resourceFullName, &environmentID, &alertChannelID),
 			},
 			{
 				PreConfig: func() {
-					base.AlertChannel_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, AlertChannelID)
+					base.AlertChannel_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, alertChannelID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -59,7 +59,7 @@ func TestAccAlertChannel_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccAlertChannel_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  base.AlertChannel_GetIDs(resourceFullName, &environmentID, &AlertChannelID),
+				Check:  base.AlertChannel_GetIDs(resourceFullName, &environmentID, &alertChannelID),
 			},
 			{
 				PreConfig: func() {
@@ -117,10 +117,31 @@ func TestAccAlertChannel_Full(t *testing.T) {
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-			resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "quota.#", "2"),
-			resource.TestCheckResourceAttr(resourceFullName, "country_limit.type", "DENIED"),
+			resource.TestCheckResourceAttr(resourceFullName, "alert_name", name),
+			resource.TestCheckResourceAttr(resourceFullName, "addresses.#", "3"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "addresses.*", "noreply@pingidentity.com"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "addresses.*", "noreply2@pingidentity.com"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "addresses.*", "noreply3@pingidentity.com"),
+			resource.TestCheckResourceAttr(resourceFullName, "channel_type", "EMAIL"),
+			resource.TestCheckResourceAttr(resourceFullName, "exclude_alert_types.#", "6"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "exclude_alert_types.*", "LICENSE_EXPIRED"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "exclude_alert_types.*", "LICENSE_EXPIRING"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "exclude_alert_types.*", "LICENSE_USER_SOFT_LIMIT_EXCEEDED"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "exclude_alert_types.*", "LICENSE_90_PERCENT_USER_SOFT_LIMIT"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "exclude_alert_types.*", "LICENSE_ROTATED"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "exclude_alert_types.*", "LICENSE_USER_HARD_LIMIT_EXCEEDED"),
+			resource.TestCheckResourceAttr(resourceFullName, "include_alert_types.#", "7"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "include_alert_types.*", "CERTIFICATE_EXPIRING"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "include_alert_types.*", "GATEWAY_VERSION_DEPRECATING"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "include_alert_types.*", "KEY_PAIR_EXPIRING"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "include_alert_types.*", "RISK_CONFIGURATION"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "include_alert_types.*", "CERTIFICATE_EXPIRED"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "include_alert_types.*", "GATEWAY_VERSION_DEPRECATED"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "include_alert_types.*", "KEY_PAIR_EXPIRED"),
+			resource.TestCheckResourceAttr(resourceFullName, "include_severities.#", "3"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "include_severities.*", "ERROR"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "include_severities.*", "INFO"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "include_severities.*", "WARNING"),
 		),
 	}
 
@@ -129,10 +150,18 @@ func TestAccAlertChannel_Full(t *testing.T) {
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-			resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "quota.#", "2"),
-			resource.TestCheckResourceAttr(resourceFullName, "country_limit.type", "DENIED"),
+			resource.TestCheckResourceAttr(resourceFullName, "alert_name", name),
+			resource.TestCheckResourceAttr(resourceFullName, "addresses.#", "2"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "addresses.*", "noreply2@pingidentity.com"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "addresses.*", "noreply3@pingidentity.com"),
+			resource.TestCheckResourceAttr(resourceFullName, "channel_type", "EMAIL"),
+			resource.TestCheckResourceAttr(resourceFullName, "exclude_alert_types.#", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "include_alert_types.#", "3"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "include_alert_types.*", "CERTIFICATE_EXPIRING"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "include_alert_types.*", "GATEWAY_VERSION_DEPRECATING"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "include_alert_types.*", "KEY_PAIR_EXPIRING"),
+			resource.TestCheckResourceAttr(resourceFullName, "include_severities.#", "1"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "include_severities.*", "INFO"),
 		),
 	}
 
@@ -141,10 +170,17 @@ func TestAccAlertChannel_Full(t *testing.T) {
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-			resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "quota.#", "0"),
-			resource.TestCheckResourceAttr(resourceFullName, "country_limit.type", "NONE"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "alert_name"),
+			resource.TestCheckResourceAttr(resourceFullName, "addresses.#", "1"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "addresses.*", "noreply@pingidentity.com"),
+			resource.TestCheckResourceAttr(resourceFullName, "channel_type", "EMAIL"),
+			resource.TestCheckResourceAttr(resourceFullName, "exclude_alert_types.#", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "include_alert_types.#", "3"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "include_alert_types.*", "LICENSE_EXPIRED"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "include_alert_types.*", "LICENSE_EXPIRING"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "include_alert_types.*", "LICENSE_ROTATED"),
+			resource.TestCheckResourceAttr(resourceFullName, "include_severities.#", "1"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "include_severities.*", "ERROR"),
 		),
 	}
 
@@ -250,8 +286,6 @@ func testAccAlertChannel_NewEnv(environmentName, licenseID, resourceName, name s
 resource "pingone_alert_channel" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  alert_name = "%[4]s"
-
   addresses = [
     "noreply@pingidentity.com",
   ]
@@ -290,28 +324,28 @@ resource "pingone_alert_channel" "%[2]s" {
   channel_type = "EMAIL"
 
   exclude_alert_types = [
-    "CERTIFICATE_EXPIRED",
-    "CERTIFICATE_EXPIRING",
-    "KEY_PAIR_EXPIRED",
-    "KEY_PAIR_EXPIRING",
+    "LICENSE_EXPIRED",
+    "LICENSE_EXPIRING",
+    "LICENSE_USER_SOFT_LIMIT_EXCEEDED",
+    "LICENSE_90_PERCENT_USER_SOFT_LIMIT",
+    "LICENSE_ROTATED",
+    "LICENSE_USER_HARD_LIMIT_EXCEEDED",
   ]
 
   include_alert_types = [
-    "GATEWAY_VERSION_DEPRECATED",
+    "CERTIFICATE_EXPIRING",
     "GATEWAY_VERSION_DEPRECATING",
-    "LICENSE_EXPIRED",
-    "LICENSE_EXPIRING",
-    "LICENSE_ROTATED",
-    "APPROACHING_USER_LICENSE_LIMIT",
-    "USER_LICENSE_LIMIT_REACHED",
-    "USER_LICENSE_LIMIT_EXCEEDED",
-    "DATA_QUALITY_ISSUE",
+    "KEY_PAIR_EXPIRING",
+    "RISK_CONFIGURATION",
+    "CERTIFICATE_EXPIRED",
+    "GATEWAY_VERSION_DEPRECATED",
+    "KEY_PAIR_EXPIRED",
   ]
 
   include_severities = [
+    "ERROR",
     "INFO",
     "WARNING",
-    "ERROR",
   ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -333,13 +367,13 @@ resource "pingone_alert_channel" "%[2]s" {
   channel_type = "EMAIL"
 
   include_alert_types = [
-    "LICENSE_EXPIRED",
-    "LICENSE_EXPIRING",
-    "LICENSE_ROTATED",
+    "CERTIFICATE_EXPIRING",
+    "GATEWAY_VERSION_DEPRECATING",
+    "KEY_PAIR_EXPIRING",
   ]
 
   include_severities = [
-    "ERROR",
+    "INFO",
   ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -351,8 +385,6 @@ func testAccAlertChannelConfig_Minimal(resourceName, name string) string {
 resource "pingone_alert_channel" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
-  alert_name = "%[3]s"
-
   addresses = [
     "noreply@pingidentity.com",
   ]
@@ -363,6 +395,10 @@ resource "pingone_alert_channel" "%[2]s" {
     "LICENSE_EXPIRED",
     "LICENSE_EXPIRING",
     "LICENSE_ROTATED",
+  ]
+
+  include_severities = [
+    "ERROR",
   ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

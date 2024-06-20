@@ -57,6 +57,22 @@ func (r *AlertChannelResource) Schema(ctx context.Context, req resource.SchemaRe
 
 	const attrMinLength = 1
 
+	channelTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the alert channel type. Currently, this must be `EMAIL`.",
+	).AllowedValuesEnum(utils.EnumSliceToStringSlice(management.AllowedEnumAlertChannelTypeEnumValues))
+
+	excludedAlertTypesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A set of strings that specifies the list of alert types that administrators will not be emailed alerts for. If left undefined, no alert types are excluded.",
+	).AllowedValuesEnum(utils.EnumSliceToStringSlice(management.AllowedEnumAlertChannelAlertTypeEnumValues))
+
+	includedAlertTypesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A set of strings that specifies the list of alert types that administrators will be emailed alerts for.",
+	).AllowedValuesEnum(utils.EnumSliceToStringSlice(management.AllowedEnumAlertChannelAlertTypeEnumValues))
+
+	includeSeveritiesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A set of strings that specifies the severity to filters alerts by.",
+	).AllowedValuesEnum(utils.EnumSliceToStringSlice(management.AllowedEnumAlertChannelSeverityEnumValues))
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage alert channels in a PingOne environment.",
@@ -69,7 +85,7 @@ func (r *AlertChannelResource) Schema(ctx context.Context, req resource.SchemaRe
 			),
 
 			"addresses": schema.SetAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A set of strings that specifies the administrator email addresses to send the alerts to.").Description,
 				Required:    true,
 
 				ElementType: types.StringType,
@@ -83,13 +99,14 @@ func (r *AlertChannelResource) Schema(ctx context.Context, req resource.SchemaRe
 			},
 
 			"alert_name": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-				Required:    true,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the name to assign to the alert channel.").Description,
+				Optional:    true,
 			},
 
 			"channel_type": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-				Required:    true,
+				Description:         channelTypeDescription.Description,
+				MarkdownDescription: channelTypeDescription.MarkdownDescription,
+				Required:            true,
 
 				Validators: []validator.String{
 					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumAlertChannelTypeEnumValues)...),
@@ -97,8 +114,9 @@ func (r *AlertChannelResource) Schema(ctx context.Context, req resource.SchemaRe
 			},
 
 			"exclude_alert_types": schema.SetAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-				Optional:    true,
+				Description:         excludedAlertTypesDescription.Description,
+				MarkdownDescription: excludedAlertTypesDescription.MarkdownDescription,
+				Optional:            true,
 
 				ElementType: types.StringType,
 
@@ -106,12 +124,14 @@ func (r *AlertChannelResource) Schema(ctx context.Context, req resource.SchemaRe
 					setvalidator.ValueStringsAre(
 						stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumAlertChannelAlertTypeEnumValues)...),
 					),
+					setvalidator.SizeAtLeast(attrMinLength),
 				},
 			},
 
 			"include_alert_types": schema.SetAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-				Required:    true,
+				Description:         includedAlertTypesDescription.Description,
+				MarkdownDescription: includedAlertTypesDescription.MarkdownDescription,
+				Required:            true,
 
 				ElementType: types.StringType,
 
@@ -119,12 +139,14 @@ func (r *AlertChannelResource) Schema(ctx context.Context, req resource.SchemaRe
 					setvalidator.ValueStringsAre(
 						stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumAlertChannelAlertTypeEnumValues)...),
 					),
+					setvalidator.SizeAtLeast(attrMinLength),
 				},
 			},
 
 			"include_severities": schema.SetAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-				Optional:    true,
+				Description:         includeSeveritiesDescription.Description,
+				MarkdownDescription: includeSeveritiesDescription.MarkdownDescription,
+				Required:            true,
 
 				ElementType: types.StringType,
 
@@ -230,21 +252,40 @@ func (r *AlertChannelResource) Read(ctx context.Context, req resource.ReadReques
 	}
 
 	// Run the API call
-	var response *management.AlertChannel
+	var listResponse *management.EntityArray
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.AlertingApi.ReadOneAlertChannel(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.AlertingApi.ReadAllAlertChannels(ctx, data.EnvironmentId.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
-		"ReadOneAlertChannel",
+		"ReadAllAlertChannels",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-		&response,
+		&listResponse,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	// Remove from state if resource is not found
+	if listResponse == nil {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
+	// Find the resource in the list
+	var response *management.AlertChannel
+	if embedded, ok := listResponse.GetEmbeddedOk(); ok {
+		if alertChannels, ok := embedded.GetAlertChannelsOk(); ok {
+			for _, alertChannel := range alertChannels {
+				if alertChannel.GetId() == data.Id.ValueString() {
+					response = &alertChannel
+					break
+				}
+			}
+		}
 	}
 
 	// Remove from state if resource is not found

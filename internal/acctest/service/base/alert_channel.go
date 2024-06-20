@@ -36,7 +36,7 @@ func AlertChannel_CheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, r, err := apiClient.AlertingApi.ReadOneAlertChannel(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.ID).Execute()
+		listResponse, r, err := apiClient.AlertingApi.ReadAllAlertChannels(ctx, rs.Primary.Attributes["environment_id"]).Execute()
 
 		shouldContinue, err = acctest.CheckForResourceDestroy(r, err)
 		if err != nil {
@@ -44,6 +44,23 @@ func AlertChannel_CheckDestroy(s *terraform.State) error {
 		}
 
 		if shouldContinue {
+			continue
+		}
+
+		// Find the resource in the list
+		var response *management.AlertChannel
+		if embedded, ok := listResponse.GetEmbeddedOk(); ok {
+			if alertChannels, ok := embedded.GetAlertChannelsOk(); ok {
+				for _, alertChannel := range alertChannels {
+					if alertChannel.GetId() == rs.Primary.ID {
+						response = &alertChannel
+						break
+					}
+				}
+			}
+		}
+
+		if response == nil {
 			continue
 		}
 
