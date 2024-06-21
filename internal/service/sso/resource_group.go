@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -32,6 +33,7 @@ type GroupResourceModel struct {
 	PopulationId  pingonetypes.ResourceIDValue `tfsdk:"population_id"`
 	UserFilter    types.String                 `tfsdk:"user_filter"`
 	ExternalId    types.String                 `tfsdk:"external_id"`
+	CustomData    jsontypes.Normalized         `tfsdk:"custom_data"`
 }
 
 // Framework interfaces
@@ -111,6 +113,13 @@ func (r *GroupResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A user defined ID that represents the counterpart group in an external system.").Description,
 				Optional:    true,
 			},
+
+			"custom_data": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A JSON string that specifies user-defined custom data.").Description,
+				Optional:    true,
+
+				CustomType: jsontypes.NormalizedType{},
+			},
 		},
 	}
 }
@@ -158,7 +167,11 @@ func (r *GroupResource) Create(ctx context.Context, req resource.CreateRequest, 
 	}
 
 	// Build the model for the API
-	group := plan.expand()
+	group, d := plan.expand()
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Run the API call
 	var response *management.Group
@@ -248,7 +261,11 @@ func (r *GroupResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	}
 
 	// Build the model for the API
-	group := plan.expand()
+	group, d := plan.expand()
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Run the API call
 	var response *management.Group
@@ -345,7 +362,8 @@ func (r *GroupResource) ImportState(ctx context.Context, req resource.ImportStat
 	}
 }
 
-func (p *GroupResourceModel) expand() *management.Group {
+func (p *GroupResourceModel) expand() (*management.Group, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
 	data := management.NewGroup(p.Name.ValueString())
 
@@ -367,11 +385,19 @@ func (p *GroupResourceModel) expand() *management.Group {
 		data.SetExternalId(p.ExternalId.ValueString())
 	}
 
-	return data
+	if !p.CustomData.IsNull() && !p.CustomData.IsUnknown() {
+		var customData map[string]interface{}
+		diags.Append(p.CustomData.Unmarshal(&customData)...)
+		if !diags.HasError() {
+			data.SetCustomData(customData)
+		}
+	}
+
+	return data, diags
 }
 
 func (p *GroupResourceModel) toState(apiObject *management.Group) diag.Diagnostics {
-	var diags diag.Diagnostics
+	var diags, d diag.Diagnostics
 
 	if apiObject == nil {
 		diags.AddError(
@@ -395,6 +421,8 @@ func (p *GroupResourceModel) toState(apiObject *management.Group) diag.Diagnosti
 
 	p.UserFilter = framework.StringOkToTF(apiObject.GetUserFilterOk())
 	p.ExternalId = framework.StringOkToTF(apiObject.GetExternalIdOk())
+	p.CustomData, d = framework.JSONNormalizedOkToTF(apiObject.GetCustomDataOk())
+	diags.Append(d...)
 
 	return diags
 }
