@@ -44,15 +44,13 @@ func resourceSecretPreviousOkToTF(apiObject *management.ResourceSecretPrevious, 
 
 func resourceOIDCSecretDataSourceRetryConditions(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
 
-	var err error
-
 	if p1error != nil {
 
-		if m, _ := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
+		m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage())
+		if err == nil && m {
 			tflog.Warn(ctx, "Insufficient PingOne privileges detected")
 			return true
-		}
-		if err != nil {
+		} else if err != nil {
 			tflog.Warn(ctx, "Cannot match error string for retry")
 			return false
 		}

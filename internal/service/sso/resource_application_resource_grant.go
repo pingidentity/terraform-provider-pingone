@@ -549,7 +549,7 @@ func (p *ApplicationResourceGrantResourceModel) getResourceWithScopes(ctx contex
 	}
 
 	resourceScopes := make([]management.ResourceScope, 0)
-	if resource != nil && !p.ScopeNames.IsNull() && !p.ScopeNames.IsUnknown() {
+	if !p.ScopeNames.IsNull() && !p.ScopeNames.IsUnknown() {
 
 		var scopeNames []string
 		diags.Append(p.ScopeNames.ElementsAs(ctx, &scopeNames, false)...)
