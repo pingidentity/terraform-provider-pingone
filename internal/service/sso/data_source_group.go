@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -31,6 +32,7 @@ type GroupDataSourceModel struct {
 	PopulationId  pingonetypes.ResourceIDValue `tfsdk:"population_id"`
 	UserFilter    types.String                 `tfsdk:"user_filter"`
 	ExternalId    types.String                 `tfsdk:"external_id"`
+	CustomData    jsontypes.Normalized         `tfsdk:"custom_data"`
 }
 
 // Framework interfaces
@@ -117,6 +119,13 @@ func (r *GroupDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 			"external_id": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a user defined ID that represents the counterpart group in an external system.").Description,
 				Computed:    true,
+			},
+
+			"custom_data": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A JSON string that specifies user-defined custom data.").Description,
+				Computed:    true,
+
+				CustomType: jsontypes.NormalizedType{},
 			},
 		},
 	}
@@ -227,7 +236,7 @@ func (r *GroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 }
 
 func (p *GroupDataSourceModel) toState(apiObject *management.Group) diag.Diagnostics {
-	var diags diag.Diagnostics
+	var diags, d diag.Diagnostics
 
 	if apiObject == nil {
 		diags.AddError(
@@ -251,6 +260,8 @@ func (p *GroupDataSourceModel) toState(apiObject *management.Group) diag.Diagnos
 
 	p.UserFilter = framework.StringOkToTF(apiObject.GetUserFilterOk())
 	p.ExternalId = framework.StringOkToTF(apiObject.GetExternalIdOk())
+	p.CustomData, d = framework.JSONNormalizedOkToTF(apiObject.GetCustomDataOk())
+	diags.Append(d...)
 
 	return diags
 }

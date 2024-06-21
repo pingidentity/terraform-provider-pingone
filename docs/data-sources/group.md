@@ -39,6 +39,7 @@ data "pingone_group" "example_by_id" {
 
 ### Read-Only
 
+- `custom_data` (String) A JSON string that specifies user-defined custom data.
 - `description` (String) A string that specifies the description applied to the group.
 - `external_id` (String) A string that specifies a user defined ID that represents the counterpart group in an external system.
 - `id` (String) The ID of this resource.

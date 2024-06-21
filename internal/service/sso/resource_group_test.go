@@ -121,6 +121,7 @@ func TestAccGroup_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "population_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "user_filter", `email ew "@test.com"`),
 		resource.TestCheckResourceAttr(resourceFullName, "external_id", "external_1234"),
+		resource.TestCheckResourceAttr(resourceFullName, "custom_data", "{\"hello\":\"world\"}"),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
@@ -131,6 +132,7 @@ func TestAccGroup_Full(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "population_id"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "user_filter"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "external_id"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "custom_data"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -263,6 +265,8 @@ resource "pingone_group" "%[2]s" {
   population_id  = pingone_population.%[2]s.id
   user_filter    = "email ew \"@test.com\""
   external_id    = "external_1234"
+
+  custom_data = jsonencode({ "hello" = "world" })
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 

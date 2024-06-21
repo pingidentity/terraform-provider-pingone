@@ -2,11 +2,13 @@ package framework
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -155,6 +157,29 @@ func DaVinciResourceIDListToTF(v []string) basetypes.ListValue {
 		}
 
 		return types.ListValueMust(pingonetypes.ResourceIDType{}, list)
+	}
+}
+
+func JSONNormalizedToTF(v map[string]interface{}) (jsontypes.Normalized, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if v == nil {
+		return jsontypes.NewNormalizedNull(), diags
+	} else {
+		jsonBytes, err := json.Marshal(v)
+		if err != nil {
+			diags.Append(diag.NewErrorDiagnostic("Normalized JSON Type Conversion Error", err.Error()))
+			return jsontypes.NewNormalizedNull(), diags
+		}
+		return jsontypes.NewNormalizedValue(string(jsonBytes[:])), diags
+	}
+}
+
+func JSONNormalizedOkToTF(v map[string]interface{}, ok bool) (jsontypes.Normalized, diag.Diagnostics) {
+	if !ok || v == nil {
+		return jsontypes.NewNormalizedNull(), nil
+	} else {
+		return JSONNormalizedToTF(v)
 	}
 }
 
