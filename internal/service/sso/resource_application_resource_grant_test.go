@@ -582,7 +582,7 @@ resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
-  
+
   oidc_options {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
@@ -637,7 +637,7 @@ resource "pingone_resource_scope" "%[2]s-5" {
 resource "pingone_application_resource_grant" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
-  resource_name = pingone_resource.%[2]s.name
+  resource_name  = pingone_resource.%[2]s.name
 
   scope_names = [
     pingone_resource_scope.%[2]s-1.name,
