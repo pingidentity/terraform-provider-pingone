@@ -205,6 +205,47 @@ func TestAccApplicationResourceGrant_CustomResource(t *testing.T) {
 	})
 }
 
+func TestAccApplicationResourceGrant_CustomResource_SimultaneousGrantRemoval(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application_resource_grant.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.ApplicationResourceGrant_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccApplicationResourceGrantConfig_CustomResource_SimultaneousGrantRemoval(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+				),
+			},
+			{
+				Config: testAccApplicationResourceGrantConfig_CustomResource_SimultaneousGrantRemoval(resourceName, name),
+				Taint: []string{
+					fmt.Sprintf("pingone_resource_scope.%[1]s-1", name),
+					fmt.Sprintf("pingone_resource_scope.%[1]s-2", name),
+					fmt.Sprintf("pingone_resource_scope.%[1]s-3", name),
+					fmt.Sprintf("pingone_resource_scope.%[1]s-4", name),
+					fmt.Sprintf("pingone_resource_scope.%[1]s-5", name),
+				},
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+				),
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
 func TestAccApplicationResourceGrant_SystemApplication(t *testing.T) {
 	t.Parallel()
 
@@ -529,6 +570,81 @@ resource "pingone_application_resource_grant" "%[2]s" {
     pingone_resource_scope.%[2]s-1.name,
     pingone_resource_scope.%[2]s-2.name,
     pingone_resource_scope.%[2]s-3.name
+  ]
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationResourceGrantConfig_CustomResource_SimultaneousGrantRemoval(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+  
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+
+resource "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_resource_scope" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  name = "%[3]s-1"
+}
+
+resource "pingone_resource_scope" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  name = "%[3]s-2"
+}
+
+resource "pingone_resource_scope" "%[2]s-3" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  name = "%[3]s-3"
+}
+
+resource "pingone_resource_scope" "%[2]s-4" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  name = "%[3]s-4"
+}
+
+resource "pingone_resource_scope" "%[2]s-5" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  name = "%[3]s-5"
+}
+
+resource "pingone_application_resource_grant" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+  resource_name = pingone_resource.%[2]s.name
+
+  scope_names = [
+    pingone_resource_scope.%[2]s-1.name,
+    pingone_resource_scope.%[2]s-2.name,
+    pingone_resource_scope.%[2]s-3.name,
+    pingone_resource_scope.%[2]s-4.name,
+    pingone_resource_scope.%[2]s-5.name,
   ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
