@@ -1,0 +1,3 @@
+```release-note:new-resource
+pingone_user_application_role_assignment
+```

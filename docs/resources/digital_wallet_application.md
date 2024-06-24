@@ -24,7 +24,7 @@ resource "pingone_application" "my_awesome_native_app" {
   name           = "Awesome Native Application"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -34,7 +34,7 @@ resource "pingone_application" "my_awesome_native_app" {
       "https://www.example.com/app/callback",
     ]
 
-    mobile_app {
+    mobile_app = {
       bundle_id    = "com.example.my_ios_app"
       package_name = "com.example.my_android_app"
       # ...
@@ -69,5 +69,5 @@ resource "pingone_digital_wallet_application" "my_digital_wallet_app" {
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-$ terraform import pingone_digital_wallet_application.example <environment_id>/<digital_wallet_application_id>
+terraform import pingone_digital_wallet_application.example <environment_id>/<digital_wallet_application_id>
 ```

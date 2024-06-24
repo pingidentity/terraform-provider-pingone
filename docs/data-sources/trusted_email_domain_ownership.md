@@ -2,12 +2,12 @@
 page_title: "pingone_trusted_email_domain_ownership Data Source - terraform-provider-pingone"
 subcategory: "Platform"
 description: |-
-  Datasource to retrieve Trusted Email Domain ownership status.
+  Datasource to retrieve the Trusted Email Domain ownership status for an environment.
 ---
 
 # pingone_trusted_email_domain_ownership (Data Source)
 
-Datasource to retrieve Trusted Email Domain ownership status.
+Datasource to retrieve the Trusted Email Domain ownership status for an environment.
 
 ## Example Usage
 
@@ -24,21 +24,20 @@ data "pingone_trusted_email_domain_ownership" "email_domain_ownership" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment.
-- `trusted_email_domain_id` (String) A string that specifies the auto-generated ID of the email domain.
+- `environment_id` (String) The ID of the environment to retrieve trusted email domain ownership verification for.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `trusted_email_domain_id` (String) A string that specifies the auto-generated ID of the email domain.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
-- `region` (Set of Object) The regions collection specifies the properties for the 4 AWS SES regions that are used for sending email for the environment. The regions are determined by the geography where this environment was provisioned (North America, Canada, Europe & Asia-Pacific). (see [below for nested schema](#nestedatt--region))
+- `regions` (Attributes Set) The regions collection specifies the properties for the 4 AWS SES regions that are used for sending email for the environment. The regions are determined by the geography where this environment was provisioned (North America, Canada, Europe & Asia-Pacific). (see [below for nested schema](#nestedatt--regions))
 - `type` (String) A string that specifies the type of DNS record.
 
-<a id="nestedatt--region"></a>
-### Nested Schema for `region`
+<a id="nestedatt--regions"></a>
+### Nested Schema for `regions`
 
 Read-Only:
 
-- `key` (String)
-- `name` (String)
-- `status` (String)
-- `value` (String)
+- `key` (String) A string that specifies the record name to apply to the DNS provider.
+- `name` (String) A string that specifies the name of the region.
+- `status` (String) The status of the email domain ownership.  Options are `ACTIVE`, `VERIFICATION_REQUIRED`.
+- `value` (String) A string that specifies the record value to apply to the DNS provider.

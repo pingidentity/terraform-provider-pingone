@@ -14,12 +14,13 @@ func Resources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewApplicationPushCredentialResource,
 		NewFIDO2PolicyResource,
-		NewMFAPoliciesResource,
+		NewMFADevicePolicyResource,
+		NewMFASettingsResource,
 	}
 }
 
 func DataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		NewMFAPoliciesDataSource,
+		NewMFADevicePoliciesDataSource,
 	}
 }

@@ -33,27 +33,27 @@ data "pingone_environment" "example_by_id" {
 
 - `description` (String) A string that specifies the description of the environment.
 - `id` (String) The ID of this resource.
-- `license_id` (String) An ID of a valid license applied to the environment.
-- `organization_id` (String) The ID of the PingOne organization tenant to which the environment belongs.
-- `region` (String) The region the environment is created in.  Valid options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.
-- `service` (Block Set) The services that are enabled in the environment. (see [below for nested schema](#nestedblock--service))
+- `license_id` (String) A string that specifies the ID of a valid license applied to the environment.
+- `organization_id` (String) A string that specifies the ID of the PingOne organization tenant to which the environment belongs.
+- `region` (String) The region the environment is created in.  Options are `AP`, `AU`, `CA`, `EU`, `NA`.
+- `services` (Attributes Set) A set of objects that specify the services that are enabled in the environment. (see [below for nested schema](#nestedatt--services))
 - `solution` (String) The solution context of the environment.  Blank or null values indicate a custom, non-workforce solution context.  Valid options are `CUSTOMER`, `WORKFORCE` or no value for custom solution context.
 - `type` (String) The type of the environment.  Options are `SANDBOX` for a development/testing environment and `PRODUCTION` for environments that require protection from deletion.
 
-<a id="nestedblock--service"></a>
-### Nested Schema for `service`
+<a id="nestedatt--services"></a>
+### Nested Schema for `services`
 
 Read-Only:
 
-- `bookmark` (Block Set) Custom bookmark links for the service. (see [below for nested schema](#nestedblock--service--bookmark))
+- `bookmarks` (Attributes Set) A set of objects that specify custom bookmark links for the service. (see [below for nested schema](#nestedatt--services--bookmarks))
 - `console_url` (String) A custom console URL set for the service.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`.
 - `tags` (Set of String) A set of tags applied upon environment creation.  Only configurable when the service `type` is `DaVinci`.  Options are `DAVINCI_MINIMAL`.
 - `type` (String) The service type applied to the environment.  Valid options are `APIIntelligence`, `Authorize`, `Credentials`, `DaVinci`, `MFA`, `PingAccess`, `PingAuthorize`, `PingCentral`, `PingDirectory`, `PingFederate`, `PingID`, `Risk`, `SSO`, `Verify`.
 
-<a id="nestedblock--service--bookmark"></a>
-### Nested Schema for `service.bookmark`
+<a id="nestedatt--services--bookmarks"></a>
+### Nested Schema for `services.bookmarks`
 
 Read-Only:
 
-- `name` (String) Bookmark name.
-- `url` (String) Bookmark URL.
+- `name` (String) A string that specifies the bookmark name.
+- `url` (String) A string that specifies the bookmark URL.

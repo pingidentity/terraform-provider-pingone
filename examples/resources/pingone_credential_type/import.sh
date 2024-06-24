@@ -1,1 +1,1 @@
-$ terraform import pingone_credential_type.example <environment_id>/<credential_type_id>
+terraform import pingone_credential_type.example <environment_id>/<credential_type_id>

@@ -1,1 +1,1 @@
-$ terraform import pingone_risk_policy.example <environment_id>/<risk_policy_id>
+terraform import pingone_risk_policy.example <environment_id>/<risk_policy_id>

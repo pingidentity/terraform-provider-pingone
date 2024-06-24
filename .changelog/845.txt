@@ -1,0 +1,27 @@
+```release-note:bug
+`resource/pingone_notification_policy`: Fixed blocking error when attempting to destroy the default notification policy for the environment.  This is now a warning instead of an error.
+```
+
+```release-note:bug
+`resource/pingone_mfa_fido2_policy`: Fixed blocking error when attempting to destroy the default MFA FIDO2 policy for the environment.  This is now a warning instead of an error.
+```
+
+```release-note:bug
+`resource/pingone_mfa_device_policy`: Fixed blocking error when attempting to destroy the default MFA device policy for the environment.  This is now a warning instead of an error.
+```
+
+```release-note:bug
+`resource/pingone_risk_policy`: Fixed blocking error when attempting to destroy the default risk policy for the environment.  This is now a warning instead of an error.
+```
+
+```release-note:bug
+`resource/pingone_password_policy`: Fixed blocking error when attempting to destroy the default password policy for the environment.  This is now a warning instead of an error.
+```
+
+```release-note:bug
+`resource/pingone_sign_on_policy`: Fixed blocking error when attempting to destroy the default sign on policy for the environment.  This is now a warning instead of an error.
+```
+
+```release-note:bug
+`resource/pingone_verify_policy`: Fixed blocking error when attempting to destroy the default verify policy for the environment.  This is now a warning instead of an error.
+```

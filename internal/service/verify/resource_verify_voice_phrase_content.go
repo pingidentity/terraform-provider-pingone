@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -16,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -24,13 +26,13 @@ import (
 type VoicePhraseContentResource serviceClientType
 
 type voicePhraseContentResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	VoicePhraseId types.String `tfsdk:"voice_phrase_id"`
-	Locale        types.String `tfsdk:"locale"`
-	Content       types.String `tfsdk:"content"`
-	CreatedAt     types.String `tfsdk:"created_at"`
-	UpdatedAt     types.String `tfsdk:"updated_at"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	VoicePhraseId pingonetypes.ResourceIDValue `tfsdk:"voice_phrase_id"`
+	Locale        types.String                 `tfsdk:"locale"`
+	Content       types.String                 `tfsdk:"content"`
+	CreatedAt     timetypes.RFC3339            `tfsdk:"created_at"`
+	UpdatedAt     timetypes.RFC3339            `tfsdk:"updated_at"`
 }
 
 // Framework interfaces
@@ -78,13 +80,11 @@ func (r *VoicePhraseContentResource) Schema(ctx context.Context, req resource.Sc
 				Description:         phraseIdDescription.Description,
 				MarkdownDescription: phraseIdDescription.MarkdownDescription,
 				Required:            true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
-				},
-				Validators: []validator.String{
-					stringvalidator.Any(
-						validation.P1ResourceIDValidator(),
-					),
 				},
 			},
 
@@ -109,6 +109,8 @@ func (r *VoicePhraseContentResource) Schema(ctx context.Context, req resource.Sc
 				Description: "Date and time the verify phrase content was created.",
 				Computed:    true,
 
+				CustomType: timetypes.RFC3339Type{},
+
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -117,6 +119,8 @@ func (r *VoicePhraseContentResource) Schema(ctx context.Context, req resource.Sc
 			"updated_at": schema.StringAttribute{
 				Description: "Date and time the verify phrase content was updated. Can be null.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 		},
 	}
@@ -151,7 +155,7 @@ func (r *VoicePhraseContentResource) Configure(ctx context.Context, req resource
 func (r *VoicePhraseContentResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state voicePhraseContentResourceModel
 
-	if r.Client.VerifyAPIClient == nil {
+	if r.Client == nil || r.Client.VerifyAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -200,7 +204,7 @@ func (r *VoicePhraseContentResource) Create(ctx context.Context, req resource.Cr
 func (r *VoicePhraseContentResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *voicePhraseContentResourceModel
 
-	if r.Client.VerifyAPIClient == nil {
+	if r.Client == nil || r.Client.VerifyAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -245,7 +249,7 @@ func (r *VoicePhraseContentResource) Read(ctx context.Context, req resource.Read
 func (r *VoicePhraseContentResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state voicePhraseContentResourceModel
 
-	if r.Client.VerifyAPIClient == nil {
+	if r.Client == nil || r.Client.VerifyAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -295,7 +299,7 @@ func (r *VoicePhraseContentResource) Update(ctx context.Context, req resource.Up
 func (r *VoicePhraseContentResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *voicePhraseContentResourceModel
 
-	if r.Client.VerifyAPIClient == nil {
+	if r.Client == nil || r.Client.VerifyAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -402,9 +406,9 @@ func (p *voicePhraseContentResourceModel) toState(apiObject *verify.VoicePhraseC
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.VoicePhraseId = framework.StringToTF(apiObject.GetVoicePhrase().Id)
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
+	p.VoicePhraseId = framework.PingOneResourceIDToTF(apiObject.GetVoicePhrase().Id)
 	p.Locale = framework.StringOkToTF(apiObject.GetLocaleOk())
 	p.Content = framework.StringOkToTF(apiObject.GetContentOk())
 	p.CreatedAt = framework.TimeOkToTF(apiObject.GetCreatedAtOk())

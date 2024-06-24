@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -24,13 +25,13 @@ import (
 type IdentityProviderAttributeResource serviceClientType
 
 type IdentityProviderAttributeResourceModel struct {
-	Id                 types.String `tfsdk:"id"`
-	EnvironmentId      types.String `tfsdk:"environment_id"`
-	IdentityProviderId types.String `tfsdk:"identity_provider_id"`
-	Name               types.String `tfsdk:"name"`
-	Update             types.String `tfsdk:"update"`
-	Value              types.String `tfsdk:"value"`
-	MappingType        types.String `tfsdk:"mapping_type"`
+	Id                 pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId      pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	IdentityProviderId pingonetypes.ResourceIDValue `tfsdk:"identity_provider_id"`
+	Name               types.String                 `tfsdk:"name"`
+	Update             types.String                 `tfsdk:"update"`
+	Value              types.String                 `tfsdk:"value"`
+	MappingType        types.String                 `tfsdk:"mapping_type"`
 }
 
 type coreIdentityProviderAttributeType struct {
@@ -181,7 +182,7 @@ func (r *IdentityProviderAttributeResource) Configure(ctx context.Context, req r
 func (r *IdentityProviderAttributeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state IdentityProviderAttributeResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -252,7 +253,7 @@ func (r *IdentityProviderAttributeResource) Create(ctx context.Context, req reso
 func (r *IdentityProviderAttributeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *IdentityProviderAttributeResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -297,7 +298,7 @@ func (r *IdentityProviderAttributeResource) Read(ctx context.Context, req resour
 func (r *IdentityProviderAttributeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state IdentityProviderAttributeResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -353,7 +354,7 @@ func (r *IdentityProviderAttributeResource) Update(ctx context.Context, req reso
 func (r *IdentityProviderAttributeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *IdentityProviderAttributeResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -612,7 +613,7 @@ func (p *IdentityProviderAttributeResourceModel) toState(apiObject *management.I
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Update = IdentityProviderAttributeMappingUpdateOkToTF(apiObject.GetUpdateOk())
 	p.Value = framework.StringOkToTF(apiObject.GetValueOk())

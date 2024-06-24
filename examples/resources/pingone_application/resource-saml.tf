@@ -15,17 +15,17 @@ resource "pingone_application" "my_awesome_saml_app" {
   name           = "My Awesome SAML App"
   enabled        = true
 
-  saml_options {
+  saml_options = {
     acs_urls           = ["https://my-saas-app.com"]
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:localhost"
 
-    idp_signing_key {
+    idp_signing_key = {
       key_id    = pingone_key.my_awesome_key.id
       algorithm = pingone_key.my_awesome_key.signature_algorithm
     }
 
-    sp_verification {
+    sp_verification = {
       certificate_ids      = [var.sp_verification_certificate_id]
       authn_request_signed = true
     }

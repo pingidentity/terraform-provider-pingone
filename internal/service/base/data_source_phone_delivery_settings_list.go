@@ -11,15 +11,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
 
 // Types
 type PhoneDeliverySettingsListDataSource serviceClientType
 
 type PhoneDeliverySettingsListDataSourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Ids           types.List   `tfsdk:"ids"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Ids           types.List                   `tfsdk:"ids"`
 }
 
 // Framework interfaces
@@ -87,7 +88,7 @@ func (r *PhoneDeliverySettingsListDataSource) Configure(ctx context.Context, req
 func (r *PhoneDeliverySettingsListDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *PhoneDeliverySettingsListDataSourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")

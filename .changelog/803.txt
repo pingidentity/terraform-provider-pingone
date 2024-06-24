@@ -1,0 +1,7 @@
+```release-note:note
+`data-source/pingone_trusted_email_domain_ownership`: Migrated to plugin framework.
+```
+
+```release-note:breaking-change
+`data-source/pingone_trusted_email_domain_ownership`: Renamed `region` to `regions`.
+```

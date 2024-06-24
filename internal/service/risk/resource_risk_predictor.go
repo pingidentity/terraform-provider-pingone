@@ -7,8 +7,9 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -35,6 +36,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/risk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	objectplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectplanmodifier"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -47,30 +49,37 @@ import (
 type RiskPredictorResource serviceClientType
 
 type riskPredictorResourceModel struct {
-	Id                           types.String `tfsdk:"id"`
-	EnvironmentId                types.String `tfsdk:"environment_id"`
-	Name                         types.String `tfsdk:"name"`
-	CompactName                  types.String `tfsdk:"compact_name"`
-	Description                  types.String `tfsdk:"description"`
-	Type                         types.String `tfsdk:"type"`
-	Default                      types.Object `tfsdk:"default"`
-	Licensed                     types.Bool   `tfsdk:"licensed"`
-	Deletable                    types.Bool   `tfsdk:"deletable"`
-	PredictorAnonymousNetwork    types.Object `tfsdk:"predictor_anonymous_network"`
-	PredictorBotDetection        types.Object `tfsdk:"predictor_bot_detection"`
-	PredictorComposite           types.Object `tfsdk:"predictor_composite"`
-	PredictorCustomMap           types.Object `tfsdk:"predictor_custom_map"`
-	PredictorDevice              types.Object `tfsdk:"predictor_device"`
-	PredictorGeoVelocity         types.Object `tfsdk:"predictor_geovelocity"`
-	PredictorIPReputation        types.Object `tfsdk:"predictor_ip_reputation"`
-	PredictorUserLocationAnomaly types.Object `tfsdk:"predictor_user_location_anomaly"`
-	PredictorUserRiskBehavior    types.Object `tfsdk:"predictor_user_risk_behavior"`
-	PredictorVelocity            types.Object `tfsdk:"predictor_velocity"`
+	Id                            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId                 pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name                          types.String                 `tfsdk:"name"`
+	CompactName                   types.String                 `tfsdk:"compact_name"`
+	Description                   types.String                 `tfsdk:"description"`
+	Type                          types.String                 `tfsdk:"type"`
+	Default                       types.Object                 `tfsdk:"default"`
+	Licensed                      types.Bool                   `tfsdk:"licensed"`
+	Deletable                     types.Bool                   `tfsdk:"deletable"`
+	PredictorAdversaryInTheMiddle types.Object                 `tfsdk:"predictor_adversary_in_the_middle"`
+	PredictorAnonymousNetwork     types.Object                 `tfsdk:"predictor_anonymous_network"`
+	PredictorBotDetection         types.Object                 `tfsdk:"predictor_bot_detection"`
+	PredictorComposite            types.Object                 `tfsdk:"predictor_composite"`
+	PredictorCustomMap            types.Object                 `tfsdk:"predictor_custom_map"`
+	PredictorDevice               types.Object                 `tfsdk:"predictor_device"`
+	PredictorEmailReputation      types.Object                 `tfsdk:"predictor_email_reputation"`
+	PredictorGeoVelocity          types.Object                 `tfsdk:"predictor_geovelocity"`
+	PredictorIPReputation         types.Object                 `tfsdk:"predictor_ip_reputation"`
+	PredictorUserLocationAnomaly  types.Object                 `tfsdk:"predictor_user_location_anomaly"`
+	PredictorUserRiskBehavior     types.Object                 `tfsdk:"predictor_user_risk_behavior"`
+	PredictorVelocity             types.Object                 `tfsdk:"predictor_velocity"`
 }
 
 // Anonymous network, IP reputation, geovelocity
 type predictorGenericAllowedCIDR struct {
 	AllowedCIDRList types.Set `tfsdk:"allowed_cidr_list"`
+}
+
+// Adversary in the middle
+type predictorGenericAllowedDomain struct {
+	AllowedDomainList types.Set `tfsdk:"allowed_domain_list"`
 }
 
 // Composite
@@ -79,9 +88,9 @@ type predictorComposite struct {
 }
 
 type predictorComposition struct {
-	ConditionJSON types.String `tfsdk:"condition_json"`
-	Condition     types.String `tfsdk:"condition"`
-	Level         types.String `tfsdk:"level"`
+	ConditionJSON jsontypes.Normalized `tfsdk:"condition_json"`
+	Condition     jsontypes.Normalized `tfsdk:"condition"`
+	Level         types.String         `tfsdk:"level"`
 }
 
 // Custom Map
@@ -110,8 +119,8 @@ type predictorCustomMapHMLList struct {
 
 // New device
 type predictorDevice struct {
-	ActivationAt types.String `tfsdk:"activation_at"`
-	Detect       types.String `tfsdk:"detect"`
+	ActivationAt timetypes.RFC3339 `tfsdk:"activation_at"`
+	Detect       types.String      `tfsdk:"detect"`
 }
 
 // User Location Anomaly
@@ -199,6 +208,11 @@ var (
 		"allowed_cidr_list": types.SetType{ElemType: types.StringType},
 	}
 
+	// Adversary in the middle
+	predictorGenericAllowedDomainTFObjectTypes = map[string]attr.Type{
+		"allowed_domain_list": types.SetType{ElemType: types.StringType},
+	}
+
 	// Composite
 	predictorCompositeTFObjectTypes = map[string]attr.Type{
 		"composition": types.ObjectType{
@@ -207,8 +221,8 @@ var (
 	}
 
 	predictorCompositionTFObjectTypes = map[string]attr.Type{
-		"condition_json": types.StringType,
-		"condition":      types.StringType,
+		"condition_json": jsontypes.NormalizedType{},
+		"condition":      jsontypes.NormalizedType{},
 		"level":          types.StringType,
 	}
 
@@ -256,7 +270,7 @@ var (
 
 	// Device
 	predictorDeviceTFObjectTypes = map[string]attr.Type{
-		"activation_at": types.StringType,
+		"activation_at": timetypes.RFC3339Type{},
 		"detect":        types.StringType,
 	}
 
@@ -378,6 +392,11 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 		"The default result level.",
 	).AllowedValuesEnum(risk.AllowedEnumRiskLevelEnumValues)
 
+	// Adversary In The Middle
+	predictorAdversaryInTheMiddleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single nested object that specifies options for the Adversary-In-The-Middle (AitM) predictor.",
+	).ExactlyOneOf(descriptionPredictorObjectPaths)
+
 	// Anonymous network predictor
 	predictorAnonymousNetworkDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single nested object that specifies options for the Anonymous Network predictor.",
@@ -418,6 +437,16 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 		"A single nested object that describes the string values that apply to the attribute reference in `predictor_custom_map.contains`, that map to high, medium or low risk results.",
 	)
 
+	// Device Predictor
+	predictorDeviceDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single nested object that specifies options for the Device predictor.",
+	).ExactlyOneOf(descriptionPredictorObjectPaths)
+
+	// Email reputation
+	predictorEmailReputationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single nested object that specifies options for the Email reputation predictor.",
+	).ExactlyOneOf(descriptionPredictorObjectPaths)
+
 	// Geovelocity Predictor
 	predictorGeovelocityDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single nested object that specifies options for the Geovelocity predictor.",
@@ -426,11 +455,6 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 	// IP reputation Predictor
 	predictorIPReputationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single nested object that specifies options for the IP reputation predictor.",
-	).ExactlyOneOf(descriptionPredictorObjectPaths)
-
-	// Device Predictor
-	predictorDeviceDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single nested object that specifies options for the Device predictor.",
 	).ExactlyOneOf(descriptionPredictorObjectPaths)
 
 	predictorDeviceDetectDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -620,6 +644,35 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				},
 			},
 
+			"predictor_adversary_in_the_middle": schema.SingleNestedAttribute{
+				Description:         predictorAdversaryInTheMiddleDescription.Description,
+				MarkdownDescription: predictorAdversaryInTheMiddleDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"allowed_domain_list": schema.SetAttribute{
+						Description: "A set of domains that are ignored for the predictor results.",
+						Optional:    true,
+						Computed:    true,
+						ElementType: types.StringType,
+
+						Default: setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{})),
+
+						Validators: []validator.Set{
+							setvalidator.ValueStringsAre(
+								stringvalidator.RegexMatches(verify.IsDomain, "Values must be valid domains."),
+							),
+						},
+					},
+				},
+
+				Validators: predictorObjectValidators,
+
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
+				},
+			},
+
 			"predictor_anonymous_network": schema.SingleNestedAttribute{
 				Description:         predictorAnonymousNetworkDescription.Description,
 				MarkdownDescription: predictorAnonymousNetworkDescription.MarkdownDescription,
@@ -665,14 +718,14 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the condition logic for the composite risk predictor. The value must be a valid JSON string.").Description,
 								Required:    true,
 
-								Validators: []validator.String{
-									stringvalidatorinternal.IsParseableJSON(),
-								},
+								CustomType: jsontypes.NormalizedType{},
 							},
 
 							"condition": schema.StringAttribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the condition logic for the composite risk predictor as applied to the service.").Description,
 								Computed:    true,
+
+								CustomType: jsontypes.NormalizedType{},
 							},
 
 							"level": schema.StringAttribute{
@@ -788,38 +841,6 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				},
 			},
 
-			"predictor_geovelocity": schema.SingleNestedAttribute{
-				Description:         predictorGeovelocityDescription.Description,
-				MarkdownDescription: predictorGeovelocityDescription.MarkdownDescription,
-				Optional:            true,
-
-				Attributes: map[string]schema.Attribute{
-					"allowed_cidr_list": allowedCIDRSchemaAttribute(),
-				},
-
-				Validators: predictorObjectValidators,
-
-				PlanModifiers: []planmodifier.Object{
-					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
-				},
-			},
-
-			"predictor_ip_reputation": schema.SingleNestedAttribute{
-				Description:         predictorIPReputationDescription.Description,
-				MarkdownDescription: predictorIPReputationDescription.MarkdownDescription,
-				Optional:            true,
-
-				Attributes: map[string]schema.Attribute{
-					"allowed_cidr_list": allowedCIDRSchemaAttribute(),
-				},
-
-				Validators: predictorObjectValidators,
-
-				PlanModifiers: []planmodifier.Object{
-					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
-				},
-			},
-
 			"predictor_device": schema.SingleNestedAttribute{
 				Description:         predictorDeviceDescription.Description,
 				MarkdownDescription: predictorDeviceDescription.MarkdownDescription,
@@ -847,14 +868,62 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						Description:         predictorDeviceActivationAtDescription.Description,
 						MarkdownDescription: predictorDeviceActivationAtDescription.MarkdownDescription,
 						Optional:            true,
+
+						CustomType: timetypes.RFC3339Type{},
+
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.RFC3339Regexp, "Attribute must be a valid RFC3339 date/time string."),
 							stringvalidatorinternal.ConflictsIfMatchesPathValue(
 								types.StringValue(string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_SUSPICIOUS_DEVICE)),
 								path.MatchRelative().AtParent().AtName("detect"),
 							),
 						},
 					},
+				},
+
+				Validators: predictorObjectValidators,
+
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
+				},
+			},
+
+			"predictor_email_reputation": schema.SingleNestedAttribute{
+				Description:         predictorEmailReputationDescription.Description,
+				MarkdownDescription: predictorEmailReputationDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{},
+
+				Validators: predictorObjectValidators,
+
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
+				},
+			},
+
+			"predictor_geovelocity": schema.SingleNestedAttribute{
+				Description:         predictorGeovelocityDescription.Description,
+				MarkdownDescription: predictorGeovelocityDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"allowed_cidr_list": allowedCIDRSchemaAttribute(),
+				},
+
+				Validators: predictorObjectValidators,
+
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
+				},
+			},
+
+			"predictor_ip_reputation": schema.SingleNestedAttribute{
+				Description:         predictorIPReputationDescription.Description,
+				MarkdownDescription: predictorIPReputationDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"allowed_cidr_list": allowedCIDRSchemaAttribute(),
 				},
 
 				Validators: predictorObjectValidators,
@@ -1188,13 +1257,15 @@ var (
 
 	predictorObjectValidators = []validator.Object{
 		objectvalidator.ExactlyOneOf(
+			path.MatchRelative().AtParent().AtName("predictor_adversary_in_the_middle"),
 			path.MatchRelative().AtParent().AtName("predictor_anonymous_network"),
 			path.MatchRelative().AtParent().AtName("predictor_bot_detection"),
 			path.MatchRelative().AtParent().AtName("predictor_composite"),
 			path.MatchRelative().AtParent().AtName("predictor_custom_map"),
+			path.MatchRelative().AtParent().AtName("predictor_device"),
+			path.MatchRelative().AtParent().AtName("predictor_email_reputation"),
 			path.MatchRelative().AtParent().AtName("predictor_geovelocity"),
 			path.MatchRelative().AtParent().AtName("predictor_ip_reputation"),
-			path.MatchRelative().AtParent().AtName("predictor_device"),
 			path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly"),
 			path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior"),
 			path.MatchRelative().AtParent().AtName("predictor_velocity"),
@@ -1202,11 +1273,13 @@ var (
 	}
 
 	descriptionPredictorObjectPaths = []string{
+		"predictor_adversary_in_the_middle",
 		"predictor_anonymous_network",
 		"predictor_bot_detection",
 		"predictor_composite",
 		"predictor_custom_map",
 		"predictor_device",
+		"predictor_email_reputation",
 		"predictor_geovelocity",
 		"predictor_ip_reputation",
 		"predictor_user_location_anomaly",
@@ -1362,7 +1435,7 @@ func (r *RiskPredictorResource) Configure(ctx context.Context, req resource.Conf
 func (r *RiskPredictorResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state riskPredictorResourceModel
 
-	if r.Client.RiskAPIClient == nil {
+	if r.Client == nil || r.Client.RiskAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1426,7 +1499,7 @@ func (r *RiskPredictorResource) Create(ctx context.Context, req resource.CreateR
 func (r *RiskPredictorResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *riskPredictorResourceModel
 
-	if r.Client.RiskAPIClient == nil {
+	if r.Client == nil || r.Client.RiskAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1471,7 +1544,7 @@ func (r *RiskPredictorResource) Read(ctx context.Context, req resource.ReadReque
 func (r *RiskPredictorResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state riskPredictorResourceModel
 
-	if r.Client.RiskAPIClient == nil {
+	if r.Client == nil || r.Client.RiskAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1520,7 +1593,7 @@ func (r *RiskPredictorResource) Update(ctx context.Context, req resource.UpdateR
 func (r *RiskPredictorResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *riskPredictorResourceModel
 
-	if r.Client.RiskAPIClient == nil {
+	if r.Client == nil || r.Client.RiskAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1664,6 +1737,10 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 			var predictorDeletable bool
 
 			switch t := predictorObject.(type) {
+			case *risk.RiskPredictorAdversaryInTheMiddle:
+				predictorId = t.GetId()
+				predictorCompactName = t.GetCompactName()
+				predictorDeletable = t.GetDeletable()
 			case *risk.RiskPredictorAnonymousNetwork:
 				predictorId = t.GetId()
 				predictorCompactName = t.GetCompactName()
@@ -1681,6 +1758,10 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 				predictorCompactName = t.GetCompactName()
 				predictorDeletable = t.GetDeletable()
 			case *risk.RiskPredictorDevice:
+				predictorId = t.GetId()
+				predictorCompactName = t.GetCompactName()
+				predictorDeletable = t.GetDeletable()
+			case *risk.RiskPredictorEmailReputation:
 				predictorId = t.GetId()
 				predictorCompactName = t.GetCompactName()
 				predictorDeletable = t.GetDeletable()
@@ -1754,6 +1835,10 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 		riskPredictorCommonData.SetDefault(*dataDefault)
 	}
 
+	if !p.PredictorAdversaryInTheMiddle.IsNull() && !p.PredictorAdversaryInTheMiddle.IsUnknown() {
+		riskPredictor.RiskPredictorAdversaryInTheMiddle, d = p.expandPredictorAdversaryInTheMiddle(ctx, riskPredictorCommonData)
+	}
+
 	if !p.PredictorAnonymousNetwork.IsNull() && !p.PredictorAnonymousNetwork.IsUnknown() {
 		riskPredictor.RiskPredictorAnonymousNetwork, d = p.expandPredictorAnonymousNetwork(ctx, riskPredictorCommonData)
 	}
@@ -1770,16 +1855,20 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 		riskPredictor.RiskPredictorCustom, d = p.expandPredictorCustom(ctx, riskPredictorCommonData)
 	}
 
+	if !p.PredictorDevice.IsNull() && !p.PredictorDevice.IsUnknown() {
+		riskPredictor.RiskPredictorDevice, d = p.expandPredictorDevice(ctx, riskPredictorCommonData)
+	}
+
+	if !p.PredictorEmailReputation.IsNull() && !p.PredictorEmailReputation.IsUnknown() {
+		riskPredictor.RiskPredictorEmailReputation = p.expandPredictorEmailReputation(riskPredictorCommonData)
+	}
+
 	if !p.PredictorGeoVelocity.IsNull() && !p.PredictorGeoVelocity.IsUnknown() {
 		riskPredictor.RiskPredictorGeovelocity, d = p.expandPredictorGeovelocity(ctx, riskPredictorCommonData)
 	}
 
 	if !p.PredictorIPReputation.IsNull() && !p.PredictorIPReputation.IsUnknown() {
 		riskPredictor.RiskPredictorIPReputation, d = p.expandPredictorIPReputation(ctx, riskPredictorCommonData)
-	}
-
-	if !p.PredictorDevice.IsNull() && !p.PredictorDevice.IsUnknown() {
-		riskPredictor.RiskPredictorDevice, d = p.expandPredictorDevice(ctx, riskPredictorCommonData)
 	}
 
 	if !p.PredictorUserRiskBehavior.IsNull() && !p.PredictorUserRiskBehavior.IsUnknown() {
@@ -1800,6 +1889,47 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 	}
 
 	return riskPredictor, overwriteRiskPredictorId, diags
+}
+
+func (p *riskPredictorResourceModel) expandPredictorAdversaryInTheMiddle(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorAdversaryInTheMiddle, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := risk.RiskPredictorAdversaryInTheMiddle{
+		Name:        riskPredictorCommon.Name,
+		CompactName: riskPredictorCommon.CompactName,
+		Description: riskPredictorCommon.Description,
+		Type:        risk.ENUMPREDICTORTYPE_ADVERSARY_IN_THE_MIDDLE,
+		Default:     riskPredictorCommon.Default,
+	}
+
+	var predictorPlan predictorGenericAllowedDomain
+	d := p.PredictorAdversaryInTheMiddle.As(ctx, &predictorPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	if !predictorPlan.AllowedDomainList.IsNull() && !predictorPlan.AllowedDomainList.IsUnknown() {
+		allowedDomainListSet, d := predictorPlan.AllowedDomainList.ToSetValue(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		valuesPointerSlice := framework.TFSetToStringSlice(ctx, allowedDomainListSet)
+		if len(valuesPointerSlice) > 0 {
+			valuesSlice := make([]string, 0)
+			for i := range valuesPointerSlice {
+				valuesSlice = append(valuesSlice, *valuesPointerSlice[i])
+			}
+			data.SetDomainWhiteList(valuesSlice)
+		}
+	}
+
+	return &data, diags
 }
 
 func (p *riskPredictorResourceModel) expandPredictorAnonymousNetwork(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorAnonymousNetwork, diag.Diagnostics) {
@@ -2295,6 +2425,59 @@ func (p *riskPredictorResourceModel) expandPredictorCustom(ctx context.Context, 
 	return &data, diags
 }
 
+func (p *riskPredictorResourceModel) expandPredictorDevice(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorDevice, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := risk.RiskPredictorDevice{
+		Name:        riskPredictorCommon.Name,
+		CompactName: riskPredictorCommon.CompactName,
+		Description: riskPredictorCommon.Description,
+		Type:        risk.ENUMPREDICTORTYPE_DEVICE,
+		Default:     riskPredictorCommon.Default,
+	}
+
+	var predictorPlan predictorDevice
+	d := p.PredictorDevice.As(ctx, &predictorPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	if predictorPlan.Detect.IsNull() || predictorPlan.Detect.IsUnknown() {
+		predictorPlan.Detect = framework.EnumToTF(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE)
+	}
+
+	data.SetDetect(risk.EnumPredictorNewDeviceDetectType(predictorPlan.Detect.ValueString()))
+
+	if !predictorPlan.ActivationAt.IsNull() && !predictorPlan.ActivationAt.IsUnknown() {
+		t, d := predictorPlan.ActivationAt.ValueRFC3339Time()
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetActivationAt(t)
+	}
+
+	return &data, diags
+}
+
+func (p *riskPredictorResourceModel) expandPredictorEmailReputation(riskPredictorCommon *risk.RiskPredictorCommon) *risk.RiskPredictorEmailReputation {
+
+	data := risk.RiskPredictorEmailReputation{
+		Name:        riskPredictorCommon.Name,
+		CompactName: riskPredictorCommon.CompactName,
+		Description: riskPredictorCommon.Description,
+		Type:        risk.ENUMPREDICTORTYPE_EMAIL_REPUTATION,
+		Default:     riskPredictorCommon.Default,
+	}
+
+	return &data
+}
+
 func (p *riskPredictorResourceModel) expandPredictorGeovelocity(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorGeovelocity, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -2372,48 +2555,6 @@ func (p *riskPredictorResourceModel) expandPredictorIPReputation(ctx context.Con
 			}
 			data.SetWhiteList(valuesSlice)
 		}
-	}
-
-	return &data, diags
-}
-
-func (p *riskPredictorResourceModel) expandPredictorDevice(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorDevice, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	data := risk.RiskPredictorDevice{
-		Name:        riskPredictorCommon.Name,
-		CompactName: riskPredictorCommon.CompactName,
-		Description: riskPredictorCommon.Description,
-		Type:        risk.ENUMPREDICTORTYPE_DEVICE,
-		Default:     riskPredictorCommon.Default,
-	}
-
-	var predictorPlan predictorDevice
-	d := p.PredictorDevice.As(ctx, &predictorPlan, basetypes.ObjectAsOptions{
-		UnhandledNullAsEmpty:    false,
-		UnhandledUnknownAsEmpty: false,
-	})
-	diags.Append(d...)
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	if predictorPlan.Detect.IsNull() || predictorPlan.Detect.IsUnknown() {
-		predictorPlan.Detect = framework.EnumToTF(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE)
-	}
-
-	data.SetDetect(risk.EnumPredictorNewDeviceDetectType(predictorPlan.Detect.ValueString()))
-
-	if !predictorPlan.ActivationAt.IsNull() && !predictorPlan.ActivationAt.IsUnknown() {
-		t, e := time.Parse(time.RFC3339, predictorPlan.ActivationAt.ValueString())
-		if e != nil {
-			diags.AddError(
-				"Invalid data format",
-				"Cannot convert activation_at to a date/time.  Please check the format is a valid RFC3339 date time format.")
-			return nil, diags
-		}
-
-		data.SetActivationAt(t)
 	}
 
 	return &data, diags
@@ -2743,6 +2884,19 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 
 	apiObjectCommon := risk.RiskPredictorCommon{}
 
+	if apiObject.RiskPredictorAdversaryInTheMiddle != nil {
+		apiObjectCommon = risk.RiskPredictorCommon{
+			Id:          apiObject.RiskPredictorAdversaryInTheMiddle.Id,
+			Name:        apiObject.RiskPredictorAdversaryInTheMiddle.Name,
+			CompactName: apiObject.RiskPredictorAdversaryInTheMiddle.CompactName,
+			Description: apiObject.RiskPredictorAdversaryInTheMiddle.Description,
+			Type:        apiObject.RiskPredictorAdversaryInTheMiddle.Type,
+			Default:     apiObject.RiskPredictorAdversaryInTheMiddle.Default,
+			Licensed:    apiObject.RiskPredictorAdversaryInTheMiddle.Licensed,
+			Deletable:   apiObject.RiskPredictorAdversaryInTheMiddle.Deletable,
+		}
+	}
+
 	if apiObject.RiskPredictorAnonymousNetwork != nil {
 		apiObjectCommon = risk.RiskPredictorCommon{
 			Id:          apiObject.RiskPredictorAnonymousNetwork.Id,
@@ -2795,6 +2949,32 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 		}
 	}
 
+	if apiObject.RiskPredictorDevice != nil {
+		apiObjectCommon = risk.RiskPredictorCommon{
+			Id:          apiObject.RiskPredictorDevice.Id,
+			Name:        apiObject.RiskPredictorDevice.Name,
+			CompactName: apiObject.RiskPredictorDevice.CompactName,
+			Description: apiObject.RiskPredictorDevice.Description,
+			Type:        apiObject.RiskPredictorDevice.Type,
+			Default:     apiObject.RiskPredictorDevice.Default,
+			Licensed:    apiObject.RiskPredictorDevice.Licensed,
+			Deletable:   apiObject.RiskPredictorDevice.Deletable,
+		}
+	}
+
+	if apiObject.RiskPredictorEmailReputation != nil {
+		apiObjectCommon = risk.RiskPredictorCommon{
+			Id:          apiObject.RiskPredictorEmailReputation.Id,
+			Name:        apiObject.RiskPredictorEmailReputation.Name,
+			CompactName: apiObject.RiskPredictorEmailReputation.CompactName,
+			Description: apiObject.RiskPredictorEmailReputation.Description,
+			Type:        apiObject.RiskPredictorEmailReputation.Type,
+			Default:     apiObject.RiskPredictorEmailReputation.Default,
+			Licensed:    apiObject.RiskPredictorEmailReputation.Licensed,
+			Deletable:   apiObject.RiskPredictorEmailReputation.Deletable,
+		}
+	}
+
 	if apiObject.RiskPredictorGeovelocity != nil {
 		apiObjectCommon = risk.RiskPredictorCommon{
 			Id:          apiObject.RiskPredictorGeovelocity.Id,
@@ -2818,19 +2998,6 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 			Default:     apiObject.RiskPredictorIPReputation.Default,
 			Licensed:    apiObject.RiskPredictorIPReputation.Licensed,
 			Deletable:   apiObject.RiskPredictorIPReputation.Deletable,
-		}
-	}
-
-	if apiObject.RiskPredictorDevice != nil {
-		apiObjectCommon = risk.RiskPredictorCommon{
-			Id:          apiObject.RiskPredictorDevice.Id,
-			Name:        apiObject.RiskPredictorDevice.Name,
-			CompactName: apiObject.RiskPredictorDevice.CompactName,
-			Description: apiObject.RiskPredictorDevice.Description,
-			Type:        apiObject.RiskPredictorDevice.Type,
-			Default:     apiObject.RiskPredictorDevice.Default,
-			Licensed:    apiObject.RiskPredictorDevice.Licensed,
-			Deletable:   apiObject.RiskPredictorDevice.Deletable,
 		}
 	}
 
@@ -2873,7 +3040,7 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 		}
 	}
 
-	p.Id = framework.StringToTF(apiObjectCommon.GetId())
+	p.Id = framework.PingOneResourceIDToTF(apiObjectCommon.GetId())
 	// p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
 	p.Name = framework.StringOkToTF(apiObjectCommon.GetNameOk())
 	p.CompactName = framework.StringOkToTF(apiObjectCommon.GetCompactNameOk())
@@ -2913,7 +3080,7 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 	p.Deletable = framework.BoolOkToTF(apiObjectCommon.GetDeletableOk())
 
 	// Save the direct-to-state fields
-	compositeConditionJSON := types.StringNull()
+	compositeConditionJSON := jsontypes.NewNormalizedNull()
 	if !p.PredictorComposite.IsNull() && !p.PredictorComposite.IsUnknown() {
 
 		var predictorPlan predictorComposite
@@ -2937,6 +3104,9 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 
 	// Set the predictor specific fields by object type
 	var d diag.Diagnostics
+	p.PredictorAdversaryInTheMiddle, d = p.toStateRiskPredictorAdversaryInTheMiddle(apiObject.RiskPredictorAdversaryInTheMiddle)
+	diags.Append(d...)
+
 	p.PredictorAnonymousNetwork, d = p.toStateRiskPredictorAnonymousNetwork(apiObject.RiskPredictorAnonymousNetwork)
 	diags.Append(d...)
 
@@ -2949,13 +3119,16 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 	p.PredictorCustomMap, d = p.toStateRiskPredictorCustom(apiObject.RiskPredictorCustom)
 	diags.Append(d...)
 
+	p.PredictorDevice, d = p.toStateRiskPredictorDevice(apiObject.RiskPredictorDevice)
+	diags.Append(d...)
+
+	p.PredictorEmailReputation, d = p.toStateRiskPredictorEmailReputation(apiObject.RiskPredictorEmailReputation)
+	diags.Append(d...)
+
 	p.PredictorGeoVelocity, d = p.toStateRiskPredictorGeovelocity(apiObject.RiskPredictorGeovelocity)
 	diags.Append(d...)
 
 	p.PredictorIPReputation, d = p.toStateRiskPredictorIPReputation(apiObject.RiskPredictorIPReputation)
-	diags.Append(d...)
-
-	p.PredictorDevice, d = p.toStateRiskPredictorDevice(apiObject.RiskPredictorDevice)
 	diags.Append(d...)
 
 	p.PredictorUserRiskBehavior, d = p.toStateRiskPredictorUserRiskBehavior(apiObject.RiskPredictorUserRiskBehavior)
@@ -2968,6 +3141,21 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 	diags.Append(d...)
 
 	return diags
+}
+
+func (p *riskPredictorResourceModel) toStateRiskPredictorAdversaryInTheMiddle(apiObject *risk.RiskPredictorAdversaryInTheMiddle) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if apiObject == nil || apiObject.GetId() == "" {
+		return types.ObjectNull(predictorGenericAllowedDomainTFObjectTypes), diags
+	}
+
+	objValue, d := types.ObjectValue(predictorGenericAllowedDomainTFObjectTypes, map[string]attr.Value{
+		"allowed_domain_list": framework.StringSetOkToTF(apiObject.GetDomainWhiteListOk()),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
 }
 
 func (p *riskPredictorResourceModel) toStateRiskPredictorAnonymousNetwork(apiObject *risk.RiskPredictorAnonymousNetwork) (basetypes.ObjectValue, diag.Diagnostics) {
@@ -2998,7 +3186,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorBotDetection(apiObject 
 	return objValue, diags
 }
 
-func (p *riskPredictorResourceModel) toStateRiskPredictorComposite(apiObject *risk.RiskPredictorComposite, compositeConditionJSON basetypes.StringValue) (basetypes.ObjectValue, diag.Diagnostics) {
+func (p *riskPredictorResourceModel) toStateRiskPredictorComposite(apiObject *risk.RiskPredictorComposite, compositeConditionJSON jsontypes.Normalized) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if apiObject == nil || apiObject.GetId() == "" {
@@ -3025,7 +3213,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorComposite(apiObject *ri
 				return types.ObjectNull(predictorCompositeTFObjectTypes), diags
 			}
 
-			o["condition"] = framework.StringToTF(string(jsonString))
+			o["condition"] = jsontypes.NewNormalizedValue(string(jsonString))
 
 			if compositeConditionJSON.IsNull() || compositeConditionJSON.IsUnknown() {
 				o["condition_json"] = o["condition"]
@@ -3393,6 +3581,35 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorCustom(apiObject *risk.
 	return objValue, diags
 }
 
+func (p *riskPredictorResourceModel) toStateRiskPredictorDevice(apiObject *risk.RiskPredictorDevice) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if apiObject == nil || apiObject.GetId() == "" {
+		return types.ObjectNull(predictorDeviceTFObjectTypes), diags
+	}
+
+	objValue, d := types.ObjectValue(predictorDeviceTFObjectTypes, map[string]attr.Value{
+		"activation_at": framework.TimeOkToTF(apiObject.GetActivationAtOk()),
+		"detect":        framework.EnumOkToTF(apiObject.GetDetectOk()),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func (p *riskPredictorResourceModel) toStateRiskPredictorEmailReputation(apiObject *risk.RiskPredictorEmailReputation) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if apiObject == nil || apiObject.GetId() == "" {
+		return types.ObjectNull(map[string]attr.Type{}), diags
+	}
+
+	objValue, d := types.ObjectValue(map[string]attr.Type{}, map[string]attr.Value{})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
 func (p *riskPredictorResourceModel) toStateRiskPredictorGeovelocity(apiObject *risk.RiskPredictorGeovelocity) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -3417,22 +3634,6 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorIPReputation(apiObject 
 
 	objValue, d := types.ObjectValue(predictorGenericAllowedCIDRTFObjectTypes, map[string]attr.Value{
 		"allowed_cidr_list": framework.StringSetOkToTF(apiObject.GetWhiteListOk()),
-	})
-	diags.Append(d...)
-
-	return objValue, diags
-}
-
-func (p *riskPredictorResourceModel) toStateRiskPredictorDevice(apiObject *risk.RiskPredictorDevice) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if apiObject == nil || apiObject.GetId() == "" {
-		return types.ObjectNull(predictorDeviceTFObjectTypes), diags
-	}
-
-	objValue, d := types.ObjectValue(predictorDeviceTFObjectTypes, map[string]attr.Value{
-		"activation_at": framework.TimeOkToTF(apiObject.GetActivationAtOk()),
-		"detect":        framework.EnumOkToTF(apiObject.GetDetectOk()),
 	})
 	diags.Append(d...)
 

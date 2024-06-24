@@ -21,10 +21,12 @@ data "pingone_flow_policies" "by_scim_filter" {
 data "pingone_flow_policies" "by_data_filter" {
   environment_id = var.environment_id
 
-  data_filter {
-    name   = "trigger.type"
-    values = ["AUTHENTICATION"]
-  }
+  data_filters = [
+    {
+      name   = "trigger.type"
+      values = ["AUTHENTICATION"]
+    }
+  ]
 }
 ```
 
@@ -37,16 +39,16 @@ data "pingone_flow_policies" "by_data_filter" {
 
 ### Optional
 
-- `data_filter` (Block List) Individual data filters to apply to the DaVinci flow policy selection.  Allowed attributes to filter: `trigger.type` (see [below for nested schema](#nestedblock--data_filter))
-- `scim_filter` (String) A SCIM filter to apply to the DaVinci flow policy selection.  A SCIM filter offers the greatest flexibility in filtering DaVinci flow policies.  The SCIM filter can use the following attributes: `trigger.type`.
+- `data_filters` (Attributes List) Individual data filters to apply to the DaVinci flow policy selection.  Allowed attributes to filter: `trigger.type`.  Exactly one of the following must be defined: `scim_filter`, `data_filters`. (see [below for nested schema](#nestedatt--data_filters))
+- `scim_filter` (String) A SCIM filter to apply to the DaVinci flow policy selection.  A SCIM filter offers the greatest flexibility in filtering DaVinci flow policies.  The SCIM filter can use the following attributes: `trigger.type`.  Exactly one of the following must be defined: `scim_filter`, `data_filters`.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 - `ids` (List of String) The list of resulting IDs of DaVinci flow policies that have been successfully retrieved and filtered.
 
-<a id="nestedblock--data_filter"></a>
-### Nested Schema for `data_filter`
+<a id="nestedatt--data_filters"></a>
+### Nested Schema for `data_filters`
 
 Required:
 

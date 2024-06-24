@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -22,9 +23,9 @@ import (
 type FormsRecaptchaV2Resource serviceClientType
 
 type formsRecaptchaV2ResourceModel struct {
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	SiteKey       types.String `tfsdk:"site_key"`
-	SecretKey     types.String `tfsdk:"secret_key"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	SiteKey       types.String                 `tfsdk:"site_key"`
+	SecretKey     types.String                 `tfsdk:"secret_key"`
 }
 
 // Framework interfaces
@@ -119,7 +120,7 @@ func (r *FormsRecaptchaV2Resource) Configure(ctx context.Context, req resource.C
 func (r *FormsRecaptchaV2Resource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state formsRecaptchaV2ResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -164,7 +165,7 @@ func (r *FormsRecaptchaV2Resource) Create(ctx context.Context, req resource.Crea
 func (r *FormsRecaptchaV2Resource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *formsRecaptchaV2ResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -209,7 +210,7 @@ func (r *FormsRecaptchaV2Resource) Read(ctx context.Context, req resource.ReadRe
 func (r *FormsRecaptchaV2Resource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state formsRecaptchaV2ResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -254,7 +255,7 @@ func (r *FormsRecaptchaV2Resource) Update(ctx context.Context, req resource.Upda
 func (r *FormsRecaptchaV2Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *formsRecaptchaV2ResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -328,7 +329,7 @@ func (p *formsRecaptchaV2ResourceModel) toState(apiObject *management.RecaptchaC
 		return diags
 	}
 
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.SiteKey = framework.StringOkToTF(apiObject.GetSiteKeyOk())
 	p.SecretKey = framework.StringOkToTF(apiObject.GetSecretKeyOk())
 

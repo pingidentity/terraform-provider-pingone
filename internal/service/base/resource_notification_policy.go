@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -22,7 +22,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -33,12 +35,12 @@ import (
 type NotificationPolicyResource serviceClientType
 
 type NotificationPolicyResourceModel struct {
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Name          types.String `tfsdk:"name"`
-	Default       types.Bool   `tfsdk:"default"`
-	CountryLimit  types.Object `tfsdk:"country_limit"`
-	Quota         types.List   `tfsdk:"quota"`
-	Id            types.String `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name          types.String                 `tfsdk:"name"`
+	Default       types.Bool                   `tfsdk:"default"`
+	CountryLimit  types.Object                 `tfsdk:"country_limit"`
+	Quota         types.Set                    `tfsdk:"quota"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
 }
 
 type NotificationPolicyQuotaResourceModel struct {
@@ -99,7 +101,7 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 	const maxQuotaLimit = 2
 
 	quotaDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object block that define the SMS/Voice limits.",
+		"A set of objects that define the SMS/Voice limits.  A maximum of two quota objects can be defined, one for SMS and/or Voice quota, and one for Email quota.",
 	)
 
 	defaultDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -248,14 +250,13 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 					},
 				},
 			},
-		},
 
-		Blocks: map[string]schema.Block{
-			"quota": schema.ListNestedBlock{
+			"quota": schema.SetNestedAttribute{
 				Description:         quotaDescription.Description,
 				MarkdownDescription: quotaDescription.MarkdownDescription,
+				Optional:            true,
 
-				NestedObject: schema.NestedBlockObject{
+				NestedObject: schema.NestedAttributeObject{
 
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
@@ -328,8 +329,8 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 					},
 				},
 
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(maxQuotaLimit),
+				Validators: []validator.Set{
+					setvalidator.SizeAtMost(maxQuotaLimit),
 				},
 			},
 		},
@@ -394,7 +395,7 @@ func (r *NotificationPolicyResource) Configure(ctx context.Context, req resource
 func (r *NotificationPolicyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state NotificationPolicyResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -443,7 +444,7 @@ func (r *NotificationPolicyResource) Create(ctx context.Context, req resource.Cr
 func (r *NotificationPolicyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *NotificationPolicyResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -488,7 +489,7 @@ func (r *NotificationPolicyResource) Read(ctx context.Context, req resource.Read
 func (r *NotificationPolicyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state NotificationPolicyResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -537,7 +538,7 @@ func (r *NotificationPolicyResource) Update(ctx context.Context, req resource.Up
 func (r *NotificationPolicyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *NotificationPolicyResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -559,13 +560,31 @@ func (r *NotificationPolicyResource) Delete(ctx context.Context, req resource.De
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteNotificationsPolicy",
-		framework.CustomErrorResourceNotFoundWarning,
+		notificationPolicyDeleteCustomError,
 		sdk.DefaultCreateReadRetryable,
 		nil,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+var notificationPolicyDeleteCustomError = func(p1Error model.P1Error) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// Undeletable default notifications policy
+	if v, ok := p1Error.GetDetailsOk(); ok && v != nil && len(v) > 0 {
+		if v[0].GetCode() == "CONSTRAINT_VIOLATION" {
+			if match, _ := regexp.MatchString("remove default notifications policy", v[0].GetMessage()); match {
+
+				diags.AddWarning("Cannot delete the default notifications policy", "Due to API restrictions, the provider cannot delete the default notifications policy for an environment.  The policy has been removed from Terraform state but has been left in place in the PingOne service.")
+
+				return diags
+			}
+		}
+	}
+
+	return framework.CustomErrorResourceNotFoundWarning(p1Error)
 }
 
 func (r *NotificationPolicyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -704,7 +723,7 @@ func (p *NotificationPolicyResourceModel) toState(apiObject *management.Notifica
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())
 
@@ -719,12 +738,12 @@ func (p *NotificationPolicyResourceModel) toState(apiObject *management.Notifica
 	return diags
 }
 
-func toStateQuota(quotas []management.NotificationsPolicyQuotasInner) (types.List, diag.Diagnostics) {
+func toStateQuota(quotas []management.NotificationsPolicyQuotasInner) (types.Set, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	tfObjType := types.ObjectType{AttrTypes: quotaTFObjectTypes}
 
 	if len(quotas) == 0 {
-		return types.ListValueMust(tfObjType, []attr.Value{}), diags
+		return types.SetNull(tfObjType), diags
 	}
 
 	flattenedList := []attr.Value{}
@@ -744,7 +763,7 @@ func toStateQuota(quotas []management.NotificationsPolicyQuotasInner) (types.Lis
 		flattenedList = append(flattenedList, flattenedObj)
 	}
 
-	returnVar, d := types.ListValue(tfObjType, flattenedList)
+	returnVar, d := types.SetValue(tfObjType, flattenedList)
 	diags.Append(d...)
 
 	return returnVar, diags

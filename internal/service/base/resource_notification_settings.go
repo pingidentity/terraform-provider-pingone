@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -20,6 +21,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -29,23 +31,23 @@ import (
 type NotificationSettingsResource serviceClientType
 
 type NotificationSettingsResourceModel struct {
-	Id                    types.String `tfsdk:"id"`
-	EnvironmentId         types.String `tfsdk:"environment_id"`
-	DeliveryMode          types.String `tfsdk:"delivery_mode"`
-	ProviderFallbackChain types.List   `tfsdk:"provider_fallback_chain"`
-	From                  types.Object `tfsdk:"from"`
-	ReplyTo               types.Object `tfsdk:"reply_to"`
-	AllowedList           types.Set    `tfsdk:"allowed_list"`
-	UpdatedAt             types.String `tfsdk:"updated_at"`
+	Id                    pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId         pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	DeliveryMode          types.String                 `tfsdk:"delivery_mode"`
+	ProviderFallbackChain types.List                   `tfsdk:"provider_fallback_chain"`
+	From                  types.Object                 `tfsdk:"from"`
+	ReplyTo               types.Object                 `tfsdk:"reply_to"`
+	AllowedList           types.Set                    `tfsdk:"allowed_list"`
+	UpdatedAt             timetypes.RFC3339            `tfsdk:"updated_at"`
 }
 
 type NotificationSettingsAllowedListResourceModel struct {
-	UserID types.String `tfsdk:"user_id"`
+	UserID pingonetypes.ResourceIDValue `tfsdk:"user_id"`
 }
 
 var (
 	allowedListTFObjectTypes = map[string]attr.Type{
-		"user_id": types.StringType,
+		"user_id": pingonetypes.ResourceIDType{},
 	}
 )
 
@@ -147,9 +149,7 @@ func (r *NotificationSettingsResource) Schema(ctx context.Context, req resource.
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the user ID to add to the allowed list.  Must be a valid PingOne resource ID.").Description,
 							Required:    true,
 
-							Validators: []validator.String{
-								verify.P1ResourceIDValidator(),
-							},
+							CustomType: pingonetypes.ResourceIDType{},
 						},
 					},
 				},
@@ -213,6 +213,8 @@ func (r *NotificationSettingsResource) Schema(ctx context.Context, req resource.
 			"updated_at": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the time the resource was last updated in RFC3339 format.").Description,
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 		},
 	}
@@ -247,7 +249,7 @@ func (r *NotificationSettingsResource) Configure(ctx context.Context, req resour
 func (r *NotificationSettingsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state NotificationSettingsResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -296,7 +298,7 @@ func (r *NotificationSettingsResource) Create(ctx context.Context, req resource.
 func (r *NotificationSettingsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *NotificationSettingsResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -341,7 +343,7 @@ func (r *NotificationSettingsResource) Read(ctx context.Context, req resource.Re
 func (r *NotificationSettingsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state NotificationSettingsResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -390,7 +392,7 @@ func (r *NotificationSettingsResource) Update(ctx context.Context, req resource.
 func (r *NotificationSettingsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *NotificationSettingsResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -545,8 +547,8 @@ func (p *NotificationSettingsResourceModel) toState(apiObject *management.Notifi
 		return diags
 	}
 
-	p.Id = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.Id = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 
 	p.DeliveryMode = framework.EnumOkToTF(apiObject.GetDeliveryModeOk())
 	p.ProviderFallbackChain = framework.StringListOkToTF(apiObject.GetSmsProvidersFallbackChainOk())
@@ -581,7 +583,7 @@ func notificationsSettingsAllowedListOkToTF(apiObject []management.Notifications
 		if user, ok := v.GetUserOk(); ok {
 
 			objMap := map[string]attr.Value{
-				"user_id": framework.StringOkToTF(user.GetIdOk()),
+				"user_id": framework.PingOneResourceIDOkToTF(user.GetIdOk()),
 			}
 
 			flattenedObj, d := types.ObjectValue(allowedListTFObjectTypes, objMap)

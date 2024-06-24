@@ -1,1 +1,1 @@
-$ terraform import pingone_digital_wallet_application.example <environment_id>/<digital_wallet_application_id>
+terraform import pingone_digital_wallet_application.example <environment_id>/<digital_wallet_application_id>

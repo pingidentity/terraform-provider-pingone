@@ -37,9 +37,9 @@ data "pingone_verify_policy" "find_default_policy_example" {
 
 ### Optional
 
-- `default` (Boolean) Set value to `true` to return the default verify policy. There is only one default policy per environment.  At least one of the following must be defined: `verify_policy_id`, `name`, `default`.
-- `name` (String) Name of the verification policy displayed in PingOne Admin UI.  At least one of the following must be defined: `verify_policy_id`, `name`, `default`.
-- `verify_policy_id` (String) Identifier (UUID) associated with the verify policy.  At least one of the following must be defined: `verify_policy_id`, `name`, `default`.
+- `default` (Boolean) Set value to `true` to return the default verify policy. There is only one default policy per environment.  Exactly one of the following must be defined: `verify_policy_id`, `name`, `default`.
+- `name` (String) Name of the verification policy displayed in PingOne Admin UI.  Exactly one of the following must be defined: `verify_policy_id`, `name`, `default`.
+- `verify_policy_id` (String) Identifier (UUID) associated with the verify policy.  Exactly one of the following must be defined: `verify_policy_id`, `name`, `default`.
 
 ### Read-Only
 

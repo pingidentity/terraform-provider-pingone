@@ -62,7 +62,9 @@ func FormsRecaptchaV2_GetIDs(resourceName string, environmentID *string) resourc
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*environmentID = rs.Primary.Attributes["environment_id"]
+		if environmentID != nil {
+			*environmentID = rs.Primary.Attributes["environment_id"]
+		}
 
 		return nil
 	}

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -17,6 +18,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -24,15 +26,15 @@ import (
 type CustomDomainSSLResource serviceClientType
 
 type CustomDomainSSLResourceModel struct {
-	Id                              types.String `tfsdk:"id"`
-	EnvironmentId                   types.String `tfsdk:"environment_id"`
-	CustomDomainId                  types.String `tfsdk:"custom_domain_id"`
-	CerificatePemFile               types.String `tfsdk:"certificate_pem_file"`
-	IntermediateCertificatesPemFile types.String `tfsdk:"intermediate_certificates_pem_file"`
-	PrivateKeyPemFile               types.String `tfsdk:"private_key_pem_file"`
-	DomainName                      types.String `tfsdk:"domain_name"`
-	Status                          types.String `tfsdk:"status"`
-	CertificateExpiresAt            types.String `tfsdk:"certificate_expires_at"`
+	Id                              pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId                   pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	CustomDomainId                  pingonetypes.ResourceIDValue `tfsdk:"custom_domain_id"`
+	CerificatePemFile               types.String                 `tfsdk:"certificate_pem_file"`
+	IntermediateCertificatesPemFile types.String                 `tfsdk:"intermediate_certificates_pem_file"`
+	PrivateKeyPemFile               types.String                 `tfsdk:"private_key_pem_file"`
+	DomainName                      types.String                 `tfsdk:"domain_name"`
+	Status                          types.String                 `tfsdk:"status"`
+	CertificateExpiresAt            timetypes.RFC3339            `tfsdk:"certificate_expires_at"`
 }
 
 // Framework interfaces
@@ -144,6 +146,8 @@ func (r *CustomDomainSSLResource) Schema(ctx context.Context, req resource.Schem
 			"certificate_expires_at": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("The time when the certificate expires.  If this property is not present, it indicates that an SSL certificate has not been setup for this custom domain.").Description,
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 		},
 	}
@@ -178,7 +182,7 @@ func (r *CustomDomainSSLResource) Configure(ctx context.Context, req resource.Co
 func (r *CustomDomainSSLResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state CustomDomainSSLResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -240,7 +244,7 @@ func (r *CustomDomainSSLResource) Create(ctx context.Context, req resource.Creat
 func (r *CustomDomainSSLResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *CustomDomainSSLResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -310,15 +314,15 @@ func (p *CustomDomainSSLResourceModel) toState(apiObject *management.CustomDomai
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.DomainName = framework.StringOkToTF(apiObject.GetDomainNameOk())
 	p.Status = framework.EnumOkToTF(apiObject.GetStatusOk())
 
 	if v, ok := apiObject.GetCertificateOk(); ok {
 		p.CertificateExpiresAt = framework.TimeOkToTF(v.GetExpiresAtOk())
 	} else {
-		p.CertificateExpiresAt = types.StringNull()
+		p.CertificateExpiresAt = timetypes.NewRFC3339Null()
 	}
 
 	return diags

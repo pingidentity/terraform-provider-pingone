@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -15,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
@@ -22,8 +24,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	int64validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int64validator"
 	customstringvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -35,20 +39,20 @@ import (
 type VerifyPolicyResource serviceClientType
 
 type verifyPolicyResourceModel struct {
-	Id               types.String `tfsdk:"id"`
-	EnvironmentId    types.String `tfsdk:"environment_id"`
-	Name             types.String `tfsdk:"name"`
-	Default          types.Bool   `tfsdk:"default"`
-	Description      types.String `tfsdk:"description"`
-	GovernmentId     types.Object `tfsdk:"government_id"`
-	FacialComparison types.Object `tfsdk:"facial_comparison"`
-	Liveness         types.Object `tfsdk:"liveness"`
-	Email            types.Object `tfsdk:"email"`
-	Phone            types.Object `tfsdk:"phone"`
-	Transaction      types.Object `tfsdk:"transaction"`
-	Voice            types.Object `tfsdk:"voice"`
-	CreatedAt        types.String `tfsdk:"created_at"`
-	UpdatedAt        types.String `tfsdk:"updated_at"`
+	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name             types.String                 `tfsdk:"name"`
+	Default          types.Bool                   `tfsdk:"default"`
+	Description      types.String                 `tfsdk:"description"`
+	GovernmentId     types.Object                 `tfsdk:"government_id"`
+	FacialComparison types.Object                 `tfsdk:"facial_comparison"`
+	Liveness         types.Object                 `tfsdk:"liveness"`
+	Email            types.Object                 `tfsdk:"email"`
+	Phone            types.Object                 `tfsdk:"phone"`
+	Transaction      types.Object                 `tfsdk:"transaction"`
+	Voice            types.Object                 `tfsdk:"voice"`
+	CreatedAt        timetypes.RFC3339            `tfsdk:"created_at"`
+	UpdatedAt        timetypes.RFC3339            `tfsdk:"updated_at"`
 }
 
 type governmentIdModel struct {
@@ -440,6 +444,10 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 				Description:         defaultDescription.Description,
 				MarkdownDescription: defaultDescription.MarkdownDescription,
 				Computed:            true,
+
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"description": schema.StringAttribute{
@@ -1217,11 +1225,6 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 								Description:         voicePhraseIdDescription.Description,
 								MarkdownDescription: voicePhraseIdDescription.MarkdownDescription,
 								Required:            true,
-								Validators: []validator.String{
-									stringvalidator.Any(
-										validation.P1ResourceIDValidator(),
-									),
-								},
 							},
 						},
 					},
@@ -1272,6 +1275,8 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 				Description: "Date and time the verify policy was created.",
 				Computed:    true,
 
+				CustomType: timetypes.RFC3339Type{},
+
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -1280,6 +1285,8 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 			"updated_at": schema.StringAttribute{
 				Description: "Date and time the verify policy was updated. Can be null.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 		},
 	}
@@ -1314,7 +1321,7 @@ func (r *VerifyPolicyResource) Configure(ctx context.Context, req resource.Confi
 func (r *VerifyPolicyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state verifyPolicyResourceModel
 
-	if r.Client.VerifyAPIClient == nil {
+	if r.Client == nil || r.Client.VerifyAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1363,7 +1370,7 @@ func (r *VerifyPolicyResource) Create(ctx context.Context, req resource.CreateRe
 func (r *VerifyPolicyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *verifyPolicyResourceModel
 
-	if r.Client.VerifyAPIClient == nil {
+	if r.Client == nil || r.Client.VerifyAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1408,7 +1415,7 @@ func (r *VerifyPolicyResource) Read(ctx context.Context, req resource.ReadReques
 func (r *VerifyPolicyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state verifyPolicyResourceModel
 
-	if r.Client.VerifyAPIClient == nil {
+	if r.Client == nil || r.Client.VerifyAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1458,7 +1465,7 @@ func (r *VerifyPolicyResource) Update(ctx context.Context, req resource.UpdateRe
 func (r *VerifyPolicyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *verifyPolicyResourceModel
 
-	if r.Client.VerifyAPIClient == nil {
+	if r.Client == nil || r.Client.VerifyAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1480,13 +1487,31 @@ func (r *VerifyPolicyResource) Delete(ctx context.Context, req resource.DeleteRe
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteVerifyPolicy",
-		framework.CustomErrorResourceNotFoundWarning,
+		verifyPolicyDeleteCustomError,
 		sdk.DefaultCreateReadRetryable,
 		nil,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+var verifyPolicyDeleteCustomError = func(p1Error model.P1Error) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// Undeletable default verify policy
+	if v, ok := p1Error.GetDetailsOk(); ok && v != nil && len(v) > 0 {
+		if v[0].GetCode() == "CONSTRAINT_VIOLATION" {
+			if match, _ := regexp.MatchString("cannot delete default", v[0].GetMessage()); match {
+
+				diags.AddWarning("Cannot delete the default verify policy", "Due to API restrictions, the provider cannot delete the default verify policy for an environment.  The policy has been removed from Terraform state but has been left in place in the PingOne service.")
+
+				return diags
+			}
+		}
+	}
+
+	return framework.CustomErrorResourceNotFoundWarning(p1Error)
 }
 
 func (r *VerifyPolicyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -2064,8 +2089,8 @@ func (p *verifyPolicyResourceModel) toState(apiObject *verify.VerifyPolicy) diag
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())

@@ -7,15 +7,16 @@ resource "pingone_notification_policy" "user" {
 
   name = "User Quota SMS Voice and Email"
 
-  quota {
-    type             = "USER"
-    delivery_methods = ["SMS", "Voice"]
-    total            = 30
-  }
-
-  quota {
-    type             = "USER"
-    delivery_methods = ["Email"]
-    total            = 30
-  }
+  quota = [
+    {
+      type             = "USER"
+      delivery_methods = ["SMS", "Voice"]
+      total            = 30
+    },
+    {
+      type             = "USER"
+      delivery_methods = ["Email"]
+      total            = 30
+    }
+  ]
 }

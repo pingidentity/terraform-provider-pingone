@@ -22,8 +22,13 @@ func ApplicationSecret_GetIDs(resourceName string, environmentID, applicationID 
 			return fmt.Errorf("Resource Not found: %s", resourceName)
 		}
 
-		*applicationID = rs.Primary.Attributes["application_id"]
-		*environmentID = rs.Primary.Attributes["environment_id"]
+		if applicationID != nil {
+			*applicationID = rs.Primary.Attributes["application_id"]
+		}
+
+		if environmentID != nil {
+			*environmentID = rs.Primary.Attributes["environment_id"]
+		}
 
 		return nil
 	}

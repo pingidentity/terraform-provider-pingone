@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -17,29 +18,29 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
 type VerifyPolicyDataSource serviceClientType
 
 type verifyPolicyDataSourceModel struct {
-	Id               types.String `tfsdk:"id"`
-	EnvironmentId    types.String `tfsdk:"environment_id"`
-	VerifyPolicyId   types.String `tfsdk:"verify_policy_id"`
-	Name             types.String `tfsdk:"name"`
-	Default          types.Bool   `tfsdk:"default"`
-	Description      types.String `tfsdk:"description"`
-	GovernmentId     types.Object `tfsdk:"government_id"`
-	FacialComparison types.Object `tfsdk:"facial_comparison"`
-	Liveness         types.Object `tfsdk:"liveness"`
-	Email            types.Object `tfsdk:"email"`
-	Phone            types.Object `tfsdk:"phone"`
-	Transaction      types.Object `tfsdk:"transaction"`
-	Voice            types.Object `tfsdk:"voice"`
-	CreatedAt        types.String `tfsdk:"created_at"`
-	UpdatedAt        types.String `tfsdk:"updated_at"`
+	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	VerifyPolicyId   pingonetypes.ResourceIDValue `tfsdk:"verify_policy_id"`
+	Name             types.String                 `tfsdk:"name"`
+	Default          types.Bool                   `tfsdk:"default"`
+	Description      types.String                 `tfsdk:"description"`
+	GovernmentId     types.Object                 `tfsdk:"government_id"`
+	FacialComparison types.Object                 `tfsdk:"facial_comparison"`
+	Liveness         types.Object                 `tfsdk:"liveness"`
+	Email            types.Object                 `tfsdk:"email"`
+	Phone            types.Object                 `tfsdk:"phone"`
+	Transaction      types.Object                 `tfsdk:"transaction"`
+	Voice            types.Object                 `tfsdk:"voice"`
+	CreatedAt        timetypes.RFC3339            `tfsdk:"created_at"`
+	UpdatedAt        timetypes.RFC3339            `tfsdk:"updated_at"`
 }
 
 var (
@@ -111,7 +112,7 @@ var (
 
 	textDependentDataSourceServiceTFObjectTypes = map[string]attr.Type{
 		"samples":         types.Int64Type,
-		"voice_phrase_id": types.StringType,
+		"voice_phrase_id": pingonetypes.ResourceIDType{},
 	}
 
 	referenceDataDataSourceServiceTFObjectTypes = map[string]attr.Type{
@@ -324,12 +325,14 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 				Description:         verifyPolicyIdDescription.Description,
 				MarkdownDescription: verifyPolicyIdDescription.MarkdownDescription,
 				Optional:            true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("name"),
 						path.MatchRelative().AtParent().AtName("default"),
 					),
-					validation.P1ResourceIDValidator(),
 				},
 			},
 
@@ -689,6 +692,8 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 							"voice_phrase_id": schema.StringAttribute{
 								Description: "	Identifier (UUID) of the voice phrase to use.",
 								Computed:    true,
+
+								CustomType: pingonetypes.ResourceIDType{},
 							},
 						},
 					},
@@ -719,11 +724,15 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 			"created_at": schema.StringAttribute{
 				Description: "Date and time the verify policy was created.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 
 			"updated_at": schema.StringAttribute{
 				Description: "Date and time the verify policy was updated. Can be null.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 		},
 	}
@@ -758,7 +767,7 @@ func (r *VerifyPolicyDataSource) Configure(ctx context.Context, req datasource.C
 func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *verifyPolicyDataSourceModel
 
-	if r.Client.VerifyAPIClient == nil {
+	if r.Client == nil || r.Client.VerifyAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -900,9 +909,9 @@ func (p *verifyPolicyDataSourceModel) toState(apiObject *verify.VerifyPolicy) di
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.VerifyPolicyId = framework.StringOkToTF(apiObject.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
+	p.VerifyPolicyId = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
@@ -1151,7 +1160,7 @@ func (p *verifyPolicyDataSourceModel) toStateVoice(apiObject *verify.VoiceConfig
 
 		o := map[string]attr.Value{
 			"samples":         framework.Int32OkToTF(v.GetSamplesOk()),
-			"voice_phrase_id": framework.StringToTF(v.GetPhrase().Id),
+			"voice_phrase_id": framework.PingOneResourceIDToTF(v.GetPhrase().Id),
 		}
 		objValue, d := types.ObjectValue(textDependentDataSourceServiceTFObjectTypes, o)
 		diags.Append(d...)

@@ -25,7 +25,7 @@ resource "pingone_identity_provider" "apple" {
   name    = "Apple"
   enabled = true
 
-  apple {
+  apple = {
     client_id                 = var.apple_client_id
     client_secret_signing_key = var.apple_client_secret_signing_key
     key_id                    = var.apple_key_id
@@ -69,7 +69,7 @@ For a full list of social providers and their configurable attribute mappings, s
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-$ terraform import pingone_identity_provider_attribute.example <environment_id>/<identity_provider_id>/<identity_provider_attribute_id>
+terraform import pingone_identity_provider_attribute.example <environment_id>/<identity_provider_id>/<identity_provider_attribute_id>
 ```
 
 ## Social Provider and External Identity Provider Attribute Reference

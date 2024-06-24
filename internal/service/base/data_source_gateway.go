@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -16,61 +15,38 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
 type GatewayDataSource serviceClientType
 
 type gatewayDataSourceModel struct {
-	Id                                    types.String `tfsdk:"id"`
-	EnvironmentId                         types.String `tfsdk:"environment_id"`
-	GatewayId                             types.String `tfsdk:"gateway_id"`
-	Name                                  types.String `tfsdk:"name"`
-	Description                           types.String `tfsdk:"description"`
-	Enabled                               types.Bool   `tfsdk:"enabled"`
-	Type                                  types.String `tfsdk:"type"`
-	BindDN                                types.String `tfsdk:"bind_dn"`
-	ConnectionSecurity                    types.String `tfsdk:"connection_security"`
-	KerberosServiceAccountUPN             types.String `tfsdk:"kerberos_service_account_upn"`
-	KerberosRetainPreviousCredentialsMins types.Int64  `tfsdk:"kerberos_retain_previous_credentials_mins"`
-	Servers                               types.Set    `tfsdk:"servers"`
-	ValidateTLSCertificates               types.Bool   `tfsdk:"validate_tls_certificates"`
-	Vendor                                types.String `tfsdk:"vendor"`
-	UserType                              types.Set    `tfsdk:"user_type"`
-	RadiusDavinciPolicyId                 types.String `tfsdk:"radius_davinci_policy_id"`
-	RadiusDefaultSharedSecret             types.String `tfsdk:"radius_default_shared_secret"`
-	RadiusClient                          types.Set    `tfsdk:"radius_client"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	GatewayId     pingonetypes.ResourceIDValue `tfsdk:"gateway_id"`
+	Name          types.String                 `tfsdk:"name"`
+	Description   types.String                 `tfsdk:"description"`
+	Type          types.String                 `tfsdk:"type"`
+	Enabled       types.Bool                   `tfsdk:"enabled"`
+
+	// LDAP
+	BindDN                  types.String `tfsdk:"bind_dn"`
+	ConnectionSecurity      types.String `tfsdk:"connection_security"`
+	FollowReferrals         types.Bool   `tfsdk:"follow_referrals"`
+	Kerberos                types.Object `tfsdk:"kerberos"`
+	Servers                 types.Set    `tfsdk:"servers"`
+	ValidateTLSCertificates types.Bool   `tfsdk:"validate_tls_certificates"`
+	Vendor                  types.String `tfsdk:"vendor"`
+	UserTypes               types.Map    `tfsdk:"user_types"`
+
+	// Radius
+	RadiusClients             types.Set                    `tfsdk:"radius_clients"`
+	RadiusDavinciPolicyId     pingonetypes.ResourceIDValue `tfsdk:"radius_davinci_policy_id"`
+	RadiusDefaultSharedSecret types.String                 `tfsdk:"radius_default_shared_secret"`
+	RadiusNetworkPolicyServer types.Object                 `tfsdk:"radius_network_policy_server"`
 }
-
-var (
-	gatewayRadiusClientTFObjectTypes = map[string]attr.Type{
-		"ip":            types.StringType,
-		"shared_secret": types.StringType,
-	}
-
-	gatewayLdapUserTypeTFObjectTypes = map[string]attr.Type{
-		"id":                            types.StringType,
-		"name":                          types.StringType,
-		"password_authority":            types.StringType,
-		"push_password_changes_to_ldap": types.BoolType,
-		"search_base_dn":                types.StringType,
-		"user_link_attributes":          types.ListType{ElemType: types.StringType},
-		"user_migration":                types.ListType{ElemType: types.ObjectType{AttrTypes: gatewayLdapUserMigrationTFObjectTypes}},
-	}
-
-	gatewayLdapUserMigrationTFObjectTypes = map[string]attr.Type{
-		"lookup_filter_pattern": types.StringType,
-		"population_id":         types.StringType,
-		"attribute_mapping":     types.SetType{ElemType: types.ObjectType{AttrTypes: gatewayLdapUserLookupAttributeMappingTFObjectTypes}},
-	}
-
-	gatewayLdapUserLookupAttributeMappingTFObjectTypes = map[string]attr.Type{
-		"name":  types.StringType,
-		"value": types.StringType,
-	}
-)
 
 // Framework interfaces
 var (
@@ -111,8 +87,12 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 		"For LDAP gateways only: The connection security type.",
 	).AllowedValuesEnum(management.AllowedEnumGatewayTypeLDAPSecurityEnumValues)
 
-	kerberosServiceAccountUPNDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"For LDAP gateways only: The Kerberos service account user principal name (for example, `username@bxretail.org`).",
+	followReferralsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"For LDAP gateways only: A boolean that, when set to true, PingOne sends LDAP queries per referrals it receives from the LDAP servers.",
+	)
+
+	kerberosServiceAccountUpnDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The Kerberos service account user principal name (for example, `username@bxretail.org`).",
 	)
 
 	serversDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -127,8 +107,16 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 		"For LDAP gateways only: The LDAP vendor",
 	).AllowedValuesEnum(management.AllowedEnumGatewayVendorEnumValues)
 
-	userTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+	userTypesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"For LDAP gateways only: A collection of properties that define how users should be provisioned in PingOne. The `user_type` block specifies which user properties in PingOne correspond to the user properties in an external LDAP directory. You can use an LDAP browser to view the user properties in the external LDAP directory.",
+	)
+
+	userTypesAllowPasswordChangesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, if set to `false`, the user cannot change the password in the remote LDAP directory. In this case, operations for forgotten passwords or resetting of passwords are not available to a user referencing this gateway.",
+	)
+
+	userTypesUpdateUserOnSuccessfulAuthenticationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, if set to `true`, when users sign on through an LDAP Gateway client, user attributes are updated based on responses from the LDAP server.",
 	)
 
 	userTypeIdsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -172,11 +160,13 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				Description:         gatewayIdDescription.Description,
 				MarkdownDescription: gatewayIdDescription.MarkdownDescription,
 				Optional:            true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("name"),
 					),
-					validation.P1ResourceIDValidator(),
 				},
 			},
 			"name": schema.StringAttribute{
@@ -194,14 +184,14 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the description of the gateway.").Description,
 				Computed:    true,
 			},
-			"enabled": schema.BoolAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the gateway is enabled in the environment.").Description,
-				Computed:    true,
-			},
 			"type": schema.StringAttribute{
 				Description:         typeDescription.Description,
 				MarkdownDescription: typeDescription.MarkdownDescription,
 				Computed:            true,
+			},
+			"enabled": schema.BoolAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the gateway is enabled in the environment.").Description,
+				Computed:    true,
 			},
 
 			// LDAP
@@ -215,14 +205,33 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				MarkdownDescription: connectionSecurity.MarkdownDescription,
 				Computed:            true,
 			},
-			"kerberos_service_account_upn": schema.StringAttribute{
-				Description:         kerberosServiceAccountUPNDescription.Description,
-				MarkdownDescription: kerberosServiceAccountUPNDescription.MarkdownDescription,
+			"follow_referrals": schema.BoolAttribute{
+				Description:         followReferralsDescription.Description,
+				MarkdownDescription: followReferralsDescription.MarkdownDescription,
 				Computed:            true,
 			},
-			"kerberos_retain_previous_credentials_mins": schema.Int64Attribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("For LDAP gateways only: The number of minutes for which the previous credentials are persisted.").Description,
+			"kerberos": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("For LDAP gateways only: A single object that specifies Kerberos connection details.").Description,
 				Computed:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"service_account_password": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the password for the Kerberos service account.").Description,
+						Computed:    true,
+						Sensitive:   true,
+					},
+
+					"service_account_upn": schema.StringAttribute{
+						Description:         kerberosServiceAccountUpnDescription.Description,
+						MarkdownDescription: kerberosServiceAccountUpnDescription.MarkdownDescription,
+						Computed:            true,
+					},
+
+					"retain_previous_credentials_mins": schema.Int64Attribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of minutes for which the previous credentials are persisted.").Description,
+						Computed:    true,
+					},
+				},
 			},
 			"servers": schema.SetAttribute{
 				Description:         serversDescription.Description,
@@ -240,29 +249,33 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				MarkdownDescription: vendorDescription.MarkdownDescription,
 				Computed:            true,
 			},
-			"user_type": schema.SetNestedAttribute{
-				Description:         userTypeDescription.Description,
-				MarkdownDescription: userTypeDescription.MarkdownDescription,
+			"user_types": schema.MapNestedAttribute{
+				Description:         userTypesDescription.Description,
+				MarkdownDescription: userTypesDescription.MarkdownDescription,
 				Computed:            true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
+						"allow_password_changes": schema.BoolAttribute{
+							Description:         userTypesAllowPasswordChangesDescription.Description,
+							MarkdownDescription: userTypesAllowPasswordChangesDescription.MarkdownDescription,
+							Computed:            true,
+						},
+						"update_user_on_successful_authentication": schema.BoolAttribute{
+							Description:         userTypesUpdateUserOnSuccessfulAuthenticationDescription.Description,
+							MarkdownDescription: userTypesUpdateUserOnSuccessfulAuthenticationDescription.MarkdownDescription,
+							Computed:            true,
+						},
 						"id": schema.StringAttribute{
 							Description:         userTypeIdsDescription.Description,
 							MarkdownDescription: userTypeIdsDescription.MarkdownDescription,
 							Computed:            true,
-						},
-						"name": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("The name of the user type.").Description,
-							Computed:    true,
+
+							CustomType: pingonetypes.ResourceIDType{},
 						},
 						"password_authority": schema.StringAttribute{
 							Description:         userTypePasswordAuthorityDescription.Description,
 							MarkdownDescription: userTypePasswordAuthorityDescription.MarkdownDescription,
 							Computed:            true,
-						},
-						"push_password_changes_to_ldap": schema.BoolAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("Determines whether password updates in PingOne should be pushed to the user's record in LDAP.  If false, the user cannot change the password and have it updated in the remote LDAP directory. In this case, operations for forgotten passwords or resetting of passwords are not available to a user referencing this gateway.").Description,
-							Computed:    true,
 						},
 						"search_base_dn": schema.StringAttribute{
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("The LDAP base domain name (DN) for this user type.").Description,
@@ -273,36 +286,37 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 							ElementType: types.StringType,
 							Computed:    true,
 						},
-						"user_migration": schema.ListNestedAttribute{
+						"new_user_lookup": schema.SingleNestedAttribute{
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("The configurations for initially authenticating new users who will be migrated to PingOne. Note: If there are multiple users having the same user name, only the first user processed is provisioned.").Description,
 							Computed:    true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"lookup_filter_pattern": schema.StringAttribute{
-										Description:         userMigrationLookupFilterPatternDescription.Description,
-										MarkdownDescription: userMigrationLookupFilterPatternDescription.MarkdownDescription,
-										Computed:            true,
-									},
-									"population_id": schema.StringAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("The ID of the population to use to create user entries during lookup.").Description,
-										Computed:    true,
-									},
-									"attribute_mapping": schema.SetNestedAttribute{
-										Description:         userMigrationAttributeMappingDescription.Description,
-										MarkdownDescription: userMigrationAttributeMappingDescription.MarkdownDescription,
-										Computed:            true,
-										NestedObject: schema.NestedAttributeObject{
-											Attributes: map[string]schema.Attribute{
-												"name": schema.StringAttribute{
-													Description:         userMigrationAttributeMappingNameDescription.Description,
-													MarkdownDescription: userMigrationAttributeMappingNameDescription.MarkdownDescription,
-													Computed:            true,
-												},
-												"value": schema.StringAttribute{
-													Description:         userMigrationAttributeMappingValueDescription.Description,
-													MarkdownDescription: userMigrationAttributeMappingValueDescription.MarkdownDescription,
-													Computed:            true,
-												},
+
+							Attributes: map[string]schema.Attribute{
+								"ldap_filter_pattern": schema.StringAttribute{
+									Description:         userMigrationLookupFilterPatternDescription.Description,
+									MarkdownDescription: userMigrationLookupFilterPatternDescription.MarkdownDescription,
+									Computed:            true,
+								},
+								"population_id": schema.StringAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("The ID of the population to use to create user entries during lookup.").Description,
+									Computed:    true,
+
+									CustomType: pingonetypes.ResourceIDType{},
+								},
+								"attribute_mappings": schema.SetNestedAttribute{
+									Description:         userMigrationAttributeMappingDescription.Description,
+									MarkdownDescription: userMigrationAttributeMappingDescription.MarkdownDescription,
+									Computed:            true,
+									NestedObject: schema.NestedAttributeObject{
+										Attributes: map[string]schema.Attribute{
+											"name": schema.StringAttribute{
+												Description:         userMigrationAttributeMappingNameDescription.Description,
+												MarkdownDescription: userMigrationAttributeMappingNameDescription.MarkdownDescription,
+												Computed:            true,
+											},
+											"value": schema.StringAttribute{
+												Description:         userMigrationAttributeMappingValueDescription.Description,
+												MarkdownDescription: userMigrationAttributeMappingValueDescription.MarkdownDescription,
+												Computed:            true,
 											},
 										},
 									},
@@ -317,13 +331,15 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 			"radius_davinci_policy_id": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("For RADIUS gateways only: The ID of the DaVinci flow policy to use.").Description,
 				Computed:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 			"radius_default_shared_secret": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("For RADIUS gateways only: Value to use for the shared secret if the shared secret is not provided for one or more of the RADIUS clients specified.").Description,
 				Computed:    true,
 				Sensitive:   true,
 			},
-			"radius_client": schema.SetNestedAttribute{
+			"radius_clients": schema.SetNestedAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("For RADIUS gateways only: A collection of RADIUS clients.").Description,
 				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
@@ -338,6 +354,22 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 							Computed:            true,
 							Sensitive:           true,
 						},
+					},
+				},
+			},
+			"radius_network_policy_server": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("For RADIUS gateways only: A single object that allows configuration of the RADIUS gateway to authenticate using the MS-CHAP v2 protocol.").Description,
+				Computed:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"ip": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the IP address of the Network Policy Server (NPS).").Description,
+						Computed:    true,
+					},
+
+					"port": schema.Int64Attribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the port number of the NPS.").Description,
+						Computed:    true,
 					},
 				},
 			},
@@ -374,7 +406,7 @@ func (r *GatewayDataSource) Configure(ctx context.Context, req datasource.Config
 func (r *GatewayDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *gatewayDataSourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -470,11 +502,11 @@ func (r *GatewayDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(gatewayInstance)...)
+	resp.Diagnostics.Append(data.toState(ctx, gatewayInstance)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (p *gatewayDataSourceModel) toState(apiObject interface{}) diag.Diagnostics {
+func (p *gatewayDataSourceModel) toState(ctx context.Context, apiObject interface{}) diag.Diagnostics {
 	var diags, d diag.Diagnostics
 
 	if apiObject == nil {
@@ -486,59 +518,103 @@ func (p *gatewayDataSourceModel) toState(apiObject interface{}) diag.Diagnostics
 		return diags
 	}
 
-	switch v := apiObject.(type) {
+	switch t := apiObject.(type) {
 	case *management.Gateway:
-		p.Id = framework.StringOkToTF(v.GetIdOk())
-		p.EnvironmentId = framework.StringToTF(*v.GetEnvironment().Id)
-		p.GatewayId = framework.StringOkToTF(v.GetIdOk())
-		p.Name = framework.StringOkToTF(v.GetNameOk())
-		p.Description = framework.StringOkToTF(v.GetDescriptionOk())
-		p.Enabled = framework.BoolOkToTF(v.GetEnabledOk())
-		p.Type = framework.EnumOkToTF(v.GetTypeOk())
+		p.Id = framework.PingOneResourceIDToTF(t.GetId())
+		p.GatewayId = framework.PingOneResourceIDToTF(t.GetId())
+		p.EnvironmentId = framework.PingOneResourceIDToTF(*t.GetEnvironment().Id)
+		p.Name = framework.StringOkToTF(t.GetNameOk())
+		p.Description = framework.StringOkToTF(t.GetDescriptionOk())
+		p.Type = framework.EnumOkToTF(t.GetTypeOk())
+		p.Enabled = framework.BoolOkToTF(t.GetEnabledOk())
+
+		// LDAP
+		p.BindDN = types.StringNull()
+		p.ConnectionSecurity = types.StringNull()
+		p.FollowReferrals = types.BoolNull()
+		p.Kerberos = types.ObjectNull(gatewayKerberosTFObjectTypes)
+		p.Servers = types.SetNull(types.StringType)
+		p.ValidateTLSCertificates = types.BoolNull()
+		p.Vendor = types.StringNull()
+		p.UserTypes = types.MapNull(types.ObjectType{AttrTypes: gatewayUserTypesTFObjectTypes})
+
+		// Radius
+		p.RadiusDavinciPolicyId = pingonetypes.NewResourceIDNull()
+		p.RadiusDefaultSharedSecret = types.StringNull()
+		p.RadiusClients = types.SetNull(types.ObjectType{AttrTypes: gatewayRadiusClientsTFObjectTypes})
+		p.RadiusNetworkPolicyServer = types.ObjectNull(gatewayRadiusNetworkPolicyServerTFObjectTypes)
 
 	case *management.GatewayTypeLDAP:
-		p.Id = framework.StringOkToTF(v.GetIdOk())
-		p.EnvironmentId = framework.StringToTF(*v.GetEnvironment().Id)
-		p.GatewayId = framework.StringOkToTF(v.GetIdOk())
-		p.Name = framework.StringOkToTF(v.GetNameOk())
-		p.Description = framework.StringOkToTF(v.GetDescriptionOk())
-		p.Enabled = framework.BoolOkToTF(v.GetEnabledOk())
-		p.Type = framework.EnumOkToTF(v.GetTypeOk())
-		p.BindDN = framework.StringOkToTF(v.GetBindDNOk())
-		p.Vendor = framework.EnumOkToTF(v.GetVendorOk())
-		p.ConnectionSecurity = framework.EnumOkToTF(v.GetConnectionSecurityOk())
-		p.Servers = framework.StringSetOkToTF(v.GetServersHostAndPortOk())
-		p.ValidateTLSCertificates = framework.BoolOkToTF(v.GetValidateTlsCertificatesOk())
+		p.Id = framework.PingOneResourceIDToTF(t.GetId())
+		p.GatewayId = framework.PingOneResourceIDToTF(t.GetId())
+		p.EnvironmentId = framework.PingOneResourceIDToTF(*t.GetEnvironment().Id)
+		p.Name = framework.StringOkToTF(t.GetNameOk())
+		p.Description = framework.StringOkToTF(t.GetDescriptionOk())
+		p.Type = framework.EnumOkToTF(t.GetTypeOk())
+		p.Enabled = framework.BoolOkToTF(t.GetEnabledOk())
 
-		if v1, ok := v.GetKerberosOk(); ok {
-			p.KerberosServiceAccountUPN = framework.StringOkToTF(v1.GetServiceAccountUserPrincipalNameOk())
-			p.KerberosRetainPreviousCredentialsMins = framework.Int32OkToTF(v1.GetMinutesToRetainPreviousCredentialsOk())
-		} else {
-			p.KerberosServiceAccountUPN = types.StringNull()
-			p.KerberosRetainPreviousCredentialsMins = types.Int64Null()
+		// LDAP
+		p.BindDN = framework.StringOkToTF(t.GetBindDNOk())
+		p.ConnectionSecurity = framework.EnumOkToTF(t.GetConnectionSecurityOk())
+		p.FollowReferrals = framework.BoolOkToTF(t.GetFollowReferralsOk())
+
+		var kerberosPlan *gatewayKerberosResourceModel
+
+		diags.Append(p.Kerberos.As(ctx, &kerberosPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return diags
 		}
 
-		p.UserType, d = p.gatewayLdapUserTypeOkToTF(v.GetUserTypesOk())
+		kerberosObj, ok := t.GetKerberosOk()
+		p.Kerberos, d = toStateKerberosOk(kerberosObj, ok, kerberosPlan)
 		diags.Append(d...)
 
+		p.Servers = framework.StringSetOkToTF(t.GetServersHostAndPortOk())
+
+		p.ValidateTLSCertificates = framework.BoolOkToTF(t.GetValidateTlsCertificatesOk())
+		p.Vendor = framework.EnumOkToTF(t.GetVendorOk())
+
+		p.UserTypes, d = toStateUserTypesOk(t.GetUserTypesOk())
+		diags.Append(d...)
+
+		// Radius
+		p.RadiusDavinciPolicyId = pingonetypes.NewResourceIDNull()
+		p.RadiusDefaultSharedSecret = types.StringNull()
+		p.RadiusClients = types.SetNull(types.ObjectType{AttrTypes: gatewayRadiusClientsTFObjectTypes})
+		p.RadiusNetworkPolicyServer = types.ObjectNull(gatewayRadiusNetworkPolicyServerTFObjectTypes)
+
 	case *management.GatewayTypeRADIUS:
-		p.Id = framework.StringOkToTF(v.GetIdOk())
-		p.EnvironmentId = framework.StringToTF(*v.GetEnvironment().Id)
-		p.GatewayId = framework.StringOkToTF(v.GetIdOk())
-		p.Name = framework.StringOkToTF(v.GetNameOk())
-		p.Description = framework.StringOkToTF(v.GetDescriptionOk())
-		p.Enabled = framework.BoolOkToTF(v.GetEnabledOk())
-		p.Type = framework.EnumOkToTF(v.GetTypeOk())
+		p.Id = framework.PingOneResourceIDToTF(t.GetId())
+		p.GatewayId = framework.PingOneResourceIDToTF(t.GetId())
+		p.EnvironmentId = framework.PingOneResourceIDToTF(*t.GetEnvironment().Id)
+		p.Name = framework.StringOkToTF(t.GetNameOk())
+		p.Description = framework.StringOkToTF(t.GetDescriptionOk())
+		p.Type = framework.EnumOkToTF(t.GetTypeOk())
+		p.Enabled = framework.BoolOkToTF(t.GetEnabledOk())
 
-		if v1, ok := v.GetDavinciOk(); ok {
-			p.RadiusDavinciPolicyId = framework.StringToTF(v1.GetPolicy().Id)
-		} else {
-			p.RadiusDavinciPolicyId = types.StringNull()
+		// LDAP
+		p.BindDN = types.StringNull()
+		p.ConnectionSecurity = types.StringNull()
+		p.FollowReferrals = types.BoolNull()
+		p.Kerberos = types.ObjectNull(gatewayKerberosTFObjectTypes)
+		p.Servers = types.SetNull(types.StringType)
+		p.ValidateTLSCertificates = types.BoolNull()
+		p.Vendor = types.StringNull()
+		p.UserTypes = types.MapNull(types.ObjectType{AttrTypes: gatewayUserTypesTFObjectTypes})
+
+		// Radius
+		if dv, ok := t.GetDavinciOk(); ok {
+			if policy, ok := dv.GetPolicyOk(); ok {
+				p.RadiusDavinciPolicyId = framework.PingOneResourceIDOkToTF(policy.GetIdOk())
+			}
 		}
-
-		p.RadiusDefaultSharedSecret = framework.StringOkToTF(v.GetDefaultSharedSecretOk())
-
-		p.RadiusClient, d = p.gatewayRadiusClientOkToTF(v.GetRadiusClientsOk())
+		p.RadiusDefaultSharedSecret = framework.StringOkToTF(t.GetDefaultSharedSecretOk())
+		p.RadiusClients, d = toStateRadiusClientOk(t.GetRadiusClientsOk())
+		diags.Append(d...)
+		p.RadiusNetworkPolicyServer, d = toStateRadiusNetworkPolicyServerOk(t.GetNetworkPolicyServerOk())
 		diags.Append(d...)
 
 	default:
@@ -550,109 +626,4 @@ func (p *gatewayDataSourceModel) toState(apiObject interface{}) diag.Diagnostics
 	}
 
 	return diags
-}
-func (p *gatewayDataSourceModel) gatewayLdapUserTypeOkToTF(apiObject []management.GatewayTypeLDAPAllOfUserTypes, ok bool) (basetypes.SetValue, diag.Diagnostics) {
-	var diags, d diag.Diagnostics
-	tfObjType := types.ObjectType{AttrTypes: gatewayLdapUserTypeTFObjectTypes}
-
-	if !ok || apiObject == nil {
-		return types.SetNull(tfObjType), diags
-	}
-
-	userTypes := []attr.Value{}
-	for _, v := range apiObject {
-
-		// build user migration object
-		userMigration := types.ListNull(types.ObjectType{AttrTypes: gatewayLdapUserMigrationTFObjectTypes})
-		if v1, ok := v.GetNewUserLookupOk(); ok {
-			attributeMapObj, d := p.gatewayLdapUserLookupAttributeMappingsOkToTF(v1.GetAttributeMappingsOk())
-			diags.Append(d...)
-
-			o := map[string]attr.Value{
-				"lookup_filter_pattern": framework.StringOkToTF(v1.GetLdapFilterPatternOk()),
-				"population_id":         framework.StringToTF(v1.GetPopulation().Id),
-				"attribute_mapping":     attributeMapObj,
-			}
-
-			flattenedObj, d := types.ObjectValue(gatewayLdapUserMigrationTFObjectTypes, o)
-			diags.Append(d...)
-
-			objValue, d := types.ListValue(types.ObjectType{AttrTypes: gatewayLdapUserMigrationTFObjectTypes}, append([]attr.Value{}, flattenedObj))
-			diags.Append(d...)
-
-			userMigration = objValue
-		}
-
-		userTypesObj, d := types.ObjectValue(gatewayLdapUserTypeTFObjectTypes, map[string]attr.Value{
-			"id":                            framework.StringOkToTF(v.GetIdOk()),
-			"name":                          framework.StringOkToTF(v.GetNameOk()),
-			"password_authority":            framework.EnumOkToTF(v.GetPasswordAuthorityOk()),
-			"search_base_dn":                framework.StringOkToTF(v.GetSearchBaseDnOk()),
-			"user_link_attributes":          framework.StringListOkToTF(v.GetOrderedCorrelationAttributesOk()),
-			"push_password_changes_to_ldap": framework.BoolOkToTF(v.GetAllowPasswordChangesOk()),
-			"user_migration":                userMigration,
-		})
-		diags.Append(d...)
-
-		userTypes = append(userTypes, userTypesObj)
-	}
-
-	returnVar, d := types.SetValue(tfObjType, userTypes)
-	diags.Append(d...)
-
-	return returnVar, diags
-}
-
-func (p *gatewayDataSourceModel) gatewayRadiusClientOkToTF(apiObject []management.GatewayTypeRADIUSAllOfRadiusClients, ok bool) (basetypes.SetValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-	tfObjType := types.ObjectType{AttrTypes: gatewayRadiusClientTFObjectTypes}
-
-	if !ok || apiObject == nil {
-		return types.SetNull(tfObjType), diags
-	}
-
-	radiusClients := []attr.Value{}
-	for _, v := range apiObject {
-
-		radiusClient := map[string]attr.Value{
-			"ip":            framework.StringOkToTF(v.GetIpOk()),
-			"shared_secret": framework.StringOkToTF(v.GetSharedSecretOk()),
-		}
-		radiusClientsObj, d := types.ObjectValue(gatewayRadiusClientTFObjectTypes, radiusClient)
-		diags.Append(d...)
-
-		radiusClients = append(radiusClients, radiusClientsObj)
-	}
-
-	returnVar, d := types.SetValue(tfObjType, radiusClients)
-	diags.Append(d...)
-
-	return returnVar, diags
-}
-
-func (p *gatewayDataSourceModel) gatewayLdapUserLookupAttributeMappingsOkToTF(apiObject []management.GatewayTypeLDAPAllOfNewUserLookupAttributeMappings, ok bool) (basetypes.SetValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-	tfObjType := types.ObjectType{AttrTypes: gatewayLdapUserLookupAttributeMappingTFObjectTypes}
-
-	if !ok || apiObject == nil {
-		return types.SetNull(tfObjType), diags
-	}
-
-	attributeMappings := []attr.Value{}
-	for _, v := range apiObject {
-
-		attributeMap := map[string]attr.Value{
-			"name":  framework.StringOkToTF(v.GetNameOk()),
-			"value": framework.StringOkToTF(v.GetValueOk()),
-		}
-		attributeMappingObj, d := types.ObjectValue(gatewayLdapUserLookupAttributeMappingTFObjectTypes, attributeMap)
-		diags.Append(d...)
-
-		attributeMappings = append(attributeMappings, attributeMappingObj)
-	}
-
-	returnVar, d := types.SetValue(tfObjType, attributeMappings)
-	diags.Append(d...)
-
-	return returnVar, diags
 }

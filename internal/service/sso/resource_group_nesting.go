@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -20,11 +21,11 @@ import (
 type GroupNestingResource serviceClientType
 
 type GroupNestingResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	GroupId       types.String `tfsdk:"group_id"`
-	NestedGroupId types.String `tfsdk:"nested_group_id"`
-	Type          types.String `tfsdk:"type"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	GroupId       pingonetypes.ResourceIDValue `tfsdk:"group_id"`
+	NestedGroupId pingonetypes.ResourceIDValue `tfsdk:"nested_group_id"`
+	Type          types.String                 `tfsdk:"type"`
 }
 
 // Framework interfaces
@@ -105,7 +106,7 @@ func (r *GroupNestingResource) Configure(ctx context.Context, req resource.Confi
 func (r *GroupNestingResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state GroupNestingResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -150,7 +151,7 @@ func (r *GroupNestingResource) Create(ctx context.Context, req resource.CreateRe
 func (r *GroupNestingResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *GroupNestingResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -198,7 +199,7 @@ func (r *GroupNestingResource) Update(ctx context.Context, req resource.UpdateRe
 func (r *GroupNestingResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *GroupNestingResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -287,9 +288,9 @@ func (p *GroupNestingResourceModel) toState(apiObject *management.GroupNesting) 
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
 	p.Type = framework.StringOkToTF(apiObject.GetTypeOk())
-	p.NestedGroupId = framework.StringOkToTF(apiObject.GetIdOk())
+	p.NestedGroupId = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
 
 	return diags
 }

@@ -6,13 +6,15 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
 
 // Common models
@@ -23,18 +25,22 @@ type DataFilterModel struct {
 
 // Common schema attributes
 func Attr_ID() schema.StringAttribute {
+	return Attr_IDCustomType(pingonetypes.ResourceIDType{})
+}
+
+func Attr_IDCustomType(customType basetypes.StringTypable) schema.StringAttribute {
 	return schema.StringAttribute{
 		Computed: true,
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.UseStateForUnknown(),
 		},
+
+		CustomType: customType,
 	}
 }
 
 func Attr_LinkID(description SchemaAttributeDescription) schema.StringAttribute {
-	return Attr_LinkIDWithValidators(description, []validator.String{
-		verify.P1ResourceIDValidator(),
-	})
+	return Attr_LinkIDWithValidators(description, []validator.String{})
 }
 
 func Attr_LinkIDWithValidators(description SchemaAttributeDescription, validators []validator.String) schema.StringAttribute {
@@ -49,6 +55,9 @@ func Attr_LinkIDWithValidators(description SchemaAttributeDescription, validator
 		Description:         description.Description,
 		MarkdownDescription: description.MarkdownDescription,
 		Required:            true,
+
+		CustomType: pingonetypes.ResourceIDType{},
+
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
@@ -64,27 +73,34 @@ func Attr_SCIMFilter(description SchemaAttributeDescription, acceptableAttribute
 	description.MarkdownDescription = fmt.Sprintf("%s.  The SCIM filter can use the following attributes: `%s`.", description.MarkdownDescription, strings.Join(acceptableAttributes, "`, `"))
 	description.Description = fmt.Sprintf("%s.  The SCIM filter can use the following attributes: \"%s\".", description.Description, strings.Join(acceptableAttributes, "\", \""))
 
-	stringValidators := make([]validator.String, 0)
-	stringValidators = append(stringValidators, stringvalidator.LengthAtLeast(filterMinLength))
+	description = description.ExactlyOneOf(mutuallyExclusiveAttributes)
+
+	validators := make([]validator.String, 0)
+	validators = append(validators, stringvalidator.LengthAtLeast(filterMinLength))
+
+	paths := make([]path.Expression, 0)
 	for _, v := range mutuallyExclusiveAttributes {
-		stringValidators = append(stringValidators, stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName(v)))
+		paths = append(paths, path.MatchRelative().AtParent().AtName(v))
 	}
+	validators = append(validators, stringvalidator.ExactlyOneOf(paths...))
 
 	return schema.StringAttribute{
 		Description:         description.Description,
 		MarkdownDescription: description.MarkdownDescription,
 		Optional:            true,
-		Validators:          stringValidators,
+		Validators:          validators,
 	}
 }
 
-func Attr_DataFilter(description SchemaAttributeDescription, acceptableAttributes []string, mutuallyExclusiveAttributes []string) schema.ListNestedBlock {
+func Attr_DataFilter(description SchemaAttributeDescription, acceptableAttributes []string, mutuallyExclusiveAttributes []string) schema.ListNestedAttribute {
 	attrMinLength := 1
 
 	description = description.Clean(true)
 
 	description.MarkdownDescription = fmt.Sprintf("%s.  Allowed attributes to filter: `%s`", description.MarkdownDescription, strings.Join(acceptableAttributes, "`, `"))
 	description.Description = fmt.Sprintf("%s.  Allowed attributes to filter: \"%s\"", description.Description, strings.Join(acceptableAttributes, "\", \""))
+
+	description = description.ExactlyOneOf(mutuallyExclusiveAttributes)
 
 	childNameAttrDescriptionFmt := fmt.Sprintf("The attribute name to filter on.  Must be one of the following values: `%s`.", strings.Join(acceptableAttributes, "`, `"))
 	childNameDescription := SchemaAttributeDescription{
@@ -99,16 +115,20 @@ func Attr_DataFilter(description SchemaAttributeDescription, acceptableAttribute
 	}
 
 	// The parent attribute validators
-	listValidators := make([]validator.List, 0)
-	for _, v := range mutuallyExclusiveAttributes {
-		listValidators = append(listValidators, listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName(v)))
-	}
+	validators := make([]validator.List, 0)
 
-	return schema.ListNestedBlock{
+	paths := make([]path.Expression, 0)
+	for _, v := range mutuallyExclusiveAttributes {
+		paths = append(paths, path.MatchRelative().AtParent().AtName(v))
+	}
+	validators = append(validators, listvalidator.ExactlyOneOf(paths...))
+
+	return schema.ListNestedAttribute{
 		Description:         description.Description,
 		MarkdownDescription: description.MarkdownDescription,
+		Optional:            true,
 
-		NestedObject: schema.NestedBlockObject{
+		NestedObject: schema.NestedAttributeObject{
 
 			Attributes: map[string]schema.Attribute{
 				"name": schema.StringAttribute{
@@ -135,11 +155,15 @@ func Attr_DataFilter(description SchemaAttributeDescription, acceptableAttribute
 				},
 			},
 		},
-		Validators: listValidators,
+		Validators: validators,
 	}
 }
 
 func Attr_DataSourceReturnIDs(description SchemaAttributeDescription) schema.ListAttribute {
+	return Attr_DataSourceReturnIDsByElement(description, pingonetypes.ResourceIDType{})
+}
+
+func Attr_DataSourceReturnIDsByElement(description SchemaAttributeDescription, elementType attr.Type) schema.ListAttribute {
 	if description.MarkdownDescription == "" {
 		description.MarkdownDescription = description.Description
 	}
@@ -148,6 +172,6 @@ func Attr_DataSourceReturnIDs(description SchemaAttributeDescription) schema.Lis
 		Description:         description.Description,
 		MarkdownDescription: description.MarkdownDescription,
 		Computed:            true,
-		ElementType:         types.StringType,
+		ElementType:         elementType,
 	}
 }

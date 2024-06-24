@@ -1,1 +1,1 @@
-$ terraform import pingone_notification_settings_email.example <environment_id>
+terraform import pingone_notification_settings_email.example <environment_id>

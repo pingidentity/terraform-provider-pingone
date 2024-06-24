@@ -1,0 +1,15 @@
+```release-note:note
+`data-source/pingone_trusted_email_domain_dkim`: Migrated to plugin framework.
+```
+
+```release-note:breaking-change
+`data-source/pingone_trusted_email_domain_dkim`: Renamed `region` to `regions`.
+```
+
+```release-note:breaking-change
+`data-source/pingone_trusted_email_domain_dkim`: Renamed `region.token` to `regions.tokens`.
+```
+
+```release-note:breaking-change
+`data-source/pingone_trusted_email_domain_dkim`: Removed unnecessary `id` attribute.
+```

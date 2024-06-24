@@ -534,8 +534,8 @@ EOT
     name               = "%[3]s"
     description        = "%[3]s Example Description"
     columns            = 1
-    background_image   = pingone_image.%[2]s-background_image.uploaded_image[0].href
-    logo_image         = pingone_image.%[2]s-logo_image.uploaded_image[0].href
+    background_image   = pingone_image.%[2]s-background_image.uploaded_image.href
+    logo_image         = pingone_image.%[2]s-logo_image.uploaded_image.href
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#eff0f1"
@@ -957,7 +957,7 @@ EOT
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#000000"
-    background_image   = pingone_image.%[2]s-background_image.uploaded_image[0].href
+    background_image   = pingone_image.%[2]s-background_image.uploaded_image.href
     //background_image = "https://wtf.example.com"
 
     fields = [
@@ -1038,7 +1038,7 @@ EOT
     bg_opacity_percent = 100
     card_color         = "#000000"
     text_color         = "#000000"
-    logo_image         = pingone_image.%[2]s-logo_image.uploaded_image[0].href # {logoImage} is missing from card_design_template
+    logo_image         = pingone_image.%[2]s-logo_image.uploaded_image.href # {logoImage} is missing from card_design_template
 
     fields = [
       {

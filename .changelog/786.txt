@@ -1,0 +1,7 @@
+```release-note:breaking-change
+`resource/pingone_custom_domain_verify`: Changed the `timeouts` data type.
+```
+
+```release-note:bug
+`resource/pingone_custom_domain_verify`: Fixed ineffectual `timeouts` configuration.
+```

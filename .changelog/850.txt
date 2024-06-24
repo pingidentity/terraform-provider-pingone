@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_group`: Added `custom_data` field to be able to append custom JSON data to a group.
+```
+
+```release-note:enhancement
+`data-source/pingone_group`: Added `custom_data` field to be able to read custom JSON data attached to a group.
+```

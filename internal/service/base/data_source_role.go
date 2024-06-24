@@ -15,21 +15,21 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
 type RoleDataSource serviceClientType
 
 type RoleDataSourceModel struct {
-	Id           types.String `tfsdk:"id"`
-	RoleId       types.String `tfsdk:"role_id"`
-	Name         types.String `tfsdk:"name"`
-	Description  types.String `tfsdk:"description"`
-	ApplicableTo types.Set    `tfsdk:"applicable_to"`
-	Permissions  types.Set    `tfsdk:"permissions"`
+	Id           pingonetypes.ResourceIDValue `tfsdk:"id"`
+	RoleId       pingonetypes.ResourceIDValue `tfsdk:"role_id"`
+	Name         types.String                 `tfsdk:"name"`
+	Description  types.String                 `tfsdk:"description"`
+	ApplicableTo types.Set                    `tfsdk:"applicable_to"`
+	Permissions  types.Set                    `tfsdk:"permissions"`
 }
 
 var (
@@ -83,9 +83,11 @@ func (r *RoleDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 				Description:         roleIdDescription.Description,
 				MarkdownDescription: roleIdDescription.MarkdownDescription,
 				Optional:            true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
-					verify.P1ResourceIDValidator(),
 				},
 			},
 
@@ -168,7 +170,7 @@ func (r *RoleDataSource) Configure(ctx context.Context, req datasource.Configure
 func (r *RoleDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *RoleDataSourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -266,7 +268,7 @@ func (p *RoleDataSourceModel) toState(v *management.Role) diag.Diagnostics {
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(v.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	p.Name = framework.EnumOkToTF(v.GetNameOk())
 	p.Description = framework.StringOkToTF(v.GetDescriptionOk())
 	p.ApplicableTo = framework.EnumSetOkToTF(v.GetApplicableToOk())

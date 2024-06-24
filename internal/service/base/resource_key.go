@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -26,6 +27,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -36,24 +38,24 @@ import (
 type KeyResource serviceClientType
 
 type keyResourceModel struct {
-	Id                 types.String `tfsdk:"id"`
-	EnvironmentId      types.String `tfsdk:"environment_id"`
-	Name               types.String `tfsdk:"name"`
-	Algorithm          types.String `tfsdk:"algorithm"`
-	Default            types.Bool   `tfsdk:"default"`
-	ExpiresAt          types.String `tfsdk:"expires_at"`
-	IssuerDn           types.String `tfsdk:"issuer_dn"`
-	KeyLength          types.Int64  `tfsdk:"key_length"`
-	SerialNumber       types.String `tfsdk:"serial_number"`
-	SignatureAlgorithm types.String `tfsdk:"signature_algorithm"`
-	StartsAt           types.String `tfsdk:"starts_at"`
-	Status             types.String `tfsdk:"status"`
-	SubjectDn          types.String `tfsdk:"subject_dn"`
-	UsageType          types.String `tfsdk:"usage_type"`
-	ValidityPeriod     types.Int64  `tfsdk:"validity_period"`
-	CustomCrl          types.String `tfsdk:"custom_crl"`
-	PKCS12FileBase64   types.String `tfsdk:"pkcs12_file_base64"`
-	PKCS12FilePassword types.String `tfsdk:"pkcs12_file_password"`
+	Id                 pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId      pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name               types.String                 `tfsdk:"name"`
+	Algorithm          types.String                 `tfsdk:"algorithm"`
+	Default            types.Bool                   `tfsdk:"default"`
+	ExpiresAt          timetypes.RFC3339            `tfsdk:"expires_at"`
+	IssuerDn           types.String                 `tfsdk:"issuer_dn"`
+	KeyLength          types.Int64                  `tfsdk:"key_length"`
+	SerialNumber       types.String                 `tfsdk:"serial_number"`
+	SignatureAlgorithm types.String                 `tfsdk:"signature_algorithm"`
+	StartsAt           timetypes.RFC3339            `tfsdk:"starts_at"`
+	Status             types.String                 `tfsdk:"status"`
+	SubjectDn          types.String                 `tfsdk:"subject_dn"`
+	UsageType          types.String                 `tfsdk:"usage_type"`
+	ValidityPeriod     types.Int64                  `tfsdk:"validity_period"`
+	CustomCrl          types.String                 `tfsdk:"custom_crl"`
+	PKCS12FileBase64   types.String                 `tfsdk:"pkcs12_file_base64"`
+	PKCS12FilePassword types.String                 `tfsdk:"pkcs12_file_password"`
 }
 
 // Framework interfaces
@@ -221,6 +223,8 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the date and time the key resource expires.").Description,
 				Computed:    true,
 
+				CustomType: timetypes.RFC3339Type{},
+
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -328,6 +332,8 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 			"starts_at": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the date and time the validity period starts.").Description,
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -558,7 +564,7 @@ func (r *KeyResource) Configure(ctx context.Context, req resource.ConfigureReque
 func (r *KeyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state keyResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -648,7 +654,7 @@ func (r *KeyResource) Create(ctx context.Context, req resource.CreateRequest, re
 func (r *KeyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *keyResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -693,7 +699,7 @@ func (r *KeyResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 func (r *KeyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state keyResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -744,7 +750,7 @@ func (r *KeyResource) Update(ctx context.Context, req resource.UpdateRequest, re
 func (r *KeyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *keyResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -899,8 +905,8 @@ func (p *keyResourceModel) toState(apiObject *management.Certificate) diag.Diagn
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Algorithm = framework.EnumOkToTF(apiObject.GetAlgorithmOk())
 	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())

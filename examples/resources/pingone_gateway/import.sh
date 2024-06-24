@@ -1,1 +1,1 @@
-$ terraform import pingone_gateway.example <environment_id>/<gateway_id>
+terraform import pingone_gateway.example <environment_id>/<gateway_id>

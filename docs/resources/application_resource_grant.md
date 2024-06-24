@@ -99,22 +99,19 @@ resource "pingone_application_resource_grant" "my_awesome_spa_custom_resource_gr
 
 - `application_id` (String) The ID of the application to create the resource grant for.  The value for `application_id` may come from the `id` attribute of the `pingone_application` or `pingone_system_application` resources or data sources.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `environment_id` (String) The ID of the environment to create the application resource grant in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
-
-### Optional
-
-- `resource_id` (String, Deprecated) **Deprecation Notice**: This parameter is deprecated and will be made read-only in a future release.  This attribute should be replaced with the `resource_name` parameter instead.  The ID of the resource to assign the resource attribute to.  At least one of the following must be defined: `resource_id`, `resource_name`.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
-- `resource_name` (String) The name of the resource to assign to the application.  The built-in OpenID Connect resource name is `openid` and the built-in PingOne API resource anem is `PingOne API`.  At least one of the following must be defined: `resource_id`, `resource_name`.  This field is immutable and will trigger a replace plan if changed.
-- `scope_names` (Set of String) A list of scopes by name that should be associated with this grant.  For example, `profile`, `email` etc.  When using the `openid` resource, the `openid` scope should not be included.  At least one of the following must be defined: `scopes`, `scope_names`.
-- `scopes` (Set of String, Deprecated) **Deprecation Notice**: This parameter is deprecated and will be made read-only in a future release.  This attribute should be replaced with the `scope_names` parameter instead.  A list of IDs of the scopes associated with this grant.  When using the `openid` resource, the `openid` scope should not be included.  At least one of the following must be defined: `scopes`, `scope_names`.
+- `resource_name` (String) The name of the resource to assign to the application.  The built-in OpenID Connect resource name is `openid` and the built-in PingOne API resource anem is `PingOne API`.  This field is immutable and will trigger a replace plan if changed.
+- `scope_names` (Set of String) A list of scopes by name that should be associated with this grant.  For example, `profile`, `email` etc.  When using the `openid` resource, the `openid` scope should not be included.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `resource_id` (String) The ID of the resource granted to the application.
+- `scopes` (Set of String) A list of IDs of the scopes associated with this grant.
 
 ## Import
 
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-$ terraform import pingone_application_resource_grant.example <environment_id>/<application_id>/<grant_id>
+terraform import pingone_application_resource_grant.example <environment_id>/<application_id>/<grant_id>
 ```

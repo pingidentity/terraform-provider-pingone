@@ -1,0 +1,1 @@
+terraform import pingone_population_default_identity_provider.example <environment_id>/<population_id>

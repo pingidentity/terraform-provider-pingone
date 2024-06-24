@@ -1,1 +1,1 @@
-$ terraform import pingone_notification_policy.example <environment_id>/<notification_policy_id>
+terraform import pingone_notification_policy.example <environment_id>/<notification_policy_id>

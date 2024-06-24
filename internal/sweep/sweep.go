@@ -22,15 +22,14 @@ var (
 
 func SweepClient(ctx context.Context) (*client.Client, error) {
 
+	regionCode := management.EnumRegionCode(os.Getenv("PINGONE_REGION_CODE"))
+
 	config := &client.Config{
 		ClientID:      os.Getenv("PINGONE_CLIENT_ID"),
 		ClientSecret:  os.Getenv("PINGONE_CLIENT_SECRET"),
 		EnvironmentID: os.Getenv("PINGONE_ENVIRONMENT_ID"),
-		Region:        os.Getenv("PINGONE_REGION"),
+		RegionCode:    &regionCode,
 		GlobalOptions: &client.GlobalOptions{
-			Environment: &client.EnvironmentOptions{
-				ProductionTypeForceDelete: true,
-			},
 			Population: &client.PopulationOptions{
 				ContainsUsersForceDelete: true,
 			},
@@ -70,7 +69,8 @@ func FetchTaggedEnvironmentsByPrefix(ctx context.Context, apiClient *management.
 				var err error
 
 				// Permissions may not have propagated by this point
-				if m, err := regexp.MatchString("^The request could not be completed. You do not have access to this resource.", p1error.GetMessage()); err == nil && m {
+				m, err := regexp.MatchString("^The request could not be completed. You do not have access to this resource.", p1error.GetMessage())
+				if err == nil && m {
 					tflog.Warn(ctx, "Insufficient PingOne privileges detected")
 					return true
 				}
@@ -138,11 +138,7 @@ func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient,
 			// Invalid region
 			if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 				if target, ok := details[0].GetTargetOk(); ok && *target == "region" {
-					allowedRegions := make([]string, 0)
-					for _, allowedRegion := range details[0].GetInnerError().AllowedValues {
-						allowedRegions = append(allowedRegions, model.FindRegionByAPICode(management.EnumRegionCode(allowedRegion)).Region)
-					}
-					diags := diag.FromErr(fmt.Errorf("Incompatible environment region for the organization tenant.  Expecting regions %v, region provided: %+v", allowedRegions, region))
+					diags := diag.FromErr(fmt.Errorf("Incompatible environment region for the organization tenant.  Expecting regions %v, region provided: %+v", details[0].GetInnerError().AllowedValues, region))
 
 					return diags
 				}

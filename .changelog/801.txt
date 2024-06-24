@@ -1,0 +1,79 @@
+```release-note:note
+`resource/pingone_password_policy`: Migrated to plugin framework.
+```
+
+```release-note:note
+`data-source/pingone_password_policy`: Migrated to plugin framework.
+```
+
+```release-note:breaking-change
+`resource/pingone_password_policy`: Renamed `environment_default` to `default`.
+```
+
+```release-note:breaking-change
+`data-source/pingone_password_policy`: Renamed `environment_default` to `default`.
+```
+
+```release-note:breaking-change
+`resource/pingone_password_policy`: Removed ineffectual `bypass_policy`.
+```
+
+```release-note:breaking-change
+`data-source/pingone_password_policy`: Removed ineffectual `bypass_policy`.
+```
+
+```release-note:breaking-change
+`resource/pingone_password_policy`: Renamed `exclude_commonly_used_passwords` to `excludes_commonly_used_passwords`.
+```
+
+```release-note:breaking-change
+`data-source/pingone_password_policy`: Renamed `exclude_commonly_used_passwords` to `excludes_commonly_used_passwords`.
+```
+
+```release-note:breaking-change
+`resource/pingone_password_policy`: Renamed `exclude_profile_data` to `excludes_profile_data`.
+```
+
+```release-note:breaking-change
+`data-source/pingone_password_policy`: Renamed `exclude_profile_data` to `excludes_profile_data`.
+```
+
+```release-note:breaking-change
+`resource/pingone_password_policy`: Renamed `password_history` to `history`.
+```
+
+```release-note:breaking-change
+`data-source/pingone_password_policy`: Renamed `password_history` to `history`.
+```
+
+```release-note:breaking-change
+`resource/pingone_password_policy`: Renamed `password_length` to `length`.
+```
+
+```release-note:breaking-change
+`data-source/pingone_password_policy`: Renamed `password_length` to `length`.
+```
+
+```release-note:breaking-change
+`resource/pingone_password_policy`: Renamed `account_lockout` to `lockout`.
+```
+
+```release-note:breaking-change
+`data-source/pingone_password_policy`: Renamed `account_lockout` to `lockout`.
+```
+
+```release-note:breaking-change
+`resource/pingone_password_policy`: Moved `password_age.max` to `password_age_max`.
+```
+
+```release-note:breaking-change
+`data-source/pingone_password_policy`: Moved `password_age.max` to `password_age_max`.
+```
+
+```release-note:breaking-change
+`resource/pingone_password_policy`: Moved `password_age.min` to `password_age_min`.
+```
+
+```release-note:breaking-change
+`data-source/pingone_password_policy`: Moved `password_age.min` to `password_age_min`.
+```

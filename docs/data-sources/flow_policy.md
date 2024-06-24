@@ -32,13 +32,13 @@ data "pingone_flow_policy" "example_by_id" {
 
 ### Read-Only
 
-- `davinci_application` (Block List) A block that describes the DaVinci application that contains the flow policy. (see [below for nested schema](#nestedblock--davinci_application))
+- `davinci_application` (Attributes) A single object that describes the DaVinci application that contains the flow policy. (see [below for nested schema](#nestedatt--davinci_application))
 - `enabled` (Boolean) A boolean to specify whether the flow policy is enabled in the environment or not.
 - `id` (String) The ID of this resource.
 - `name` (String) The name of the DaVinci flow policy.
-- `trigger` (Block List) A block that describes the configured DaVinci flow policy trigger. (see [below for nested schema](#nestedblock--trigger))
+- `trigger` (Attributes) A single object that describes the configured DaVinci flow policy trigger. (see [below for nested schema](#nestedatt--trigger))
 
-<a id="nestedblock--davinci_application"></a>
+<a id="nestedatt--davinci_application"></a>
 ### Nested Schema for `davinci_application`
 
 Read-Only:
@@ -47,7 +47,7 @@ Read-Only:
 - `name` (String) A string that specifies the name of the DaVinci application to which the flow policy is assigned.
 
 
-<a id="nestedblock--trigger"></a>
+<a id="nestedatt--trigger"></a>
 ### Nested Schema for `trigger`
 
 Read-Only:

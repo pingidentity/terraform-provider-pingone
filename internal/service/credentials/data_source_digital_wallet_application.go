@@ -14,20 +14,20 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
 type DigitalWalletApplicationDataSource serviceClientType
 
 type DigitalWalletApplicationDataSourceModel struct {
-	Id              types.String `tfsdk:"id"`
-	EnvironmentId   types.String `tfsdk:"environment_id"`
-	DigitalWalletId types.String `tfsdk:"digital_wallet_id"`
-	ApplicationId   types.String `tfsdk:"application_id"`
-	AppOpenUrl      types.String `tfsdk:"app_open_url"`
-	Name            types.String `tfsdk:"name"`
+	Id              pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId   pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	DigitalWalletId pingonetypes.ResourceIDValue `tfsdk:"digital_wallet_id"`
+	ApplicationId   pingonetypes.ResourceIDValue `tfsdk:"application_id"`
+	AppOpenUrl      types.String                 `tfsdk:"app_open_url"`
+	Name            types.String                 `tfsdk:"name"`
 }
 
 // Framework interfaces
@@ -66,24 +66,28 @@ func (r *DigitalWalletApplicationDataSource) Schema(ctx context.Context, req dat
 			"digital_wallet_id": schema.StringAttribute{
 				Description: "Identifier (UUID) associated with the credential digital wallet application.",
 				Optional:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("name"),
 						path.MatchRelative().AtParent().AtName("application_id"),
 					),
-					verify.P1ResourceIDValidator(),
 				},
 			},
 
 			"application_id": schema.StringAttribute{
 				Description: "The identifier (UUID) of the PingOne application associated with the digital wallet application.",
 				Optional:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("name"),
 						path.MatchRelative().AtParent().AtName("digital_wallet_id"),
 					),
-					verify.P1ResourceIDValidator(),
 				},
 			},
 
@@ -136,7 +140,7 @@ func (r *DigitalWalletApplicationDataSource) Configure(ctx context.Context, req 
 func (r *DigitalWalletApplicationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *DigitalWalletApplicationDataSourceModel
 
-	if r.Client.CredentialsAPIClient == nil {
+	if r.Client == nil || r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -281,10 +285,10 @@ func (p *DigitalWalletApplicationDataSourceModel) toState(apiObject *credentials
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.DigitalWalletId = framework.StringToTF(apiObject.GetId())
-	p.ApplicationId = framework.StringToTF(*apiObject.GetApplication().Id)
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
+	p.DigitalWalletId = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.ApplicationId = framework.PingOneResourceIDToTF(*apiObject.GetApplication().Id)
 	p.AppOpenUrl = framework.StringToTF(apiObject.GetAppOpenUrl())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 

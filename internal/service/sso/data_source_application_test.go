@@ -327,17 +327,17 @@ resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "My test OIDC app"
-  tags           = []
+
   login_page_url = "https://www.pingidentity.com"
 
-  icon {
+  icon = {
     id   = pingone_image.%[2]s.id
-    href = pingone_image.%[2]s.uploaded_image[0].href
+    href = pingone_image.%[2]s.uploaded_image.href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
 
-  access_control_group_options {
+  access_control_group_options = {
     type = "ANY_GROUP"
 
     groups = [
@@ -350,7 +350,7 @@ resource "pingone_application" "%[2]s" {
 
   enabled = true
 
-  oidc_options {
+  oidc_options = {
     type                             = "WEB_APP"
     grant_types                      = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
     response_types                   = ["CODE"]
@@ -371,7 +371,7 @@ resource "pingone_application" "%[2]s" {
 
     support_unsigned_request_object = true
 
-    cors_settings {
+    cors_settings = {
       behavior = "ALLOW_SPECIFIC_ORIGINS"
       origins = [
         "http://localhost",
@@ -411,17 +411,17 @@ resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "My test OIDC app"
-  tags           = []
+
   login_page_url = "https://www.pingidentity.com"
 
-  icon {
+  icon = {
     id   = pingone_image.%[2]s.id
-    href = pingone_image.%[2]s.uploaded_image[0].href
+    href = pingone_image.%[2]s.uploaded_image.href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
 
-  access_control_group_options {
+  access_control_group_options = {
     type = "ANY_GROUP"
 
     groups = [
@@ -433,14 +433,14 @@ resource "pingone_application" "%[2]s" {
 
   enabled = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
     allow_wildcards_in_redirect_uris = true
 
-    mobile_app {
+    mobile_app = {
       bundle_id           = "com.%[2]s.bundle"
       package_name        = "com.%[2]s.package"
       huawei_app_id       = "%[2]s"
@@ -450,17 +450,17 @@ resource "pingone_application" "%[2]s" {
 
       universal_app_link = "https://applink.com"
 
-      integrity_detection {
+      integrity_detection = {
         enabled = true
 
         excluded_platforms = ["IOS"]
 
-        cache_duration {
+        cache_duration = {
           amount = 30
           units  = "HOURS"
         }
 
-        google_play {
+        google_play = {
           verification_type = "INTERNAL"
           decryption_key    = "decryptionkeydoesnotexist"
           verification_key  = "verificationkeydoesnotexist"
@@ -502,12 +502,12 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   description    = "My test external link app"
 
-  icon {
+  icon = {
     id   = pingone_image.%[2]s.id
-    href = pingone_image.%[2]s.uploaded_image[0].href
+    href = pingone_image.%[2]s.uploaded_image.href
   }
 
-  access_control_group_options {
+  access_control_group_options = {
     type = "ANY_GROUP"
 
     groups = [
@@ -520,7 +520,7 @@ resource "pingone_application" "%[2]s" {
 
   enabled = true
 
-  external_link_options {
+  external_link_options = {
     home_page_url = "https://www.pingidentity.com"
   }
 }
@@ -539,7 +539,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  external_link_options {
+  external_link_options = {
     home_page_url = "https://www.pingidentity.com"
   }
 }
@@ -629,12 +629,10 @@ EOT
 
 resource "pingone_certificate" "%[3]s-enc" {
   environment_id = pingone_environment.%[2]s.id
-
-  pem_file = <<EOT
+  pem_file       = <<EOT
 %[7]s
 EOT
-
-  usage_type = "ENCRYPTION"
+  usage_type     = "ENCRYPTION"
 }
 
 resource "pingone_application" "%[3]s" {
@@ -643,14 +641,14 @@ resource "pingone_application" "%[3]s" {
   description    = "My test SAML app"
   login_page_url = "https://www.pingidentity.com"
 
-  icon {
+  icon = {
     id   = pingone_image.%[3]s.id
-    href = pingone_image.%[3]s.uploaded_image[0].href
+    href = pingone_image.%[3]s.uploaded_image.href
   }
 
   access_control_role_type = "ADMIN_USERS_ONLY"
 
-  access_control_group_options {
+  access_control_group_options = {
     type = "ANY_GROUP"
 
     groups = [
@@ -663,22 +661,22 @@ resource "pingone_application" "%[3]s" {
 
   enabled = true
 
-  saml_options {
+  saml_options = {
     type               = "WEB_APP"
     home_page_url      = "https://www.pingidentity.com"
     acs_urls           = ["https://www.pingidentity.com", "https://pingidentity.com"]
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:%[3]s"
 
-    sp_encryption {
+    sp_encryption = {
       algorithm = "AES_256"
-      certificate {
+      certificate = {
         id = pingone_certificate.%[3]s-enc.id
       }
     }
 
-    assertion_signed_enabled       = false
-    idp_signing_key_id             = pingone_key.%[3]s.id
+    assertion_signed_enabled = false
+
     enable_requested_authn_context = true
     nameid_format                  = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
     response_is_signed             = true
@@ -689,7 +687,12 @@ resource "pingone_application" "%[3]s" {
 
     default_target_url = "https://www.pingidentity.com/relaystate"
 
-    sp_verification {
+    idp_signing_key = {
+      algorithm = pingone_key.%[3]s.signature_algorithm
+      key_id    = pingone_key.%[3]s.id
+    }
+
+    sp_verification = {
       authn_request_signed = true
       certificate_ids = [
         pingone_certificate.%[3]s-2.id,
@@ -697,7 +700,7 @@ resource "pingone_application" "%[3]s" {
       ]
     }
 
-    cors_settings {
+    cors_settings = {
       behavior = "ALLOW_SPECIFIC_ORIGINS"
       origins = [
         "http://localhost",
@@ -739,11 +742,14 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  saml_options {
+  saml_options = {
     acs_urls           = ["https://pingidentity.com"]
     assertion_duration = 3600
     sp_entity_id       = "sp:entity:%[2]s"
-    idp_signing_key_id = pingone_key.%[2]s.id
+    idp_signing_key = {
+      key_id    = pingone_key.%[2]s.id
+      algorithm = pingone_key.%[2]s.signature_algorithm
+    }
   }
 }
 data "pingone_application" "%[2]s" {

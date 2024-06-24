@@ -15,7 +15,7 @@ resource "pingone_webhook" "my_webhook" {
 
   format = "ACTIVITY"
 
-  filter_options {
+  filter_options = {
     included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
   }
 }

@@ -1,1 +1,1 @@
-$ terraform import pingone_gateway_role_assignment.example <environment_id>/<gateway_id>/<role_assignment_id>
+terraform import pingone_gateway_role_assignment.example <environment_id>/<gateway_id>/<role_assignment_id>

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -14,24 +15,24 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
 type AgreementDataSource serviceClientType
 
 type AgreementDataSourceModel struct {
-	Id                    types.String  `tfsdk:"id"`
-	EnvironmentId         types.String  `tfsdk:"environment_id"`
-	AgreementId           types.String  `tfsdk:"agreement_id"`
-	Name                  types.String  `tfsdk:"name"`
-	Enabled               types.Bool    `tfsdk:"enabled"`
-	Description           types.String  `tfsdk:"description"`
-	ReconsentPeriodDays   types.Float64 `tfsdk:"reconsent_period_days"`
-	TotalUserConsents     types.Int64   `tfsdk:"total_user_consent_count"`
-	ExpiredUserConsents   types.Int64   `tfsdk:"expired_user_consent_count"`
-	ConsentCountsUpdateAt types.String  `tfsdk:"consent_counts_updated_at"`
+	Id                    pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId         pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	AgreementId           pingonetypes.ResourceIDValue `tfsdk:"agreement_id"`
+	Name                  types.String                 `tfsdk:"name"`
+	Enabled               types.Bool                   `tfsdk:"enabled"`
+	Description           types.String                 `tfsdk:"description"`
+	ReconsentPeriodDays   types.Float64                `tfsdk:"reconsent_period_days"`
+	TotalUserConsents     types.Int64                  `tfsdk:"total_user_consent_count"`
+	ExpiredUserConsents   types.Int64                  `tfsdk:"expired_user_consent_count"`
+	ConsentCountsUpdateAt timetypes.RFC3339            `tfsdk:"consent_counts_updated_at"`
 }
 
 // Framework interfaces
@@ -76,9 +77,11 @@ func (r *AgreementDataSource) Schema(ctx context.Context, req datasource.SchemaR
 			"agreement_id": schema.StringAttribute{
 				Description: "The ID of the agreement to retrieve. Either `agreement_id`, or `name` can be used to retrieve the agreement localization, but cannot be set together.",
 				Optional:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
-					verify.P1ResourceIDValidator(),
 				},
 			},
 
@@ -121,6 +124,8 @@ func (r *AgreementDataSource) Schema(ctx context.Context, req datasource.SchemaR
 			"consent_counts_updated_at": schema.StringAttribute{
 				Description: "The date and time the consent user count metrics were last updated. This value is typically updated once every 24 hours.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 		},
 	}
@@ -155,7 +160,7 @@ func (r *AgreementDataSource) Configure(ctx context.Context, req datasource.Conf
 func (r *AgreementDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *AgreementDataSourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -258,9 +263,9 @@ func (p *AgreementDataSourceModel) toState(apiObject *management.Agreement) diag
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.AgreementId = framework.StringToTF(apiObject.GetId())
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
+	p.AgreementId = framework.PingOneResourceIDToTF(apiObject.GetId())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())

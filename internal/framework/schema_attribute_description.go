@@ -43,6 +43,14 @@ func (r SchemaAttributeDescription) Clean(removeTrailingStop bool) SchemaAttribu
 }
 
 func (r SchemaAttributeDescription) DefaultValue(defaultValue any) SchemaAttributeDescription {
+	return r.genericValue("Defaults to", defaultValue)
+}
+
+func (r SchemaAttributeDescription) FixedValue(defaultValue any) SchemaAttributeDescription {
+	return r.genericValue("Fixed value of", defaultValue)
+}
+
+func (r SchemaAttributeDescription) genericValue(text string, defaultValue any) SchemaAttributeDescription {
 	var defaultValueString string
 	switch v := defaultValue.(type) {
 	case string:
@@ -58,7 +66,7 @@ func (r SchemaAttributeDescription) DefaultValue(defaultValue any) SchemaAttribu
 	default:
 		defaultValueString = "DOC ERROR: Unknown default data type"
 	}
-	return r.AppendStringValue("Defaults to", defaultValueString)
+	return r.AppendStringValue(text, defaultValueString)
 }
 
 func (r SchemaAttributeDescription) AllowedValues(allowedValues ...any) SchemaAttributeDescription {
@@ -104,15 +112,15 @@ func (r SchemaAttributeDescription) ConflictsWith(fieldPaths []string) SchemaAtt
 }
 
 func (r SchemaAttributeDescription) ExactlyOneOf(fieldPaths []string) SchemaAttributeDescription {
-	return r.AppendSliceValues("At least one of the following must be defined:", fieldPaths)
+	return r.AppendSliceValues("Exactly one of the following must be defined:", fieldPaths)
 }
 
 func (r SchemaAttributeDescription) RequiresReplace() SchemaAttributeDescription {
 	return r.AppendMarkdownString("This field is immutable and will trigger a replace plan if changed.")
 }
 
-func (r SchemaAttributeDescription) RequiresReplaceBlock() SchemaAttributeDescription {
-	return r.AppendMarkdownString("This block is immutable.  If this block is added or removed, a replacement plan is triggered.  Parameters within the block are subject to their own immutability rules.")
+func (r SchemaAttributeDescription) RequiresReplaceNestedAttributes() SchemaAttributeDescription {
+	return r.AppendMarkdownString("If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules.")
 }
 
 func (r SchemaAttributeDescription) AppendSliceValues(pretext string, values []string) SchemaAttributeDescription {
