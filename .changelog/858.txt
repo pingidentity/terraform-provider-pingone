@@ -1,0 +1,24 @@
+```release-note:bug
+`resource/pingone_language`: Correct `locale` validation to add missing ISO country codes.
+```
+
+```release-note:bug
+`resource/pingone_notification_template_content`: Correct `locale` validation to add missing ISO country codes.
+```
+
+```release-note:bug
+`resource/pingone_credential_issuance_rule`: Correct `notification.template.locale` validation to add missing ISO country codes.
+```
+
+```release-note:bug
+`resource/pingone_verify_voice_phrase_content`: Correct `locale` validation to add missing ISO country codes.
+```
+
+```release-note:bug
+`data-source/pingone_language`: Correct `locale` validation to add missing ISO country codes.
+```
+
+```release-note:bug
+`data-source/pingone_agreement_localization`: Correct `locale` validation to add missing ISO country codes.
+```
+
