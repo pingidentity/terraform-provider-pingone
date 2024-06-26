@@ -199,14 +199,19 @@ ENHANCEMENTS:
 
 BUG FIXES:
 
+* `data-source/pingone_agreement_localization`: Correct `locale` validation to add missing ISO country codes. ([#858](https://github.com/pingidentity/terraform-provider-pingone/issues/858))
+* `data-source/pingone_language`: Correct `locale` validation to add missing ISO country codes. ([#858](https://github.com/pingidentity/terraform-provider-pingone/issues/858))
 * `resource/pingone_application_secret`: Fixed state inconsistency issue when retrieving an application's client secret. ([#781](https://github.com/pingidentity/terraform-provider-pingone/issues/781))
 * `resource/pingone_application`: Fixed state inconsistency issue when retrieving an application's client secret. ([#781](https://github.com/pingidentity/terraform-provider-pingone/issues/781))
+* `resource/pingone_credential_issuance_rule`: Correct `notification.template.locale` validation to add missing ISO country codes. ([#858](https://github.com/pingidentity/terraform-provider-pingone/issues/858))
 * `resource/pingone_custom_domain_verify`: Fixed ineffectual `timeouts` configuration. ([#786](https://github.com/pingidentity/terraform-provider-pingone/issues/786))
 * `resource/pingone_gateway`: Fixed issue that, when updating a `user_types` object, Terraform re-creates the full `user_types` object instead of updating the object in place. ([#798](https://github.com/pingidentity/terraform-provider-pingone/issues/798))
+* `resource/pingone_language`: Correct `locale` validation to add missing ISO country codes. ([#858](https://github.com/pingidentity/terraform-provider-pingone/issues/858))
 * `resource/pingone_mfa_device_policy`: Fixed blocking error when attempting to destroy the default MFA device policy for the environment.  This is now a warning instead of an error. ([#845](https://github.com/pingidentity/terraform-provider-pingone/issues/845))
 * `resource/pingone_mfa_device_policy`: Resource can now be modified with Terraform if the `default` property is modified to `true` in the console or by API directly. ([#844](https://github.com/pingidentity/terraform-provider-pingone/issues/844))
 * `resource/pingone_mfa_fido2_policy`: Fixed blocking error when attempting to destroy the default MFA FIDO2 policy for the environment.  This is now a warning instead of an error. ([#845](https://github.com/pingidentity/terraform-provider-pingone/issues/845))
 * `resource/pingone_notification_policy`: Fixed blocking error when attempting to destroy the default notification policy for the environment.  This is now a warning instead of an error. ([#845](https://github.com/pingidentity/terraform-provider-pingone/issues/845))
+* `resource/pingone_notification_template_content`: Correct `locale` validation to add missing ISO country codes. ([#858](https://github.com/pingidentity/terraform-provider-pingone/issues/858))
 * `resource/pingone_password_policy`: Fixed blocking error when attempting to destroy the default password policy for the environment.  This is now a warning instead of an error. ([#845](https://github.com/pingidentity/terraform-provider-pingone/issues/845))
 * `resource/pingone_resource_scope`: Fixed blocking errors that result from removing multiple resource scopes that are already assigned to an application. ([#852](https://github.com/pingidentity/terraform-provider-pingone/issues/852))
 * `resource/pingone_resource_scope`: Fixed blocking errors that result from removing multiple resource scopes that are already assigned to an application. ([#854](https://github.com/pingidentity/terraform-provider-pingone/issues/854))
@@ -214,3 +219,4 @@ BUG FIXES:
 * `resource/pingone_sign_on_policy`: Fixed blocking error when attempting to destroy the default sign on policy for the environment.  This is now a warning instead of an error. ([#845](https://github.com/pingidentity/terraform-provider-pingone/issues/845))
 * `resource/pingone_verify_policy`: Fixed blocking error when attempting to destroy the default verify policy for the environment.  This is now a warning instead of an error. ([#845](https://github.com/pingidentity/terraform-provider-pingone/issues/845))
 * `resource/pingone_verify_policy`: Resource can now be modified with Terraform if the `default` property is modified to `true` in the console or by API directly. ([#844](https://github.com/pingidentity/terraform-provider-pingone/issues/844))
+* `resource/pingone_verify_voice_phrase_content`: Correct `locale` validation to add missing ISO country codes. ([#858](https://github.com/pingidentity/terraform-provider-pingone/issues/858))
