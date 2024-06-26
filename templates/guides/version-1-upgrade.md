@@ -7,13 +7,20 @@ description: |-
 
 # PingOne Terraform Provider Version 1 Upgrade Guide (from version 0)
 
-Version 1.0.0 of the PingOne Terraform provider is a major release that introduces breaking changes to existing HCL. This guide describes the changes that are required to upgrade v0.* PingOne Terraform provider releases to v1.*.
+Version `1.0` of the PingOne Terraform provider is a major release that introduces breaking changes to existing HCL. This guide describes the changes that are required to upgrade `v0.*` PingOne Terraform provider releases to `v1.*`.
 
 ## Why have schemas changed?
 
 As part of ensuring the ongoing maintainability of the Terraform provider integration and to solve functional issues, some resource schemas have changed going to version `1` from version `0`.
 
-The schemas may have changed in different ways, described in the following sections.
+The schemas may have changed in the following ways:
+
+* Removal of previously deprecated fields
+* Removal of previously deprecated resources/data-sources
+* Re-alignment of the Terraform schema with the API schema
+* Data type changes (which change how HCL is written)
+
+The following sections detail the rationale for the above changes, and whether the changes are routine for a major version upgrade or one off changes that aren't expected in future major version changes.
 
 ### Removal of previously deprecated fields
 
