@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_resource_attribute`: Remove restrictive validation preventing config generation of default OIDC attributes
+```

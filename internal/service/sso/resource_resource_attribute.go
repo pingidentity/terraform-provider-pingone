@@ -154,9 +154,6 @@ func (r *ResourceAttributeResource) Schema(ctx context.Context, req resource.Sch
 				Description:         valueDescription.Description,
 				MarkdownDescription: valueDescription.MarkdownDescription,
 				Required:            true,
-				Validators: []validator.String{
-					stringvalidator.LengthAtLeast(attrMinLength),
-				},
 			},
 
 			"id_token_enabled": schema.BoolAttribute{
