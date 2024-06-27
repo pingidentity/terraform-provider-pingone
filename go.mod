@@ -14,6 +14,7 @@ require (
 	github.com/hashicorp/terraform-plugin-mux v0.16.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.34.0
 	github.com/hashicorp/terraform-plugin-testing v1.8.0
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/patrickcping/pingone-go-sdk-v2 v0.12.1
 	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.5.0
 	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.8.0
@@ -61,7 +62,6 @@ require (
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
-	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
