@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/mitchellh/mapstructure"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -40,6 +41,7 @@ type AgreementLocalizationRevisionResourceModel struct {
 	NotValidAfter           timetypes.RFC3339            `tfsdk:"not_valid_after"`
 	RequireReconsent        types.Bool                   `tfsdk:"require_reconsent"`
 	Text                    types.String                 `tfsdk:"text"`
+	StoredText              types.String                 `tfsdk:"stored_text"`
 }
 
 // Framework interfaces
@@ -149,6 +151,11 @@ func (r *AgreementLocalizationRevisionResource) Schema(ctx context.Context, req 
 					stringvalidator.LengthAtLeast(attrMinLength),
 				},
 			},
+
+			"stored_text": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The text or HTML for the revision that is presented to the user.").Description,
+				Computed:    true,
+			},
 		},
 	}
 }
@@ -220,11 +227,42 @@ func (r *AgreementLocalizationRevisionResource) Create(ctx context.Context, req 
 		return
 	}
 
+	var agreementText *management.AgreementRevisionText
+	var agreementTextIntf map[string]interface{}
+	if halLinks, ok := response.GetLinksOk(); ok && halLinks != nil {
+		halObjectLinks := *halLinks
+		const revisionTextHalLink = "text"
+		resp.Diagnostics.Append(framework.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				fO, fR, fErr := r.Client.ManagementAPIClient.HALApi.ReadHALLink(ctx, halObjectLinks["text"]).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			},
+			fmt.Sprintf("ReadHALLink (%s)", revisionTextHalLink),
+			framework.CustomErrorResourceNotFoundWarning,
+			sdk.DefaultCreateReadRetryable,
+			&agreementTextIntf,
+		)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		err := mapstructure.Decode(agreementTextIntf, &agreementText)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error decoding agreement text",
+				err.Error(),
+			)
+			return
+		}
+	}
+
 	// Create the state to save
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response, localizationRevision.Text)...)
+	resp.Diagnostics.Append(state.toState(response, agreementText)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -268,9 +306,35 @@ func (r *AgreementLocalizationRevisionResource) Read(ctx context.Context, req re
 		return
 	}
 
-	var agreementText string
-	if !data.Text.IsNull() {
-		agreementText = data.Text.ValueString()
+	var agreementText *management.AgreementRevisionText
+	var agreementTextIntf map[string]interface{}
+	if halLinks, ok := response.GetLinksOk(); ok && halLinks != nil {
+		halObjectLinks := *halLinks
+		const revisionTextHalLink = "text"
+		resp.Diagnostics.Append(framework.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				fO, fR, fErr := r.Client.ManagementAPIClient.HALApi.ReadHALLink(ctx, halObjectLinks[revisionTextHalLink]).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			},
+			fmt.Sprintf("ReadHALLink (%s)", revisionTextHalLink),
+			framework.CustomErrorResourceNotFoundWarning,
+			sdk.DefaultCreateReadRetryable,
+			&agreementTextIntf,
+		)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		err := mapstructure.Decode(agreementTextIntf, &agreementText)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error decoding agreement text",
+				err.Error(),
+			)
+			return
+		}
 	}
 
 	// Save updated data into Terraform state
@@ -382,7 +446,7 @@ func (p *AgreementLocalizationRevisionResourceModel) expand() (*management.Agree
 	return data, diags
 }
 
-func (p *AgreementLocalizationRevisionResourceModel) toState(apiObject *management.AgreementLanguageRevision, revisionText string) diag.Diagnostics {
+func (p *AgreementLocalizationRevisionResourceModel) toState(apiObject *management.AgreementLanguageRevision, revisionText *management.AgreementRevisionText) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -401,7 +465,11 @@ func (p *AgreementLocalizationRevisionResourceModel) toState(apiObject *manageme
 	p.EffectiveAt = framework.TimeOkToTF(apiObject.GetEffectiveAtOk())
 	p.NotValidAfter = framework.TimeOkToTF(apiObject.GetNotValidAfterOk())
 	p.RequireReconsent = framework.BoolOkToTF(apiObject.GetRequireReconsentOk())
-	p.Text = framework.StringToTF(revisionText)
+	p.StoredText = framework.StringOkToTF(revisionText.GetDataOk())
+
+	if p.Text.IsNull() {
+		p.Text = p.StoredText
+	}
 
 	return diags
 }
