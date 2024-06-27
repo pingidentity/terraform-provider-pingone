@@ -1,0 +1,1 @@
+terraform import pingone_alert_channel.example <environment_id>/<alert_channel_id>
