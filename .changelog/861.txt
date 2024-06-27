@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_agreement_localization_revision`: Fixed inability to retrieve agreement text on import.
+```
