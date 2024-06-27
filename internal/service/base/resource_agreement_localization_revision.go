@@ -160,6 +160,8 @@ func (r *AgreementLocalizationRevisionResource) Schema(ctx context.Context, req 
 	}
 }
 
+const revisionTextHalLink = "text"
+
 func (r *AgreementLocalizationRevisionResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
@@ -231,12 +233,11 @@ func (r *AgreementLocalizationRevisionResource) Create(ctx context.Context, req 
 	var agreementTextIntf map[string]interface{}
 	if halLinks, ok := response.GetLinksOk(); ok && halLinks != nil {
 		halObjectLinks := *halLinks
-		const revisionTextHalLink = "text"
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ManagementAPIClient.HALApi.ReadHALLink(ctx, halObjectLinks["text"]).Execute()
+				fO, fR, fErr := r.Client.ManagementAPIClient.HALApi.ReadHALLink(ctx, halObjectLinks[revisionTextHalLink]).Execute()
 				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			fmt.Sprintf("ReadHALLink (%s)", revisionTextHalLink),
@@ -310,7 +311,6 @@ func (r *AgreementLocalizationRevisionResource) Read(ctx context.Context, req re
 	var agreementTextIntf map[string]interface{}
 	if halLinks, ok := response.GetLinksOk(); ok && halLinks != nil {
 		halObjectLinks := *halLinks
-		const revisionTextHalLink = "text"
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
