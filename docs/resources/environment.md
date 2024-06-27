@@ -53,7 +53,7 @@ resource "pingone_environment" "my_environment" {
 
 - `description` (String) A string that specifies the description to apply to the environment.
 - `region` (String) A string that specifies the region to create the environment in.  Should be consistent with the PingOne organisation region.  Options are `AP`, `AU`, `CA`, `EU`, `NA`.  Will default to the region specified in the provider configuration if not specified, or can be set with the `PINGONE_REGION_CODE` environment variable.
-- `solution` (String) A string that specifies the solution context of the environment.  Leave blank for a custom, non-workforce solution context.  Valid options are `CUSTOMER`, or no value for custom solution context.  Workforce solution environments are not yet supported in this provider resource, but can be fetched using the `pingone_environment` datasource.  This field is immutable and will trigger a replace plan if changed.
+- `solution` (String) A string that specifies the solution context of the environment.  Leave undefined for a custom, non-workforce solution context.  Options are `CIAM_TRIAL`, `CUSTOMER`, `WF_TRIAL`, `WORKFORCE`.  This field is immutable and will trigger a replace plan if changed.
 - `type` (String) A string that specifies the type of the environment to create.  Options are `PRODUCTION` (for environments that require protection from deletion), `SANDBOX` (for a development/testing environment).  Once an environment has been set as `PRODUCTION` type, it cannot be reset back to `SANDBOX` within Terraform.  Administrators must log in to the web admin console to override the data protection features of `PRODUCTION` environments.  Defaults to `SANDBOX`.
 
 ### Read-Only

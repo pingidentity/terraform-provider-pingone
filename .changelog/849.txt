@@ -1,0 +1,3 @@
+```release-note:enhancement
+`resource/pingone_environment`: Support the creation of trials enabled environments.
+```
