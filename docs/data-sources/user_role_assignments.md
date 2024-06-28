@@ -48,4 +48,4 @@ Read-Only:
 Read-Only:
 
 - `id` (String) A string that specifies the ID of the environment, population or organization that the role is scoped to.
-- `type` (String) The type of the scope.  Options are `ENVIRONMENT`, `ORGANIZATION`, `POPULATION`.
+- `type` (String) The type of the scope.  Options are `APPLICATION`, `ENVIRONMENT`, `ORGANIZATION`, `POPULATION`.

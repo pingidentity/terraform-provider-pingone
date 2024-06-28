@@ -85,13 +85,25 @@ func TestAccRoleAssignmentUser_RemovalDrift(t *testing.T) {
 	})
 }
 
-func TestAccRoleAssignmentUser_Population(t *testing.T) {
+func TestAccRoleAssignmentUser_Application(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_user_role_assignment.%s", resourceName)
 
 	name := resourceName
+
+	successCheck := resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "user_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "role_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "scope_application_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckNoResourceAttr(resourceFullName, "scope_population_id"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "scope_organization_id"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "scope_environment_id"),
+		resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
+	)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -103,17 +115,8 @@ func TestAccRoleAssignmentUser_Population(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccRoleAssignmentUserConfig_Population(resourceName, name, "Identity Data Admin"),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "user_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "role_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "scope_population_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckNoResourceAttr(resourceFullName, "scope_organization_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "scope_environment_id"),
-					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
-				),
+				Config: testAccRoleAssignmentUserConfig_Application(resourceName, name, "Application Owner"),
+				Check:  successCheck,
 			},
 			{
 				ResourceName: resourceFullName,
@@ -129,6 +132,73 @@ func TestAccRoleAssignmentUser_Population(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			{
+				Config:      testAccRoleAssignmentUserConfig_Application(resourceName, name, "Identity Data Admin"),
+				ExpectError: regexp.MustCompile(`Incompatible role and scope combination`),
+			},
+			{
+				Config:      testAccRoleAssignmentUserConfig_Application(resourceName, name, "Environment Admin"),
+				ExpectError: regexp.MustCompile(`Incompatible role and scope combination`),
+			},
+			{
+				Config:      testAccRoleAssignmentUserConfig_Application(resourceName, name, "Organization Admin"),
+				ExpectError: regexp.MustCompile(`Incompatible role and scope combination`),
+			},
+		},
+	})
+}
+
+func TestAccRoleAssignmentUser_Population(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_user_role_assignment.%s", resourceName)
+
+	name := resourceName
+
+	successCheck := resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "user_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "role_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "scope_population_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckNoResourceAttr(resourceFullName, "scope_organization_id"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "scope_environment_id"),
+		resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.RoleAssignmentUser_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccRoleAssignmentUserConfig_Population(resourceName, name, "Identity Data Admin"),
+				Check:  successCheck,
+			},
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["user_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				Config:      testAccRoleAssignmentUserConfig_Population(resourceName, name, "Application Owner"),
+				ExpectError: regexp.MustCompile(`Incompatible role and scope combination`),
 			},
 			{
 				Config:      testAccRoleAssignmentUserConfig_Population(resourceName, name, "Environment Admin"),
@@ -151,6 +221,17 @@ func TestAccRoleAssignmentUser_Organisation(t *testing.T) {
 	name := resourceName
 	organisationID := os.Getenv("PINGONE_ORGANIZATION_ID")
 
+	successCheck := resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "user_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "role_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckNoResourceAttr(resourceFullName, "scope_population_id"),
+		resource.TestMatchResourceAttr(resourceFullName, "scope_organization_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckNoResourceAttr(resourceFullName, "scope_environment_id"),
+		resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
+	)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
@@ -165,56 +246,24 @@ func TestAccRoleAssignmentUser_Organisation(t *testing.T) {
 				ExpectError: regexp.MustCompile(`Incompatible role and scope combination`),
 			},
 			{
+				Config:      testAccRoleAssignmentUserConfig_Organisation(resourceName, name, "Application Owner", organisationID),
+				ExpectError: regexp.MustCompile(`Incompatible role and scope combination`),
+			},
+			{
 				Config: testAccRoleAssignmentUserConfig_Organisation(resourceName, name, "Environment Admin", organisationID),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "user_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "role_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckNoResourceAttr(resourceFullName, "scope_population_id"),
-					resource.TestMatchResourceAttr(resourceFullName, "scope_organization_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckNoResourceAttr(resourceFullName, "scope_environment_id"),
-					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
-				),
+				Check:  successCheck,
 			},
 			{
 				Config: testAccRoleAssignmentUserConfig_Organisation(resourceName, name, "Organization Admin", organisationID),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "user_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "role_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckNoResourceAttr(resourceFullName, "scope_population_id"),
-					resource.TestMatchResourceAttr(resourceFullName, "scope_organization_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckNoResourceAttr(resourceFullName, "scope_environment_id"),
-					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
-				),
+				Check:  successCheck,
 			},
 			{
 				Config: testAccRoleAssignmentUserConfig_Organisation(resourceName, name, "DaVinci Admin", organisationID),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "user_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "role_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckNoResourceAttr(resourceFullName, "scope_population_id"),
-					resource.TestMatchResourceAttr(resourceFullName, "scope_organization_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckNoResourceAttr(resourceFullName, "scope_environment_id"),
-					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
-				),
+				Check:  successCheck,
 			},
 			{
 				Config: testAccRoleAssignmentUserConfig_Organisation(resourceName, name, "DaVinci Admin Read Only", organisationID),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "user_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "role_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckNoResourceAttr(resourceFullName, "scope_population_id"),
-					resource.TestMatchResourceAttr(resourceFullName, "scope_organization_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckNoResourceAttr(resourceFullName, "scope_environment_id"),
-					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
-				),
+				Check:  successCheck,
 			},
 			{
 				ResourceName: resourceFullName,
@@ -243,6 +292,17 @@ func TestAccRoleAssignmentUser_Environment(t *testing.T) {
 
 	name := resourceName
 
+	successCheck := resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "user_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "role_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckNoResourceAttr(resourceFullName, "scope_population_id"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "scope_organization_id"),
+		resource.TestMatchResourceAttr(resourceFullName, "scope_environment_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
+	)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
@@ -255,55 +315,19 @@ func TestAccRoleAssignmentUser_Environment(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccRoleAssignmentUserConfig_Environment(resourceName, name, "Identity Data Admin"),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "user_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "role_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckNoResourceAttr(resourceFullName, "scope_population_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "scope_organization_id"),
-					resource.TestMatchResourceAttr(resourceFullName, "scope_environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
-				),
+				Check:  successCheck,
 			},
 			{
 				Config: testAccRoleAssignmentUserConfig_Environment(resourceName, name, "Environment Admin"),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "user_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "role_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckNoResourceAttr(resourceFullName, "scope_population_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "scope_organization_id"),
-					resource.TestMatchResourceAttr(resourceFullName, "scope_environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
-				),
+				Check:  successCheck,
 			},
 			{
 				Config: testAccRoleAssignmentUserConfig_Environment(resourceName, name, "DaVinci Admin"),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "user_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "role_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckNoResourceAttr(resourceFullName, "scope_population_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "scope_organization_id"),
-					resource.TestMatchResourceAttr(resourceFullName, "scope_environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
-				),
+				Check:  successCheck,
 			},
 			{
 				Config: testAccRoleAssignmentUserConfig_Environment(resourceName, name, "DaVinci Admin Read Only"),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "user_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "role_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckNoResourceAttr(resourceFullName, "scope_population_id"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "scope_organization_id"),
-					resource.TestMatchResourceAttr(resourceFullName, "scope_environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
-				),
+				Check:  successCheck,
 			},
 			{
 				ResourceName: resourceFullName,
@@ -319,6 +343,10 @@ func TestAccRoleAssignmentUser_Environment(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			{
+				Config: testAccRoleAssignmentUserConfig_Environment(resourceName, name, "Application Owner"),
+				Check:  successCheck,
 			},
 			{
 				Config:      testAccRoleAssignmentUserConfig_Environment(resourceName, name, "Organization Admin"),
@@ -400,6 +428,51 @@ resource "pingone_user_role_assignment" "%[3]s" {
 
   scope_population_id = pingone_population.%[3]s.id
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, roleName)
+}
+
+func testAccRoleAssignmentUserConfig_Application(resourceName, name, roleName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options = {
+    type                        = "WEB_APP"
+    grant_types                 = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_user" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  population_id  = pingone_population.%[2]s.id
+
+  username = "%[3]s"
+  email    = "foouser@pingidentity.com"
+}
+
+data "pingone_role" "%[2]s" {
+  name = "%[4]s"
+}
+
+resource "pingone_user_role_assignment" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  user_id        = pingone_user.%[2]s.id
+  role_id        = data.pingone_role.%[2]s.id
+
+  scope_application_id = pingone_application.%[2]s.id
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, roleName)
 }
 
 func testAccRoleAssignmentUserConfig_Population(resourceName, name, roleName string) string {
