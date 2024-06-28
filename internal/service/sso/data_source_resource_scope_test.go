@@ -35,6 +35,8 @@ func TestAccResourceScopeDataSource_ByNameFull(t *testing.T) {
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "custom_resource_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(dataSourceFullName, "resource_type", "CUSTOM"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "schema_attributes", resourceFullName, "schema_attributes"),
@@ -67,6 +69,8 @@ func TestAccResourceScopeDataSource_ByNameSystem(t *testing.T) {
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckNoResourceAttr(dataSourceFullName, "custom_resource_id"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "resource_type", "OPENID_CONNECT"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "resource_scope_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "email"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
@@ -102,6 +106,8 @@ func TestAccResourceScopeDataSource_ByIDFull(t *testing.T) {
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "custom_resource_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(dataSourceFullName, "resource_type", "CUSTOM"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "schema_attributes", resourceFullName, "schema_attributes"),
@@ -214,8 +220,9 @@ resource "pingone_resource_scope" "%[2]s" {
 }
 
 data "pingone_resource_scope" "%[3]s" {
-  environment_id = data.pingone_environment.general_test.id
-  resource_id    = pingone_resource.%[2]s.id
+  environment_id     = data.pingone_environment.general_test.id
+  resource_type      = "CUSTOM"
+  custom_resource_id = pingone_resource.%[2]s.id
 
   name = "%[3]s"
 
@@ -243,8 +250,9 @@ resource "pingone_resource_scope" "%[2]s" {
 }
 
 data "pingone_resource_scope" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  resource_id    = pingone_resource.%[2]s.id
+  environment_id     = data.pingone_environment.general_test.id
+  resource_type      = "CUSTOM"
+  custom_resource_id = pingone_resource.%[2]s.id
 
   resource_scope_id = pingone_resource_scope.%[2]s.id
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -254,15 +262,9 @@ func testAccResourceScopeDataSourceConfig_ByNameSystem(resourceName string) stri
 	return fmt.Sprintf(`
 	%[1]s
 
-data "pingone_resource" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "openid"
-}
-
 data "pingone_resource_scope" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  resource_id    = data.pingone_resource.%[2]s.id
+  resource_type  = "OPENID_CONNECT"
 
   name = "email"
 }`, acctest.GenericSandboxEnvironment(), resourceName)
@@ -283,15 +285,9 @@ resource "pingone_resource_scope_pingone_api" "%[2]s" {
   ]
 }
 
-data "pingone_resource" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "PingOne API"
-}
-
 data "pingone_resource_scope" "%[2]s" {
   environment_id    = data.pingone_environment.general_test.id
-  resource_id       = data.pingone_resource.%[2]s.id
+  resource_type     = "PINGONE_API"
   resource_scope_id = pingone_resource_scope_pingone_api.%[2]s.id
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -301,15 +297,9 @@ func testAccResourceScopeDataSourceConfig_ByIDMappedClaims(resourceName, name st
 	return fmt.Sprintf(`
 	%[1]s
 
-data "pingone_resource" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "openid"
-}
-
 resource "pingone_resource_attribute" "%[2]s-1" {
   environment_id = data.pingone_environment.general_test.id
-  resource_name  = data.pingone_resource.%[2]s.name
+  resource_type  = "OPENID_CONNECT"
 
   name  = "%[3]s-1"
   value = "$${user.name.given}"
@@ -317,7 +307,7 @@ resource "pingone_resource_attribute" "%[2]s-1" {
 
 resource "pingone_resource_attribute" "%[2]s-2" {
   environment_id = data.pingone_environment.general_test.id
-  resource_name  = data.pingone_resource.%[2]s.name
+  resource_type  = "OPENID_CONNECT"
 
   name  = "%[3]s-2"
   value = "$${user.name.family}"
@@ -325,7 +315,7 @@ resource "pingone_resource_attribute" "%[2]s-2" {
 
 resource "pingone_resource_attribute" "%[2]s-3" {
   environment_id = data.pingone_environment.general_test.id
-  resource_name  = data.pingone_resource.%[2]s.name
+  resource_type  = "OPENID_CONNECT"
 
   name  = "%[3]s-3"
   value = "$${user.email}"
@@ -346,7 +336,7 @@ resource "pingone_resource_scope_openid" "%[2]s" {
 
 data "pingone_resource_scope" "%[2]s" {
   environment_id    = data.pingone_environment.general_test.id
-  resource_id       = data.pingone_resource.%[2]s.id
+  resource_type     = "OPENID_CONNECT"
   resource_scope_id = pingone_resource_scope_openid.%[2]s.id
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -363,8 +353,9 @@ resource "pingone_resource" "%[2]s" {
 }
 
 data "pingone_resource_scope" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  resource_id    = pingone_resource.%[2]s.id
+  environment_id     = data.pingone_environment.general_test.id
+  resource_type      = "CUSTOM"
+  custom_resource_id = pingone_resource.%[2]s.id
 
   name = "doesnotexist"
 }`, acctest.GenericSandboxEnvironment(), resourceName)
@@ -381,8 +372,9 @@ resource "pingone_resource" "%[2]s" {
 }
 
 data "pingone_resource_scope" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  resource_id    = pingone_resource.%[2]s.id
+  environment_id     = data.pingone_environment.general_test.id
+  resource_type      = "CUSTOM"
+  custom_resource_id = pingone_resource.%[2]s.id
 
   resource_scope_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
 }`, acctest.GenericSandboxEnvironment(), resourceName)
