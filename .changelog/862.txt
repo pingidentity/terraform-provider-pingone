@@ -1,0 +1,3 @@
+```release-note:enhancement
+Support ability to grant the "Application Owner" role to users, groups of users, connections and admin applications.
+```
