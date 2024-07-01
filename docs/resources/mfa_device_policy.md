@@ -96,7 +96,7 @@ resource "pingone_mfa_application_push_credential" "example_fcm" {
   environment_id = pingone_environment.my_environment.id
   application_id = pingone_application.my_mobile_application.id
 
-  fcm {
+  fcm = {
     google_service_account_credentials = var.google_service_account_credentials_json
   }
 }
@@ -105,7 +105,7 @@ resource "pingone_mfa_application_push_credential" "example_apns" {
   environment_id = pingone_environment.my_environment.id
   application_id = pingone_application.my_mobile_application.id
 
-  apns {
+  apns = {
     key               = var.apns_key
     team_id           = var.apns_team_id
     token_signing_key = var.apns_token_signing_key
@@ -127,6 +127,10 @@ resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
     otp = {
       failure = {
         count = 3
+        cool_down = {
+          duration  = 5
+          time_unit = "MINUTES"
+        }
       }
     }
 
@@ -375,9 +379,12 @@ Required:
 <a id="nestedatt--mobile--otp--failure"></a>
 ### Nested Schema for `mobile.otp.failure`
 
-Optional:
+Required:
 
 - `cool_down` (Attributes) A single object that specifies OTP failure cool down settings for mobile applications in the policy. (see [below for nested schema](#nestedatt--mobile--otp--failure--cool_down))
+
+Optional:
+
 - `count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. The minimum value is `1`, maximum is `7`, and the default is `3`.
 
 <a id="nestedatt--mobile--otp--failure--cool_down"></a>
