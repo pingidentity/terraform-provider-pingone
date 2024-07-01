@@ -666,6 +666,17 @@ func (p *ApplicationResourceGrantResourceModel) expand(ctx context.Context, reso
 func (p *ApplicationResourceGrantResourceModel) validate(resource management.Resource, resourceScopes []management.ResourceScope) diag.Diagnostics {
 	var diags diag.Diagnostics
 
+	// Check that the scopes relate to the resource
+	for _, resourceScope := range resourceScopes {
+		if resourceS, ok := resourceScope.GetResourceOk(); ok && resourceS.GetId() != resource.GetId() {
+			diags.AddError(
+				"Invalid scope",
+				fmt.Sprintf("Cannot create an application resource grant as the scope %s does not relate to the resource %s.", resourceScope.GetId(), resource.GetId()),
+			)
+
+		}
+	}
+
 	return diags
 }
 
