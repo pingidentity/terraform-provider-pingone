@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -144,6 +145,10 @@ func (r *ApplicationResourceGrantResource) Schema(ctx context.Context, req resou
 				Required:            true,
 
 				ElementType: pingonetypes.ResourceIDType{},
+
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.RequiresReplace(),
+				},
 			},
 		},
 	}
@@ -660,19 +665,6 @@ func (p *ApplicationResourceGrantResourceModel) expand(ctx context.Context, reso
 
 func (p *ApplicationResourceGrantResourceModel) validate(resource management.Resource, resourceScopes []management.ResourceScope) diag.Diagnostics {
 	var diags diag.Diagnostics
-
-	// // Check that the `openid` scope from the `openid` resource is not in the list
-	// if v, ok := resource.GetNameOk(); ok && *v == "openid" && len(resourceScopes) > 0 {
-	// 	for _, resourceScope := range resourceScopes {
-	// 		if resourceScopeName, ok := resourceScope.GetNameOk(); ok && *resourceScopeName == "openid" {
-	// 			diags.AddError(
-	// 				"Invalid scope",
-	// 				"Cannot create an application resource grant with the `openid` scope.  This scope is automatically applied and should be removed from the `scopes` parameter.",
-	// 			)
-	// 			break
-	// 		}
-	// 	}
-	// }
 
 	return diags
 }

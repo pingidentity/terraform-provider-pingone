@@ -220,7 +220,6 @@ func TestAccApplicationResourceGrant_CustomResource(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 				),
-				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
