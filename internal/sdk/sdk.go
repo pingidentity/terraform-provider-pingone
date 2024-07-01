@@ -2,10 +2,10 @@ package sdk
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -81,25 +81,12 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, sdk
 
 			if v, ok := t.Model().(model.P1Error); ok && v.GetId() != "" {
 
-				summaryText := fmt.Sprintf("Error when calling `%s`: %v", sdkMethod, v.GetMessage())
-				detailText := fmt.Sprintf("PingOne Error Details:\nID: %s\nCode: %s\nMessage: %s", v.GetId(), v.GetCode(), v.GetMessage())
-
 				diags = customError(v)
 				if diags != nil {
 					return nil, diags
 				}
 
-				if details, ok := v.GetDetailsOk(); ok {
-					detailsBytes, err := json.Marshal(details)
-					if err != nil {
-						diags = append(diags, diag.Diagnostic{
-							Severity: diag.Warning,
-							Summary:  "Cannot parse details object",
-						})
-					}
-
-					detailText = fmt.Sprintf("%s\nDetails object: %+v", detailText, string(detailsBytes[:]))
-				}
+				summaryText, detailText := FormatPingOneError(sdkMethod, v)
 
 				diags = append(diags, diag.Diagnostic{
 					Severity: diag.Error,
@@ -145,4 +132,69 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, sdk
 
 	return resp, diags
 
+}
+
+func FormatPingOneError(sdkMethod string, v model.P1Error) (summaryText, detailText string) {
+	summaryText = fmt.Sprintf("Error when calling `%s`: %v", sdkMethod, v.GetMessage())
+	detailText = fmt.Sprintf("PingOne Error Details:\nID:\t\t%s\nCode:\t\t%s\nMessage:\t%s", v.GetId(), v.GetCode(), v.GetMessage())
+
+	if details, ok := v.GetDetailsOk(); ok {
+
+		detailsStrList := make([]string, 0, len(details))
+		for _, detail := range details {
+			detailsStr := ""
+			nextLineMarker := "-"
+
+			if code, ok := detail.GetCodeOk(); ok {
+				detailsStr += fmt.Sprintf("  %s Code:\t%s\n", nextLineMarker, *code)
+				nextLineMarker = " "
+			}
+
+			if message, ok := detail.GetMessageOk(); ok {
+				detailsStr += fmt.Sprintf("  %s Message:\t%s\n", nextLineMarker, *message)
+				nextLineMarker = " "
+			}
+
+			if target, ok := detail.GetTargetOk(); ok {
+				detailsStr += fmt.Sprintf("  %s Target:\t%s\n", nextLineMarker, *target)
+				nextLineMarker = " "
+			}
+
+			if innerError, ok := detail.GetInnerErrorOk(); ok {
+				innerDetailsStr := ""
+
+				if v, ok := innerError.GetRangeMinimumValueOk(); ok {
+					innerDetailsStr += fmt.Sprintf("      Range Min Value:\t%d\n", *v)
+				}
+
+				if v, ok := innerError.GetRangeMaximumValueOk(); ok {
+					innerDetailsStr += fmt.Sprintf("      Range Max Value:\t%d\n", *v)
+				}
+
+				if v, ok := innerError.GetAllowedPatternOk(); ok {
+					innerDetailsStr += fmt.Sprintf("      Allowed Pattern:\t%s\n", *v)
+				}
+
+				if v, ok := innerError.GetAllowedValuesOk(); ok {
+					innerDetailsStr += fmt.Sprintf("      Allowed Values:\t[%s]\n", strings.Join(v, ", "))
+				}
+
+				if v, ok := innerError.GetMaximumValueOk(); ok {
+					innerDetailsStr += fmt.Sprintf("      Max Value:\t%d\n", *v)
+				}
+
+				if v, ok := innerError.GetReferencedValuesOk(); ok {
+					innerDetailsStr += fmt.Sprintf("      Referenced Values:\t[%s]\n", strings.Join(v, ", "))
+				}
+
+				detailsStr += fmt.Sprintf("  %s Data:\n%s", nextLineMarker, innerDetailsStr)
+			}
+
+			detailsStrList = append(detailsStrList, detailsStr)
+		}
+
+		detailText += fmt.Sprintf("\nDetails:\n%s", strings.Join(detailsStrList, "\n"))
+	}
+
+	return
 }
