@@ -637,28 +637,28 @@ resource "pingone_system_application" "%[3]s" {
   enable_default_theme_footer = true
 }
 
-data "pingone_resource_scope" "pingone_api_read_user" {
+data "pingone_resource_scope" "%[2]s_read_user" {
   environment_id = pingone_environment.%[2]s.id
 
   resource_type = "PINGONE_API"
   name          = "p1:read:user"
 }
 
-data "pingone_resource_scope" "pingone_api_update_user" {
+data "pingone_resource_scope" "%[2]s_update_user" {
   environment_id = pingone_environment.%[2]s.id
 
   resource_type = "PINGONE_API"
   name          = "p1:update:user"
 }
 
-data "pingone_resource_scope" "pingone_api_create_device" {
+data "pingone_resource_scope" "%[2]s_create_device" {
   environment_id = pingone_environment.%[2]s.id
 
   resource_type = "PINGONE_API"
   name          = "p1:create:device"
 }
 
-data "pingone_resource_scope" "pingone_api_create_pairing_key" {
+data "pingone_resource_scope" "%[2]s_create_pairing_key" {
   environment_id = pingone_environment.%[2]s.id
 
   resource_type = "PINGONE_API"
@@ -672,10 +672,10 @@ resource "pingone_application_resource_grant" "%[3]s" {
   resource_type = "PINGONE_API"
 
   scopes = [
-    data.pingone_resource_scope.pingone_api_read_user.id,
-    data.pingone_resource_scope.pingone_api_update_user.id,
-    data.pingone_resource_scope.pingone_api_create_device.id,
-    data.pingone_resource_scope.pingone_api_create_pairing_key.id,
+    data.pingone_resource_scope.%[2]s_read_user.id,
+    data.pingone_resource_scope.%[2]s_update_user.id,
+    data.pingone_resource_scope.%[2]s_create_device.id,
+    data.pingone_resource_scope.%[2]s_create_pairing_key.id,
   ]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
