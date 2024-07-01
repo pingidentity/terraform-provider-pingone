@@ -71,7 +71,6 @@ resource "pingone_gateway" "my_ldap_gateway" {
       update_user_on_successful_authentication = true
     }
   }
-
 }
 ```
 
@@ -96,7 +95,6 @@ resource "pingone_gateway" "my_radius_gateway" {
       ip = "127.0.0.1"
     }
   ]
-
 }
 ```
 
