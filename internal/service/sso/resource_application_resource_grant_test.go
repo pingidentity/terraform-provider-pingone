@@ -483,69 +483,69 @@ resource "pingone_application_resource_grant" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationResourceGrantConfig_OpenIDResource_InvalidOpenIDScope(resourceName, name string) string {
-	return fmt.Sprintf(`
-		%[1]s
+// func testAccApplicationResourceGrantConfig_OpenIDResource_InvalidOpenIDScope(resourceName, name string) string {
+// 	return fmt.Sprintf(`
+// 		%[1]s
 
-resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
-  enabled        = true
+// resource "pingone_application" "%[2]s" {
+//   environment_id = data.pingone_environment.general_test.id
+//   name           = "%[3]s"
+//   enabled        = true
 
-  oidc_options = {
-    type                        = "SINGLE_PAGE_APP"
-    grant_types                 = ["AUTHORIZATION_CODE"]
-    response_types              = ["CODE"]
-    pkce_enforcement            = "S256_REQUIRED"
-    token_endpoint_authn_method = "NONE"
-    redirect_uris               = ["https://www.pingidentity.com"]
-  }
-}
+//   oidc_options = {
+//     type                        = "SINGLE_PAGE_APP"
+//     grant_types                 = ["AUTHORIZATION_CODE"]
+//     response_types              = ["CODE"]
+//     pkce_enforcement            = "S256_REQUIRED"
+//     token_endpoint_authn_method = "NONE"
+//     redirect_uris               = ["https://www.pingidentity.com"]
+//   }
+// }
 
-data "pingone_resource_scope" "%[2]s_email" {
-  environment_id = data.pingone_environment.general_test.id
+// data "pingone_resource_scope" "%[2]s_email" {
+//   environment_id = data.pingone_environment.general_test.id
 
-  resource_type = "OPENID_CONNECT"
-  name          = "email"
-}
+//   resource_type = "OPENID_CONNECT"
+//   name          = "email"
+// }
 
-data "pingone_resource_scope" "%[2]s_profile" {
-  environment_id = data.pingone_environment.general_test.id
+// data "pingone_resource_scope" "%[2]s_profile" {
+//   environment_id = data.pingone_environment.general_test.id
 
-  resource_type = "OPENID_CONNECT"
-  name          = "profile"
-}
+//   resource_type = "OPENID_CONNECT"
+//   name          = "profile"
+// }
 
-resource "pingone_resource_attribute" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
+// resource "pingone_resource_attribute" "%[2]s" {
+//   environment_id = data.pingone_environment.general_test.id
 
-  resource_type = "OPENID_CONNECT"
-  name          = "%[3]s"
-  value         = "$${user.name.given}"
-}
+//   resource_type = "OPENID_CONNECT"
+//   name          = "%[3]s"
+//   value         = "$${user.name.given}"
+// }
 
-resource "pingone_resource_scope_openid" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
+// resource "pingone_resource_scope_openid" "%[2]s" {
+//   environment_id = data.pingone_environment.general_test.id
 
-  name = "%[2]s"
+//   name = "%[2]s"
 
-  mapped_claims = [
-    pingone_resource_attribute.%[2]s.id
-  ]
-}
+//   mapped_claims = [
+//     pingone_resource_attribute.%[2]s.id
+//   ]
+// }
 
-resource "pingone_application_resource_grant" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  application_id = pingone_application.%[2]s.id
+// resource "pingone_application_resource_grant" "%[2]s" {
+//   environment_id = data.pingone_environment.general_test.id
+//   application_id = pingone_application.%[2]s.id
 
-  resource_type = "OPENID_CONNECT"
-  scopes = [
-    data.pingone_resource_scope.%[2]s_email.id,
-    data.pingone_resource_scope.%[2]s_profile.id,
-    pingone_resource_scope_openid.%[2]s.id,
-  ]
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
-}
+//   resource_type = "OPENID_CONNECT"
+//   scopes = [
+//     data.pingone_resource_scope.%[2]s_email.id,
+//     data.pingone_resource_scope.%[2]s_profile.id,
+//     pingone_resource_scope_openid.%[2]s.id,
+//   ]
+// }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+// }
 
 func testAccApplicationResourceGrantConfig_CustomResource(resourceName, name string) string {
 	return fmt.Sprintf(`
