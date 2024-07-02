@@ -6,18 +6,29 @@ resource "pingone_application" "my_awesome_spa" {
   # ...
 }
 
-data "pingone_resource_scope" "pingone_api_read_user" {
-  environment_id = var.environment_id
-
-  resource_type = "PINGONE_API"
-  name          = "p1:read:user"
+locals {
+  pingone_api_scopes = [
+    "p1:read:user",
+    "p1:update:user",
+    "p1:read:sessions",
+    "p1:delete:sessions",
+    "p1:create:device",
+    "p1:read:device",
+    "p1:update:device",
+    "p1:delete:device",
+    "p1:read:userPassword",
+    "p1:reset:userPassword",
+    "p1:validate:userPassword",
+  ]
 }
 
-data "pingone_resource_scope" "pingone_api_update_user" {
-  environment_id = var.environment_id
+data "pingone_resource_scope" "pingone_api" {
+  for_each = toset(local.pingone_api_scopes)
 
-  resource_type = "PINGONE_API"
-  name          = "p1:update:user"
+  environment_id = pingone_environment.my_environment.id
+  resource_type  = "PINGONE_API"
+
+  name = each.key
 }
 
 resource "pingone_application_resource_grant" "my_awesome_spa_pingone_api_resource_grants" {
@@ -27,7 +38,6 @@ resource "pingone_application_resource_grant" "my_awesome_spa_pingone_api_resour
   resource_type = "PINGONE_API"
 
   scopes = [
-    data.pingone_resource_scope.pingone_api_read_user.id,
-    data.pingone_resource_scope.pingone_api_update_user.id,
+    for scope in data.pingone_resource_scope.pingone_api : scope.id
   ]
 }

@@ -60,7 +60,7 @@ Required:
 
 Optional:
 
-- `max_allowed_devices` (Number) An integer that defines the maximum number of MFA devices each user can have. This can be any number up to 15. The default value is 5.  All devices that are Active or Blocked are subject to this limit.
+- `max_allowed_devices` (Number) An integer that defines the maximum number of MFA devices each user can have. This can be any number from `1` to `15`. All devices that are Active or Blocked are subject to this limit.  Defaults to `5`.
 
 
 <a id="nestedatt--lockout"></a>
