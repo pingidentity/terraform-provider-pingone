@@ -196,5 +196,5 @@ func FormatPingOneError(sdkMethod string, v model.P1Error) (summaryText, detailT
 		detailText += fmt.Sprintf("\nDetails:\n%s", strings.Join(detailsStrList, "\n"))
 	}
 
-	return
+	return summaryText, detailText
 }

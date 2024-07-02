@@ -201,10 +201,6 @@ var (
 	}
 
 	RoleRemovalRetryable = func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
-
-		if p1error != nil {
-		}
-
 		return false
 	}
 )
