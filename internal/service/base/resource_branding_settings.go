@@ -25,7 +25,7 @@ import (
 // Types
 type BrandingSettingsResource serviceClientType
 
-type brandingSettingsResourceModel struct {
+type brandingSettingsResourceModelV1 struct {
 	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
 	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	CompanyName   types.String                 `tfsdk:"company_name"`
@@ -34,9 +34,10 @@ type brandingSettingsResourceModel struct {
 
 // Framework interfaces
 var (
-	_ resource.Resource                = &BrandingSettingsResource{}
-	_ resource.ResourceWithConfigure   = &BrandingSettingsResource{}
-	_ resource.ResourceWithImportState = &BrandingSettingsResource{}
+	_ resource.Resource                 = &BrandingSettingsResource{}
+	_ resource.ResourceWithConfigure    = &BrandingSettingsResource{}
+	_ resource.ResourceWithImportState  = &BrandingSettingsResource{}
+	_ resource.ResourceWithUpgradeState = &BrandingSettingsResource{}
 )
 
 // New Object
@@ -63,6 +64,9 @@ func (r *BrandingSettingsResource) Schema(ctx context.Context, req resource.Sche
 	)
 
 	resp.Schema = schema.Schema{
+
+		Version: 1,
+
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage the PingOne branding settings for an environment.",
 
@@ -136,7 +140,7 @@ func (r *BrandingSettingsResource) Configure(ctx context.Context, req resource.C
 }
 
 func (r *BrandingSettingsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan, state brandingSettingsResourceModel
+	var plan, state brandingSettingsResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -185,7 +189,7 @@ func (r *BrandingSettingsResource) Create(ctx context.Context, req resource.Crea
 }
 
 func (r *BrandingSettingsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *brandingSettingsResourceModel
+	var data *brandingSettingsResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -230,7 +234,7 @@ func (r *BrandingSettingsResource) Read(ctx context.Context, req resource.ReadRe
 }
 
 func (r *BrandingSettingsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan, state brandingSettingsResourceModel
+	var plan, state brandingSettingsResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -279,7 +283,7 @@ func (r *BrandingSettingsResource) Update(ctx context.Context, req resource.Upda
 }
 
 func (r *BrandingSettingsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *brandingSettingsResourceModel
+	var data *brandingSettingsResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -338,7 +342,7 @@ func (r *BrandingSettingsResource) ImportState(ctx context.Context, req resource
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), framework.PingOneResourceIDToTF(attributes["environment_id"]))...)
 }
 
-func (p *brandingSettingsResourceModel) expand(ctx context.Context) (*management.BrandingSettings, diag.Diagnostics) {
+func (p *brandingSettingsResourceModelV1) expand(ctx context.Context) (*management.BrandingSettings, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data := management.NewBrandingSettings()
@@ -366,7 +370,7 @@ func (p *brandingSettingsResourceModel) expand(ctx context.Context) (*management
 	return data, diags
 }
 
-func (p *brandingSettingsResourceModel) toState(apiObject *management.BrandingSettings) diag.Diagnostics {
+func (p *brandingSettingsResourceModelV1) toState(apiObject *management.BrandingSettings) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
