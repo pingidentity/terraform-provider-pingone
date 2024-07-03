@@ -710,34 +710,7 @@ func (r *ApplicationResource) resourceApplicationSchemaCorsSettingsV0() schema.B
 }
 
 func (p *applicationResourceModelV0) schemaUpgradeIconV0toV1(ctx context.Context) (types.Object, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	attributeTypes := service.ImageTFObjectTypes
-	planAttribute := p.Icon
-
-	if planAttribute.IsNull() {
-		return types.ObjectNull(attributeTypes), diags
-	} else if planAttribute.IsUnknown() {
-		return types.ObjectUnknown(attributeTypes), diags
-	} else {
-		var priorStateData []service.ImageResourceModel
-		d := planAttribute.ElementsAs(ctx, &priorStateData, false)
-		diags.Append(d...)
-		if diags.HasError() {
-			return types.ObjectNull(attributeTypes), diags
-		}
-
-		if len(priorStateData) == 0 {
-			return types.ObjectNull(attributeTypes), diags
-		}
-
-		upgradedStateData := priorStateData[0]
-
-		returnVar, d := types.ObjectValueFrom(ctx, attributeTypes, upgradedStateData)
-		diags.Append(d...)
-
-		return returnVar, diags
-	}
+	return service.ImageListToObjectSchemaUpgrade(ctx, p.Icon)
 }
 
 func (p *applicationResourceModelV0) schemaUpgradeAccessControlGroupOptionsV0toV1(ctx context.Context) (types.Object, diag.Diagnostics) {
