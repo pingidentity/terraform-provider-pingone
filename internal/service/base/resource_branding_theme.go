@@ -29,7 +29,7 @@ import (
 // Types
 type BrandingThemeResource serviceClientType
 
-type brandingThemeResourceModel struct {
+type brandingThemeResourceModelV1 struct {
 	Id                   pingonetypes.ResourceIDValue `tfsdk:"id"`
 	EnvironmentId        pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	Name                 types.String                 `tfsdk:"name"`
@@ -113,6 +113,9 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 	)
 
 	resp.Schema = schema.Schema{
+
+		Version: 1,
+
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage PingOne branding themes for an environment.",
 
@@ -312,7 +315,7 @@ func (r *BrandingThemeResource) Configure(ctx context.Context, req resource.Conf
 }
 
 func (r *BrandingThemeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan, state brandingThemeResourceModel
+	var plan, state brandingThemeResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -361,7 +364,7 @@ func (r *BrandingThemeResource) Create(ctx context.Context, req resource.CreateR
 }
 
 func (r *BrandingThemeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *brandingThemeResourceModel
+	var data *brandingThemeResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -406,7 +409,7 @@ func (r *BrandingThemeResource) Read(ctx context.Context, req resource.ReadReque
 }
 
 func (r *BrandingThemeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan, state brandingThemeResourceModel
+	var plan, state brandingThemeResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -455,7 +458,7 @@ func (r *BrandingThemeResource) Update(ctx context.Context, req resource.UpdateR
 }
 
 func (r *BrandingThemeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *brandingThemeResourceModel
+	var data *brandingThemeResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -522,7 +525,7 @@ func (r *BrandingThemeResource) ImportState(ctx context.Context, req resource.Im
 	}
 }
 
-func (p *brandingThemeResourceModel) expand(ctx context.Context) (*management.BrandingTheme, diag.Diagnostics) {
+func (p *brandingThemeResourceModelV1) expand(ctx context.Context) (*management.BrandingTheme, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	logoType := management.ENUMBRANDINGLOGOTYPE_NONE
@@ -606,7 +609,7 @@ func (p *brandingThemeResourceModel) expand(ctx context.Context) (*management.Br
 	return data, diags
 }
 
-func (p *brandingThemeResourceModel) toState(apiObject *management.BrandingTheme) diag.Diagnostics {
+func (p *brandingThemeResourceModelV1) toState(apiObject *management.BrandingTheme) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
