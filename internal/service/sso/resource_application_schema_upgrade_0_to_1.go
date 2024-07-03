@@ -34,14 +34,9 @@ type applicationResourceModelV0 struct {
 	SAMLOptions               types.List                   `tfsdk:"saml_options"`
 }
 
-type applicationAccessControlGroupOptionsResourceModelV0 struct {
-	Type   types.String `tfsdk:"type"`
-	Groups types.Set    `tfsdk:"groups"`
-}
+type applicationAccessControlGroupOptionsResourceModelV0 applicationAccessControlGroupOptionsResourceModelV1
 
-type applicationExternalLinkOptionsResourceModelV0 struct {
-	HomePageUrl types.String `tfsdk:"home_page_url"`
-}
+type applicationExternalLinkOptionsResourceModelV0 applicationExternalLinkOptionsResourceModelV1
 
 type applicationOIDCOptionsResourceModelV0 struct {
 	AdditionalRefreshTokenReplayProtectionEnabled types.Bool                   `tfsdk:"additional_refresh_token_replay_protection_enabled"`
@@ -74,14 +69,9 @@ type applicationOIDCOptionsResourceModelV0 struct {
 	PackageName                                   types.String                 `tfsdk:"package_name"`
 }
 
-type applicationCorsSettingsResourceModelV0 struct {
-	Behavior types.String `tfsdk:"behavior"`
-	Origins  types.Set    `tfsdk:"origins"`
-}
+type applicationCorsSettingsResourceModelV0 applicationCorsSettingsResourceModelV1
 
-type applicationOIDCCertificateBasedAuthenticationResourceModelV0 struct {
-	KeyId pingonetypes.ResourceIDValue `tfsdk:"key_id"`
-}
+type applicationOIDCCertificateBasedAuthenticationResourceModelV0 applicationOIDCCertificateBasedAuthenticationResourceModelV1
 
 type applicationOIDCMobileAppResourceModelV0 struct {
 	BundleId               types.String `tfsdk:"bundle_id"`
@@ -100,10 +90,7 @@ type applicationOIDCMobileAppIntegrityDetectionResourceModelV0 struct {
 	GooglePlay        types.List `tfsdk:"google_play"`
 }
 
-type applicationOIDCMobileAppIntegrityDetectionCacheDurationResourceModelV0 struct {
-	Amount types.Int64  `tfsdk:"amount"`
-	Units  types.String `tfsdk:"units"`
-}
+type applicationOIDCMobileAppIntegrityDetectionCacheDurationResourceModelV0 applicationOIDCMobileAppIntegrityDetectionCacheDurationResourceModelV1
 
 type applicationOIDCMobileAppIntegrityDetectionGooglePlayResourceModelV0 struct {
 	DecryptionKey                 types.String `tfsdk:"decryption_key"`
@@ -135,24 +122,16 @@ type applicationSAMLOptionsResourceModelV0 struct {
 	Type                         types.String `tfsdk:"type"`
 }
 
-type applicationSAMLOptionsIdpSigningKeyResourceModelV0 struct {
-	Algorithm types.String                 `tfsdk:"algorithm"`
-	KeyId     pingonetypes.ResourceIDValue `tfsdk:"key_id"`
-}
+type applicationSAMLOptionsIdpSigningKeyResourceModelV0 applicationSAMLOptionsIdpSigningKeyResourceModelV1
 
 type applicationSAMLOptionsSpEncryptionResourceModelV0 struct {
 	Algorithm   types.String `tfsdk:"algorithm"`
 	Certificate types.List   `tfsdk:"certificate"`
 }
 
-type applicationSAMLOptionsSpEncryptionCertificateResourceModelV0 struct {
-	Id pingonetypes.ResourceIDValue `tfsdk:"id"`
-}
+type applicationSAMLOptionsSpEncryptionCertificateResourceModelV0 applicationSAMLOptionsSpEncryptionCertificateResourceModelV1
 
-type applicationSAMLOptionsSpVerificationResourceModelV0 struct {
-	CertificateIds     types.Set  `tfsdk:"certificate_ids"`
-	AuthnRequestSigned types.Bool `tfsdk:"authn_request_signed"`
-}
+type applicationSAMLOptionsSpVerificationResourceModelV0 applicationSAMLOptionsSpVerificationResourceModelV1
 
 func (r *ApplicationResource) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
 
