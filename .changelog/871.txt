@@ -25,3 +25,7 @@ bump `github.com/patrickcping/pingone-go-sdk-v2/risk` 0.15.1 => 0.16.0
 ```release-note:note
 bump `github.com/patrickcping/pingone-go-sdk-v2/verify` 0.5.0 => 0.6.0
 ```
+
+```release-note:bug
+`resource/pingone_gateway`: Fixed error when configuring gateways that are generic LDAP v3 compliant directories, or OpenDJ Directory servers.
+```
