@@ -57,5 +57,4 @@ resource "pingone_gateway" "my_ldap_gateway" {
       update_user_on_successful_authentication = true
     }
   }
-
 }

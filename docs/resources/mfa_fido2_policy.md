@@ -71,7 +71,6 @@ resource "pingone_mfa_fido2_policy" "my_awesome_fido2_policy" {
     enforce_during_authentication = true
     option                        = "REQUIRED"
   }
-
 }
 ```
 

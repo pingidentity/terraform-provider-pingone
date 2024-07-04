@@ -29,7 +29,7 @@ import (
 // Types
 type ApplicationPushCredentialResource serviceClientType
 
-type applicationPushCredentialResourceModel struct {
+type applicationPushCredentialResourceModelV1 struct {
 	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
 	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	ApplicationId pingonetypes.ResourceIDValue `tfsdk:"application_id"`
@@ -38,26 +38,27 @@ type applicationPushCredentialResourceModel struct {
 	Hms           types.Object                 `tfsdk:"hms"`
 }
 
-type applicationPushCredentialFcmResourceModel struct {
+type applicationPushCredentialFcmResourceModelV1 struct {
 	GoogleServiceAccountCredentials jsontypes.Normalized `tfsdk:"google_service_account_credentials"`
 }
 
-type applicationPushCredentialApnsResourceModel struct {
+type applicationPushCredentialApnsResourceModelV1 struct {
 	Key             types.String `tfsdk:"key"`
 	TeamId          types.String `tfsdk:"team_id"`
 	TokenSigningKey types.String `tfsdk:"token_signing_key"`
 }
 
-type applicationPushCredentialHmsResourceModel struct {
+type applicationPushCredentialHmsResourceModelV1 struct {
 	ClientId     types.String `tfsdk:"client_id"`
 	ClientSecret types.String `tfsdk:"client_secret"`
 }
 
 // Framework interfaces
 var (
-	_ resource.Resource                = &ApplicationPushCredentialResource{}
-	_ resource.ResourceWithConfigure   = &ApplicationPushCredentialResource{}
-	_ resource.ResourceWithImportState = &ApplicationPushCredentialResource{}
+	_ resource.Resource                 = &ApplicationPushCredentialResource{}
+	_ resource.ResourceWithConfigure    = &ApplicationPushCredentialResource{}
+	_ resource.ResourceWithImportState  = &ApplicationPushCredentialResource{}
+	_ resource.ResourceWithUpgradeState = &ApplicationPushCredentialResource{}
 )
 
 // New Object
@@ -92,6 +93,9 @@ func (r *ApplicationPushCredentialResource) Schema(ctx context.Context, req reso
 	).RequiresReplaceNestedAttributes()
 
 	resp.Schema = schema.Schema{
+
+		Version: 1,
+
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage push credentials for a mobile MFA application configured in PingOne.",
 
@@ -265,7 +269,7 @@ func (r *ApplicationPushCredentialResource) Configure(ctx context.Context, req r
 }
 
 func (r *ApplicationPushCredentialResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan, state applicationPushCredentialResourceModel
+	var plan, state applicationPushCredentialResourceModelV1
 
 	if r.Client.MFAAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -314,7 +318,7 @@ func (r *ApplicationPushCredentialResource) Create(ctx context.Context, req reso
 }
 
 func (r *ApplicationPushCredentialResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *applicationPushCredentialResourceModel
+	var data *applicationPushCredentialResourceModelV1
 
 	if r.Client.MFAAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -359,7 +363,7 @@ func (r *ApplicationPushCredentialResource) Read(ctx context.Context, req resour
 }
 
 func (r *ApplicationPushCredentialResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan, state applicationPushCredentialResourceModel
+	var plan, state applicationPushCredentialResourceModelV1
 
 	if r.Client.MFAAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -408,7 +412,7 @@ func (r *ApplicationPushCredentialResource) Update(ctx context.Context, req reso
 }
 
 func (r *ApplicationPushCredentialResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *applicationPushCredentialResourceModel
+	var data *applicationPushCredentialResourceModelV1
 
 	if r.Client.MFAAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -479,13 +483,13 @@ func (r *ApplicationPushCredentialResource) ImportState(ctx context.Context, req
 	}
 }
 
-func (p *applicationPushCredentialResourceModel) expand(ctx context.Context) (*mfa.MFAPushCredentialRequest, diag.Diagnostics) {
+func (p *applicationPushCredentialResourceModelV1) expand(ctx context.Context) (*mfa.MFAPushCredentialRequest, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data := &mfa.MFAPushCredentialRequest{}
 
 	if !p.Fcm.IsNull() && !p.Fcm.IsUnknown() {
-		var plan applicationPushCredentialFcmResourceModel
+		var plan applicationPushCredentialFcmResourceModelV1
 		diags.Append(p.Fcm.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -503,7 +507,7 @@ func (p *applicationPushCredentialResourceModel) expand(ctx context.Context) (*m
 	}
 
 	if !p.Apns.IsNull() && !p.Apns.IsUnknown() {
-		var plan applicationPushCredentialApnsResourceModel
+		var plan applicationPushCredentialApnsResourceModelV1
 		diags.Append(p.Apns.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -521,7 +525,7 @@ func (p *applicationPushCredentialResourceModel) expand(ctx context.Context) (*m
 	}
 
 	if !p.Hms.IsNull() && !p.Hms.IsUnknown() {
-		var plan applicationPushCredentialHmsResourceModel
+		var plan applicationPushCredentialHmsResourceModelV1
 		diags.Append(p.Hms.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -540,7 +544,7 @@ func (p *applicationPushCredentialResourceModel) expand(ctx context.Context) (*m
 	return data, diags
 }
 
-func (p *applicationPushCredentialResourceModel) toState(apiObject *mfa.MFAPushCredentialResponse) diag.Diagnostics {
+func (p *applicationPushCredentialResourceModelV1) toState(apiObject *mfa.MFAPushCredentialResponse) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {

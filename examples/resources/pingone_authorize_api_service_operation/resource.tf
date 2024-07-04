@@ -51,3 +51,20 @@ resource "pingone_authorize_api_service_operation" "my_awesome_api_service_opera
     },
   ]
 }
+
+variable "redeploy_trigger_date" {
+  type = string
+}
+
+resource "pingone_authorize_api_service_deployment" "my_awesome_api_service" {
+  environment_id = pingone_environment.my_environment.id
+  api_service_id = pingone_authorize_api_service.my_awesome_api_service.id
+
+  redeployment_trigger_values = {
+    "redeploy" : var.redeploy_trigger_date
+  }
+
+  depends_on = [
+    pingone_authorize_api_service_operation.my_awesome_api_service_operation,
+  ]
+}

@@ -841,7 +841,7 @@ func (p *applicationDataSourceModel) toState(ctx context.Context, apiObject *man
 		// Service specific attributes
 		p.Tags = framework.EnumSetOkToTF(v.GetTagsOk())
 
-		var oidcOptionsState ApplicationOIDCOptionsResourceModel
+		var oidcOptionsState applicationOIDCOptionsResourceModelV1
 		if !p.OIDCOptions.IsNull() && !p.OIDCOptions.IsUnknown() {
 			d := p.OIDCOptions.As(ctx, &oidcOptionsState, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    false,

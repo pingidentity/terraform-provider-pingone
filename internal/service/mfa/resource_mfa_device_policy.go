@@ -706,7 +706,7 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 
 									"cool_down": schema.SingleNestedAttribute{
 										Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies OTP failure cool down settings for mobile applications in the policy.").Description,
-										Optional:    true,
+										Required:    true,
 
 										Attributes: map[string]schema.Attribute{
 											"duration": schema.Int64Attribute{

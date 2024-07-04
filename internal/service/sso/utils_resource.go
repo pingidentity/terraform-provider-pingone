@@ -45,45 +45,13 @@ func fetchResourceFromName(ctx context.Context, apiClient *management.APIClient,
 
 	var resource management.Resource
 
-	errorFunction := framework.DefaultCustomError
-	if warnIfNotFound {
-		errorFunction = framework.CustomErrorResourceNotFoundWarning
-	}
-
-	// Run the API call
-	var entityArray *management.EntityArray
-	diags.Append(framework.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.ResourcesApi.ReadAllResources(ctx, environmentId).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, fO, fR, fErr)
-		},
-		"ReadAllResources",
-		errorFunction,
-		sdk.DefaultCreateReadRetryable,
-		&entityArray,
-	)...)
+	resources, d := fetchResources(ctx, apiClient, environmentId, warnIfNotFound)
+	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
-	if entityArray == nil {
-		if warnIfNotFound {
-			diags.AddWarning(
-				"Environment cannot be found",
-				fmt.Sprintf("The environment %s cannot be found when finding resource %s by name", environmentId, resourceName),
-			)
-		} else {
-			diags.AddError(
-				"Environment cannot be found",
-				fmt.Sprintf("The environment %s cannot be found when finding resource %s by name", environmentId, resourceName),
-			)
-		}
-		return nil, diags
-	}
-
-	if resources, ok := entityArray.Embedded.GetResourcesOk(); ok {
+	if len(resources) > 0 {
 
 		found := false
 		for _, resourceItem := range resources {
@@ -112,4 +80,99 @@ func fetchResourceFromName(ctx context.Context, apiClient *management.APIClient,
 	}
 
 	return &resource, diags
+}
+
+func fetchResourceByType(ctx context.Context, apiClient *management.APIClient, environmentId string, resourceType management.EnumResourceType, warnIfNotFound bool) (*management.Resource, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if resourceType == management.ENUMRESOURCETYPE_CUSTOM {
+		diags.AddError("Invalid resource type", "Cannot find a resource by custom type.")
+		return nil, diags
+	}
+
+	var resource management.Resource
+
+	resources, d := fetchResources(ctx, apiClient, environmentId, warnIfNotFound)
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	if len(resources) > 0 {
+
+		found := false
+		for _, resourceItem := range resources {
+			if resourceItem.Resource != nil && resourceItem.Resource.GetType() == resourceType {
+				resource = *resourceItem.Resource
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			if warnIfNotFound {
+				diags.AddWarning(
+					"Cannot find resource from type",
+					fmt.Sprintf("The resource %s for environment %s cannot be found", resourceType, environmentId),
+				)
+			} else {
+				diags.AddError(
+					"Cannot find resource from type",
+					fmt.Sprintf("The resource %s for environment %s cannot be found", resourceType, environmentId),
+				)
+			}
+			return nil, diags
+		}
+
+	}
+
+	return &resource, diags
+}
+
+func fetchResources(ctx context.Context, apiClient *management.APIClient, environmentId string, warnIfNotFound bool) ([]management.EntityArrayEmbeddedResourcesInner, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	errorFunction := framework.DefaultCustomError
+	if warnIfNotFound {
+		errorFunction = framework.CustomErrorResourceNotFoundWarning
+	}
+
+	// Run the API call
+	var entityArray *management.EntityArray
+	diags.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			fO, fR, fErr := apiClient.ResourcesApi.ReadAllResources(ctx, environmentId).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, fO, fR, fErr)
+		},
+		"ReadAllResources",
+		errorFunction,
+		sdk.DefaultCreateReadRetryable,
+		&entityArray,
+	)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	if entityArray == nil {
+		if warnIfNotFound {
+			diags.AddWarning(
+				"Environment cannot be found",
+				fmt.Sprintf("The environment %s cannot be found when attempting to find resource", environmentId),
+			)
+		} else {
+			diags.AddError(
+				"Environment cannot be found",
+				fmt.Sprintf("The environment %s cannot be found when attempting to find resource", environmentId),
+			)
+		}
+		return nil, diags
+	}
+
+	if resources, ok := entityArray.Embedded.GetResourcesOk(); ok {
+		return resources, diags
+	}
+
+	return nil, diags
 }

@@ -21,7 +21,6 @@ resource "pingone_digital_wallet_application" "my_digital_wallet_app" {
 resource "pingone_credential_type" "my_credential" {
   environment_id = pingone_environment.my_environment.id
   # ...
-
 }
 
 resource "pingone_credential_issuance_rule" "my_credential_issuance_rule" {
