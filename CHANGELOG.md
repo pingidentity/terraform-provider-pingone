@@ -1,5 +1,19 @@
 ## 0.29.2 (Unreleased)
 
+NOTES:
+
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` 0.5.0 => 0.6.0 ([#871](https://github.com/pingidentity/terraform-provider-pingone/issues/871))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` 0.8.0 => 0.9.0 ([#871](https://github.com/pingidentity/terraform-provider-pingone/issues/871))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.41.0 => 0.42.0 ([#871](https://github.com/pingidentity/terraform-provider-pingone/issues/871))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` 0.19.0 => 0.20.0 ([#871](https://github.com/pingidentity/terraform-provider-pingone/issues/871))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` 0.15.1 => 0.16.0 ([#871](https://github.com/pingidentity/terraform-provider-pingone/issues/871))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/verify` 0.5.0 => 0.6.0 ([#871](https://github.com/pingidentity/terraform-provider-pingone/issues/871))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.1 => 0.12.2 ([#871](https://github.com/pingidentity/terraform-provider-pingone/issues/871))
+
+BUG FIXES:
+
+* `resource/pingone_gateway`: Fixed error when configuring gateways that are generic LDAP v3 compliant directories, or OpenDJ Directory servers. ([#871](https://github.com/pingidentity/terraform-provider-pingone/issues/871))
+
 ## 0.29.1 (24 June 2024)
 
 BUG FIXES:
