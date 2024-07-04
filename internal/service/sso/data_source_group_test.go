@@ -40,6 +40,7 @@ func TestAccGroupDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "population_id", resourceFullName, "population_id"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "user_filter", resourceFullName, "user_filter"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "external_id", resourceFullName, "external_id"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "custom_data", resourceFullName, "custom_data"),
 				),
 			},
 		},
@@ -75,6 +76,7 @@ func TestAccGroupDataSource_ByIDFull(t *testing.T) {
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "population_id", resourceFullName, "population_id"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "user_filter", resourceFullName, "user_filter"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "external_id", resourceFullName, "external_id"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "custom_data", resourceFullName, "custom_data"),
 				),
 			},
 		},
@@ -125,6 +127,8 @@ resource "pingone_group" "%[2]s" {
   population_id = pingone_population.%[2]s.id
   user_filter   = "email ew \"@test.com\""
   external_id   = "external_1234"
+
+  custom_data = jsonencode({ "hello" = "world" })
 }
 
 data "pingone_group" "%[2]s" {
@@ -153,6 +157,8 @@ resource "pingone_group" "%[2]s" {
   population_id = pingone_population.%[2]s.id
   user_filter   = "email ew \"@test.com\""
   external_id   = "external_1234"
+
+  custom_data = jsonencode({ "hello" = "world" })
 }
 
 data "pingone_group" "%[2]s" {

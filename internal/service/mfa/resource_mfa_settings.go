@@ -98,6 +98,10 @@ func (r *MFASettingsResource) Schema(ctx context.Context, req resource.SchemaReq
 	const maxAllowedDevicesMin = 1
 	const maxAllowedDevicesMax = 15
 
+	pairingMaxAllowedDevicesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the maximum number of MFA devices each user can have. This can be any number from `%d` to `%d`. All devices that are Active or Blocked are subject to this limit.", maxAllowedDevicesMin, maxAllowedDevicesMax),
+	).DefaultValue(maxAllowedDevicesDefault)
+
 	pairingPairingKeyFormatDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that controls the type of pairing key issued.",
 	).AllowedValuesComplex(map[string]string{
@@ -153,9 +157,10 @@ func (r *MFASettingsResource) Schema(ctx context.Context, req resource.SchemaReq
 
 				Attributes: map[string]schema.Attribute{
 					"max_allowed_devices": schema.Int64Attribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the maximum number of MFA devices each user can have. This can be any number up to 15. The default value is 5.  All devices that are Active or Blocked are subject to this limit.").Description,
-						Optional:    true,
-						Computed:    true,
+						Description:         pairingMaxAllowedDevicesDescription.Description,
+						MarkdownDescription: pairingMaxAllowedDevicesDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
 
 						Default: int64default.StaticInt64(maxAllowedDevicesDefault),
 

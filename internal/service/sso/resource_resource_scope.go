@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -21,6 +22,8 @@ import (
 
 // Types
 type ResourceScopeResource serviceClientType
+
+var requestMutex sync.Mutex
 
 type ResourceScopeResourceModel struct {
 	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
@@ -296,6 +299,9 @@ func (r *ResourceScopeResource) Delete(ctx context.Context, req resource.DeleteR
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return
 	}
+
+	requestMutex.Lock()
+	defer requestMutex.Unlock()
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)

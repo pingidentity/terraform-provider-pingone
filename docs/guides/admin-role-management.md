@@ -1,0 +1,142 @@
+---
+layout: ""
+page_title: "Admin Role Management Considerations"
+description: |-
+  When creating and managing environments using Terraform, admin role management must be considered to avoid unexpected errors or unexpected inability to manage platform resources.  The following document describes admin role management considerations that administrators must take when using the PingOne Terraform provider.
+---
+
+# Admin Role Management Considerations
+
+When creating and managing environments using Terraform, admin role management must be considered to avoid unexpected errors or unexpected inability to manage platform resources.  The following document describes admin role management considerations that administrators must take when using the PingOne Terraform provider.
+
+## PingOne Admin Role Model
+
+An administrative role is a collection of permissions that you can assign to a user, group of users, application, or connection. Administrative roles give PingOne admins access to resources in the PingOne admin console, API, Terraform resources and determine the actions they can take in PingOne.
+
+The list of available admin roles can be found on the PingOne online documentation - [PingOne Roles](https://docs.pingidentity.com/r/en-us/pingone/p1_c_roles).
+
+Since each role is a collection of permissions, the list of permissions that each role contains can be found on the PingOne online API documentation - [PingOne Role Permissions](https://apidocs.pingidentity.com/pingone/platform/v1/api/#pingone-role-permissions).
+
+## Considerations When Using Terraform to Create Environments
+
+When creating environments using Terraform (using the `pingone_environment` resource), the worker application used to connect Terraform to the PingOne tenant should have the **Organization Admin** role assigned, as that role contains the permission **Create, promote, read, update, and delete environment**.
+
+After the worker application has created the new environment, the worker application automatically inherits the following roles:
+- **Environment Admin** _scoped to the new environment_
+- **Identity Data Admin** _scoped to the new environment_
+- **Client Application Developer** _scoped to the new environment_
+
+Any existing user, group of users, application or connection that has an admin role assignment _scoped to the organization_ will also inherit the ability to manage the new environment with the permissions assigned to that role.
+
+For example, if admin user "Peter Parker" has **Environment Admin** _scoped to the organization_ and **Identity Data Admin** _scoped to individual environments_, either assigned directly or by being member of a group that has those admin roles assigned, Peter will inherit the role permissions to be able to manage that new environment (inherited **Environment Admin** role permissions), but will _not_ be able to manage user and group data of the environment (the **Identity Data Admin** role permissions have not been inherited).  In this example, if Peter needs to manage user identities and groups, Peter would need the **Identity Data Admin** role assigned _scoped to the new environment_ either directly or by being made a member of a group that has that role assigned.  See [Assigning Admin Roles](#assigning-admin-roles).
+
+~> Note that to prevent privilege escalation, admin users, worker applications or connections that previously could view and manage the worker application's secret may now no longer be able to do so, after an environment has been created with Terraform.  This can lead to an error _**Actor does not have permissions to access worker application client secrets**_.  For more information see [When Admins Cannot View a Worker Application Secret](#when-admins-cannot-view-or-manage-a-worker-application-secret)
+
+Beyond the birthright roles assigned to the worker application on environment creation and the inherited permissions on actors with roles scoped to the organisation, no other role assignments are given implicitly.
+
+It is now up to the customer tenant administrators to consider:
+1. Are the Terraform worker application's birthright roles sufficient to perform further configuration with Terraform?  _If not, further roles may need to be explicitly assigned to the worker application.  This can be achieved in the admin web console by an administrator, or by API, or by Terraform.  See [Assigning Admin Roles](#assigning-admin-roles)._
+2. Are the worker application's birthright role permissions beyond what is required for the worker application to perform it's configuration management purpose and contravene least privilege principles? _In this case, roles may need to be revoked from the worker application.  This can be achieved in the admin web console by an administrator, or by API.  It is not possible to revoke birthright roles from a worker application used to create an environment using Terraform, unless the birthright role assignments are first imported into Terraform state.  See [Importing Role Assignments to Terraform state](#importing-role-assignments-to-terraform-state)._
+3. Should other users, worker applications or connections be granted administrative roles to be able to manage the new environment, or continue to manage the secret of the Terraform worker application (see [When Admins Cannot View or Manage a Worker Application Secret](#when-admins-cannot-view-or-manage-a-worker-application-secret))? _Roles can be explicitly assigned to any user, group of users, worker application or connection in the admin console, by API or by Terraform.  See [Assigning Admin Roles](#assigning-admin-roles)._
+4. Do existing users, worker applications or connections that have roles _scoped to the organization_ (and therefore will implicitly gain permissions to manage the new environment) have the appropriate role permissions, or do those users (through direct assignment or via group membership), worker applications or connections need to have their role scope reduced such that their roles should instead be _scoped to individual environments_.    _Reducing the scope of admin role assignments can be achieved in the admin web console by an administrator, by API, or by Terraform (if those role assignments are managed using Terraform)._
+
+## Assigning Admin Roles
+
+When assigning admin roles to users, worker applications or connections, the role assignments can be assigned with a scope either to individual environments, populations or to the entire organisation (depending on the role).  Users may be assigned roles directly, or by being members of a group that has been assigned admin roles.
+
+Admin role assignments can be managed by the admin web console, API or Terraform.  When using Terraform, the following resources apply.
+
+- Assigning admin roles directly to users - `pingone_user_role_assignment` ([registry documentation link](https://registry.terraform.io/providers/pingidentity/pingone/latest/docs/resources/user_role_assignment)) - _Role conflicts may occur.  See [Role Assignment Scope Conflicts](#role-assignment-scope-conflicts)._
+- Assigning admin roles to groups - `pingone_group_role_assignment` ([registry documentation link](https://registry.terraform.io/providers/pingidentity/pingone/latest/docs/resources/group_role_assignment)) - _Role conflicts may occur on the group role assignment, but role conflicts on group user members are automatically resolved.  See [Role Assignment Scope Conflicts](#role-assignment-scope-conflicts)._
+- Assigning admin roles to worker applications - `pingone_application_role_assignment` ([registry documentation link](https://registry.terraform.io/providers/pingidentity/pingone/latest/docs/resources/application_role_assignment)) - _Role conflicts may occur.  See [Role Assignment Scope Conflicts](#role-assignment-scope-conflicts)._
+- Assigning admin roles to connections - `pingone_gateway_role_assignment` ([registry documentation link](https://registry.terraform.io/providers/pingidentity/pingone/latest/docs/resources/gateway_role_assignment)) - _Role conflicts may occur.  See [Role Assignment Scope Conflicts](#role-assignment-scope-conflicts)._
+
+A guided tutorial on role assignment using Terraform can be found at [terraform.pingidentity.com](https://terraform.pingidentity.com/examples/pingone/role-assignment/).
+
+Ping recommend that customers follow documented best practices for developing with Terraform, found at [terraform.pingidentity.com](https://terraform.pingidentity.com/best-practices/).  When managing admin roles assigned to users, follow the [User Administrator Role Assignment](https://terraform.pingidentity.com/best-practices/pingone/#user-administrator-role-assignment) best practice.
+
+### Role Assignment Scope Conflicts
+
+When assigning roles to users, groups of users, applications or connections using Terraform, there are situations where role assignment uniqueness conflicts may occur.  Errors may look similar to the following:
+
+```
+PingOne Error Details:
+ID: f21b****-****-****-****-********a7d0
+Code: INVALID_DATA
+Message: The request could not be completed. One or more validation errors were in the request.
+Details object: [{"code":"UNIQUENESS_VIOLATION","message":"May not assign duplicate Role","target":"role"}]
+```
+
+The error occurs when a user, group, worker application or connection already has the role assignment at a scope that is greater than or equal to the scope being configured.
+
+For example, "Bruce Wayne" has the **Environment Admin** role assigned _scoped to the organization_.  The `terraform apply` run attempts to assign the **Environment Admin** to Bruce using the `pingone_user_role_assignment` resource, _scoped to an individual environment_.  In this way, since Bruce already has **Environment Admin** with organisation level permissions (and so can manage all environments), Terraform is attempting to add duplicate role permissions.
+
+In the above example, the user-level conflict can be resolved by instead managing user's role assignments using groups, using the `pingone_group_role_assignment` resource where needed.  When using Terraform to manage role assignments, using groups to manage user's role assignments is a [documented best practice](https://terraform.pingidentity.com/best-practices/pingone/#use-group-role-assignments-over-terraform-managed-user-role-assignments).
+
+In the case of worker applications and connections, the Terraform HCL must be adjusted to resolve the role assignment scope conflict.  The following describe what can be changed:
+
+1. Change how role assignments are managed as an out-of-band control, to avoid the possibility of conflict.  In this way, admin-level controls outside of Terraform ensure that conflicts are not likely to happen when Terraform needs to manage role conflicts.
+2. Manage roles with privileged access management tools, to reduce the need for Terraform to manage role assignments.
+3. Use Terraform to calculate the possibility of conflicting role assignments.
+
+~> There are drawbacks when using Terraform to calculate the possibility of conflicting role assignments, as role assignments for a user, group, application or connection must be fully known in order to calculate the potential conflicts.  Since in Terraform, IDs are not known until the first `terraform apply`, this can lead to a situation where the Terraform HCL must be applied twice.  First applying the initial role assignments, followed by accurate calculation to ensure any future role assignments are not in conflict.  Example HCL can be found on [Github issue 478](https://github.com/pingidentity/terraform-provider-pingone/issues/478#issue-1805321896).
+
+## Importing Role Assignments to Terraform state
+
+Role assignments to users, groups, worker applications and connections may have been defined outside of Terraform's management control.  This includes role assignments that:
+
+- Have been defined by administrators in the admin web console
+- Have been defined by administrators and/or scripts by using the PingOne platform management API
+- Have been defined implicitly by the platform when creating new environments, though the admin web console, API or Terraform (by using the `pingone_environment` resource)
+
+These role assignments can be brought under Terraform's management control by using the **Terraform import** functionality.  Import is supported on the following resources:
+
+- Admin role assignment to a user directly - `pingone_user_role_assignment` ([registry documentation link](https://registry.terraform.io/providers/pingidentity/pingone/latest/docs/resources/user_role_assignment))
+- Admin role assignment to a group - `pingone_group_role_assignment` ([registry documentation link](https://registry.terraform.io/providers/pingidentity/pingone/latest/docs/resources/group_role_assignment))
+- Admin role assignment to a worker application - `pingone_application_role_assignment` ([registry documentation link](https://registry.terraform.io/providers/pingidentity/pingone/latest/docs/resources/application_role_assignment))
+- Admin role assignment to a connection - `pingone_gateway_role_assignment` ([registry documentation link](https://registry.terraform.io/providers/pingidentity/pingone/latest/docs/resources/gateway_role_assignment))
+
+### Import by Terraform CLI
+
+Hashicorp Terraform provides a standard CLI command, `terraform import`, that can be used to import any supported resource into Terraform state.  See Hashicorp's Documentation - [Importing Infrastructure](https://developer.hashicorp.com/terraform/cli/import)
+
+Each resource listed above contains an example for importing the resource to Terraform state using the Terraform CLI.
+
+### Import by Terraform Configuration Language
+
+Hashicorp Terraform provides a standard configuration langauge import declaration block, `import {}`, that can be used to import any supported resource into Terraform state and optionally, generate it's resulting HCL.  See Hashicorp's Documentation - [Terraform Configuration Language Import](https://developer.hashicorp.com/terraform/language/import)
+
+An example of a role assignment import for `pingone_group_role_assignment` is shown below, where the ID is a composite ID of `<environment_id>/<group_id>/<role_assignment_id>`, as shown in the Terraform CLI import example on the ([registry documentation](https://registry.terraform.io/providers/pingidentity/pingone/latest/docs/resources/group_role_assignment)):
+
+```terraform
+import {
+  to = pingone_group_role_assignment.example
+  id = "e16f****-****-****-****-********15be/80f9****-****-****-****-********e828/f936****-****-****-****-********65c1"
+}
+```
+
+## When Admins Cannot View or Manage a Worker Application Secret
+
+Admin actors (users, worker applications, connections) may not be able to view or rotate a worker application's secret when they previously have been able to as an unexpected change of behaviour.
+
+The issue may be observed in the admin web console (manifesting as a lack of control over a worker application's secret), a `403` error response from the [Read Application Secret](https://apidocs.pingidentity.com/pingone/platform/v1/api/#get-read-application-secret) API, or the following error within Terraform when attempting to use the `pingone_application_secret` resource or data source:
+
+```
+PingOne Error Details:
+ID: f21b****-****-****-****-********a7d0
+Code: ACCESS_FAILED
+Message: The request could not be completed. You do not have access to this resource.
+Details object: [{"code":"INSUFFICIENT_PERMISSIONS","message":"Actor does not have permissions to access worker application client secrets"}]
+```
+
+The change in ability to manage a worker application's client secret typically occurs when the worker application is granted additional role permissions that the user, admin worker application or connection doesn't have.  In effect, it means the worker application whose secret cannot be managed has a higher level of privilege to manage configuration and data within the tenant.  The ability to view and change the secret is therefore restricted to mitigate privilege escalation issues where admin actors could potentially use the higher privileged worker application to make changes they are not authorised to make in the platform.
+
+For example, worker application "Terraform Admin" is used to create a new environment using the `pingone_environment` resource.  The "Terraform Admin" worker application is implicitly granted birthright roles to be able to manage that environment (see [Considerations When Using Terraform to Create Environments](#considerations-when-using-terraform-to-create-environments)), but other admin users, worker applications and connections are not provided the same birthright role permission assignments.
+
+_The "Terraform Admin" worker application that created the environment now has higher privileges than other administrators, so privilege escalation controls are applied to other platform administrators.  Other platform administrators have now lost the ability to view and manage the "Terraform Admin" worker application secret_.
+
+The resolution is to apply the missing roles permissions (by assigning roles) to the users, worker applications or connections that need to be able to manage the worker application's secret.
+
+In the above example, this would mean adding a combination of **Environment Admin**, **Identity Data Admin** and **Client Application Developer** roles _scoped to the newly created environment_ to the users, worker applications or connections that need to be able to manage the "Terraform Admin" worker application's secret.
+
+_Roles can be explicitly assigned to any user, group of users, worker application or connection in the admin console, by API or by Terraform.  See [Assigning Admin Roles](#assigning-admin-roles)._

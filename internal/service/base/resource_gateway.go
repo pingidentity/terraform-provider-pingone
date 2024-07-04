@@ -39,7 +39,7 @@ import (
 // Types
 type GatewayResource serviceClientType
 
-type gatewayResourceModel struct {
+type gatewayResourceModelV1 struct {
 	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
 	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	Name          types.String                 `tfsdk:"name"`
@@ -65,13 +65,13 @@ type gatewayResourceModel struct {
 	RadiusNetworkPolicyServer types.Object                 `tfsdk:"radius_network_policy_server"`
 }
 
-type gatewayKerberosResourceModel struct {
+type gatewayKerberosResourceModelV1 struct {
 	ServiceAccountPassword        types.String `tfsdk:"service_account_password"`
 	ServiceAccountUPN             types.String `tfsdk:"service_account_upn"`
 	RetainPreviousCredentialsMins types.Int64  `tfsdk:"retain_previous_credentials_mins"`
 }
 
-type gatewayUserTypeResourceModel struct {
+type gatewayUserTypeResourceModelV1 struct {
 	AllowPasswordChanges                 types.Bool                   `tfsdk:"allow_password_changes"`
 	Id                                   pingonetypes.ResourceIDValue `tfsdk:"id"`
 	NewUserLookup                        types.Object                 `tfsdk:"new_user_lookup"`
@@ -81,23 +81,23 @@ type gatewayUserTypeResourceModel struct {
 	UserLinkAttributes                   types.List                   `tfsdk:"user_link_attributes"`
 }
 
-type gatewayUserTypeNewUserLookupResourceModel struct {
+type gatewayUserTypeNewUserLookupResourceModelV1 struct {
 	AttributeMappings types.Set                    `tfsdk:"attribute_mappings"`
 	LDAPFilterPattern types.String                 `tfsdk:"ldap_filter_pattern"`
 	PopulationId      pingonetypes.ResourceIDValue `tfsdk:"population_id"`
 }
 
-type gatewayUserTypeMigrationAttributeMappingResourceModel struct {
+type gatewayUserTypeMigrationAttributeMappingResourceModelV1 struct {
 	Name  types.String `tfsdk:"name"`
 	Value types.String `tfsdk:"value"`
 }
 
-type gatewayRadiusClientsResourceModel struct {
+type gatewayRadiusClientsResourceModelV1 struct {
 	IP           types.String `tfsdk:"ip"`
 	SharedSecret types.String `tfsdk:"shared_secret"`
 }
 
-type gatewayRadiusNetworkPolicyServerResourceModel struct {
+type gatewayRadiusNetworkPolicyServerResourceModelV1 struct {
 	IP   types.String `tfsdk:"ip"`
 	Port types.Int64  `tfsdk:"port"`
 }
@@ -147,10 +147,11 @@ var (
 
 // Framework interfaces
 var (
-	_ resource.Resource                = &GatewayResource{}
-	_ resource.ResourceWithConfigure   = &GatewayResource{}
-	_ resource.ResourceWithImportState = &GatewayResource{}
-	_ resource.ResourceWithModifyPlan  = &GatewayResource{}
+	_ resource.Resource                 = &GatewayResource{}
+	_ resource.ResourceWithConfigure    = &GatewayResource{}
+	_ resource.ResourceWithImportState  = &GatewayResource{}
+	_ resource.ResourceWithModifyPlan   = &GatewayResource{}
+	_ resource.ResourceWithUpgradeState = &GatewayResource{}
 )
 
 // New Object
@@ -249,6 +250,9 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 	}
 
 	resp.Schema = schema.Schema{
+
+		Version: 1,
+
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage gateway configuration in a PingOne environment.",
 
@@ -825,7 +829,7 @@ func (r *GatewayResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 		return
 	}
 
-	var plan, config gatewayResourceModel
+	var plan, config gatewayResourceModelV1
 	// Read Terraform plan and state data into the model
 	resp.Diagnostics.Append(resp.Plan.Get(ctx, &plan)...)
 	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
@@ -872,7 +876,7 @@ func (r *GatewayResource) Configure(ctx context.Context, req resource.ConfigureR
 }
 
 func (r *GatewayResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan, state gatewayResourceModel
+	var plan, state gatewayResourceModelV1
 
 	if r.Client.MFAAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -921,7 +925,7 @@ func (r *GatewayResource) Create(ctx context.Context, req resource.CreateRequest
 }
 
 func (r *GatewayResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *gatewayResourceModel
+	var data *gatewayResourceModelV1
 
 	if r.Client.MFAAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -966,7 +970,7 @@ func (r *GatewayResource) Read(ctx context.Context, req resource.ReadRequest, re
 }
 
 func (r *GatewayResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan, state gatewayResourceModel
+	var plan, state gatewayResourceModelV1
 
 	if r.Client.MFAAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -1015,7 +1019,7 @@ func (r *GatewayResource) Update(ctx context.Context, req resource.UpdateRequest
 }
 
 func (r *GatewayResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *gatewayResourceModel
+	var data *gatewayResourceModelV1
 
 	if r.Client.MFAAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -1082,7 +1086,7 @@ func (r *GatewayResource) ImportState(ctx context.Context, req resource.ImportSt
 	}
 }
 
-func (p *gatewayResourceModel) expand(ctx context.Context) (*management.CreateGatewayRequest, diag.Diagnostics) {
+func (p *gatewayResourceModelV1) expand(ctx context.Context) (*management.CreateGatewayRequest, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	// Main object
@@ -1128,7 +1132,7 @@ func (p *gatewayResourceModel) expand(ctx context.Context) (*management.CreateGa
 
 		if !p.Kerberos.IsNull() && !p.Kerberos.IsUnknown() {
 
-			var kerberosPlan gatewayKerberosResourceModel
+			var kerberosPlan gatewayKerberosResourceModelV1
 			diags.Append(p.Kerberos.As(ctx, &kerberosPlan, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    false,
 				UnhandledUnknownAsEmpty: false,
@@ -1155,7 +1159,7 @@ func (p *gatewayResourceModel) expand(ctx context.Context) (*management.CreateGa
 		}
 
 		if !p.UserTypes.IsNull() && !p.UserTypes.IsUnknown() {
-			var userTypesPlan map[string]gatewayUserTypeResourceModel
+			var userTypesPlan map[string]gatewayUserTypeResourceModelV1
 			diags.Append(p.UserTypes.ElementsAs(ctx, &userTypesPlan, false)...)
 			if diags.HasError() {
 				return nil, diags
@@ -1183,7 +1187,7 @@ func (p *gatewayResourceModel) expand(ctx context.Context) (*management.CreateGa
 		radiusClients := make([]management.GatewayTypeRADIUSAllOfRadiusClients, 0)
 
 		if !p.RadiusClients.IsNull() && !p.RadiusClients.IsUnknown() {
-			var radiusClientsPlan []gatewayRadiusClientsResourceModel
+			var radiusClientsPlan []gatewayRadiusClientsResourceModelV1
 			diags.Append(p.RadiusClients.ElementsAs(ctx, &radiusClientsPlan, false)...)
 			if diags.HasError() {
 				return nil, diags
@@ -1214,7 +1218,7 @@ func (p *gatewayResourceModel) expand(ctx context.Context) (*management.CreateGa
 		}
 
 		if !p.RadiusNetworkPolicyServer.IsNull() && !p.RadiusNetworkPolicyServer.IsUnknown() {
-			var radiusNPSPlan gatewayRadiusNetworkPolicyServerResourceModel
+			var radiusNPSPlan gatewayRadiusNetworkPolicyServerResourceModelV1
 			diags.Append(p.RadiusNetworkPolicyServer.As(ctx, &radiusNPSPlan, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    false,
 				UnhandledUnknownAsEmpty: false,
@@ -1247,7 +1251,7 @@ func (p *gatewayResourceModel) expand(ctx context.Context) (*management.CreateGa
 	return data, diags
 }
 
-func (p *gatewayUserTypeResourceModel) expandLDAPUserType(ctx context.Context, key string) (*management.GatewayTypeLDAPAllOfUserTypes, diag.Diagnostics) {
+func (p *gatewayUserTypeResourceModelV1) expandLDAPUserType(ctx context.Context, key string) (*management.GatewayTypeLDAPAllOfUserTypes, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var userLinkAttributesPlan []string
@@ -1277,7 +1281,7 @@ func (p *gatewayUserTypeResourceModel) expandLDAPUserType(ctx context.Context, k
 
 	if !p.NewUserLookup.IsNull() && !p.NewUserLookup.IsUnknown() {
 
-		var newUserLookupPlan gatewayUserTypeNewUserLookupResourceModel
+		var newUserLookupPlan gatewayUserTypeNewUserLookupResourceModelV1
 		diags.Append(p.NewUserLookup.As(ctx, &newUserLookupPlan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -1297,10 +1301,10 @@ func (p *gatewayUserTypeResourceModel) expandLDAPUserType(ctx context.Context, k
 	return data, diags
 }
 
-func (p *gatewayUserTypeNewUserLookupResourceModel) expandLDAPUserTypeNewUserLookup(ctx context.Context) (*management.GatewayTypeLDAPAllOfNewUserLookup, diag.Diagnostics) {
+func (p *gatewayUserTypeNewUserLookupResourceModelV1) expandLDAPUserTypeNewUserLookup(ctx context.Context) (*management.GatewayTypeLDAPAllOfNewUserLookup, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var attributeMappingsPlan []gatewayUserTypeMigrationAttributeMappingResourceModel
+	var attributeMappingsPlan []gatewayUserTypeMigrationAttributeMappingResourceModelV1
 	diags.Append(p.AttributeMappings.ElementsAs(ctx, &attributeMappingsPlan, false)...)
 	if diags.HasError() {
 		return nil, diags
@@ -1324,7 +1328,7 @@ func (p *gatewayUserTypeNewUserLookupResourceModel) expandLDAPUserTypeNewUserLoo
 	return data, diags
 }
 
-func (p *gatewayResourceModel) toState(ctx context.Context, apiObject *management.CreateGateway201Response) diag.Diagnostics {
+func (p *gatewayResourceModelV1) toState(ctx context.Context, apiObject *management.CreateGateway201Response) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -1378,7 +1382,7 @@ func (p *gatewayResourceModel) toState(ctx context.Context, apiObject *managemen
 		p.ConnectionSecurity = framework.EnumOkToTF(t.GetConnectionSecurityOk())
 		p.FollowReferrals = framework.BoolOkToTF(t.GetFollowReferralsOk())
 
-		var kerberosPlan *gatewayKerberosResourceModel
+		var kerberosPlan *gatewayKerberosResourceModelV1
 
 		diags.Append(p.Kerberos.As(ctx, &kerberosPlan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
@@ -1495,7 +1499,7 @@ func toStateRadiusNetworkPolicyServerOk(apiObject *management.GatewayTypeRADIUSA
 	return returnVar, diags
 }
 
-func toStateKerberosOk(apiObject *management.GatewayTypeLDAPAllOfKerberos, ok bool, kerberosStateModel *gatewayKerberosResourceModel) (types.Object, diag.Diagnostics) {
+func toStateKerberosOk(apiObject *management.GatewayTypeLDAPAllOfKerberos, ok bool, kerberosStateModel *gatewayKerberosResourceModelV1) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {

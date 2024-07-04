@@ -7,13 +7,20 @@ description: |-
 
 # PingOne Terraform Provider Version 1 Upgrade Guide (from version 0)
 
-Version 1.0.0 of the PingOne Terraform provider is a major release that introduces breaking changes to existing HCL. This guide describes the changes that are required to upgrade v0.* PingOne Terraform provider releases to v1.*.
+Version `1.0` of the PingOne Terraform provider is a major release that introduces breaking changes to existing HCL. This guide describes the changes that are required to upgrade `v0.*` PingOne Terraform provider releases to `v1.*`.
 
 ## Why have schemas changed?
 
 As part of ensuring the ongoing maintainability of the Terraform provider integration and to solve functional issues, some resource schemas have changed going to version `1` from version `0`.
 
-The schemas may have changed in different ways, described in the following sections.
+The schemas may have changed in the following ways:
+
+* Removal of previously deprecated fields
+* Removal of previously deprecated resources/data-sources
+* Re-alignment of the Terraform schema with the API schema
+* Data type changes (which change how HCL is written)
+
+The following sections detail the rationale for the above changes, and whether the changes are routine for a major version upgrade or one off changes that aren't expected in future major version changes.
 
 ### Removal of previously deprecated fields
 
@@ -1000,19 +1007,162 @@ resource "pingone_application" "my_awesome_saml_app" {
 
 ### `resource_id` parameter changed
 
-This parameter was previously deprecated and has now been made read only.  Use the `resource_name` parameter going forward.
+This parameter was previously deprecated and has now been made read only.  Use the `resource_type` and `custom_resource_id` fields going forward.
 
-### `resource_name` parameter changed
+Previous configuration example (OIDC):
 
-This parameter was previously optional and has now been made a required parameter.
+```terraform
+resource "pingone_application_resource_grant" "my_awesome_resource_grant" {
+  # ... other configuration parameters
+
+  resource_id = var.my_oidc_resource_id
+}
+```
+
+New configuration example (OIDC):
+
+```terraform
+resource "pingone_application" "my_awesome_saml_app" {
+  # ... other configuration parameters
+
+  resource_type = "OPENID_CONNECT"
+}
+```
+
+Previous configuration example (Custom resource):
+
+```terraform
+resource "pingone_application_resource_grant" "my_awesome_resource_grant" {
+  # ... other configuration parameters
+
+  resource_id = var.my_custom_resource_id
+}
+```
+
+New configuration example (Custom resource):
+
+```terraform
+resource "pingone_application" "my_awesome_saml_app" {
+  # ... other configuration parameters
+
+  resource_type      = "CUSTOM"
+  custom_resource_id = var.my_custom_resource_id
+}
+```
+
+### `resource_name` parameter removed
+
+This parameter was previously required and has now been removed.  Use the `resource_type` and `custom_resource_id` fields going forward.
+
+Previous configuration example (OIDC):
+
+```terraform
+resource "pingone_application_resource_grant" "my_awesome_resource_grant" {
+  # ... other configuration parameters
+
+  resource_name = "openid"
+}
+```
+
+New configuration example (OIDC):
+
+```terraform
+resource "pingone_application" "my_awesome_saml_app" {
+  # ... other configuration parameters
+
+  resource_type = "OPENID_CONNECT"
+}
+```
+
+Previous configuration example (Custom resource):
+
+```terraform
+resource "pingone_application_resource_grant" "my_awesome_resource_grant" {
+  # ... other configuration parameters
+
+  resource_name = var.my_custom_resource_name
+}
+```
+
+New configuration example (Custom resource):
+
+```terraform
+resource "pingone_application" "my_awesome_saml_app" {
+  # ... other configuration parameters
+
+  resource_type      = "CUSTOM"
+  custom_resource_id = var.my_custom_resource_id
+}
+```
 
 ### `scopes` parameter changed
 
-This parameter was previously deprecated and has now been made read only.  Use the `scope_names` parameter going forward.
+This parameter was previously deprecated and has now been made required.
 
 ### `scope_names` parameter changed
 
-This parameter was previously optional and has now been made a required parameter.
+This parameter was previously optional and has now been removed.  Use the `scopes` field going forward.
+
+Previous configuration example (OIDC):
+
+```terraform
+resource "pingone_application_resource_grant" "my_awesome_resource_grant" {
+  # ... other configuration parameters
+
+  resource_name = "openid"
+
+  scope_names [
+    "email",
+    "profile",
+  ]
+}
+```
+
+New configuration example (OIDC):
+
+```terraform
+resource "pingone_application" "my_awesome_saml_app" {
+  # ... other configuration parameters
+
+  resource_type = "OPENID_CONNECT"
+
+  scopes [
+    var.email_scope_id,
+    var.profile_scope_id,
+  ]
+}
+```
+
+Previous configuration example (Custom resource):
+
+```terraform
+resource "pingone_application_resource_grant" "my_awesome_resource_grant" {
+  # ... other configuration parameters
+
+  resource_name = var.my_custom_resource_name
+
+  scope_names [
+    "myscope1",
+    "myscope2",
+  ]
+}
+```
+
+New configuration example (Custom resource):
+
+```terraform
+resource "pingone_application" "my_awesome_saml_app" {
+  # ... other configuration parameters
+
+  resource_type      = "CUSTOM"
+  custom_resource_id = var.my_custom_resource_id
+
+  scope_names [
+    var.my_custom_scope1_id,
+    var.my_custom_scope2_id,
+  ]
+}
+```
 
 ## Resource: pingone_branding_settings
 
@@ -1302,6 +1452,96 @@ resource "pingone_environment" "my_environment" {
 This parameter block is no longer needed and has been removed.
 
 ## Resource: pingone_gateway
+
+### `kerberos_service_account_upn` parameter moved
+
+The `kerberos_service_account_upn` parameter has been moved to `kerberos.service_account_upn`
+
+Previous configuration example:
+
+```terraform
+resource "pingone_gateway" "my_awesome_gateway" {
+  # ... other configuration parameters
+
+  kerberos_service_account_upn              = var.kerberos_service_account_upn
+  kerberos_service_account_password         = var.kerberos_service_account_password
+  kerberos_retain_previous_credentials_mins = 20
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_gateway" "my_awesome_gateway" {
+  # ... other configuration parameters
+
+  kerberos = {
+    service_account_upn              = var.kerberos_service_account_upn
+    service_account_password         = var.kerberos_service_account_password
+    retain_previous_credentials_mins = 20
+  }
+}
+```
+
+### `kerberos_service_account_password` parameter moved
+
+The `kerberos_service_account_password` parameter has been moved to `kerberos.service_account_password`
+
+Previous configuration example:
+
+```terraform
+resource "pingone_gateway" "my_awesome_gateway" {
+  # ... other configuration parameters
+
+  kerberos_service_account_upn              = var.kerberos_service_account_upn
+  kerberos_service_account_password         = var.kerberos_service_account_password
+  kerberos_retain_previous_credentials_mins = 20
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_gateway" "my_awesome_gateway" {
+  # ... other configuration parameters
+
+  kerberos = {
+    service_account_upn              = var.kerberos_service_account_upn
+    service_account_password         = var.kerberos_service_account_password
+    retain_previous_credentials_mins = 20
+  }
+}
+```
+
+### `kerberos_retain_previous_credentials_mins` parameter moved
+
+The `kerberos_retain_previous_credentials_mins` parameter has been moved to `kerberos.retain_previous_credentials_mins`
+
+Previous configuration example:
+
+```terraform
+resource "pingone_gateway" "my_awesome_gateway" {
+  # ... other configuration parameters
+
+  kerberos_service_account_upn              = var.kerberos_service_account_upn
+  kerberos_service_account_password         = var.kerberos_service_account_password
+  kerberos_retain_previous_credentials_mins = 20
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_gateway" "my_awesome_gateway" {
+  # ... other configuration parameters
+
+  kerberos = {
+    service_account_upn              = var.kerberos_service_account_upn
+    service_account_password         = var.kerberos_service_account_password
+    retain_previous_credentials_mins = 20
+  }
+}
+```
 
 ### `radius_client` parameter rename and data type change
 
@@ -4054,11 +4294,93 @@ locals {
 
 ### `resource_id` parameter changed
 
-This parameter was previously deprecated and has now been made read only.  Use the `resource_name` parameter going forward.
+This parameter was previously deprecated and has now been made read only.  Use the `resource_type` and `custom_resource_id` parameters going forward.
 
-### `resource_name` parameter changed
+Previous configuration example (OIDC):
 
-This parameter was previously optional and has now been made a required field.
+```terraform
+resource "pingone_resource_attribute" "my_awesome_resource_attribute" {
+  # ... other configuration parameters
+
+  resource_id = var.my_oidc_resource_id
+}
+```
+
+New configuration example (OIDC):
+
+```terraform
+resource "pingone_resource_attribute" "my_awesome_resource_attribute" {
+  # ... other configuration parameters
+
+  resource_type = "OPENID_CONNECT"
+}
+```
+
+Previous configuration example (Custom resource):
+
+```terraform
+resource "pingone_resource_attribute" "my_awesome_resource_attribute" {
+  # ... other configuration parameters
+
+  resource_id = var.my_custom_resource_id
+}
+```
+
+New configuration example (Custom resource):
+
+```terraform
+resource "pingone_resource_attribute" "my_awesome_resource_attribute" {
+  # ... other configuration parameters
+
+  resource_type      = "CUSTOM"
+  custom_resource_id = var.my_custom_resource_id
+}
+```
+
+### `resource_name` parameter removed
+
+This parameter was previously optional and has now been removed.  Use the `resource_type` and `custom_resource_id` fields going forward.
+
+Previous configuration example (OIDC):
+
+```terraform
+resource "pingone_resource_attribute" "my_awesome_resource_attribute" {
+  # ... other configuration parameters
+
+  resource_name = "openid"
+}
+```
+
+New configuration example (OIDC):
+
+```terraform
+resource "pingone_resource_attribute" "my_awesome_resource_attribute" {
+  # ... other configuration parameters
+
+  resource_type = "OPENID_CONNECT"
+}
+```
+
+Previous configuration example (Custom resource):
+
+```terraform
+resource "pingone_resource_attribute" "my_awesome_resource_attribute" {
+  # ... other configuration parameters
+
+  resource_name = var.my_custom_resource_name
+}
+```
+
+New configuration example (Custom resource):
+
+```terraform
+resource "pingone_resource_attribute" "my_awesome_resource_attribute" {
+  # ... other configuration parameters
+
+  resource_type      = "CUSTOM"
+  custom_resource_id = var.my_custom_resource_id
+}
+```
 
 ## Resource: pingone_role_assignment_user (now pingone_user_role_assignment)
 
@@ -4571,6 +4893,53 @@ data "pingone_resource_secret" "my_awesome_custom_resource" {
 locals {
   my_awesome_resource_client_id     = data.pingone_resource.my_awesome_custom_resource.id
   my_awesome_resource_client_secret = data.pingone_resource_secret.my_awesome_custom_resource.secret
+}
+```
+
+## Data Source: pingone_resource_scope
+
+### `resource_id` parameter changed
+
+This parameter was previously required and has now been made read only.  Use the `resource_type` and `custom_resource_id` parameters going forward.
+
+Previous configuration example (OIDC):
+
+```terraform
+data "pingone_resource_scope" "my_awesome_resource_scope" {
+  # ... other configuration parameters
+
+  resource_id = var.my_oidc_resource_id
+}
+```
+
+New configuration example (OIDC):
+
+```terraform
+data "pingone_resource_scope" "my_awesome_resource_scope" {
+  # ... other configuration parameters
+
+  resource_type = "OPENID_CONNECT"
+}
+```
+
+Previous configuration example (Custom resource):
+
+```terraform
+data "pingone_resource_scope" "my_awesome_resource_scope" {
+  # ... other configuration parameters
+
+  resource_id = var.my_custom_resource_id
+}
+```
+
+New configuration example (Custom resource):
+
+```terraform
+data "pingone_resource_scope" "my_awesome_resource_scope" {
+  # ... other configuration parameters
+
+  resource_type      = "CUSTOM"
+  custom_resource_id = var.my_custom_resource_id
 }
 ```
 

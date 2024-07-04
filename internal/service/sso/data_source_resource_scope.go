@@ -16,7 +16,9 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
 // Types
@@ -25,7 +27,9 @@ type ResourceScopeDataSource serviceClientType
 type ResourceScopeDataSourceModel struct {
 	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
 	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ResourceType     types.String                 `tfsdk:"resource_type"`
 	ResourceId       pingonetypes.ResourceIDValue `tfsdk:"resource_id"`
+	CustomResourceId pingonetypes.ResourceIDValue `tfsdk:"custom_resource_id"`
 	ResourceScopeId  pingonetypes.ResourceIDValue `tfsdk:"resource_scope_id"`
 	Name             types.String                 `tfsdk:"name"`
 	Description      types.String                 `tfsdk:"description"`
@@ -52,6 +56,18 @@ func (r *ResourceScopeDataSource) Metadata(ctx context.Context, req datasource.M
 func (r *ResourceScopeDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 
 	nameLength := 1
+
+	resourceTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("The type of the resource to select.  When the value is set to `%s`, `custom_resource_id` must be specified.", string(management.ENUMRESOURCETYPE_CUSTOM)),
+	).AllowedValuesEnum(management.AllowedEnumResourceTypeEnumValues)
+
+	customResourceIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A string that specifies the ID of the custom resource to select.  Must be a valid PingOne resource ID.  Required if `resource_type` is set to `%s`, but cannot be set if `resource_type` is set to `%s` or `%s`.", string(management.ENUMRESOURCETYPE_CUSTOM), string(management.ENUMRESOURCETYPE_OPENID_CONNECT), string(management.ENUMRESOURCETYPE_PINGONE_API)),
+	)
+
+	resourceIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the ID of the resource granted to the application.",
+	)
 
 	resourceScopeIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The ID of the resource scope.",
@@ -80,9 +96,46 @@ func (r *ResourceScopeDataSource) Schema(ctx context.Context, req datasource.Sch
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment that is configured with the resource scope."),
 			),
 
-			"resource_id": framework.Attr_LinkID(
-				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the resource that the scope belongs to."),
-			),
+			"resource_type": schema.StringAttribute{
+				Description:         resourceTypeDescription.Description,
+				MarkdownDescription: resourceTypeDescription.MarkdownDescription,
+				Required:            true,
+
+				Validators: []validator.String{
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumResourceTypeEnumValues)...),
+				},
+			},
+
+			"custom_resource_id": schema.StringAttribute{
+				Description:         customResourceIdDescription.Description,
+				MarkdownDescription: customResourceIdDescription.MarkdownDescription,
+				Optional:            true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+
+				Validators: []validator.String{
+					stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+						types.StringValue(string(management.ENUMRESOURCETYPE_CUSTOM)),
+						path.MatchRelative().AtParent().AtName("resource_type"),
+					),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMRESOURCETYPE_OPENID_CONNECT)),
+						path.MatchRelative().AtParent().AtName("resource_type"),
+					),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMRESOURCETYPE_PINGONE_API)),
+						path.MatchRelative().AtParent().AtName("resource_type"),
+					),
+				},
+			},
+
+			"resource_id": schema.StringAttribute{
+				Description:         resourceIdDescription.Description,
+				MarkdownDescription: resourceIdDescription.MarkdownDescription,
+				Computed:            true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+			},
 
 			"resource_scope_id": schema.StringAttribute{
 				Description:         resourceScopeIdDescription.Description,
@@ -174,12 +227,27 @@ func (r *ResourceScopeDataSource) Read(ctx context.Context, req datasource.ReadR
 		return
 	}
 
+	var resource *management.Resource
+	var d diag.Diagnostics
+
+	switch data.ResourceType.ValueString() {
+	case string(management.ENUMRESOURCETYPE_CUSTOM):
+		resource, d = fetchResourceFromID(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), data.CustomResourceId.ValueString(), false)
+		resp.Diagnostics.Append(d...)
+	case string(management.ENUMRESOURCETYPE_OPENID_CONNECT), string(management.ENUMRESOURCETYPE_PINGONE_API):
+		resource, d = fetchResourceByType(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), management.EnumResourceType(data.ResourceType.ValueString()), false)
+		resp.Diagnostics.Append(d...)
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	var resourceScope *management.ResourceScope
 
 	if !data.Name.IsNull() {
 
 		var d diag.Diagnostics
-		resourceScope, d = fetchResourceScopeFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), data.Name.ValueString())
+		resourceScope, d = fetchResourceScopeFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), resource.GetId(), data.Name.ValueString())
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -188,7 +256,7 @@ func (r *ResourceScopeDataSource) Read(ctx context.Context, req datasource.ReadR
 	} else if !data.ResourceScopeId.IsNull() {
 
 		var d diag.Diagnostics
-		resourceScope, d = fetchResourceScopeFromID(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), data.ResourceId.ValueString(), data.ResourceScopeId.ValueString())
+		resourceScope, d = fetchResourceScopeFromID(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), resource.GetId(), data.ResourceScopeId.ValueString())
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -203,11 +271,11 @@ func (r *ResourceScopeDataSource) Read(ctx context.Context, req datasource.ReadR
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(resourceScope)...)
+	resp.Diagnostics.Append(data.toState(resourceScope, resource)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (p *ResourceScopeDataSourceModel) toState(apiObject *management.ResourceScope) diag.Diagnostics {
+func (p *ResourceScopeDataSourceModel) toState(apiObject *management.ResourceScope, resourceApiObject *management.Resource) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -221,7 +289,14 @@ func (p *ResourceScopeDataSourceModel) toState(apiObject *management.ResourceSco
 
 	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
 	p.ResourceId = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.ResourceType = framework.EnumOkToTF(resourceApiObject.GetTypeOk())
 	p.ResourceScopeId = framework.PingOneResourceIDToTF(apiObject.GetId())
+
+	p.CustomResourceId = pingonetypes.NewResourceIDNull()
+	if resourceApiObject.GetType() == management.ENUMRESOURCETYPE_CUSTOM {
+		p.CustomResourceId = framework.PingOneResourceIDOkToTF(apiObject.Resource.GetIdOk())
+	}
+
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.SchemaAttributes = framework.StringSetOkToTF(apiObject.GetSchemaAttributesOk())
