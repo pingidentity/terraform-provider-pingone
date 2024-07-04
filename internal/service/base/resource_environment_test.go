@@ -437,6 +437,10 @@ func TestAccEnvironment_BadParameters(t *testing.T) {
 		CheckDestroy:             base.Environment_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			{
+				Config:      testAccEnvironmentConfig_Workforce(resourceName, name, licenseID),
+				ExpectError: regexp.MustCompile(`Cannot create workforce environments`),
+			},
 			// Configure
 			{
 				Config: testAccEnvironmentConfig_Minimal(resourceName, name, licenseID),
@@ -528,6 +532,21 @@ func testAccEnvironmentConfig_Minimal(resourceName, name, licenseID string) stri
 resource "pingone_environment" "%[1]s" {
   name       = "%[2]s"
   license_id = "%[3]s"
+
+  services = [
+    {
+      type = "SSO"
+    }
+  ]
+}`, resourceName, name, licenseID)
+}
+
+func testAccEnvironmentConfig_Workforce(resourceName, name, licenseID string) string {
+	return fmt.Sprintf(`
+resource "pingone_environment" "%[1]s" {
+  name       = "%[2]s"
+  license_id = "%[3]s"
+  solution   = "WORKFORCE"
 
   services = [
     {

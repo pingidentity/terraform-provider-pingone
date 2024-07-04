@@ -122,8 +122,8 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 	).AllowedValuesEnum(management.AllowedEnumRegionCodeEnumValues).AppendMarkdownString("Will default to the region specified in the provider configuration if not specified, or can be set with the `PINGONE_REGION_CODE` environment variable.")
 
 	solutionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A string that specifies the solution context of the environment.  Leave blank for a custom, non-workforce solution context.  Valid options are `%s`, or no value for custom solution context.  Workforce solution environments are not yet supported in this provider resource, but can be fetched using the `pingone_environment` datasource.", string(management.ENUMSOLUTIONTYPE_CUSTOMER)),
-	).RequiresReplace()
+		"A string that specifies the solution context of the environment.  Leave undefined for a custom, non-workforce solution context.",
+	).AllowedValues(string(management.ENUMSOLUTIONTYPE_CUSTOMER), string(management.ENUMSOLUTIONTYPE_CIAM_TRIAL)).RequiresReplace()
 
 	servicesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A set of objects that specify the services to enable in the environment.",
@@ -264,6 +264,10 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 
 				Optional: true,
 
+				Validators: []validator.String{
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumSolutionTypeEnumValues)...),
+				},
+
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -379,6 +383,10 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 		return
 	}
 
+	if req.State.Raw.IsNull() {
+		resp.Diagnostics.Append(r.validateSolutionValue(plan.Solution)...)
+	}
+
 	if plan.Region.IsUnknown() {
 
 		if r.region.APICode == "" {
@@ -438,7 +446,7 @@ func (r *EnvironmentResource) ValidateConfig(ctx context.Context, req resource.V
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
-	resp.Diagnostics.Append(environmentServicesValidateTags(ctx, data.Services)...)
+	resp.Diagnostics.Append(r.environmentServicesValidateTags(ctx, data.Services)...)
 }
 
 func (r *EnvironmentResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -484,6 +492,12 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(r.validateSolutionValue(plan.Solution)...)
+	resp.Diagnostics.Append(r.environmentServicesValidateTags(ctx, plan.Services)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -601,6 +615,11 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 	// Read Terraform plan and state data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(r.environmentServicesValidateTags(ctx, plan.Services)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -874,11 +893,6 @@ func (p *environmentResourceModel) expand(ctx context.Context) (*management.Envi
 
 	if !p.Description.IsNull() {
 		environment.SetDescription(p.Description.ValueString())
-	}
-
-	diags.Append(environmentServicesValidateTags(ctx, p.Services)...)
-	if diags.HasError() {
-		return nil, diags
 	}
 
 	if !p.Services.IsNull() {
@@ -1160,7 +1174,7 @@ var retryEnvironmentDefault = func(ctx context.Context, r *http.Response, p1erro
 	return false
 }
 
-func environmentServicesValidateTags(ctx context.Context, services basetypes.SetValue) diag.Diagnostics {
+func (r *EnvironmentResource) environmentServicesValidateTags(ctx context.Context, services basetypes.SetValue) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if !services.IsNull() && !services.IsUnknown() {
@@ -1197,5 +1211,21 @@ func environmentServicesValidateTags(ctx context.Context, services basetypes.Set
 		}
 	}
 
+	return diags
+}
+func (r *EnvironmentResource) validateSolutionValue(solutionType basetypes.StringValue) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if !solutionType.IsNull() && !solutionType.IsUnknown() && (solutionType.ValueString() == string(management.ENUMSOLUTIONTYPE_WORKFORCE) || solutionType.ValueString() == string(management.ENUMSOLUTIONTYPE_WF_TRIAL)) {
+
+		diags.AddAttributeError(
+			path.Root("solution"),
+			"Cannot create workforce environments",
+			"The provider cannot yet create environments that are of the `WORKFORCE` or `WF_TRIAL` solution type.  Please create these environments manually in the PingOne admin console and if required, import into Terraform state.",
+		)
+
+		return diags
+
+	}
 	return diags
 }
