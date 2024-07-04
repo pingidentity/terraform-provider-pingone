@@ -27,6 +27,7 @@ type ApplicationRoleAssignmentResourceModel struct {
 	EnvironmentId       pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	ApplicationId       pingonetypes.ResourceIDValue `tfsdk:"application_id"`
 	RoleId              pingonetypes.ResourceIDValue `tfsdk:"role_id"`
+	ScopeApplicationId  pingonetypes.ResourceIDValue `tfsdk:"scope_application_id"`
 	ScopeEnvironmentId  pingonetypes.ResourceIDValue `tfsdk:"scope_environment_id"`
 	ScopeOrganizationId pingonetypes.ResourceIDValue `tfsdk:"scope_organization_id"`
 	ScopePopulationId   pingonetypes.ResourceIDValue `tfsdk:"scope_population_id"`
@@ -327,7 +328,7 @@ func (r *ApplicationRoleAssignmentResource) ImportState(ctx context.Context, req
 func (p *ApplicationRoleAssignmentResourceModel) expand() (*management.RoleAssignment, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	scopeID, scopeType, d := service.ExpandRoleAssignmentScope(p.ScopeEnvironmentId, p.ScopeOrganizationId, p.ScopePopulationId)
+	scopeID, scopeType, d := service.ExpandRoleAssignmentScope(p.ScopeEnvironmentId, p.ScopeOrganizationId, p.ScopePopulationId, p.ScopeApplicationId)
 	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
@@ -357,7 +358,7 @@ func (p *ApplicationRoleAssignmentResourceModel) toState(apiObject *management.R
 	p.RoleId = framework.PingOneResourceIDOkToTF(apiObject.Role.GetIdOk())
 	p.ReadOnly = framework.BoolOkToTF(apiObject.GetReadOnlyOk())
 
-	p.ScopeEnvironmentId, p.ScopeOrganizationId, p.ScopePopulationId = service.RoleAssignmentScopeOkToTF(apiObject.GetScopeOk())
+	p.ScopeEnvironmentId, p.ScopeOrganizationId, p.ScopePopulationId, p.ScopeApplicationId = service.RoleAssignmentScopeOkToTF(apiObject.GetScopeOk())
 
 	return diags
 }

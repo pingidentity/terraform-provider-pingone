@@ -9,9 +9,9 @@ description: |-
 
 {{ .Description | trimspace }}
 
-## Example Usage - Assign Population Scope
+## Example Usage - Assign Application Scope
 
-{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-population.tf") }}
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-application.tf") }}
 
 ## Example Usage - Assign Environment Scope
 
@@ -21,7 +21,11 @@ description: |-
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-organization.tf") }}
 
-~> When defining a role assignment, one of `scope_environment_id`, `scope_organization_id` or `scope_population_id` must be defined.
+## Example Usage - Assign Population Scope
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-population.tf") }}
+
+~> When defining a role assignment, one of `scope_application_id`, `scope_environment_id`, `scope_organization_id` or `scope_population_id` must be defined.
 
 {{ .SchemaMarkdown | trimspace }}
 
