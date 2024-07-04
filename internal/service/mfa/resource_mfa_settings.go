@@ -28,7 +28,7 @@ import (
 // Types
 type MFASettingsResource serviceClientType
 
-type MFASettingsResourceModel struct {
+type mFASettingsResourceModelV1 struct {
 	EnvironmentId   pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	Lockout         types.Object                 `tfsdk:"lockout"`
 	Pairing         types.Object                 `tfsdk:"pairing"`
@@ -36,21 +36,21 @@ type MFASettingsResourceModel struct {
 	Users           types.Object                 `tfsdk:"users"`
 }
 
-type MFASettingsLockoutResourceModel struct {
+type mFASettingsLockoutResourceModelV1 struct {
 	FailureCount    types.Int64 `tfsdk:"failure_count"`
 	DurationSeconds types.Int64 `tfsdk:"duration_seconds"`
 }
 
-type MFASettingsPairingResourceModel struct {
+type mFASettingsPairingResourceModelV1 struct {
 	MaxAllowedDevices types.Int64  `tfsdk:"max_allowed_devices"`
 	PairingKeyFormat  types.String `tfsdk:"pairing_key_format"`
 }
 
-type MFASettingsPhoneExtensionsResourceModel struct {
+type mFASettingsPhoneExtensionsResourceModelV1 struct {
 	Enabled types.Bool `tfsdk:"enabled"`
 }
 
-type MFASettingsUsersResourceModel struct {
+type mFASettingsUsersResourceModelV1 struct {
 	MFAEnabled types.Bool `tfsdk:"mfa_enabled"`
 }
 
@@ -76,9 +76,10 @@ var (
 
 // Framework interfaces
 var (
-	_ resource.Resource                = &MFASettingsResource{}
-	_ resource.ResourceWithConfigure   = &MFASettingsResource{}
-	_ resource.ResourceWithImportState = &MFASettingsResource{}
+	_ resource.Resource                 = &MFASettingsResource{}
+	_ resource.ResourceWithConfigure    = &MFASettingsResource{}
+	_ resource.ResourceWithImportState  = &MFASettingsResource{}
+	_ resource.ResourceWithUpgradeState = &MFASettingsResource{}
 )
 
 // New Object
@@ -118,6 +119,9 @@ func (r *MFASettingsResource) Schema(ctx context.Context, req resource.SchemaReq
 	)
 
 	resp.Schema = schema.Schema{
+
+		Version: 1,
+
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to manage the MFA settings for a PingOne environment.",
 
@@ -253,7 +257,7 @@ func (r *MFASettingsResource) Configure(ctx context.Context, req resource.Config
 }
 
 func (r *MFASettingsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan, state MFASettingsResourceModel
+	var plan, state mFASettingsResourceModelV1
 
 	if r.Client.MFAAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -302,7 +306,7 @@ func (r *MFASettingsResource) Create(ctx context.Context, req resource.CreateReq
 }
 
 func (r *MFASettingsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *MFASettingsResourceModel
+	var data *mFASettingsResourceModelV1
 
 	if r.Client.MFAAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -347,7 +351,7 @@ func (r *MFASettingsResource) Read(ctx context.Context, req resource.ReadRequest
 }
 
 func (r *MFASettingsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan, state MFASettingsResourceModel
+	var plan, state mFASettingsResourceModelV1
 
 	if r.Client.MFAAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -396,7 +400,7 @@ func (r *MFASettingsResource) Update(ctx context.Context, req resource.UpdateReq
 }
 
 func (r *MFASettingsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *MFASettingsResourceModel
+	var data *mFASettingsResourceModelV1
 
 	if r.Client.MFAAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -459,11 +463,11 @@ func (r *MFASettingsResource) ImportState(ctx context.Context, req resource.Impo
 	}
 }
 
-func (p *MFASettingsResourceModel) expand(ctx context.Context) (*mfa.MFASettings, diag.Diagnostics) {
+func (p *mFASettingsResourceModelV1) expand(ctx context.Context) (*mfa.MFASettings, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	// Pairing
-	var pairingPlan MFASettingsPairingResourceModel
+	var pairingPlan mFASettingsPairingResourceModelV1
 	diags.Append(p.Pairing.As(ctx, &pairingPlan, basetypes.ObjectAsOptions{
 		UnhandledNullAsEmpty:    false,
 		UnhandledUnknownAsEmpty: false,
@@ -483,7 +487,7 @@ func (p *MFASettingsResourceModel) expand(ctx context.Context) (*mfa.MFASettings
 
 	// Lockout
 	if !p.Lockout.IsNull() && !p.Lockout.IsUnknown() {
-		var lockoutPlan MFASettingsLockoutResourceModel
+		var lockoutPlan mFASettingsLockoutResourceModelV1
 		diags.Append(p.Lockout.As(ctx, &lockoutPlan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -504,7 +508,7 @@ func (p *MFASettingsResourceModel) expand(ctx context.Context) (*mfa.MFASettings
 
 	// Phone Extensions
 	if !p.PhoneExtensions.IsNull() && !p.PhoneExtensions.IsUnknown() {
-		var phoneExtensionsPlan MFASettingsPhoneExtensionsResourceModel
+		var phoneExtensionsPlan mFASettingsPhoneExtensionsResourceModelV1
 		diags.Append(p.PhoneExtensions.As(ctx, &phoneExtensionsPlan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -523,7 +527,7 @@ func (p *MFASettingsResourceModel) expand(ctx context.Context) (*mfa.MFASettings
 
 	// Users
 	if !p.Users.IsNull() && !p.Users.IsUnknown() {
-		var usersPlan MFASettingsUsersResourceModel
+		var usersPlan mFASettingsUsersResourceModelV1
 		diags.Append(p.Users.As(ctx, &usersPlan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -543,7 +547,7 @@ func (p *MFASettingsResourceModel) expand(ctx context.Context) (*mfa.MFASettings
 	return data, diags
 }
 
-func (p *MFASettingsResourceModel) toState(apiObject *mfa.MFASettings) diag.Diagnostics {
+func (p *mFASettingsResourceModelV1) toState(apiObject *mfa.MFASettings) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
