@@ -79,7 +79,7 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 	resp.Schema = schema.Schema{
 
 		Version: 1,
-		
+
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to manage the email sender settings in a PingOne environment.",
 
