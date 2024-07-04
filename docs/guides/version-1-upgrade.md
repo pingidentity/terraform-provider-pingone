@@ -4085,6 +4085,40 @@ resource "pingone_password_policy" "my_awesome_password_policy" {
 }
 ```
 
+### `min_characters` parameter data type change
+
+The `min_characters` parameter is now a nested object type and no longer a block list type.
+
+Previous configuration example:
+
+```terraform
+resource "pingone_password_policy" "my_awesome_password_policy" {
+  # ... other configuration parameters
+
+  min_characters {
+    alphabetical_uppercase = 1
+    alphabetical_lowercase = 1
+    numeric                = 1
+    special_characters     = 1
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_password_policy" "my_awesome_password_policy" {
+  # ... other configuration parameters
+
+  min_characters = {
+    alphabetical_uppercase = 1
+    alphabetical_lowercase = 1
+    numeric                = 1
+    special_characters     = 1
+  }
+}
+```
+
 ### `password_age.max` parameter moved
 
 The `password_age.max` parameter has been moved to `password_age_max`.
@@ -4164,7 +4198,7 @@ New configuration example:
 resource "pingone_password_policy" "my_awesome_password_policy" {
   # ... other configuration parameters
 
-  history {
+  history = {
     count          = 6
     retention_days = 365
   }

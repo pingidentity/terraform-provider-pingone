@@ -29,7 +29,7 @@ import (
 // Types
 type PasswordPolicyResource serviceClientType
 
-type PasswordPolicyResourceModel struct {
+type passwordPolicyResourceModelV1 struct {
 	Id                            pingonetypes.ResourceIDValue `tfsdk:"id"`
 	EnvironmentId                 pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	Name                          types.String                 `tfsdk:"name"`
@@ -50,22 +50,22 @@ type PasswordPolicyResourceModel struct {
 	PopulationCount               types.Int64                  `tfsdk:"population_count"`
 }
 
-type PasswordPolicyPasswordHistoryResourceModel struct {
+type passwordPolicyHistoryResourceModelV1 struct {
 	Count         types.Int64 `tfsdk:"count"`
 	RetentionDays types.Int64 `tfsdk:"retention_days"`
 }
 
-type PasswordPolicyPasswordLengthResourceModel struct {
+type passwordPolicyLengthResourceModelV1 struct {
 	Max types.Int64 `tfsdk:"max"`
 	Min types.Int64 `tfsdk:"min"`
 }
 
-type PasswordPolicyAccountLockoutResourceModel struct {
+type passwordPolicyLockoutResourceModelV1 struct {
 	DurationSeconds types.Int64 `tfsdk:"duration_seconds"`
 	FailureCount    types.Int64 `tfsdk:"failure_count"`
 }
 
-type PasswordPolicyMinCharactersResourceModel struct {
+type passwordPolicyMinCharactersResourceModelV1 struct {
 	AlphabeticalUppercase types.Int64 `tfsdk:"alphabetical_uppercase"`
 	AlphabeticalLowercase types.Int64 `tfsdk:"alphabetical_lowercase"`
 	Numeric               types.Int64 `tfsdk:"numeric"`
@@ -186,6 +186,9 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 	).DefaultValue(false)
 
 	resp.Schema = schema.Schema{
+
+		Version: 1,
+
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage PingOne password policies in an environment.",
 
@@ -470,7 +473,7 @@ func (r *PasswordPolicyResource) Configure(ctx context.Context, req resource.Con
 }
 
 func (r *PasswordPolicyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan, state PasswordPolicyResourceModel
+	var plan, state passwordPolicyResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -519,7 +522,7 @@ func (r *PasswordPolicyResource) Create(ctx context.Context, req resource.Create
 }
 
 func (r *PasswordPolicyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *PasswordPolicyResourceModel
+	var data *passwordPolicyResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -564,7 +567,7 @@ func (r *PasswordPolicyResource) Read(ctx context.Context, req resource.ReadRequ
 }
 
 func (r *PasswordPolicyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan, state PasswordPolicyResourceModel
+	var plan, state passwordPolicyResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -613,7 +616,7 @@ func (r *PasswordPolicyResource) Update(ctx context.Context, req resource.Update
 }
 
 func (r *PasswordPolicyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *PasswordPolicyResourceModel
+	var data *passwordPolicyResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -699,7 +702,7 @@ func (r *PasswordPolicyResource) ImportState(ctx context.Context, req resource.I
 	}
 }
 
-func (p *PasswordPolicyResourceModel) expand(ctx context.Context) (*management.PasswordPolicy, diag.Diagnostics) {
+func (p *passwordPolicyResourceModelV1) expand(ctx context.Context) (*management.PasswordPolicy, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data := management.NewPasswordPolicy(
@@ -720,7 +723,7 @@ func (p *PasswordPolicyResourceModel) expand(ctx context.Context) (*management.P
 	}
 
 	if !p.History.IsNull() && !p.History.IsUnknown() {
-		var plan PasswordPolicyPasswordHistoryResourceModel
+		var plan passwordPolicyHistoryResourceModelV1
 		diags.Append(p.History.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -743,7 +746,7 @@ func (p *PasswordPolicyResourceModel) expand(ctx context.Context) (*management.P
 	}
 
 	if !p.Length.IsNull() && !p.Length.IsUnknown() {
-		var plan PasswordPolicyPasswordLengthResourceModel
+		var plan passwordPolicyLengthResourceModelV1
 		diags.Append(p.Length.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -766,7 +769,7 @@ func (p *PasswordPolicyResourceModel) expand(ctx context.Context) (*management.P
 	}
 
 	if !p.Lockout.IsNull() && !p.Lockout.IsUnknown() {
-		var plan PasswordPolicyAccountLockoutResourceModel
+		var plan passwordPolicyLockoutResourceModelV1
 		diags.Append(p.Lockout.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -789,7 +792,7 @@ func (p *PasswordPolicyResourceModel) expand(ctx context.Context) (*management.P
 	}
 
 	if !p.MinCharacters.IsNull() && !p.MinCharacters.IsUnknown() {
-		var plan PasswordPolicyMinCharactersResourceModel
+		var plan passwordPolicyMinCharactersResourceModelV1
 		diags.Append(p.MinCharacters.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -846,7 +849,7 @@ func (p *PasswordPolicyResourceModel) expand(ctx context.Context) (*management.P
 	return data, diags
 }
 
-func (p *PasswordPolicyResourceModel) toState(apiObject *management.PasswordPolicy) diag.Diagnostics {
+func (p *passwordPolicyResourceModelV1) toState(apiObject *management.PasswordPolicy) diag.Diagnostics {
 	var diags, d diag.Diagnostics
 
 	if apiObject == nil {
