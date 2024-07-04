@@ -53,7 +53,8 @@ func AlertChannel_CheckDestroy(s *terraform.State) error {
 			if alertChannels, ok := embedded.GetAlertChannelsOk(); ok {
 				for _, alertChannel := range alertChannels {
 					if alertChannel.GetId() == rs.Primary.ID {
-						response = &alertChannel
+						alertChannel := &alertChannel // exportloopref lint
+						response = alertChannel
 						break
 					}
 				}
