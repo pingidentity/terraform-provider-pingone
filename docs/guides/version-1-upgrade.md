@@ -1453,6 +1453,96 @@ This parameter block is no longer needed and has been removed.
 
 ## Resource: pingone_gateway
 
+### `kerberos_service_account_upn` parameter moved
+
+The `kerberos_service_account_upn` parameter has been moved to `kerberos.service_account_upn`
+
+Previous configuration example:
+
+```terraform
+resource "pingone_gateway" "my_awesome_gateway" {
+  # ... other configuration parameters
+
+  kerberos_service_account_upn              = var.kerberos_service_account_upn
+  kerberos_service_account_password         = var.kerberos_service_account_password
+  kerberos_retain_previous_credentials_mins = 20
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_gateway" "my_awesome_gateway" {
+  # ... other configuration parameters
+
+  kerberos = {
+    service_account_upn              = var.kerberos_service_account_upn
+    service_account_password         = var.kerberos_service_account_password
+    retain_previous_credentials_mins = 20
+  }
+}
+```
+
+### `kerberos_service_account_password` parameter moved
+
+The `kerberos_service_account_password` parameter has been moved to `kerberos.service_account_password`
+
+Previous configuration example:
+
+```terraform
+resource "pingone_gateway" "my_awesome_gateway" {
+  # ... other configuration parameters
+
+  kerberos_service_account_upn              = var.kerberos_service_account_upn
+  kerberos_service_account_password         = var.kerberos_service_account_password
+  kerberos_retain_previous_credentials_mins = 20
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_gateway" "my_awesome_gateway" {
+  # ... other configuration parameters
+
+  kerberos = {
+    service_account_upn              = var.kerberos_service_account_upn
+    service_account_password         = var.kerberos_service_account_password
+    retain_previous_credentials_mins = 20
+  }
+}
+```
+
+### `kerberos_retain_previous_credentials_mins` parameter moved
+
+The `kerberos_retain_previous_credentials_mins` parameter has been moved to `kerberos.retain_previous_credentials_mins`
+
+Previous configuration example:
+
+```terraform
+resource "pingone_gateway" "my_awesome_gateway" {
+  # ... other configuration parameters
+
+  kerberos_service_account_upn              = var.kerberos_service_account_upn
+  kerberos_service_account_password         = var.kerberos_service_account_password
+  kerberos_retain_previous_credentials_mins = 20
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_gateway" "my_awesome_gateway" {
+  # ... other configuration parameters
+
+  kerberos = {
+    service_account_upn              = var.kerberos_service_account_upn
+    service_account_password         = var.kerberos_service_account_password
+    retain_previous_credentials_mins = 20
+  }
+}
+```
+
 ### `radius_client` parameter rename and data type change
 
 The `radius_client` parameter has been renamed to `radius_clients` and is now a set of objects data type and no longer a block set type.
