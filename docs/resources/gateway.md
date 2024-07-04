@@ -152,7 +152,7 @@ resource "pingone_gateway" "my_awesome_api_gateway" {
 - `servers` (Set of String) For LDAP gateways only: A list of LDAP server host name and port number combinations (for example, [`ds1.bxretail.org:636`, `ds2.bxretail.org:636`]).
 - `user_type` (Block Set) For LDAP gateways only: A collection of properties that define how users should be provisioned in PingOne. The `user_type` block specifies which user properties in PingOne correspond to the user properties in an external LDAP directory. You can use an LDAP browser to view the user properties in the external LDAP directory. (see [below for nested schema](#nestedblock--user_type))
 - `validate_tls_certificates` (Boolean) For LDAP gateways only: Indicates whether or not to trust all SSL certificates (defaults to `true`). If this value is `false`, TLS certificates are not validated. When the value is set to `true`, only certificates that are signed by the default JVM CAs, or the CA certs that the customer has uploaded to the certificate service are trusted. Defaults to `true`.
-- `vendor` (String) For LDAP gateways only: The LDAP vendor. Options are `PingDirectory`, `Microsoft Active Directory`, `Oracle Directory Server Enterprise Edition`, `Oracle Unified Directory`, `CA Directory`, `OpenDJ Directory`, `IBM (Tivoli) Security Directory Server`, and `LDAP v3 compliant Directory Server`.
+- `vendor` (String) For LDAP gateways only: The LDAP vendor. Options are `PingDirectory`, `Microsoft Active Directory`, `Oracle Directory Server Enterprise Edition`, `Oracle Unified Directory`, `CA Directory`, `OpenDJ Directory Server`, `IBM (Tivoli) Security Directory Server`, and `LDAPv3-compliant Directory Server`.
 
 ### Read-Only
 

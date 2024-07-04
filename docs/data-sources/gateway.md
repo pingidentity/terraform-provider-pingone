@@ -51,7 +51,7 @@ data "pingone_gateway" "example_by_id" {
 - `type` (String) Specifies the type of gateway resource.  Options are `API_GATEWAY_INTEGRATION`, `LDAP`, `PING_FEDERATE`, `PING_INTELLIGENCE`, `RADIUS`.
 - `user_type` (Attributes Set) For LDAP gateways only: A collection of properties that define how users should be provisioned in PingOne. The `user_type` block specifies which user properties in PingOne correspond to the user properties in an external LDAP directory. You can use an LDAP browser to view the user properties in the external LDAP directory. (see [below for nested schema](#nestedatt--user_type))
 - `validate_tls_certificates` (Boolean) For LDAP gateways only: Indicates whether or not to trust all SSL certificates (defaults to `true`). If this value is `false`, TLS certificates are not validated. When the value is set to `true`, only certificates that are signed by the default JVM CAs, or the CA certs that the customer has uploaded to the certificate service are trusted.
-- `vendor` (String) For LDAP gateways only: The LDAP vendor.  Options are `CA Directory`, `IBM (Tivoli) Security Directory Server`, `LDAP v3 compliant Directory Server`, `Microsoft Active Directory`, `OpenDJ Directory`, `Oracle Directory Server Enterprise Edition`, `Oracle Unified Directory`, `PingDirectory`.
+- `vendor` (String) For LDAP gateways only: The LDAP vendor.  Options are `CA Directory`, `IBM (Tivoli) Security Directory Server`, `LDAPv3-compliant Directory Server`, `Microsoft Active Directory`, `OpenDJ Directory Server`, `Oracle Directory Server Enterprise Edition`, `Oracle Unified Directory`, `PingDirectory`.
 
 <a id="nestedatt--radius_client"></a>
 ### Nested Schema for `radius_client`
