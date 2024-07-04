@@ -48,20 +48,19 @@ func AlertChannel_CheckDestroy(s *terraform.State) error {
 		}
 
 		// Find the resource in the list
-		var response *management.AlertChannel
+		found := false
 		if embedded, ok := listResponse.GetEmbeddedOk(); ok {
 			if alertChannels, ok := embedded.GetAlertChannelsOk(); ok {
 				for _, alertChannel := range alertChannels {
 					if alertChannel.GetId() == rs.Primary.ID {
-						alertChannel := &alertChannel // exportloopref lint
-						response = alertChannel
+						found = true
 						break
 					}
 				}
 			}
 		}
 
-		if response == nil {
+		if !found {
 			continue
 		}
 

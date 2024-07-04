@@ -276,13 +276,14 @@ func (r *AlertChannelResource) Read(ctx context.Context, req resource.ReadReques
 	}
 
 	// Find the resource in the list
-	var response *management.AlertChannel
+	var response management.AlertChannel
+	found := false
 	if embedded, ok := listResponse.GetEmbeddedOk(); ok {
 		if alertChannels, ok := embedded.GetAlertChannelsOk(); ok {
 			for _, alertChannel := range alertChannels {
 				if alertChannel.GetId() == data.Id.ValueString() {
-					alertChannel := &alertChannel // exportloopref lint
 					response = alertChannel
+					found = true
 					break
 				}
 			}
@@ -290,13 +291,13 @@ func (r *AlertChannelResource) Read(ctx context.Context, req resource.ReadReques
 	}
 
 	// Remove from state if resource is not found
-	if response == nil {
+	if !found {
 		resp.State.RemoveResource(ctx)
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response)...)
+	resp.Diagnostics.Append(data.toState(&response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
