@@ -383,6 +383,10 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 		return
 	}
 
+	if req.State.Raw.IsNull() {
+		resp.Diagnostics.Append(r.validateSolutionValue(plan.Solution)...)
+	}
+
 	if plan.Region.IsUnknown() {
 
 		if r.region.APICode == "" {
@@ -443,8 +447,6 @@ func (r *EnvironmentResource) ValidateConfig(ctx context.Context, req resource.V
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
 	resp.Diagnostics.Append(r.environmentServicesValidateTags(ctx, data.Services)...)
-
-	resp.Diagnostics.Append(r.validateSolutionValue(data.Solution)...)
 }
 
 func (r *EnvironmentResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
