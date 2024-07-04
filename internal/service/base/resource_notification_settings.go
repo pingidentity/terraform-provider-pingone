@@ -493,7 +493,7 @@ func (p *NotificationSettingsResourceModel) expand(ctx context.Context) (*manage
 	}
 
 	if !p.From.IsNull() && !p.From.IsUnknown() {
-		var plan EmailSourceModel
+		var plan emailSourceModelV1
 		diags.Append(p.From.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -513,7 +513,7 @@ func (p *NotificationSettingsResourceModel) expand(ctx context.Context) (*manage
 	}
 
 	if !p.ReplyTo.IsNull() && !p.ReplyTo.IsUnknown() {
-		var plan EmailSourceModel
+		var plan emailSourceModelV1
 		diags.Append(p.ReplyTo.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,

@@ -25,7 +25,7 @@ import (
 // Types
 type NotificationSettingsEmailResource serviceClientType
 
-type NotificationSettingsEmailResourceModel struct {
+type notificationSettingsEmailResourceModelV1 struct {
 	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
 	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	Host          types.String                 `tfsdk:"host"`
@@ -37,7 +37,7 @@ type NotificationSettingsEmailResourceModel struct {
 	ReplyTo       types.Object                 `tfsdk:"reply_to"`
 }
 
-type EmailSourceModel struct {
+type emailSourceModelV1 struct {
 	Name         types.String `tfsdk:"name"`
 	EmailAddress types.String `tfsdk:"email_address"`
 }
@@ -77,6 +77,9 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 	)
 
 	resp.Schema = schema.Schema{
+
+		Version: 1,
+		
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to manage the email sender settings in a PingOne environment.",
 
@@ -194,7 +197,7 @@ func (r *NotificationSettingsEmailResource) Configure(ctx context.Context, req r
 }
 
 func (r *NotificationSettingsEmailResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan, state NotificationSettingsEmailResourceModel
+	var plan, state notificationSettingsEmailResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -243,7 +246,7 @@ func (r *NotificationSettingsEmailResource) Create(ctx context.Context, req reso
 }
 
 func (r *NotificationSettingsEmailResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *NotificationSettingsEmailResourceModel
+	var data *notificationSettingsEmailResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -288,7 +291,7 @@ func (r *NotificationSettingsEmailResource) Read(ctx context.Context, req resour
 }
 
 func (r *NotificationSettingsEmailResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan, state NotificationSettingsEmailResourceModel
+	var plan, state notificationSettingsEmailResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -337,7 +340,7 @@ func (r *NotificationSettingsEmailResource) Update(ctx context.Context, req reso
 }
 
 func (r *NotificationSettingsEmailResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *NotificationSettingsEmailResourceModel
+	var data *notificationSettingsEmailResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -393,7 +396,7 @@ func (r *NotificationSettingsEmailResource) ImportState(ctx context.Context, req
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes["environment_id"])...)
 }
 
-func (p *NotificationSettingsEmailResourceModel) expand(ctx context.Context) (*management.NotificationsSettingsEmailDeliverySettings, diag.Diagnostics) {
+func (p *notificationSettingsEmailResourceModelV1) expand(ctx context.Context) (*management.NotificationsSettingsEmailDeliverySettings, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data := management.NewNotificationsSettingsEmailDeliverySettings()
@@ -415,7 +418,7 @@ func (p *NotificationSettingsEmailResourceModel) expand(ctx context.Context) (*m
 	}
 
 	if !p.From.IsNull() && !p.From.IsUnknown() {
-		var plan EmailSourceModel
+		var plan emailSourceModelV1
 		d := p.From.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -432,7 +435,7 @@ func (p *NotificationSettingsEmailResourceModel) expand(ctx context.Context) (*m
 	}
 
 	if !p.ReplyTo.IsNull() && !p.ReplyTo.IsUnknown() {
-		var plan EmailSourceModel
+		var plan emailSourceModelV1
 		d := p.ReplyTo.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -455,7 +458,7 @@ func (p *NotificationSettingsEmailResourceModel) expand(ctx context.Context) (*m
 	return data, diags
 }
 
-func (p *NotificationSettingsEmailResourceModel) toState(apiObject *management.NotificationsSettingsEmailDeliverySettings) diag.Diagnostics {
+func (p *notificationSettingsEmailResourceModelV1) toState(apiObject *management.NotificationsSettingsEmailDeliverySettings) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
