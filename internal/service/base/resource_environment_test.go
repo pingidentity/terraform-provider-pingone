@@ -546,7 +546,7 @@ func testAccEnvironmentConfig_Workforce(resourceName, name, licenseID string) st
 resource "pingone_environment" "%[1]s" {
   name       = "%[2]s"
   license_id = "%[3]s"
-  solution = "WORKFORCE"
+  solution   = "WORKFORCE"
 
   services = [
     {
