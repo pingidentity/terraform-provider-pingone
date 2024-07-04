@@ -34,7 +34,7 @@ import (
 // Types
 type IdentityProviderResource serviceClientType
 
-type IdentityProviderResourceModel struct {
+type identityProviderResourceModelV1 struct {
 	Id                       pingonetypes.ResourceIDValue `tfsdk:"id"`
 	EnvironmentId            pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	Name                     types.String                 `tfsdk:"name"`
@@ -57,48 +57,48 @@ type IdentityProviderResourceModel struct {
 	Saml                     types.Object                 `tfsdk:"saml"`
 }
 
-type IdentityProviderClientIdClientSecretResourceModel struct {
+type identityProviderClientIdClientSecretResourceModelV1 struct {
 	ClientId     types.String `tfsdk:"client_id"`
 	ClientSecret types.String `tfsdk:"client_secret"`
 }
 
-type IdentityProviderLoginButtonIcon service.ImageResourceModel
+type identityProviderLoginButtonIconV1 service.ImageResourceModel
 
-type IdentityProviderIcon service.ImageResourceModel
+type identityProviderIconV1 service.ImageResourceModel
 
-type IdentityProviderFacebookResourceModel struct {
+type identityProviderFacebookResourceModelV1 struct {
 	AppId     types.String `tfsdk:"app_id"`
 	AppSecret types.String `tfsdk:"app_secret"`
 }
 
-type IdentityProviderGoogleResourceModel IdentityProviderClientIdClientSecretResourceModel
+type identityProviderGoogleResourceModelV1 identityProviderClientIdClientSecretResourceModelV1
 
-type IdentityProviderLinkedInResourceModel IdentityProviderClientIdClientSecretResourceModel
+type identityProviderLinkedInResourceModelV1 identityProviderClientIdClientSecretResourceModelV1
 
-type IdentityProviderYahooResourceModel IdentityProviderClientIdClientSecretResourceModel
+type identityProviderYahooResourceModelV1 identityProviderClientIdClientSecretResourceModelV1
 
-type IdentityProviderAmazonResourceModel IdentityProviderClientIdClientSecretResourceModel
+type identityProviderAmazonResourceModelV1 identityProviderClientIdClientSecretResourceModelV1
 
-type IdentityProviderTwitterResourceModel IdentityProviderClientIdClientSecretResourceModel
+type identityProviderTwitterResourceModelV1 identityProviderClientIdClientSecretResourceModelV1
 
-type IdentityProviderAppleResourceModel struct {
+type identityProviderAppleResourceModelV1 struct {
 	TeamId                 types.String `tfsdk:"team_id"`
 	KeyId                  types.String `tfsdk:"key_id"`
 	ClientId               types.String `tfsdk:"client_id"`
 	ClientSecretSigningKey types.String `tfsdk:"client_secret_signing_key"`
 }
 
-type IdentityProviderPaypalResourceModel struct {
+type identityProviderPaypalResourceModelV1 struct {
 	ClientId          types.String `tfsdk:"client_id"`
 	ClientSecret      types.String `tfsdk:"client_secret"`
 	ClientEnvironment types.String `tfsdk:"client_environment"`
 }
 
-type IdentityProviderMicrosoftResourceModel IdentityProviderClientIdClientSecretResourceModel
+type identityProviderMicrosoftResourceModelV1 identityProviderClientIdClientSecretResourceModelV1
 
-type IdentityProviderGithubResourceModel IdentityProviderClientIdClientSecretResourceModel
+type identityProviderGithubResourceModelV1 identityProviderClientIdClientSecretResourceModelV1
 
-type IdentityProviderOIDCResourceModel struct {
+type identityProviderOIDCResourceModelV1 struct {
 	AuthorizationEndpoint   types.String `tfsdk:"authorization_endpoint"`
 	ClientId                types.String `tfsdk:"client_id"`
 	ClientSecret            types.String `tfsdk:"client_secret"`
@@ -112,7 +112,7 @@ type IdentityProviderOIDCResourceModel struct {
 	UserinfoEndpoint        types.String `tfsdk:"userinfo_endpoint"`
 }
 
-type IdentityProviderSAMLResourceModel struct {
+type identityProviderSAMLResourceModelV1 struct {
 	AuthenticationRequestSigned types.Bool   `tfsdk:"authentication_request_signed"`
 	IdpEntityId                 types.String `tfsdk:"idp_entity_id"`
 	SpEntityId                  types.String `tfsdk:"sp_entity_id"`
@@ -126,20 +126,20 @@ type IdentityProviderSAMLResourceModel struct {
 	SloWindow                   types.Int64  `tfsdk:"slo_window"`
 }
 
-type IdentityProviderSAMLResourceIdPVerificationModel struct {
+type identityProviderSAMLResourceIdPVerificationModelV1 struct {
 	Certificates types.Set `tfsdk:"certificates"`
 }
 
-type IdentityProviderSAMLResourceIdPVerificationCertificatesModel struct {
+type identityProviderSAMLResourceIdPVerificationCertificatesModelV1 struct {
 	Id pingonetypes.ResourceIDValue `tfsdk:"id"`
 }
 
-type IdentityProviderSAMLResourceSpSigningModel struct {
+type identityProviderSAMLResourceSpSigningModelV1 struct {
 	Key       types.Object `tfsdk:"key"`
 	Algorithm types.String `tfsdk:"algorithm"`
 }
 
-type IdentityProviderSAMLResourceSpSigningKeyModel struct {
+type identityProviderSAMLResourceSpSigningKeyModelV1 struct {
 	Id pingonetypes.ResourceIDValue `tfsdk:"id"`
 }
 
@@ -215,9 +215,10 @@ var (
 
 // Framework interfaces
 var (
-	_ resource.Resource                = &IdentityProviderResource{}
-	_ resource.ResourceWithConfigure   = &IdentityProviderResource{}
-	_ resource.ResourceWithImportState = &IdentityProviderResource{}
+	_ resource.Resource                 = &IdentityProviderResource{}
+	_ resource.ResourceWithConfigure    = &IdentityProviderResource{}
+	_ resource.ResourceWithImportState  = &IdentityProviderResource{}
+	_ resource.ResourceWithUpgradeState = &IdentityProviderResource{}
 )
 
 // New Object
@@ -310,6 +311,9 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 	)
 
 	resp.Schema = schema.Schema{
+
+		Version: 1,
+
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage Identity Providers in a PingOne environment.",
 
@@ -927,7 +931,7 @@ func (r *IdentityProviderResource) Configure(ctx context.Context, req resource.C
 }
 
 func (r *IdentityProviderResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan, state IdentityProviderResourceModel
+	var plan, state identityProviderResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -976,7 +980,7 @@ func (r *IdentityProviderResource) Create(ctx context.Context, req resource.Crea
 }
 
 func (r *IdentityProviderResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *IdentityProviderResourceModel
+	var data *identityProviderResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -1021,7 +1025,7 @@ func (r *IdentityProviderResource) Read(ctx context.Context, req resource.ReadRe
 }
 
 func (r *IdentityProviderResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan, state IdentityProviderResourceModel
+	var plan, state identityProviderResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -1070,7 +1074,7 @@ func (r *IdentityProviderResource) Update(ctx context.Context, req resource.Upda
 }
 
 func (r *IdentityProviderResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *IdentityProviderResourceModel
+	var data *identityProviderResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -1138,7 +1142,7 @@ func (r *IdentityProviderResource) ImportState(ctx context.Context, req resource
 	}
 }
 
-func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management.IdentityProvider, diag.Diagnostics) {
+func (p *identityProviderResourceModelV1) expand(ctx context.Context) (*management.IdentityProvider, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	common := *management.NewIdentityProviderCommon(p.Enabled.ValueBool(), p.Name.ValueString(), management.ENUMIDENTITYPROVIDEREXT_OPENID_CONNECT)
@@ -1156,7 +1160,7 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 	}
 
 	if !p.LoginButtonIcon.IsNull() && !p.LoginButtonIcon.IsUnknown() {
-		var plan IdentityProviderLoginButtonIcon
+		var plan identityProviderLoginButtonIconV1
 		d := p.LoginButtonIcon.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -1174,7 +1178,7 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 	}
 
 	if !p.Icon.IsNull() && !p.Icon.IsUnknown() {
-		var plan IdentityProviderIcon
+		var plan identityProviderIconV1
 		d := p.Icon.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -1195,7 +1199,7 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 	processedCount := 0
 
 	if !p.Facebook.IsNull() && !p.Facebook.IsUnknown() {
-		var plan IdentityProviderFacebookResourceModel
+		var plan identityProviderFacebookResourceModelV1
 		d := p.Facebook.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -1223,7 +1227,7 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 	}
 
 	if !p.Google.IsNull() && !p.Google.IsUnknown() {
-		var plan IdentityProviderGoogleResourceModel
+		var plan identityProviderGoogleResourceModelV1
 		d := p.Google.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -1251,7 +1255,7 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 	}
 
 	if !p.LinkedIn.IsNull() && !p.LinkedIn.IsUnknown() {
-		var plan IdentityProviderLinkedInResourceModel
+		var plan identityProviderLinkedInResourceModelV1
 		d := p.LinkedIn.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -1279,7 +1283,7 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 	}
 
 	if !p.Yahoo.IsNull() && !p.Yahoo.IsUnknown() {
-		var plan IdentityProviderYahooResourceModel
+		var plan identityProviderYahooResourceModelV1
 		d := p.Yahoo.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -1307,7 +1311,7 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 	}
 
 	if !p.Amazon.IsNull() && !p.Amazon.IsUnknown() {
-		var plan IdentityProviderAmazonResourceModel
+		var plan identityProviderAmazonResourceModelV1
 		d := p.Amazon.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -1335,7 +1339,7 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 	}
 
 	if !p.Twitter.IsNull() && !p.Twitter.IsUnknown() {
-		var plan IdentityProviderTwitterResourceModel
+		var plan identityProviderTwitterResourceModelV1
 		d := p.Twitter.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -1363,7 +1367,7 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 	}
 
 	if !p.Apple.IsNull() && !p.Apple.IsUnknown() {
-		var plan IdentityProviderAppleResourceModel
+		var plan identityProviderAppleResourceModelV1
 		d := p.Apple.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -1393,7 +1397,7 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 	}
 
 	if !p.Paypal.IsNull() && !p.Paypal.IsUnknown() {
-		var plan IdentityProviderPaypalResourceModel
+		var plan identityProviderPaypalResourceModelV1
 		d := p.Paypal.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -1422,7 +1426,7 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 	}
 
 	if !p.Microsoft.IsNull() && !p.Microsoft.IsUnknown() {
-		var plan IdentityProviderMicrosoftResourceModel
+		var plan identityProviderMicrosoftResourceModelV1
 		d := p.Microsoft.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -1450,7 +1454,7 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 	}
 
 	if !p.Github.IsNull() && !p.Github.IsUnknown() {
-		var plan IdentityProviderGithubResourceModel
+		var plan identityProviderGithubResourceModelV1
 		d := p.Github.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -1478,7 +1482,7 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 	}
 
 	if !p.OpenIDConnect.IsNull() && !p.OpenIDConnect.IsUnknown() {
-		var plan IdentityProviderOIDCResourceModel
+		var plan identityProviderOIDCResourceModelV1
 		d := p.OpenIDConnect.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -1553,7 +1557,7 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 	}
 
 	if !p.Saml.IsNull() && !p.Saml.IsUnknown() {
-		var plan IdentityProviderSAMLResourceModel
+		var plan identityProviderSAMLResourceModelV1
 		d := p.Saml.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -1586,7 +1590,7 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 		}
 
 		if !plan.IdpVerification.IsNull() && !plan.IdpVerification.IsUnknown() {
-			var idpVerificationPlan IdentityProviderSAMLResourceIdPVerificationModel
+			var idpVerificationPlan identityProviderSAMLResourceIdPVerificationModelV1
 			diags.Append(plan.IdpVerification.As(ctx, &idpVerificationPlan, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    false,
 				UnhandledUnknownAsEmpty: false,
@@ -1605,7 +1609,7 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 		}
 
 		if !plan.SpSigning.IsNull() && !plan.SpSigning.IsUnknown() {
-			var spSigningPlan IdentityProviderSAMLResourceSpSigningModel
+			var spSigningPlan identityProviderSAMLResourceSpSigningModelV1
 			diags.Append(plan.SpSigning.As(ctx, &spSigningPlan, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    false,
 				UnhandledUnknownAsEmpty: false,
@@ -1670,10 +1674,10 @@ func (p *IdentityProviderResourceModel) expand(ctx context.Context) (*management
 	return data, diags
 }
 
-func (p *IdentityProviderSAMLResourceIdPVerificationModel) expand(ctx context.Context) (*management.IdentityProviderSAMLAllOfIdpVerification, diag.Diagnostics) {
+func (p *identityProviderSAMLResourceIdPVerificationModelV1) expand(ctx context.Context) (*management.IdentityProviderSAMLAllOfIdpVerification, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var certificatesPlan []IdentityProviderSAMLResourceIdPVerificationCertificatesModel
+	var certificatesPlan []identityProviderSAMLResourceIdPVerificationCertificatesModelV1
 	diags.Append(p.Certificates.ElementsAs(ctx, &certificatesPlan, false)...)
 	if diags.HasError() {
 		return nil, diags
@@ -1692,10 +1696,10 @@ func (p *IdentityProviderSAMLResourceIdPVerificationModel) expand(ctx context.Co
 	return data, diags
 }
 
-func (p *IdentityProviderSAMLResourceSpSigningModel) expand(ctx context.Context) (*management.IdentityProviderSAMLAllOfSpSigning, diag.Diagnostics) {
+func (p *identityProviderSAMLResourceSpSigningModelV1) expand(ctx context.Context) (*management.IdentityProviderSAMLAllOfSpSigning, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var keyPlan IdentityProviderSAMLResourceSpSigningKeyModel
+	var keyPlan identityProviderSAMLResourceSpSigningKeyModelV1
 	diags.Append(p.Key.As(ctx, &keyPlan, basetypes.ObjectAsOptions{
 		UnhandledNullAsEmpty:    false,
 		UnhandledUnknownAsEmpty: false,
@@ -1717,7 +1721,7 @@ func (p *IdentityProviderSAMLResourceSpSigningModel) expand(ctx context.Context)
 	return data, diags
 }
 
-func (p *IdentityProviderResourceModel) toState(apiObject *management.IdentityProvider) diag.Diagnostics {
+func (p *identityProviderResourceModelV1) toState(apiObject *management.IdentityProvider) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
