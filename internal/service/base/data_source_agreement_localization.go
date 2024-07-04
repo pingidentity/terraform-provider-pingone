@@ -57,6 +57,18 @@ func (r *AgreementLocalizationDataSource) Schema(ctx context.Context, req dataso
 
 	nameLength := 1
 
+	agreementLocalizationIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The ID of the agreement localization language to retrieve.",
+	).ExactlyOneOf([]string{"agreement_localization_id", "display_name", "locale"})
+
+	displayNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string used as the title of the agreement localization to retrieve.",
+	).ExactlyOneOf([]string{"agreement_localization_id", "display_name", "locale"})
+
+	localeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string used as the locale code of the agreement localization to retrieve.",
+	).AllowedValuesEnum(verify.FullIsoList()).ExactlyOneOf([]string{"agreement_localization_id", "display_name", "locale"})
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Datasource to retrieve details of an agreement localization in a PingOne environment.",
@@ -73,8 +85,9 @@ func (r *AgreementLocalizationDataSource) Schema(ctx context.Context, req dataso
 			),
 
 			"agreement_localization_id": schema.StringAttribute{
-				Description: "The ID of the agreement localization language to retrieve. Either `agreement_localization_id`, `display_name` or `locale` can be used to retrieve the agreement localization, but cannot be set together.",
-				Optional:    true,
+				Description:         agreementLocalizationIdDescription.Description,
+				MarkdownDescription: agreementLocalizationIdDescription.MarkdownDescription,
+				Optional:            true,
 
 				CustomType: pingonetypes.ResourceIDType{},
 
@@ -87,8 +100,9 @@ func (r *AgreementLocalizationDataSource) Schema(ctx context.Context, req dataso
 			},
 
 			"display_name": schema.StringAttribute{
-				Description: "A string used as the title of the agreement localization to retrieve. Either `agreement_localization_id`, `display_name` or `locale` can be used to retrieve the agreement localization, but cannot be set together.",
-				Optional:    true,
+				Description:         displayNameDescription.Description,
+				MarkdownDescription: displayNameDescription.MarkdownDescription,
+				Optional:            true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("agreement_localization_id"),
@@ -99,8 +113,9 @@ func (r *AgreementLocalizationDataSource) Schema(ctx context.Context, req dataso
 			},
 
 			"locale": schema.StringAttribute{
-				Description: "A string used as the locale code of the agreement localization to retrieve. Either `agreement_localization_id`, `display_name` or `locale` can be used to retrieve the agreement localization, but cannot be set together.",
-				Optional:    true,
+				Description:         localeDescription.Description,
+				MarkdownDescription: localeDescription.MarkdownDescription,
+				Optional:            true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("agreement_localization_id"),

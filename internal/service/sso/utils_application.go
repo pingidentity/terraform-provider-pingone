@@ -75,7 +75,7 @@ func applicationCorsSettingsOkToTF(apiObject *management.ApplicationCorsSettings
 	return returnVar, diags
 }
 
-func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.ApplicationOIDC, stateValue ApplicationOIDCOptionsResourceModel) (types.Object, diag.Diagnostics) {
+func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.ApplicationOIDC, stateValue applicationOIDCOptionsResourceModelV1) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if apiObject == nil || apiObject.GetId() == "" {
@@ -89,7 +89,7 @@ func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.Appli
 	diags.Append(d...)
 
 	mobileAppObject, ok := apiObject.GetMobileOk()
-	var mobileAppState ApplicationOIDCMobileAppResourceModel
+	var mobileAppState applicationOIDCMobileAppResourceModelV1
 	if !stateValue.MobileApp.IsNull() && !stateValue.MobileApp.IsUnknown() {
 		d := stateValue.MobileApp.As(ctx, &mobileAppState, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
@@ -161,7 +161,7 @@ func applicationOidcOptionsCertificateBasedAuthenticationToTF(apiObject *managem
 	return returnVar, diags
 }
 
-func applicationMobileAppOkToTF(ctx context.Context, apiObject *management.ApplicationOIDCAllOfMobile, ok bool, stateValue ApplicationOIDCMobileAppResourceModel) (types.Object, diag.Diagnostics) {
+func applicationMobileAppOkToTF(ctx context.Context, apiObject *management.ApplicationOIDCAllOfMobile, ok bool, stateValue applicationOIDCMobileAppResourceModelV1) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -169,7 +169,7 @@ func applicationMobileAppOkToTF(ctx context.Context, apiObject *management.Appli
 	}
 
 	integrityDetectionObj, ok := apiObject.GetIntegrityDetectionOk()
-	var integrityDetectionState ApplicationOIDCMobileAppIntegrityDetectionResourceModel
+	var integrityDetectionState applicationOIDCMobileAppIntegrityDetectionResourceModelV1
 	if !stateValue.IntegrityDetection.IsNull() && !stateValue.IntegrityDetection.IsUnknown() {
 		d := stateValue.IntegrityDetection.As(ctx, &integrityDetectionState, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
@@ -213,7 +213,7 @@ func applicationMobileAppOkToTF(ctx context.Context, apiObject *management.Appli
 	return returnVar, diags
 }
 
-func applicationMobileAppIntegrityDetectionOkToTF(ctx context.Context, apiObject *management.ApplicationOIDCAllOfMobileIntegrityDetection, ok bool, stateValue ApplicationOIDCMobileAppIntegrityDetectionResourceModel) (types.Object, diag.Diagnostics) {
+func applicationMobileAppIntegrityDetectionOkToTF(ctx context.Context, apiObject *management.ApplicationOIDCAllOfMobileIntegrityDetection, ok bool, stateValue applicationOIDCMobileAppIntegrityDetectionResourceModelV1) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -224,7 +224,7 @@ func applicationMobileAppIntegrityDetectionOkToTF(ctx context.Context, apiObject
 	diags.Append(d...)
 
 	googlePlayObject, ok := apiObject.GetGooglePlayOk()
-	var googlePlayState ApplicationOIDCMobileAppIntegrityDetectionGooglePlayResourceModel
+	var googlePlayState applicationOIDCMobileAppIntegrityDetectionGooglePlayResourceModelV1
 	if !stateValue.GooglePlay.IsNull() && !stateValue.GooglePlay.IsUnknown() {
 		d := stateValue.GooglePlay.As(ctx, &googlePlayState, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
@@ -277,7 +277,7 @@ func applicationMobileAppIntegrityDetectionCacheDurationOkToTF(apiObject *manage
 	return returnVar, diags
 }
 
-func applicationMobileAppIntegrityDetectionGooglePlayOkToTF(apiObject *management.ApplicationOIDCAllOfMobileIntegrityDetectionGooglePlay, ok bool, stateValue ApplicationOIDCMobileAppIntegrityDetectionGooglePlayResourceModel) (types.Object, diag.Diagnostics) {
+func applicationMobileAppIntegrityDetectionGooglePlayOkToTF(apiObject *management.ApplicationOIDCAllOfMobileIntegrityDetectionGooglePlay, ok bool, stateValue applicationOIDCMobileAppIntegrityDetectionGooglePlayResourceModelV1) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {

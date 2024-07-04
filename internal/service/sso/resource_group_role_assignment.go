@@ -4,15 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
@@ -228,52 +225,19 @@ func (r *GroupRoleAssignmentResource) Delete(ctx context.Context, req resource.D
 		return
 	}
 
-	deleteStateConf := &retry.StateChangeConf{
-		Pending: []string{
-			"400",
+	resp.Diagnostics.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			fR, fErr := r.Client.ManagementAPIClient.GroupRoleAssignmentsApi.DeleteGroupRoleAssignment(ctx, data.EnvironmentId.ValueString(), data.GroupId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
-		Target: []string{
-			"204",
-			"404",
-		},
-		Refresh: func() (interface{}, string, error) {
-			var fR *http.Response
-			var fErr error
-			resp.Diagnostics.Append(framework.ParseResponse(
-				ctx,
+		"DeleteGroupRoleAssignment",
+		framework.CustomErrorResourceNotFoundWarning,
+		service.RoleRemovalRetryable,
+		nil,
+	)...)
 
-				func() (any, *http.Response, error) {
-					fR, fErr = r.Client.ManagementAPIClient.GroupRoleAssignmentsApi.DeleteGroupRoleAssignment(ctx, data.EnvironmentId.ValueString(), data.GroupId.ValueString(), data.Id.ValueString()).Execute()
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
-				},
-				"DeleteGroupRoleAssignment",
-				framework.CustomErrorResourceNotFoundWarning,
-				nil,
-				nil,
-			)...)
-
-			statusCode := ""
-			if fR != nil {
-				base := 10
-				statusCode = strconv.FormatInt(int64(fR.StatusCode), base)
-			}
-
-			return resp, statusCode, fErr
-		},
-		Timeout:                   20 * time.Minute,
-		Delay:                     1 * time.Second,
-		MinTimeout:                500 * time.Millisecond,
-		ContinuousTargetOccurence: 2,
-	}
-	_, err := deleteStateConf.WaitForStateContext(ctx)
-	if err != nil {
-		resp.Diagnostics.AddWarning(
-			"Role Assignment Delete Error",
-			fmt.Sprintf("Error waiting for group role assignment (%s) to be deleted: %s", data.Id.ValueString(), err),
-		)
-
-		return
-	}
 }
 
 func (r *GroupRoleAssignmentResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

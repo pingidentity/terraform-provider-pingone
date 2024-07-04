@@ -12,22 +12,36 @@ Datasource to read PingOne OAuth 2.0 resource scope data.
 ## Example Usage
 
 ```terraform
-data "pingone_resource" "openid_resource" {
+data "pingone_resource_scope" "openid_example_by_name" {
   environment_id = var.environment_id
 
-  name = "openid"
-}
-
-data "pingone_resource_scope" "example_by_name" {
-  environment_id = var.environment_id
-  resource_id    = data.pingone_resource.openid_resource.id
+  resource_type = "OPENID_CONNECT"
 
   name = "email"
 }
 
-data "pingone_resource_scope" "example_by_id" {
+data "pingone_resource_scope" "openid_example_by_id" {
   environment_id = var.environment_id
-  resource_id    = data.pingone_resource.openid_resource.id
+
+  resource_type = "OPENID_CONNECT"
+
+  resource_scope_id = var.resource_scope_id
+}
+
+data "pingone_resource_scope" "custom_resource_example_by_name" {
+  environment_id = var.environment_id
+
+  resource_type      = "CUSTOM"
+  custom_resource_id = var.custom_resource_id
+
+  name = "email"
+}
+
+data "pingone_resource_scope" "custom_resource_example_by_id" {
+  environment_id = var.environment_id
+
+  resource_type      = "CUSTOM"
+  custom_resource_id = var.custom_resource_id
 
   resource_scope_id = var.resource_scope_id
 }
@@ -39,10 +53,11 @@ data "pingone_resource_scope" "example_by_id" {
 ### Required
 
 - `environment_id` (String) The ID of the environment that is configured with the resource scope.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
-- `resource_id` (String) The ID of the resource that the scope belongs to.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `resource_type` (String) The type of the resource to select.  When the value is set to `CUSTOM`, `custom_resource_id` must be specified.  Options are `CUSTOM`, `OPENID_CONNECT`, `PINGONE_API`.
 
 ### Optional
 
+- `custom_resource_id` (String) A string that specifies the ID of the custom resource to select.  Must be a valid PingOne resource ID.  Required if `resource_type` is set to `CUSTOM`, but cannot be set if `resource_type` is set to `OPENID_CONNECT` or `PINGONE_API`.
 - `name` (String) The name of the resource scope.  Exactly one of the following must be defined: `resource_scope_id`, `name`.
 - `resource_scope_id` (String) The ID of the resource scope.  Exactly one of the following must be defined: `resource_scope_id`, `name`.  Must be a valid PingOne resource ID.
 
@@ -51,4 +66,5 @@ data "pingone_resource_scope" "example_by_id" {
 - `description` (String) A description of the resource scope.
 - `id` (String) The ID of this resource.
 - `mapped_claims` (Set of String) A list of custom resource attribute IDs. This property applies only for the resource with its type property set to `OPENID_CONNECT`. Moreover, this property does not display predefined OpenID Connect (OIDC) mappings, such as the `email` claim in the OIDC `email` scope or the `name` claim in the `profile` scope. You can create custom attributes, and these custom attributes can be added to `mapped_claims` and will display in the response.
+- `resource_id` (String) A string that specifies the ID of the resource granted to the application.
 - `schema_attributes` (Set of String) A list that specifies the user schema attributes that can be read or updated for the specified PingOne access control scope. The value is an array of schema attribute paths (such as `username`, `name.given`, `shirtSize`) that the scope controls. This property is supported only for the `p1:read:user`, `p1:update:user` and `p1:read:user:{suffix}` and `p1:update:user:{suffix}` scopes. No other PingOne platform scopes allow this behavior. Any attributes not listed in the attribute array are excluded from the read or update action. The wildcard path (`*`) in the array includes all attributes and cannot be used in conjunction with any other user schema attribute path.

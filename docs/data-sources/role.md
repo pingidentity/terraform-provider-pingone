@@ -50,12 +50,12 @@ data "pingone_role" "role_by_id" {
 
 ### Optional
 
-- `name` (String) The name of the role to look up.  Options are `Client Application Developer`, `Configuration Read Only`, `DaVinci Admin`, `DaVinci Admin Read Only`, `Environment Admin`, `Identity Data Admin`, `Identity Data Read Only`, `Organization Admin`, `PingFederate Administrator`, `PingFederate Auditor`, `PingFederate Crypto Administrator`, `PingFederate Expression Administrator`, `PingFederate User Administrator`.  Exactly one of the following must be defined: `name`, `role_id`.
+- `name` (String) The name of the role to look up.  Options are `Application Owner`, `Client Application Developer`, `Configuration Read Only`, `DaVinci Admin`, `DaVinci Admin Read Only`, `Environment Admin`, `Identity Data Admin`, `Identity Data Read Only`, `Organization Admin`, `PingFederate Administrator`, `PingFederate Auditor`, `PingFederate Crypto Administrator`, `PingFederate Expression Administrator`, `PingFederate User Administrator`.  Exactly one of the following must be defined: `name`, `role_id`.
 - `role_id` (String) The ID of the role to retrieve.  Must be a valid PingOne resource ID.  Exactly one of the following must be defined: `name`, `role_id`.
 
 ### Read-Only
 
-- `applicable_to` (Set of String) A set of strings that specifies the applicable scopes that the role can be assigned to.  Options are `ENVIRONMENT`, `ORGANIZATION`, `POPULATION`.
+- `applicable_to` (Set of String) A set of strings that specifies the applicable scopes that the role can be assigned to.  Options are `APPLICATION`, `ENVIRONMENT`, `ORGANIZATION`, `POPULATION`.
 - `description` (String) The description of the role.
 - `id` (String) The ID of this resource.
 - `permissions` (Attributes Set) A set of strings that represent permissions that have been assigned to the role. (see [below for nested schema](#nestedatt--permissions))

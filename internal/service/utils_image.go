@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -67,4 +68,34 @@ func ImageOkToTF(logo interface{}, ok bool) (types.Object, diag.Diagnostics) {
 	diags.Append(d...)
 
 	return returnVar, diags
+}
+
+func ImageListToObjectSchemaUpgrade(ctx context.Context, planAttribute types.List) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := ImageTFObjectTypes
+
+	if planAttribute.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	} else if planAttribute.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	} else {
+		var priorStateData []ImageResourceModel
+		d := planAttribute.ElementsAs(ctx, &priorStateData, false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return types.ObjectNull(attributeTypes), diags
+		}
+
+		if len(priorStateData) == 0 {
+			return types.ObjectNull(attributeTypes), diags
+		}
+
+		upgradedStateData := priorStateData[0]
+
+		returnVar, d := types.ObjectValueFrom(ctx, attributeTypes, upgradedStateData)
+		diags.Append(d...)
+
+		return returnVar, diags
+	}
 }

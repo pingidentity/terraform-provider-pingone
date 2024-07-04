@@ -9,11 +9,11 @@ description: |-
 
 The PingOne provider interacts with the configuration of the PingOne platform via the management API. The provider requires credentials from worker application client before it can be used.
 
-!> This `v1.0.0-rc1` release is a pre-release (candidate) build release and is not stable for production use.  The latest stable build for production use is `v0.29`.  The documentation for `v0.29` can be found [here](https://registry.terraform.io/providers/pingidentity/pingone/0.29.0/docs).
+!> This `v1.0.0-rc1` release is a pre-release (candidate) build and is not stable for production use.  The latest stable build for production use is `v0.29`.  The documentation for `v0.29` can be found [here](https://registry.terraform.io/providers/pingidentity/pingone/0.29.1/docs).
 
-~> This `v1.0.0-rc1` release is a pre-release (candidate) build release and can be used prepare for the upgrade from `v0.*` to `v1.*` of the provider.  Please review the [upgrade guide](https://registry.terraform.io/providers/pingidentity/pingone/1.0.0-rc1/docs/guides/version-1-upgrade) for details on breaking changes to the Terraform schema.
+~> This `v1.0.0-rc1` release is a pre-release (candidate) build that contains breaking changes to the PingOne Terraform schema.  This candidate build can be used prepare HCL for the upgrade from `v0.*` to `v1.*` of the provider.  Please review the [upgrade guide](https://registry.terraform.io/providers/pingidentity/pingone/1.0.0-rc1/docs/guides/version-1-upgrade) for details on handling breaking changes to the PingOne Terraform schema.
 
-~> This `v1.0.0-rc1` release is a pre-release (candidate) build release and can be used prepare for the upgrade from `v0.*` to `v1.*` of the provider.  If you find bugs in this build, please [raise an issue to the provider maintainers](https://github.com/pingidentity/terraform-provider-pingone/issues/new?assignees=&labels=type%2Fbug%2Cstatus%2Fneeds-triage&projects=&template=bug_report.md&title=`v1.0.0-rc1:`).
+~> This `v1.0.0-rc1` release is a pre-release (candidate) build and can be used prepare HCL for the upgrade from `v0.*` to `v1.*` of the provider.  If you find bugs in this build, please [raise an issue to the provider maintainers](https://github.com/pingidentity/terraform-provider-pingone/issues/new?assignees=&labels=type%2Fbug%2Cstatus%2Fneeds-triage&projects=&template=bug_report.md&title=`v1.0.0-rc1:`).
 
 ## Getting Started
 
@@ -50,7 +50,7 @@ For code examples showing how to configure the PingOne service using Terraform, 
 
 ## Custom User Agent information
 
-The PingOne provider allows custom information to be appended to the default user agent string (that includes Terraform provider version information) by setting the `PINGONE_TF_APPEND_USER_AGENT` environment variable.  This can be useful when troubleshooting issues with Ping Identity Support, or adding context to HTTP requests.
+The PingOne provider allows custom information to be appended to the default user agent string (that includes Terraform provider version information) by setting the `PINGONE_TF_APPEND_USER_AGENT` environment variable, or the `append_user_agent` provider parameter.  This can be useful when troubleshooting issues with Ping Identity Support, or adding context to HTTP requests.
 
 {{ codefile "shell" (printf "%s" "examples/provider/provider-custom-user-agent.sh") }}
 

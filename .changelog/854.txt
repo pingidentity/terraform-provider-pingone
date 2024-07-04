@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_resource_scope`: Fixed blocking errors that result from removing multiple resource scopes that are already assigned to an application.
+```

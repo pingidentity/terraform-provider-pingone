@@ -14,7 +14,6 @@ Datasource to retrieve a list of multiple PingOne Credentials credential types. 
 ```terraform
 data "pingone_credential_types" "example_all_credential_types_ids" {
   environment_id = var.environment_id
-
 }
 ```
 

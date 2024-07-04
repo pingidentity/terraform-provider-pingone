@@ -61,6 +61,10 @@ func (r *VoicePhraseContentResource) Schema(ctx context.Context, req resource.Sc
 		"The identifier (UUID) of the `voice_phrase` associated with the `voice_phrase_content` configuration.",
 	).RequiresReplace()
 
+	localeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Language localization requirement for the voice phrase contents.",
+	).AllowedValuesEnum(validation.FullIsoList())
+
 	contentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The phrase a user must speak as part of the voice enrollment or verification. The phrase must be written in the language and character set required by the language specified in the `locale` property.",
 	)
@@ -89,8 +93,9 @@ func (r *VoicePhraseContentResource) Schema(ctx context.Context, req resource.Sc
 			},
 
 			"locale": schema.StringAttribute{
-				Description: "Language localization requirement for the voice phrase contents.",
-				Required:    true,
+				Description:         localeDescription.Description,
+				MarkdownDescription: localeDescription.MarkdownDescription,
+				Required:            true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(validation.FullIsoList()...),
 				},

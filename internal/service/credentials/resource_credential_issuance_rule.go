@@ -132,8 +132,8 @@ func (r *CredentialIssuanceRuleResource) Schema(ctx context.Context, req resourc
 	)
 
 	notificationTemplateLocaleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The ISO 2-character language code used for the notification; for example, `en`.",
-	)
+		"A string that specifies the ISO language code used for the notification.",
+	).AllowedValuesEnum(verify.FullIsoList())
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.

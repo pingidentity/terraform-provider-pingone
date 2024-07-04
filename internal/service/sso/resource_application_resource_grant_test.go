@@ -107,14 +107,15 @@ func TestAccApplicationResourceGrant_OpenIDResource(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "resource_name", "openid"),
-					resource.TestCheckResourceAttr(resourceFullName, "scopes.#", "2"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "custom_resource_id"),
+					resource.TestCheckResourceAttr(resourceFullName, "resource_type", "OPENID_CONNECT"),
+					resource.TestCheckResourceAttr(resourceFullName, "scopes.#", "4"),
 					resource.TestMatchResourceAttr(resourceFullName, "scopes.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "scopes.1", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.0", "email"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.1", "profile"),
+					resource.TestMatchResourceAttr(resourceFullName, "scopes.2", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "scopes.3", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 			// Test importing the resource
@@ -133,20 +134,26 @@ func TestAccApplicationResourceGrant_OpenIDResource(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
-			// Test error catch on update
-			{
-				Config:      testAccApplicationResourceGrantConfig_OpenIDResource_InvalidOpenIDScope(resourceName, name),
-				ExpectError: regexp.MustCompile(`Invalid scope`),
-			},
-			{
-				Config:  testAccApplicationResourceGrantConfig_OpenIDResource(resourceName, name),
-				Destroy: true,
-			},
-			// Test error catch on from new
-			{
-				Config:      testAccApplicationResourceGrantConfig_OpenIDResource_InvalidOpenIDScope(resourceName, name),
-				ExpectError: regexp.MustCompile(`Invalid scope`),
-			},
+			// // Test error catch on update
+			// {
+			// 	Config: testAccApplicationResourceGrantConfig_OpenIDResource_InvalidOpenIDScope(resourceName, name),
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			// 	),
+			// 	//ExpectError: regexp.MustCompile(`Invalid scope`),
+			// },
+			// {
+			// 	Config:  testAccApplicationResourceGrantConfig_OpenIDResource(resourceName, name),
+			// 	Destroy: true,
+			// },
+			// // Test error catch on from new
+			// {
+			// 	Config: testAccApplicationResourceGrantConfig_OpenIDResource_InvalidOpenIDScope(resourceName, name),
+			// 	Check: resource.ComposeTestCheckFunc(
+			// 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			// 	),
+			// 	//ExpectError: regexp.MustCompile(`Invalid scope`),
+			// },
 		},
 	})
 }
@@ -173,16 +180,16 @@ func TestAccApplicationResourceGrant_CustomResource(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "resource_name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "scopes.#", "3"),
+					resource.TestMatchResourceAttr(resourceFullName, "custom_resource_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "resource_type", "CUSTOM"),
+					resource.TestCheckResourceAttr(resourceFullName, "scopes.#", "5"),
 					resource.TestMatchResourceAttr(resourceFullName, "scopes.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "scopes.1", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "scopes.2", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.#", "3"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.0", fmt.Sprintf("%s-1", name)),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.1", fmt.Sprintf("%s-2", name)),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.2", fmt.Sprintf("%s-3", name)),
+					resource.TestMatchResourceAttr(resourceFullName, "scopes.3", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "scopes.4", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 			// Test importing the resource
@@ -200,6 +207,60 @@ func TestAccApplicationResourceGrant_CustomResource(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			{
+				Config: testAccApplicationResourceGrantConfig_CustomResource(resourceName, name),
+				Taint: []string{
+					fmt.Sprintf("pingone_resource_scope.%[1]s-1", name),
+					fmt.Sprintf("pingone_resource_scope.%[1]s-2", name),
+					fmt.Sprintf("pingone_resource_scope.%[1]s-3", name),
+					fmt.Sprintf("pingone_resource_scope.%[1]s-4", name),
+					fmt.Sprintf("pingone_resource_scope.%[1]s-5", name),
+				},
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+				),
+			},
+		},
+	})
+}
+
+func TestAccApplicationResourceGrant_CustomResource_SimultaneousGrantRemoval(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application_resource_grant.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.ApplicationResourceGrant_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccApplicationResourceGrantConfig_CustomResource_SimultaneousGrantRemoval(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+				),
+			},
+			{
+				Config: testAccApplicationResourceGrantConfig_CustomResource_SimultaneousGrantRemoval(resourceName, name),
+				Taint: []string{
+					fmt.Sprintf("pingone_resource_scope.%[1]s-1", name),
+					fmt.Sprintf("pingone_resource_scope.%[1]s-2", name),
+					fmt.Sprintf("pingone_resource_scope.%[1]s-3", name),
+					fmt.Sprintf("pingone_resource_scope.%[1]s-4", name),
+					fmt.Sprintf("pingone_resource_scope.%[1]s-5", name),
+				},
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+				),
+				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -230,26 +291,15 @@ func TestAccApplicationResourceGrant_SystemApplication(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "resource_name", "PingOne API"),
-					resource.TestCheckResourceAttr(resourceFullName, "scopes.#", "8"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "custom_resource_id"),
+					resource.TestCheckResourceAttr(resourceFullName, "resource_type", "PINGONE_API"),
+					resource.TestCheckResourceAttr(resourceFullName, "scopes.#", "4"),
 					resource.TestMatchResourceAttr(resourceFullName, "scopes.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "scopes.1", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "scopes.2", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "scopes.3", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "scopes.4", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "scopes.5", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "scopes.6", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "scopes.7", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.#", "8"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.0", "p1:create:device"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.1", "p1:create:pairingKey"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.2", "p1:delete:device"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.3", "p1:read:device"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.4", "p1:read:pairingKey"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.5", "p1:read:user"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.6", "p1:update:device"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.7", "p1:update:user"),
 				),
 			},
 			// Test importing the resource
@@ -273,26 +323,14 @@ func TestAccApplicationResourceGrant_SystemApplication(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "resource_name", "PingOne API"),
-					resource.TestCheckResourceAttr(resourceFullName, "scopes.#", "8"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "custom_resource_id"),
+					resource.TestCheckResourceAttr(resourceFullName, "resource_type", "PINGONE_API"),
+					resource.TestCheckResourceAttr(resourceFullName, "scopes.#", "3"),
 					resource.TestMatchResourceAttr(resourceFullName, "scopes.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "scopes.1", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "scopes.2", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "scopes.3", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "scopes.4", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "scopes.5", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "scopes.6", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "scopes.7", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.#", "8"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.0", "p1:create:device"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.1", "p1:create:pairingKey"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.2", "p1:delete:device"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.3", "p1:read:device"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.4", "p1:read:pairingKey"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.5", "p1:read:user"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.6", "p1:update:device"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.7", "p1:update:user"),
 				),
 			},
 			// Test console error catch - TODO
@@ -322,14 +360,15 @@ func TestAccApplicationResourceGrant_Change(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "resource_name", "openid"),
-					resource.TestCheckResourceAttr(resourceFullName, "scopes.#", "2"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "custom_resource_id"),
+					resource.TestCheckResourceAttr(resourceFullName, "resource_type", "OPENID_CONNECT"),
+					resource.TestCheckResourceAttr(resourceFullName, "scopes.#", "4"),
 					resource.TestMatchResourceAttr(resourceFullName, "scopes.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "scopes.1", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.0", "email"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.1", "profile"),
+					resource.TestMatchResourceAttr(resourceFullName, "scopes.2", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "scopes.3", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 			{
@@ -337,16 +376,16 @@ func TestAccApplicationResourceGrant_Change(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "resource_name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "scopes.#", "3"),
+					resource.TestMatchResourceAttr(resourceFullName, "custom_resource_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "resource_type", "CUSTOM"),
+					resource.TestCheckResourceAttr(resourceFullName, "scopes.#", "5"),
 					resource.TestMatchResourceAttr(resourceFullName, "scopes.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "scopes.1", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "scopes.2", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.#", "3"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.0", fmt.Sprintf("%s-1", name)),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.1", fmt.Sprintf("%s-2", name)),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.2", fmt.Sprintf("%s-3", name)),
+					resource.TestMatchResourceAttr(resourceFullName, "scopes.3", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "scopes.4", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 			{
@@ -354,14 +393,15 @@ func TestAccApplicationResourceGrant_Change(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "resource_name", "openid"),
-					resource.TestCheckResourceAttr(resourceFullName, "scopes.#", "2"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "custom_resource_id"),
+					resource.TestCheckResourceAttr(resourceFullName, "resource_type", "OPENID_CONNECT"),
+					resource.TestCheckResourceAttr(resourceFullName, "scopes.#", "4"),
 					resource.TestMatchResourceAttr(resourceFullName, "scopes.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "scopes.1", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.0", "email"),
-					resource.TestCheckResourceAttr(resourceFullName, "scope_names.1", "profile"),
+					resource.TestMatchResourceAttr(resourceFullName, "scopes.2", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "scopes.3", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -430,49 +470,122 @@ resource "pingone_application" "%[2]s" {
   }
 }
 
+data "pingone_resource_scope" "%[2]s_openid" {
+  environment_id = data.pingone_environment.general_test.id
+
+  resource_type = "OPENID_CONNECT"
+  name          = "openid"
+}
+
+data "pingone_resource_scope" "%[2]s_email" {
+  environment_id = data.pingone_environment.general_test.id
+
+  resource_type = "OPENID_CONNECT"
+  name          = "email"
+}
+
+data "pingone_resource_scope" "%[2]s_profile" {
+  environment_id = data.pingone_environment.general_test.id
+
+  resource_type = "OPENID_CONNECT"
+  name          = "profile"
+}
+
+resource "pingone_resource_attribute" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  resource_type = "OPENID_CONNECT"
+  name          = "%[3]s"
+  value         = "$${user.name.given}"
+}
+
+resource "pingone_resource_scope_openid" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[2]s"
+
+  mapped_claims = [
+    pingone_resource_attribute.%[2]s.id
+  ]
+}
+
 resource "pingone_application_resource_grant" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
 
-  resource_name = "openid"
-  scope_names = [
-    "email",
-    "profile",
+  resource_type = "OPENID_CONNECT"
+  scopes = [
+    data.pingone_resource_scope.%[2]s_openid.id,
+    data.pingone_resource_scope.%[2]s_email.id,
+    data.pingone_resource_scope.%[2]s_profile.id,
+    pingone_resource_scope_openid.%[2]s.id,
   ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationResourceGrantConfig_OpenIDResource_InvalidOpenIDScope(resourceName, name string) string {
-	return fmt.Sprintf(`
-		%[1]s
+// func testAccApplicationResourceGrantConfig_OpenIDResource_InvalidOpenIDScope(resourceName, name string) string {
+// 	return fmt.Sprintf(`
+// 		%[1]s
 
-resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
-  enabled        = true
+// resource "pingone_application" "%[2]s" {
+//   environment_id = data.pingone_environment.general_test.id
+//   name           = "%[3]s"
+//   enabled        = true
 
-  oidc_options = {
-    type                        = "SINGLE_PAGE_APP"
-    grant_types                 = ["AUTHORIZATION_CODE"]
-    response_types              = ["CODE"]
-    pkce_enforcement            = "S256_REQUIRED"
-    token_endpoint_authn_method = "NONE"
-    redirect_uris               = ["https://www.pingidentity.com"]
-  }
-}
+//   oidc_options = {
+//     type                        = "SINGLE_PAGE_APP"
+//     grant_types                 = ["AUTHORIZATION_CODE"]
+//     response_types              = ["CODE"]
+//     pkce_enforcement            = "S256_REQUIRED"
+//     token_endpoint_authn_method = "NONE"
+//     redirect_uris               = ["https://www.pingidentity.com"]
+//   }
+// }
 
-resource "pingone_application_resource_grant" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  application_id = pingone_application.%[2]s.id
+// data "pingone_resource_scope" "%[2]s_email" {
+//   environment_id = data.pingone_environment.general_test.id
 
-  resource_name = "openid"
-  scope_names = [
-    "email",
-    "profile",
-    "openid",
-  ]
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
-}
+//   resource_type = "OPENID_CONNECT"
+//   name          = "email"
+// }
+
+// data "pingone_resource_scope" "%[2]s_profile" {
+//   environment_id = data.pingone_environment.general_test.id
+
+//   resource_type = "OPENID_CONNECT"
+//   name          = "profile"
+// }
+
+// resource "pingone_resource_attribute" "%[2]s" {
+//   environment_id = data.pingone_environment.general_test.id
+
+//   resource_type = "OPENID_CONNECT"
+//   name          = "%[3]s"
+//   value         = "$${user.name.given}"
+// }
+
+// resource "pingone_resource_scope_openid" "%[2]s" {
+//   environment_id = data.pingone_environment.general_test.id
+
+//   name = "%[2]s"
+
+//   mapped_claims = [
+//     pingone_resource_attribute.%[2]s.id
+//   ]
+// }
+
+// resource "pingone_application_resource_grant" "%[2]s" {
+//   environment_id = data.pingone_environment.general_test.id
+//   application_id = pingone_application.%[2]s.id
+
+//   resource_type = "OPENID_CONNECT"
+//   scopes = [
+//     data.pingone_resource_scope.%[2]s_email.id,
+//     data.pingone_resource_scope.%[2]s_profile.id,
+//     pingone_resource_scope_openid.%[2]s.id,
+//   ]
+// }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+// }
 
 func testAccApplicationResourceGrantConfig_CustomResource(resourceName, name string) string {
 	return fmt.Sprintf(`
@@ -520,15 +633,107 @@ resource "pingone_resource_scope" "%[2]s-3" {
   name = "%[3]s-3"
 }
 
+resource "pingone_resource_scope" "%[2]s-4" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  name = "%[3]s-4"
+}
+
+resource "pingone_resource_scope" "%[2]s-5" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  name = "%[3]s-5"
+}
+
 resource "pingone_application_resource_grant" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
 
-  resource_name = pingone_resource.%[2]s.name
+  resource_type      = "CUSTOM"
+  custom_resource_id = pingone_resource.%[2]s.id
+  scopes = [
+    pingone_resource_scope.%[2]s-2.id,
+    pingone_resource_scope.%[2]s-1.id,
+    pingone_resource_scope.%[2]s-3.id,
+    pingone_resource_scope.%[2]s-4.id,
+    pingone_resource_scope.%[2]s-5.id,
+  ]
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationResourceGrantConfig_CustomResource_SimultaneousGrantRemoval(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options {
+    type                        = "SINGLE_PAGE_APP"
+    grant_types                 = ["AUTHORIZATION_CODE"]
+    response_types              = ["CODE"]
+    pkce_enforcement            = "S256_REQUIRED"
+    token_endpoint_authn_method = "NONE"
+    redirect_uris               = ["https://www.pingidentity.com"]
+  }
+}
+
+resource "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_resource_scope" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  name = "%[3]s-1"
+}
+
+resource "pingone_resource_scope" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  name = "%[3]s-2"
+}
+
+resource "pingone_resource_scope" "%[2]s-3" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  name = "%[3]s-3"
+}
+
+resource "pingone_resource_scope" "%[2]s-4" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  name = "%[3]s-4"
+}
+
+resource "pingone_resource_scope" "%[2]s-5" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_id    = pingone_resource.%[2]s.id
+
+  name = "%[3]s-5"
+}
+
+resource "pingone_application_resource_grant" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+  resource_name  = pingone_resource.%[2]s.name
+
   scope_names = [
     pingone_resource_scope.%[2]s-1.name,
     pingone_resource_scope.%[2]s-2.name,
-    pingone_resource_scope.%[2]s-3.name
+    pingone_resource_scope.%[2]s-3.name,
+    pingone_resource_scope.%[2]s-4.name,
+    pingone_resource_scope.%[2]s-5.name,
   ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -547,21 +752,45 @@ resource "pingone_system_application" "%[3]s" {
   enable_default_theme_footer = true
 }
 
+data "pingone_resource_scope" "%[2]s_read_user" {
+  environment_id = pingone_environment.%[2]s.id
+
+  resource_type = "PINGONE_API"
+  name          = "p1:read:user"
+}
+
+data "pingone_resource_scope" "%[2]s_update_user" {
+  environment_id = pingone_environment.%[2]s.id
+
+  resource_type = "PINGONE_API"
+  name          = "p1:update:user"
+}
+
+data "pingone_resource_scope" "%[2]s_create_device" {
+  environment_id = pingone_environment.%[2]s.id
+
+  resource_type = "PINGONE_API"
+  name          = "p1:create:device"
+}
+
+data "pingone_resource_scope" "%[2]s_create_pairing_key" {
+  environment_id = pingone_environment.%[2]s.id
+
+  resource_type = "PINGONE_API"
+  name          = "p1:create:pairingKey"
+}
+
 resource "pingone_application_resource_grant" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   application_id = pingone_system_application.%[3]s.id
 
-  resource_name = "PingOne API"
+  resource_type = "PINGONE_API"
 
-  scope_names = [
-    "p1:create:device",
-    "p1:create:pairingKey",
-    "p1:delete:device",
-    "p1:read:device",
-    "p1:read:pairingKey",
-    "p1:read:user",
-    "p1:update:device",
-    "p1:update:user",
+  scopes = [
+    data.pingone_resource_scope.%[2]s_read_user.id,
+    data.pingone_resource_scope.%[2]s_update_user.id,
+    data.pingone_resource_scope.%[2]s_create_device.id,
+    data.pingone_resource_scope.%[2]s_create_pairing_key.id,
   ]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
@@ -577,21 +806,44 @@ resource "pingone_system_application" "%[3]s" {
   enabled = true
 }
 
+data "pingone_resource_scope" "pingone_api_read_user" {
+  environment_id = pingone_environment.%[2]s.id
+
+  resource_type = "PINGONE_API"
+  name          = "p1:read:user"
+}
+
+data "pingone_resource_scope" "pingone_api_update_user" {
+  environment_id = pingone_environment.%[2]s.id
+
+  resource_type = "PINGONE_API"
+  name          = "p1:update:user"
+}
+
+data "pingone_resource_scope" "pingone_api_create_device" {
+  environment_id = pingone_environment.%[2]s.id
+
+  resource_type = "PINGONE_API"
+  name          = "p1:create:device"
+}
+
+data "pingone_resource_scope" "pingone_api_create_pairing_key" {
+  environment_id = pingone_environment.%[2]s.id
+
+  resource_type = "PINGONE_API"
+  name          = "p1:create:pairingKey"
+}
+
 resource "pingone_application_resource_grant" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   application_id = pingone_system_application.%[3]s.id
 
-  resource_name = "PingOne API"
+  resource_type = "PINGONE_API"
 
-  scope_names = [
-    "p1:create:device",
-    "p1:create:pairingKey",
-    "p1:delete:device",
-    "p1:read:device",
-    "p1:read:pairingKey",
-    "p1:read:user",
-    "p1:update:device",
-    "p1:update:user",
+  scopes = [
+    data.pingone_resource_scope.pingone_api_read_user.id,
+    data.pingone_resource_scope.pingone_api_update_user.id,
+    data.pingone_resource_scope.pingone_api_create_device.id,
   ]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }

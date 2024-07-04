@@ -2,7 +2,6 @@ package framework
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -93,22 +92,12 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f sdk.SDKInterfaceFunc,
 
 			if v, ok := t.Model().(model.P1Error); ok && v.GetId() != "" {
 
-				summaryText := fmt.Sprintf("Error when calling `%s`: %v", requestID, v.GetMessage())
-				detailText := fmt.Sprintf("PingOne Error Details:\nID: %s\nCode: %s\nMessage: %s", v.GetId(), v.GetCode(), v.GetMessage())
-
 				diags = customError(v)
 				if diags != nil {
 					return diags
 				}
 
-				if details, ok := v.GetDetailsOk(); ok {
-					detailsBytes, err := json.Marshal(details)
-					if err != nil {
-						diags.AddWarning("Cannot parse details object", "There is an internal problem with the provider.  Please raise an issue with the provider's maintainers.")
-					}
-
-					detailText = fmt.Sprintf("%s\nDetails object: %+v", detailText, string(detailsBytes[:]))
-				}
+				summaryText, detailText := sdk.FormatPingOneError(requestID, v)
 
 				diags.AddError(summaryText, detailText)
 

@@ -39,7 +39,7 @@ import (
 // Types
 type ApplicationResource serviceClientType
 
-type ApplicationResourceModel struct {
+type applicationResourceModelV1 struct {
 	Id                        pingonetypes.ResourceIDValue `tfsdk:"id"`
 	EnvironmentId             pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	Name                      types.String                 `tfsdk:"name"`
@@ -56,16 +56,16 @@ type ApplicationResourceModel struct {
 	SAMLOptions               types.Object                 `tfsdk:"saml_options"`
 }
 
-type ApplicationAccessControlGroupOptionsResourceModel struct {
+type applicationAccessControlGroupOptionsResourceModelV1 struct {
 	Type   types.String `tfsdk:"type"`
 	Groups types.Set    `tfsdk:"groups"`
 }
 
-type ApplicationExternalLinkOptionsResourceModel struct {
+type applicationExternalLinkOptionsResourceModelV1 struct {
 	HomePageUrl types.String `tfsdk:"home_page_url"`
 }
 
-type ApplicationOIDCOptionsResourceModel struct {
+type applicationOIDCOptionsResourceModelV1 struct {
 	AdditionalRefreshTokenReplayProtectionEnabled types.Bool   `tfsdk:"additional_refresh_token_replay_protection_enabled"`
 	AllowWildcardsInRedirectUris                  types.Bool   `tfsdk:"allow_wildcards_in_redirect_uris"`
 	CertificateBasedAuthentication                types.Object `tfsdk:"certificate_based_authentication"`
@@ -96,16 +96,16 @@ type ApplicationOIDCOptionsResourceModel struct {
 	Type                                          types.String `tfsdk:"type"`
 }
 
-type ApplicationCorsSettingsResourceModel struct {
+type applicationCorsSettingsResourceModelV1 struct {
 	Behavior types.String `tfsdk:"behavior"`
 	Origins  types.Set    `tfsdk:"origins"`
 }
 
-type ApplicationOIDCCertificateBasedAuthenticationResourceModel struct {
+type applicationOIDCCertificateBasedAuthenticationResourceModelV1 struct {
 	KeyId pingonetypes.ResourceIDValue `tfsdk:"key_id"`
 }
 
-type ApplicationOIDCMobileAppResourceModel struct {
+type applicationOIDCMobileAppResourceModelV1 struct {
 	BundleId               types.String `tfsdk:"bundle_id"`
 	HuaweiAppId            types.String `tfsdk:"huawei_app_id"`
 	HuaweiPackageName      types.String `tfsdk:"huawei_package_name"`
@@ -115,26 +115,26 @@ type ApplicationOIDCMobileAppResourceModel struct {
 	UniversalAppLink       types.String `tfsdk:"universal_app_link"`
 }
 
-type ApplicationOIDCMobileAppIntegrityDetectionResourceModel struct {
+type applicationOIDCMobileAppIntegrityDetectionResourceModelV1 struct {
 	CacheDuration     types.Object `tfsdk:"cache_duration"`
 	Enabled           types.Bool   `tfsdk:"enabled"`
 	ExcludedPlatforms types.Set    `tfsdk:"excluded_platforms"`
 	GooglePlay        types.Object `tfsdk:"google_play"`
 }
 
-type ApplicationOIDCMobileAppIntegrityDetectionCacheDurationResourceModel struct {
+type applicationOIDCMobileAppIntegrityDetectionCacheDurationResourceModelV1 struct {
 	Amount types.Int64  `tfsdk:"amount"`
 	Units  types.String `tfsdk:"units"`
 }
 
-type ApplicationOIDCMobileAppIntegrityDetectionGooglePlayResourceModel struct {
+type applicationOIDCMobileAppIntegrityDetectionGooglePlayResourceModelV1 struct {
 	DecryptionKey                 types.String         `tfsdk:"decryption_key"`
 	ServiceAccountCredentialsJson jsontypes.Normalized `tfsdk:"service_account_credentials_json"`
 	VerificationKey               types.String         `tfsdk:"verification_key"`
 	VerificationType              types.String         `tfsdk:"verification_type"`
 }
 
-type ApplicationSAMLOptionsResourceModel struct {
+type applicationSAMLOptionsResourceModelV1 struct {
 	AcsUrls                     types.Set    `tfsdk:"acs_urls"`
 	AssertionDuration           types.Int64  `tfsdk:"assertion_duration"`
 	AssertionSignedEnabled      types.Bool   `tfsdk:"assertion_signed_enabled"`
@@ -155,21 +155,21 @@ type ApplicationSAMLOptionsResourceModel struct {
 	Type                        types.String `tfsdk:"type"`
 }
 
-type ApplicationSAMLOptionsIdpSigningKeyResourceModel struct {
+type applicationSAMLOptionsIdpSigningKeyResourceModelV1 struct {
 	Algorithm types.String                 `tfsdk:"algorithm"`
 	KeyId     pingonetypes.ResourceIDValue `tfsdk:"key_id"`
 }
 
-type ApplicationSAMLOptionsSpEncryptionResourceModel struct {
+type applicationSAMLOptionsSpEncryptionResourceModelV1 struct {
 	Algorithm   types.String `tfsdk:"algorithm"`
 	Certificate types.Object `tfsdk:"certificate"`
 }
 
-type ApplicationSAMLOptionsSpEncryptionCertificateResourceModel struct {
+type applicationSAMLOptionsSpEncryptionCertificateResourceModelV1 struct {
 	Id pingonetypes.ResourceIDValue `tfsdk:"id"`
 }
 
-type ApplicationSAMLOptionsSpVerificationResourceModel struct {
+type applicationSAMLOptionsSpVerificationResourceModelV1 struct {
 	CertificateIds     types.Set  `tfsdk:"certificate_ids"`
 	AuthnRequestSigned types.Bool `tfsdk:"authn_request_signed"`
 }
@@ -300,6 +300,7 @@ var (
 	_ resource.ResourceWithConfigure      = &ApplicationResource{}
 	_ resource.ResourceWithImportState    = &ApplicationResource{}
 	_ resource.ResourceWithValidateConfig = &ApplicationResource{}
+	_ resource.ResourceWithUpgradeState   = &ApplicationResource{}
 )
 
 // New Object
@@ -630,6 +631,9 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	).DefaultValue(false)
 
 	resp.Schema = schema.Schema{
+
+		Version: 1,
+
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage a PingOne application (SAML, OpenID Connect, External Link) in an environment.",
 
@@ -1657,12 +1661,12 @@ func (r *ApplicationResource) Configure(ctx context.Context, req resource.Config
 }
 
 func (r *ApplicationResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var data ApplicationResourceModel
+	var data applicationResourceModelV1
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
 	if !data.OIDCOptions.IsNull() && !data.OIDCOptions.IsUnknown() {
-		var plan ApplicationOIDCOptionsResourceModel
+		var plan applicationOIDCOptionsResourceModelV1
 		resp.Diagnostics.Append(data.OIDCOptions.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -1709,7 +1713,7 @@ func (r *ApplicationResource) ValidateConfig(ctx context.Context, req resource.V
 }
 
 func (r *ApplicationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan, state ApplicationResourceModel
+	var plan, state applicationResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -1789,7 +1793,7 @@ func (r *ApplicationResource) Create(ctx context.Context, req resource.CreateReq
 }
 
 func (r *ApplicationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *ApplicationResourceModel
+	var data *applicationResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -1834,7 +1838,7 @@ func (r *ApplicationResource) Read(ctx context.Context, req resource.ReadRequest
 }
 
 func (r *ApplicationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan, state ApplicationResourceModel
+	var plan, state applicationResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -1883,7 +1887,7 @@ func (r *ApplicationResource) Update(ctx context.Context, req resource.UpdateReq
 }
 
 func (r *ApplicationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *ApplicationResourceModel
+	var data *applicationResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -1969,7 +1973,7 @@ func applicationWriteCustomError(error model.P1Error) diag.Diagnostics {
 	return framework.DefaultCustomError(error)
 }
 
-func (p *ApplicationResourceModel) expandCreate(ctx context.Context) (*management.CreateApplicationRequest, diag.Diagnostics) {
+func (p *applicationResourceModelV1) expandCreate(ctx context.Context) (*management.CreateApplicationRequest, diag.Diagnostics) {
 	var d, diags diag.Diagnostics
 
 	data := &management.CreateApplicationRequest{}
@@ -1992,7 +1996,7 @@ func (p *ApplicationResourceModel) expandCreate(ctx context.Context) (*managemen
 	return data, diags
 }
 
-func (p *ApplicationResourceModel) expandUpdate(ctx context.Context) (*management.UpdateApplicationRequest, diag.Diagnostics) {
+func (p *applicationResourceModelV1) expandUpdate(ctx context.Context) (*management.UpdateApplicationRequest, diag.Diagnostics) {
 	var d, diags diag.Diagnostics
 
 	data := &management.UpdateApplicationRequest{}
@@ -2015,7 +2019,7 @@ func (p *ApplicationResourceModel) expandUpdate(ctx context.Context) (*managemen
 	return data, diags
 }
 
-func (p *ApplicationCorsSettingsResourceModel) expand() (*management.ApplicationCorsSettings, diag.Diagnostics) {
+func (p *applicationCorsSettingsResourceModelV1) expand() (*management.ApplicationCorsSettings, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data := management.NewApplicationCorsSettings(management.EnumApplicationCorsSettingsBehavior(p.Behavior.ValueString()))
@@ -2033,13 +2037,13 @@ func (p *ApplicationCorsSettingsResourceModel) expand() (*management.Application
 	return data, diags
 }
 
-func (p *ApplicationResourceModel) expandApplicationOIDC(ctx context.Context) (*management.ApplicationOIDC, diag.Diagnostics) {
+func (p *applicationResourceModelV1) expandApplicationOIDC(ctx context.Context) (*management.ApplicationOIDC, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var data *management.ApplicationOIDC
 
 	if !p.OIDCOptions.IsNull() && !p.OIDCOptions.IsUnknown() {
-		var plan ApplicationOIDCOptionsResourceModel
+		var plan applicationOIDCOptionsResourceModelV1
 		d := p.OIDCOptions.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -2084,7 +2088,7 @@ func (p *ApplicationResourceModel) expandApplicationOIDC(ctx context.Context) (*
 		data.HiddenFromAppPortal = applicationCommon.HiddenFromAppPortal
 
 		if !plan.CorsSettings.IsNull() && !plan.CorsSettings.IsUnknown() {
-			var corsPlan ApplicationCorsSettingsResourceModel
+			var corsPlan applicationCorsSettingsResourceModelV1
 
 			diags.Append(plan.CorsSettings.As(ctx, &corsPlan, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    false,
@@ -2238,7 +2242,7 @@ func (p *ApplicationResourceModel) expandApplicationOIDC(ctx context.Context) (*
 				return nil, diags
 			}
 
-			var kerberosPlan ApplicationOIDCCertificateBasedAuthenticationResourceModel
+			var kerberosPlan applicationOIDCCertificateBasedAuthenticationResourceModelV1
 
 			diags.Append(plan.CertificateBasedAuthentication.As(ctx, &kerberosPlan, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    false,
@@ -2260,7 +2264,7 @@ func (p *ApplicationResourceModel) expandApplicationOIDC(ctx context.Context) (*
 		}
 
 		if !plan.MobileApp.IsNull() && !plan.MobileApp.IsUnknown() {
-			var mobileAppPlan ApplicationOIDCMobileAppResourceModel
+			var mobileAppPlan applicationOIDCMobileAppResourceModelV1
 
 			diags.Append(plan.MobileApp.As(ctx, &mobileAppPlan, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    false,
@@ -2283,7 +2287,7 @@ func (p *ApplicationResourceModel) expandApplicationOIDC(ctx context.Context) (*
 	return data, diags
 }
 
-func (p *ApplicationOIDCMobileAppResourceModel) expand(ctx context.Context) (*management.ApplicationOIDCAllOfMobile, diag.Diagnostics) {
+func (p *applicationOIDCMobileAppResourceModelV1) expand(ctx context.Context) (*management.ApplicationOIDCAllOfMobile, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data := management.NewApplicationOIDCAllOfMobile()
@@ -2302,7 +2306,7 @@ func (p *ApplicationOIDCMobileAppResourceModel) expand(ctx context.Context) (*ma
 
 	if !p.IntegrityDetection.IsNull() && !p.IntegrityDetection.IsUnknown() {
 
-		var integrityDetectionPlan ApplicationOIDCMobileAppIntegrityDetectionResourceModel
+		var integrityDetectionPlan applicationOIDCMobileAppIntegrityDetectionResourceModelV1
 		diags.Append(p.IntegrityDetection.As(ctx, &integrityDetectionPlan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -2338,7 +2342,7 @@ func (p *ApplicationOIDCMobileAppResourceModel) expand(ctx context.Context) (*ma
 	return data, diags
 }
 
-func (p *ApplicationOIDCMobileAppIntegrityDetectionResourceModel) expand(ctx context.Context) (*management.ApplicationOIDCAllOfMobileIntegrityDetection, diag.Diagnostics) {
+func (p *applicationOIDCMobileAppIntegrityDetectionResourceModelV1) expand(ctx context.Context) (*management.ApplicationOIDCAllOfMobileIntegrityDetection, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data := management.NewApplicationOIDCAllOfMobileIntegrityDetection()
@@ -2377,7 +2381,7 @@ func (p *ApplicationOIDCMobileAppIntegrityDetectionResourceModel) expand(ctx con
 
 	if !p.GooglePlay.IsNull() && !p.GooglePlay.IsUnknown() {
 
-		var googlePlayPlan ApplicationOIDCMobileAppIntegrityDetectionGooglePlayResourceModel
+		var googlePlayPlan applicationOIDCMobileAppIntegrityDetectionGooglePlayResourceModelV1
 		diags.Append(p.GooglePlay.As(ctx, &googlePlayPlan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -2417,7 +2421,7 @@ func (p *ApplicationOIDCMobileAppIntegrityDetectionResourceModel) expand(ctx con
 
 	if !p.CacheDuration.IsNull() && !p.CacheDuration.IsUnknown() {
 
-		var cacheDurationPlan ApplicationOIDCMobileAppIntegrityDetectionCacheDurationResourceModel
+		var cacheDurationPlan applicationOIDCMobileAppIntegrityDetectionCacheDurationResourceModelV1
 		diags.Append(p.CacheDuration.As(ctx, &cacheDurationPlan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -2442,13 +2446,13 @@ func (p *ApplicationOIDCMobileAppIntegrityDetectionResourceModel) expand(ctx con
 	return data, diags
 }
 
-func (p *ApplicationResourceModel) expandApplicationSAML(ctx context.Context) (*management.ApplicationSAML, diag.Diagnostics) {
+func (p *applicationResourceModelV1) expandApplicationSAML(ctx context.Context) (*management.ApplicationSAML, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var data *management.ApplicationSAML
 
 	if !p.SAMLOptions.IsNull() && !p.SAMLOptions.IsUnknown() {
-		var plan ApplicationSAMLOptionsResourceModel
+		var plan applicationSAMLOptionsResourceModelV1
 		d := p.SAMLOptions.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -2489,7 +2493,7 @@ func (p *ApplicationResourceModel) expandApplicationSAML(ctx context.Context) (*
 
 		// SAML specific options
 		if !plan.CorsSettings.IsNull() && !plan.CorsSettings.IsUnknown() {
-			var corsPlan ApplicationCorsSettingsResourceModel
+			var corsPlan applicationCorsSettingsResourceModelV1
 
 			diags.Append(plan.CorsSettings.As(ctx, &corsPlan, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    false,
@@ -2517,7 +2521,7 @@ func (p *ApplicationResourceModel) expandApplicationSAML(ctx context.Context) (*
 
 		if !plan.IdpSigningKey.IsNull() && !plan.IdpSigningKey.IsUnknown() {
 
-			var idpSigningOptionsPlan ApplicationSAMLOptionsIdpSigningKeyResourceModel
+			var idpSigningOptionsPlan applicationSAMLOptionsIdpSigningKeyResourceModelV1
 
 			diags.Append(plan.IdpSigningKey.As(ctx, &idpSigningOptionsPlan, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    false,
@@ -2566,7 +2570,7 @@ func (p *ApplicationResourceModel) expandApplicationSAML(ctx context.Context) (*
 		}
 
 		if !plan.SpEncryption.IsNull() && !plan.SpEncryption.IsUnknown() {
-			var spEncryptionPlan ApplicationSAMLOptionsSpEncryptionResourceModel
+			var spEncryptionPlan applicationSAMLOptionsSpEncryptionResourceModelV1
 
 			diags.Append(plan.SpEncryption.As(ctx, &spEncryptionPlan, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    false,
@@ -2576,7 +2580,7 @@ func (p *ApplicationResourceModel) expandApplicationSAML(ctx context.Context) (*
 				return nil, diags
 			}
 
-			var spEncryptionCertificatePlan ApplicationSAMLOptionsSpEncryptionCertificateResourceModel
+			var spEncryptionCertificatePlan applicationSAMLOptionsSpEncryptionCertificateResourceModelV1
 
 			diags.Append(spEncryptionPlan.Certificate.As(ctx, &spEncryptionCertificatePlan, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    false,
@@ -2595,7 +2599,7 @@ func (p *ApplicationResourceModel) expandApplicationSAML(ctx context.Context) (*
 		}
 
 		if !plan.SpVerification.IsNull() && !plan.SpVerification.IsUnknown() {
-			var spVerificationPlan ApplicationSAMLOptionsSpVerificationResourceModel
+			var spVerificationPlan applicationSAMLOptionsSpVerificationResourceModelV1
 
 			diags.Append(plan.SpVerification.As(ctx, &spVerificationPlan, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    false,
@@ -2632,13 +2636,13 @@ func (p *ApplicationResourceModel) expandApplicationSAML(ctx context.Context) (*
 	return data, diags
 }
 
-func (p *ApplicationResourceModel) expandApplicationExternalLink(ctx context.Context) (*management.ApplicationExternalLink, diag.Diagnostics) {
+func (p *applicationResourceModelV1) expandApplicationExternalLink(ctx context.Context) (*management.ApplicationExternalLink, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var data *management.ApplicationExternalLink
 
 	if !p.ExternalLinkOptions.IsNull() && !p.ExternalLinkOptions.IsUnknown() {
-		var plan ApplicationExternalLinkOptionsResourceModel
+		var plan applicationExternalLinkOptionsResourceModelV1
 		d := p.ExternalLinkOptions.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -2673,7 +2677,7 @@ func (p *ApplicationResourceModel) expandApplicationExternalLink(ctx context.Con
 	return data, diags
 }
 
-func (p *ApplicationResourceModel) expandApplicationCommon(ctx context.Context) (*management.Application, diag.Diagnostics) {
+func (p *applicationResourceModelV1) expandApplicationCommon(ctx context.Context) (*management.Application, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data := management.Application{}
@@ -2714,7 +2718,7 @@ func (p *ApplicationResourceModel) expandApplicationCommon(ctx context.Context) 
 	}
 
 	if !p.AccessControlGroupOptions.IsNull() && !p.AccessControlGroupOptions.IsUnknown() {
-		var plan ApplicationAccessControlGroupOptionsResourceModel
+		var plan applicationAccessControlGroupOptionsResourceModelV1
 		d := p.AccessControlGroupOptions.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -2756,7 +2760,7 @@ func (p *ApplicationResourceModel) expandApplicationCommon(ctx context.Context) 
 	return &data, diags
 }
 
-func (p *ApplicationResourceModel) toState(ctx context.Context, apiObject *management.ReadOneApplication200Response) diag.Diagnostics {
+func (p *applicationResourceModelV1) toState(ctx context.Context, apiObject *management.ReadOneApplication200Response) diag.Diagnostics {
 	var diags, d diag.Diagnostics
 
 	if apiObject == nil {
@@ -2833,7 +2837,7 @@ func (p *ApplicationResourceModel) toState(ctx context.Context, apiObject *manag
 		// Service specific attributes
 		p.Tags = framework.EnumSetOkToTF(v.GetTagsOk())
 
-		var oidcOptionsState ApplicationOIDCOptionsResourceModel
+		var oidcOptionsState applicationOIDCOptionsResourceModelV1
 		if !p.OIDCOptions.IsNull() && !p.OIDCOptions.IsUnknown() {
 			d := p.OIDCOptions.As(ctx, &oidcOptionsState, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    false,
