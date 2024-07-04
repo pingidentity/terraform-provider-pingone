@@ -1,3 +1,5 @@
+## 0.29.2 (Unreleased)
+
 ## 0.29.1 (24 June 2024)
 
 BUG FIXES:
