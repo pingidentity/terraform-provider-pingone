@@ -18,7 +18,8 @@ resource "pingone_environment" "my_environment" {
 
 resource "pingone_resource_attribute" "my_resource_attribute" {
   environment_id = pingone_environment.my_environment.id
-  resource_name  = "openid"
+
+  resource_type = "OPENID_CONNECT"
 
   name  = "exampleAttribute"
   value = "$${user.name.given}"

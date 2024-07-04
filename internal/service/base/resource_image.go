@@ -28,14 +28,14 @@ import (
 // Types
 type ImageResource serviceClientType
 
-type ImageResourceModel struct {
+type imageResourceModelV1 struct {
 	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
 	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	ImageFileB64  types.String                 `tfsdk:"image_file_base64"`
 	UploadedImage types.Object                 `tfsdk:"uploaded_image"`
 }
 
-type ImageUploadedImageResourceModel struct {
+type imageUploadedImageResourceModelV1 struct {
 	Width  types.Int64  `tfsdk:"width"`
 	Height types.Int64  `tfsdk:"height"`
 	Type   types.String `tfsdk:"type"`
@@ -78,6 +78,9 @@ func (r *ImageResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 	const attrMinLength = 2
 
 	resp.Schema = schema.Schema{
+
+		Version: 1,
+
 		// This description is used by the documentation generator and the language server.
 		Description: framework.SchemaDescriptionFromMarkdown("Resource to create and manage PingOne images in an environment.").Description,
 
@@ -161,7 +164,7 @@ func (r *ImageResource) Configure(ctx context.Context, req resource.ConfigureReq
 }
 
 func (r *ImageResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan, state ImageResourceModel
+	var plan, state imageResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -210,7 +213,7 @@ func (r *ImageResource) Create(ctx context.Context, req resource.CreateRequest, 
 }
 
 func (r *ImageResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *ImageResourceModel
+	var data *imageResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -258,7 +261,7 @@ func (r *ImageResource) Update(ctx context.Context, req resource.UpdateRequest, 
 }
 
 func (r *ImageResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *ImageResourceModel
+	var data *imageResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -325,7 +328,7 @@ func (r *ImageResource) ImportState(ctx context.Context, req resource.ImportStat
 	}
 }
 
-func (p *ImageResourceModel) expand() (*[]byte, *string, *string, diag.Diagnostics) {
+func (p *imageResourceModelV1) expand() (*[]byte, *string, *string, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var archive []byte
@@ -373,7 +376,7 @@ func (p *ImageResourceModel) expand() (*[]byte, *string, *string, diag.Diagnosti
 	return &archive, &fileName, &contentType, diags
 }
 
-func (p *ImageResourceModel) toState(apiObject *management.Image) diag.Diagnostics {
+func (p *imageResourceModelV1) toState(apiObject *management.Image) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {

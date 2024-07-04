@@ -558,7 +558,7 @@ func (p *gatewayDataSourceModel) toState(ctx context.Context, apiObject interfac
 		p.ConnectionSecurity = framework.EnumOkToTF(t.GetConnectionSecurityOk())
 		p.FollowReferrals = framework.BoolOkToTF(t.GetFollowReferralsOk())
 
-		var kerberosPlan *gatewayKerberosResourceModel
+		var kerberosPlan *gatewayKerberosResourceModelV1
 
 		diags.Append(p.Kerberos.As(ctx, &kerberosPlan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,

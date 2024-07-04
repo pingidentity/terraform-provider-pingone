@@ -16,5 +16,4 @@ resource "pingone_gateway" "my_radius_gateway" {
       ip = "127.0.0.1"
     }
   ]
-
 }

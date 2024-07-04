@@ -11,9 +11,13 @@ description: |-
 
 -> Resource grants can be mapped to administrator defined applications that are managed through the `pingone_application` resource, and built-in system applications that are managed through the `pingone_system_application` resource.
 
-## Example Usage - Standard Resources
+## Example Usage - OpenID Connect Resource
 
-{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-standard-resources.tf") }}
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-openid-resource.tf") }}
+
+## Example Usage - PingOne API Resource
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-pingone-api-resource.tf") }}
 
 ## Example Usage - Custom Resource
 

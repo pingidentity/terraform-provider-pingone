@@ -1,0 +1,3 @@
+```release-note:note
+Reformat API error responses to be clearer to read.
+```
