@@ -103,6 +103,7 @@ resource "pingone_agreement_localization_enable" "my_agreement_fr_enable" {
 
 - `id` (String) The ID of this resource.
 - `not_valid_after` (String) Specifies whether the revision is still valid in the context of all revisions for a language. This property is calculated dynamically at read time, taking into consideration the agreement language, the language enabled property, and the agreement enabled property. When a new revision is added, this attribute's property values for all other previous revisions might be impacted. For example, if a new revision becomes effective and it forces reconsent, then all older revisions are no longer valid.
+- `stored_text` (String) The text or HTML for the revision that is presented to the user.
 
 ## Import
 
