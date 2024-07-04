@@ -322,7 +322,7 @@ func testAccResourceScopeOpenIDConfig_NewEnv(environmentName, licenseID, resourc
 
 resource "pingone_resource_attribute" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  resource_name  = "openid"
+  resource_type  = "OPENID_CONNECT"
 
   name  = "%[4]s"
   value = "$${user.name.given}"
@@ -346,7 +346,7 @@ func testAccResourceScopeOpenIDConfig_Full(resourceName, attributeName, scopeNam
 
 resource "pingone_resource_attribute" "%[2]s-1" {
   environment_id = data.pingone_environment.general_test.id
-  resource_name  = "openid"
+  resource_type  = "OPENID_CONNECT"
 
   name  = "%[3]s-1"
   value = "$${user.name.given}"
@@ -354,7 +354,7 @@ resource "pingone_resource_attribute" "%[2]s-1" {
 
 resource "pingone_resource_attribute" "%[2]s-2" {
   environment_id = data.pingone_environment.general_test.id
-  resource_name  = "openid"
+  resource_type  = "OPENID_CONNECT"
 
   name  = "%[3]s-2"
   value = "$${user.name.family}"
@@ -362,7 +362,7 @@ resource "pingone_resource_attribute" "%[2]s-2" {
 
 resource "pingone_resource_attribute" "%[2]s-3" {
   environment_id = data.pingone_environment.general_test.id
-  resource_name  = "openid"
+  resource_type  = "OPENID_CONNECT"
 
   name  = "%[3]s-3"
   value = "$${user.email}"
@@ -399,7 +399,7 @@ func testAccResourceScopeOpenIDConfig_OverridePredefined(environmentName, licens
 
 resource "pingone_resource_attribute" "%[3]s-1" {
   environment_id = pingone_environment.%[2]s.id
-  resource_name  = "openid"
+  resource_type  = "OPENID_CONNECT"
 
   name  = "%[4]s-1"
   value = "$${user.name.given}"
@@ -407,7 +407,7 @@ resource "pingone_resource_attribute" "%[3]s-1" {
 
 resource "pingone_resource_attribute" "%[3]s-2" {
   environment_id = pingone_environment.%[2]s.id
-  resource_name  = "openid"
+  resource_type  = "OPENID_CONNECT"
 
   name  = "%[4]s-2"
   value = "$${user.name.family}"
@@ -415,7 +415,7 @@ resource "pingone_resource_attribute" "%[3]s-2" {
 
 resource "pingone_resource_attribute" "%[3]s-3" {
   environment_id = pingone_environment.%[2]s.id
-  resource_name  = "openid"
+  resource_type  = "OPENID_CONNECT"
 
   name  = "%[4]s-3"
   value = "$${user.email}"
