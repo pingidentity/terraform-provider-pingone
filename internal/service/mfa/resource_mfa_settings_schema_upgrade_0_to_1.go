@@ -27,6 +27,8 @@ type mFASettingsLockoutResourceModelV0 mFASettingsLockoutResourceModelV1
 type mFASettingsPairingResourceModelV0 mFASettingsPairingResourceModelV1
 
 func (r *MFASettingsResource) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
+
+	const pairingMaxAllowedDevicesDescription = 5
 	return map[int64]resource.StateUpgrader{
 		// State upgrade implementation from 0 (prior state version) to 1 (Schema.Version)
 		0: {
@@ -55,7 +57,7 @@ func (r *MFASettingsResource) UpgradeState(ctx context.Context) map[int64]resour
 									Optional: true,
 									Computed: true,
 
-									Default: int64default.StaticInt64(5),
+									Default: int64default.StaticInt64(pairingMaxAllowedDevicesDescription),
 								},
 
 								"pairing_key_format": schema.StringAttribute{
