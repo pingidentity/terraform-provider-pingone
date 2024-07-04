@@ -371,18 +371,70 @@ func TestAccSignOnPolicyAction_MFAAction(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
 
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { t.Skipf("Test to be re-defined") }, // test to be re-defined
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccSignOnPolicyActionConfig_IDPFull(resourceName, name),
-				ExpectError: regexp.MustCompile(`Not defined`),
+				Config: testAccSignOnPolicyActionConfig_MFAFull(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "sign_on_policy_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "social_provider_ids.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "mfa.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "mfa.0.device_sign_on_policy_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "mfa.0.no_device_mode", "BYPASS"),
+				),
+			},
+			{
+				Config: testAccSignOnPolicyActionConfig_MFAMinimal(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "sign_on_policy_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "social_provider_ids.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "mfa.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "mfa.0.device_sign_on_policy_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "mfa.0.no_device_mode", "BLOCK"),
+				),
+			},
+			{
+				Config: testAccSignOnPolicyActionConfig_MFAFull(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "sign_on_policy_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "social_provider_ids.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "mfa.#", "1"),
+					resource.TestMatchResourceAttr(resourceFullName, "mfa.0.device_sign_on_policy_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "mfa.0.no_device_mode", "BYPASS"),
+				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -1253,7 +1305,10 @@ func TestAccSignOnPolicyAction_ConditionsIPOutOfRangeSingle(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { t.Skipf("Test to be re-defined") }, // test to be re-defined
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -1265,7 +1320,7 @@ func TestAccSignOnPolicyAction_ConditionsIPOutOfRangeSingle(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.0", "192.168.129.23/17"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.*", "192.168.129.23/17"),
 				),
 			},
 			{
@@ -1281,7 +1336,7 @@ func TestAccSignOnPolicyAction_ConditionsIPOutOfRangeSingle(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.0", "192.168.129.23/17"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.*", "192.168.129.23/17"),
 				),
 			},
 			// Test importing the resource
@@ -1313,7 +1368,10 @@ func TestAccSignOnPolicyAction_ConditionsIPOutOfRangeMultiple(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { t.Skipf("Test to be re-defined") }, // test to be re-defined
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -1325,8 +1383,8 @@ func TestAccSignOnPolicyAction_ConditionsIPOutOfRangeMultiple(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.0", "192.168.129.23/17"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.1", "192.168.0.15/24"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.*", "192.168.129.23/17"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.*", "192.168.0.15/24"),
 				),
 			},
 			{
@@ -1342,8 +1400,8 @@ func TestAccSignOnPolicyAction_ConditionsIPOutOfRangeMultiple(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("%s-id", resourceFullName), "conditions.0.last_sign_on_older_than_seconds", "3600"),
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.0", "192.168.129.23/17"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.1", "192.168.0.15/24"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.*", "192.168.129.23/17"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "conditions.0.ip_out_of_range_cidr.*", "192.168.0.15/24"),
 				),
 			},
 			// Test importing the resource
@@ -1375,7 +1433,10 @@ func TestAccSignOnPolicyAction_ConditionsIPHighRisk(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { t.Skipf("Test to be re-defined") }, // test to be re-defined
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -1433,7 +1494,10 @@ func TestAccSignOnPolicyAction_ConditionsGeovelocity(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { t.Skipf("Test to be re-defined") }, // test to be re-defined
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -1491,7 +1555,10 @@ func TestAccSignOnPolicyAction_ConditionsAnonymousNetwork(t *testing.T) {
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { t.Skipf("Test to be re-defined") }, // test to be re-defined
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -1551,7 +1618,10 @@ func TestAccSignOnPolicyAction_ConditionsAnonymousNetworkWithAllowed(t *testing.
 	name := resourceName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { t.Skipf("Test to be re-defined") }, // test to be re-defined
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -1564,8 +1634,8 @@ func TestAccSignOnPolicyAction_ConditionsAnonymousNetworkWithAllowed(t *testing.
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.0", "192.168.129.23/17"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.1", "192.168.0.15/24"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.*", "192.168.129.23/17"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.*", "192.168.0.15/24"),
 				),
 			},
 			{
@@ -1582,8 +1652,8 @@ func TestAccSignOnPolicyAction_ConditionsAnonymousNetworkWithAllowed(t *testing.
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.#", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.#", "2"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.0", "192.168.129.23/17"),
-					resource.TestCheckResourceAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.1", "192.168.0.15/24"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.*", "192.168.129.23/17"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "conditions.0.anonymous_network_detected_allowed_cidr.*", "192.168.0.15/24"),
 				),
 			},
 			// Test importing the resource
@@ -1757,7 +1827,7 @@ resource "pingone_identity_provider" "%[2]s-1" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-1"
 
-  google {
+  google = {
     client_id     = "testclientid"
     client_secret = "testclientsecret"
   }
@@ -1767,7 +1837,7 @@ resource "pingone_identity_provider" "%[2]s-2" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-2"
 
-  facebook {
+  facebook = {
     app_id     = "testclientid"
     app_secret = "testclientsecret"
   }
@@ -1810,7 +1880,7 @@ resource "pingone_identity_provider" "%[2]s-1" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-1"
 
-  google {
+  google = {
     client_id     = "testclientid"
     client_secret = "testclientsecret"
   }
@@ -1820,7 +1890,7 @@ resource "pingone_identity_provider" "%[2]s-2" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-2"
 
-  facebook {
+  facebook = {
     app_id     = "testclientid"
     app_secret = "testclientsecret"
   }
@@ -1880,61 +1950,61 @@ resource "pingone_gateway" "%[2]s-1" {
     "ds2.dummyldapservice.com:389",
   ]
 
-  user_type {
-    name               = "User Set 1"
-    password_authority = "LDAP"
-    search_base_dn     = "ou=users1,dc=example,dc=com"
+  user_types = {
+    "User Set 1" = {
+      password_authority = "LDAP"
+      search_base_dn     = "ou=users1,dc=example,dc=com"
 
-    user_link_attributes = ["objectGUID", "objectSid"]
+      user_link_attributes = ["objectGUID", "objectSid"]
 
-    user_migration {
-      lookup_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
+      new_user_lookup = {
+        ldap_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
 
-      population_id = pingone_population.%[2]s.id
+        population_id = pingone_population.%[2]s.id
 
-      attribute_mapping {
-        name  = "username"
-        value = "$${ldapAttributes.uid}"
+        attribute_mappings = [
+          {
+            name  = "username"
+            value = "$${ldapAttributes.uid}"
+          },
+          {
+            name  = "email"
+            value = "$${ldapAttributes.mail}"
+          }
+        ]
       }
 
-      attribute_mapping {
-        name  = "email"
-        value = "$${ldapAttributes.mail}"
+      allow_password_changes = true
+    },
+    "User Set 2" = {
+      password_authority = "PING_ONE"
+      search_base_dn     = "ou=users,dc=example,dc=com"
+
+      user_link_attributes = ["objectGUID", "dn", "objectSid"]
+
+      new_user_lookup = {
+        ldap_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
+
+        population_id = pingone_population.%[2]s.id
+
+        attribute_mappings = [
+          {
+            name  = "username"
+            value = "$${ldapAttributes.uid}"
+          },
+          {
+            name  = "email"
+            value = "$${ldapAttributes.mail}"
+          },
+          {
+            name  = "name.family"
+            value = "$${ldapAttributes.sn}"
+          }
+        ]
       }
+
+      allow_password_changes = true
     }
-
-    push_password_changes_to_ldap = true
-  }
-
-  user_type {
-    name               = "User Set 2"
-    password_authority = "PING_ONE"
-    search_base_dn     = "ou=users,dc=example,dc=com"
-
-    user_link_attributes = ["objectGUID", "dn", "objectSid"]
-
-    user_migration {
-      lookup_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
-
-      population_id = pingone_population.%[2]s.id
-
-      attribute_mapping {
-        name  = "username"
-        value = "$${ldapAttributes.uid}"
-      }
-
-      attribute_mapping {
-        name  = "email"
-        value = "$${ldapAttributes.mail}"
-      }
-
-      attribute_mapping {
-        name  = "name.family"
-        value = "$${ldapAttributes.sn}"
-      }
-    }
-
-    push_password_changes_to_ldap = true
   }
 
 }
@@ -1962,30 +2032,32 @@ resource "pingone_gateway" "%[2]s-2" {
     "ds2.dummyldapservice.com:389",
   ]
 
-  user_type {
-    name               = "User Set 1"
-    password_authority = "LDAP"
-    search_base_dn     = "ou=users1,dc=example,dc=com"
+  user_types = {
+    "User Set 1" = {
+      password_authority = "LDAP"
+      search_base_dn     = "ou=users1,dc=example,dc=com"
 
-    user_link_attributes = ["objectGUID", "objectSid"]
+      user_link_attributes = ["objectGUID", "objectSid"]
 
-    user_migration {
-      lookup_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
+      new_user_lookup = {
+        ldap_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
 
-      population_id = pingone_population.%[2]s.id
+        population_id = pingone_population.%[2]s.id
 
-      attribute_mapping {
-        name  = "username"
-        value = "$${ldapAttributes.uid}"
+        attribute_mappings = [
+          {
+            name  = "username"
+            value = "$${ldapAttributes.uid}"
+          },
+          {
+            name  = "email"
+            value = "$${ldapAttributes.mail}"
+          }
+        ]
       }
 
-      attribute_mapping {
-        name  = "email"
-        value = "$${ldapAttributes.mail}"
-      }
+      allow_password_changes = true
     }
-
-    push_password_changes_to_ldap = true
   }
 }
 
@@ -2012,17 +2084,17 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
     new_user_provisioning {
       gateway {
         id           = pingone_gateway.%[2]s-1.id
-        user_type_id = pingone_gateway.%[2]s-1.user_type.* [index(pingone_gateway.%[2]s-1.user_type[*].name, "User Set 2")].id
+        user_type_id = pingone_gateway.%[2]s-1.user_types["User Set 2"].id
       }
 
       gateway {
         id           = pingone_gateway.%[2]s-2.id
-        user_type_id = pingone_gateway.%[2]s-2.user_type.* [index(pingone_gateway.%[2]s-2.user_type[*].name, "User Set 1")].id
+        user_type_id = pingone_gateway.%[2]s-2.user_types["User Set 1"].id
       }
 
       gateway {
         id           = pingone_gateway.%[2]s-1.id
-        user_type_id = pingone_gateway.%[2]s-1.user_type.* [index(pingone_gateway.%[2]s-1.user_type[*].name, "User Set 1")].id
+        user_type_id = pingone_gateway.%[2]s-1.user_types["User Set 1"].id
       }
     }
   }
@@ -2095,14 +2167,15 @@ resource "pingone_gateway" "%[2]s" {
     "ds2.dummyldapservice.com:389",
   ]
 
-  user_type {
-    name               = "User Set 1"
-    password_authority = "LDAP"
-    search_base_dn     = "ou=users1,dc=example,dc=com"
+  user_types = {
+    "User Set 1" = {
+      password_authority = "LDAP"
+      search_base_dn     = "ou=users1,dc=example,dc=com"
 
-    user_link_attributes = ["objectGUID", "objectSid"]
+      user_link_attributes = ["objectGUID", "objectSid"]
 
-    push_password_changes_to_ldap = true
+      allow_password_changes = true
+    }
   }
 }
 
@@ -2129,7 +2202,7 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
     new_user_provisioning {
       gateway {
         id           = pingone_gateway.%[2]s.id
-        user_type_id = pingone_gateway.%[2]s.user_type.* [index(pingone_gateway.%[2]s.user_type[*].name, "User Set 1")].id
+        user_type_id = pingone_gateway.%[2]s.user_types["User Set 1"].id
       }
     }
   }
@@ -2171,7 +2244,7 @@ resource "pingone_identity_provider" "%[2]s-1" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-1"
 
-  google {
+  google = {
     client_id     = "testclientid"
     client_secret = "testclientsecret"
   }
@@ -2181,7 +2254,7 @@ resource "pingone_identity_provider" "%[2]s-2" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-2"
 
-  facebook {
+  facebook = {
     app_id     = "testclientid"
     app_secret = "testclientsecret"
   }
@@ -2231,7 +2304,7 @@ resource "pingone_identity_provider" "%[2]s-1" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-1"
 
-  google {
+  google = {
     client_id     = "testclientid"
     client_secret = "testclientsecret"
   }
@@ -2241,7 +2314,7 @@ resource "pingone_identity_provider" "%[2]s-2" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-2"
 
-  facebook {
+  facebook = {
     app_id     = "testclientid"
     app_secret = "testclientsecret"
   }
@@ -2301,12 +2374,109 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-// TODO: MFA device policy data source
-// func testAccSignOnPolicyActionConfig_MFAFull(resourceName, name string) string {
-// }
+func testAccSignOnPolicyActionConfig_MFAFull(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
 
-// func testAccSignOnPolicyActionConfig_MFAMinimal(resourceName, name string) string {
-// }
+resource "pingone_mfa_device_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms = {
+    enabled = true
+  }
+
+  voice = {
+    enabled = false
+  }
+
+  email = {
+    enabled = false
+  }
+
+  mobile = {
+    enabled = false
+  }
+
+  totp = {
+    enabled = false
+  }
+
+  fido2 = {
+    enabled = false
+  }
+}
+
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+
+  priority = 1
+
+  mfa {
+    device_sign_on_policy_id = pingone_mfa_device_policy.%[2]s.id
+    no_device_mode           = "BYPASS"
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccSignOnPolicyActionConfig_MFAMinimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_mfa_device_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms = {
+    enabled = true
+  }
+
+  voice = {
+    enabled = false
+  }
+
+  email = {
+    enabled = false
+  }
+
+  mobile = {
+    enabled = false
+  }
+
+  totp = {
+    enabled = false
+  }
+
+  fido2 = {
+    enabled = false
+  }
+}
+
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+
+  priority = 1
+
+  mfa {
+    device_sign_on_policy_id = pingone_mfa_device_policy.%[2]s.id
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
 
 func testAccSignOnPolicyActionConfig_IDPFull(resourceName, name string) string {
 	return fmt.Sprintf(`
@@ -2322,7 +2492,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  openid_connect {
+  openid_connect = {
     client_id     = "testclientid"
     client_secret = "testclientsecret"
 
@@ -2368,7 +2538,7 @@ resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  openid_connect {
+  openid_connect = {
     client_id     = "testclientid"
     client_secret = "testclientsecret"
 
@@ -3178,6 +3348,35 @@ func testAccSignOnPolicyActionConfig_ConditionsIPOutOfRangeSingle(resourceName, 
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_mfa_device_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms = {
+    enabled = true
+  }
+
+  voice = {
+    enabled = false
+  }
+
+  email = {
+    enabled = false
+  }
+
+  mobile = {
+    enabled = false
+  }
+
+  totp = {
+    enabled = false
+  }
+
+  fido2 = {
+    enabled = false
+  }
+}
+
 resource "pingone_sign_on_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
@@ -3210,7 +3409,9 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
     ]
   }
 
-  mfa {}
+  mfa {
+    device_sign_on_policy_id = pingone_mfa_device_policy.%[2]s.id
+  }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -3219,6 +3420,35 @@ func testAccSignOnPolicyActionConfig_ConditionsIPOutOfRangeMultiple(resourceName
 
 	return fmt.Sprintf(`
 		%[1]s
+
+resource "pingone_mfa_device_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms = {
+    enabled = true
+  }
+
+  voice = {
+    enabled = false
+  }
+
+  email = {
+    enabled = false
+  }
+
+  mobile = {
+    enabled = false
+  }
+
+  totp = {
+    enabled = false
+  }
+
+  fido2 = {
+    enabled = false
+  }
+}
 
 resource "pingone_sign_on_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -3253,7 +3483,9 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
     ]
   }
 
-  mfa {}
+  mfa {
+    device_sign_on_policy_id = pingone_mfa_device_policy.%[2]s.id
+  }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -3262,6 +3494,35 @@ func testAccSignOnPolicyActionConfig_ConditionsIPHighRisk(resourceName, name str
 
 	return fmt.Sprintf(`
 		%[1]s
+
+resource "pingone_mfa_device_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms = {
+    enabled = true
+  }
+
+  voice = {
+    enabled = false
+  }
+
+  email = {
+    enabled = false
+  }
+
+  mobile = {
+    enabled = false
+  }
+
+  totp = {
+    enabled = false
+  }
+
+  fido2 = {
+    enabled = false
+  }
+}
 
 resource "pingone_sign_on_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -3293,7 +3554,9 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
     ip_reputation_high_risk = true
   }
 
-  mfa {}
+  mfa {
+    device_sign_on_policy_id = pingone_mfa_device_policy.%[2]s.id
+  }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -3302,6 +3565,35 @@ func testAccSignOnPolicyActionConfig_ConditionsGeovelocity(resourceName, name st
 
 	return fmt.Sprintf(`
 		%[1]s
+
+resource "pingone_mfa_device_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms = {
+    enabled = true
+  }
+
+  voice = {
+    enabled = false
+  }
+
+  email = {
+    enabled = false
+  }
+
+  mobile = {
+    enabled = false
+  }
+
+  totp = {
+    enabled = false
+  }
+
+  fido2 = {
+    enabled = false
+  }
+}
 
 resource "pingone_sign_on_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -3333,7 +3625,9 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
     geovelocity_anomaly_detected = true
   }
 
-  mfa {}
+  mfa {
+    device_sign_on_policy_id = pingone_mfa_device_policy.%[2]s.id
+  }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -3342,6 +3636,35 @@ func testAccSignOnPolicyActionConfig_ConditionsAnonymousNetwork(resourceName, na
 
 	return fmt.Sprintf(`
 		%[1]s
+
+resource "pingone_mfa_device_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms = {
+    enabled = true
+  }
+
+  voice = {
+    enabled = false
+  }
+
+  email = {
+    enabled = false
+  }
+
+  mobile = {
+    enabled = false
+  }
+
+  totp = {
+    enabled = false
+  }
+
+  fido2 = {
+    enabled = false
+  }
+}
 
 resource "pingone_sign_on_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -3373,7 +3696,9 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
     anonymous_network_detected = true
   }
 
-  mfa {}
+  mfa {
+    device_sign_on_policy_id = pingone_mfa_device_policy.%[2]s.id
+  }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -3382,6 +3707,35 @@ func testAccSignOnPolicyActionConfig_ConditionsAnonymousNetworkWithAllowed(resou
 
 	return fmt.Sprintf(`
 		%[1]s
+
+resource "pingone_mfa_device_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms = {
+    enabled = true
+  }
+
+  voice = {
+    enabled = false
+  }
+
+  email = {
+    enabled = false
+  }
+
+  mobile = {
+    enabled = false
+  }
+
+  totp = {
+    enabled = false
+  }
+
+  fido2 = {
+    enabled = false
+  }
+}
 
 resource "pingone_sign_on_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -3418,7 +3772,9 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
     ]
   }
 
-  mfa {}
+  mfa {
+    device_sign_on_policy_id = pingone_mfa_device_policy.%[2]s.id
+  }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

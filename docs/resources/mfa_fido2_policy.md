@@ -71,7 +71,6 @@ resource "pingone_mfa_fido2_policy" "my_awesome_fido2_policy" {
     enforce_during_authentication = true
     option                        = "REQUIRED"
   }
-
 }
 ```
 
@@ -169,5 +168,5 @@ Required:
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-$ terraform import pingone_mfa_fido2_policy.example <environment_id>/<mfa_fido2_policy_id>
+terraform import pingone_mfa_fido2_policy.example <environment_id>/<mfa_fido2_policy_id>
 ```

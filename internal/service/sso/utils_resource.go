@@ -45,6 +45,93 @@ func fetchResourceFromName(ctx context.Context, apiClient *management.APIClient,
 
 	var resource management.Resource
 
+	resources, d := fetchResources(ctx, apiClient, environmentId, warnIfNotFound)
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	if len(resources) > 0 {
+
+		found := false
+		for _, resourceItem := range resources {
+			if resourceItem.Resource != nil && resourceItem.Resource.GetName() == resourceName {
+				resource = *resourceItem.Resource
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			if warnIfNotFound {
+				diags.AddWarning(
+					"Cannot find resource from name",
+					fmt.Sprintf("The resource %s for environment %s cannot be found", resourceName, environmentId),
+				)
+			} else {
+				diags.AddError(
+					"Cannot find resource from name",
+					fmt.Sprintf("The resource %s for environment %s cannot be found", resourceName, environmentId),
+				)
+			}
+			return nil, diags
+		}
+
+	}
+
+	return &resource, diags
+}
+
+func fetchResourceByType(ctx context.Context, apiClient *management.APIClient, environmentId string, resourceType management.EnumResourceType, warnIfNotFound bool) (*management.Resource, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if resourceType == management.ENUMRESOURCETYPE_CUSTOM {
+		diags.AddError("Invalid resource type", "Cannot find a resource by custom type.")
+		return nil, diags
+	}
+
+	var resource management.Resource
+
+	resources, d := fetchResources(ctx, apiClient, environmentId, warnIfNotFound)
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	if len(resources) > 0 {
+
+		found := false
+		for _, resourceItem := range resources {
+			if resourceItem.Resource != nil && resourceItem.Resource.GetType() == resourceType {
+				resource = *resourceItem.Resource
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			if warnIfNotFound {
+				diags.AddWarning(
+					"Cannot find resource from type",
+					fmt.Sprintf("The resource %s for environment %s cannot be found", resourceType, environmentId),
+				)
+			} else {
+				diags.AddError(
+					"Cannot find resource from type",
+					fmt.Sprintf("The resource %s for environment %s cannot be found", resourceType, environmentId),
+				)
+			}
+			return nil, diags
+		}
+
+	}
+
+	return &resource, diags
+}
+
+func fetchResources(ctx context.Context, apiClient *management.APIClient, environmentId string, warnIfNotFound bool) ([]management.EntityArrayEmbeddedResourcesInner, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
 	errorFunction := framework.DefaultCustomError
 	if warnIfNotFound {
 		errorFunction = framework.CustomErrorResourceNotFoundWarning
@@ -72,45 +159,20 @@ func fetchResourceFromName(ctx context.Context, apiClient *management.APIClient,
 		if warnIfNotFound {
 			diags.AddWarning(
 				"Environment cannot be found",
-				fmt.Sprintf("The environment %s cannot be found when finding resource %s by name", environmentId, resourceName),
+				fmt.Sprintf("The environment %s cannot be found when attempting to find resource", environmentId),
 			)
 		} else {
 			diags.AddError(
 				"Environment cannot be found",
-				fmt.Sprintf("The environment %s cannot be found when finding resource %s by name", environmentId, resourceName),
+				fmt.Sprintf("The environment %s cannot be found when attempting to find resource", environmentId),
 			)
 		}
 		return nil, diags
 	}
 
 	if resources, ok := entityArray.Embedded.GetResourcesOk(); ok {
-
-		found := false
-		for _, resourceItem := range resources {
-
-			if resourceItem.Resource.GetName() == resourceName {
-				resource = *resourceItem.Resource
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			if warnIfNotFound {
-				diags.AddWarning(
-					"Cannot find resource from name",
-					fmt.Sprintf("The resource %s for environment %s cannot be found", resourceName, environmentId),
-				)
-			} else {
-				diags.AddError(
-					"Cannot find resource from name",
-					fmt.Sprintf("The resource %s for environment %s cannot be found", resourceName, environmentId),
-				)
-			}
-			return nil, diags
-		}
-
+		return resources, diags
 	}
 
-	return &resource, diags
+	return nil, diags
 }

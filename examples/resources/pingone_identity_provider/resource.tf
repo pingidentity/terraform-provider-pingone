@@ -8,7 +8,7 @@ resource "pingone_identity_provider" "facebook" {
   name    = "Facebook"
   enabled = true
 
-  facebook {
+  facebook = {
     app_id     = var.facebook_app_id
     app_secret = var.facebook_app_secret
   }
@@ -20,7 +20,7 @@ resource "pingone_identity_provider" "google" {
   name    = "Google"
   enabled = true
 
-  google {
+  google = {
     client_id     = var.google_client_id
     client_secret = var.google_client_secret
   }
@@ -32,7 +32,7 @@ resource "pingone_identity_provider" "apple" {
   name    = "Apple"
   enabled = true
 
-  apple {
+  apple = {
     client_id                 = var.apple_client_id
     client_secret_signing_key = var.apple_client_secret_signing_key
     key_id                    = var.apple_key_id

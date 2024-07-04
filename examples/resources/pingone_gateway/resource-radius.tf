@@ -11,7 +11,9 @@ resource "pingone_gateway" "my_radius_gateway" {
   radius_default_shared_secret = var.radius_default_shared_secret
   radius_davinci_policy_id     = var.radius_davinci_policy_id
 
-  radius_client {
-    ip = "127.0.0.1"
-  }
+  radius_clients = [
+    {
+      ip = "127.0.0.1"
+    }
+  ]
 }

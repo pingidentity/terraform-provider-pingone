@@ -1,1 +1,1 @@
-$ terraform import pingone_sign_on_policy.example <environment_id>/<sign_on_policy_id>
+terraform import pingone_sign_on_policy.example <environment_id>/<sign_on_policy_id>

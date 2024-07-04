@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -25,6 +26,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	customstringvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -35,18 +37,18 @@ import (
 type CredentialTypeResource serviceClientType
 
 type CredentialTypeResourceModel struct {
-	Id                 types.String `tfsdk:"id"`
-	EnvironmentId      types.String `tfsdk:"environment_id"`
-	IssuerId           types.String `tfsdk:"issuer_id"`
-	CardType           types.String `tfsdk:"card_type"`
-	CardDesignTemplate types.String `tfsdk:"card_design_template"`
-	Description        types.String `tfsdk:"description"`
-	ManagementMode     types.String `tfsdk:"management_mode"`
-	Metadata           types.Object `tfsdk:"metadata"`
-	RevokeOnDelete     types.Bool   `tfsdk:"revoke_on_delete"`
-	Title              types.String `tfsdk:"title"`
-	CreatedAt          types.String `tfsdk:"created_at"`
-	UpdatedAt          types.String `tfsdk:"updated_at"`
+	Id                 pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId      pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	IssuerId           pingonetypes.ResourceIDValue `tfsdk:"issuer_id"`
+	CardType           types.String                 `tfsdk:"card_type"`
+	CardDesignTemplate types.String                 `tfsdk:"card_design_template"`
+	Description        types.String                 `tfsdk:"description"`
+	ManagementMode     types.String                 `tfsdk:"management_mode"`
+	Metadata           types.Object                 `tfsdk:"metadata"`
+	RevokeOnDelete     types.Bool                   `tfsdk:"revoke_on_delete"`
+	Title              types.String                 `tfsdk:"title"`
+	CreatedAt          timetypes.RFC3339            `tfsdk:"created_at"`
+	UpdatedAt          timetypes.RFC3339            `tfsdk:"updated_at"`
 }
 
 type MetadataModel struct {
@@ -63,14 +65,14 @@ type MetadataModel struct {
 }
 
 type FieldsModel struct {
-	Id          types.String `tfsdk:"id"`
-	Type        types.String `tfsdk:"type"`
-	Title       types.String `tfsdk:"title"`
-	FileSupport types.String `tfsdk:"file_support"`
-	IsVisible   types.Bool   `tfsdk:"is_visible"`
-	Attribute   types.String `tfsdk:"attribute"`
-	Value       types.String `tfsdk:"value"`
-	Required    types.Bool   `tfsdk:"required"`
+	Id          pingonetypes.ResourceIDValue `tfsdk:"id"`
+	Type        types.String                 `tfsdk:"type"`
+	Title       types.String                 `tfsdk:"title"`
+	FileSupport types.String                 `tfsdk:"file_support"`
+	IsVisible   types.Bool                   `tfsdk:"is_visible"`
+	Attribute   types.String                 `tfsdk:"attribute"`
+	Value       types.String                 `tfsdk:"value"`
+	Required    types.Bool                   `tfsdk:"required"`
 }
 
 var (
@@ -88,7 +90,7 @@ var (
 	}
 
 	innerFieldsServiceTFObjectTypes = map[string]attr.Type{
-		"id":           types.StringType,
+		"id":           pingonetypes.ResourceIDType{},
 		"type":         types.StringType,
 		"title":        types.StringType,
 		"file_support": types.StringType,
@@ -186,6 +188,8 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 				Description:         issuerIdDescriptipion.Description,
 				MarkdownDescription: issuerIdDescriptipion.MarkdownDescription,
 				Computed:            true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"title": schema.StringAttribute{
@@ -266,7 +270,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 
 				Attributes: map[string]schema.Attribute{
 					"background_image": schema.StringAttribute{
-						Description: "The URL or fully qualified path to the image file used for the credential background.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.  Image size must not exceed 50 KB.",
+						Description: "The URL or fully qualified path to the image file used for the credential background.  This can be retrieved from the `uploaded_image.href` parameter of the `pingone_image` resource.  Image size must not exceed 50 KB.",
 						Optional:    true,
 						Validators: []validator.String{
 							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
@@ -328,7 +332,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 					},
 
 					"logo_image": schema.StringAttribute{
-						Description: "The URL or fully qualified path to the image file used for the credential logo.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.  Image size must not exceed 25 KB.",
+						Description: "The URL or fully qualified path to the image file used for the credential logo.  This can be retrieved from the `uploaded_image.href` parameter of the `pingone_image` resource.  Image size must not exceed 25 KB.",
 						Optional:    true,
 
 						Validators: []validator.String{
@@ -392,6 +396,8 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 									Description:         fieldsIdDescription.Description,
 									MarkdownDescription: fieldsIdDescription.MarkdownDescription,
 									Computed:            true,
+
+									CustomType: pingonetypes.ResourceIDType{},
 								},
 								"type": schema.StringAttribute{
 									Description:         fieldsTypeDescription.Description,
@@ -461,6 +467,8 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 				Description: "Date and time the object was created.",
 				Computed:    true,
 
+				CustomType: timetypes.RFC3339Type{},
+
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -469,6 +477,8 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 			"updated_at": schema.StringAttribute{
 				Description: "Date and time the object was updated. Can be null.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 		},
 	}
@@ -540,7 +550,7 @@ func (r *CredentialTypeResource) Configure(ctx context.Context, req resource.Con
 func (r *CredentialTypeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state CredentialTypeResourceModel
 
-	if r.Client.CredentialsAPIClient == nil {
+	if r.Client == nil || r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -592,7 +602,7 @@ func (r *CredentialTypeResource) Create(ctx context.Context, req resource.Create
 func (r *CredentialTypeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *CredentialTypeResourceModel
 
-	if r.Client.CredentialsAPIClient == nil {
+	if r.Client == nil || r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -637,7 +647,7 @@ func (r *CredentialTypeResource) Read(ctx context.Context, req resource.ReadRequ
 func (r *CredentialTypeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state CredentialTypeResourceModel
 
-	if r.Client.CredentialsAPIClient == nil {
+	if r.Client == nil || r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -686,7 +696,7 @@ func (r *CredentialTypeResource) Update(ctx context.Context, req resource.Update
 func (r *CredentialTypeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *CredentialTypeResourceModel
 
-	if r.Client.CredentialsAPIClient == nil {
+	if r.Client == nil || r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -925,9 +935,9 @@ func (p *CredentialTypeResourceModel) toState(apiObject *credentials.CredentialT
 	}
 
 	// credential attributes
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.IssuerId = framework.StringToTF(*apiObject.GetIssuer().Id)
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
+	p.IssuerId = framework.PingOneResourceIDToTF(*apiObject.GetIssuer().Id)
 	p.Title = framework.StringOkToTF(apiObject.GetTitleOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.CardType = framework.StringOkToTF(apiObject.GetCardTypeOk())
@@ -996,7 +1006,7 @@ func toStateFields(innerFields []credentials.CredentialTypeMetaDataFieldsInner, 
 	for _, v := range innerFields {
 
 		fieldsMap := map[string]attr.Value{
-			"id":           framework.StringOkToTF(v.GetIdOk()),
+			"id":           framework.PingOneResourceIDOkToTF(v.GetIdOk()),
 			"type":         framework.EnumOkToTF(v.GetTypeOk()),
 			"title":        framework.StringOkToTF(v.GetTitleOk()),
 			"file_support": framework.EnumOkToTF(v.GetFileSupportOk()),

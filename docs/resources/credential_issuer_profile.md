@@ -23,7 +23,6 @@ resource "pingone_credential_issuer_profile" "my_credential_issuer" {
   environment_id = pingone_environment.my_environment.id
 
   name = "Awesome PingOne Credentials Issuer"
-
 }
 ```
 
@@ -58,5 +57,5 @@ Optional:
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-$ terraform import pingone_credential_issuer_profile.example <environment_id>/<credential_issuer_profile_id>
+terraform import pingone_credential_issuer_profile.example <environment_id>/<credential_issuer_profile_id>
 ```

@@ -87,7 +87,6 @@ func TestAccImage_PNG(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
-			acctest.PreCheckPKCS7Cert(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Image_CheckDestroy,
@@ -98,11 +97,10 @@ func TestAccImage_PNG(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.0.width", "901"),
-					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.0.height", "901"),
-					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.0.type", "png"),
-					resource.TestMatchResourceAttr(resourceFullName, "uploaded_image.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.width", "901"),
+					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.height", "901"),
+					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.type", "png"),
+					resource.TestMatchResourceAttr(resourceFullName, "uploaded_image.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 				),
 			},
 			// Test importing the resource
@@ -141,7 +139,6 @@ func TestAccImage_JPG(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
-			acctest.PreCheckPKCS7Cert(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Image_CheckDestroy,
@@ -152,11 +149,10 @@ func TestAccImage_JPG(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.0.width", "901"),
-					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.0.height", "901"),
-					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.0.type", "png"),
-					resource.TestMatchResourceAttr(resourceFullName, "uploaded_image.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.width", "901"),
+					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.height", "901"),
+					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.type", "png"),
+					resource.TestMatchResourceAttr(resourceFullName, "uploaded_image.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 				),
 			},
 		},
@@ -176,7 +172,6 @@ func TestAccImage_GIF(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
-			acctest.PreCheckPKCS7Cert(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Image_CheckDestroy,
@@ -187,11 +182,10 @@ func TestAccImage_GIF(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.0.width", "901"),
-					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.0.height", "901"),
-					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.0.type", "png"),
-					resource.TestMatchResourceAttr(resourceFullName, "uploaded_image.0.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.width", "901"),
+					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.height", "901"),
+					resource.TestCheckResourceAttr(resourceFullName, "uploaded_image.type", "png"),
+					resource.TestMatchResourceAttr(resourceFullName, "uploaded_image.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 				),
 			},
 		},
@@ -224,19 +218,19 @@ func TestAccImage_BadParameters(t *testing.T) {
 			{
 				ResourceName: resourceFullName,
 				ImportState:  true,
-				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/image_id" and must match regex: .*`),
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "/",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/image_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "badformat/badformat",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/image_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})

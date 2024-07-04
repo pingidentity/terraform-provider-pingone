@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -18,9 +19,9 @@ import (
 type DigitalWalletApplicationsDataSource serviceClientType
 
 type DigitalWalletApplicationsDataSourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Ids           types.List   `tfsdk:"ids"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Ids           types.List                   `tfsdk:"ids"`
 }
 
 // Framework interfaces
@@ -88,7 +89,7 @@ func (r *DigitalWalletApplicationsDataSource) Configure(ctx context.Context, req
 func (r *DigitalWalletApplicationsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *DigitalWalletApplicationsDataSourceModel
 
-	if r.Client.CredentialsAPIClient == nil {
+	if r.Client == nil || r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -144,7 +145,7 @@ func (p *DigitalWalletApplicationsDataSourceModel) toState(environmentID string,
 
 	var d diag.Diagnostics
 
-	p.Id = framework.StringToTF(environmentID)
+	p.Id = framework.PingOneResourceIDToTF(environmentID)
 	p.Ids, d = framework.StringSliceToTF(list)
 	diags.Append(d...)
 

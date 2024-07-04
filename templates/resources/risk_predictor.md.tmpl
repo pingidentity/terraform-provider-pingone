@@ -9,6 +9,10 @@ description: |-
 
 {{ .Description | trimspace }}
 
+## Example Usage - Adversary-In-The-Middle
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-adversary-in-the-middle.tf") }}
+
 ## Example Usage - Anonymous Network Predictor
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-anonymous-network.tf") }}
@@ -24,6 +28,10 @@ description: |-
 ## Example Usage - Custom Predictor
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-custom.tf") }}
+
+## Example Usage - Email Reputation Predictor
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-email-reputation.tf") }}
 
 ## Example Usage - Geovelocity Predictor
 

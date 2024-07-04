@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -20,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -29,19 +29,19 @@ import (
 type WebhookResource serviceClientType
 
 type WebhookResourceModel struct {
-	Id                     types.String `tfsdk:"id"`
-	EnvironmentId          types.String `tfsdk:"environment_id"`
-	Name                   types.String `tfsdk:"name"`
-	Enabled                types.Bool   `tfsdk:"enabled"`
-	HttpEndpointUrl        types.String `tfsdk:"http_endpoint_url"`
-	HttpEndpointHeaders    types.Map    `tfsdk:"http_endpoint_headers"`
-	VerifyTLSCertificates  types.Bool   `tfsdk:"verify_tls_certificates"`
-	TLSClientAuthKeyPairId types.String `tfsdk:"tls_client_auth_key_pair_id"`
-	Format                 types.String `tfsdk:"format"`
-	FilterOptions          types.List   `tfsdk:"filter_options"`
+	Id                     pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId          pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name                   types.String                 `tfsdk:"name"`
+	Enabled                types.Bool                   `tfsdk:"enabled"`
+	HttpEndpointUrl        types.String                 `tfsdk:"http_endpoint_url"`
+	HttpEndpointHeaders    types.Map                    `tfsdk:"http_endpoint_headers"`
+	VerifyTLSCertificates  types.Bool                   `tfsdk:"verify_tls_certificates"`
+	TLSClientAuthKeyPairId pingonetypes.ResourceIDValue `tfsdk:"tls_client_auth_key_pair_id"`
+	Format                 types.String                 `tfsdk:"format"`
+	FilterOptions          types.Object                 `tfsdk:"filter_options"`
 }
 
-type WebookFilterOptionsModel struct {
+type WebhookFilterOptionsResourceModel struct {
 	IncludedActionTypes    types.Set  `tfsdk:"included_action_types"`
 	IncludedApplicationIds types.Set  `tfsdk:"included_application_ids"`
 	IncludedPopulationIds  types.Set  `tfsdk:"included_population_ids"`
@@ -53,8 +53,8 @@ type WebookFilterOptionsModel struct {
 var (
 	webhookFilterOptionsTFObjectTypes = map[string]attr.Type{
 		"included_action_types":    types.SetType{ElemType: types.StringType},
-		"included_application_ids": types.SetType{ElemType: types.StringType},
-		"included_population_ids":  types.SetType{ElemType: types.StringType},
+		"included_application_ids": types.SetType{ElemType: pingonetypes.ResourceIDType{}},
+		"included_population_ids":  types.SetType{ElemType: pingonetypes.ResourceIDType{}},
 		"included_tags":            types.SetType{ElemType: types.StringType},
 		"ip_address_exposed":       types.BoolType,
 		"useragent_exposed":        types.BoolType,
@@ -129,7 +129,6 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 
 	const attrMinLength = 1
 	const attrFilterOptionsIncludedIDsMaxLength = 10
-	const attrFilterOptionsLimit = 1
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -191,9 +190,7 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 				MarkdownDescription: tlsClientAuthKeyPairIdDescription.MarkdownDescription,
 				Optional:            true,
 
-				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
-				},
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"format": schema.StringAttribute{
@@ -205,99 +202,82 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumSubscriptionFormatEnumValues)...),
 				},
 			},
-		},
 
-		Blocks: map[string]schema.Block{
+			"filter_options": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the PingOne platform event filters to be included to trigger this webhook.").Description,
+				Required:    true,
 
-			"filter_options": schema.ListNestedBlock{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A block that specifies the PingOne platform event filters to be included to trigger this webhook.").Description,
+				Attributes: map[string]schema.Attribute{
+					"included_action_types": schema.SetAttribute{
+						Description:         filterOptionsIncludedActionTypesDescription.Description,
+						MarkdownDescription: filterOptionsIncludedActionTypesDescription.MarkdownDescription,
+						Required:            true,
 
-				NestedObject: schema.NestedBlockObject{
+						ElementType: types.StringType,
 
-					Attributes: map[string]schema.Attribute{
-						"included_action_types": schema.SetAttribute{
-							Description:         filterOptionsIncludedActionTypesDescription.Description,
-							MarkdownDescription: filterOptionsIncludedActionTypesDescription.MarkdownDescription,
-							Required:            true,
-
-							ElementType: types.StringType,
-
-							Validators: []validator.Set{
-								setvalidator.SizeAtLeast(attrMinLength),
-								setvalidator.ValueStringsAre(
-									stringvalidator.LengthAtLeast(attrMinLength),
-								),
-							},
-						},
-
-						"included_application_ids": schema.SetAttribute{
-							Description:         filterOptionsIncludedApplicationIDsDescription.Description,
-							MarkdownDescription: filterOptionsIncludedApplicationIDsDescription.MarkdownDescription,
-							Optional:            true,
-
-							ElementType: types.StringType,
-
-							Validators: []validator.Set{
-								setvalidator.SizeAtMost(attrFilterOptionsIncludedIDsMaxLength),
-								setvalidator.ValueStringsAre(
-									verify.P1ResourceIDValidator(),
-								),
-							},
-						},
-
-						"included_population_ids": schema.SetAttribute{
-							Description:         filterOptionsIncludedPopulationIDsDescription.Description,
-							MarkdownDescription: filterOptionsIncludedPopulationIDsDescription.MarkdownDescription,
-							Optional:            true,
-
-							ElementType: types.StringType,
-
-							Validators: []validator.Set{
-								setvalidator.SizeAtMost(attrFilterOptionsIncludedIDsMaxLength),
-								setvalidator.ValueStringsAre(
-									verify.P1ResourceIDValidator(),
-								),
-							},
-						},
-
-						"included_tags": schema.SetAttribute{
-							Description:         filterOptionsIncludedTagsDescription.Description,
-							MarkdownDescription: filterOptionsIncludedTagsDescription.MarkdownDescription,
-							Optional:            true,
-
-							ElementType: types.StringType,
-
-							Validators: []validator.Set{
-								setvalidator.ValueStringsAre(
-									stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumSubscriptionFilterIncludedTagsEnumValues)...),
-								),
-							},
-						},
-
-						"ip_address_exposed": schema.BoolAttribute{
-							Description:         filterOptionsIPAddressExposedDescription.Description,
-							MarkdownDescription: filterOptionsIPAddressExposedDescription.MarkdownDescription,
-							Optional:            true,
-							Computed:            true,
-
-							Default: booldefault.StaticBool(false),
-						},
-
-						"useragent_exposed": schema.BoolAttribute{
-							Description:         filterOptionsUseragentExposedDescription.Description,
-							MarkdownDescription: filterOptionsUseragentExposedDescription.MarkdownDescription,
-							Optional:            true,
-							Computed:            true,
-
-							Default: booldefault.StaticBool(false),
+						Validators: []validator.Set{
+							setvalidator.SizeAtLeast(attrMinLength),
+							setvalidator.ValueStringsAre(
+								stringvalidator.LengthAtLeast(attrMinLength),
+							),
 						},
 					},
-				},
 
-				Validators: []validator.List{
-					listvalidator.SizeAtLeast(attrFilterOptionsLimit),
-					listvalidator.SizeAtMost(attrFilterOptionsLimit),
-					listvalidator.IsRequired(),
+					"included_application_ids": schema.SetAttribute{
+						Description:         filterOptionsIncludedApplicationIDsDescription.Description,
+						MarkdownDescription: filterOptionsIncludedApplicationIDsDescription.MarkdownDescription,
+						Optional:            true,
+
+						ElementType: pingonetypes.ResourceIDType{},
+
+						Validators: []validator.Set{
+							setvalidator.SizeAtMost(attrFilterOptionsIncludedIDsMaxLength),
+						},
+					},
+
+					"included_population_ids": schema.SetAttribute{
+						Description:         filterOptionsIncludedPopulationIDsDescription.Description,
+						MarkdownDescription: filterOptionsIncludedPopulationIDsDescription.MarkdownDescription,
+						Optional:            true,
+
+						ElementType: pingonetypes.ResourceIDType{},
+
+						Validators: []validator.Set{
+							setvalidator.SizeAtMost(attrFilterOptionsIncludedIDsMaxLength),
+						},
+					},
+
+					"included_tags": schema.SetAttribute{
+						Description:         filterOptionsIncludedTagsDescription.Description,
+						MarkdownDescription: filterOptionsIncludedTagsDescription.MarkdownDescription,
+						Optional:            true,
+
+						ElementType: types.StringType,
+
+						Validators: []validator.Set{
+							setvalidator.ValueStringsAre(
+								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumSubscriptionFilterIncludedTagsEnumValues)...),
+							),
+						},
+					},
+
+					"ip_address_exposed": schema.BoolAttribute{
+						Description:         filterOptionsIPAddressExposedDescription.Description,
+						MarkdownDescription: filterOptionsIPAddressExposedDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: booldefault.StaticBool(false),
+					},
+
+					"useragent_exposed": schema.BoolAttribute{
+						Description:         filterOptionsUseragentExposedDescription.Description,
+						MarkdownDescription: filterOptionsUseragentExposedDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: booldefault.StaticBool(false),
+					},
 				},
 			},
 		},
@@ -333,7 +313,7 @@ func (r *WebhookResource) Configure(ctx context.Context, req resource.ConfigureR
 func (r *WebhookResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state WebhookResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -382,7 +362,7 @@ func (r *WebhookResource) Create(ctx context.Context, req resource.CreateRequest
 func (r *WebhookResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *WebhookResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -427,7 +407,7 @@ func (r *WebhookResource) Read(ctx context.Context, req resource.ReadRequest, re
 func (r *WebhookResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state WebhookResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -476,7 +456,7 @@ func (r *WebhookResource) Update(ctx context.Context, req resource.UpdateRequest
 func (r *WebhookResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *WebhookResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -556,20 +536,20 @@ func (p *WebhookResourceModel) expand(ctx context.Context) (*management.Subscrip
 		httpEndpoint.SetHeaders(headersPlan)
 	}
 
-	var filterOptionsPlan []WebookFilterOptionsModel
-	diags.Append(p.FilterOptions.ElementsAs(ctx, &filterOptionsPlan, false)...)
+	var filterOptionsPlan WebhookFilterOptionsResourceModel
+	diags.Append(p.FilterOptions.As(ctx, &filterOptionsPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    true,
+		UnhandledUnknownAsEmpty: true,
+	})...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
 	var filterOptions *management.SubscriptionFilterOptions
 	var d diag.Diagnostics
-	if len(filterOptionsPlan) == 1 {
-		filterOptions, d = filterOptionsPlan[0].expand(ctx)
-		diags.Append(d...)
-	} else {
-		d.AddError("Invalid webhook filter options", "Exactly one filter options block must be specified")
-	}
+
+	filterOptions, d = filterOptionsPlan.expand(ctx)
+	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
 	}
@@ -593,7 +573,7 @@ func (p *WebhookResourceModel) expand(ctx context.Context) (*management.Subscrip
 	return data, diags
 }
 
-func (p *WebookFilterOptionsModel) expand(ctx context.Context) (*management.SubscriptionFilterOptions, diag.Diagnostics) {
+func (p *WebhookFilterOptionsResourceModel) expand(ctx context.Context) (*management.SubscriptionFilterOptions, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var includedActionTypes []string
@@ -672,8 +652,8 @@ func (p *WebhookResourceModel) toState(apiObject *management.Subscription) diag.
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
 
@@ -687,9 +667,9 @@ func (p *WebhookResourceModel) toState(apiObject *management.Subscription) diag.
 
 	p.VerifyTLSCertificates = framework.BoolOkToTF(apiObject.GetVerifyTlsCertificatesOk())
 
-	p.TLSClientAuthKeyPairId = types.StringNull()
+	p.TLSClientAuthKeyPairId = pingonetypes.NewResourceIDNull()
 	if v, ok := apiObject.GetTlsClientAuthKeyPairOk(); ok {
-		p.TLSClientAuthKeyPairId = framework.StringOkToTF(v.GetIdOk())
+		p.TLSClientAuthKeyPairId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	}
 
 	p.Format = framework.EnumOkToTF(apiObject.GetFormatOk())
@@ -701,12 +681,11 @@ func (p *WebhookResourceModel) toState(apiObject *management.Subscription) diag.
 	return diags
 }
 
-func toStateWebhookFilterOptions(v *management.SubscriptionFilterOptions, ok bool) (types.List, diag.Diagnostics) {
+func toStateWebhookFilterOptions(v *management.SubscriptionFilterOptions, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	tfObjType := types.ObjectType{AttrTypes: webhookFilterOptionsTFObjectTypes}
 
 	if !ok || v == nil {
-		return types.ListNull(types.ObjectType{AttrTypes: webhookFilterOptionsTFObjectTypes}), diags
+		return types.ObjectNull(webhookFilterOptionsTFObjectTypes), diags
 	}
 
 	var applicationIDSet, populationIDSet basetypes.SetValue
@@ -717,9 +696,9 @@ func toStateWebhookFilterOptions(v *management.SubscriptionFilterOptions, ok boo
 			applicationIDList = append(applicationIDList, application.GetId())
 		}
 
-		applicationIDSet = framework.StringSetToTF(applicationIDList)
+		applicationIDSet = framework.PingOneResourceIDSetToTF(applicationIDList)
 	} else {
-		applicationIDSet = types.SetNull(types.StringType)
+		applicationIDSet = types.SetNull(pingonetypes.ResourceIDType{})
 	}
 
 	populationIDList := make([]string, 0)
@@ -728,9 +707,9 @@ func toStateWebhookFilterOptions(v *management.SubscriptionFilterOptions, ok boo
 			populationIDList = append(populationIDList, population.GetId())
 		}
 
-		populationIDSet = framework.StringSetToTF(populationIDList)
+		populationIDSet = framework.PingOneResourceIDSetToTF(populationIDList)
 	} else {
-		populationIDSet = types.SetNull(types.StringType)
+		populationIDSet = types.SetNull(pingonetypes.ResourceIDType{})
 	}
 
 	objMap := map[string]attr.Value{
@@ -742,10 +721,7 @@ func toStateWebhookFilterOptions(v *management.SubscriptionFilterOptions, ok boo
 		"useragent_exposed":        framework.BoolOkToTF(v.GetUserAgentExposedOk()),
 	}
 
-	flattenedObj, d := types.ObjectValue(webhookFilterOptionsTFObjectTypes, objMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(webhookFilterOptionsTFObjectTypes, objMap)
 	diags.Append(d...)
 
 	return returnVar, diags

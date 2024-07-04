@@ -1,1 +1,1 @@
-$ terraform import pingone_password_policy.example <environment_id>/<password_policy_id>
+terraform import pingone_password_policy.example <environment_id>/<password_policy_id>

@@ -15,21 +15,21 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
 type PopulationDataSource serviceClientType
 
 type PopulationDataSourceModel struct {
-	Description      types.String `tfsdk:"description"`
-	EnvironmentId    types.String `tfsdk:"environment_id"`
-	Id               types.String `tfsdk:"id"`
-	Name             types.String `tfsdk:"name"`
-	PasswordPolicyId types.String `tfsdk:"password_policy_id"`
-	PopulationId     types.String `tfsdk:"population_id"`
-	Default          types.Bool   `tfsdk:"default"`
+	Description      types.String                 `tfsdk:"description"`
+	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
+	Name             types.String                 `tfsdk:"name"`
+	PasswordPolicyId pingonetypes.ResourceIDValue `tfsdk:"password_policy_id"`
+	PopulationId     pingonetypes.ResourceIDValue `tfsdk:"population_id"`
+	Default          types.Bool                   `tfsdk:"default"`
 }
 
 // Framework interfaces
@@ -77,9 +77,11 @@ func (r *PopulationDataSource) Schema(ctx context.Context, req datasource.Schema
 				Description:         populationIdDescription.Description,
 				MarkdownDescription: populationIdDescription.MarkdownDescription,
 				Optional:            true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
-					verify.P1ResourceIDValidator(),
 				},
 			},
 
@@ -101,6 +103,8 @@ func (r *PopulationDataSource) Schema(ctx context.Context, req datasource.Schema
 			"password_policy_id": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the password policy applied to the population.").Description,
 				Computed:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"default": schema.BoolAttribute{
@@ -140,7 +144,7 @@ func (r *PopulationDataSource) Configure(ctx context.Context, req datasource.Con
 func (r *PopulationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *PopulationDataSourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -227,15 +231,15 @@ func (p *PopulationDataSourceModel) toState(apiObject *management.Population) di
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	p.PopulationId = framework.StringToTF(apiObject.GetId())
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.PopulationId = framework.PingOneResourceIDToTF(apiObject.GetId())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 
 	if v, ok := apiObject.GetPasswordPolicyOk(); ok && v != nil {
-		p.PasswordPolicyId = framework.StringOkToTF(v.GetIdOk())
+		p.PasswordPolicyId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	} else {
-		p.PasswordPolicyId = types.StringNull()
+		p.PasswordPolicyId = pingonetypes.NewResourceIDNull()
 	}
 
 	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())

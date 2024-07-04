@@ -1,0 +1,1 @@
+terraform import pingone_user_role_assignment.example <environment_id>/<user_id>/<role_assignment_id>

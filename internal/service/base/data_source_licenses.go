@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -19,11 +20,11 @@ import (
 type LicensesDataSource serviceClientType
 
 type LicensesDataSourceModel struct {
-	OrganizationId types.String `tfsdk:"organization_id"`
-	Id             types.String `tfsdk:"id"`
-	ScimFilter     types.String `tfsdk:"scim_filter"`
-	DataFilter     types.List   `tfsdk:"data_filter"`
-	Ids            types.List   `tfsdk:"ids"`
+	OrganizationId pingonetypes.ResourceIDValue `tfsdk:"organization_id"`
+	Id             pingonetypes.ResourceIDValue `tfsdk:"id"`
+	ScimFilter     types.String                 `tfsdk:"scim_filter"`
+	DataFilters    types.List                   `tfsdk:"data_filters"`
+	Ids            types.List                   `tfsdk:"ids"`
 }
 
 // Framework interfaces
@@ -61,21 +62,19 @@ func (r *LicensesDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 				"A SCIM filter to apply to the license selection.  A SCIM filter offers the greatest flexibility in filtering licenses.",
 			).AppendMarkdownString(fmt.Sprintf("If the attribute filter is `status`, available values are `%s`, `%s`, `%s` and `%s`.", management.ENUMLICENSESTATUS_ACTIVE, management.ENUMLICENSESTATUS_EXPIRED, management.ENUMLICENSESTATUS_FUTURE, management.ENUMLICENSESTATUS_TERMINATED)),
 				filterableAttributes,
-				[]string{"data_filter"},
+				[]string{"scim_filter", "data_filters"},
+			),
+
+			"data_filters": framework.Attr_DataFilter(framework.SchemaAttributeDescriptionFromMarkdown(
+				"Individual data filters to apply to the license selection.",
+			).AppendMarkdownString(fmt.Sprintf("If the attribute filter is `status`, available values are `%s`, `%s`, `%s` and `%s`.", management.ENUMLICENSESTATUS_ACTIVE, management.ENUMLICENSESTATUS_EXPIRED, management.ENUMLICENSESTATUS_FUTURE, management.ENUMLICENSESTATUS_TERMINATED)),
+				filterableAttributes,
+				[]string{"scim_filter", "data_filters"},
 			),
 
 			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescriptionFromMarkdown(
 				"The list of resulting IDs of licenses that have been successfully retrieved and filtered.",
 			)),
-		},
-
-		Blocks: map[string]schema.Block{
-			"data_filter": framework.Attr_DataFilter(framework.SchemaAttributeDescriptionFromMarkdown(
-				"Individual data filters to apply to the license selection.",
-			).AppendMarkdownString(fmt.Sprintf("If the attribute filter is `status`, available values are `%s`, `%s`, `%s` and `%s`.", management.ENUMLICENSESTATUS_ACTIVE, management.ENUMLICENSESTATUS_EXPIRED, management.ENUMLICENSESTATUS_FUTURE, management.ENUMLICENSESTATUS_TERMINATED)),
-				filterableAttributes,
-				[]string{"scim_filter"},
-			),
 		},
 	}
 }
@@ -109,7 +108,7 @@ func (r *LicensesDataSource) Configure(ctx context.Context, req datasource.Confi
 func (r *LicensesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *LicensesDataSourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -130,7 +129,7 @@ func (r *LicensesDataSource) Read(ctx context.Context, req datasource.ReadReques
 			return r.Client.ManagementAPIClient.LicensesApi.ReadAllLicenses(ctx, data.OrganizationId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute()
 		}
 
-	} else if !data.DataFilter.IsNull() {
+	} else if !data.DataFilters.IsNull() {
 
 		filterFunction = func() (any, *http.Response, error) {
 			return r.Client.ManagementAPIClient.LicensesApi.ReadAllLicenses(ctx, data.OrganizationId.ValueString()).Execute()
@@ -159,9 +158,9 @@ func (r *LicensesDataSource) Read(ctx context.Context, req datasource.ReadReques
 	}
 
 	licenses := entityArray.Embedded.GetLicenses()
-	if !data.DataFilter.IsNull() {
+	if !data.DataFilters.IsNull() {
 		var dataFilterPlan []framework.DataFilterModel
-		resp.Diagnostics.Append(data.DataFilter.ElementsAs(ctx, &dataFilterPlan, false)...)
+		resp.Diagnostics.Append(data.DataFilters.ElementsAs(ctx, &dataFilterPlan, false)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
@@ -198,7 +197,7 @@ func (p *LicensesDataSourceModel) toState(environmentID string, licenses []manag
 
 	var d diag.Diagnostics
 
-	p.Id = framework.StringToTF(environmentID)
+	p.Id = framework.PingOneResourceIDToTF(environmentID)
 	p.Ids, d = framework.StringSliceToTF(list)
 	diags.Append(d...)
 

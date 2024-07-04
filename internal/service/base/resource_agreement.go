@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -24,12 +25,12 @@ import (
 type AgreementResource serviceClientType
 
 type AgreementResourceModel struct {
-	Id                  types.String  `tfsdk:"id"`
-	EnvironmentId       types.String  `tfsdk:"environment_id"`
-	Name                types.String  `tfsdk:"name"`
-	Enabled             types.Bool    `tfsdk:"enabled"`
-	Description         types.String  `tfsdk:"description"`
-	ReconsentPeriodDays types.Float64 `tfsdk:"reconsent_period_days"`
+	Id                  pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId       pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name                types.String                 `tfsdk:"name"`
+	Enabled             types.Bool                   `tfsdk:"enabled"`
+	Description         types.String                 `tfsdk:"description"`
+	ReconsentPeriodDays types.Float64                `tfsdk:"reconsent_period_days"`
 }
 
 // Framework interfaces
@@ -123,7 +124,7 @@ func (r *AgreementResource) Configure(ctx context.Context, req resource.Configur
 func (r *AgreementResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state AgreementResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -168,7 +169,7 @@ func (r *AgreementResource) Create(ctx context.Context, req resource.CreateReque
 func (r *AgreementResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *AgreementResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -213,7 +214,7 @@ func (r *AgreementResource) Read(ctx context.Context, req resource.ReadRequest, 
 func (r *AgreementResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state AgreementResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -258,7 +259,7 @@ func (r *AgreementResource) Update(ctx context.Context, req resource.UpdateReque
 func (r *AgreementResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *AgreementResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -350,8 +351,8 @@ func (p *AgreementResourceModel) toState(apiObject *management.Agreement) diag.D
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())

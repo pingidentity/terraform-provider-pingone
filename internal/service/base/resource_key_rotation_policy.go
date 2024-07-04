@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -16,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -25,19 +27,19 @@ import (
 type KeyRotationPolicyResource serviceClientType
 
 type keyRotationPolicyResourceModel struct {
-	Id                 types.String `tfsdk:"id"`
-	EnvironmentId      types.String `tfsdk:"environment_id"`
-	Name               types.String `tfsdk:"name"`
-	Algorithm          types.String `tfsdk:"algorithm"`
-	CurrentKeyId       types.String `tfsdk:"current_key_id"`
-	SubjectDn          types.String `tfsdk:"subject_dn"`
-	KeyLength          types.Int64  `tfsdk:"key_length"`
-	NextKeyId          types.String `tfsdk:"next_key_id"`
-	RotatedAt          types.String `tfsdk:"rotated_at"`
-	RotationPeriod     types.Int64  `tfsdk:"rotation_period"`
-	SignatureAlgorithm types.String `tfsdk:"signature_algorithm"`
-	UsageType          types.String `tfsdk:"usage_type"`
-	ValidityPeriod     types.Int64  `tfsdk:"validity_period"`
+	Id                 pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId      pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name               types.String                 `tfsdk:"name"`
+	Algorithm          types.String                 `tfsdk:"algorithm"`
+	CurrentKeyId       pingonetypes.ResourceIDValue `tfsdk:"current_key_id"`
+	SubjectDn          types.String                 `tfsdk:"subject_dn"`
+	KeyLength          types.Int64                  `tfsdk:"key_length"`
+	NextKeyId          pingonetypes.ResourceIDValue `tfsdk:"next_key_id"`
+	RotatedAt          timetypes.RFC3339            `tfsdk:"rotated_at"`
+	RotationPeriod     types.Int64                  `tfsdk:"rotation_period"`
+	SignatureAlgorithm types.String                 `tfsdk:"signature_algorithm"`
+	UsageType          types.String                 `tfsdk:"usage_type"`
+	ValidityPeriod     types.Int64                  `tfsdk:"validity_period"`
 }
 
 // Framework interfaces
@@ -157,6 +159,8 @@ func (r *KeyRotationPolicyResource) Schema(ctx context.Context, req resource.Sch
 			"rotated_at": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("The last time the key rotation policy was rotated.").Description,
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 
 			"rotation_period": schema.Int64Attribute{
@@ -206,12 +210,16 @@ func (r *KeyRotationPolicyResource) Schema(ctx context.Context, req resource.Sch
 				Description:         currentKeyIdDescription.Description,
 				MarkdownDescription: currentKeyIdDescription.MarkdownDescription,
 				Computed:            true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"next_key_id": schema.StringAttribute{
 				Description:         nextKeyIdDescription.Description,
 				MarkdownDescription: nextKeyIdDescription.MarkdownDescription,
 				Computed:            true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 		},
 	}
@@ -246,7 +254,7 @@ func (r *KeyRotationPolicyResource) Configure(ctx context.Context, req resource.
 func (r *KeyRotationPolicyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state keyRotationPolicyResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -291,7 +299,7 @@ func (r *KeyRotationPolicyResource) Create(ctx context.Context, req resource.Cre
 func (r *KeyRotationPolicyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *keyRotationPolicyResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -336,7 +344,7 @@ func (r *KeyRotationPolicyResource) Read(ctx context.Context, req resource.ReadR
 func (r *KeyRotationPolicyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state keyRotationPolicyResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -381,7 +389,7 @@ func (r *KeyRotationPolicyResource) Update(ctx context.Context, req resource.Upd
 func (r *KeyRotationPolicyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *keyRotationPolicyResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -479,14 +487,14 @@ func (p *keyRotationPolicyResourceModel) toState(apiObject *management.KeyRotati
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Algorithm = framework.EnumOkToTF(apiObject.GetAlgorithmOk())
-	p.CurrentKeyId = framework.StringOkToTF(apiObject.GetCurrentKeyIdOk())
+	p.CurrentKeyId = framework.PingOneResourceIDOkToTF(apiObject.GetCurrentKeyIdOk())
 	p.SubjectDn = framework.StringOkToTF(apiObject.GetDnOk())
 	p.KeyLength = framework.Int32OkToTF(apiObject.GetKeyLengthOk())
-	p.NextKeyId = framework.StringOkToTF(apiObject.GetNextKeyIdOk())
+	p.NextKeyId = framework.PingOneResourceIDOkToTF(apiObject.GetNextKeyIdOk())
 	p.RotatedAt = framework.TimeOkToTF(apiObject.GetRotatedAtOk())
 	p.RotationPeriod = framework.Int32OkToTF(apiObject.GetRotationPeriodOk())
 	p.SignatureAlgorithm = framework.EnumOkToTF(apiObject.GetSignatureAlgorithmOk())

@@ -24,6 +24,10 @@ resource "pingone_group" "my_awesome_group" {
   name        = "My awesome group"
   description = "My new awesome group for people who are awesome"
 
+  custom_data = jsonencode({
+    "hello" = "world"
+  })
+
   lifecycle {
     # change the `prevent_destroy` parameter value to `true` to prevent this data carrying resource from being destroyed
     prevent_destroy = false
@@ -41,6 +45,7 @@ resource "pingone_group" "my_awesome_group" {
 
 ### Optional
 
+- `custom_data` (String) A JSON string that specifies user-defined custom data.
 - `description` (String) A description to apply to the group.
 - `external_id` (String) A user defined ID that represents the counterpart group in an external system.
 - `population_id` (String) The ID of the population that the group should be assigned to.  This field is immutable and will trigger a replace plan if changed.
@@ -55,5 +60,5 @@ resource "pingone_group" "my_awesome_group" {
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-$ terraform import pingone_group.example <environment_id>/<group_id>
+terraform import pingone_group.example <environment_id>/<group_id>
 ```

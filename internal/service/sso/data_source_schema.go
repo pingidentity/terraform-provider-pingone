@@ -14,19 +14,19 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
 type SchemaDataSource serviceClientType
 
 type SchemaDataSourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	SchemaId      types.String `tfsdk:"schema_id"`
-	Name          types.String `tfsdk:"name"`
-	Description   types.String `tfsdk:"description"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	SchemaId      pingonetypes.ResourceIDValue `tfsdk:"schema_id"`
+	Name          types.String                 `tfsdk:"name"`
+	Description   types.String                 `tfsdk:"description"`
 }
 
 // Framework interfaces
@@ -63,9 +63,11 @@ func (r *SchemaDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 			"schema_id": schema.StringAttribute{
 				Description: "The ID of the schema.",
 				Optional:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
-					verify.P1ResourceIDValidator(),
 				},
 			},
 
@@ -115,7 +117,7 @@ func (r *SchemaDataSource) Configure(ctx context.Context, req datasource.Configu
 func (r *SchemaDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *SchemaDataSourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -185,8 +187,8 @@ func (p *SchemaDataSourceModel) toState(apiObject *management.Schema) diag.Diagn
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	p.SchemaId = framework.StringToTF(apiObject.GetId())
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.SchemaId = framework.PingOneResourceIDToTF(apiObject.GetId())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 

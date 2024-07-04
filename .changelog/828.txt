@@ -1,0 +1,15 @@
+```release-note:breaking-change
+Replaced the `region` parameter (and `PINGONE_REGION` environment variable) with `region_code` (defaulted with the `PINGONE_REGION_CODE` environment variable).  See the Upgrade Guide for details.
+```
+
+```release-note:breaking-change
+`pingone_environment`: The `region` parameter's values now aligns with the API request/response payload values.  See the Upgrade Guide for details.
+```
+
+```release-note:enhancement
+Support the new `AU` tenant region with the `com.au` top level domain.
+```
+
+```release-note:enhancement
+Inclusion of a new optional provider parameter `append_user_agent` to append a custom string to the `User-Agent` header when making API requests to the PingOne service.
+```

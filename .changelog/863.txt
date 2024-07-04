@@ -1,0 +1,35 @@
+```release-note:bug
+`resource/pingone_application_resource_grant`: Fixed broken grants when a resource or scope changes it's ID (scopes and resources are re-created, not triggering a re-creation of the grants)
+```
+
+```release-note:bug
+`resource/pingone_application_resource_grant`: Fixed issue where the provider produces an inconsistent result after apply when new scopes are added to, or existing scopes removed from, an existing grant.
+```
+
+```release-note:breaking-change
+`data-source/pingone_resource_scope`: Existing `resource_id` field made read only.  Use `resource_type` and `custom_resource_id` instead.
+```
+
+```release-note:breaking-change
+`data-source/pingone_resource_scope`: New `resource_type` field is a required field, and new `custom_resource_id` field is an optional field.  The combination of these fields ensure the correct resource is selected without encountering issue.
+```
+
+```release-note:breaking-change
+`resource/pingone_application_resource_grant`: Existing `resource_name` field removed.  Use `resource_type` and `custom_resource_id` instead.
+```
+
+```release-note:breaking-change
+`resource/pingone_application_resource_grant`: New `resource_type` field is a required field, and new `custom_resource_id` field is an optional field.  The combination of these fields ensure the correct resource is selected without encountering issue.
+```
+
+```release-note:breaking-change
+`resource/pingone_application_resource_grant`: Existing `scope_names` field removed and existing `scopes` field is now a required field.  Use `scopes` to define the list of scopes for the grant instead.
+```
+
+```release-note:breaking-change
+`resource/pingone_resource_attribute`: Existing `resource_name` field removed.  Use `resource_type` and `custom_resource_id` instead.
+```
+
+```release-note:breaking-change
+`resource/pingone_resource_attribute`: New `resource_type` field is a required field, and new `custom_resource_id` field is an optional field.  The combination of these fields ensure the correct resource is selected without encountering issue.
+```

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -12,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -19,19 +21,19 @@ import (
 type CredentialTypeDataSource serviceClientType
 
 type CredentialTypeDataSourceModel struct {
-	Id                 types.String `tfsdk:"id"`
-	EnvironmentId      types.String `tfsdk:"environment_id"`
-	IssuerId           types.String `tfsdk:"issuer_id"`
-	CredentialTypeId   types.String `tfsdk:"credential_type_id"`
-	CardType           types.String `tfsdk:"card_type"`
-	CardDesignTemplate types.String `tfsdk:"card_design_template"`
-	Description        types.String `tfsdk:"description"`
-	ManagementMode     types.String `tfsdk:"management_mode"`
-	Metadata           types.Object `tfsdk:"metadata"`
-	RevokeOnDelete     types.Bool   `tfsdk:"revoke_on_delete"`
-	Title              types.String `tfsdk:"title"`
-	CreatedAt          types.String `tfsdk:"created_at"`
-	UpdatedAt          types.String `tfsdk:"updated_at"`
+	Id                 pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId      pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	IssuerId           pingonetypes.ResourceIDValue `tfsdk:"issuer_id"`
+	CredentialTypeId   pingonetypes.ResourceIDValue `tfsdk:"credential_type_id"`
+	Title              types.String                 `tfsdk:"title"`
+	Description        types.String                 `tfsdk:"description"`
+	CardType           types.String                 `tfsdk:"card_type"`
+	CardDesignTemplate types.String                 `tfsdk:"card_design_template"`
+	ManagementMode     types.String                 `tfsdk:"management_mode"`
+	Metadata           types.Object                 `tfsdk:"metadata"`
+	RevokeOnDelete     types.Bool                   `tfsdk:"revoke_on_delete"`
+	CreatedAt          timetypes.RFC3339            `tfsdk:"created_at"`
+	UpdatedAt          timetypes.RFC3339            `tfsdk:"updated_at"`
 }
 
 type MetadataDataSourceModel struct {
@@ -48,14 +50,14 @@ type MetadataDataSourceModel struct {
 }
 
 type FieldsDataSourceModel struct {
-	Id          types.String `tfsdk:"id"`
-	Type        types.String `tfsdk:"type"`
-	Title       types.String `tfsdk:"title"`
-	FileSupport types.String `tfsdk:"file_support"`
-	IsVisible   types.Bool   `tfsdk:"is_visible"`
-	Attribute   types.String `tfsdk:"attribute"`
-	Value       types.String `tfsdk:"value"`
-	Required    types.Bool   `tfsdk:"required"`
+	Id          pingonetypes.ResourceIDValue `tfsdk:"id"`
+	Type        types.String                 `tfsdk:"type"`
+	Title       types.String                 `tfsdk:"title"`
+	FileSupport types.String                 `tfsdk:"file_support"`
+	IsVisible   types.Bool                   `tfsdk:"is_visible"`
+	Attribute   types.String                 `tfsdk:"attribute"`
+	Value       types.String                 `tfsdk:"value"`
+	Required    types.Bool                   `tfsdk:"required"`
 }
 
 var (
@@ -73,7 +75,7 @@ var (
 	}
 
 	innerFieldsDataSourceServiceTFObjectTypes = map[string]attr.Type{
-		"id":           types.StringType,
+		"id":           pingonetypes.ResourceIDType{},
 		"type":         types.StringType,
 		"title":        types.StringType,
 		"file_support": types.StringType,
@@ -119,6 +121,8 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 			"issuer_id": schema.StringAttribute{
 				Description: "Identifier (UUID) of the credential issuer.",
 				Computed:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"title": schema.StringAttribute{
@@ -208,6 +212,8 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 								"id": schema.StringAttribute{
 									Description: "Identifier of the field object.",
 									Computed:    true,
+
+									CustomType: pingonetypes.ResourceIDType{},
 								},
 								"type": schema.StringAttribute{
 									Description: "Type of data in the field.",
@@ -246,11 +252,15 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 			"created_at": schema.StringAttribute{
 				Description: "Date and time the object was created.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 
 			"updated_at": schema.StringAttribute{
 				Description: "Date and time the object was updated. Can be null.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 		},
 	}
@@ -285,7 +295,7 @@ func (r *CredentialTypeDataSource) Configure(ctx context.Context, req datasource
 func (r *CredentialTypeDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *CredentialTypeDataSourceModel
 
-	if r.Client.CredentialsAPIClient == nil {
+	if r.Client == nil || r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -333,10 +343,10 @@ func (p *CredentialTypeDataSourceModel) toState(apiObject *credentials.Credentia
 	}
 
 	// credential attributes
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.CredentialTypeId = framework.StringToTF(apiObject.GetId())
-	p.IssuerId = framework.StringToTF(*apiObject.GetIssuer().Id)
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
+	p.CredentialTypeId = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.IssuerId = framework.PingOneResourceIDToTF(*apiObject.GetIssuer().Id)
 	p.Title = framework.StringOkToTF(apiObject.GetTitleOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.CardType = framework.StringOkToTF(apiObject.GetCardTypeOk())
@@ -405,7 +415,7 @@ func toStateFieldsDataSource(innerFields []credentials.CredentialTypeMetaDataFie
 	for _, v := range innerFields {
 
 		fieldsMap := map[string]attr.Value{
-			"id":           framework.StringOkToTF(v.GetIdOk()),
+			"id":           framework.PingOneResourceIDOkToTF(v.GetIdOk()),
 			"type":         framework.EnumOkToTF(v.GetTypeOk()),
 			"title":        framework.StringOkToTF(v.GetTitleOk()),
 			"file_support": framework.EnumOkToTF(v.GetFileSupportOk()),

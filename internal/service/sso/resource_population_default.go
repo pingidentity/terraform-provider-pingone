@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -27,11 +28,11 @@ import (
 type PopulationDefaultResource serviceClientType
 
 type PopulationDefaultResourceModel struct {
-	Id               types.String `tfsdk:"id"`
-	EnvironmentId    types.String `tfsdk:"environment_id"`
-	Name             types.String `tfsdk:"name"`
-	Description      types.String `tfsdk:"description"`
-	PasswordPolicyId types.String `tfsdk:"password_policy_id"`
+	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name             types.String                 `tfsdk:"name"`
+	Description      types.String                 `tfsdk:"description"`
+	PasswordPolicyId pingonetypes.ResourceIDValue `tfsdk:"password_policy_id"`
 }
 
 // Framework interfaces
@@ -86,9 +87,7 @@ func (r *PopulationDefaultResource) Schema(ctx context.Context, req resource.Sch
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("The ID of a password policy to assign to the default population.").Description,
 				Optional:    true,
 
-				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
-				},
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 		},
 	}
@@ -133,7 +132,7 @@ func (r *PopulationDefaultResource) Configure(ctx context.Context, req resource.
 func (r *PopulationDefaultResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state PopulationDefaultResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -199,7 +198,7 @@ func (r *PopulationDefaultResource) Create(ctx context.Context, req resource.Cre
 func (r *PopulationDefaultResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *PopulationDefaultResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -233,7 +232,7 @@ func (r *PopulationDefaultResource) Read(ctx context.Context, req resource.ReadR
 func (r *PopulationDefaultResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state PopulationDefaultResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -284,7 +283,7 @@ func (r *PopulationDefaultResource) Update(ctx context.Context, req resource.Upd
 func (r *PopulationDefaultResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data PopulationDefaultResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -396,15 +395,15 @@ func (p *PopulationDefaultResourceModel) toState(apiObject *management.Populatio
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringOkToTF(apiObject.Environment.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDOkToTF(apiObject.Environment.GetIdOk())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 
 	if v, ok := apiObject.GetPasswordPolicyOk(); ok {
-		p.PasswordPolicyId = framework.StringOkToTF(v.GetIdOk())
+		p.PasswordPolicyId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	} else {
-		p.PasswordPolicyId = types.StringNull()
+		p.PasswordPolicyId = pingonetypes.NewResourceIDNull()
 	}
 
 	return diags

@@ -14,7 +14,6 @@ Data source to retrieve a list of PingOne Verify policies. Filtering the list by
 ```terraform
 data "pingone_verify_policies" "find_all_verify_policies_example" {
   environment_id = var.environment_id
-
 }
 ```
 

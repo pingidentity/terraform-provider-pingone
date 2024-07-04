@@ -34,11 +34,12 @@ data "pingone_group" "example_by_id" {
 
 ### Optional
 
-- `group_id` (String) A string that specifies the ID of the group to retrieve configuration for.  Must be a valid PingOne resource ID.  At least one of the following must be defined: `group_id`, `name`.
-- `name` (String) A string that specifies the name of the group to retrieve configuration for.  At least one of the following must be defined: `group_id`, `name`.
+- `group_id` (String) A string that specifies the ID of the group to retrieve configuration for.  Must be a valid PingOne resource ID.  Exactly one of the following must be defined: `group_id`, `name`.
+- `name` (String) A string that specifies the name of the group to retrieve configuration for.  Exactly one of the following must be defined: `group_id`, `name`.
 
 ### Read-Only
 
+- `custom_data` (String) A JSON string that specifies user-defined custom data.
 - `description` (String) A string that specifies the description applied to the group.
 - `external_id` (String) A string that specifies a user defined ID that represents the counterpart group in an external system.
 - `id` (String) The ID of this resource.

@@ -35,17 +35,18 @@ resource "pingone_notification_policy" "environment" {
 
   name = "Environment Quota SMS Voice and Email"
 
-  quota {
-    type             = "ENVIRONMENT"
-    delivery_methods = ["SMS", "Voice"]
-    total            = 100
-  }
-
-  quota {
-    type             = "ENVIRONMENT"
-    delivery_methods = ["Email"]
-    total            = 100
-  }
+  quota = [
+    {
+      type             = "ENVIRONMENT"
+      delivery_methods = ["SMS", "Voice"]
+      total            = 100
+    },
+    {
+      type             = "ENVIRONMENT"
+      delivery_methods = ["Email"]
+      total            = 100
+    }
+  ]
 }
 ```
 
@@ -61,17 +62,18 @@ resource "pingone_notification_policy" "user" {
 
   name = "User Quota SMS Voice and Email"
 
-  quota {
-    type             = "USER"
-    delivery_methods = ["SMS", "Voice"]
-    total            = 30
-  }
-
-  quota {
-    type             = "USER"
-    delivery_methods = ["Email"]
-    total            = 30
-  }
+  quota = [
+    {
+      type             = "USER"
+      delivery_methods = ["SMS", "Voice"]
+      total            = 30
+    },
+    {
+      type             = "USER"
+      delivery_methods = ["Email"]
+      total            = 30
+    }
+  ]
 }
 ```
 
@@ -86,7 +88,7 @@ resource "pingone_notification_policy" "user" {
 ### Optional
 
 - `country_limit` (Attributes) A single object to limit the countries where you can send SMS and voice notifications. (see [below for nested schema](#nestedatt--country_limit))
-- `quota` (Block List) A single object block that define the SMS/Voice limits. (see [below for nested schema](#nestedblock--quota))
+- `quota` (Attributes Set) A set of objects that define the SMS/Voice limits.  A maximum of two quota objects can be defined, one for SMS and/or Voice quota, and one for Email quota. (see [below for nested schema](#nestedatt--quota))
 
 ### Read-Only
 
@@ -106,7 +108,7 @@ Optional:
 - `delivery_methods` (Set of String) The delivery methods that the defined limitation should be applied to. Content of the array can be `SMS`, `Voice`, or both. If the parameter is not provided, the default is `SMS` and `Voice`.
 
 
-<a id="nestedblock--quota"></a>
+<a id="nestedatt--quota"></a>
 ### Nested Schema for `quota`
 
 Required:
@@ -125,5 +127,5 @@ Optional:
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-$ terraform import pingone_notification_policy.example <environment_id>/<notification_policy_id>
+terraform import pingone_notification_policy.example <environment_id>/<notification_policy_id>
 ```

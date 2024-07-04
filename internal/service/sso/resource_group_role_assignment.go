@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -22,14 +23,14 @@ import (
 type GroupRoleAssignmentResource serviceClientType
 
 type GroupRoleAssignmentResourceModel struct {
-	Id                  types.String `tfsdk:"id"`
-	EnvironmentId       types.String `tfsdk:"environment_id"`
-	GroupId             types.String `tfsdk:"group_id"`
-	RoleId              types.String `tfsdk:"role_id"`
-	ScopeEnvironmentId  types.String `tfsdk:"scope_environment_id"`
-	ScopeOrganizationId types.String `tfsdk:"scope_organization_id"`
-	ScopePopulationId   types.String `tfsdk:"scope_population_id"`
-	ReadOnly            types.Bool   `tfsdk:"read_only"`
+	Id                  pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId       pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	GroupId             pingonetypes.ResourceIDValue `tfsdk:"group_id"`
+	RoleId              pingonetypes.ResourceIDValue `tfsdk:"role_id"`
+	ScopeEnvironmentId  pingonetypes.ResourceIDValue `tfsdk:"scope_environment_id"`
+	ScopeOrganizationId pingonetypes.ResourceIDValue `tfsdk:"scope_organization_id"`
+	ScopePopulationId   pingonetypes.ResourceIDValue `tfsdk:"scope_population_id"`
+	ReadOnly            types.Bool                   `tfsdk:"read_only"`
 }
 
 // Framework interfaces
@@ -114,7 +115,7 @@ func (r *GroupRoleAssignmentResource) Configure(ctx context.Context, req resourc
 func (r *GroupRoleAssignmentResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state GroupRoleAssignmentResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -163,7 +164,7 @@ func (r *GroupRoleAssignmentResource) Create(ctx context.Context, req resource.C
 func (r *GroupRoleAssignmentResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *GroupRoleAssignmentResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -211,7 +212,7 @@ func (r *GroupRoleAssignmentResource) Update(ctx context.Context, req resource.U
 func (r *GroupRoleAssignmentResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *GroupRoleAssignmentResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -224,16 +225,6 @@ func (r *GroupRoleAssignmentResource) Delete(ctx context.Context, req resource.D
 		return
 	}
 
-	if data.ReadOnly.Equal(types.BoolValue(true)) {
-		resp.Diagnostics.AddError(
-			"Cannot destroy read only role assignment",
-			fmt.Sprintf("Role assignment %s cannot be deleted as it is read only", data.Id.ValueString()),
-		)
-
-		return
-	}
-
-	// Run the API call
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
@@ -243,13 +234,10 @@ func (r *GroupRoleAssignmentResource) Delete(ctx context.Context, req resource.D
 		},
 		"DeleteGroupRoleAssignment",
 		framework.CustomErrorResourceNotFoundWarning,
-		nil,
+		service.RoleRemovalRetryable,
 		nil,
 	)...)
 
-	if resp.Diagnostics.HasError() {
-		return
-	}
 }
 
 func (r *GroupRoleAssignmentResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -318,9 +306,9 @@ func (p *GroupRoleAssignmentResourceModel) toState(apiObject *management.RoleAss
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringOkToTF(apiObject.Environment.GetIdOk())
-	p.RoleId = framework.StringOkToTF(apiObject.Role.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDOkToTF(apiObject.Environment.GetIdOk())
+	p.RoleId = framework.PingOneResourceIDOkToTF(apiObject.Role.GetIdOk())
 	p.ReadOnly = framework.BoolOkToTF(apiObject.GetReadOnlyOk())
 
 	p.ScopeEnvironmentId, p.ScopeOrganizationId, p.ScopePopulationId = service.RoleAssignmentScopeOkToTF(apiObject.GetScopeOk())

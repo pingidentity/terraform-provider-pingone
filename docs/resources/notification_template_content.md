@@ -2,12 +2,12 @@
 page_title: "pingone_notification_template_content Resource - terraform-provider-pingone"
 subcategory: "Platform"
 description: |-
-  Resource to create and manage PingOne notification template contents for push, SMS, email and voice notifications.
+  Resource to create and manage PingOne notification template contents for push, SMS, email and voice notifications in an environment.
 ---
 
 # pingone_notification_template_content (Resource)
 
-Resource to create and manage PingOne notification template contents for push, SMS, email and voice notifications.
+Resource to create and manage PingOne notification template contents for push, SMS, email and voice notifications in an environment.
 
 ~> Only one notification method can be configured per resource, so (for example) a template that requires push, email and SMS will require three `pingone_notification_template_content` resource definitions, one for each method type.
 
@@ -25,11 +25,11 @@ resource "pingone_notification_template_content" "email" {
   template_name  = "strong_authentication"
   locale         = "en"
 
-  email {
+  email = {
     body    = "Please approve this transaction with passcode $${otp}."
     subject = "BX Retail Transaction Request"
 
-    from {
+    from = {
       name    = "BX Retail"
       address = "noreply@bxretail.org"
     }
@@ -41,7 +41,7 @@ resource "pingone_notification_template_content" "push" {
   template_name  = "strong_authentication"
   locale         = "en"
 
-  push {
+  push = {
     body  = "Please approve this transaction."
     title = "BX Retail Transaction Request"
   }
@@ -52,7 +52,7 @@ resource "pingone_notification_template_content" "sms" {
   template_name  = "strong_authentication"
   locale         = "en"
 
-  sms {
+  sms = {
     content = "Please approve this transaction with passcode $${otp}."
     sender  = "BX Retail"
   }
@@ -63,7 +63,7 @@ resource "pingone_notification_template_content" "voice" {
   template_name  = "strong_authentication"
   locale         = "en"
 
-  voice {
+  voice = {
     content = "Hello <pause1sec> your authentication code is <sayCharValue>$${otp}</sayCharValue><pause1sec><pause1sec><repeatMessage val=2>I repeat <pause1sec>your code is <sayCharValue>$${otp}</sayCharValue></repeatMessage>"
     type    = "Alice"
   }
@@ -75,97 +75,97 @@ resource "pingone_notification_template_content" "voice" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to manage notification template contents in.
-- `locale` (String) An ISO standard language code. For more information about standard language codes, see [ISO Language Code Table](http://www.lingoes.net/en/translator/langcode.htm).
-- `template_name` (String) The ID of the template to manage localised contents for.  Options are `credential_issued`, `credential_revoked`, `credential_updated`, `credential_verification`, `device_pairing`, `digital_wallet_pairing`, `email_verification_admin`, `email_verification_user`, `email_phone_verification`, `general`, `id_verification`, `new_device_paired`, `recovery_code_template`, `strong_authentication`, `transaction`, `verification_code_template`.
+- `environment_id` (String) The ID of the environment to manage notification template contents in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `locale` (String) A string that specifies an ISO standard language code. For more information about standard language codes, see [ISO Language Code Table](http://www.lingoes.net/en/translator/langcode.htm).  Options are `aa`, `ab`, `ae`, `af`, `af-ZA`, `ak`, `am`, `an`, `ar`, `ar-AE`, `ar-BH`, `ar-DZ`, `ar-EG`, `ar-IQ`, `ar-JO`, `ar-KW`, `ar-LB`, `ar-LY`, `ar-MA`, `ar-OM`, `ar-QA`, `ar-SA`, `ar-SY`, `ar-TN`, `ar-YE`, `as`, `av`, `ay`, `az`, `az-AZ`, `ba`, `be`, `be-BY`, `bg`, `bg-BG`, `bi`, `bm`, `bn`, `bo`, `br`, `bs`, `bs-BA`, `ca`, `ca-ES`, `ce`, `ch`, `cmn-CN`, `cmn-TW`, `co`, `cr`, `cs`, `cs-CZ`, `cu`, `cv`, `cy`, `cy-GB`, `da`, `da-DK`, `de`, `de-AT`, `de-CH`, `de-DE`, `de-LI`, `de-LU`, `dv`, `dv-MV`, `dz`, `ee`, `el`, `el-GR`, `en`, `en-AU`, `en-BZ`, `en-CA`, `en-CB`, `en-GB`, `en-GB-WLS`, `en-IE`, `en-IN`, `en-JM`, `en-NZ`, `en-PH`, `en-TT`, `en-US`, `en-ZA`, `en-ZW`, `eo`, `es`, `es-AR`, `es-BO`, `es-CL`, `es-CO`, `es-CR`, `es-DO`, `es-EC`, `es-ES`, `es-GT`, `es-HN`, `es-MX`, `es-NI`, `es-PA`, `es-PE`, `es-PR`, `es-PY`, `es-SV`, `es-US`, `es-UY`, `es-VE`, `et`, `et-EE`, `eu`, `eu-ES`, `fa`, `fa-IR`, `ff`, `fi`, `fi-FI`, `fj`, `fo`, `fo-FO`, `fr`, `fr-BE`, `fr-CA`, `fr-CH`, `fr-FR`, `fr-LU`, `fr-MC`, `fy`, `ga`, `gd`, `gl`, `gl-ES`, `gn`, `gu`, `gu-IN`, `gv`, `ha`, `he`, `he-IL`, `hi`, `hi-IN`, `ho`, `hr`, `hr-BA`, `hr-HR`, `ht`, `hu`, `hu-HU`, `hy`, `hy-AM`, `hz`, `ia`, `id`, `id-ID`, `ie`, `ig`, `ii`, `ik`, `io`, `is`, `is-IS`, `it`, `it-CH`, `it-IT`, `iu`, `ja`, `ja-JP`, `jv`, `ka`, `ka-GE`, `kg`, `ki`, `kj`, `kk`, `kk-KZ`, `kl`, `km`, `kn`, `kn-IN`, `ko`, `ko-KR`, `kok`, `kok-IN`, `kr`, `ks`, `ku`, `kv`, `kw`, `ky`, `ky-KG`, `la`, `lb`, `lg`, `li`, `ln`, `lo`, `lt`, `lt-LT`, `lu`, `lv`, `lv-LV`, `mg`, `mh`, `mi`, `mi-NZ`, `mk`, `mk-MK`, `ml`, `mn`, `mn-MN`, `mr`, `mr-IN`, `ms`, `ms-BN`, `ms-MY`, `mt`, `mt-MT`, `my`, `na`, `nb`, `nb-NO`, `nd`, `ne`, `ng`, `nl`, `nl-BE`, `nl-NL`, `nn`, `nn-NO`, `no`, `nr`, `ns`, `ns-ZA`, `nv`, `ny`, `oc`, `oj`, `om`, `or`, `os`, `pa`, `pa-IN`, `pi`, `pl`, `pl-PL`, `ps`, `ps-AR`, `pt`, `pt-BR`, `pt-PT`, `qu`, `qu-BO`, `qu-EC`, `qu-PE`, `rm`, `rn`, `ro`, `ro-RO`, `ru`, `ru-RU`, `rw`, `sa`, `sa-IN`, `sc`, `sd`, `se`, `se-FI`, `se-NO`, `se-SE`, `sg`, `si`, `sk`, `sk-SK`, `sl`, `sl-SI`, `sm`, `sn`, `so`, `sq`, `sq-AL`, `sr`, `sr-BA`, `sr-SP`, `ss`, `st`, `su`, `sv`, `sv-FI`, `sv-SE`, `sw`, `sw-KE`, `syr`, `syr-SY`, `ta`, `ta-IN`, `te`, `te-IN`, `tg`, `th`, `th-TH`, `ti`, `tk`, `tl`, `tl-PH`, `tn`, `tn-ZA`, `to`, `tr`, `tr-TR`, `ts`, `tt`, `tt-RU`, `tw`, `ty`, `ug`, `uk`, `uk-UA`, `ur`, `ur-PK`, `uz`, `uz-UZ`, `ve`, `vi`, `vi-VN`, `vo`, `wa`, `wo`, `xh`, `xh-ZA`, `yi`, `yo`, `yue-CN`, `za`, `zh`, `zh-CN`, `zh-HK`, `zh-MO`, `zh-SG`, `zh-TW`, `zu`, `zu-ZA`.  This field is immutable and will trigger a replace plan if changed.
+- `template_name` (String) A string that specifies the ID of the template to manage localised contents for.  Options are `credential_issued`, `credential_revoked`, `credential_updated`, `credential_verification`, `device_pairing`, `digital_wallet_pairing`, `email_phone_verification`, `email_verification_admin`, `email_verification_user`, `general`, `id_verification`, `new_device_paired`, `recovery_code_template`, `strong_authentication`, `transaction`, `verification_code_template`.  This field is immutable and will trigger a replace plan if changed.
 
 ### Optional
 
-- `email` (Block List, Max: 1) A block that specifies the content settings for the `email` delivery method. (see [below for nested schema](#nestedblock--email))
-- `push` (Block List, Max: 1) A block that specifies the content settings for the mobile `push` delivery method. (see [below for nested schema](#nestedblock--push))
-- `sms` (Block List, Max: 1) A block that specifies the content settings for the `SMS` delivery method. (see [below for nested schema](#nestedblock--sms))
-- `variant` (String) Holds the unique user-defined name for each content variant that uses the same template + `deliveryMethod` + `locale` combination.  This property is case insensitive and has a limit of 100 characters.
-- `voice` (Block List, Max: 1) A block that specifies the content settings for the `voice` delivery method. (see [below for nested schema](#nestedblock--voice))
+- `email` (Attributes) A single object that specifies properties for the `email` delivery method.  Exactly one of `email`, `push`, `sms` or `voice` must be specified. (see [below for nested schema](#nestedatt--email))
+- `push` (Attributes) A single object that specifies properties for the `push` delivery method.  Exactly one of `email`, `push`, `sms` or `voice` must be specified. (see [below for nested schema](#nestedatt--push))
+- `sms` (Attributes) A single object that specifies properties for the `sms` delivery method.  Exactly one of `email`, `push`, `sms` or `voice` must be specified. (see [below for nested schema](#nestedatt--sms))
+- `variant` (String) A string that specifies the unique user-defined name for each content variant that uses the same template + `deliveryMethod` + `locale` combination.  This property is case insensitive and has a limit of 100 characters.
+- `voice` (Attributes) A single object that specifies properties for the `voice` delivery method.  Exactly one of `email`, `push`, `sms` or `voice` must be specified. (see [below for nested schema](#nestedatt--voice))
 
 ### Read-Only
 
-- `default` (Boolean) Specifies whether the template is a predefined default template.
+- `default` (Boolean) A boolean that specifies whether the template is a predefined default template.
 - `id` (String) The ID of this resource.
 
-<a id="nestedblock--email"></a>
+<a id="nestedatt--email"></a>
 ### Nested Schema for `email`
 
 Required:
 
 - `body` (String) A string representing the email body. Email text can contain HTML but cannot be larger than 100 kB.  Use of variables is supported.
-- `subject` (String) The email's subject line. Cannot exceed 256 characters. Can include variables.
+- `subject` (String) A string representing the email's subject line. Cannot exceed 256 characters. Can include variables.
 
 Optional:
 
-- `character_set` (String) The email's character set. Defaults to `UTF-8`.
-- `content_type` (String) The email's content-type. Defaults to `text/html`.
-- `from` (Block List, Max: 1) A block that specifies the sender settings for the `email` delivery method. (see [below for nested schema](#nestedblock--email--from))
-- `reply_to` (Block List, Max: 1) A block that specifies the reply-to settings for the `email` delivery method. (see [below for nested schema](#nestedblock--email--reply_to))
+- `character_set` (String) A string that specifies the email's character set.  Defaults to `UTF-8`.
+- `content_type` (String) A string that specifies the email's content-type.  Defaults to `text/html`.
+- `from` (Attributes) A single object that specifies properties for the email sender. (see [below for nested schema](#nestedatt--email--from))
+- `reply_to` (Attributes) A single object that specifies properties for the email "reply to" address. (see [below for nested schema](#nestedatt--email--reply_to))
 
-<a id="nestedblock--email--from"></a>
+<a id="nestedatt--email--from"></a>
 ### Nested Schema for `email.from`
 
 Optional:
 
-- `address` (String) The sender email address. If the environment uses the Ping Identity email sender, or if the address field is empty, the address `noreply@pingidentity.com` is used.  You can configure other email sender addresses per environment. Defaults to `noreply@pingidentity.com`.
-- `name` (String) The email's sender name.  If the environment uses the Ping Identity email sender, the name `PingOne` is used. You can configure other email sender names per environment. Defaults to `PingOne`.
+- `address` (String) A string that specifies the sender email address. If the environment uses the Ping Identity email sender, or if the address field is empty, the address `noreply@pingidentity.com` is used.  You can configure other email sender addresses per environment.
+- `name` (String) A string that specifies the email's sender name.  If the environment uses the Ping Identity email sender, the name `PingOne` is used. You can configure other email sender names per environment.
 
 
-<a id="nestedblock--email--reply_to"></a>
+<a id="nestedatt--email--reply_to"></a>
 ### Nested Schema for `email.reply_to`
 
 Optional:
 
-- `address` (String) The "reply to" email address.  If the environment uses the Ping Identity email sender, or if the address field is empty, the address `noreply@pingidentity.com` is used.  You can configure other email "reply to" addresses per environment.
-- `name` (String) The email's "reply to" name.  If the environment uses the Ping Identity email sender, the name `PingOne` is used.  You can configure other email "reply to" names per environment.
+- `address` (String) A string that specifies the "reply to" email address.  If the environment uses the Ping Identity email sender, or if the address field is empty, the address `noreply@pingidentity.com` is used.  You can configure other email "reply to" addresses per environment.
+- `name` (String) A string that specifies the email's "reply to" name.  If the environment uses the Ping Identity email sender, the name `PingOne` is used.  You can configure other email "reply to" names per environment.
 
 
 
-<a id="nestedblock--push"></a>
+<a id="nestedatt--push"></a>
 ### Nested Schema for `push`
 
 Required:
 
-- `body` (String) The push notification text. This can include variables.
-- `title` (String) The push notification title. This can include variables.
+- `body` (String) A string that specifies the push notification text. This can include variables.
+- `title` (String) A string that specifies the push notification title. This can include variables.
 
 Optional:
 
-- `category` (String) For Push content, you can specify what type of banner should be displayed to the user. The available options are `BANNER_BUTTONS` (the banner contains both Approve and Deny buttons), `WITHOUT_BANNER_BUTTONS` (when the user clicks the banner, they are taken to an application that contains the necessary approval controls), `APPROVE_AND_OPEN_APP` (when the Approve button is clicked, authentication is completed and the user is taken to the relevant application).  If this parameter is not provided, the default is `BANNER_BUTTONS`. Note that to use the non-default push banners, you must implement them in your application code, using the PingOne SDK. For details, see the [README for iOS](https://github.com/pingidentity/pingone-mobile-sdk-ios/#171-push-notifications-categories) and the [README for Android](https://github.com/pingidentity/pingone-mobile-sdk-android). Defaults to `BANNER_BUTTONS`.
+- `category` (String) A string that specifies what type of banner should be displayed to the user.  Options are `APPROVE_AND_OPEN_APP` (when the Approve button is clicked, authentication is completed and the user is taken to the relevant application), `BANNER_BUTTONS` (the banner contains both Approve and Deny buttons), `WITHOUT_BANNER_BUTTONS` (when the user clicks the banner, they are taken to an application that contains the necessary approval controls).  Defaults to `BANNER_BUTTONS`.  Note that to use the non-default push banners, you must implement them in your application code, using the PingOne SDK. For details, see the [README for iOS](https://github.com/pingidentity/pingone-mobile-sdk-ios/#171-push-notifications-categories) and the [README for Android](https://github.com/pingidentity/pingone-mobile-sdk-android).
 
 
-<a id="nestedblock--sms"></a>
+<a id="nestedatt--sms"></a>
 ### Nested Schema for `sms`
 
 Required:
 
-- `content` (String) The SMS text. UC-2 encoding is used for text that contains non GSM-7 characters. UC-2 encoded text cannot exceed 67 characters. GSM-7 encoded text cannot exceed 153 characters. This can include variables.
+- `content` (String) A string that specifies the SMS text. UC-2 encoding is used for text that contains non GSM-7 characters. UC-2 encoded text cannot exceed 67 characters. GSM-7 encoded text cannot exceed 153 characters. This can include variables.
 
 Optional:
 
-- `sender` (String) The SMS sender ID. This property can contain only alphanumeric characters and spaces, and its length cannot exceed 11 characters. In some countries, it is impossible to send an SMS with an alphanumeric sender ID. For those countries, the sender ID must be empty. For SMS recipients in specific countries, refer to Twilio's documentation on [International support for Alphanumeric Sender ID](https://support.twilio.com/hc/en-us/articles/223133767-International-support-for-Alphanumeric-Sender-ID).
+- `sender` (String) A string that specifies the SMS sender ID. This property can contain only alphanumeric characters and spaces, and its length cannot exceed 11 characters. In some countries, it is impossible to send an SMS with an alphanumeric sender ID. For those countries, the sender ID must be empty. For SMS recipients in specific countries, refer to Twilio's documentation on [International support for Alphanumeric Sender ID](https://support.twilio.com/hc/en-us/articles/223133767-International-support-for-Alphanumeric-Sender-ID).
 
 
-<a id="nestedblock--voice"></a>
+<a id="nestedatt--voice"></a>
 ### Nested Schema for `voice`
 
 Required:
 
-- `content` (String) The voice text to read.  This can include variables.
+- `content` (String) A string that specifies the voice text to read. This can include variables.
 
 Optional:
 
-- `type` (String) The voice type desired for the message. Out of the box options include `Man`, `Woman`, `Alice` (Twilio only), `Amazon Polly`, or your own user-defined custom string. In the case that the selected voice type is not supported by the provider in the desired locale, another voice type will be automatically selected. Additional charges may be incurred for these selections, as determined by the sender. Defaults to `Alice`.
+- `type` (String) A string that specifies the voice type desired for the message. Out of the box options include `Man`, `Woman`, `Alice` (Twilio only), `Amazon Polly`, or your own user-defined custom string. In the case that the selected voice type is not supported by the provider in the desired locale, another voice type will be automatically selected. Additional charges may be incurred for these selections, as determined by the sender.
 
 ## Import
 
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-$ terraform import pingone_notification_template_content.example <environment_id>/<template_name>/<template_content_id>
+terraform import pingone_notification_template_content.example <environment_id>/<template_name>/<template_content_id>
 ```

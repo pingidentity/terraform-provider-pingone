@@ -13,6 +13,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -20,11 +21,11 @@ import (
 type PopulationsDataSource serviceClientType
 
 type PopulationsDataSourceModel struct {
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Id            types.String `tfsdk:"id"`
-	ScimFilter    types.String `tfsdk:"scim_filter"`
-	DataFilter    types.List   `tfsdk:"data_filter"`
-	Ids           types.List   `tfsdk:"ids"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	ScimFilter    types.String                 `tfsdk:"scim_filter"`
+	DataFilters   types.List                   `tfsdk:"data_filters"`
+	Ids           types.List                   `tfsdk:"ids"`
 }
 
 // Framework interfaces
@@ -62,21 +63,19 @@ func (r *PopulationsDataSource) Schema(ctx context.Context, req datasource.Schem
 				"A SCIM filter to apply to the population selection.  A SCIM filter offers the greatest flexibility in filtering populations.",
 			),
 				filterableAttributes,
-				[]string{"data_filter"},
+				[]string{"scim_filter", "data_filters"},
+			),
+
+			"data_filters": framework.Attr_DataFilter(framework.SchemaAttributeDescriptionFromMarkdown(
+				"Individual data filters to apply to the population selection.",
+			),
+				filterableAttributes,
+				[]string{"scim_filter", "data_filters"},
 			),
 
 			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescriptionFromMarkdown(
 				"The list of resulting IDs of populations that have been successfully retrieved and filtered.",
 			)),
-		},
-
-		Blocks: map[string]schema.Block{
-			"data_filter": framework.Attr_DataFilter(framework.SchemaAttributeDescriptionFromMarkdown(
-				"Individual data filters to apply to the population selection.",
-			),
-				filterableAttributes,
-				[]string{"scim_filter"},
-			),
 		},
 	}
 }
@@ -110,7 +109,7 @@ func (r *PopulationsDataSource) Configure(ctx context.Context, req datasource.Co
 func (r *PopulationsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *PopulationsDataSourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -131,10 +130,10 @@ func (r *PopulationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 			return r.Client.ManagementAPIClient.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute()
 		}
 
-	} else if !data.DataFilter.IsNull() {
+	} else if !data.DataFilters.IsNull() {
 
 		var dataFilterIn []framework.DataFilterModel
-		resp.Diagnostics.Append(data.DataFilter.ElementsAs(ctx, &dataFilterIn, false)...)
+		resp.Diagnostics.Append(data.DataFilters.ElementsAs(ctx, &dataFilterIn, false)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
@@ -211,7 +210,7 @@ func (p *PopulationsDataSourceModel) toState(environmentID string, populations [
 
 	var d diag.Diagnostics
 
-	p.Id = framework.StringToTF(environmentID)
+	p.Id = framework.PingOneResourceIDToTF(environmentID)
 	p.Ids, d = framework.StringSliceToTF(list)
 	diags.Append(d...)
 

@@ -94,12 +94,12 @@ resource "pingone_application" "%[3]s-appname1" {
   name           = "%[4]s-appname1"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-    mobile_app {
+    mobile_app = {
       bundle_id                = "com.pingidentity.ios_wallet_byid"
       package_name             = "com.pingidentity.android_wallet_byid"
       passcode_refresh_seconds = 30
@@ -119,7 +119,7 @@ resource "pingone_application" "%[3]s-appname2" {
   name           = "%[4]s-appname2"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -129,7 +129,7 @@ resource "pingone_application" "%[3]s-appname2" {
       "https://www.example.com/app/callback",
     ]
 
-    mobile_app {
+    mobile_app = {
       bundle_id                = "com.pingidentity.ios_wallet2"
       package_name             = "com.pingidentity.android_wallet2"
       passcode_refresh_seconds = 30
@@ -149,12 +149,12 @@ resource "pingone_application" "%[3]s-appname3" {
   name           = "%[4]s-appname3"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "NATIVE_APP"
     grant_types                 = ["CLIENT_CREDENTIALS"]
     token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
 
-    mobile_app {
+    mobile_app = {
       bundle_id                = "com.pingidentity.ios_wallet3"
       package_name             = "com.pingidentity.android_wallet3"
       passcode_refresh_seconds = 30

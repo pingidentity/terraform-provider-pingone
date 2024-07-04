@@ -14,7 +14,6 @@ Datasource to retrieve a list of multiple PingOne Credentials digital wallet app
 ```terraform
 data "pingone_digital_wallet_applications" "example_digital_wallet_app_ids" {
   environment_id = var.environment_id
-
 }
 ```
 

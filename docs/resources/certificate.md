@@ -65,5 +65,5 @@ resource "pingone_certificate" "my_certificate" {
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-$ terraform import pingone_certificate.example <environment_id>/<certificate_id>
+terraform import pingone_certificate.example <environment_id>/<certificate_id>
 ```

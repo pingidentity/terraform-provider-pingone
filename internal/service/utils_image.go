@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -8,27 +9,26 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
 
 type ImageResourceModel struct {
-	Id   types.String `tfsdk:"id"`
-	Href types.String `tfsdk:"href"`
+	Id   pingonetypes.ResourceIDValue `tfsdk:"id"`
+	Href types.String                 `tfsdk:"href"`
 }
 
 var (
 	ImageTFObjectTypes = map[string]attr.Type{
-		"id":   types.StringType,
+		"id":   pingonetypes.ResourceIDType{},
 		"href": types.StringType,
 	}
 )
 
-func ImageOkToTF(logo interface{}, ok bool) (types.List, diag.Diagnostics) {
+func ImageOkToTF(logo interface{}, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	tfObjType := types.ObjectType{AttrTypes: ImageTFObjectTypes}
-
 	if !ok || logo == nil {
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(ImageTFObjectTypes), diags
 	}
 
 	b, e := json.Marshal(logo)
@@ -37,7 +37,7 @@ func ImageOkToTF(logo interface{}, ok bool) (types.List, diag.Diagnostics) {
 			"Invalid data object",
 			fmt.Sprintf("Cannot remap the data object to JSON: %s.  Please report this to the provider maintainers.", e),
 		)
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(ImageTFObjectTypes), diags
 	}
 
 	var s map[string]string
@@ -47,7 +47,7 @@ func ImageOkToTF(logo interface{}, ok bool) (types.List, diag.Diagnostics) {
 			"Invalid data object",
 			fmt.Sprintf("Cannot remap the data object to map: %s.  Please report this to the provider maintainers.", e),
 		)
-		return types.ListNull(tfObjType), diags
+		return types.ObjectNull(ImageTFObjectTypes), diags
 	}
 
 	attributesMap := map[string]attr.Value{}
@@ -59,16 +59,43 @@ func ImageOkToTF(logo interface{}, ok bool) (types.List, diag.Diagnostics) {
 	}
 
 	if s["id"] != "" {
-		attributesMap["id"] = framework.StringToTF(s["id"])
+		attributesMap["id"] = framework.PingOneResourceIDToTF(s["id"])
 	} else {
-		attributesMap["id"] = types.StringNull()
+		attributesMap["id"] = pingonetypes.NewResourceIDNull()
 	}
 
-	flattenedObj, d := types.ObjectValue(ImageTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	returnVar, d := types.ListValue(tfObjType, append([]attr.Value{}, flattenedObj))
+	returnVar, d := types.ObjectValue(ImageTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags
+}
+
+func ImageListToObjectSchemaUpgrade(ctx context.Context, planAttribute types.List) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := ImageTFObjectTypes
+
+	if planAttribute.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	} else if planAttribute.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	} else {
+		var priorStateData []ImageResourceModel
+		d := planAttribute.ElementsAs(ctx, &priorStateData, false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return types.ObjectNull(attributeTypes), diags
+		}
+
+		if len(priorStateData) == 0 {
+			return types.ObjectNull(attributeTypes), diags
+		}
+
+		upgradedStateData := priorStateData[0]
+
+		returnVar, d := types.ObjectValueFrom(ctx, attributeTypes, upgradedStateData)
+		diags.Append(d...)
+
+		return returnVar, diags
+	}
 }

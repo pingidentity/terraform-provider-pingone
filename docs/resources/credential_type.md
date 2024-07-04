@@ -53,8 +53,8 @@ EOT
     description        = "Demo Proof of Employment"
     bg_opacity_percent = 100
 
-    background_image = pingone_image.verifiedemployee-background_image.uploaded_image[0].href
-    logo_image       = pingone_image.verifiedemployee-logo_image.uploaded_image[0].href
+    background_image = pingone_image.verifiedemployee-background_image.uploaded_image.href
+    logo_image       = pingone_image.verifiedemployee-logo_image.uploaded_image.href
 
     card_color = "#ffffff"
     text_color = "#000000"
@@ -111,7 +111,6 @@ EOT
       }
     ]
   }
-
 }
 ```
 
@@ -148,12 +147,12 @@ Required:
 
 Optional:
 
-- `background_image` (String) The URL or fully qualified path to the image file used for the credential background.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.  Image size must not exceed 50 KB.
+- `background_image` (String) The URL or fully qualified path to the image file used for the credential background.  This can be retrieved from the `uploaded_image.href` parameter of the `pingone_image` resource.  Image size must not exceed 50 KB.
 - `bg_opacity_percent` (Number) A numnber indicating the percent opacity of the background image in the credential. High percentage opacity may make text on the credential difficult to read.
 - `card_color` (String) A string containing a 6-digit hexadecimal color code specifying the color of the credential.
 - `columns` (Number) Indicates a number (between 1-3) of columns to display visible fields on the credential.
 - `description` (String) Description of the credential.
-- `logo_image` (String) The URL or fully qualified path to the image file used for the credential logo.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.  Image size must not exceed 25 KB.
+- `logo_image` (String) The URL or fully qualified path to the image file used for the credential logo.  This can be retrieved from the `uploaded_image.href` parameter of the `pingone_image` resource.  Image size must not exceed 25 KB.
 - `name` (String) Name of the credential.
 - `text_color` (String) A string containing a 6-digit hexadecimal color code specifying the color of the credential text.
 
@@ -186,5 +185,5 @@ Read-Only:
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-$ terraform import pingone_credential_type.example <environment_id>/<credential_type_id>
+terraform import pingone_credential_type.example <environment_id>/<credential_type_id>
 ```

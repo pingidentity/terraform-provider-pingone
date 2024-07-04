@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -16,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -24,13 +26,14 @@ import (
 type GroupResource serviceClientType
 
 type GroupResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Name          types.String `tfsdk:"name"`
-	Description   types.String `tfsdk:"description"`
-	PopulationId  types.String `tfsdk:"population_id"`
-	UserFilter    types.String `tfsdk:"user_filter"`
-	ExternalId    types.String `tfsdk:"external_id"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name          types.String                 `tfsdk:"name"`
+	Description   types.String                 `tfsdk:"description"`
+	PopulationId  pingonetypes.ResourceIDValue `tfsdk:"population_id"`
+	UserFilter    types.String                 `tfsdk:"user_filter"`
+	ExternalId    types.String                 `tfsdk:"external_id"`
+	CustomData    jsontypes.Normalized         `tfsdk:"custom_data"`
 }
 
 // Framework interfaces
@@ -93,12 +96,10 @@ func (r *GroupResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				MarkdownDescription: populationIdDescription.MarkdownDescription,
 				Optional:            true,
 
+				CustomType: pingonetypes.ResourceIDType{},
+
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
-				},
-
-				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
 				},
 			},
 
@@ -111,6 +112,13 @@ func (r *GroupResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 			"external_id": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A user defined ID that represents the counterpart group in an external system.").Description,
 				Optional:    true,
+			},
+
+			"custom_data": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A JSON string that specifies user-defined custom data.").Description,
+				Optional:    true,
+
+				CustomType: jsontypes.NormalizedType{},
 			},
 		},
 	}
@@ -145,7 +153,7 @@ func (r *GroupResource) Configure(ctx context.Context, req resource.ConfigureReq
 func (r *GroupResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state GroupResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -159,7 +167,11 @@ func (r *GroupResource) Create(ctx context.Context, req resource.CreateRequest, 
 	}
 
 	// Build the model for the API
-	group := plan.expand()
+	group, d := plan.expand()
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Run the API call
 	var response *management.Group
@@ -190,7 +202,7 @@ func (r *GroupResource) Create(ctx context.Context, req resource.CreateRequest, 
 func (r *GroupResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *GroupResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -235,7 +247,7 @@ func (r *GroupResource) Read(ctx context.Context, req resource.ReadRequest, resp
 func (r *GroupResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state GroupResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -249,7 +261,11 @@ func (r *GroupResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	}
 
 	// Build the model for the API
-	group := plan.expand()
+	group, d := plan.expand()
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Run the API call
 	var response *management.Group
@@ -280,7 +296,7 @@ func (r *GroupResource) Update(ctx context.Context, req resource.UpdateRequest, 
 func (r *GroupResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *GroupResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -346,7 +362,8 @@ func (r *GroupResource) ImportState(ctx context.Context, req resource.ImportStat
 	}
 }
 
-func (p *GroupResourceModel) expand() *management.Group {
+func (p *GroupResourceModel) expand() (*management.Group, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
 	data := management.NewGroup(p.Name.ValueString())
 
@@ -368,11 +385,19 @@ func (p *GroupResourceModel) expand() *management.Group {
 		data.SetExternalId(p.ExternalId.ValueString())
 	}
 
-	return data
+	if !p.CustomData.IsNull() && !p.CustomData.IsUnknown() {
+		var customData map[string]interface{}
+		diags.Append(p.CustomData.Unmarshal(&customData)...)
+		if !diags.HasError() {
+			data.SetCustomData(customData)
+		}
+	}
+
+	return data, diags
 }
 
 func (p *GroupResourceModel) toState(apiObject *management.Group) diag.Diagnostics {
-	var diags diag.Diagnostics
+	var diags, d diag.Diagnostics
 
 	if apiObject == nil {
 		diags.AddError(
@@ -383,19 +408,21 @@ func (p *GroupResourceModel) toState(apiObject *management.Group) diag.Diagnosti
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringOkToTF(apiObject.Environment.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDOkToTF(apiObject.Environment.GetIdOk())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 
 	if v, ok := apiObject.GetPopulationOk(); ok {
-		p.PopulationId = framework.StringOkToTF(v.GetIdOk())
+		p.PopulationId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	} else {
-		p.PopulationId = types.StringNull()
+		p.PopulationId = pingonetypes.NewResourceIDNull()
 	}
 
 	p.UserFilter = framework.StringOkToTF(apiObject.GetUserFilterOk())
 	p.ExternalId = framework.StringOkToTF(apiObject.GetExternalIdOk())
+	p.CustomData, d = framework.JSONNormalizedOkToTF(apiObject.GetCustomDataOk())
+	diags.Append(d...)
 
 	return diags
 }

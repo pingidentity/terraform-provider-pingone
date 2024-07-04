@@ -26,6 +26,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -36,17 +37,17 @@ import (
 type FormResource serviceClientType
 
 type formResourceModel struct {
-	Id                types.String `tfsdk:"id"`
-	EnvironmentId     types.String `tfsdk:"environment_id"`
-	Name              types.String `tfsdk:"name"`
-	Description       types.String `tfsdk:"description"`
-	Category          types.String `tfsdk:"category"`
-	Cols              types.Int64  `tfsdk:"cols"`
-	Components        types.Object `tfsdk:"components"`
-	FieldTypes        types.Set    `tfsdk:"field_types"`
-	MarkOptional      types.Bool   `tfsdk:"mark_optional"`
-	MarkRequired      types.Bool   `tfsdk:"mark_required"`
-	TranslationMethod types.String `tfsdk:"translation_method"`
+	Id                pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId     pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name              types.String                 `tfsdk:"name"`
+	Description       types.String                 `tfsdk:"description"`
+	Category          types.String                 `tfsdk:"category"`
+	Cols              types.Int64                  `tfsdk:"cols"`
+	Components        types.Object                 `tfsdk:"components"`
+	FieldTypes        types.Set                    `tfsdk:"field_types"`
+	MarkOptional      types.Bool                   `tfsdk:"mark_optional"`
+	MarkRequired      types.Bool                   `tfsdk:"mark_required"`
+	TranslationMethod types.String                 `tfsdk:"translation_method"`
 }
 
 type formComponentsResourceModel struct {
@@ -1518,7 +1519,7 @@ func (r *FormResource) Configure(ctx context.Context, req resource.ConfigureRequ
 func (r *FormResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state formResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1567,7 +1568,7 @@ func (r *FormResource) Create(ctx context.Context, req resource.CreateRequest, r
 func (r *FormResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *formResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1612,7 +1613,7 @@ func (r *FormResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 func (r *FormResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state formResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -1661,7 +1662,7 @@ func (r *FormResource) Update(ctx context.Context, req resource.UpdateRequest, r
 func (r *FormResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *formResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -2571,8 +2572,8 @@ func (p *formResourceModel) toState(apiObject *management.Form) diag.Diagnostics
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.Category = framework.EnumOkToTF(apiObject.GetCategoryOk())

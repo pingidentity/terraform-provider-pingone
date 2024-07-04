@@ -16,7 +16,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -25,11 +27,11 @@ import (
 type SignOnPolicyResource serviceClientType
 
 type SignOnPolicyResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Name          types.String `tfsdk:"name"`
-	Description   types.String `tfsdk:"description"`
-	Default       types.Bool   `tfsdk:"default"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name          types.String                 `tfsdk:"name"`
+	Description   types.String                 `tfsdk:"description"`
+	Default       types.Bool                   `tfsdk:"default"`
 }
 
 // Framework interfaces
@@ -126,7 +128,7 @@ func (r *SignOnPolicyResource) Configure(ctx context.Context, req resource.Confi
 func (r *SignOnPolicyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state SignOnPolicyResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -171,7 +173,7 @@ func (r *SignOnPolicyResource) Create(ctx context.Context, req resource.CreateRe
 func (r *SignOnPolicyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *SignOnPolicyResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -216,7 +218,7 @@ func (r *SignOnPolicyResource) Read(ctx context.Context, req resource.ReadReques
 func (r *SignOnPolicyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state SignOnPolicyResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -261,7 +263,7 @@ func (r *SignOnPolicyResource) Update(ctx context.Context, req resource.UpdateRe
 func (r *SignOnPolicyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *SignOnPolicyResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -283,7 +285,7 @@ func (r *SignOnPolicyResource) Delete(ctx context.Context, req resource.DeleteRe
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteSignOnPolicy",
-		framework.CustomErrorResourceNotFoundWarning,
+		signOnPolicyDeleteCustomError,
 		nil,
 		nil,
 	)...)
@@ -291,6 +293,24 @@ func (r *SignOnPolicyResource) Delete(ctx context.Context, req resource.DeleteRe
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+var signOnPolicyDeleteCustomError = func(p1Error model.P1Error) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// Undeletable default SOP
+	if v, ok := p1Error.GetDetailsOk(); ok && v != nil && len(v) > 0 {
+		if v[0].GetCode() == "CONSTRAINT_VIOLATION" {
+			if match, _ := regexp.MatchString("delete a default policy", v[0].GetMessage()); match {
+
+				diags.AddWarning("Cannot delete the default Sign On policy", "Due to API restrictions, the provider cannot delete the default sign on policy for an environment.  The policy has been removed from Terraform state but has been left in place in the PingOne service.")
+
+				return diags
+			}
+		}
+	}
+
+	return framework.CustomErrorResourceNotFoundWarning(p1Error)
 }
 
 func (r *SignOnPolicyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -356,8 +376,8 @@ func (p *SignOnPolicyResourceModel) toState(apiObject *management.SignOnPolicy) 
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringOkToTF(apiObject.Environment.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDOkToTF(apiObject.Environment.GetIdOk())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())

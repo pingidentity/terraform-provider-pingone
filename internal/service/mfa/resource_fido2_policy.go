@@ -20,7 +20,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -33,20 +35,20 @@ import (
 type FIDO2PolicyResource serviceClientType
 
 type FIDO2PolicyResourceModel struct {
-	Id                            types.String `tfsdk:"id"`
-	EnvironmentId                 types.String `tfsdk:"environment_id"`
-	Name                          types.String `tfsdk:"name"`
-	Description                   types.String `tfsdk:"description"`
-	Default                       types.Bool   `tfsdk:"default"`
-	AttestationRequirements       types.String `tfsdk:"attestation_requirements"`
-	AuthenticatorAttachment       types.String `tfsdk:"authenticator_attachment"`
-	BackupEligibility             types.Object `tfsdk:"backup_eligibility"`
-	DeviceDisplayName             types.String `tfsdk:"device_display_name"`
-	DiscoverableCredentials       types.String `tfsdk:"discoverable_credentials"`
-	MdsAuthenticatorsRequirements types.Object `tfsdk:"mds_authenticators_requirements"`
-	RelyingPartyId                types.String `tfsdk:"relying_party_id"`
-	UserDisplayNameAttributes     types.Object `tfsdk:"user_display_name_attributes"`
-	UserVerification              types.Object `tfsdk:"user_verification"`
+	Id                            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId                 pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name                          types.String                 `tfsdk:"name"`
+	Description                   types.String                 `tfsdk:"description"`
+	Default                       types.Bool                   `tfsdk:"default"`
+	AttestationRequirements       types.String                 `tfsdk:"attestation_requirements"`
+	AuthenticatorAttachment       types.String                 `tfsdk:"authenticator_attachment"`
+	BackupEligibility             types.Object                 `tfsdk:"backup_eligibility"`
+	DeviceDisplayName             types.String                 `tfsdk:"device_display_name"`
+	DiscoverableCredentials       types.String                 `tfsdk:"discoverable_credentials"`
+	MdsAuthenticatorsRequirements types.Object                 `tfsdk:"mds_authenticators_requirements"`
+	RelyingPartyId                types.String                 `tfsdk:"relying_party_id"`
+	UserDisplayNameAttributes     types.Object                 `tfsdk:"user_display_name_attributes"`
+	UserVerification              types.Object                 `tfsdk:"user_verification"`
 }
 
 type FIDO2PolicyBackupEligibilityResourceModel struct {
@@ -676,13 +678,31 @@ func (r *FIDO2PolicyResource) Delete(ctx context.Context, req resource.DeleteReq
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteFIDO2Policy",
-		framework.CustomErrorResourceNotFoundWarning,
+		mfaFido2PolicyDeleteCustomError,
 		nil,
 		nil,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+var mfaFido2PolicyDeleteCustomError = func(p1Error model.P1Error) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// Undeletable default FIDO2 policy
+	if v, ok := p1Error.GetDetailsOk(); ok && v != nil && len(v) > 0 {
+		if v[0].GetCode() == "CONSTRAINT_VIOLATION" {
+			if match, _ := regexp.MatchString("cannot delete the default policy", v[0].GetMessage()); match {
+
+				diags.AddWarning("Cannot delete the default MFA FIDO2 policy", "Due to API restrictions, the provider cannot delete the default FIDO2 policy for an environment.  The policy has been removed from Terraform state but has been left in place in the PingOne service.")
+
+				return diags
+			}
+		}
+	}
+
+	return framework.CustomErrorResourceNotFoundWarning(p1Error)
 }
 
 func (r *FIDO2PolicyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -877,8 +897,8 @@ func (p *FIDO2PolicyResourceModel) toState(apiObject *mfa.FIDO2Policy) diag.Diag
 
 	var d diag.Diagnostics
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())

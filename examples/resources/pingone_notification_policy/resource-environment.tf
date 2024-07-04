@@ -7,15 +7,16 @@ resource "pingone_notification_policy" "environment" {
 
   name = "Environment Quota SMS Voice and Email"
 
-  quota {
-    type             = "ENVIRONMENT"
-    delivery_methods = ["SMS", "Voice"]
-    total            = 100
-  }
-
-  quota {
-    type             = "ENVIRONMENT"
-    delivery_methods = ["Email"]
-    total            = 100
-  }
+  quota = [
+    {
+      type             = "ENVIRONMENT"
+      delivery_methods = ["SMS", "Voice"]
+      total            = 100
+    },
+    {
+      type             = "ENVIRONMENT"
+      delivery_methods = ["Email"]
+      total            = 100
+    }
+  ]
 }

@@ -36,8 +36,8 @@ EOT
     description        = "Demo Proof of Employment"
     bg_opacity_percent = 100
 
-    background_image = pingone_image.verifiedemployee-background_image.uploaded_image[0].href
-    logo_image       = pingone_image.verifiedemployee-logo_image.uploaded_image[0].href
+    background_image = pingone_image.verifiedemployee-background_image.uploaded_image.href
+    logo_image       = pingone_image.verifiedemployee-logo_image.uploaded_image.href
 
     card_color = "#ffffff"
     text_color = "#000000"
@@ -94,5 +94,4 @@ EOT
       }
     ]
   }
-
 }

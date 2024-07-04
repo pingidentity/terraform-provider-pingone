@@ -5,19 +5,22 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -25,13 +28,13 @@ import (
 type ApplicationResourceGrantResource serviceClientType
 
 type ApplicationResourceGrantResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	ApplicationId types.String `tfsdk:"application_id"`
-	ResourceId    types.String `tfsdk:"resource_id"`
-	ResourceName  types.String `tfsdk:"resource_name"`
-	Scopes        types.Set    `tfsdk:"scopes"`
-	ScopeNames    types.Set    `tfsdk:"scope_names"`
+	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ApplicationId    pingonetypes.ResourceIDValue `tfsdk:"application_id"`
+	ResourceType     types.String                 `tfsdk:"resource_type"`
+	ResourceId       pingonetypes.ResourceIDValue `tfsdk:"resource_id"`
+	CustomResourceId pingonetypes.ResourceIDValue `tfsdk:"custom_resource_id"`
+	Scopes           types.Set                    `tfsdk:"scopes"`
 }
 
 // Framework interfaces
@@ -56,21 +59,21 @@ func (r *ApplicationResourceGrantResource) Schema(ctx context.Context, req resou
 
 	const attrMinLength = 1
 
-	resourceIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"**Deprecation Notice**: This parameter is deprecated and will be made read-only in a future release.  This attribute should be replaced with the `resource_name` parameter instead.  The ID of the resource to assign the resource attribute to.",
-	).ExactlyOneOf([]string{"resource_id", "resource_name"}).AppendMarkdownString("Must be a valid PingOne resource ID.").RequiresReplace()
+	resourceTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("The type of the resource to configure the grant for. When the value is set to `%s`, `custom_resource_id` must be specified.", string(management.ENUMRESOURCETYPE_CUSTOM)),
+	).AllowedValuesEnum(management.AllowedEnumResourceTypeEnumValues).RequiresReplace()
 
-	resourceNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The name of the resource to assign to the application.  The built-in OpenID Connect resource name is `openid` and the built-in PingOne API resource anem is `PingOne API`.",
-	).ExactlyOneOf([]string{"resource_id", "resource_name"}).RequiresReplace()
+	customResourceIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A string that specifies the ID of the custom resource to be granted to the application.  Must be a valid PingOne resource ID.  Required if `resource_type` is set to `%s`, but cannot be set if `resource_type` is set to `%s` or `%s`.", string(management.ENUMRESOURCETYPE_CUSTOM), string(management.ENUMRESOURCETYPE_OPENID_CONNECT), string(management.ENUMRESOURCETYPE_PINGONE_API)),
+	).RequiresReplace()
+
+	resourceIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the ID of the resource granted to the application.",
+	)
 
 	scopesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"**Deprecation Notice**: This parameter is deprecated and will be made read-only in a future release.  This attribute should be replaced with the `scope_names` parameter instead.  A list of IDs of the scopes associated with this grant.  When using the `openid` resource, the `openid` scope should not be included.",
-	).ExactlyOneOf([]string{"scopes", "scope_names"})
-
-	scopeNamesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A list of scopes by name that should be associated with this grant.  For example, `profile`, `email` etc.  When using the `openid` resource, the `openid` scope should not be included.",
-	).ExactlyOneOf([]string{"scopes", "scope_names"})
+		"A list of IDs of the scopes associated with this grant.  Values must be valid PingOne resource IDs.",
+	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -87,82 +90,64 @@ func (r *ApplicationResourceGrantResource) Schema(ctx context.Context, req resou
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the application to create the resource grant for.  The value for `application_id` may come from the `id` attribute of the `pingone_application` or `pingone_system_application` resources or data sources."),
 			),
 
-			"resource_id": schema.StringAttribute{
-				Description:         resourceIdDescription.Description,
-				MarkdownDescription: resourceIdDescription.MarkdownDescription,
-				DeprecationMessage:  "This parameter is deprecated and will be made read-only in a future release.  This attribute should be replaced with the `resource_name` parameter instead.",
-				Optional:            true,
-				Computed:            true,
+			"resource_type": schema.StringAttribute{
+				Description:         resourceTypeDescription.Description,
+				MarkdownDescription: resourceTypeDescription.MarkdownDescription,
+				Required:            true,
 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 
 				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
-					stringvalidator.ExactlyOneOf(
-						path.MatchRoot("resource_id"),
-						path.MatchRoot("resource_name"),
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumResourceTypeEnumValues)...),
+				},
+			},
+
+			"custom_resource_id": schema.StringAttribute{
+				Description:         customResourceIdDescription.Description,
+				MarkdownDescription: customResourceIdDescription.MarkdownDescription,
+				Optional:            true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+
+				Validators: []validator.String{
+					stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+						types.StringValue(string(management.ENUMRESOURCETYPE_CUSTOM)),
+						path.MatchRelative().AtParent().AtName("resource_type"),
+					),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMRESOURCETYPE_OPENID_CONNECT)),
+						path.MatchRelative().AtParent().AtName("resource_type"),
+					),
+					stringvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMRESOURCETYPE_PINGONE_API)),
+						path.MatchRelative().AtParent().AtName("resource_type"),
 					),
 				},
 			},
 
-			"resource_name": schema.StringAttribute{
-				Description:         resourceNameDescription.Description,
-				MarkdownDescription: resourceNameDescription.MarkdownDescription,
-				Optional:            true,
+			"resource_id": schema.StringAttribute{
+				Description:         resourceIdDescription.Description,
+				MarkdownDescription: resourceIdDescription.MarkdownDescription,
 				Computed:            true,
 
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-
-				Validators: []validator.String{
-					stringvalidator.ExactlyOneOf(
-						path.MatchRoot("resource_id"),
-						path.MatchRoot("resource_name"),
-					),
-				},
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"scopes": schema.SetAttribute{
 				Description:         scopesDescription.Description,
 				MarkdownDescription: scopesDescription.MarkdownDescription,
-				DeprecationMessage:  "This parameter is deprecated and will be made read-only in a future release.  This attribute should be replaced with the `scope_names` parameter instead.",
-				Optional:            true,
-				Computed:            true,
+				Required:            true,
 
-				ElementType: types.StringType,
+				ElementType: pingonetypes.ResourceIDType{},
 
-				Validators: []validator.Set{
-					setvalidator.SizeAtLeast(attrMinLength),
-					setvalidator.ValueStringsAre(
-						verify.P1ResourceIDValidator(),
-					),
-					setvalidator.ExactlyOneOf(
-						path.MatchRoot("scopes"),
-						path.MatchRoot("scope_names"),
-					),
-				},
-			},
-
-			"scope_names": schema.SetAttribute{
-				Description:         scopeNamesDescription.Description,
-				MarkdownDescription: scopeNamesDescription.MarkdownDescription,
-				Optional:            true,
-				Computed:            true,
-
-				ElementType: types.StringType,
-
-				Validators: []validator.Set{
-					setvalidator.SizeAtLeast(attrMinLength),
-					setvalidator.ValueStringsAre(
-						stringvalidator.LengthAtLeast(attrMinLength),
-					),
-					setvalidator.ExactlyOneOf(
-						path.MatchRoot("scopes"),
-						path.MatchRoot("scope_names"),
-					),
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.RequiresReplace(),
 				},
 			},
 		},
@@ -198,7 +183,7 @@ func (r *ApplicationResourceGrantResource) Configure(ctx context.Context, req re
 func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state ApplicationResourceGrantResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -255,7 +240,11 @@ func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resou
 	}
 
 	// Build the model for the API
-	applicationResourceGrant := plan.expand(*resource, resourceScopes, replaceResourceGrant)
+	applicationResourceGrant, d := plan.expand(ctx, *resource, replaceResourceGrant)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Run the API call
 	var grantResponse *management.ApplicationResourceGrant
@@ -298,30 +287,18 @@ func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resou
 		return
 	}
 
-	// Get the resource scopes response
-	scopeIds := make([]string, 0, len(grantResponse.Scopes))
-	for _, scope := range grantResponse.Scopes {
-		scopeIds = append(scopeIds, scope.GetId())
-	}
-
-	resourceScopesResponse, d := fetchResourceScopesFromIDs(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), grantResponse.Resource.GetId(), scopeIds)
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	// Create the state to save
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(grantResponse, resourceResponse, resourceScopesResponse)...)
+	resp.Diagnostics.Append(state.toState(grantResponse, resourceResponse)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
 func (r *ApplicationResourceGrantResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *ApplicationResourceGrantResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -365,27 +342,15 @@ func (r *ApplicationResourceGrantResource) Read(ctx context.Context, req resourc
 		return
 	}
 
-	// Get the resource scopes response
-	scopeIds := make([]string, 0, len(grantResponse.Scopes))
-	for _, scope := range grantResponse.Scopes {
-		scopeIds = append(scopeIds, scope.GetId())
-	}
-
-	resourceScopesResponse, d := fetchResourceScopesFromIDs(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), grantResponse.Resource.GetId(), scopeIds)
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(grantResponse, resourceResponse, resourceScopesResponse)...)
+	resp.Diagnostics.Append(data.toState(grantResponse, resourceResponse)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *ApplicationResourceGrantResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state ApplicationResourceGrantResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -442,7 +407,11 @@ func (r *ApplicationResourceGrantResource) Update(ctx context.Context, req resou
 	}
 
 	// Build the model for the API
-	applicationResourceGrant := plan.expand(*resource, resourceScopes, replaceResourceGrant)
+	applicationResourceGrant, d := plan.expand(ctx, *resource, replaceResourceGrant)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Run the API call
 	var grantResponse *management.ApplicationResourceGrant
@@ -469,30 +438,18 @@ func (r *ApplicationResourceGrantResource) Update(ctx context.Context, req resou
 		return
 	}
 
-	// Get the resource scopes response
-	scopeIds := make([]string, 0, len(grantResponse.Scopes))
-	for _, scope := range grantResponse.Scopes {
-		scopeIds = append(scopeIds, scope.GetId())
-	}
-
-	resourceScopesResponse, d := fetchResourceScopesFromIDs(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), grantResponse.Resource.GetId(), scopeIds)
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	// Create the state to save
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(grantResponse, resourceResponse, resourceScopesResponse)...)
+	resp.Diagnostics.Append(state.toState(grantResponse, resourceResponse)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
 func (r *ApplicationResourceGrantResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *ApplicationResourceGrantResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -563,20 +520,18 @@ func (r *ApplicationResourceGrantResource) ImportState(ctx context.Context, req 
 }
 
 func (p *ApplicationResourceGrantResourceModel) getResourceWithScopes(ctx context.Context, apiClient *management.APIClient, warnIfNotFound bool) (*management.Resource, []management.ResourceScope, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	var d diag.Diagnostics
+	var diags, d diag.Diagnostics
 
 	var resource *management.Resource
-	if !p.ResourceId.IsNull() && !p.ResourceId.IsUnknown() {
-		resource, d = fetchResourceFromID(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceId.ValueString(), warnIfNotFound)
-	}
 
-	if !p.ResourceName.IsNull() && !p.ResourceName.IsUnknown() {
-		resource, d = fetchResourceFromName(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceName.ValueString(), warnIfNotFound)
+	switch p.ResourceType.ValueString() {
+	case string(management.ENUMRESOURCETYPE_CUSTOM):
+		resource, d = fetchResourceFromID(ctx, apiClient, p.EnvironmentId.ValueString(), p.CustomResourceId.ValueString(), warnIfNotFound)
+		diags.Append(d...)
+	case string(management.ENUMRESOURCETYPE_OPENID_CONNECT), string(management.ENUMRESOURCETYPE_PINGONE_API):
+		resource, d = fetchResourceByType(ctx, apiClient, p.EnvironmentId.ValueString(), management.EnumResourceType(p.ResourceType.ValueString()), warnIfNotFound)
+		diags.Append(d...)
 	}
-
-	diags.Append(d...)
 	if diags.HasError() {
 		return nil, nil, diags
 	}
@@ -586,26 +541,15 @@ func (p *ApplicationResourceGrantResourceModel) getResourceWithScopes(ctx contex
 	}
 
 	resourceScopes := make([]management.ResourceScope, 0)
-	if resource != nil && !p.Scopes.IsNull() && !p.Scopes.IsUnknown() {
+	if !p.Scopes.IsNull() && !p.Scopes.IsUnknown() {
 
-		var scopeIds []string
-		diags.Append(p.Scopes.ElementsAs(ctx, &scopeIds, false)...)
+		var scopes []string
+		diags.Append(p.Scopes.ElementsAs(ctx, &scopes, false)...)
 		if diags.HasError() {
 			return nil, nil, diags
 		}
 
-		resourceScopes, d = fetchResourceScopesFromIDs(ctx, apiClient, p.EnvironmentId.ValueString(), resource.GetId(), scopeIds)
-	}
-
-	if resource != nil && !p.ScopeNames.IsNull() && !p.ScopeNames.IsUnknown() {
-
-		var scopeNames []string
-		diags.Append(p.ScopeNames.ElementsAs(ctx, &scopeNames, false)...)
-		if diags.HasError() {
-			return nil, nil, diags
-		}
-
-		resourceScopes, d = fetchResourceScopesFromNames(ctx, apiClient, p.EnvironmentId.ValueString(), resource.GetId(), scopeNames)
+		resourceScopes, d = fetchResourceScopesFromIDs(ctx, apiClient, p.EnvironmentId.ValueString(), resource.GetId(), scopes)
 	}
 
 	diags.Append(d...)
@@ -688,14 +632,21 @@ func (p *ApplicationResourceGrantResourceModel) getResourceGrant(ctx context.Con
 	return applicationGrant, diags
 }
 
-func (p *ApplicationResourceGrantResourceModel) expand(resource management.Resource, resourceScopes []management.ResourceScope, replaceResourceGrant *management.ApplicationResourceGrant) *management.ApplicationResourceGrant {
+func (p *ApplicationResourceGrantResourceModel) expand(ctx context.Context, resource management.Resource, replaceResourceGrant *management.ApplicationResourceGrant) (*management.ApplicationResourceGrant, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
 	resourceObj := management.NewApplicationResourceGrantResource(resource.GetId())
 
-	scopes := make([]management.ApplicationResourceGrantScopesInner, 0, len(resourceScopes))
-	for _, scope := range resourceScopes {
+	var scopesPlan []string
+	diags.Append(p.Scopes.ElementsAs(ctx, &scopesPlan, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	scopes := make([]management.ApplicationResourceGrantScopesInner, 0, len(scopesPlan))
+	for _, scope := range scopesPlan {
 		scopes = append(scopes, management.ApplicationResourceGrantScopesInner{
-			Id: scope.GetId(),
+			Id: scope,
 		})
 	}
 
@@ -709,32 +660,30 @@ func (p *ApplicationResourceGrantResourceModel) expand(resource management.Resou
 		data = management.NewApplicationResourceGrant(*resourceObj, scopes)
 	}
 
-	return data
+	return data, diags
 }
 
 func (p *ApplicationResourceGrantResourceModel) validate(resource management.Resource, resourceScopes []management.ResourceScope) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	// Check that the `openid` scope from the `openid` resource is not in the list
-	if v, ok := resource.GetNameOk(); ok && *v == "openid" && len(resourceScopes) > 0 {
-		for _, resourceScope := range resourceScopes {
-			if resourceScopeName, ok := resourceScope.GetNameOk(); ok && *resourceScopeName == "openid" {
-				diags.AddError(
-					"Invalid scope",
-					"Cannot create an application resource grant with the `openid` scope.  This scope is automatically applied and should be removed from the `scopes` parameter.",
-				)
-				break
-			}
+	// Check that the scopes relate to the resource
+	for _, resourceScope := range resourceScopes {
+		if resourceS, ok := resourceScope.GetResourceOk(); ok && resourceS.GetId() != resource.GetId() {
+			diags.AddError(
+				"Invalid scope",
+				fmt.Sprintf("Cannot create an application resource grant as the scope %s does not relate to the resource %s.", resourceScope.GetId(), resource.GetId()),
+			)
+
 		}
 	}
 
 	return diags
 }
 
-func (p *ApplicationResourceGrantResourceModel) toState(apiObject *management.ApplicationResourceGrant, resourceApiObject *management.Resource, resourceScopesApiObjects []management.ResourceScope) diag.Diagnostics {
+func (p *ApplicationResourceGrantResourceModel) toState(apiObject *management.ApplicationResourceGrant, resourceApiObject *management.Resource) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if apiObject == nil {
+	if apiObject == nil || resourceApiObject == nil {
 		diags.AddError(
 			"Data object missing",
 			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
@@ -743,27 +692,23 @@ func (p *ApplicationResourceGrantResourceModel) toState(apiObject *management.Ap
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.ResourceId = framework.StringOkToTF(resourceApiObject.GetIdOk())
-	p.ResourceName = framework.StringOkToTF(resourceApiObject.GetNameOk())
-	p.ApplicationId = framework.StringOkToTF(apiObject.Application.GetIdOk())
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.ApplicationId = framework.PingOneResourceIDOkToTF(apiObject.Application.GetIdOk())
+	p.ResourceId = framework.PingOneResourceIDOkToTF(resourceApiObject.GetIdOk())
+	p.ResourceType = framework.EnumOkToTF(resourceApiObject.GetTypeOk())
 
-	if _, ok := apiObject.GetScopesOk(); ok {
-
-		scopeIds := make([]string, 0, len(resourceScopesApiObjects))
-		scopeNames := make([]string, 0, len(resourceScopesApiObjects))
-
-		for _, scope := range resourceScopesApiObjects {
-			scopeIds = append(scopeIds, scope.GetId())
-			scopeNames = append(scopeNames, scope.GetName())
+	p.Scopes = types.SetNull(types.StringType)
+	if scopes, ok := apiObject.GetScopesOk(); ok {
+		scopesList := make([]string, 0, len(scopes))
+		for _, scope := range scopes {
+			scopesList = append(scopesList, scope.GetId())
 		}
+		p.Scopes = framework.PingOneResourceIDSetToTF(scopesList)
+	}
 
-		p.Scopes = framework.StringSetToTF(scopeIds)
-		p.ScopeNames = framework.StringSetToTF(scopeNames)
-
-	} else {
-		p.Scopes = types.SetNull(types.StringType)
-		p.ScopeNames = types.SetNull(types.StringType)
+	p.CustomResourceId = pingonetypes.NewResourceIDNull()
+	if resourceApiObject.GetType() == management.ENUMRESOURCETYPE_CUSTOM {
+		p.CustomResourceId = framework.PingOneResourceIDOkToTF(apiObject.Resource.GetIdOk())
 	}
 
 	return diags

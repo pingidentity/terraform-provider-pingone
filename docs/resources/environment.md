@@ -22,18 +22,21 @@ resource "pingone_environment" "my_environment" {
   type        = "SANDBOX"
   license_id  = var.license_id
 
-  service {
-    type = "SSO"
-  }
-
-  service {
-    type = "MFA"
-  }
-
-  service {
-    type        = "PingFederate"
-    console_url = "https://my-pingfederate-console.example.com/pingfederate"
-  }
+  services = [
+    {
+      type = "SSO"
+    },
+    {
+      type = "DaVinci"
+    },
+    {
+      type = "MFA"
+    },
+    {
+      type        = "PingFederate"
+      console_url = "https://my-pingfederate-console.example.com/pingfederate"
+    }
+  ]
 }
 ```
 
@@ -42,65 +45,47 @@ resource "pingone_environment" "my_environment" {
 
 ### Required
 
-- `license_id` (String) An ID of a valid license to apply to the environment.  Must be a valid PingOne resource ID.
-- `name` (String) The name of the environment.
+- `license_id` (String) A string that specifies the ID of a valid license to apply to the environment.  Must be a valid PingOne resource ID.
+- `name` (String) A string that specifies the name of the environment.
+- `services` (Attributes Set) A set of objects that specify the services to enable in the environment. (see [below for nested schema](#nestedatt--services))
 
 ### Optional
 
-- `default_population` (Block List, Deprecated) **Deprecation Message** The `default_population` block has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.  To preserve user data, removal of this block from HCL will not delete the population from the service.  The default population configuration cannot be added after the environment has already been created, but will not trigger a replacement of the resource.  The environment's default population.  The values for this block will not be populated when importing the resource using `terraform import`. (see [below for nested schema](#nestedblock--default_population))
-- `description` (String) A description of the environment.
-- `region` (String) The region to create the environment in.  Should be consistent with the PingOne organisation region.  Valid options are `AsiaPacific` `Canada` `Europe` and `NorthAmerica`.  Default can be set with the `PINGONE_REGION` environment variable.
-- `service` (Block Set) The services to enable in the environment.  Defaults to `SSO`. (see [below for nested schema](#nestedblock--service))
-- `solution` (String) The solution context of the environment.  Leave blank for a custom, non-workforce solution context.  Valid options are `CUSTOMER`, or no value for custom solution context.  Workforce solution environments are not yet supported in this provider resource, but can be fetched using the `pingone_environment` datasource.
-- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
-- `type` (String) The type of the environment to create.  Options are `SANDBOX` for a development/testing environment and `PRODUCTION` for environments that require protection from deletion. Defaults to `SANDBOX`.
+- `description` (String) A string that specifies the description to apply to the environment.
+- `region` (String) A string that specifies the region to create the environment in.  Should be consistent with the PingOne organisation region.  Options are `AP`, `AU`, `CA`, `EU`, `NA`.  Will default to the region specified in the provider configuration if not specified, or can be set with the `PINGONE_REGION_CODE` environment variable.
+- `solution` (String) A string that specifies the solution context of the environment.  Leave blank for a custom, non-workforce solution context.  Valid options are `CUSTOMER`, or no value for custom solution context.  Workforce solution environments are not yet supported in this provider resource, but can be fetched using the `pingone_environment` datasource.  This field is immutable and will trigger a replace plan if changed.
+- `type` (String) A string that specifies the type of the environment to create.  Options are `PRODUCTION` (for environments that require protection from deletion), `SANDBOX` (for a development/testing environment).  Once an environment has been set as `PRODUCTION` type, it cannot be reset back to `SANDBOX` within Terraform.  Administrators must log in to the web admin console to override the data protection features of `PRODUCTION` environments.  Defaults to `SANDBOX`.
 
 ### Read-Only
 
-- `default_population_id` (String, Deprecated) **Deprecation Message** The `default_population_id` attribute has been deprecated.  Default population functionality has moved to the `pingone_population_default` resource.  This attribute will be removed in the next major version of the provider.  The ID of the environment's default population.  This attribute is only populated when also using the `default_population` block to define a default population, but will not be populated when importing the resource using `terraform import`.
 - `id` (String) The ID of this resource.
-- `organization_id` (String) The ID of the PingOne organization tenant to which the environment belongs.
+- `organization_id` (String) A string that represents the ID of the PingOne organization tenant to which the environment belongs.
 
-<a id="nestedblock--default_population"></a>
-### Nested Schema for `default_population`
-
-Optional:
-
-- `description` (String) A description to apply to the environment's default population.
-- `name` (String) The name of the environment's default population.  Defaults to `Default`.
-
-
-<a id="nestedblock--service"></a>
-### Nested Schema for `service`
-
-Optional:
-
-- `bookmark` (Block Set) Custom bookmark links for the service. (see [below for nested schema](#nestedblock--service--bookmark))
-- `console_url` (String) A custom console URL to set.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`.
-- `tags` (Set of String) A set of tags to apply upon environment creation.  Only configurable when the service `type` is `DaVinci`.  Options are `DAVINCI_MINIMAL` (allows for a creation of an environment without example/demo configuration in the DaVinci service).  This field is immutable and will trigger a replace plan if changed.
-- `type` (String) The service type to enable in the environment.  Valid options are `APIIntelligence`, `Authorize`, `Credentials`, `DaVinci`, `MFA`, `PingAccess`, `PingAuthorize`, `PingCentral`, `PingDirectory`, `PingFederate`, `PingID`, `Risk`, `SSO`, `Verify`.  Defaults to `SSO`.
-
-<a id="nestedblock--service--bookmark"></a>
-### Nested Schema for `service.bookmark`
+<a id="nestedatt--services"></a>
+### Nested Schema for `services`
 
 Required:
 
-- `name` (String) Bookmark name.
-- `url` (String) Bookmark URL.
-
-
-
-<a id="nestedblock--timeouts"></a>
-### Nested Schema for `timeouts`
+- `type` (String) A string that specifies the service type to enable in the environment.  Options are `APIIntelligence`, `Authorize`, `Credentials`, `DaVinci`, `MFA`, `PingAccess`, `PingAuthorize`, `PingCentral`, `PingDirectory`, `PingFederate`, `PingID`, `Risk`, `SSO`, `Verify`.
 
 Optional:
 
-- `create` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+- `bookmarks` (Attributes Set) A set of objects that specify custom bookmark links for the service. (see [below for nested schema](#nestedatt--services--bookmarks))
+- `console_url` (String) A string that specifies the custom console URL to set.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`.
+- `tags` (Set of String) A set of string tags to apply upon environment creation.  Only configurable when the service `type` is `DaVinci`.  Options are `DAVINCI_MINIMAL` (allows for a creation of an environment without example/demo configuration in the DaVinci service).  This field is immutable and will trigger a replace plan if changed.
+
+<a id="nestedatt--services--bookmarks"></a>
+### Nested Schema for `services.bookmarks`
+
+Required:
+
+- `name` (String) A string that specifies the bookmark name.
+- `url` (String) A string that represents the bookmark URL.
 
 ## Import
 
 Import is supported using the following syntax examples, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-$ terraform import pingone_environment.example <environment_id>
+terraform import pingone_environment.example <environment_id>
 ```

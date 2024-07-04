@@ -30,30 +30,31 @@ resource "pingone_gateway" "my_ldap_gateway" {
     "ds3.bxretail.org:636",
   ]
 
-  user_type {
-    name               = "User Set 1"
-    password_authority = "LDAP"
-    search_base_dn     = "ou=users,dc=bxretail,dc=org"
+  user_types = {
+    "User Set 1" = {
+      password_authority = "LDAP"
+      search_base_dn     = "ou=users,dc=bxretail,dc=org"
 
-    user_link_attributes = ["objectGUID", "objectSid"]
+      user_link_attributes = ["objectGUID", "objectSid"]
 
-    user_migration {
-      lookup_filter_pattern = "(|(sAMAccountName=$${identifier})(UserPrincipalName=$${identifier}))"
+      new_user_lookup = {
+        ldap_filter_pattern = "(|(sAMAccountName=$${identifier})(UserPrincipalName=$${identifier}))"
 
-      population_id = pingone_population.my_population.id
+        population_id = pingone_population.my_population.id
 
-      attribute_mapping {
-        name  = "username"
-        value = "$${ldapAttributes.sAMAccountName}"
+        attribute_mappings = [
+          {
+            name  = "username"
+            value = "$${ldapAttributes.sAMAccountName}"
+          },
+          {
+            name  = "email"
+            value = "$${ldapAttributes.mail}"
+          }
+        ]
       }
 
-      attribute_mapping {
-        name  = "email"
-        value = "$${ldapAttributes.mail}"
-      }
+      update_user_on_successful_authentication = true
     }
-
-    push_password_changes_to_ldap = true
   }
-
 }

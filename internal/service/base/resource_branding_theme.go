@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -17,9 +16,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -27,23 +29,23 @@ import (
 // Types
 type BrandingThemeResource serviceClientType
 
-type brandingThemeResourceModel struct {
-	Id                   types.String `tfsdk:"id"`
-	EnvironmentId        types.String `tfsdk:"environment_id"`
-	Name                 types.String `tfsdk:"name"`
-	Template             types.String `tfsdk:"template"`
-	Default              types.Bool   `tfsdk:"default"`
-	Logo                 types.List   `tfsdk:"logo"`
-	BackgroundImage      types.List   `tfsdk:"background_image"`
-	BackgroundColor      types.String `tfsdk:"background_color"`
-	UseDefaultBackground types.Bool   `tfsdk:"use_default_background"`
-	BodyTextColor        types.String `tfsdk:"body_text_color"`
-	ButtonColor          types.String `tfsdk:"button_color"`
-	ButtonTextColor      types.String `tfsdk:"button_text_color"`
-	CardColor            types.String `tfsdk:"card_color"`
-	FooterText           types.String `tfsdk:"footer_text"`
-	HeadingTextColor     types.String `tfsdk:"heading_text_color"`
-	LinkTextColor        types.String `tfsdk:"link_text_color"`
+type brandingThemeResourceModelV1 struct {
+	Id                   pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId        pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name                 types.String                 `tfsdk:"name"`
+	Template             types.String                 `tfsdk:"template"`
+	Default              types.Bool                   `tfsdk:"default"`
+	Logo                 types.Object                 `tfsdk:"logo"`
+	BackgroundImage      types.Object                 `tfsdk:"background_image"`
+	BackgroundColor      types.String                 `tfsdk:"background_color"`
+	UseDefaultBackground types.Bool                   `tfsdk:"use_default_background"`
+	BodyTextColor        types.String                 `tfsdk:"body_text_color"`
+	ButtonColor          types.String                 `tfsdk:"button_color"`
+	ButtonTextColor      types.String                 `tfsdk:"button_text_color"`
+	CardColor            types.String                 `tfsdk:"card_color"`
+	FooterText           types.String                 `tfsdk:"footer_text"`
+	HeadingTextColor     types.String                 `tfsdk:"heading_text_color"`
+	LinkTextColor        types.String                 `tfsdk:"link_text_color"`
 }
 
 // Framework interfaces
@@ -87,11 +89,11 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 	).ExactlyOneOf(backgroundExactlyOneOfRelativePaths)
 
 	backgroundImageDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single block that specifies the HREF and ID for the background image.",
+		"A single object that specifies the HREF and ID for the background image.",
 	).ExactlyOneOf(backgroundExactlyOneOfRelativePaths)
 
 	logoDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single block that specifies the HREF and ID for the company logo, for this branding template.  If not set, the environment's default logo (set with the `pingone_branding_settings` resource) will be applied.",
+		"A single object that specifies the HREF and ID for the company logo, for this branding template.  If not set, the environment's default logo (set with the `pingone_branding_settings` resource) will be applied.",
 	)
 
 	logoIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -99,7 +101,7 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 	)
 
 	logoHrefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The URL or fully qualified path to the logo file used for branding.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.",
+		"The URL or fully qualified path to the logo file used for branding.  This can be retrieved from the `uploaded_image.href` parameter of the `pingone_image` resource.",
 	)
 
 	backgroundImageIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -107,10 +109,13 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 	)
 
 	backgroundImageHrefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The URL or fully qualified path to the background image file used for branding.  This can be retrieved from the `uploaded_image[0].href` parameter of the `pingone_image` resource.",
+		"The URL or fully qualified path to the background image file used for branding.  This can be retrieved from the `uploaded_image.href` parameter of the `pingone_image` resource.",
 	)
 
 	resp.Schema = schema.Schema{
+
+		Version: 1,
+
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage PingOne branding themes for an environment.",
 
@@ -144,6 +149,56 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 
 				PlanModifiers: []planmodifier.Bool{
 					boolplanmodifier.UseStateForUnknown(),
+				},
+			},
+
+			"logo": schema.SingleNestedAttribute{
+				Description:         logoDescription.Description,
+				MarkdownDescription: logoDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description:         logoIdDescription.Description,
+						MarkdownDescription: logoIdDescription.MarkdownDescription,
+						Required:            true,
+
+						CustomType: pingonetypes.ResourceIDType{},
+					},
+
+					"href": schema.StringAttribute{
+						Description:         logoHrefDescription.Description,
+						MarkdownDescription: logoHrefDescription.MarkdownDescription,
+						Required:            true,
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+						},
+					},
+				},
+			},
+
+			"background_image": schema.SingleNestedAttribute{
+				Description:         backgroundImageDescription.Description,
+				MarkdownDescription: backgroundImageDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description:         backgroundImageIdDescription.Description,
+						MarkdownDescription: backgroundImageIdDescription.MarkdownDescription,
+						Required:            true,
+
+						CustomType: pingonetypes.ResourceIDType{},
+					},
+
+					"href": schema.StringAttribute{
+						Description:         backgroundImageHrefDescription.Description,
+						MarkdownDescription: backgroundImageHrefDescription.MarkdownDescription,
+						Required:            true,
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+						},
+					},
 				},
 			},
 
@@ -230,75 +285,6 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 				},
 			},
 		},
-
-		Blocks: map[string]schema.Block{
-
-			"logo": schema.ListNestedBlock{
-				Description:         logoDescription.Description,
-				MarkdownDescription: logoDescription.MarkdownDescription,
-
-				NestedObject: schema.NestedBlockObject{
-
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Description:         logoIdDescription.Description,
-							MarkdownDescription: logoIdDescription.MarkdownDescription,
-							Required:            true,
-
-							Validators: []validator.String{
-								verify.P1ResourceIDValidator(),
-							},
-						},
-
-						"href": schema.StringAttribute{
-							Description:         logoHrefDescription.Description,
-							MarkdownDescription: logoHrefDescription.MarkdownDescription,
-							Required:            true,
-							Validators: []validator.String{
-								stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
-							},
-						},
-					},
-				},
-
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-				},
-			},
-
-			"background_image": schema.ListNestedBlock{
-				Description:         backgroundImageDescription.Description,
-				MarkdownDescription: backgroundImageDescription.MarkdownDescription,
-
-				NestedObject: schema.NestedBlockObject{
-
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Description:         backgroundImageIdDescription.Description,
-							MarkdownDescription: backgroundImageIdDescription.MarkdownDescription,
-							Required:            true,
-
-							Validators: []validator.String{
-								verify.P1ResourceIDValidator(),
-							},
-						},
-
-						"href": schema.StringAttribute{
-							Description:         backgroundImageHrefDescription.Description,
-							MarkdownDescription: backgroundImageHrefDescription.MarkdownDescription,
-							Required:            true,
-							Validators: []validator.String{
-								stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
-							},
-						},
-					},
-				},
-
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(1),
-				},
-			},
-		},
 	}
 }
 
@@ -329,9 +315,9 @@ func (r *BrandingThemeResource) Configure(ctx context.Context, req resource.Conf
 }
 
 func (r *BrandingThemeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan, state brandingThemeResourceModel
+	var plan, state brandingThemeResourceModelV1
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -378,9 +364,9 @@ func (r *BrandingThemeResource) Create(ctx context.Context, req resource.CreateR
 }
 
 func (r *BrandingThemeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *brandingThemeResourceModel
+	var data *brandingThemeResourceModelV1
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -423,9 +409,9 @@ func (r *BrandingThemeResource) Read(ctx context.Context, req resource.ReadReque
 }
 
 func (r *BrandingThemeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan, state brandingThemeResourceModel
+	var plan, state brandingThemeResourceModelV1
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -472,9 +458,9 @@ func (r *BrandingThemeResource) Update(ctx context.Context, req resource.UpdateR
 }
 
 func (r *BrandingThemeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *brandingThemeResourceModel
+	var data *brandingThemeResourceModelV1
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -539,36 +525,38 @@ func (r *BrandingThemeResource) ImportState(ctx context.Context, req resource.Im
 	}
 }
 
-func (p *brandingThemeResourceModel) expand(ctx context.Context) (*management.BrandingTheme, diag.Diagnostics) {
+func (p *brandingThemeResourceModelV1) expand(ctx context.Context) (*management.BrandingTheme, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	logoType := management.ENUMBRANDINGLOGOTYPE_NONE
-	var logo imageResourceModel
+	var logo service.ImageResourceModel
 
 	if !p.Logo.IsNull() && !p.Logo.IsUnknown() {
 
-		var plan []imageResourceModel
-		diags.Append(p.Logo.ElementsAs(ctx, &plan, false)...)
+		diags.Append(p.Logo.As(ctx, &logo, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		logo = plan[0]
 		logoType = management.ENUMBRANDINGLOGOTYPE_IMAGE
 
 	}
 
 	backgroundType := management.ENUMBRANDINGTHEMEBACKGROUNDTYPE_NONE
-	var background imageResourceModel
+	var background service.ImageResourceModel
 	if !p.BackgroundImage.IsNull() && !p.BackgroundImage.IsUnknown() {
 
-		var plan []imageResourceModel
-		diags.Append(p.BackgroundImage.ElementsAs(ctx, &plan, false)...)
+		diags.Append(p.BackgroundImage.As(ctx, &background, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		background = plan[0]
 		backgroundType = management.ENUMBRANDINGTHEMEBACKGROUNDTYPE_IMAGE
 
 	}
@@ -621,7 +609,7 @@ func (p *brandingThemeResourceModel) expand(ctx context.Context) (*management.Br
 	return data, diags
 }
 
-func (p *brandingThemeResourceModel) toState(apiObject *management.BrandingTheme) diag.Diagnostics {
+func (p *brandingThemeResourceModelV1) toState(apiObject *management.BrandingTheme) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -633,8 +621,8 @@ func (p *brandingThemeResourceModel) toState(apiObject *management.BrandingTheme
 		return diags
 	}
 
-	p.Id = framework.StringToTF(apiObject.GetId())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.Template = framework.EnumOkToTF(apiObject.GetTemplateOk())
 	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())
 
@@ -648,11 +636,11 @@ func (p *brandingThemeResourceModel) toState(apiObject *management.BrandingTheme
 			p.UseDefaultBackground = types.BoolValue(false)
 		}
 
-		logo, d := toStateImageRef(v.GetLogoOk())
+		logo, d := service.ImageOkToTF(v.GetLogoOk())
 		diags.Append(d...)
 		p.Logo = logo
 
-		backgroundImage, d := toStateImageRef(v.GetBackgroundImageOk())
+		backgroundImage, d := service.ImageOkToTF(v.GetBackgroundImageOk())
 		diags.Append(d...)
 		p.BackgroundImage = backgroundImage
 

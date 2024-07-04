@@ -7,11 +7,11 @@ resource "pingone_notification_template_content" "email" {
   template_name  = "strong_authentication"
   locale         = "en"
 
-  email {
+  email = {
     body    = "Please approve this transaction with passcode $${otp}."
     subject = "BX Retail Transaction Request"
 
-    from {
+    from = {
       name    = "BX Retail"
       address = "noreply@bxretail.org"
     }
@@ -23,7 +23,7 @@ resource "pingone_notification_template_content" "push" {
   template_name  = "strong_authentication"
   locale         = "en"
 
-  push {
+  push = {
     body  = "Please approve this transaction."
     title = "BX Retail Transaction Request"
   }
@@ -34,7 +34,7 @@ resource "pingone_notification_template_content" "sms" {
   template_name  = "strong_authentication"
   locale         = "en"
 
-  sms {
+  sms = {
     content = "Please approve this transaction with passcode $${otp}."
     sender  = "BX Retail"
   }
@@ -45,7 +45,7 @@ resource "pingone_notification_template_content" "voice" {
   template_name  = "strong_authentication"
   locale         = "en"
 
-  voice {
+  voice = {
     content = "Hello <pause1sec> your authentication code is <sayCharValue>$${otp}</sayCharValue><pause1sec><pause1sec><repeatMessage val=2>I repeat <pause1sec>your code is <sayCharValue>$${otp}</sayCharValue></repeatMessage>"
     type    = "Alice"
   }

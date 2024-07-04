@@ -1,1 +1,1 @@
-$ terraform import pingone_resource_attribute.example <environment_id>/<resource_id>/<resource_attribute_id>
+terraform import pingone_resource_attribute.example <environment_id>/<resource_id>/<resource_attribute_id>

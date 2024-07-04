@@ -1,15 +1,18 @@
 package client
 
+import "github.com/patrickcping/pingone-go-sdk-v2/management"
+
 type Config struct {
 	ClientID             string
 	ClientSecret         string
 	EnvironmentID        string
 	AccessToken          string
-	Region               string
+	RegionCode           *management.EnumRegionCode
 	APIHostnameOverride  *string
 	AuthHostnameOverride *string
 	ProxyURL             *string
 	GlobalOptions        *GlobalOptions
+	UserAgentAppend      *string
 }
 
 type GlobalOptions struct {
@@ -17,9 +20,7 @@ type GlobalOptions struct {
 	Population  *PopulationOptions
 }
 
-type EnvironmentOptions struct {
-	ProductionTypeForceDelete bool
-}
+type EnvironmentOptions struct{}
 
 type PopulationOptions struct {
 	ContainsUsersForceDelete bool

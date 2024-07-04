@@ -1,1 +1,1 @@
-$ terraform import pingone_application.example <environment_id>/<application_id>
+terraform import pingone_application.example <environment_id>/<application_id>

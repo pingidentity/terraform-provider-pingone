@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -23,6 +24,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -31,13 +33,13 @@ import (
 type CredentialIssuerProfileResource serviceClientType
 
 type CredentialIssuerProfileResourceModel struct {
-	Id                    types.String   `tfsdk:"id"`
-	EnvironmentId         types.String   `tfsdk:"environment_id"`
-	ApplicationInstanceId types.String   `tfsdk:"application_instance_id"`
-	CreatedAt             types.String   `tfsdk:"created_at"`
-	UpdatedAt             types.String   `tfsdk:"updated_at"`
-	Name                  types.String   `tfsdk:"name"`
-	Timeouts              timeouts.Value `tfsdk:"timeouts"`
+	Id                    pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId         pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ApplicationInstanceId pingonetypes.ResourceIDValue `tfsdk:"application_instance_id"`
+	CreatedAt             timetypes.RFC3339            `tfsdk:"created_at"`
+	UpdatedAt             timetypes.RFC3339            `tfsdk:"updated_at"`
+	Name                  types.String                 `tfsdk:"name"`
+	Timeouts              timeouts.Value               `tfsdk:"timeouts"`
 }
 
 // Framework interfaces
@@ -80,11 +82,15 @@ func (r *CredentialIssuerProfileResource) Schema(ctx context.Context, req resour
 			"application_instance_id": schema.StringAttribute{
 				Description: "Identifier (UUID) of the application instance registered with the PingOne platform service. This enables the client to send messages to the service.",
 				Computed:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"created_at": schema.StringAttribute{
 				Description: "Date and time the issuer profile was created.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -94,6 +100,8 @@ func (r *CredentialIssuerProfileResource) Schema(ctx context.Context, req resour
 			"updated_at": schema.StringAttribute{
 				Description: "Date and time the issuer profile was last updated.",
 				Computed:    true,
+
+				CustomType: timetypes.RFC3339Type{},
 			},
 
 			"name": schema.StringAttribute{
@@ -140,7 +148,7 @@ func (r *CredentialIssuerProfileResource) Configure(ctx context.Context, req res
 func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state CredentialIssuerProfileResourceModel
 
-	if r.Client.CredentialsAPIClient == nil {
+	if r.Client == nil || r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -251,7 +259,7 @@ func (r *CredentialIssuerProfileResource) Create(ctx context.Context, req resour
 func (r *CredentialIssuerProfileResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *CredentialIssuerProfileResourceModel
 
-	if r.Client.CredentialsAPIClient == nil {
+	if r.Client == nil || r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -300,7 +308,7 @@ func (r *CredentialIssuerProfileResource) Read(ctx context.Context, req resource
 func (r *CredentialIssuerProfileResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state CredentialIssuerProfileResourceModel
 
-	if r.Client.CredentialsAPIClient == nil {
+	if r.Client == nil || r.Client.CredentialsAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -405,9 +413,9 @@ func (p *CredentialIssuerProfileResourceModel) toState(apiObject *credentials.Cr
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
-	p.ApplicationInstanceId = framework.StringToTF(*apiObject.GetApplicationInstance().Id)
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
+	p.ApplicationInstanceId = framework.PingOneResourceIDToTF(*apiObject.GetApplicationInstance().Id)
 	p.CreatedAt = framework.TimeOkToTF(apiObject.GetCreatedAtOk())
 	p.UpdatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())

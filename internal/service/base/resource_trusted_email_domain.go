@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -24,9 +25,9 @@ import (
 type TrustedEmailDomainResource serviceClientType
 
 type TrustedEmailDomainResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	DomainName    types.String `tfsdk:"domain_name"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	DomainName    types.String                 `tfsdk:"domain_name"`
 }
 
 // Framework interfaces
@@ -113,7 +114,7 @@ func (r *TrustedEmailDomainResource) Configure(ctx context.Context, req resource
 func (r *TrustedEmailDomainResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state TrustedEmailDomainResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -158,7 +159,7 @@ func (r *TrustedEmailDomainResource) Create(ctx context.Context, req resource.Cr
 func (r *TrustedEmailDomainResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *TrustedEmailDomainResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -206,7 +207,7 @@ func (r *TrustedEmailDomainResource) Update(ctx context.Context, req resource.Up
 func (r *TrustedEmailDomainResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *TrustedEmailDomainResourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -289,8 +290,8 @@ func (p *TrustedEmailDomainResourceModel) toState(apiObject *management.EmailDom
 		return diags
 	}
 
-	p.Id = framework.StringOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.StringToTF(*apiObject.GetEnvironment().Id)
+	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.DomainName = framework.StringOkToTF(apiObject.GetDomainNameOk())
 
 	return diags

@@ -1,0 +1,23 @@
+```release-note:new-data-source
+pingone_application_secret
+```
+
+```release-note:bug
+`resource/pingone_application_secret`: Fixed state inconsistency issue when retrieving an application's client secret.
+```
+
+```release-note:bug
+`resource/pingone_application`: Fixed state inconsistency issue when retrieving an application's client secret.
+```
+
+```release-note:breaking-change
+`resource/pingone_application`: Removed `oidc_options.client_id` and `oidc_options.client_secret`.  Use the `pingone_application_secret` resource or data source going forward.
+```
+
+```release-note:breaking-change
+`data-source/pingone_application`: Removed `oidc_options.client_id` and `oidc_options.client_secret`.  Use the `pingone_application_secret` resource or data source going forward.
+```
+
+```release-note:enhancement
+`resource/pingone_application_secret`: Support for handling previous secrets for application secret rotation.
+```

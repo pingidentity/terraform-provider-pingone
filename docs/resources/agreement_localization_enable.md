@@ -102,5 +102,5 @@ resource "pingone_agreement_localization_enable" "my_agreement_fr_enable" {
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-$ terraform import pingone_agreement_localization_enable.example <environment_id>/<agreement_id>/<agreement_localization_id>
+terraform import pingone_agreement_localization_enable.example <environment_id>/<agreement_id>/<agreement_localization_id>
 ```

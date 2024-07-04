@@ -8,25 +8,24 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 // Types
 type GroupsDataSource serviceClientType
 
 type GroupsDataSourceModel struct {
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Id            types.String `tfsdk:"id"`
-	ScimFilter    types.String `tfsdk:"scim_filter"`
-	DataFilter    types.List   `tfsdk:"data_filter"`
-	Ids           types.List   `tfsdk:"ids"`
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	ScimFilter    types.String                 `tfsdk:"scim_filter"`
+	DataFilters   types.List                   `tfsdk:"data_filters"`
+	Ids           types.List                   `tfsdk:"ids"`
 }
 
 // Framework interfaces
@@ -59,30 +58,27 @@ func (r *GroupsDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 			"environment_id": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the environment to filter groups from.  Must be a valid PingOne resource ID.").Description,
 				Required:    true,
-				Validators: []validator.String{
-					verify.P1ResourceIDValidator(),
-				},
+
+				CustomType: pingonetypes.ResourceIDType{},
 			},
 
 			"scim_filter": framework.Attr_SCIMFilter(framework.SchemaAttributeDescriptionFromMarkdown(
 				"A SCIM filter to apply to the group selection.  A SCIM filter offers the greatest flexibility in filtering groups.",
 			),
 				filterableAttributes,
-				[]string{"data_filter"},
+				[]string{"scim_filter", "data_filters"},
+			),
+
+			"data_filters": framework.Attr_DataFilter(framework.SchemaAttributeDescriptionFromMarkdown(
+				"Individual data filters to apply to the group selection.",
+			),
+				filterableAttributes,
+				[]string{"scim_filter", "data_filters"},
 			),
 
 			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescriptionFromMarkdown(
 				"The list of resulting IDs of groups that have been successfully retrieved and filtered.",
 			)),
-		},
-
-		Blocks: map[string]schema.Block{
-			"data_filter": framework.Attr_DataFilter(framework.SchemaAttributeDescriptionFromMarkdown(
-				"Individual data filters to apply to the group selection.",
-			),
-				filterableAttributes,
-				[]string{"scim_filter"},
-			),
 		},
 	}
 }
@@ -116,7 +112,7 @@ func (r *GroupsDataSource) Configure(ctx context.Context, req datasource.Configu
 func (r *GroupsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data *GroupsDataSourceModel
 
-	if r.Client.ManagementAPIClient == nil {
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
@@ -137,10 +133,10 @@ func (r *GroupsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 			return r.Client.ManagementAPIClient.GroupsApi.ReadAllGroups(ctx, data.EnvironmentId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute()
 		}
 
-	} else if !data.DataFilter.IsNull() {
+	} else if !data.DataFilters.IsNull() {
 
 		var dataFilterIn []framework.DataFilterModel
-		resp.Diagnostics.Append(data.DataFilter.ElementsAs(ctx, &dataFilterIn, false)...)
+		resp.Diagnostics.Append(data.DataFilters.ElementsAs(ctx, &dataFilterIn, false)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
@@ -217,7 +213,7 @@ func (p *GroupsDataSourceModel) toState(environmentID string, groups []managemen
 
 	var d diag.Diagnostics
 
-	p.Id = framework.StringToTF(environmentID)
+	p.Id = framework.PingOneResourceIDToTF(environmentID)
 	p.Ids, d = framework.StringSliceToTF(list)
 	diags.Append(d...)
 

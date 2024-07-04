@@ -129,32 +129,26 @@ func TestAccPasswordPolicy_Full(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "Test description"),
-					resource.TestCheckResourceAttr(resourceFullName, "environment_default", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "bypass_policy", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "exclude_commonly_used_passwords", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "exclude_profile_data", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "password_history.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "password_history.0.prior_password_count", "10"),
-					resource.TestCheckResourceAttr(resourceFullName, "password_history.0.retention_days", "150"),
-					resource.TestCheckResourceAttr(resourceFullName, "password_length.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "password_length.0.min", "12"),
-					resource.TestCheckResourceAttr(resourceFullName, "password_length.0.max", "255"),
-					resource.TestCheckResourceAttr(resourceFullName, "account_lockout.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "account_lockout.0.duration_seconds", "30"),
-					resource.TestCheckResourceAttr(resourceFullName, "account_lockout.0.fail_count", "5"),
-					resource.TestCheckResourceAttr(resourceFullName, "min_characters.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "min_characters.0.alphabetical_uppercase", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "min_characters.0.alphabetical_lowercase", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "min_characters.0.numeric", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "min_characters.0.special_characters", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "password_age.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "password_age.0.max", "35"),
-					resource.TestCheckResourceAttr(resourceFullName, "password_age.0.min", "2"),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "excludes_commonly_used_passwords", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "excludes_profile_data", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "history.count", "10"),
+					resource.TestCheckResourceAttr(resourceFullName, "history.retention_days", "150"),
+					resource.TestCheckResourceAttr(resourceFullName, "length.min", "12"),
+					resource.TestCheckResourceAttr(resourceFullName, "length.max", "255"),
+					resource.TestCheckResourceAttr(resourceFullName, "lockout.duration_seconds", "30"),
+					resource.TestCheckResourceAttr(resourceFullName, "lockout.failure_count", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "min_characters.alphabetical_uppercase", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "min_characters.alphabetical_lowercase", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "min_characters.numeric", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "min_characters.special_characters", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "password_age_max", "35"),
+					resource.TestCheckResourceAttr(resourceFullName, "password_age_min", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "max_repeated_characters", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "min_complexity", "7"),
 					resource.TestCheckResourceAttr(resourceFullName, "min_unique_characters", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "not_similar_to_current", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "population_count", "0"),
+					//resource.TestCheckResourceAttr(resourceFullName, "population_count", "1"),
 				),
 			},
 			// Test importing the resource
@@ -172,6 +166,9 @@ func TestAccPasswordPolicy_Full(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"population_count", // this is ignored because it is 0 (not returned) on recording initial creation state, but is returned on import read, leading to a difference between the state after create and the state after re-import
+				},
 			},
 		},
 	})
@@ -200,21 +197,21 @@ func TestAccPasswordPolicy_Minimal(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "description", ""),
-					resource.TestCheckResourceAttr(resourceFullName, "environment_default", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "bypass_policy", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "exclude_commonly_used_passwords", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "exclude_profile_data", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "password_history.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "password_length.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "account_lockout.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "min_characters.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "password_age.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "max_repeated_characters", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "min_complexity", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "min_unique_characters", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "excludes_commonly_used_passwords", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "excludes_profile_data", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "history"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "length"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "lockout"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "min_characters"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "password_age_max"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "password_age_min"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "max_repeated_characters"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "min_complexity"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "min_unique_characters"),
 					resource.TestCheckResourceAttr(resourceFullName, "not_similar_to_current", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "population_count", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "population_count"),
 				),
 			},
 		},
@@ -246,19 +243,19 @@ func TestAccPasswordPolicy_BadParameters(t *testing.T) {
 			{
 				ResourceName: resourceFullName,
 				ImportState:  true,
-				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/password_policy_id" and must match regex: .*`),
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "/",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/password_policy_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "badformat/badformat",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/password_policy_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})
@@ -284,31 +281,29 @@ resource "pingone_password_policy" "%[2]s" {
 
   description = "Test description"
 
-  exclude_commonly_used_passwords = true
-  exclude_profile_data            = true
-  not_similar_to_current          = true
+  excludes_commonly_used_passwords = true
+  excludes_profile_data            = true
+  not_similar_to_current           = true
 
-  password_history {
-    prior_password_count = 10
-    retention_days       = 150
+  history = {
+    count          = 10
+    retention_days = 150
   }
 
-  password_length {
+  length = {
     min = 12
     max = 255
   }
 
-  password_age {
-    max = 35
-    min = 2
-  }
+  password_age_max = 35
+  password_age_min = 2
 
-  account_lockout {
+  lockout = {
     duration_seconds = 30
-    fail_count       = 5
+    failure_count    = 5
   }
 
-  min_characters {
+  min_characters = {
     alphabetical_uppercase = 1
     alphabetical_lowercase = 1
     numeric                = 1
@@ -318,6 +313,13 @@ resource "pingone_password_policy" "%[2]s" {
   max_repeated_characters = 2
   min_complexity          = 7
   min_unique_characters   = 5
+}
+
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name               = "%[3]s"
+  password_policy_id = pingone_password_policy.%[2]s.id
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 

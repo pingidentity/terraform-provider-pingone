@@ -5,106 +5,220 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
-	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func ResourceMFASettings() *schema.Resource {
-	return &schema.Resource{
+// Types
+type MFASettingsResource serviceClientType
 
+type MFASettingsResourceModel struct {
+	EnvironmentId   pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Lockout         types.Object                 `tfsdk:"lockout"`
+	Pairing         types.Object                 `tfsdk:"pairing"`
+	PhoneExtensions types.Object                 `tfsdk:"phone_extensions"`
+	Users           types.Object                 `tfsdk:"users"`
+}
+
+type MFASettingsLockoutResourceModel struct {
+	FailureCount    types.Int64 `tfsdk:"failure_count"`
+	DurationSeconds types.Int64 `tfsdk:"duration_seconds"`
+}
+
+type MFASettingsPairingResourceModel struct {
+	MaxAllowedDevices types.Int64  `tfsdk:"max_allowed_devices"`
+	PairingKeyFormat  types.String `tfsdk:"pairing_key_format"`
+}
+
+type MFASettingsPhoneExtensionsResourceModel struct {
+	Enabled types.Bool `tfsdk:"enabled"`
+}
+
+type MFASettingsUsersResourceModel struct {
+	MFAEnabled types.Bool `tfsdk:"mfa_enabled"`
+}
+
+var (
+	MFASettingsLockoutTFObjectTypes = map[string]attr.Type{
+		"failure_count":    types.Int64Type,
+		"duration_seconds": types.Int64Type,
+	}
+
+	MFASettingsPairingTFObjectTypes = map[string]attr.Type{
+		"max_allowed_devices": types.Int64Type,
+		"pairing_key_format":  types.StringType,
+	}
+
+	MFASettingsPhoneExtensionsTFObjectTypes = map[string]attr.Type{
+		"enabled": types.BoolType,
+	}
+
+	MFASettingsUsersTFObjectTypes = map[string]attr.Type{
+		"mfa_enabled": types.BoolType,
+	}
+)
+
+// Framework interfaces
+var (
+	_ resource.Resource                = &MFASettingsResource{}
+	_ resource.ResourceWithConfigure   = &MFASettingsResource{}
+	_ resource.ResourceWithImportState = &MFASettingsResource{}
+)
+
+// New Object
+func NewMFASettingsResource() resource.Resource {
+	return &MFASettingsResource{}
+}
+
+// Metadata
+func (r *MFASettingsResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_mfa_settings"
+}
+
+func (r *MFASettingsResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+
+	// schema descriptions and validation settings
+	const maxAllowedDevicesDefault = 5
+	const maxAllowedDevicesMin = 1
+	const maxAllowedDevicesMax = 15
+
+	pairingMaxAllowedDevicesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the maximum number of MFA devices each user can have. This can be any number from `%d` to `%d`. All devices that are Active or Blocked are subject to this limit.", maxAllowedDevicesMin, maxAllowedDevicesMax),
+	).DefaultValue(maxAllowedDevicesDefault)
+
+	pairingPairingKeyFormatDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that controls the type of pairing key issued.",
+	).AllowedValuesComplex(map[string]string{
+		string(mfa.ENUMMFASETTINGSPAIRINGKEYFORMAT_NUMERIC):      "12-digit key",
+		string(mfa.ENUMMFASETTINGSPAIRINGKEYFORMAT_ALPHANUMERIC): "16-character alphanumeric key",
+	})
+
+	phoneExtensionsEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean when set to `true` to allow one-time passwords to be delivered via voice to phone numbers that include extensions. Set to `false` to disable support for phone numbers with extensions. By default, support for extensions is disabled.",
+	)
+
+	usersMfaEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, will enable MFA by default for new users.",
+	)
+
+	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage a PingOne Environment's MFA Settings",
+		Description: "Resource to manage the MFA settings for a PingOne environment.",
 
-		CreateContext: resourceMFASettingsCreate,
-		ReadContext:   resourceMFASettingsRead,
-		UpdateContext: resourceMFASettingsUpdate,
-		DeleteContext: resourceMFASettingsDelete,
+		Attributes: map[string]schema.Attribute{
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to manage MFA settings for."),
+			),
 
-		Importer: &schema.ResourceImporter{
-			StateContext: resourceMFASettingsImport,
-		},
-
-		Schema: map[string]*schema.Schema{
-			"environment_id": {
-				Description:      "The ID of the environment to create the sign on policy in.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ForceNew:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(verify.ValidP1ResourceID),
-			},
-			"phone_extensions_enabled": {
-				Description: "A boolean when set to `true` allows one-time passwords to be delivered via voice to phone numbers that include extensions. Set to `false` to disable support for extensions.",
-				Type:        schema.TypeBool,
+			"lockout": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that contains information about the MFA policy lockout settings.").Description,
 				Optional:    true,
-				Default:     false,
+
+				Attributes: map[string]schema.Attribute{
+					"failure_count": schema.Int64Attribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the maximum number of incorrect authentication attempts before the account is locked.").Description,
+						Required:    true,
+
+						Validators: []validator.Int64{
+							int64validator.AtLeast(0),
+						},
+					},
+
+					"duration_seconds": schema.Int64Attribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the number of seconds to keep the account in a locked state").Description,
+						Optional:    true,
+
+						Validators: []validator.Int64{
+							int64validator.AtLeast(0),
+						},
+					},
+				},
 			},
-			"pairing": {
-				Description: "An object that contains pairing settings.",
-				Type:        schema.TypeList,
-				MaxItems:    1,
+
+			"pairing": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that contains information about the MFA policy device pairing settings.").Description,
 				Required:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"max_allowed_devices": {
-							Description:      "An integer that defines the maximum number of MFA devices each user can have. This can be any number up to 15. The default value is 5.",
-							Type:             schema.TypeInt,
-							Optional:         true,
-							Default:          5,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(1, 15)),
+
+				Attributes: map[string]schema.Attribute{
+					"max_allowed_devices": schema.Int64Attribute{
+						Description:         pairingMaxAllowedDevicesDescription.Description,
+						MarkdownDescription: pairingMaxAllowedDevicesDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: int64default.StaticInt64(maxAllowedDevicesDefault),
+
+						Validators: []validator.Int64{
+							int64validator.Between(maxAllowedDevicesMin, maxAllowedDevicesMax),
 						},
-						"pairing_key_format": {
-							Description:      fmt.Sprintf("String that controls the type of pairing key issued. The valid values are `%s` (12-digit key) and `%s` (16-character alphanumeric key).", string(mfa.ENUMMFASETTINGSPAIRINGKEYFORMAT_NUMERIC), string(mfa.ENUMMFASETTINGSPAIRINGKEYFORMAT_ALPHANUMERIC)),
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMMFASETTINGSPAIRINGKEYFORMAT_NUMERIC), string(mfa.ENUMMFASETTINGSPAIRINGKEYFORMAT_ALPHANUMERIC)}, false)),
+					},
+
+					"pairing_key_format": schema.StringAttribute{
+						Description:         pairingPairingKeyFormatDescription.Description,
+						MarkdownDescription: pairingPairingKeyFormatDescription.MarkdownDescription,
+						Required:            true,
+
+						Validators: []validator.String{
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumMFASettingsPairingKeyFormatEnumValues)...),
 						},
 					},
 				},
 			},
-			"lockout": {
-				Description: "An object that contains lockout settings.",
-				Type:        schema.TypeList,
-				MaxItems:    1,
-				Optional:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"failure_count": {
-							Description:      "An integer that defines the maximum number of incorrect authentication attempts before the account is locked.",
-							Type:             schema.TypeInt,
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
-						},
-						"duration_seconds": {
-							Description:      "An integer that defines the number of seconds to keep the account in a locked state.",
-							Type:             schema.TypeInt,
-							Optional:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
-						},
-					},
-				},
-			},
-			"authentication": {
-				Description: "**This property is deprecated.**  Device selection settings should now be configured on the device policy, the `pingone_mfa_policy` resource. An object that contains the device selection settings.",
-				Type:        schema.TypeList,
-				Deprecated:  "Device selection settings should now be configured on the device policy, the `pingone_mfa_policy` resource.",
-				MaxItems:    1,
+
+			"phone_extensions": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that contains settings for phone extension support.").Description,
 				Optional:    true,
 				Computed:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"device_selection": {
-							Description:      fmt.Sprintf("**This property is deprecated.**  Device selection settings should now be configured on the device policy, the `pingone_mfa_policy` resource.  A string that defines the device selection method. Options are `%s` (this is the default setting for new environments) and `%s`.", string(mfa.ENUMMFASETTINGSDEVICESELECTION_DEFAULT_TO_FIRST), string(mfa.ENUMMFASETTINGSDEVICESELECTION_PROMPT_TO_SELECT)),
-							Type:             schema.TypeString,
-							Deprecated:       "Device selection settings should now be configured on the device policy, the `pingone_mfa_policy` resource.",
-							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{string(mfa.ENUMMFASETTINGSDEVICESELECTION_DEFAULT_TO_FIRST), string(mfa.ENUMMFASETTINGSDEVICESELECTION_PROMPT_TO_SELECT)}, false)),
-						},
+
+				Default: objectdefault.StaticValue(types.ObjectValueMust(
+					MFASettingsPhoneExtensionsTFObjectTypes,
+					map[string]attr.Value{
+						"enabled": types.BoolValue(false),
+					},
+				)),
+
+				Attributes: map[string]schema.Attribute{
+					"enabled": schema.BoolAttribute{
+						Description:         phoneExtensionsEnabledDescription.Description,
+						MarkdownDescription: phoneExtensionsEnabledDescription.MarkdownDescription,
+						Required:            true,
+					},
+				},
+			},
+
+			"users": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that contains information about the default settings for new users.").Description,
+				Optional:    true,
+				Computed:    true,
+
+				Default: objectdefault.StaticValue(types.ObjectValueMust(
+					MFASettingsUsersTFObjectTypes,
+					map[string]attr.Value{
+						"mfa_enabled": types.BoolValue(false),
+					},
+				)),
+
+				Attributes: map[string]schema.Attribute{
+					"mfa_enabled": schema.BoolAttribute{
+						Description:         usersMfaEnabledDescription.Description,
+						MarkdownDescription: usersMfaEnabledDescription.MarkdownDescription,
+						Required:            true,
 					},
 				},
 			},
@@ -112,233 +226,419 @@ func ResourceMFASettings() *schema.Resource {
 	}
 }
 
-func resourceMFASettingsCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.MFAAPIClient
-
-	var diags diag.Diagnostics
-
-	mfaSettings := *mfa.NewMFASettings(expandMFASettingsPairing(d.Get("pairing").([]interface{})))
-
-	if v, ok := d.GetOk("authentication"); ok {
-		mfaSettings.SetAuthentication(expandMFASettingsAuthentication(v.([]interface{})))
+func (r *MFASettingsResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
 	}
 
-	if v, ok := d.GetOk("lockout"); ok {
-		mfaSettings.SetLockout(expandMFASettingsLockout(v.([]interface{})))
+	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected the provider client, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
+		)
+
+		return
 	}
 
-	if v, ok := d.GetOk("phone_extensions_enabled"); ok {
-		mfaSettings.SetPhoneExtensions(expandMFASettingsPhoneExtensions(v))
+	r.Client = resourceConfig.Client.API
+	if r.Client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialised",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
+		)
+		return
 	}
-
-	resp, diags := sdk.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.MFASettingsApi.UpdateMFASettings(ctx, d.Get("environment_id").(string)).MFASettings(mfaSettings).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
-		},
-		"UpdateMFASettings",
-		sdk.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
-		return diags
-	}
-
-	respObject := resp.(*mfa.MFASettings)
-
-	d.SetId(*respObject.GetEnvironment().Id)
-
-	return resourceMFASettingsRead(ctx, d, meta)
 }
 
-func resourceMFASettingsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.MFAAPIClient
+func (r *MFASettingsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan, state MFASettingsResourceModel
 
-	var diags diag.Diagnostics
+	if r.Client.MFAAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
 
-	resp, diags := sdk.ParseResponse(
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the model for the API
+	mFASettings, d := plan.expand(ctx)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	var response *mfa.MFASettings
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.MFASettingsApi.ReadMFASettings(ctx, d.Get("environment_id").(string)).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
+			fO, fR, fErr := r.Client.MFAAPIClient.MFASettingsApi.UpdateMFASettings(ctx, plan.EnvironmentId.ValueString()).MFASettings(*mFASettings).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+		},
+		"UpdateMFASettings",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Create the state to save
+	state = plan
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+}
+
+func (r *MFASettingsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *MFASettingsResourceModel
+
+	if r.Client.MFAAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	var response *mfa.MFASettings
+	resp.Diagnostics.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			fO, fR, fErr := r.Client.MFAAPIClient.MFASettingsApi.ReadMFASettings(ctx, data.EnvironmentId.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadMFASettings",
-		sdk.CustomErrorResourceNotFoundWarning,
+		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-	)
-	if diags.HasError() {
-		return diags
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if resp == nil {
-		d.SetId("")
-		return nil
+	// Remove from state if resource is not found
+	if response == nil {
+		resp.State.RemoveResource(ctx)
+		return
 	}
 
-	respObject := resp.(*mfa.MFASettings)
-
-	d.Set("pairing", flattenMFASettingPairing(respObject.GetPairing()))
-
-	if v, ok := respObject.GetLockoutOk(); ok {
-		d.Set("lockout", flattenMFASettingLockout(*v))
-	} else {
-		d.Set("lockout", nil)
-	}
-
-	if v, ok := respObject.GetPhoneExtensionsOk(); ok {
-		d.Set("phone_extensions_enabled", v.GetEnabled())
-	} else {
-		d.Set("phone_extensions_enabled", nil)
-	}
-
-	if v, ok := respObject.GetAuthenticationOk(); ok {
-		d.Set("authentication", flattenMFASettingAuthentication(*v))
-	} else {
-		d.Set("authentication", nil)
-	}
-
-	return diags
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(data.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceMFASettingsUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.MFAAPIClient
+func (r *MFASettingsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan, state MFASettingsResourceModel
 
-	var diags diag.Diagnostics
-
-	mfaSettings := *mfa.NewMFASettings(expandMFASettingsPairing(d.Get("pairing").([]interface{})))
-
-	if v, ok := d.GetOk("authentication"); ok {
-		mfaSettings.SetAuthentication(expandMFASettingsAuthentication(v.([]interface{})))
+	if r.Client.MFAAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
 	}
 
-	if v, ok := d.GetOk("lockout"); ok {
-		mfaSettings.SetLockout(expandMFASettingsLockout(v.([]interface{})))
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if v, ok := d.GetOk("phone_extensions_enabled"); ok {
-		mfaSettings.SetPhoneExtensions(expandMFASettingsPhoneExtensions(v))
+	// Build the model for the API
+	mFASettings, d := plan.expand(ctx)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	_, diags = sdk.ParseResponse(
+	// Run the API call
+	var response *mfa.MFASettings
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.MFASettingsApi.UpdateMFASettings(ctx, d.Get("environment_id").(string)).MFASettings(mfaSettings).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
+			fO, fR, fErr := r.Client.MFAAPIClient.MFASettingsApi.UpdateMFASettings(ctx, plan.EnvironmentId.ValueString()).MFASettings(*mFASettings).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateMFASettings",
-		sdk.DefaultCustomError,
+		framework.DefaultCustomError,
 		nil,
-	)
-	if diags.HasError() {
-		return diags
+		&response,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	return resourceMFASettingsRead(ctx, d, meta)
+	// Update the state to save
+	state = plan
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func resourceMFASettingsDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	p1Client := meta.(*client.Client)
-	apiClient := p1Client.API.MFAAPIClient
+func (r *MFASettingsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *MFASettingsResourceModel
 
-	var diags diag.Diagnostics
+	if r.Client.MFAAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
 
-	_, diags = sdk.ParseResponse(
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Run the API call
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.MFASettingsApi.ResetMFASettings(ctx, d.Get("environment_id").(string)).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
+			f0, fR, fErr := r.Client.MFAAPIClient.MFASettingsApi.ResetMFASettings(ctx, data.EnvironmentId.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), f0, fR, fErr)
 		},
 		"ResetMFASettings",
-		sdk.CustomErrorResourceNotFoundWarning,
+		framework.CustomErrorResourceNotFoundWarning,
 		nil,
-	)
-	if diags.HasError() {
-		return diags
+		nil,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-
-	return diags
 }
 
-func resourceMFASettingsImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func (r *MFASettingsResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 
 	idComponents := []framework.ImportComponent{
 		{
-			Label:  "environment_id",
-			Regexp: verify.P1ResourceIDRegexp,
+			Label:     "environment_id",
+			Regexp:    verify.P1ResourceIDRegexp,
+			PrimaryID: true,
 		},
 	}
 
-	attributes, err := framework.ParseImportID(d.Id(), idComponents...)
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
 	if err != nil {
-		return nil, err
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			err.Error(),
+		)
+		return
 	}
 
-	d.SetId(attributes["environment_id"])
-	d.Set("environment_id", attributes["environment_id"])
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
 
-	resourceMFASettingsRead(ctx, d, meta)
+		if idComponent.PrimaryID {
+			pathKey = "environment_id"
+		}
 
-	return []*schema.ResourceData{d}, nil
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
-func expandMFASettingsPairing(v []interface{}) mfa.MFASettingsPairing {
-	obj := v[0].(map[string]interface{})
+func (p *MFASettingsResourceModel) expand(ctx context.Context) (*mfa.MFASettings, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
-	return *mfa.NewMFASettingsPairing(int32(obj["max_allowed_devices"].(int)), mfa.EnumMFASettingsPairingKeyFormat(obj["pairing_key_format"].(string)))
-}
+	// Pairing
+	var pairingPlan MFASettingsPairingResourceModel
+	diags.Append(p.Pairing.As(ctx, &pairingPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return nil, diags
+	}
+	pairing := mfa.NewMFASettingsPairing(
+		int32(pairingPlan.MaxAllowedDevices.ValueInt64()),
+		mfa.EnumMFASettingsPairingKeyFormat(pairingPlan.PairingKeyFormat.ValueString()),
+	)
 
-func expandMFASettingsLockout(v []interface{}) mfa.MFASettingsLockout {
-	obj := v[0].(map[string]interface{})
+	// Main object
+	data := mfa.NewMFASettings(
+		*pairing,
+	)
 
-	mfa := *mfa.NewMFASettingsLockout(int32(obj["failure_count"].(int)))
+	// Lockout
+	if !p.Lockout.IsNull() && !p.Lockout.IsUnknown() {
+		var lockoutPlan MFASettingsLockoutResourceModel
+		diags.Append(p.Lockout.As(ctx, &lockoutPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+		lockout := mfa.NewMFASettingsLockout(
+			int32(lockoutPlan.FailureCount.ValueInt64()),
+		)
 
-	if v, ok := obj["duration_seconds"].(int); ok && v > 0 {
-		mfa.SetDurationSeconds(int32(v))
+		if !lockoutPlan.DurationSeconds.IsNull() && !lockoutPlan.DurationSeconds.IsUnknown() {
+			lockout.SetDurationSeconds(int32(lockoutPlan.DurationSeconds.ValueInt64()))
+		}
+
+		data.SetLockout(*lockout)
 	}
 
-	return mfa
+	// Phone Extensions
+	if !p.PhoneExtensions.IsNull() && !p.PhoneExtensions.IsUnknown() {
+		var phoneExtensionsPlan MFASettingsPhoneExtensionsResourceModel
+		diags.Append(p.PhoneExtensions.As(ctx, &phoneExtensionsPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+		phoneExtensions := mfa.NewMFASettingsPhoneExtensions()
+
+		if !phoneExtensionsPlan.Enabled.IsNull() && !phoneExtensionsPlan.Enabled.IsUnknown() {
+			phoneExtensions.SetEnabled(phoneExtensionsPlan.Enabled.ValueBool())
+		}
+
+		data.SetPhoneExtensions(*phoneExtensions)
+	}
+
+	// Users
+	if !p.Users.IsNull() && !p.Users.IsUnknown() {
+		var usersPlan MFASettingsUsersResourceModel
+		diags.Append(p.Users.As(ctx, &usersPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+		users := mfa.NewMFASettingsUsers()
+
+		if !usersPlan.MFAEnabled.IsNull() && !usersPlan.MFAEnabled.IsUnknown() {
+			users.SetMfaEnabled(usersPlan.MFAEnabled.ValueBool())
+		}
+
+		data.SetUsers(*users)
+	}
+
+	return data, diags
 }
 
-func expandMFASettingsPhoneExtensions(v interface{}) mfa.MFASettingsPhoneExtensions {
-	mfa := *mfa.NewMFASettingsPhoneExtensions()
-	mfa.SetEnabled(v.(bool))
+func (p *MFASettingsResourceModel) toState(apiObject *mfa.MFASettings) diag.Diagnostics {
+	var diags diag.Diagnostics
 
-	return mfa
+	if apiObject == nil {
+		diags.AddError(
+			"Data object missing",
+			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
+		)
+		return diags
+	}
+
+	var d diag.Diagnostics
+
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
+
+	p.Lockout, d = toStateLockout(apiObject.GetLockoutOk())
+	diags.Append(d...)
+
+	p.Pairing, d = toStatePairing(apiObject.GetPairingOk())
+	diags.Append(d...)
+
+	p.PhoneExtensions, d = toStatePhoneExtensions(apiObject.GetPhoneExtensionsOk())
+	diags.Append(d...)
+
+	p.Users, d = toStateUsers(apiObject.GetUsersOk())
+	diags.Append(d...)
+
+	return diags
 }
 
-func expandMFASettingsAuthentication(v []interface{}) mfa.MFASettingsAuthentication {
-	obj := v[0].(map[string]interface{})
+func toStateLockout(apiObject *mfa.MFASettingsLockout, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
-	return *mfa.NewMFASettingsAuthentication(mfa.EnumMFASettingsDeviceSelection(obj["device_selection"].(string)))
+	if !ok || apiObject == nil {
+		return types.ObjectNull(MFASettingsLockoutTFObjectTypes), nil
+	}
+
+	o := map[string]attr.Value{
+		"failure_count":    framework.Int32OkToTF(apiObject.GetFailureCountOk()),
+		"duration_seconds": framework.Int32OkToTF(apiObject.GetDurationSecondsOk()),
+	}
+
+	objValue, d := types.ObjectValue(MFASettingsLockoutTFObjectTypes, o)
+	diags.Append(d...)
+
+	return objValue, diags
 }
 
-func flattenMFASettingAuthentication(v mfa.MFASettingsAuthentication) []map[string]interface{} {
-	c := make([]map[string]interface{}, 0)
-	return append(c, map[string]interface{}{
-		"device_selection": string(v.GetDeviceSelection()),
-	})
+func toStatePairing(apiObject *mfa.MFASettingsPairing, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(MFASettingsPairingTFObjectTypes), nil
+	}
+
+	o := map[string]attr.Value{
+		"max_allowed_devices": framework.Int32OkToTF(apiObject.GetMaxAllowedDevicesOk()),
+		"pairing_key_format":  framework.EnumOkToTF(apiObject.GetPairingKeyFormatOk()),
+	}
+
+	objValue, d := types.ObjectValue(MFASettingsPairingTFObjectTypes, o)
+	diags.Append(d...)
+
+	return objValue, diags
 }
 
-func flattenMFASettingLockout(v mfa.MFASettingsLockout) []map[string]interface{} {
-	c := make([]map[string]interface{}, 0)
-	return append(c, map[string]interface{}{
-		"failure_count":    v.GetFailureCount(),
-		"duration_seconds": v.GetDurationSeconds(),
-	})
+func toStatePhoneExtensions(apiObject *mfa.MFASettingsPhoneExtensions, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(MFASettingsPhoneExtensionsTFObjectTypes), nil
+	}
+
+	o := map[string]attr.Value{
+		"enabled": framework.BoolOkToTF(apiObject.GetEnabledOk()),
+	}
+
+	objValue, d := types.ObjectValue(MFASettingsPhoneExtensionsTFObjectTypes, o)
+	diags.Append(d...)
+
+	return objValue, diags
 }
 
-func flattenMFASettingPairing(v mfa.MFASettingsPairing) []map[string]interface{} {
-	c := make([]map[string]interface{}, 0)
-	return append(c, map[string]interface{}{
-		"max_allowed_devices": v.GetMaxAllowedDevices(),
-		"pairing_key_format":  string(v.GetPairingKeyFormat()),
-	})
+func toStateUsers(apiObject *mfa.MFASettingsUsers, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(MFASettingsUsersTFObjectTypes), nil
+	}
+
+	o := map[string]attr.Value{
+		"mfa_enabled": framework.BoolOkToTF(apiObject.GetMfaEnabledOk()),
+	}
+
+	objValue, d := types.ObjectValue(MFASettingsUsersTFObjectTypes, o)
+	diags.Append(d...)
+
+	return objValue, diags
 }

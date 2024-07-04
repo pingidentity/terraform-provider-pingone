@@ -1,0 +1,15 @@
+```release-note:note
+`resource/pingone_mfa_settings`: Migrated to plugin framework.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_settings`: Changed the `pairing` and `lockout` data types.
+```
+
+```release-note:breaking-change
+`resource/pingone_mfa_settings`: Removed `phone_extensions_enabled` and moved into nested attribute object.  Use `phone_extensions.enabled` going forward.
+```
+
+```release-note:enhancement
+`resource/pingone_mfa_settings`: Added `users.mfa_enabled` that, when set to `true`, will enable MFA by default for new users.
+```
