@@ -32,7 +32,7 @@ import (
 // Types
 type NotificationTemplateContentResource serviceClientType
 
-type NotificationTemplateContentResourceModel struct {
+type notificationTemplateContentResourceModelV1 struct {
 	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
 	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	TemplateName  types.String                 `tfsdk:"template_name"`
@@ -45,7 +45,7 @@ type NotificationTemplateContentResourceModel struct {
 	Voice         types.Object                 `tfsdk:"voice"`
 }
 
-type NotificationTemplateContentEmailResourceModel struct {
+type notificationTemplateContentEmailResourceModelV1 struct {
 	Body         types.String `tfsdk:"body"`
 	From         types.Object `tfsdk:"from"`
 	Subject      types.String `tfsdk:"subject"`
@@ -54,23 +54,23 @@ type NotificationTemplateContentEmailResourceModel struct {
 	ContentType  types.String `tfsdk:"content_type"`
 }
 
-type NotificationTemplateContentEmailAddressResourceModel struct {
+type notificationTemplateContentEmailAddressResourceModelV1 struct {
 	Name    types.String `tfsdk:"name"`
 	Address types.String `tfsdk:"address"`
 }
 
-type NotificationTemplateContentPushResourceModel struct {
+type notificationTemplateContentPushResourceModelV1 struct {
 	Category types.String `tfsdk:"category"`
 	Body     types.String `tfsdk:"body"`
 	Title    types.String `tfsdk:"title"`
 }
 
-type NotificationTemplateContentSmsResourceModel struct {
+type notificationTemplateContentSmsResourceModelV1 struct {
 	Content types.String `tfsdk:"content"`
 	Sender  types.String `tfsdk:"sender"`
 }
 
-type NotificationTemplateContentVoiceResourceModel struct {
+type notificationTemplateContentVoiceResourceModelV1 struct {
 	Content types.String `tfsdk:"content"`
 	Type    types.String `tfsdk:"type"`
 }
@@ -227,6 +227,9 @@ func (r *NotificationTemplateContentResource) Schema(ctx context.Context, req re
 	)
 
 	resp.Schema = schema.Schema{
+
+		Version: 1,
+
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage PingOne notification template contents for push, SMS, email and voice notifications in an environment.",
 
@@ -554,7 +557,7 @@ func (r *NotificationTemplateContentResource) Configure(ctx context.Context, req
 }
 
 func (r *NotificationTemplateContentResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan, state NotificationTemplateContentResourceModel
+	var plan, state notificationTemplateContentResourceModelV1
 
 	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -603,7 +606,7 @@ func (r *NotificationTemplateContentResource) Create(ctx context.Context, req re
 }
 
 func (r *NotificationTemplateContentResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *NotificationTemplateContentResourceModel
+	var data *notificationTemplateContentResourceModelV1
 
 	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -648,7 +651,7 @@ func (r *NotificationTemplateContentResource) Read(ctx context.Context, req reso
 }
 
 func (r *NotificationTemplateContentResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan, state NotificationTemplateContentResourceModel
+	var plan, state notificationTemplateContentResourceModelV1
 
 	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -697,7 +700,7 @@ func (r *NotificationTemplateContentResource) Update(ctx context.Context, req re
 }
 
 func (r *NotificationTemplateContentResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *NotificationTemplateContentResourceModel
+	var data *notificationTemplateContentResourceModelV1
 
 	if r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -817,14 +820,14 @@ func notificationTemplateCustomWriteError(error model.P1Error) diag.Diagnostics 
 	return nil
 }
 
-func (p *NotificationTemplateContentResourceModel) expand(ctx context.Context) (*management.TemplateContent, diag.Diagnostics) {
+func (p *notificationTemplateContentResourceModelV1) expand(ctx context.Context) (*management.TemplateContent, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data := management.TemplateContent{}
 
 	if !p.Email.IsNull() && !p.Email.IsUnknown() {
 
-		var providerPlan NotificationTemplateContentEmailResourceModel
+		var providerPlan notificationTemplateContentEmailResourceModelV1
 		diags.Append(p.Email.As(ctx, &providerPlan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -845,7 +848,7 @@ func (p *NotificationTemplateContentResourceModel) expand(ctx context.Context) (
 
 		// Email specific
 		if !providerPlan.From.IsNull() && !providerPlan.From.IsUnknown() {
-			var fromPlan NotificationTemplateContentEmailAddressResourceModel
+			var fromPlan notificationTemplateContentEmailAddressResourceModelV1
 			diags.Append(providerPlan.From.As(ctx, &fromPlan, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    false,
 				UnhandledUnknownAsEmpty: false,
@@ -864,7 +867,7 @@ func (p *NotificationTemplateContentResourceModel) expand(ctx context.Context) (
 		}
 
 		if !providerPlan.ReplyTo.IsNull() && !providerPlan.ReplyTo.IsUnknown() {
-			var replyToPlan NotificationTemplateContentEmailAddressResourceModel
+			var replyToPlan notificationTemplateContentEmailAddressResourceModelV1
 			diags.Append(providerPlan.ReplyTo.As(ctx, &replyToPlan, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    false,
 				UnhandledUnknownAsEmpty: false,
@@ -891,7 +894,7 @@ func (p *NotificationTemplateContentResourceModel) expand(ctx context.Context) (
 
 	if !p.Push.IsNull() && !p.Push.IsUnknown() {
 
-		var providerPlan NotificationTemplateContentPushResourceModel
+		var providerPlan notificationTemplateContentPushResourceModelV1
 		diags.Append(p.Push.As(ctx, &providerPlan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -921,7 +924,7 @@ func (p *NotificationTemplateContentResourceModel) expand(ctx context.Context) (
 
 	if !p.Sms.IsNull() && !p.Sms.IsUnknown() {
 
-		var providerPlan NotificationTemplateContentSmsResourceModel
+		var providerPlan notificationTemplateContentSmsResourceModelV1
 		diags.Append(p.Sms.As(ctx, &providerPlan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -950,7 +953,7 @@ func (p *NotificationTemplateContentResourceModel) expand(ctx context.Context) (
 
 	if !p.Voice.IsNull() && !p.Voice.IsUnknown() {
 
-		var providerPlan NotificationTemplateContentVoiceResourceModel
+		var providerPlan notificationTemplateContentVoiceResourceModelV1
 		diags.Append(p.Voice.As(ctx, &providerPlan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -980,7 +983,7 @@ func (p *NotificationTemplateContentResourceModel) expand(ctx context.Context) (
 	return &data, diags
 }
 
-func (p *NotificationTemplateContentEmailAddressResourceModel) expandFrom() *management.TemplateContentEmailAllOfFrom {
+func (p *notificationTemplateContentEmailAddressResourceModelV1) expandFrom() *management.TemplateContentEmailAllOfFrom {
 
 	data := management.NewTemplateContentEmailAllOfFrom()
 
@@ -995,7 +998,7 @@ func (p *NotificationTemplateContentEmailAddressResourceModel) expandFrom() *man
 	return data
 }
 
-func (p *NotificationTemplateContentEmailAddressResourceModel) expandReplyTo() *management.TemplateContentEmailAllOfReplyTo {
+func (p *notificationTemplateContentEmailAddressResourceModelV1) expandReplyTo() *management.TemplateContentEmailAllOfReplyTo {
 
 	data := management.NewTemplateContentEmailAllOfReplyTo()
 
@@ -1010,7 +1013,7 @@ func (p *NotificationTemplateContentEmailAddressResourceModel) expandReplyTo() *
 	return data
 }
 
-func (p *NotificationTemplateContentResourceModel) toState(apiObject *management.TemplateContent) diag.Diagnostics {
+func (p *notificationTemplateContentResourceModelV1) toState(apiObject *management.TemplateContent) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
