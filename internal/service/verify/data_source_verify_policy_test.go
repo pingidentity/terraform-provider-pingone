@@ -38,12 +38,17 @@ func TestAccVerifyPolicyDataSource_All(t *testing.T) {
 
 		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.inspection_type", "AUTOMATIC"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.fail_expired_id", "true"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.provider_auto", "VERIFF"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.provider_manual", "MITEK"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.retry_attempts", "1"),
 
 		resource.TestCheckResourceAttr(dataSourceFullName, "facial_comparison.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "facial_comparison.threshold", "HIGH"),
 
 		resource.TestCheckResourceAttr(dataSourceFullName, "liveness.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "liveness.threshold", "HIGH"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "liveness.retry_attempts", "3"),
 
 		resource.TestCheckResourceAttr(dataSourceFullName, "email.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "email.create_mfa_device", "true"),
@@ -227,7 +232,12 @@ resource "pingone_verify_policy" "%[3]s" {
   description    = "%[4]s"
 
   government_id = {
-    verify = "REQUIRED"
+    verify          = "REQUIRED"
+    inspection_type = "AUTOMATIC"
+    fail_expired_id = true
+    provider_auto   = "VERIFF"
+    provider_manual = "MITEK"
+    retry_attempts  = "1"
   }
 
   facial_comparison = {
@@ -236,8 +246,9 @@ resource "pingone_verify_policy" "%[3]s" {
   }
 
   liveness = {
-    verify    = "REQUIRED"
-    threshold = "HIGH"
+    verify         = "REQUIRED"
+    threshold      = "HIGH"
+    retry_attempts = "3"
   }
 
   email = {

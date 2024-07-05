@@ -52,6 +52,10 @@ var (
 	governmentIdDataSourceServiceTFObjectTypes = map[string]attr.Type{
 		"verify":          types.StringType,
 		"inspection_type": types.StringType,
+		"fail_expired_id": types.BoolType,
+		"provider_auto":   types.StringType,
+		"provider_manual": types.StringType,
+		"retry_attempts":  types.Int64Type,
 	}
 
 	facialComparisonDataSourceServiceTFObjectTypes = map[string]attr.Type{
@@ -60,8 +64,9 @@ var (
 	}
 
 	livenessDataSourceServiceTFObjectTypes = map[string]attr.Type{
-		"verify":    types.StringType,
-		"threshold": types.StringType,
+		"verify":         types.StringType,
+		"threshold":      types.StringType,
+		"retry_attempts": types.Int64Type,
 	}
 
 	deviceDataSourceServiceTFObjectTypes = map[string]attr.Type{
@@ -153,6 +158,9 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 	const attrMinLifetimeDurationMinutes = 1
 	const attrMaxLifetimeDurationMinutes = 30
 
+	const attrMinRetryAttempts = 0
+	const attrMaxRetryAttempts = 3
+
 	// defaults
 	const defaultNotificationTemplate = "email_phone_verification"
 
@@ -171,6 +179,9 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 	const defaultTransactionDuration = 30
 	const defaultTransactionDataCollectionDuration = 15
 	const defaultTransactionTimeUnit = verify.ENUMTIMEUNIT_MINUTES
+
+	const defaultProviderAuto = verify.ENUMPROVIDERAUTO_MITEK
+	const defaultProviderManual = verify.ENUMPROVIDERAUTO_MITEK
 
 	dataSourceExactlyOneOfRelativePaths := []string{
 		"verify_policy_id",
@@ -310,6 +321,18 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 		"When `true`, collects documents specified in the policy without determining their validity; defaults to `false`.",
 	)
 
+	retryAttemptsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("Number of retries permitted when submitting images.  The allowed range is `%d - %d`.", attrMinRetryAttempts, attrMaxRetryAttempts),
+	)
+
+	providerAutoDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Provider to use for the automatic verification service.",
+	).AllowedValuesEnum(verify.AllowedEnumProviderAutoEnumValues).DefaultValue(string(defaultProviderAuto))
+
+	providerManualDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Provider to use for the manual verification service.",
+	).AllowedValuesEnum(verify.AllowedEnumProviderManualEnumValues).DefaultValue(string(defaultProviderManual))
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Data source to retrieve the default PingOne Verify Policy or to find a PingOne Verify Policy by its Verify Policy Id or Name.",
@@ -381,6 +404,25 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 						MarkdownDescription: governmentIdInspectionTypeDescription.MarkdownDescription,
 						Computed:            true,
 					},
+					"fail_expired_id": schema.BoolAttribute{
+						Description: "When enabled, Government ID verification fails if the document is expired.",
+						Computed:    true,
+					},
+					"provider_auto": schema.StringAttribute{
+						Description:         providerAutoDescription.Description,
+						MarkdownDescription: providerAutoDescription.MarkdownDescription,
+						Computed:            true,
+					},
+					"provider_manual": schema.StringAttribute{
+						Description:         providerManualDescription.Description,
+						MarkdownDescription: providerManualDescription.MarkdownDescription,
+						Computed:            true,
+					},
+					"retry_attempts": schema.Int64Attribute{
+						Description:         retryAttemptsDescription.Description,
+						MarkdownDescription: retryAttemptsDescription.MarkdownDescription,
+						Computed:            true,
+					},
 				},
 			},
 
@@ -415,6 +457,11 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 					"threshold": schema.StringAttribute{
 						Description:         livenessThresholdDescription.Description,
 						MarkdownDescription: livenessThresholdDescription.MarkdownDescription,
+						Computed:            true,
+					},
+					"retry_attempts": schema.Int64Attribute{
+						Description:         retryAttemptsDescription.Description,
+						MarkdownDescription: retryAttemptsDescription.MarkdownDescription,
 						Computed:            true,
 					},
 				},
@@ -950,9 +997,27 @@ func (p *verifyPolicyDataSourceModel) toStateGovernmentId(apiObject *verify.Gove
 		return types.ObjectNull(governmentIdDataSourceServiceTFObjectTypes), diags
 	}
 
+	retryAttempts := types.Int64Null()
+	if v, ok := apiObject.GetRetryOk(); ok {
+		if t, ok := v.GetAttemptsOk(); ok {
+			retryAttempts = framework.Int32ToTF(*t)
+		}
+	}
+
+	provider, ok := apiObject.GetProviderOk()
+	if !ok {
+		diags.AddError(
+			"Unexpected Missing Value",
+			"GovernmentId data object contained unexpected null value for the `provider` data object.  Please report this issue to the provider maintainers.")
+	}
+
 	objValue, d := types.ObjectValue(governmentIdDataSourceServiceTFObjectTypes, map[string]attr.Value{
 		"verify":          framework.EnumOkToTF(apiObject.GetVerifyOk()),
 		"inspection_type": framework.EnumOkToTF(apiObject.GetInspectionTypeOk()),
+		"fail_expired_id": framework.BoolOkToTF(apiObject.GetFailExpiredIdOk()),
+		"provider_auto":   framework.EnumOkToTF(provider.GetAutoOk()),
+		"provider_manual": framework.EnumOkToTF(provider.GetManualOk()),
+		"retry_attempts":  retryAttempts,
 	})
 	diags.Append(d...)
 
@@ -982,9 +1047,17 @@ func (p *verifyPolicyDataSourceModel) toStateLiveness(apiObject *verify.Liveness
 		return types.ObjectNull(livenessDataSourceServiceTFObjectTypes), diags
 	}
 
+	retryAttempts := types.Int64Null()
+	if v, ok := apiObject.GetRetryOk(); ok {
+		if t, ok := v.GetAttemptsOk(); ok {
+			retryAttempts = framework.Int32ToTF(*t)
+		}
+	}
+
 	objValue, d := types.ObjectValue(livenessDataSourceServiceTFObjectTypes, map[string]attr.Value{
-		"verify":    framework.EnumOkToTF(apiObject.GetVerifyOk()),
-		"threshold": framework.EnumOkToTF(apiObject.GetThresholdOk()),
+		"verify":         framework.EnumOkToTF(apiObject.GetVerifyOk()),
+		"threshold":      framework.EnumOkToTF(apiObject.GetThresholdOk()),
+		"retry_attempts": retryAttempts,
 	})
 	diags.Append(d...)
 

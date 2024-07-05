@@ -20,7 +20,10 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
   description    = "Example - All Verification Checks Required"
 
   government_id = {
-    verify = "REQUIRED"
+    verify          = "REQUIRED"
+    provider_auto   = "VERIFF"
+    fail_expired_id = true
+    retry_attempts  = "2"
   }
 
   facial_comparison = {
