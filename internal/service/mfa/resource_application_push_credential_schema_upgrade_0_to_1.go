@@ -161,14 +161,31 @@ func (p *applicationPushCredentialResourceModelV0) schemaUpgradeFCMV0toV1(ctx co
 			return types.ObjectNull(attributeTypes), diags
 		}
 
+		googleServiceAccountCredentials, d := priorStateData[0].schemaUpgradeGoogleServiceAccountCredentialsV0toV1()
+		diags.Append(d...)
+
 		upgradedStateData := applicationPushCredentialFcmResourceModelV1{
-			GoogleServiceAccountCredentials: jsontypes.NewNormalizedValue(priorStateData[0].GoogleServiceAccountCredentials.ValueString()),
+			GoogleServiceAccountCredentials: googleServiceAccountCredentials,
 		}
 
 		returnVar, d := types.ObjectValueFrom(ctx, attributeTypes, upgradedStateData)
 		diags.Append(d...)
 
 		return returnVar, diags
+	}
+}
+
+func (p *applicationPushCredentialFcmResourceModelV0) schemaUpgradeGoogleServiceAccountCredentialsV0toV1() (jsontypes.Normalized, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	planAttribute := p.GoogleServiceAccountCredentials
+
+	if planAttribute.IsNull() {
+		return jsontypes.NewNormalizedNull(), diags
+	} else if planAttribute.IsUnknown() {
+		return jsontypes.NewNormalizedUnknown(), diags
+	} else {
+		return jsontypes.NewNormalizedValue(planAttribute.ValueString()), diags
 	}
 }
 
