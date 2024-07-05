@@ -25,11 +25,11 @@ resource "pingone_application" "my_awesome_mobile_application" {
   enabled = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["AUTHORIZATION_CODE"]
-    response_types              = ["CODE"]
-    token_endpoint_authn_method = "NONE"
-    pkce_enforcement            = "S256_REQUIRED"
+    type                       = "NATIVE_APP"
+    grant_types                = ["AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    token_endpoint_auth_method = "NONE"
+    pkce_enforcement           = "S256_REQUIRED"
 
     mobile_app = {
 

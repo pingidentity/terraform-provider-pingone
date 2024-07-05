@@ -427,11 +427,11 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "WEB_APP"
-    grant_types                 = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
-    response_types              = ["CODE"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-    redirect_uris               = ["https://www.pingidentity.com"]
+    type                       = "WEB_APP"
+    grant_types                = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
+    redirect_uris              = ["https://www.pingidentity.com"]
   }
 }
 

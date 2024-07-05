@@ -95,9 +95,9 @@ resource "pingone_application" "%[3]s-appname1" {
   enabled        = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     mobile_app = {
       bundle_id                = "com.pingidentity.ios_wallet_byid"
@@ -120,11 +120,11 @@ resource "pingone_application" "%[3]s-appname2" {
   enabled        = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["AUTHORIZATION_CODE"]
-    response_types              = ["CODE"]
-    pkce_enforcement            = "S256_REQUIRED"
-    token_endpoint_authn_method = "NONE"
+    type                       = "NATIVE_APP"
+    grant_types                = ["AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    pkce_enforcement           = "S256_REQUIRED"
+    token_endpoint_auth_method = "NONE"
     redirect_uris = [
       "https://www.example.com/app/callback",
     ]
@@ -150,9 +150,9 @@ resource "pingone_application" "%[3]s-appname3" {
   enabled        = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     mobile_app = {
       bundle_id                = "com.pingidentity.ios_wallet3"

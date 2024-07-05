@@ -431,9 +431,9 @@ resource "pingone_application" "%[3]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "WORKER"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "WORKER"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
   }
 }
 
@@ -460,11 +460,11 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "WEB_APP"
-    grant_types                 = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
-    response_types              = ["CODE"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-    redirect_uris               = ["https://www.pingidentity.com"]
+    type                       = "WEB_APP"
+    grant_types                = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
+    redirect_uris              = ["https://www.pingidentity.com"]
   }
 }
 
@@ -474,9 +474,9 @@ resource "pingone_application" "%[2]s-admin" {
   enabled        = true
 
   oidc_options = {
-    type                        = "WORKER"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "WORKER"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
   }
 }
 
@@ -509,9 +509,9 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "WORKER"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "WORKER"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
   }
 }
 
@@ -538,9 +538,9 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "WORKER"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "WORKER"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
   }
 }
 
@@ -567,9 +567,9 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "WORKER"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "WORKER"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
   }
 }
 

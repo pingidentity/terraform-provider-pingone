@@ -244,6 +244,36 @@ resource "pingone_application" "my_awesome_application" {
 }
 ```
 
+### `oidc_options.allow_wildcards_in_redirect_uris` optional parameter renamed
+
+The `oidc_options.allow_wildcards_in_redirect_uris` optional parameter has been renamed to `oidc_options.allow_wildcard_in_redirect_uris` to align with the API.
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  oidc_options {
+    # ... other configuration parameters
+
+    allow_wildcards_in_redirect_uris = "NONE"
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  oidc_options = {
+    # ... other configuration parameters
+
+    allow_wildcard_in_redirect_uris = "NONE"
+  }
+}
+```
+
 ### `oidc_options.bundle_id` optional parameter removed
 
 This parameter was previously deprecated and has been removed.  Use the `oidc_options.mobile_app.bundle_id` parameter going forward.
@@ -683,6 +713,36 @@ resource "pingone_application" "my_awesome_application" {
 ### `oidc_options.package_name` optional parameter removed
 
 This parameter was previously deprecated and has been removed.  Use the `oidc_options.mobile_app.package_name` parameter going forward.
+
+### `oidc_options.token_endpoint_authn_method` optional parameter renamed
+
+The `oidc_options.token_endpoint_authn_method` optional parameter has been renamed to `oidc_options.token_endpoint_auth_method` to align with the API.
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  oidc_options {
+    # ... other configuration parameters
+
+    token_endpoint_authn_method = "NONE"
+  }
+}
+```
+
+New configuration example:
+
+```terraform
+resource "pingone_application" "my_awesome_application" {
+  # ... other configuration parameters
+
+  oidc_options = {
+    # ... other configuration parameters
+
+    token_endpoint_auth_method = "NONE"
+  }
+}
+```
 
 ### `saml_options` parameter data type change
 
@@ -4482,6 +4542,10 @@ The `icon` computed attribute is now a nested object type and no longer a list t
 
 The `oidc_options` computed attribute is now a nested object type and no longer a list type.
 
+### `oidc_options.allow_wildcards_in_redirect_uris` computed attribute renamed
+
+The `oidc_options.allow_wildcards_in_redirect_uris` computed attribute has been renamed to `oidc_options.allow_wildcard_in_redirect_uris` to align with the API.
+
 ### `oidc_options.certificate_based_authentication` computed attribute data type change
 
 The `oidc_options.certificate_based_authentication` computed attribute is now a nested object type and no longer a list type.
@@ -4588,6 +4652,10 @@ The `oidc_options.mobile_app.integrity_detection.cache_duration` computed attrib
 ### `oidc_options.mobile_app.integrity_detection.google_play` computed attribute data type change
 
 The `oidc_options.mobile_app.integrity_detection.google_play` computed attribute is now a nested object type and no longer a list type.
+
+### `oidc_options.token_endpoint_authn_method` computed attribute renamed
+
+The `oidc_options.token_endpoint_authn_method` computed attribute has been renamed to `oidc_options.token_endpoint_auth_method` to align with the API.
 
 ### `saml_options` computed attribute data type change
 

@@ -401,9 +401,9 @@ resource "pingone_application" "%[3]s" {
   enabled = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     mobile_app = {
       package_name = "com.%[4]s.package"
@@ -452,9 +452,9 @@ resource "pingone_application" "%[2]s" {
   enabled = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     mobile_app = {
       package_name = "com.%[2]s.package"
@@ -503,9 +503,9 @@ resource "pingone_application" "%[2]s" {
   enabled = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     mobile_app = {
       bundle_id = "com.%[2]s.bundle"
@@ -554,9 +554,9 @@ resource "pingone_application" "%[2]s" {
   enabled = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     mobile_app = {
       huawei_app_id       = "%[2]s"

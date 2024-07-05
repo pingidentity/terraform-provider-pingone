@@ -151,14 +151,14 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "REFRESH_TOKEN"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://pingidentity.com"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.*", "https://pingidentity.com/logout"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.*", "https://www.pingidentity.com/logout"),
@@ -241,13 +241,13 @@ func TestAccApplication_OIDCMinimalWeb(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "REFRESH_TOKEN"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "15552000"),
@@ -306,13 +306,13 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "REFRESH_TOKEN"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "15552000"),
@@ -352,14 +352,14 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "REFRESH_TOKEN"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://pingidentity.com"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.*", "https://pingidentity.com/logout"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.*", "https://www.pingidentity.com/logout"),
@@ -405,13 +405,13 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "REFRESH_TOKEN"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "15552000"),
@@ -473,12 +473,12 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.grant_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "15552000"),
@@ -567,12 +567,12 @@ func TestAccApplication_OIDCMinimalNative(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.grant_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "15552000"),
@@ -641,12 +641,12 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.grant_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "15552000"),
@@ -693,12 +693,12 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.grant_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "15552000"),
@@ -743,12 +743,12 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.grant_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "15552000"),
@@ -1145,14 +1145,14 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "TOKEN"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "ID_TOKEN"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "180"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://pingidentity.com"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.*", "https://pingidentity.com/logout"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.*", "https://www.pingidentity.com/logout"),
@@ -1237,12 +1237,12 @@ func TestAccApplication_OIDCMinimalCustom(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_timeout", "600"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_polling_interval", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "15552000"),
@@ -1314,14 +1314,14 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "TOKEN"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "ID_TOKEN"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "180"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://pingidentity.com"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.*", "https://pingidentity.com/logout"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.*", "https://www.pingidentity.com/logout"),
@@ -1369,12 +1369,12 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_timeout", "600"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_polling_interval", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "15552000"),
@@ -1422,14 +1422,14 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "TOKEN"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "ID_TOKEN"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "180"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://pingidentity.com"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.*", "https://pingidentity.com/logout"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.*", "https://www.pingidentity.com/logout"),
@@ -1574,14 +1574,14 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "TOKEN"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "ID_TOKEN"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://pingidentity.com"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.*", "https://pingidentity.com/logout"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.*", "https://www.pingidentity.com/logout"),
@@ -1664,13 +1664,13 @@ func TestAccApplication_OIDCMinimalService(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "REFRESH_TOKEN"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "15552000"),
@@ -1738,14 +1738,14 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "TOKEN"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "ID_TOKEN"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://pingidentity.com"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.*", "https://pingidentity.com/logout"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.*", "https://www.pingidentity.com/logout"),
@@ -1791,13 +1791,13 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "REFRESH_TOKEN"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "15552000"),
@@ -1841,14 +1841,14 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "TOKEN"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "ID_TOKEN"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://pingidentity.com"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.*", "https://pingidentity.com/logout"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.*", "https://www.pingidentity.com/logout"),
@@ -1922,14 +1922,14 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "AUTHORIZATION_CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "NONE"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "NONE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "S256_REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://pingidentity.com"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.*", "https://pingidentity.com/logout"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.*", "https://www.pingidentity.com/logout"),
@@ -2011,13 +2011,13 @@ func TestAccApplication_OIDCMinimalSPA(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "AUTHORIZATION_CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "NONE"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "NONE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "S256_REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "15552000"),
@@ -2075,13 +2075,13 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "AUTHORIZATION_CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "NONE"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "NONE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "S256_REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "15552000"),
@@ -2120,14 +2120,14 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "AUTHORIZATION_CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "NONE"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "NONE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "S256_REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://pingidentity.com"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.*", "https://pingidentity.com/logout"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.*", "https://www.pingidentity.com/logout"),
@@ -2172,13 +2172,13 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "AUTHORIZATION_CODE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "NONE"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "NONE"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "S256_REQUIRED"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "15552000"),
@@ -2241,12 +2241,12 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.grant_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "15552000"),
@@ -2327,12 +2327,12 @@ func TestAccApplication_OIDCMinimalWorker(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.grant_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "15552000"),
@@ -2391,12 +2391,12 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.grant_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "15552000"),
@@ -2435,12 +2435,12 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.grant_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "15552000"),
@@ -2484,12 +2484,12 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.grant_types.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "15552000"),
@@ -2535,7 +2535,7 @@ func TestAccApplication_OIDC_WildcardInRedirectURI(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com/*"),
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcards_in_redirect_uris", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.allow_wildcard_in_redirect_uris", "true"),
 				),
 			},
 		},
@@ -2641,7 +2641,7 @@ func TestAccApplication_OIDC_JwtTokenAuth(t *testing.T) {
 	clientSecretBasic := resource.TestStep{
 		Config: testAccApplicationConfig_OIDC_MinimalWeb(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_BASIC"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.jwks"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.jwks_url"),
 		),
@@ -2650,7 +2650,7 @@ func TestAccApplication_OIDC_JwtTokenAuth(t *testing.T) {
 	privateKeyJwtJWKS := resource.TestStep{
 		Config: testAccApplicationConfig_OIDC_MinimalWeb_PrivateKeyJWT_JWKS(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "PRIVATE_KEY_JWT"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "PRIVATE_KEY_JWT"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.jwks", "{\n\t\"keys\": [\n\t  {\n\t\t\"kty\": \"RSA\",\n\t\t\"e\": \"AQAB\",\n\t\t\"use\": \"sig\",\n\t\t\"kid\": \"12345\",\n\t\t\"alg\": \"RS256\",\n\t\t\"n\": \"0vx7agoebGcQSuuPiLJXZptN9nndrQmbXEPCR0VH7jhV1JvKFvVsenY4rz5BnCNRS7U2mFF9K2BWXTZiaF4f3hjd4J0AOnHZV9KbV7L5Cp-1PEXF12R3HCkcqsn9b2I0xEs5OYLQaGbhV8v1FwTD2jZX0tAiw4i+SN9GJkPV2ZCOnF-8RPZCVDG9LZGFq4c9-YNPvRwT7B9-EN0kDYEKsOmGiJ0PVPAVTPZ9EVZVdLg7SwamytKcP4fz_BLTjCojz2W9KIL5UZGenQR5S7KAZxJ0T0DO8Q4kqNVdF7OOrBizX6-qQ9ZC1l6HJ6Sq9ye0oW2jTiMlNQxgc5vNRgHFAmb4DNA\"\n\t  }\n\t]\n}\n"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.jwks_url"),
 		),
@@ -2659,7 +2659,7 @@ func TestAccApplication_OIDC_JwtTokenAuth(t *testing.T) {
 	privateKeyJwtJWKSURL := resource.TestStep{
 		Config: testAccApplicationConfig_OIDC_MinimalWeb_PrivateKeyJWT_JWKSURL(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "PRIVATE_KEY_JWT"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "PRIVATE_KEY_JWT"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.jwks"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.jwks_url", "https://pingidentity.com/jwks"),
 		),
@@ -2668,7 +2668,7 @@ func TestAccApplication_OIDC_JwtTokenAuth(t *testing.T) {
 	clientSecretJWT := resource.TestStep{
 		Config: testAccApplicationConfig_OIDC_MinimalWeb_ClientSecretJWT(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_authn_method", "CLIENT_SECRET_JWT"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_JWT"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.jwks"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.jwks_url"),
 		),
@@ -3119,11 +3119,11 @@ resource "pingone_application" "%[3]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "WEB_APP"
-    grant_types                 = ["AUTHORIZATION_CODE", "REFRESH_TOKEN"]
-    response_types              = ["CODE"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-    redirect_uris               = ["https://www.pingidentity.com"]
+    type                       = "WEB_APP"
+    grant_types                = ["AUTHORIZATION_CODE", "REFRESH_TOKEN"]
+    response_types             = ["CODE"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
+    redirect_uris              = ["https://www.pingidentity.com"]
   }
 }
 `, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
@@ -3171,13 +3171,13 @@ resource "pingone_application" "%[2]s" {
   enabled = true
 
   oidc_options = {
-    type                             = "WEB_APP"
-    grant_types                      = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
-    response_types                   = ["CODE"]
-    token_endpoint_authn_method      = "CLIENT_SECRET_BASIC"
-    redirect_uris                    = ["https://www.pingidentity.com", "https://pingidentity.com"]
-    allow_wildcards_in_redirect_uris = true
-    post_logout_redirect_uris        = ["https://www.pingidentity.com/logout", "https://pingidentity.com/logout"]
+    type                            = "WEB_APP"
+    grant_types                     = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
+    response_types                  = ["CODE"]
+    token_endpoint_auth_method      = "CLIENT_SECRET_BASIC"
+    redirect_uris                   = ["https://www.pingidentity.com", "https://pingidentity.com"]
+    allow_wildcard_in_redirect_uris = true
+    post_logout_redirect_uris       = ["https://www.pingidentity.com/logout", "https://pingidentity.com/logout"]
 
     refresh_token_duration                             = 3000000
     refresh_token_rolling_duration                     = 30000000
@@ -3222,11 +3222,11 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "WEB_APP"
-    grant_types                 = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
-    response_types              = ["CODE"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-    redirect_uris               = ["https://www.pingidentity.com"]
+    type                       = "WEB_APP"
+    grant_types                = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
+    redirect_uris              = ["https://www.pingidentity.com"]
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -3241,11 +3241,11 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "WEB_APP"
-    grant_types                 = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
-    response_types              = ["CODE"]
-    token_endpoint_authn_method = "PRIVATE_KEY_JWT"
-    redirect_uris               = ["https://www.pingidentity.com"]
+    type                       = "WEB_APP"
+    grant_types                = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    token_endpoint_auth_method = "PRIVATE_KEY_JWT"
+    redirect_uris              = ["https://www.pingidentity.com"]
 
     jwks = <<EOF
 {
@@ -3275,11 +3275,11 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "WEB_APP"
-    grant_types                 = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
-    response_types              = ["CODE"]
-    token_endpoint_authn_method = "PRIVATE_KEY_JWT"
-    redirect_uris               = ["https://www.pingidentity.com"]
+    type                       = "WEB_APP"
+    grant_types                = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    token_endpoint_auth_method = "PRIVATE_KEY_JWT"
+    redirect_uris              = ["https://www.pingidentity.com"]
 
     jwks_url = "https://pingidentity.com/jwks"
   }
@@ -3296,11 +3296,11 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "WEB_APP"
-    grant_types                 = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
-    response_types              = ["CODE"]
-    token_endpoint_authn_method = "CLIENT_SECRET_JWT"
-    redirect_uris               = ["https://www.pingidentity.com"]
+    type                       = "WEB_APP"
+    grant_types                = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    token_endpoint_auth_method = "CLIENT_SECRET_JWT"
+    redirect_uris              = ["https://www.pingidentity.com"]
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -3347,11 +3347,11 @@ resource "pingone_application" "%[2]s" {
   enabled = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
-    allow_wildcards_in_redirect_uris = true
+    allow_wildcard_in_redirect_uris = true
 
     cors_settings = {
       behavior = "ALLOW_NO_ORIGINS"
@@ -3399,9 +3399,9 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -3429,9 +3429,9 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     certificate_based_authentication = {
       key_id = pingone_key.%[2]s.id
@@ -3463,9 +3463,9 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     certificate_based_authentication = {
       key_id = pingone_key.%[2]s.id
@@ -3497,9 +3497,9 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "WORKER"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "WORKER"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     certificate_based_authentication = {
       key_id = pingone_key.%[2]s.id
@@ -3519,9 +3519,9 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     mobile_app = {
       bundle_id           = "com.%[2]s.bundle"
@@ -3565,9 +3565,9 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     mobile_app = {}
   }
@@ -3585,9 +3585,9 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     mobile_app = {
       bundle_id           = "com.%[2]s.bundle"
@@ -3631,9 +3631,9 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     mobile_app = {
       bundle_id           = "com.%[2]s.bundle"
@@ -3673,9 +3673,9 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     mobile_app = {
       bundle_id           = "com.%[2]s.bundle"
@@ -3712,9 +3712,9 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     mobile_app = {
       bundle_id           = "com.%[2]s.bundle"
@@ -3800,10 +3800,10 @@ resource "pingone_application" "%[2]s" {
       "TOKEN",
       "ID_TOKEN"
     ]
-    token_endpoint_authn_method      = "CLIENT_SECRET_BASIC"
-    redirect_uris                    = ["https://www.pingidentity.com", "https://pingidentity.com"]
-    allow_wildcards_in_redirect_uris = true
-    post_logout_redirect_uris        = ["https://www.pingidentity.com/logout", "https://pingidentity.com/logout"]
+    token_endpoint_auth_method      = "CLIENT_SECRET_BASIC"
+    redirect_uris                   = ["https://www.pingidentity.com", "https://pingidentity.com"]
+    allow_wildcard_in_redirect_uris = true
+    post_logout_redirect_uris       = ["https://www.pingidentity.com/logout", "https://pingidentity.com/logout"]
 
     refresh_token_duration                             = 3000000
     refresh_token_rolling_duration                     = 30000000
@@ -3848,9 +3848,9 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "CUSTOM_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "CUSTOM_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -3866,9 +3866,9 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "CUSTOM_APP"
-    grant_types                 = ["DEVICE_CODE", "REFRESH_TOKEN"]
-    token_endpoint_authn_method = "NONE"
+    type                       = "CUSTOM_APP"
+    grant_types                = ["DEVICE_CODE", "REFRESH_TOKEN"]
+    token_endpoint_auth_method = "NONE"
 
     device_path_id                 = "mobileAppId-1"
     device_custom_verification_uri = "https://pingidentity.com/verification1"
@@ -3889,9 +3889,9 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "CUSTOM_APP"
-    grant_types                 = ["DEVICE_CODE"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "CUSTOM_APP"
+    grant_types                = ["DEVICE_CODE"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -3950,10 +3950,10 @@ resource "pingone_application" "%[2]s" {
       "TOKEN",
       "ID_TOKEN"
     ]
-    token_endpoint_authn_method      = "CLIENT_SECRET_BASIC"
-    redirect_uris                    = ["https://www.pingidentity.com", "https://pingidentity.com"]
-    allow_wildcards_in_redirect_uris = true
-    post_logout_redirect_uris        = ["https://www.pingidentity.com/logout", "https://pingidentity.com/logout"]
+    token_endpoint_auth_method      = "CLIENT_SECRET_BASIC"
+    redirect_uris                   = ["https://www.pingidentity.com", "https://pingidentity.com"]
+    allow_wildcard_in_redirect_uris = true
+    post_logout_redirect_uris       = ["https://www.pingidentity.com/logout", "https://pingidentity.com/logout"]
 
     refresh_token_duration                             = 3000000
     refresh_token_rolling_duration                     = 30000000
@@ -3993,11 +3993,11 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "SERVICE"
-    grant_types                 = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
-    response_types              = ["CODE"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-    redirect_uris               = ["https://www.pingidentity.com"]
+    type                       = "SERVICE"
+    grant_types                = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
+    redirect_uris              = ["https://www.pingidentity.com"]
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -4044,17 +4044,17 @@ resource "pingone_application" "%[2]s" {
   enabled = true
 
   oidc_options = {
-    type                             = "SINGLE_PAGE_APP"
-    grant_types                      = ["AUTHORIZATION_CODE"]
-    response_types                   = ["CODE"]
-    pkce_enforcement                 = "S256_REQUIRED"
-    token_endpoint_authn_method      = "NONE"
-    redirect_uris                    = ["https://www.pingidentity.com", "https://pingidentity.com"]
-    allow_wildcards_in_redirect_uris = true
-    post_logout_redirect_uris        = ["https://www.pingidentity.com/logout", "https://pingidentity.com/logout"]
-    home_page_url                    = "https://www.pingidentity.com"
-    initiate_login_uri               = "https://www.pingidentity.com/initiate"
-    target_link_uri                  = "https://www.pingidentity.com/target"
+    type                            = "SINGLE_PAGE_APP"
+    grant_types                     = ["AUTHORIZATION_CODE"]
+    response_types                  = ["CODE"]
+    pkce_enforcement                = "S256_REQUIRED"
+    token_endpoint_auth_method      = "NONE"
+    redirect_uris                   = ["https://www.pingidentity.com", "https://pingidentity.com"]
+    allow_wildcard_in_redirect_uris = true
+    post_logout_redirect_uris       = ["https://www.pingidentity.com/logout", "https://pingidentity.com/logout"]
+    home_page_url                   = "https://www.pingidentity.com"
+    initiate_login_uri              = "https://www.pingidentity.com/initiate"
+    target_link_uri                 = "https://www.pingidentity.com/target"
 
     support_unsigned_request_object = true
 
@@ -4086,12 +4086,12 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "SINGLE_PAGE_APP"
-    grant_types                 = ["AUTHORIZATION_CODE"]
-    response_types              = ["CODE"]
-    pkce_enforcement            = "S256_REQUIRED"
-    token_endpoint_authn_method = "NONE"
-    redirect_uris               = ["https://www.pingidentity.com"]
+    type                       = "SINGLE_PAGE_APP"
+    grant_types                = ["AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    pkce_enforcement           = "S256_REQUIRED"
+    token_endpoint_auth_method = "NONE"
+    redirect_uris              = ["https://www.pingidentity.com"]
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -4144,9 +4144,9 @@ resource "pingone_application" "%[2]s" {
   enabled = true
 
   oidc_options = {
-    type                        = "WORKER"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "WORKER"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     cors_settings = {
       behavior = "ALLOW_SPECIFIC_ORIGINS"
@@ -4176,9 +4176,9 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "WORKER"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "WORKER"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -4194,13 +4194,13 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                             = "SINGLE_PAGE_APP"
-    grant_types                      = ["AUTHORIZATION_CODE"]
-    response_types                   = ["CODE"]
-    pkce_enforcement                 = "S256_REQUIRED"
-    token_endpoint_authn_method      = "NONE"
-    redirect_uris                    = ["https://www.pingidentity.com/*"]
-    allow_wildcards_in_redirect_uris = %[4]t
+    type                            = "SINGLE_PAGE_APP"
+    grant_types                     = ["AUTHORIZATION_CODE"]
+    response_types                  = ["CODE"]
+    pkce_enforcement                = "S256_REQUIRED"
+    token_endpoint_auth_method      = "NONE"
+    redirect_uris                   = ["https://www.pingidentity.com/*"]
+    allow_wildcard_in_redirect_uris = %[4]t
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name, wildcardInRedirect)
@@ -4218,16 +4218,16 @@ resource "pingone_application" "%[2]s" {
   login_page_url = "http://%[4]s/login" # https with the exception of localhost
 
   oidc_options = {
-    home_page_url               = "http://%[4]s/home" # https with the exception of localhost
-    initiate_login_uri          = "http://%[4]s/init" # https with the exception of localhost
-    type                        = "SINGLE_PAGE_APP"
-    grant_types                 = ["AUTHORIZATION_CODE"]
-    response_types              = ["CODE"]
-    pkce_enforcement            = "S256_REQUIRED"
-    token_endpoint_authn_method = "NONE"
-    redirect_uris               = ["http://%[4]s/callback"] # https with the exception of localhost
-    post_logout_redirect_uris   = ["http://%[4]s/logout"]   # either http or https
-    target_link_uri             = "http://%[4]s/link"       # either http or https
+    home_page_url              = "http://%[4]s/home" # https with the exception of localhost
+    initiate_login_uri         = "http://%[4]s/init" # https with the exception of localhost
+    type                       = "SINGLE_PAGE_APP"
+    grant_types                = ["AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    pkce_enforcement           = "S256_REQUIRED"
+    token_endpoint_auth_method = "NONE"
+    redirect_uris              = ["http://%[4]s/callback"] # https with the exception of localhost
+    post_logout_redirect_uris  = ["http://%[4]s/logout"]   # either http or https
+    target_link_uri            = "http://%[4]s/link"       # either http or https
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name, hostname)
@@ -4243,15 +4243,15 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["AUTHORIZATION_CODE"]
-    response_types              = ["CODE"]
-    pkce_enforcement            = "S256_REQUIRED"
-    token_endpoint_authn_method = "NONE"
-    redirect_uris               = ["com.myapp.app://callback"]
-    post_logout_redirect_uris   = ["com.myapp.app://logout"]
-    initiate_login_uri          = "https://pingidentity.com/target"
-    target_link_uri             = "com.myapp.app://target"
+    type                       = "NATIVE_APP"
+    grant_types                = ["AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    pkce_enforcement           = "S256_REQUIRED"
+    token_endpoint_auth_method = "NONE"
+    redirect_uris              = ["com.myapp.app://callback"]
+    post_logout_redirect_uris  = ["com.myapp.app://logout"]
+    initiate_login_uri         = "https://pingidentity.com/target"
+    target_link_uri            = "com.myapp.app://target"
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -4549,12 +4549,12 @@ resource "pingone_application" "%[2]s" {
   enabled        = %[4]t
 
   oidc_options = {
-    type                        = "SINGLE_PAGE_APP"
-    grant_types                 = ["AUTHORIZATION_CODE"]
-    response_types              = ["CODE"]
-    pkce_enforcement            = "S256_REQUIRED"
-    token_endpoint_authn_method = "NONE"
-    redirect_uris               = ["https://www.pingidentity.com"]
+    type                       = "SINGLE_PAGE_APP"
+    grant_types                = ["AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    pkce_enforcement           = "S256_REQUIRED"
+    token_endpoint_auth_method = "NONE"
+    redirect_uris              = ["https://www.pingidentity.com"]
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name, enabled)

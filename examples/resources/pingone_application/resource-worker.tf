@@ -4,9 +4,9 @@ resource "pingone_application" "my_awesome_worker_app" {
   enabled        = true
 
   oidc_options = {
-    type                        = "WORKER"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "WORKER"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
   }
 }
 

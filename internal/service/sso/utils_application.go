@@ -105,7 +105,7 @@ func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.Appli
 
 	attributesMap := map[string]attr.Value{
 		"additional_refresh_token_replay_protection_enabled": framework.BoolOkToTF(apiObject.GetAdditionalRefreshTokenReplayProtectionEnabledOk()),
-		"allow_wildcards_in_redirect_uris":                   framework.BoolOkToTF(apiObject.GetAllowWildcardInRedirectUrisOk()),
+		"allow_wildcard_in_redirect_uris":                    framework.BoolOkToTF(apiObject.GetAllowWildcardInRedirectUrisOk()),
 		"certificate_based_authentication":                   kerberos,
 		"cors_settings":                                      corsSettings,
 		"device_path_id":                                     framework.StringOkToTF(apiObject.GetDevicePathIdOk()),
@@ -130,7 +130,7 @@ func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.Appli
 		"response_types":                                     framework.EnumSetOkToTF(apiObject.GetResponseTypesOk()),
 		"support_unsigned_request_object":                    framework.BoolOkToTF(apiObject.GetSupportUnsignedRequestObjectOk()),
 		"target_link_uri":                                    framework.StringOkToTF(apiObject.GetTargetLinkUriOk()),
-		"token_endpoint_authn_method":                        framework.EnumOkToTF(apiObject.GetTokenEndpointAuthMethodOk()),
+		"token_endpoint_auth_method":                         framework.EnumOkToTF(apiObject.GetTokenEndpointAuthMethodOk()),
 		"type":                                               framework.EnumOkToTF(apiObject.GetTypeOk()),
 	}
 

@@ -18,12 +18,12 @@ resource "pingone_application" "my_awesome_spa" {
   enabled        = true
 
   oidc_options = {
-    type                        = "SINGLE_PAGE_APP"
-    grant_types                 = ["AUTHORIZATION_CODE"]
-    response_types              = ["CODE"]
-    pkce_enforcement            = "S256_REQUIRED"
-    token_endpoint_authn_method = "NONE"
-    redirect_uris               = ["https://my-website.com"]
+    type                       = "SINGLE_PAGE_APP"
+    grant_types                = ["AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    pkce_enforcement           = "S256_REQUIRED"
+    token_endpoint_auth_method = "NONE"
+    redirect_uris              = ["https://my-website.com"]
   }
 }
 
@@ -50,11 +50,11 @@ resource "pingone_application" "my_awesome_web_app" {
   enabled        = true
 
   oidc_options = {
-    type                        = "WEB_APP"
-    grant_types                 = ["AUTHORIZATION_CODE", "REFRESH_TOKEN"]
-    response_types              = ["CODE"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
-    redirect_uris               = ["https://my-website.com"]
+    type                       = "WEB_APP"
+    grant_types                = ["AUTHORIZATION_CODE", "REFRESH_TOKEN"]
+    response_types             = ["CODE"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
+    redirect_uris              = ["https://my-website.com"]
   }
 }
 
@@ -119,11 +119,11 @@ resource "pingone_application" "my_awesome_native_app" {
   enabled        = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["AUTHORIZATION_CODE"]
-    response_types              = ["CODE"]
-    pkce_enforcement            = "S256_REQUIRED"
-    token_endpoint_authn_method = "NONE"
+    type                       = "NATIVE_APP"
+    grant_types                = ["AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    pkce_enforcement           = "S256_REQUIRED"
+    token_endpoint_auth_method = "NONE"
     redirect_uris = [
       "https://demo.bxretail.org/app/callback",
       "org.bxretail.app://callback"
@@ -180,9 +180,9 @@ resource "pingone_application" "my_awesome_worker_app" {
   enabled        = true
 
   oidc_options = {
-    type                        = "WORKER"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "WORKER"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
   }
 }
 
@@ -272,13 +272,13 @@ Required:
 Required:
 
 - `grant_types` (Set of String) A list that specifies the grant type for the authorization request.  Options are `AUTHORIZATION_CODE`, `CLIENT_CREDENTIALS`, `DEVICE_CODE`, `IMPLICIT`, `REFRESH_TOKEN`.
-- `token_endpoint_authn_method` (String) A string that specifies the client authentication methods supported by the token endpoint.  Options are `CLIENT_SECRET_BASIC`, `CLIENT_SECRET_JWT`, `CLIENT_SECRET_POST`, `NONE`, `PRIVATE_KEY_JWT`.  When `PRIVATE_KEY_JWT` is configured, either `jwks` or `jwks_url` must also be configured.
+- `token_endpoint_auth_method` (String) A string that specifies the client authentication methods supported by the token endpoint.  Options are `CLIENT_SECRET_BASIC`, `CLIENT_SECRET_JWT`, `CLIENT_SECRET_POST`, `NONE`, `PRIVATE_KEY_JWT`.  When `PRIVATE_KEY_JWT` is configured, either `jwks` or `jwks_url` must also be configured.
 - `type` (String) A string that specifies the type associated with the application.  Options are `CUSTOM_APP`, `NATIVE_APP`, `SERVICE`, `SINGLE_PAGE_APP`, `WEB_APP`, `WORKER`.  This field is immutable and will trigger a replace plan if changed.
 
 Optional:
 
 - `additional_refresh_token_replay_protection_enabled` (Boolean) A boolean that, when set to `true` (the default), if you attempt to reuse the refresh token, the authorization server immediately revokes the reused refresh token, as well as all descendant tokens. Setting this to null equates to a `false` setting.  Defaults to `true`.
-- `allow_wildcards_in_redirect_uris` (Boolean) A boolean to specify whether wildcards are allowed in redirect URIs. For more information, see [Wildcards in Redirect URIs](https://docs.pingidentity.com/csh?context=p1_c_wildcard_redirect_uri).  Defaults to `false`.
+- `allow_wildcard_in_redirect_uris` (Boolean) A boolean to specify whether wildcards are allowed in redirect URIs. For more information, see [Wildcards in Redirect URIs](https://docs.pingidentity.com/csh?context=p1_c_wildcard_redirect_uri).  Defaults to `false`.
 - `certificate_based_authentication` (Attributes) A single object that specifies Certificate based authentication settings. This parameter block can only be set where the application's `type` parameter is set to `NATIVE_APP`. (see [below for nested schema](#nestedatt--oidc_options--certificate_based_authentication))
 - `cors_settings` (Attributes) A single object that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings. (see [below for nested schema](#nestedatt--oidc_options--cors_settings))
 - `device_custom_verification_uri` (String) A string that specifies an optional custom verification URI that is returned for the `/device_authorization` endpoint.
@@ -287,8 +287,8 @@ Optional:
 - `device_timeout` (Number) An integer that specifies the length of time (in seconds) that the `userCode` and `deviceCode` returned by the `/device_authorization` endpoint are valid. This property is required only for applications in which the `grant_types` property is set to `DEVICE_CODE`. The default value is `600` seconds. It can have a value of no more than `3600` seconds (min/max=`1`/`3600`).
 - `home_page_url` (String) A string that specifies the custom home page URL for the application.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.
 - `initiate_login_uri` (String) A string that specifies the URI to use for third-parties to begin the sign-on process for the application. If specified, PingOne redirects users to this URI to initiate SSO to PingOne. The application is responsible for implementing the relevant OIDC flow when the initiate login URI is requested. This property is required if you want the application to appear in the PingOne Application Portal. See the OIDC specification section of [Initiating Login from a Third Party](https://openid.net/specs/openid-connect-core-1_0.html#ThirdPartyInitiatedLogin) for more information.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.
-- `jwks` (String) A string that specifies a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_authn_method`. This property is required when `token_endpoint_authn_method` is `PRIVATE_KEY_JWT` and the `jwks_url` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks_url` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).  Conflicts with `jwks_url`.
-- `jwks_url` (String) A string that specifies a URL (supports `https://` only) that provides access to a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_authn_method`. This property is required when `token_endpoint_authn_method` is `PRIVATE_KEY_JWT` and the `jwks` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).  Conflicts with `jwks`.
+- `jwks` (String) A string that specifies a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_auth_method`. This property is required when `token_endpoint_auth_method` is `PRIVATE_KEY_JWT` and the `jwks_url` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks_url` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).  Conflicts with `jwks_url`.
+- `jwks_url` (String) A string that specifies a URL (supports `https://` only) that provides access to a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_auth_method`. This property is required when `token_endpoint_auth_method` is `PRIVATE_KEY_JWT` and the `jwks` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).  Conflicts with `jwks`.
 - `mobile_app` (Attributes) A single object that specifies Mobile application integration settings for `NATIVE_APP` type applications. (see [below for nested schema](#nestedatt--oidc_options--mobile_app))
 - `par_requirement` (String) A string that specifies whether pushed authorization requests (PAR) are required.  Options are `OPTIONAL`, `REQUIRED`.  Defaults to `OPTIONAL`.
 - `par_timeout` (Number) An integer that specifies the pushed authorization request (PAR) timeout in seconds.  Valid values are between `1` and `600`.  Defaults to `60`.
