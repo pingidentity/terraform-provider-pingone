@@ -28,7 +28,7 @@ import (
 // Types
 type WebhookResource serviceClientType
 
-type WebhookResourceModel struct {
+type webhookResourceModelV1 struct {
 	Id                     pingonetypes.ResourceIDValue `tfsdk:"id"`
 	EnvironmentId          pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	Name                   types.String                 `tfsdk:"name"`
@@ -41,7 +41,7 @@ type WebhookResourceModel struct {
 	FilterOptions          types.Object                 `tfsdk:"filter_options"`
 }
 
-type WebhookFilterOptionsResourceModel struct {
+type webhookFilterOptionsResourceModelV1 struct {
 	IncludedActionTypes    types.Set  `tfsdk:"included_action_types"`
 	IncludedApplicationIds types.Set  `tfsdk:"included_application_ids"`
 	IncludedPopulationIds  types.Set  `tfsdk:"included_population_ids"`
@@ -131,6 +131,9 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 	const attrFilterOptionsIncludedIDsMaxLength = 10
 
 	resp.Schema = schema.Schema{
+
+		Version: 1,
+
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage PingOne Webhooks / Data Subscriptions.",
 
@@ -311,7 +314,7 @@ func (r *WebhookResource) Configure(ctx context.Context, req resource.ConfigureR
 }
 
 func (r *WebhookResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan, state WebhookResourceModel
+	var plan, state webhookResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -360,7 +363,7 @@ func (r *WebhookResource) Create(ctx context.Context, req resource.CreateRequest
 }
 
 func (r *WebhookResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *WebhookResourceModel
+	var data *webhookResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -405,7 +408,7 @@ func (r *WebhookResource) Read(ctx context.Context, req resource.ReadRequest, re
 }
 
 func (r *WebhookResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan, state WebhookResourceModel
+	var plan, state webhookResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -454,7 +457,7 @@ func (r *WebhookResource) Update(ctx context.Context, req resource.UpdateRequest
 }
 
 func (r *WebhookResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *WebhookResourceModel
+	var data *webhookResourceModelV1
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -521,7 +524,7 @@ func (r *WebhookResource) ImportState(ctx context.Context, req resource.ImportSt
 	}
 }
 
-func (p *WebhookResourceModel) expand(ctx context.Context) (*management.Subscription, diag.Diagnostics) {
+func (p *webhookResourceModelV1) expand(ctx context.Context) (*management.Subscription, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	httpEndpoint := *management.NewSubscriptionHttpEndpoint(p.HttpEndpointUrl.ValueString())
@@ -536,7 +539,7 @@ func (p *WebhookResourceModel) expand(ctx context.Context) (*management.Subscrip
 		httpEndpoint.SetHeaders(headersPlan)
 	}
 
-	var filterOptionsPlan WebhookFilterOptionsResourceModel
+	var filterOptionsPlan webhookFilterOptionsResourceModelV1
 	diags.Append(p.FilterOptions.As(ctx, &filterOptionsPlan, basetypes.ObjectAsOptions{
 		UnhandledNullAsEmpty:    true,
 		UnhandledUnknownAsEmpty: true,
@@ -573,7 +576,7 @@ func (p *WebhookResourceModel) expand(ctx context.Context) (*management.Subscrip
 	return data, diags
 }
 
-func (p *WebhookFilterOptionsResourceModel) expand(ctx context.Context) (*management.SubscriptionFilterOptions, diag.Diagnostics) {
+func (p *webhookFilterOptionsResourceModelV1) expand(ctx context.Context) (*management.SubscriptionFilterOptions, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var includedActionTypes []string
@@ -640,7 +643,7 @@ func (p *WebhookFilterOptionsResourceModel) expand(ctx context.Context) (*manage
 	return data, diags
 }
 
-func (p *WebhookResourceModel) toState(apiObject *management.Subscription) diag.Diagnostics {
+func (p *webhookResourceModelV1) toState(apiObject *management.Subscription) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
