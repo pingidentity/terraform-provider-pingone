@@ -4392,7 +4392,7 @@ The `pingone_role_assignment_user` resource has been renamed to `pingone_user_ro
 
 ### `schema_id` parameter changed
 
-This parameter was previously deprecated and has now been made read only.  Use the optional `schema_name` parameter going forward.
+This parameter was previously deprecated and has now been made read only.  The default environment schema will be implicitly selected.
 
 ## Resource: pingone_user
 

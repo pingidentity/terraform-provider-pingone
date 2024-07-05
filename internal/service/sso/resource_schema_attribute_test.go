@@ -122,7 +122,6 @@ func TestAccSchemaAttribute_String(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "schema_name", "User"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "display_name", displayName),
 			resource.TestCheckResourceAttr(resourceFullName, "description", description),
@@ -140,14 +139,13 @@ func TestAccSchemaAttribute_String(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "schema_name", "User"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckNoResourceAttr(resourceFullName, "display_name"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 			resource.TestCheckResourceAttr(resourceFullName, "type", "STRING"),
-			resource.TestCheckResourceAttr(resourceFullName, "unique", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "unique", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "multivalued", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "multivalued", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "schema_type", "CUSTOM"),
 		),
 	}
@@ -206,7 +204,7 @@ func TestAccSchemaAttribute_StringEnumeratedValues(t *testing.T) {
 	name := resourceName
 
 	fullCheck := resource.TestStep{
-		Config: testAccSchemaAttributeConfig_EnumeratedValues(resourceName, name, "STRING"),
+		Config: testAccSchemaAttributeConfig_EnumeratedValues1(resourceName, name, "STRING"),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "enumerated_values.#", "6"),
@@ -239,10 +237,39 @@ func TestAccSchemaAttribute_StringEnumeratedValues(t *testing.T) {
 	}
 
 	minimalCheck := resource.TestStep{
-		Config: testAccSchemaAttributeConfig_StringMinimal(resourceName, name),
+		Config: testAccSchemaAttributeConfig_EnumeratedValues2(resourceName, name, "STRING"),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckNoResourceAttr(resourceFullName, "enumerated_values"),
+			resource.TestCheckResourceAttr(resourceFullName, "enumerated_values.#", "7"),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "enumerated_values.*", map[string]string{
+				"value":       "value1",
+				"archived":    "false",
+				"description": "Test description",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "enumerated_values.*", map[string]string{
+				"value":       "value2",
+				"description": "Test description",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "enumerated_values.*", map[string]string{
+				"value":       "value3",
+				"archived":    "true",
+				"description": "Test description",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "enumerated_values.*", map[string]string{
+				"value": "value4",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "enumerated_values.*", map[string]string{
+				"value":    "value5",
+				"archived": "true",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "enumerated_values.*", map[string]string{
+				"value":    "value6",
+				"archived": "true",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "enumerated_values.*", map[string]string{
+				"value":    "value7",
+				"archived": "false",
+			}),
 		),
 	}
 
@@ -255,22 +282,13 @@ func TestAccSchemaAttribute_StringEnumeratedValues(t *testing.T) {
 		CheckDestroy:             sso.SchemaAttribute_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			// Full
-			fullCheck,
-			{
-				Config:  testAccSchemaAttributeConfig_EnumeratedValues(resourceName, name, "STRING"),
-				Destroy: true,
-			},
-			// Minimal
-			minimalCheck,
-			{
-				Config:  testAccSchemaAttributeConfig_StringMinimal(resourceName, name),
-				Destroy: true,
-			},
 			// Change
 			fullCheck,
 			minimalCheck,
-			fullCheck,
+			{
+				Config:      testAccSchemaAttributeConfig_EnumeratedValues1(resourceName, name, "STRING"),
+				ExpectError: regexp.MustCompile(`Data Loss Protection`),
+			},
 			// Test importing the resource
 			{
 				ResourceName: resourceFullName,
@@ -395,6 +413,10 @@ func TestAccSchemaAttribute_StringParameterCombinations(t *testing.T) {
 				),
 			},
 			{
+				Config:  testAccSchemaAttributeConfig_StringFull(resourceName, name, true, true),
+				Destroy: true,
+			},
+			{
 				Config: testAccSchemaAttributeConfig_StringFull(resourceName, name, false, true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
@@ -404,6 +426,10 @@ func TestAccSchemaAttribute_StringParameterCombinations(t *testing.T) {
 				),
 			},
 			{
+				Config:  testAccSchemaAttributeConfig_StringFull(resourceName, name, false, true),
+				Destroy: true,
+			},
+			{
 				Config: testAccSchemaAttributeConfig_StringFull(resourceName, name, false, false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
@@ -411,6 +437,10 @@ func TestAccSchemaAttribute_StringParameterCombinations(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "multivalued", "false"),
 				),
+			},
+			{
+				Config:  testAccSchemaAttributeConfig_StringFull(resourceName, name, false, false),
+				Destroy: true,
 			},
 			{
 				Config: testAccSchemaAttributeConfig_StringFull(resourceName, name, true, false),
@@ -442,7 +472,6 @@ func TestAccSchemaAttribute_JSON(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "schema_name", "User"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckResourceAttr(resourceFullName, "display_name", displayName),
 			resource.TestCheckResourceAttr(resourceFullName, "description", description),
@@ -460,14 +489,13 @@ func TestAccSchemaAttribute_JSON(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "schema_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "schema_name", "User"),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
 			resource.TestCheckNoResourceAttr(resourceFullName, "display_name"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 			resource.TestCheckResourceAttr(resourceFullName, "type", "JSON"),
 			resource.TestCheckResourceAttr(resourceFullName, "unique", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "multivalued", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "multivalued", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "schema_type", "CUSTOM"),
 		),
 	}
@@ -538,7 +566,7 @@ func TestAccSchemaAttribute_JSONInvalidAttrs(t *testing.T) {
 				ExpectError: regexp.MustCompile(`Invalid argument combination`),
 			},
 			{
-				Config:      testAccSchemaAttributeConfig_EnumeratedValues(resourceName, name, "JSON"),
+				Config:      testAccSchemaAttributeConfig_EnumeratedValues1(resourceName, name, "JSON"),
 				ExpectError: regexp.MustCompile(`Invalid argument combination`),
 			},
 		},
@@ -578,6 +606,10 @@ func TestAccSchemaAttribute_JSONParameterCombinations(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "required", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "multivalued", "true"),
 				),
+			},
+			{
+				Config:  testAccSchemaAttributeConfig_JSONFull(resourceName, name, false, true),
+				Destroy: true,
 			},
 			{
 				Config: testAccSchemaAttributeConfig_JSONFull(resourceName, name, false, false),
@@ -635,6 +667,66 @@ func TestAccSchemaAttribute_BadParameters(t *testing.T) {
 	})
 }
 
+func TestAccSchemaAttribute_DLP(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.SchemaAttribute_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Attribute type
+			{
+				Config: testAccSchemaAttributeConfig_StringFull(resourceName, name, false, false),
+			},
+			{
+				Config:      testAccSchemaAttributeConfig_JSONFull(resourceName, name, false, false),
+				ExpectError: regexp.MustCompile(`Data Loss Protection`),
+			},
+			{
+				Config:  testAccSchemaAttributeConfig_StringFull(resourceName, name, false, false),
+				Destroy: true,
+			},
+			// Unique & multivalued
+			{
+				Config: testAccSchemaAttributeConfig_StringFull(resourceName, name, true, false),
+			},
+			{
+				Config:      testAccSchemaAttributeConfig_StringFull(resourceName, name, false, false),
+				ExpectError: regexp.MustCompile(`Data Loss Protection`),
+			},
+			{
+				Config:      testAccSchemaAttributeConfig_StringFull(resourceName, name, true, true),
+				ExpectError: regexp.MustCompile(`Data Loss Protection`),
+			},
+			{
+				Config:  testAccSchemaAttributeConfig_StringFull(resourceName, name, true, false),
+				Destroy: true,
+			},
+			// Enumerated values
+			{
+				Config: testAccSchemaAttributeConfig_StringFull(resourceName, name, false, false),
+			},
+			{
+				Config:      testAccSchemaAttributeConfig_EnumeratedValues1(resourceName, name, "STRING"),
+				ExpectError: regexp.MustCompile(`Data Loss Protection`),
+			},
+			{
+				Config:  testAccSchemaAttributeConfig_StringFull(resourceName, name, false, false),
+				Destroy: true,
+			},
+		},
+	})
+}
+
 func testAccSchemaAttributeConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -652,7 +744,6 @@ func testAccSchemaAttributeConfig_StringFull(resourceName, name string, unique, 
 
 resource "pingone_schema_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  schema_name    = "User"
 
   name         = "%[3]s"
   display_name = "Attribute %[3]s"
@@ -671,7 +762,10 @@ func testAccSchemaAttributeConfig_StringMinimal(resourceName, name string) strin
 resource "pingone_schema_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
-  name = "%[3]s"
+  name        = "%[3]s"
+  type        = "STRING"
+  unique      = true
+  multivalued = true
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -681,7 +775,6 @@ func testAccSchemaAttributeConfig_JSONFull(resourceName, name string, unique, mu
 
 resource "pingone_schema_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  schema_name    = "User"
 
   name         = "%[3]s"
   display_name = "Attribute %[3]s"
@@ -702,10 +795,12 @@ resource "pingone_schema_attribute" "%[2]s" {
 
   name = "%[3]s"
   type = "JSON"
+
+  multivalued = true
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccSchemaAttributeConfig_EnumeratedValues(resourceName, name, attrType string) string {
+func testAccSchemaAttributeConfig_EnumeratedValues1(resourceName, name, attrType string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -745,6 +840,50 @@ resource "pingone_schema_attribute" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, attrType)
 }
 
+func testAccSchemaAttributeConfig_EnumeratedValues2(resourceName, name, attrType string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_schema_attribute" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+  type = "%[4]s"
+
+  enumerated_values = [
+    {
+      value       = "value1"
+      archived    = "false"
+      description = "Test description"
+    },
+    {
+      value       = "value2"
+      description = "Test description"
+    },
+    {
+      value       = "value3"
+      archived    = "true"
+      description = "Test description"
+    },
+    {
+      value = "value4"
+    },
+    {
+      value    = "value5"
+      archived = "true"
+    },
+    {
+      value    = "value6"
+      archived = "true"
+    },
+    {
+      value    = "value7"
+      archived = "false"
+    }
+  ]
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, attrType)
+}
+
 func testAccSchemaAttributeConfig_RegexValidation(resourceName, name, attrType string) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -754,6 +893,9 @@ resource "pingone_schema_attribute" "%[2]s" {
 
   name = "%[3]s"
   type = "%[4]s"
+
+  unique      = true
+  multivalued = true
 
   regex_validation = {
     pattern      = "^[a-zA-Z0-9]*$",
