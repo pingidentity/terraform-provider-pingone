@@ -833,7 +833,7 @@ func FetchApplicationsByTypeWithTimeout(ctx context.Context, apiClient *manageme
 			}
 
 			if !found && expectAtLeastOneResult {
-				return nil, "false", fmt.Errorf("No applications found for type %s, but at least one is expected", applicationType)
+				return nil, "false", nil
 			}
 
 			tflog.Debug(ctx, "Find applications by type attempt", map[string]interface{}{
