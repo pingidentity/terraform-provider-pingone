@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -15,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
@@ -416,6 +419,36 @@ func (r *KeyRotationPolicyResource) Delete(ctx context.Context, req resource.Del
 		nil,
 	)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	deleteStateConf := &retry.StateChangeConf{
+		Pending: []string{
+			"200",
+			"403",
+		},
+		Target: []string{
+			"404",
+		},
+		Refresh: func() (interface{}, string, error) {
+			krpR, fR, fErr := r.Client.ManagementAPIClient.KeyRotationPoliciesApi.GetKeyRotationPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			resp, r, _ := framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), krpR, fR, fErr)
+
+			base := 10
+			return resp, strconv.FormatInt(int64(r.StatusCode), base), nil
+		},
+		Timeout:                   20 * time.Minute,
+		Delay:                     1 * time.Second,
+		MinTimeout:                500 * time.Millisecond,
+		ContinuousTargetOccurence: 2,
+	}
+	_, err := deleteStateConf.WaitForStateContext(ctx)
+	if err != nil {
+		resp.Diagnostics.AddWarning(
+			"Key Rotation Policy Delete Timeout",
+			fmt.Sprintf("Error waiting for key rotation policy (%s) to be deleted: %s", data.Id.ValueString(), err),
+		)
+
 		return
 	}
 }
