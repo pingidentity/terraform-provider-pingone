@@ -260,7 +260,6 @@ func TestAccApplicationResourceGrant_CustomResource_SimultaneousGrantRemoval(t *
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 				),
-				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -672,7 +671,7 @@ resource "pingone_application" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
 
-  oidc_options {
+  oidc_options = {
     type                        = "SINGLE_PAGE_APP"
     grant_types                 = ["AUTHORIZATION_CODE"]
     response_types              = ["CODE"]
@@ -726,14 +725,16 @@ resource "pingone_resource_scope" "%[2]s-5" {
 resource "pingone_application_resource_grant" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
-  resource_name  = pingone_resource.%[2]s.name
 
-  scope_names = [
-    pingone_resource_scope.%[2]s-1.name,
-    pingone_resource_scope.%[2]s-2.name,
-    pingone_resource_scope.%[2]s-3.name,
-    pingone_resource_scope.%[2]s-4.name,
-    pingone_resource_scope.%[2]s-5.name,
+  resource_type = "CUSTOM"
+  custom_resource_id  = pingone_resource.%[2]s.id
+
+  scopes = [
+    pingone_resource_scope.%[2]s-1.id,
+    pingone_resource_scope.%[2]s-2.id,
+    pingone_resource_scope.%[2]s-3.id,
+    pingone_resource_scope.%[2]s-4.id,
+    pingone_resource_scope.%[2]s-5.id,
   ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
