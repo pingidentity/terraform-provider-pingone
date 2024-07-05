@@ -177,13 +177,12 @@ func (p *CredentialIssuerProfileDataSourceModel) toState(apiObject *credentials.
 
 func credentialIssuerDataSourceRetryConditions(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
 
-	var err error
-
 	if p1error != nil {
 
 		// Credential Issuer Profile's keys may not have propagated after initial environment setup.
 		// Rare, but possible.
-		if m, _ := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
+		m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage())
+		if err == nil && m {
 			tflog.Warn(ctx, "Insufficient PingOne privileges detected")
 			return true
 		}

@@ -410,8 +410,8 @@ func TestAccNotificationTemplateContent_Email(t *testing.T) {
 	locale := "en"
 
 	template := acctest.TestData{
-		Invalid: "", // Invalid not tested, no templates without email
-		Valid:   "email_verification_admin",
+		//Invalid: "", // Invalid not tested, no templates without email
+		Valid: "email_verification_admin",
 	}
 
 	check := acctest.MinMaxChecks{

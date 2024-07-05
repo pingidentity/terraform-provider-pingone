@@ -148,7 +148,8 @@ The following example shows a custom retry override to account for bootstrapped 
 				var err error
 
 				// Permissions may not have propagated by this point
-				if m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
+				m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage())
+				if err == nil && m {
 					tflog.Warn(ctx, "Insufficient PingOne privileges detected")
 					return true
 				}

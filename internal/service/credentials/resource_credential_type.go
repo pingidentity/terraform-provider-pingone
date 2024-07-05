@@ -1028,15 +1028,14 @@ func toStateFields(innerFields []credentials.CredentialTypeMetaDataFieldsInner, 
 
 func credentialTypeRetryConditions(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
 
-	var err error
-
 	if p1error != nil {
 
 		// Credential Issuer Profile's keys may not have propagated yet. Rare, but possible.
 		if details, ok := p1error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 
 			// detected issuer profile not fully deployed yet
-			if m, err := regexp.MatchString("^issuerProfile must exist before creating credentialTypes", details[0].GetMessage()); err == nil && m {
+			m, err := regexp.MatchString("^issuerProfile must exist before creating credentialTypes", details[0].GetMessage())
+			if err == nil && m {
 				tflog.Warn(ctx, fmt.Sprintf("IssuerProfile (prerequisite) has not finished provisioning - %s.  Retrying...", details[0].GetMessage()))
 				return true
 			}
@@ -1047,7 +1046,8 @@ func credentialTypeRetryConditions(ctx context.Context, r *http.Response, p1erro
 		}
 
 		// detected credentials service not fully deployed yet
-		if m, _ := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
+		m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage())
+		if err == nil && m {
 			tflog.Warn(ctx, "Insufficient PingOne privileges detected")
 			return true
 		}

@@ -347,7 +347,17 @@ func (r *ResourceScopeOpenIDResource) Delete(ctx context.Context, req resource.D
 		return
 	}
 
-	if m, err := regexp.MatchString("^(address|email|openid|phone|profile)$", data.Name.ValueString()); err == nil && m {
+	m, err := regexp.MatchString("^(address|email|openid|phone|profile)$", data.Name.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Invalid attribute value",
+			err.Error(),
+		)
+		return
+
+	}
+
+	if m {
 
 		resourceScope, d := fetchResourceScopeFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), resource.GetId(), data.Name.ValueString())
 		resp.Diagnostics.Append(d...)
@@ -431,7 +441,16 @@ func (p *ResourceScopeOpenIDResourceModel) expand(ctx context.Context, apiClient
 	var data *management.ResourceScope
 
 	newScope := true
-	if m, err := regexp.MatchString("^(address|email|openid|phone|profile)$", p.Name.ValueString()); err == nil && m {
+	m, err := regexp.MatchString("^(address|email|openid|phone|profile)$", p.Name.ValueString())
+	if err != nil {
+		diags.AddError(
+			"Invalid attribute value",
+			err.Error(),
+		)
+		return nil, diags
+	}
+
+	if m {
 		newScope = false
 
 		data, diags = fetchResourceScopeFromName(ctx, apiClient, p.EnvironmentId.ValueString(), resource.GetId(), p.Name.ValueString())

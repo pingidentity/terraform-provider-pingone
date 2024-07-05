@@ -305,7 +305,8 @@ func populationDeleteCustomErrorHandler(error model.P1Error) diag.Diagnostics {
 	if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 		if code, ok := details[0].GetCodeOk(); ok && *code == "CONSTRAINT_VIOLATION" {
 			if message, ok := details[0].GetMessageOk(); ok {
-				if m, err := regexp.MatchString(`must contain at least one population`, *message); err == nil && m {
+				m, err := regexp.MatchString(`must contain at least one population`, *message)
+				if err == nil && m {
 					diags.AddWarning(
 						"Constraint violation",
 						fmt.Sprintf("A constraint violation error was encountered: %s\n\nThe population has been removed from Terraform state, but has been left in place in the environment.", error.GetMessage()),
@@ -416,7 +417,16 @@ func (r *PopulationResource) hasUsersAssigned(ctx context.Context, environmentID
 func (r *PopulationResource) readUsers(ctx context.Context, environmentID, populationID string) ([]management.User, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if m, err := regexp.MatchString(verify.P1ResourceIDRegexpFullString.String(), populationID); err == nil && m {
+	m, err := regexp.MatchString(verify.P1ResourceIDRegexpFullString.String(), populationID)
+	if err != nil {
+		diags.AddError(
+			"Population ID validation",
+			fmt.Sprintf("An error occurred while validating the population ID: %s", err.Error()),
+		)
+		return nil, diags
+	}
+
+	if m {
 
 		scimFilter := fmt.Sprintf(`population.id eq "%s"`, populationID)
 

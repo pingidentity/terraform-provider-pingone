@@ -425,8 +425,6 @@ func (p *CredentialIssuerProfileResourceModel) toState(apiObject *credentials.Cr
 
 func credentialIssuerRetryConditions(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
 
-	var err error
-
 	if p1error != nil {
 
 		// Credential Issuer Profile's keys may not have propagated after initial environment setup.
@@ -435,7 +433,8 @@ func credentialIssuerRetryConditions(ctx context.Context, r *http.Response, p1er
 		// Rare, but possible.
 		if details, ok := p1error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 
-			if m, err := regexp.MatchString("^A resource with the specified name already exists", details[0].GetMessage()); err == nil && m {
+			m, err := regexp.MatchString("^A resource with the specified name already exists", details[0].GetMessage())
+			if err == nil && m {
 				tflog.Warn(ctx, fmt.Sprintf("IssuerProfile (prerequisite) has not finished provisioning - %s.  Retrying...", details[0].GetMessage()))
 				return true
 			}
@@ -447,7 +446,8 @@ func credentialIssuerRetryConditions(ctx context.Context, r *http.Response, p1er
 		}
 
 		// detected credentials service not fully deployed yet
-		if m, _ := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
+		m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage())
+		if err == nil && m {
 			tflog.Warn(ctx, "Insufficient PingOne privileges detected. Retrying...")
 			return true
 		}
@@ -457,7 +457,8 @@ func credentialIssuerRetryConditions(ctx context.Context, r *http.Response, p1er
 		}
 
 		// issuer not found could be the caused by delayed credential issuer
-		if m, _ := regexp.MatchString("^The requested resource object cannot be found.", p1error.GetMessage()); err == nil && m {
+		m, err = regexp.MatchString("^The requested resource object cannot be found.", p1error.GetMessage())
+		if err == nil && m {
 			tflog.Warn(ctx, "Credential Issuer not found. Retrying...")
 			return true
 		}

@@ -185,7 +185,8 @@ var (
 			var err error
 
 			// Permissions may not have propagated by this point (1)
-			if m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
+			m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage())
+			if err == nil && m {
 				tflog.Warn(ctx, "Insufficient PingOne privileges detected")
 				return true
 			}
@@ -196,7 +197,8 @@ var (
 
 			// Permissions may not have propagated by this point (2)
 			if details, ok := p1error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
-				if m, err := regexp.MatchString("^Must have role at the same or broader scope", details[0].GetMessage()); err == nil && m {
+				m, err := regexp.MatchString("^Must have role at the same or broader scope", details[0].GetMessage())
+				if err == nil && m {
 					tflog.Warn(ctx, "Insufficient PingOne privileges detected")
 					return true
 				}
