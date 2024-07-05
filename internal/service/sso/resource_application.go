@@ -466,7 +466,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	const oidcOptionsRefreshTokenDurationMin = 60
 	const oidcOptionsRefreshTokenDurationMax = 2147483647
 	oidcOptionsRefreshTokenDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("An integer that specifies the lifetime in seconds of the refresh token. Valid values are between `%d` and `%d`. If the `refresh_token_rolling_duration` property is specified for the application, then this property value must be less than or equal to the value of `refresh_token_rolling_duration`. After this property is set, the value cannot be nullified - this will force recreation of the resource. This value is used to generate the value for the exp claim when minting a new refresh token.", oidcOptionsRefreshTokenDurationMin, oidcOptionsRefreshTokenDurationMax),
+		fmt.Sprintf("An integer that specifies the lifetime in seconds of the refresh token. Valid values are between `%d` and `%d`. If the `refresh_token_rolling_duration` property is specified for the application, then this property value must be less than or equal to the value of `refresh_token_rolling_duration`. After this property is set, the value cannot be nullified - this will reset the value back to the default. This value is used to generate the value for the exp claim when minting a new refresh token.", oidcOptionsRefreshTokenDurationMin, oidcOptionsRefreshTokenDurationMax),
 	).DefaultValue(oidcOptionsRefreshTokenDurationDefault)
 
 	const oidcOptionsRefreshTokenRollingDurationDefault = 15552000

@@ -726,8 +726,8 @@ resource "pingone_application_resource_grant" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
 
-  resource_type = "CUSTOM"
-  custom_resource_id  = pingone_resource.%[2]s.id
+  resource_type      = "CUSTOM"
+  custom_resource_id = pingone_resource.%[2]s.id
 
   scopes = [
     pingone_resource_scope.%[2]s-1.id,
