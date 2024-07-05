@@ -4,11 +4,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -323,7 +326,7 @@ func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *manage
 			},
 			"UpdateLanguage-UpdateSequence2",
 			errorFunction,
-			nil,
+			retryLanguageUpdateSequence2,
 		)
 		if diags.HasError() {
 			return diags
@@ -333,4 +336,24 @@ func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *manage
 
 	return diags
 
+}
+
+var retryLanguageUpdateSequence2 = func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
+
+	if p1error != nil {
+
+		// Language may not be enabled yet
+		m, err := regexp.MatchString("^The language must be enabled before it is set as the default", p1error.GetMessage())
+		if err == nil && m {
+			tflog.Warn(ctx, "Language not yet enabled, retrying to set as default")
+			return true
+		}
+		if err != nil {
+			tflog.Warn(ctx, "Cannot match error string for retry")
+			return false
+		}
+
+	}
+
+	return false
 }
