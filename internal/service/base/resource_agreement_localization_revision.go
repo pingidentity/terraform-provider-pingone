@@ -430,7 +430,8 @@ func (p *AgreementLocalizationRevisionResourceModel) expand() (*management.Agree
 		t, d = p.EffectiveAt.ValueRFC3339Time()
 		diags.Append(d...)
 	} else {
-		t = time.Now().Local().Add(time.Minute * 10)
+		bufferTimeMins := 10 * time.Minute
+		t = time.Now().Local().Add(bufferTimeMins)
 	}
 	if diags.HasError() {
 		return nil, diags
