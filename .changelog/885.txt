@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_system_application`: Fixed intermittent "Cannot find applications by type" error.
+```
