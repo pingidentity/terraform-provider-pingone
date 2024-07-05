@@ -12,6 +12,7 @@ import (
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service/mfa"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
 )
 
@@ -138,6 +139,8 @@ func New(version string) func() *schema.Provider {
 				"pingone_gateway_credential":           base.ResourceGatewayCredential(),
 				"pingone_language":                     base.ResourceLanguage(),
 				"pingone_language_update":              base.ResourceLanguageUpdate(),
+
+				"pingone_mfa_policy": mfa.ResourceMFAPolicy(),
 
 				"pingone_application_sign_on_policy_assignment": sso.ResourceApplicationSignOnPolicyAssignment(),
 				"pingone_sign_on_policy_action":                 sso.ResourceSignOnPolicyAction(),
