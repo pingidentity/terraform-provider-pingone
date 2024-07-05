@@ -779,7 +779,8 @@ func (r *KeyResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 				var err error
 
 				// It seems the key might not release itself immediately
-				if m, err := regexp.MatchString("The Key must not be in use", p1error.GetMessage()); err == nil && m {
+				m, err := regexp.MatchString("The Key must not be in use", p1error.GetMessage())
+				if err == nil && m {
 					tflog.Warn(ctx, "Key in use detected")
 					return true
 				}

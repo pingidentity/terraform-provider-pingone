@@ -359,7 +359,16 @@ func (r *ResourceScopePingOneAPIResource) Delete(ctx context.Context, req resour
 		return
 	}
 
-	if m, err := regexp.MatchString("^p1:(read|update):user$", data.Name.ValueString()); err == nil && m {
+	m, err := regexp.MatchString("^p1:(read|update):user$", data.Name.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Invalid resource scope name",
+			fmt.Sprintf("Cannot determine if the resource scope is a predefined scope: %s", err),
+		)
+		return
+	}
+
+	if m {
 
 		resourceScope, d := fetchResourceScopeFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), resource.GetId(), data.Name.ValueString())
 		resp.Diagnostics.Append(d...)
@@ -443,7 +452,16 @@ func (p *ResourceScopePingOneAPIResourceModel) expand(ctx context.Context, apiCl
 	var data *management.ResourceScope
 
 	newScope := true
-	if m, err := regexp.MatchString("^p1:(read|update):user$", p.Name.ValueString()); err == nil && m {
+	m, err := regexp.MatchString("^p1:(read|update):user$", p.Name.ValueString())
+	if err != nil {
+		diags.AddError(
+			"Invalid resource scope name",
+			fmt.Sprintf("Cannot determine if the resource scope is a predefined scope: %s", err),
+		)
+		return nil, diags
+	}
+
+	if m {
 		newScope = false
 
 		data, diags = fetchResourceScopeFromName(ctx, apiClient, p.EnvironmentId.ValueString(), resource.GetId(), p.Name.ValueString())

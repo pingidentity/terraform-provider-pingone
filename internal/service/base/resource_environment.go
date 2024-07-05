@@ -1155,12 +1155,11 @@ func environmentCreateCustomErrorHandler(error model.P1Error) diag.Diagnostics {
 
 var retryEnvironmentDefault = func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
 
-	var err error
-
 	if p1error != nil {
 
 		// Permissions may not have propagated by this point
-		if m, err := regexp.MatchString("^The request could not be completed. You do not have access to this resource.", p1error.GetMessage()); err == nil && m {
+		m, err := regexp.MatchString("^The request could not be completed. You do not have access to this resource.", p1error.GetMessage())
+		if err == nil && m {
 			tflog.Warn(ctx, "Insufficient PingOne privileges detected")
 			return true
 		}
