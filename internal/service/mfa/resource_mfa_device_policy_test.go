@@ -1850,9 +1850,9 @@ resource "pingone_application" "%[2]s-1" {
   enabled = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     mobile_app = {
       bundle_id    = "com.%[2]s1.bundle"
@@ -1886,9 +1886,9 @@ resource "pingone_application" "%[2]s-2" {
   enabled = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     mobile_app = {
       bundle_id    = "com.%[2]s2.bundle"
@@ -1922,9 +1922,9 @@ resource "pingone_application" "%[2]s-3" {
   enabled = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     mobile_app = {
       bundle_id    = "com.%[2]s3.bundle"
@@ -1967,9 +1967,9 @@ resource "pingone_application" "%[2]s-4" {
   enabled = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     mobile_app = {
       bundle_id    = "com.%[2]s4.bundle"
@@ -2164,9 +2164,9 @@ resource "pingone_application" "%[2]s" {
   enabled = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     mobile_app = {
       bundle_id    = "com.%[2]s.bundle"
@@ -2261,9 +2261,9 @@ resource "pingone_application" "%[2]s" {
   enabled = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     mobile_app = {
       bundle_id    = "com.%[2]s.bundle"
@@ -2533,9 +2533,9 @@ resource "pingone_application" "%[2]s" {
   enabled = true
 
   oidc_options = {
-    type                        = "WORKER"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "WORKER"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
   }
 }
 
@@ -2617,9 +2617,9 @@ resource "pingone_application" "%[2]s" {
   enabled = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
   }
 }
 

@@ -322,12 +322,12 @@ resource "pingone_application" "%[3]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["AUTHORIZATION_CODE"]
-    response_types              = ["CODE"]
-    pkce_enforcement            = "S256_REQUIRED"
-    token_endpoint_authn_method = "NONE"
-    redirect_uris               = ["https://www.pingidentity.com"]
+    type                       = "NATIVE_APP"
+    grant_types                = ["AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    pkce_enforcement           = "S256_REQUIRED"
+    token_endpoint_auth_method = "NONE"
+    redirect_uris              = ["https://www.pingidentity.com"]
 
     mobile_app = {
       bundle_id                = "com.pingidentity.ios_%[4]s"
@@ -354,9 +354,9 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     mobile_app = {
       bundle_id                = "com.pingidentity.ios_%[3]s"
@@ -394,12 +394,12 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "SINGLE_PAGE_APP"
-    grant_types                 = ["AUTHORIZATION_CODE"]
-    response_types              = ["CODE"]
-    pkce_enforcement            = "S256_REQUIRED"
-    token_endpoint_authn_method = "NONE"
-    redirect_uris               = ["https://www.pingidentity.com"]
+    type                       = "SINGLE_PAGE_APP"
+    grant_types                = ["AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    pkce_enforcement           = "S256_REQUIRED"
+    token_endpoint_auth_method = "NONE"
+    redirect_uris              = ["https://www.pingidentity.com"]
   }
 }
 
@@ -420,9 +420,9 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
   }
 }
 
@@ -443,9 +443,9 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     mobile_app = {
       passcode_refresh_seconds = 30
@@ -470,9 +470,9 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     mobile_app = {
       bundle_id                = "com.pingidentity.ios_%[3]s"

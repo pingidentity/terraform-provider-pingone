@@ -67,7 +67,7 @@ type applicationExternalLinkOptionsResourceModelV1 struct {
 
 type applicationOIDCOptionsResourceModelV1 struct {
 	AdditionalRefreshTokenReplayProtectionEnabled types.Bool   `tfsdk:"additional_refresh_token_replay_protection_enabled"`
-	AllowWildcardsInRedirectUris                  types.Bool   `tfsdk:"allow_wildcards_in_redirect_uris"`
+	AllowWildcardsInRedirectUris                  types.Bool   `tfsdk:"allow_wildcard_in_redirect_uris"`
 	CertificateBasedAuthentication                types.Object `tfsdk:"certificate_based_authentication"`
 	CorsSettings                                  types.Object `tfsdk:"cors_settings"`
 	DevicePathId                                  types.String `tfsdk:"device_path_id"`
@@ -92,7 +92,7 @@ type applicationOIDCOptionsResourceModelV1 struct {
 	ResponseTypes                                 types.Set    `tfsdk:"response_types"`
 	SupportUnsignedRequestObject                  types.Bool   `tfsdk:"support_unsigned_request_object"`
 	TargetLinkUri                                 types.String `tfsdk:"target_link_uri"`
-	TokenEndpointAuthnMethod                      types.String `tfsdk:"token_endpoint_authn_method"`
+	TokenEndpointAuthnMethod                      types.String `tfsdk:"token_endpoint_auth_method"`
 	Type                                          types.String `tfsdk:"type"`
 }
 
@@ -182,7 +182,7 @@ var (
 
 	applicationOidcOptionsTFObjectTypes = map[string]attr.Type{
 		"additional_refresh_token_replay_protection_enabled": types.BoolType,
-		"allow_wildcards_in_redirect_uris":                   types.BoolType,
+		"allow_wildcard_in_redirect_uris":                    types.BoolType,
 		"certificate_based_authentication":                   types.ObjectType{AttrTypes: applicationOidcOptionsCertificateAuthenticationTFObjectTypes},
 		"cors_settings":                                      types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
 		"device_path_id":                                     types.StringType,
@@ -207,7 +207,7 @@ var (
 		"response_types":                                     types.SetType{ElemType: types.StringType},
 		"support_unsigned_request_object":                    types.BoolType,
 		"target_link_uri":                                    types.StringType,
-		"token_endpoint_authn_method":                        types.StringType,
+		"token_endpoint_auth_method":                         types.StringType,
 		"type":                                               types.StringType,
 	}
 
@@ -410,11 +410,11 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	)
 
 	oidcOptionsJwksDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_authn_method`. This property is required when `token_endpoint_authn_method` is `PRIVATE_KEY_JWT` and the `jwks_url` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks_url` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).",
+		"A string that specifies a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_auth_method`. This property is required when `token_endpoint_auth_method` is `PRIVATE_KEY_JWT` and the `jwks_url` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks_url` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).",
 	).ConflictsWith([]string{"jwks_url"})
 
 	oidcOptionsJwksUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies a URL (supports `https://` only) that provides access to a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_authn_method`. This property is required when `token_endpoint_authn_method` is `PRIVATE_KEY_JWT` and the `jwks` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).",
+		"A string that specifies a URL (supports `https://` only) that provides access to a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_auth_method`. This property is required when `token_endpoint_auth_method` is `PRIVATE_KEY_JWT` and the `jwks` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).",
 	).ConflictsWith([]string{"jwks"})
 
 	oidcOptionsTargetLinkUriDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -959,7 +959,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						},
 					},
 
-					"token_endpoint_authn_method": schema.StringAttribute{
+					"token_endpoint_auth_method": schema.StringAttribute{
 						Description:         oidcOptionsTokenEndpointAuthnMethod.Description,
 						MarkdownDescription: oidcOptionsTokenEndpointAuthnMethod.MarkdownDescription,
 						Required:            true,
@@ -1022,7 +1022,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						},
 					},
 
-					"allow_wildcards_in_redirect_uris": schema.BoolAttribute{
+					"allow_wildcard_in_redirect_uris": schema.BoolAttribute{
 						Description:         oidcOptionsAllowWildcardsInRedirectUrisDescription.Description,
 						MarkdownDescription: oidcOptionsAllowWildcardsInRedirectUrisDescription.MarkdownDescription,
 						Optional:            true,
@@ -1701,7 +1701,7 @@ func (r *ApplicationResource) ValidateConfig(ctx context.Context, req resource.V
 						resp.Diagnostics.AddAttributeError(
 							path.Root("oidc_options").AtName("redirect_uris"),
 							"Invalid configuration",
-							"Current configuration is invalid as wildcards are not allowed in redirect URIs.  Wildcards can be enabled by setting `allow_wildcards_in_redirect_uris` to `true`.",
+							"Current configuration is invalid as wildcards are not allowed in redirect URIs.  Wildcards can be enabled by setting `allow_wildcard_in_redirect_uris` to `true`.",
 						)
 						break
 					}
@@ -1965,7 +1965,7 @@ func applicationWriteCustomError(error model.P1Error) diag.Diagnostics {
 		return diags
 	}
 	if m {
-		diags.AddError("Invalid configuration", "Current configuration is invalid as wildcards are not allowed in redirect URIs.  Wildcards can be enabled by setting `allow_wildcards_in_redirect_uris` to `true`.")
+		diags.AddError("Invalid configuration", "Current configuration is invalid as wildcards are not allowed in redirect URIs.  Wildcards can be enabled by setting `allow_wildcard_in_redirect_uris` to `true`.")
 
 		return diags
 	}

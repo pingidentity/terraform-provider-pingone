@@ -1,0 +1,15 @@
+```release-note:breaking-change
+`resource/pingone_application`: Renamed `oidc_options.allow_wildcards_in_redirect_uris` to `oidc_options.allow_wildcard_in_redirect_uris` to align with the API.
+```
+
+```release-note:breaking-change
+`resource/pingone_application`: Renamed `oidc_options.token_endpoint_authn_method` to `oidc_options.token_endpoint_auth_method` to align with the API.
+```
+
+```release-note:breaking-change
+`data-source/pingone_application`: Renamed `oidc_options.allow_wildcards_in_redirect_uris` to `oidc_options.allow_wildcard_in_redirect_uris` to align with the API.
+```
+
+```release-note:breaking-change
+`data-source/pingone_application`: Renamed `oidc_options.token_endpoint_authn_method` to `oidc_options.token_endpoint_auth_method` to align with the API.
+```

@@ -351,13 +351,13 @@ resource "pingone_application" "%[2]s" {
   enabled = true
 
   oidc_options = {
-    type                             = "WEB_APP"
-    grant_types                      = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
-    response_types                   = ["CODE"]
-    token_endpoint_authn_method      = "CLIENT_SECRET_BASIC"
-    redirect_uris                    = ["https://www.pingidentity.com", "https://pingidentity.com"]
-    allow_wildcards_in_redirect_uris = true
-    post_logout_redirect_uris        = ["https://www.pingidentity.com/logout", "https://pingidentity.com/logout"]
+    type                            = "WEB_APP"
+    grant_types                     = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
+    response_types                  = ["CODE"]
+    token_endpoint_auth_method      = "CLIENT_SECRET_BASIC"
+    redirect_uris                   = ["https://www.pingidentity.com", "https://pingidentity.com"]
+    allow_wildcard_in_redirect_uris = true
+    post_logout_redirect_uris       = ["https://www.pingidentity.com/logout", "https://pingidentity.com/logout"]
 
     refresh_token_duration                             = 3000000
     refresh_token_rolling_duration                     = 30000000
@@ -434,11 +434,11 @@ resource "pingone_application" "%[2]s" {
   enabled = true
 
   oidc_options = {
-    type                        = "NATIVE_APP"
-    grant_types                 = ["CLIENT_CREDENTIALS"]
-    token_endpoint_authn_method = "CLIENT_SECRET_BASIC"
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
-    allow_wildcards_in_redirect_uris = true
+    allow_wildcard_in_redirect_uris = true
 
     mobile_app = {
       bundle_id           = "com.%[2]s.bundle"
