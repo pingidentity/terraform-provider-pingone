@@ -158,24 +158,7 @@ func (r *SchemaAttributeResource) UpgradeState(ctx context.Context) map[int64]re
 					return
 				}
 
-				upgradedStateData := SchemaAttributeResourceModelV1{
-					Id:               priorStateData.Id,
-					EnvironmentId:    priorStateData.EnvironmentId,
-					Description:      priorStateData.Description,
-					DisplayName:      priorStateData.DisplayName,
-					Enabled:          priorStateData.Enabled,
-					EnumeratedValues: priorStateData.EnumeratedValues,
-					LdapAttribute:    priorStateData.LdapAttribute,
-					Multivalued:      priorStateData.Multivalued,
-					Name:             priorStateData.Name,
-					RegexValidation:  priorStateData.RegexValidation,
-					Required:         priorStateData.Required,
-					SchemaId:         priorStateData.SchemaId,
-					SchemaName:       types.StringValue("User"),
-					SchemaType:       priorStateData.SchemaType,
-					Type:             priorStateData.Type,
-					Unique:           priorStateData.Unique,
-				}
+				upgradedStateData := priorStateData
 
 				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateData)...)
 			},

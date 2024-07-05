@@ -123,6 +123,10 @@ func (r SchemaAttributeDescription) RequiresReplaceNestedAttributes() SchemaAttr
 	return r.AppendMarkdownString("If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules.")
 }
 
+func (r SchemaAttributeDescription) UnmodifiableDataLossProtection() SchemaAttributeDescription {
+	return r.AppendMarkdownString("This field is immutable and cannot be changed once defined.  To protect against accidental data loss, this resource must be replaced manually (for example, by using Terraform's [plan `-replace` command option](https://developer.hashicorp.com/terraform/cli/commands/plan#replace-address)).  Any data that is stored against this resource must be manually exported before the resource is removed and re-imported once the resource has been replaced.")
+}
+
 func (r SchemaAttributeDescription) AppendSliceValues(pretext string, values []string) SchemaAttributeDescription {
 	pretext = strings.TrimSpace(pretext)
 

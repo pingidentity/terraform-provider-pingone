@@ -1,0 +1,7 @@
+```release-note:bug
+`resource/pingone_schema_attribute`: Fixed issue where schema attributes have the `required` field set to the incorrect boolean value.
+```
+
+```release-note:enhancement
+`resource/pingone_schema_attribute`: Added data protection validation to mitigate accidental deletion of custom user data.
+```
