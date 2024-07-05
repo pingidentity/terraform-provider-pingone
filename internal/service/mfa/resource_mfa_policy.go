@@ -632,14 +632,6 @@ var mfaPolicyCreateUpdateCustomErrorHandler = func(error model.P1Error) diag.Dia
 	return nil
 }
 
-func expandMFAPolicyPost(ctx context.Context, apiClient *management.APIClient, d *schema.ResourceData) (*mfa.DeviceAuthenticationPolicyPost, diag.Diagnostics) {
-	var diags diag.Diagnostics
-	mfaPolicyPost := mfa.DeviceAuthenticationPolicyPost{}
-	mfaPolicyPost.DeviceAuthenticationPolicy, diags = expandMFAPolicy(ctx, apiClient, d)
-
-	return &mfaPolicyPost, diags
-}
-
 func expandMFAPolicy(ctx context.Context, apiClient *management.APIClient, d *schema.ResourceData) (*mfa.DeviceAuthenticationPolicy, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
