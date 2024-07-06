@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_verify_policy`: Added support for the `fail_expired_id`, `provider_auto`, `provider_manual`, and `retry_attempts` properties.
+```
+
+```release-note:enhancement
+`data_source/pingone_verify_policy`: Added support for the `fail_expired_id`, `provider_auto`, `provider_manual`, and `retry_attempts` properties.
+```
