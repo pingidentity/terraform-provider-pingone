@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/mitchellh/mapstructure"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
@@ -259,6 +260,55 @@ func (r *AgreementLocalizationRevisionResource) Create(ctx context.Context, req 
 		}
 	}
 
+	if plan.EffectiveAt.IsNull() || plan.EffectiveAt.IsUnknown() {
+		stateConf := &retry.StateChangeConf{
+			Pending: []string{
+				"false",
+			},
+			Target: []string{
+				"true",
+				"err",
+			},
+			Refresh: func() (interface{}, string, error) {
+
+				var readResponse *management.AgreementLanguageRevision
+				// Run the API call
+				resp.Diagnostics.Append(framework.ParseResponse(
+					ctx,
+
+					func() (any, *http.Response, error) {
+						fO, fR, fErr := r.Client.ManagementAPIClient.AgreementRevisionsResourcesApi.ReadOneAgreementLanguageRevision(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString(), plan.AgreementLocalizationId.ValueString(), response.GetId()).Execute()
+						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+					},
+					"ReadOneAgreementLanguageRevision",
+					framework.DefaultCustomError,
+					sdk.DefaultCreateReadRetryable,
+					&readResponse,
+				)...)
+				if resp.Diagnostics.HasError() {
+					return nil, "err", fmt.Errorf("Error reading agreement revision")
+				}
+
+				if readResponse.GetEffectiveAt().After(time.Now()) {
+					return nil, "false", nil
+				}
+
+				return response, "true", nil
+			},
+			Timeout:                   5 * time.Minute,
+			Delay:                     30 * time.Second,
+			MinTimeout:                1 * time.Second,
+			ContinuousTargetOccurence: 1,
+		}
+		_, err := stateConf.WaitForStateContext(ctx)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Cannot check for agreement language revision effective date",
+				fmt.Sprintf("Expected to validate the implicitly assigned effective date for the agreement language revision %s, got error: %s", response.GetId(), err.Error()))
+			return
+		}
+	}
+
 	// Create the state to save
 	state = plan
 
@@ -430,7 +480,7 @@ func (p *AgreementLocalizationRevisionResourceModel) expand() (*management.Agree
 		t, d = p.EffectiveAt.ValueRFC3339Time()
 		diags.Append(d...)
 	} else {
-		bufferTimeMins := 10 * time.Minute
+		bufferTimeMins := 1 * time.Minute
 		t = time.Now().Local().Add(bufferTimeMins)
 	}
 	if diags.HasError() {
