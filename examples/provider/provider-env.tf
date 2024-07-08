@@ -2,7 +2,7 @@ terraform {
   required_providers {
     pingone = {
       source  = "pingidentity/pingone"
-      version = "~> 1.0"
+      version = "1.0.0-rc2"
     }
   }
 }
