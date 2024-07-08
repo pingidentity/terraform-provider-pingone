@@ -370,9 +370,13 @@ func (r *ResourceScopePingOneAPIResource) Delete(ctx context.Context, req resour
 
 	if m {
 
-		resourceScope, d := fetchResourceScopeFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), resource.GetId(), data.Name.ValueString())
+		resourceScope, d := fetchResourceScopeFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), resource.GetId(), data.Name.ValueString(), true)
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		if resource == nil {
 			return
 		}
 
@@ -464,7 +468,7 @@ func (p *ResourceScopePingOneAPIResourceModel) expand(ctx context.Context, apiCl
 	if m {
 		newScope = false
 
-		data, diags = fetchResourceScopeFromName(ctx, apiClient, p.EnvironmentId.ValueString(), resource.GetId(), p.Name.ValueString())
+		data, diags = fetchResourceScopeFromName(ctx, apiClient, p.EnvironmentId.ValueString(), resource.GetId(), p.Name.ValueString(), false)
 		if diags.HasError() {
 			return nil, diags
 		}
