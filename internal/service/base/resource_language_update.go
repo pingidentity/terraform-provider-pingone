@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
@@ -293,19 +295,80 @@ func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *manage
 		errorFunction = sdk.CustomErrorResourceNotFoundWarning
 	}
 
-	response, d := sdk.ParseResponse(
-		ctx,
+	var response interface{}
 
-		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.LanguagesApi.UpdateLanguage(ctx, environmentID, languageID).Language(language).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
+	stateConf := &retry.StateChangeConf{
+		Pending: []string{
+			"false",
 		},
-		"UpdateLanguage-UpdateSequence1",
-		errorFunction,
-		nil,
-	)
-	diags = append(diags, d...)
-	if diags.HasError() {
+		Target: []string{
+			"true",
+			"err",
+		},
+		Refresh: func() (interface{}, string, error) {
+
+			// Run the API call
+			responseCreate, d := sdk.ParseResponse(
+				ctx,
+
+				func() (any, *http.Response, error) {
+					fO, fR, fErr := apiClient.LanguagesApi.UpdateLanguage(ctx, environmentID, languageID).Language(language).Execute()
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
+				},
+				"UpdateLanguage-UpdateSequence1",
+				errorFunction,
+				nil,
+			)
+			diags = append(diags, d...)
+			if diags.HasError() {
+				return nil, "err", fmt.Errorf("Error reading language")
+			}
+
+			if responseCreate == nil {
+				return nil, "err", fmt.Errorf("Language not found")
+			}
+
+			// Run the API call
+			response, d = sdk.ParseResponse(
+				ctx,
+
+				func() (any, *http.Response, error) {
+					fO, fR, fErr := apiClient.LanguagesApi.ReadOneLanguage(ctx, environmentID, languageID).Execute()
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
+				},
+				"ReadOneLanguage-UpdateSequence1",
+				errorFunction,
+				nil,
+			)
+			diags = append(diags, d...)
+			if diags.HasError() {
+				return nil, "err", fmt.Errorf("Error reading language")
+			}
+
+			if response == nil {
+				return nil, "err", fmt.Errorf("Language not found")
+			}
+
+			if response.(*management.Language).GetEnabled() != enabled {
+				return nil, "false", nil
+			}
+
+			return response, "true", nil
+		},
+		Timeout:                   5 * time.Minute,
+		Delay:                     1 * time.Second,
+		MinTimeout:                1 * time.Second,
+		ContinuousTargetOccurence: 1,
+	}
+	response, err := stateConf.WaitForStateContext(ctx)
+
+	if err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Cannot find enable language",
+			Detail:   fmt.Sprintf("The language %s for environment %s cannot be enabled: %s", languageID, environmentID, err),
+		})
+
 		return diags
 	}
 
@@ -313,7 +376,9 @@ func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *manage
 		return diags
 	}
 
-	if defaultValue && enabled {
+	languageResponse := response.(*management.Language)
+
+	if defaultValue && languageResponse.Enabled {
 
 		language.SetDefault(true)
 
