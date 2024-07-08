@@ -549,7 +549,7 @@ func (p *ApplicationResourceGrantResourceModel) getResourceWithScopes(ctx contex
 			return nil, nil, diags
 		}
 
-		resourceScopes, d = fetchResourceScopesFromIDs(ctx, apiClient, p.EnvironmentId.ValueString(), resource.GetId(), scopes)
+		resourceScopes, d = fetchResourceScopesFromIDs(ctx, apiClient, p.EnvironmentId.ValueString(), resource.GetId(), scopes, false)
 	}
 
 	diags.Append(d...)
