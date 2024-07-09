@@ -1531,13 +1531,19 @@ func (p *identityProviderResourceModelV1) expand(ctx context.Context) (*manageme
 		}
 
 		if !plan.Scopes.IsNull() && !plan.Scopes.IsUnknown() {
-			var scopesPlan []string
+			var scopesPlan []types.String
 			diags.Append(plan.Scopes.ElementsAs(ctx, &scopesPlan, false)...)
 			if diags.HasError() {
 				return nil, diags
 			}
 
-			idpData.SetScopes(scopesPlan)
+			scopes, d := framework.TFTypeStringSliceToStringSlice(scopesPlan, path.Root("openid_connect").AtName("scopes"))
+			diags.Append(d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			idpData.SetScopes(scopes)
 		}
 
 		if !plan.TokenEndpoint.IsNull() && !plan.TokenEndpoint.IsUnknown() {

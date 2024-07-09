@@ -1385,13 +1385,19 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 			}
 
 			if !conditionPlan.IPRange.IsNull() && !conditionPlan.IPRange.IsUnknown() {
-				var conditionIPRangePlan []string
+				var conditionIPRangePlan []types.String
 				diags.Append(conditionPlan.IPRange.ElementsAs(ctx, &conditionIPRangePlan, false)...)
 				if diags.HasError() {
 					return nil, diags
 				}
 
-				condition.SetIpRange(conditionIPRangePlan)
+				conditionIPRange, d := framework.TFTypeStringSliceToStringSlice(conditionIPRangePlan, path.Root("overrides").AtName("condition").AtName("ip_range"))
+				diags.Append(d...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				condition.SetIpRange(conditionIPRange)
 			}
 
 			// The Result
@@ -1456,15 +1462,21 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 	evaluatedPredictors := make([]risk.RiskPolicySetEvaluatedPredictorsInner, 0)
 
 	if !p.EvaluatedPredictors.IsNull() && !p.EvaluatedPredictors.IsUnknown() {
-		var plan []string
+		var plan []types.String
 		diags.Append(p.EvaluatedPredictors.ElementsAs(ctx, &plan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		evaluatedPredictorsStr, d := framework.TFTypeStringSliceToStringSlice(plan, path.Root("evaluated_predictors"))
+		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
 		configuredEvaluatedPredictorIDs := make(map[string]bool)
 
-		for _, predictorID := range plan {
+		for _, predictorID := range evaluatedPredictorsStr {
 			evaluatedPredictors = append(evaluatedPredictors, *risk.NewRiskPolicySetEvaluatedPredictorsInner(predictorID))
 			configuredEvaluatedPredictorIDs[predictorID] = true
 		}

@@ -774,13 +774,19 @@ func (p *FIDO2PolicyResourceModel) expand(ctx context.Context) (*mfa.FIDO2Policy
 	if !mdsAuthenticatorRequirementsPlan.AllowedAuthenticatorIDs.IsNull() && !mdsAuthenticatorRequirementsPlan.AllowedAuthenticatorIDs.IsUnknown() {
 		allowedAuthenticators := make([]mfa.FIDO2PolicyMdsAuthenticatorsRequirementsAllowedAuthenticatorsInner, 0)
 
-		var allowedAuthenticatorIDsPlan []string
+		var allowedAuthenticatorIDsPlan []types.String
 		diags.Append(mdsAuthenticatorRequirementsPlan.AllowedAuthenticatorIDs.ElementsAs(ctx, &allowedAuthenticatorIDsPlan, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		for _, allowedAuthenticatorIDPlan := range allowedAuthenticatorIDsPlan {
+		allowedAuthenticatorIDs, d := framework.TFTypeStringSliceToStringSlice(allowedAuthenticatorIDsPlan, path.Root("mds_authenticators_requirements").AtName("allowed_authenticator_ids"))
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		for _, allowedAuthenticatorIDPlan := range allowedAuthenticatorIDs {
 
 			allowedAuthenticator := *mfa.NewFIDO2PolicyMdsAuthenticatorsRequirementsAllowedAuthenticatorsInner(
 				allowedAuthenticatorIDPlan,

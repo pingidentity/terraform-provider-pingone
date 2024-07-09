@@ -421,15 +421,21 @@ func (r *AlertChannelResource) ImportState(ctx context.Context, req resource.Imp
 func (p *AlertChannelResourceModel) expand(ctx context.Context) (*management.AlertChannel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var addressesPlan []string
+	var addressesPlan []types.String
 	diags.Append(p.Addresses.ElementsAs(ctx, &addressesPlan, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	addresses, d := framework.TFTypeStringSliceToStringSlice(addressesPlan, path.Root("addresses"))
+	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
 	data := management.NewAlertChannel(
 		management.EnumAlertChannelType(p.ChannelType.ValueString()),
-		addressesPlan,
+		addresses,
 	)
 
 	if !p.AlertName.IsNull() && !p.AlertName.IsUnknown() {
@@ -438,14 +444,20 @@ func (p *AlertChannelResourceModel) expand(ctx context.Context) (*management.Ale
 
 	if !p.ExcludeAlertTypes.IsNull() && !p.ExcludeAlertTypes.IsUnknown() {
 
-		var excludeAlertTypesPlan []string
+		var excludeAlertTypesPlan []types.String
 		diags.Append(p.ExcludeAlertTypes.ElementsAs(ctx, &excludeAlertTypesPlan, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
+		excludeAlertTypesPlanStr, d := framework.TFTypeStringSliceToStringSlice(excludeAlertTypesPlan, path.Root("exclude_alert_types"))
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
 		excludeAlertTypes := make([]management.EnumAlertChannelAlertType, len(excludeAlertTypesPlan))
-		for i, v := range excludeAlertTypesPlan {
+		for i, v := range excludeAlertTypesPlanStr {
 			excludeAlertTypes[i] = management.EnumAlertChannelAlertType(v)
 		}
 
@@ -454,14 +466,20 @@ func (p *AlertChannelResourceModel) expand(ctx context.Context) (*management.Ale
 
 	if !p.IncludeAlertTypes.IsNull() && !p.IncludeAlertTypes.IsUnknown() {
 
-		var includeAlertTypesPlan []string
+		var includeAlertTypesPlan []types.String
 		diags.Append(p.IncludeAlertTypes.ElementsAs(ctx, &includeAlertTypesPlan, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
+		includeAlertTypesPlanStr, d := framework.TFTypeStringSliceToStringSlice(includeAlertTypesPlan, path.Root("include_alert_types"))
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
 		includeAlertTypes := make([]management.EnumAlertChannelAlertType, len(includeAlertTypesPlan))
-		for i, v := range includeAlertTypesPlan {
+		for i, v := range includeAlertTypesPlanStr {
 			includeAlertTypes[i] = management.EnumAlertChannelAlertType(v)
 		}
 
@@ -470,14 +488,20 @@ func (p *AlertChannelResourceModel) expand(ctx context.Context) (*management.Ale
 
 	if !p.IncludeSeverities.IsNull() && !p.IncludeSeverities.IsUnknown() {
 
-		var includeSeveritiesPlan []string
+		var includeSeveritiesPlan []types.String
 		diags.Append(p.IncludeSeverities.ElementsAs(ctx, &includeSeveritiesPlan, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
+		includeSeveritiesStr, d := framework.TFTypeStringSliceToStringSlice(includeSeveritiesPlan, path.Root("include_severities"))
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
 		includeSeverities := make([]management.EnumAlertChannelSeverity, len(includeSeveritiesPlan))
-		for i, v := range includeSeveritiesPlan {
+		for i, v := range includeSeveritiesStr {
 			includeSeverities[i] = management.EnumAlertChannelSeverity(v)
 		}
 

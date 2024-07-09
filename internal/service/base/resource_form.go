@@ -1212,112 +1212,13 @@ func formFieldValidationDocumentation(key string) string {
 }
 
 func (r *FormResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var data []formComponentsFieldResourceModel
-	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("components").AtName("fields"), &data)...)
-
-	positions := make([]formComponentsFieldPositionResourceModel, 0)
-
-	hasSubmitButton := false
-
-	for _, field := range data {
-		// Validate has submit button
-		if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON))) {
-			hasSubmitButton = true
-		}
-
-		// Validate Position conflicts
-		var positionPlan formComponentsFieldPositionResourceModel
-		resp.Diagnostics.Append(field.Position.As(ctx, &positionPlan, basetypes.ObjectAsOptions{
-			UnhandledNullAsEmpty:    false,
-			UnhandledUnknownAsEmpty: false,
-		})...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		for _, existingPosition := range positions {
-			if existingPosition.Col.Equal(positionPlan.Col) && existingPosition.Row.Equal(positionPlan.Row) {
-				resp.Diagnostics.AddAttributeError(
-					path.Root("components").AtName("fields"),
-					"Invalid DaVinci form configuration",
-					fmt.Sprintf("The combination of `col` and `row` must be unique between form fields.  The position `col`: `%d`, `row`: `%d` is duplicated.", positionPlan.Col.ValueInt64(), positionPlan.Row.ValueInt64()),
-				)
-			}
-		}
-
-		positions = append(positions, positionPlan)
-
-		// Validate Required/Optional
-		if v, ok := formComponentsFieldsSchemaDefMap[management.EnumFormFieldType(field.Type.ValueString())]; ok {
-			for _, requiredField := range v.Required {
-				if !field.validateFieldSet(requiredField) {
-					resp.Diagnostics.AddAttributeError(
-						path.Root("components").AtName("fields"),
-						"Invalid DaVinci form configuration",
-						fmt.Sprintf("The `%s` field is required for the `%s` field type.", requiredField, field.Type.ValueString()),
-					)
-				}
-			}
-		} else {
-			resp.Diagnostics.AddAttributeWarning(
-				path.Root("components").AtName("fields"),
-				"Cannot validate form configuration",
-				fmt.Sprintf("The form field type `%s` does not have Required/Optional metadata configured.  Please report this to the provider maintainers.", field.Type.ValueString()),
-			)
-		}
-
-		// Validate parameters must have specific values if the `key` is a user field
-		m, err := regexp.Compile(`^user\..+$`)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected error",
-				fmt.Sprintf("Failed to compile regex: %s.  This is always a bug in the provider.  Please report this error to the provider maintainers.", err.Error()),
-			)
-			return
-		}
-
-		if m.MatchString(field.Key.ValueString()) {
-			if !field.Required.IsNull() && !field.Required.IsUnknown() && !field.Required.ValueBool() {
-				resp.Diagnostics.AddAttributeError(
-					path.Root("components").AtName("fields"),
-					"Invalid DaVinci form configuration",
-					fmt.Sprintf("The `required` parameter must be set to `true` for the `%s` field type when the `key` is a user field.", field.Type.ValueString()),
-				)
-			}
-		}
-
-		// Validate if PASSWORD or PASSWORDVERIFY, the validation.type must be NONE
-		if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_PASSWORD))) || field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY))) {
-			if !field.Validation.IsNull() && !field.Validation.IsUnknown() {
-				var vPlan formComponentsFieldElementValidationResourceModel
-				resp.Diagnostics.Append(field.Validation.As(ctx, &vPlan, basetypes.ObjectAsOptions{
-					UnhandledNullAsEmpty:    false,
-					UnhandledUnknownAsEmpty: false,
-				})...)
-				if resp.Diagnostics.HasError() {
-					return
-				}
-
-				if !vPlan.Type.Equal(types.StringValue(string(management.ENUMFORMELEMENTVALIDATIONTYPE_NONE))) {
-					resp.Diagnostics.AddAttributeError(
-						path.Root("components").AtName("fields"),
-						"Invalid DaVinci form configuration",
-						fmt.Sprintf("The `validation.type` parameter must be set to `NONE` for the `%s` field type.", field.Type.ValueString()),
-					)
-				}
-			}
-		}
+	var data formResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	// Validate has submit button
-	if !hasSubmitButton {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("components").AtName("fields"),
-			"Invalid DaVinci form configuration",
-			"The DaVinci form is expected to contain a submit button field (`type` parameter value of `SUBMIT_BUTTON`).",
-		)
-	}
-
+	resp.Diagnostics.Append(data.validate(ctx, true)...)
 }
 
 func (r *formComponentsFieldResourceModel) validateFieldSet(field string) bool {
@@ -1727,6 +1628,174 @@ func (r *FormResource) ImportState(ctx context.Context, req resource.ImportState
 	}
 }
 
+func (p *formResourceModel) validate(ctx context.Context, allowUnknowns bool) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	var componentsPlan *formComponentsResourceModel
+	diags.Append(p.Components.As(ctx, &componentsPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: allowUnknowns,
+	})...)
+	if diags.HasError() {
+		return diags
+	}
+
+	if componentsPlan != nil {
+
+		var fieldsPlan []formComponentsFieldResourceModel
+		diags.Append(componentsPlan.Fields.ElementsAs(ctx, &fieldsPlan, allowUnknowns)...)
+		if diags.HasError() {
+			return diags
+		}
+
+		if len(fieldsPlan) > 0 {
+
+			hasSubmitButton := false
+			submitButtonUnknown := false
+
+			for i, field := range fieldsPlan {
+
+				if field.Type.IsUnknown() && !allowUnknowns {
+					diags.AddAttributeError(
+						path.Root("components").AtName("fields"),
+						"Invalid DaVinci form configuration",
+						"The `type` parameter is unknown and cannot be validated.",
+					)
+					submitButtonUnknown = true
+					continue
+				}
+
+				if !field.Type.IsNull() && !field.Type.IsUnknown() && field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON))) {
+					hasSubmitButton = true
+				}
+
+				// Validate Position conflicts
+				var positionPlan *formComponentsFieldPositionResourceModel
+				diags.Append(field.Position.As(ctx, &positionPlan, basetypes.ObjectAsOptions{
+					UnhandledNullAsEmpty:    false,
+					UnhandledUnknownAsEmpty: allowUnknowns,
+				})...)
+				if diags.HasError() {
+					return diags
+				}
+
+				if positionPlan != nil {
+					for existingPositionIndex, existingPosition := range fieldsPlan {
+						if existingPositionIndex != i {
+							var existingPositionPlan *formComponentsFieldPositionResourceModel
+							diags.Append(existingPosition.Position.As(ctx, &existingPositionPlan, basetypes.ObjectAsOptions{
+								UnhandledNullAsEmpty:    false,
+								UnhandledUnknownAsEmpty: allowUnknowns,
+							})...)
+							if diags.HasError() {
+								return diags
+							}
+
+							if existingPositionPlan != nil && existingPositionPlan.Col.Equal(positionPlan.Col) && existingPositionPlan.Row.Equal(positionPlan.Row) {
+								diags.AddAttributeError(
+									path.Root("components").AtName("fields"),
+									"Invalid DaVinci form configuration",
+									fmt.Sprintf("The combination of `col` and `row` must be unique between form fields.  The position `col`: `%d`, `row`: `%d` is duplicated.", positionPlan.Col.ValueInt64(), positionPlan.Row.ValueInt64()),
+								)
+							}
+						}
+					}
+				}
+
+				// Validate Required/Optional
+				if v, ok := formComponentsFieldsSchemaDefMap[management.EnumFormFieldType(field.Type.ValueString())]; ok {
+					for _, requiredField := range v.Required {
+						if !field.validateFieldSet(requiredField) {
+							diags.AddAttributeError(
+								path.Root("components").AtName("fields"),
+								"Invalid DaVinci form configuration",
+								fmt.Sprintf("The `%s` field is required for the `%s` field type.", requiredField, field.Type.ValueString()),
+							)
+						}
+					}
+				} else {
+					diags.AddAttributeWarning(
+						path.Root("components").AtName("fields"),
+						"Cannot validate form configuration",
+						fmt.Sprintf("The form field type `%s` does not have Required/Optional metadata configured.  Please report this to the provider maintainers.", field.Type.ValueString()),
+					)
+				}
+
+				// Validate parameters must have specific values if the `key` is a user field
+				m, err := regexp.Compile(`^user\..+$`)
+				if err != nil {
+					diags.AddError(
+						"Unexpected error",
+						fmt.Sprintf("Failed to compile regex: %s.  This is always a bug in the provider.  Please report this error to the provider maintainers.", err.Error()),
+					)
+					return diags
+				}
+
+				if field.Key.IsUnknown() && !allowUnknowns {
+					diags.AddAttributeError(
+						path.Root("components").AtName("fields"),
+						"Invalid DaVinci form configuration",
+						"The `key` parameter is unknown and cannot be validated.",
+					)
+					continue
+				}
+
+				if !field.Key.IsNull() && !field.Key.IsUnknown() && m.MatchString(field.Key.ValueString()) {
+					if !field.Required.IsNull() && !field.Required.IsUnknown() && !field.Required.ValueBool() {
+						diags.AddAttributeError(
+							path.Root("components").AtName("fields"),
+							"Invalid DaVinci form configuration",
+							fmt.Sprintf("The `required` parameter must be set to `true` for the `%s` field type when the `key` is a user field.", field.Type.ValueString()),
+						)
+					}
+				}
+
+				// Validate if PASSWORD or PASSWORDVERIFY, the validation.type must be NONE
+				if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_PASSWORD))) || field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY))) {
+					if field.Validation.IsUnknown() && !allowUnknowns {
+						diags.AddAttributeError(
+							path.Root("components").AtName("fields"),
+							"Invalid DaVinci form configuration",
+							"The `validation` parameter is unknown and cannot be validated.",
+						)
+						continue
+					}
+
+					if !field.Validation.IsNull() && !field.Validation.IsUnknown() {
+						var vPlan formComponentsFieldElementValidationResourceModel
+						diags.Append(field.Validation.As(ctx, &vPlan, basetypes.ObjectAsOptions{
+							UnhandledNullAsEmpty:    false,
+							UnhandledUnknownAsEmpty: false,
+						})...)
+						if diags.HasError() {
+							return diags
+						}
+
+						if !vPlan.Type.Equal(types.StringValue(string(management.ENUMFORMELEMENTVALIDATIONTYPE_NONE))) {
+							diags.AddAttributeError(
+								path.Root("components").AtName("fields"),
+								"Invalid DaVinci form configuration",
+								fmt.Sprintf("The `validation.type` parameter must be set to `NONE` for the `%s` field type.", field.Type.ValueString()),
+							)
+						}
+					}
+				}
+			}
+
+			// Validate has submit button
+			if !hasSubmitButton && !submitButtonUnknown {
+				diags.AddAttributeError(
+					path.Root("components").AtName("fields"),
+					"Invalid DaVinci form configuration",
+					"The DaVinci form is expected to contain a submit button field (`type` parameter value of `SUBMIT_BUTTON`).",
+				)
+			}
+		}
+	}
+
+	return diags
+}
+
 func (p *formResourceModel) expand(ctx context.Context) (*management.Form, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -1772,14 +1841,20 @@ func (p *formResourceModel) expand(ctx context.Context) (*management.Form, diag.
 	}
 
 	if !p.FieldTypes.IsNull() && !p.FieldTypes.IsUnknown() {
-		var plan []string
+		var plan []types.String
 		diags.Append(p.FieldTypes.ElementsAs(ctx, &plan, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
+		forms, d := framework.TFTypeStringSliceToStringSlice(plan, path.Root("field_types"))
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
 		fieldTypes := make([]management.EnumFormFieldType, 0)
-		for _, v := range plan {
+		for _, v := range forms {
 			fieldTypes = append(fieldTypes, management.EnumFormFieldType(v))
 		}
 
