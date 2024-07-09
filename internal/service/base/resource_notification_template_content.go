@@ -771,53 +771,55 @@ func (r *NotificationTemplateContentResource) ImportState(ctx context.Context, r
 	}
 }
 
-func notificationTemplateCustomWriteError(error model.P1Error) diag.Diagnostics {
+func notificationTemplateCustomWriteError(_ *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+	if p1Error != nil {
+		if details, ok := p1Error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 
-		// Delivery method not applicable to the template
-		if target, ok := details[0].GetTargetOk(); ok && details[0].GetCode() == "INVALID_VALUE" && *target == "deliveryMethod" {
-			diags.AddError(
-				"The configured delivery method does not apply to the selected template.",
-				"Please ensure that the delivery method (`email`, `sms`, `push`, `voice`) is applicable to the selected template.",
-			)
+			// Delivery method not applicable to the template
+			if target, ok := details[0].GetTargetOk(); ok && details[0].GetCode() == "INVALID_VALUE" && *target == "deliveryMethod" {
+				diags.AddError(
+					"The configured delivery method does not apply to the selected template.",
+					"Please ensure that the delivery method (`email`, `sms`, `push`, `voice`) is applicable to the selected template.",
+				)
 
-			return diags
-		}
+				return diags
+			}
 
-		// Language not likely added
-		if target, ok := details[0].GetTargetOk(); ok && details[0].GetCode() == "INVALID_VALUE" && *target == "language" {
-			diags.AddError(
-				"The locale is not valid for the environment.",
-				"Please ensure that the associated language for the locale been created with the `pingone_language` resource.",
-			)
+			// Language not likely added
+			if target, ok := details[0].GetTargetOk(); ok && details[0].GetCode() == "INVALID_VALUE" && *target == "language" {
+				diags.AddError(
+					"The locale is not valid for the environment.",
+					"Please ensure that the associated language for the locale been created with the `pingone_language` resource.",
+				)
 
-			return diags
-		}
+				return diags
+			}
 
-		// Not all variables set
-		if message, ok := details[0].GetMessageOk(); ok && details[0].GetCode() == "REQUIRED_VALUE" {
-			diags.AddError(
-				"Content body is missing a required value.",
-				*message,
-			)
+			// Not all variables set
+			if message, ok := details[0].GetMessageOk(); ok && details[0].GetCode() == "REQUIRED_VALUE" {
+				diags.AddError(
+					"Content body is missing a required value.",
+					*message,
+				)
 
-			return diags
-		}
+				return diags
+			}
 
-		// Custom notification content already exists
-		if _, ok := details[0].GetMessageOk(); ok && details[0].GetCode() == "UNIQUENESS_VIOLATION" {
-			diags.AddError(
-				"Customized content for the template, locale and variant combination already exists.",
-				"Please ensure that:\n\t1.\tThe notification content for the template, locale and variant is not being managed by another process and is conflicting.\n\t2.\tAny custom content for the combination has been restored to default values. See [Editing a notification](https://docs.pingidentity.com/r/en-us/pingone/p1_c_edit_notification) for more details.",
-			)
+			// Custom notification content already exists
+			if _, ok := details[0].GetMessageOk(); ok && details[0].GetCode() == "UNIQUENESS_VIOLATION" {
+				diags.AddError(
+					"Customized content for the template, locale and variant combination already exists.",
+					"Please ensure that:\n\t1.\tThe notification content for the template, locale and variant is not being managed by another process and is conflicting.\n\t2.\tAny custom content for the combination has been restored to default values. See [Editing a notification](https://docs.pingidentity.com/r/en-us/pingone/p1_c_edit_notification) for more details.",
+				)
 
-			return diags
+				return diags
+			}
 		}
 	}
 
-	return nil
+	return diags
 }
 
 func (p *notificationTemplateContentResourceModelV1) expand(ctx context.Context) (*management.TemplateContent, diag.Diagnostics) {

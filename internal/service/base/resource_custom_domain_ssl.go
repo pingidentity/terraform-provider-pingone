@@ -208,23 +208,24 @@ func (r *CustomDomainSSLResource) Create(ctx context.Context, req resource.Creat
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateDomain",
-		func(error model.P1Error) diag.Diagnostics {
+		func(_ *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 			var diags diag.Diagnostics
 
-			// Cannot validate against the authoritative name service
-			if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
-				m, _ := regexp.MatchString("^Custom domain status must be 'SSL_CERTIFICATE_REQUIRED' or 'ACTIVE' in order to import a certificate", details[0].GetMessage())
-				if m {
-					diags.AddError(
-						fmt.Sprintf("Cannot add SSL certificate settings to the custom domain - %s", details[0].GetMessage()),
-						`Please verify the domain first (hint: use the "pingone_custom_domain_verify" resource).)`,
-					)
+			if p1Error != nil {
+				// Cannot validate against the authoritative name service
+				if details, ok := p1Error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+					m, _ := regexp.MatchString("^Custom domain status must be 'SSL_CERTIFICATE_REQUIRED' or 'ACTIVE' in order to import a certificate", details[0].GetMessage())
+					if m {
+						diags.AddError(
+							fmt.Sprintf("Cannot add SSL certificate settings to the custom domain - %s", details[0].GetMessage()),
+							`Please verify the domain first (hint: use the "pingone_custom_domain_verify" resource).)`,
+						)
 
-					return diags
+						return diags
+					}
 				}
 			}
-
-			return nil
+			return diags
 		},
 		sdk.DefaultCreateReadRetryable,
 		&response,

@@ -298,27 +298,29 @@ func (r *PopulationResource) Delete(ctx context.Context, req resource.DeleteRequ
 	}
 }
 
-func populationDeleteCustomErrorHandler(error model.P1Error) diag.Diagnostics {
+func populationDeleteCustomErrorHandler(r *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	// Env must contain at least one population
-	if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
-		if code, ok := details[0].GetCodeOk(); ok && *code == "CONSTRAINT_VIOLATION" {
-			if message, ok := details[0].GetMessageOk(); ok {
-				m, err := regexp.MatchString(`must contain at least one population`, *message)
-				if err == nil && m {
-					diags.AddWarning(
-						"Constraint violation",
-						fmt.Sprintf("A constraint violation error was encountered: %s\n\nThe population has been removed from Terraform state, but has been left in place in the environment.", error.GetMessage()),
-					)
+	if p1Error != nil {
+		// Env must contain at least one population
+		if details, ok := p1Error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+			if code, ok := details[0].GetCodeOk(); ok && *code == "CONSTRAINT_VIOLATION" {
+				if message, ok := details[0].GetMessageOk(); ok {
+					m, err := regexp.MatchString(`must contain at least one population`, *message)
+					if err == nil && m {
+						diags.AddWarning(
+							"Constraint violation",
+							fmt.Sprintf("A constraint violation error was encountered: %s\n\nThe population has been removed from Terraform state, but has been left in place in the environment.", p1Error.GetMessage()),
+						)
 
-					return diags
+						return diags
+					}
 				}
 			}
 		}
 	}
 
-	return nil
+	return diags
 }
 
 func (r *PopulationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

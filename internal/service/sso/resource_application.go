@@ -1955,22 +1955,25 @@ func (r *ApplicationResource) ImportState(ctx context.Context, req resource.Impo
 	}
 }
 
-func applicationWriteCustomError(error model.P1Error) diag.Diagnostics {
+func applicationWriteCustomError(r *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	// Wildcards in redirect URis
-	m, err := regexp.MatchString("^Wildcards are not allowed in redirect URIs.", error.GetMessage())
-	if err != nil {
-		diags.AddError("API Validation error", "Cannot match error string for wildcard in redirect URIs")
-		return diags
-	}
-	if m {
-		diags.AddError("Invalid configuration", "Current configuration is invalid as wildcards are not allowed in redirect URIs.  Wildcards can be enabled by setting `allow_wildcard_in_redirect_uris` to `true`.")
+	if p1Error != nil {
+		// Wildcards in redirect URis
+		m, err := regexp.MatchString("^Wildcards are not allowed in redirect URIs.", p1Error.GetMessage())
+		if err != nil {
+			diags.AddError("API Validation error", "Cannot match error string for wildcard in redirect URIs")
+			return diags
+		}
+		if m {
+			diags.AddError("Invalid configuration", "Current configuration is invalid as wildcards are not allowed in redirect URIs.  Wildcards can be enabled by setting `allow_wildcard_in_redirect_uris` to `true`.")
 
-		return diags
+			return diags
+		}
 	}
 
-	return framework.DefaultCustomError(error)
+	diags.Append(framework.DefaultCustomError(r, p1Error)...)
+	return diags
 }
 
 func (p *applicationResourceModelV1) expandCreate(ctx context.Context) (*management.CreateApplicationRequest, diag.Diagnostics) {

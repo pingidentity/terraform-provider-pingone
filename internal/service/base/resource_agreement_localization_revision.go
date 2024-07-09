@@ -525,32 +525,26 @@ func (p *AgreementLocalizationRevisionResourceModel) toState(apiObject *manageme
 	return diags
 }
 
-func agreementLocalizationRevisionDeleteErrorHandler(error model.P1Error) diag.Diagnostics {
+func agreementLocalizationRevisionDeleteErrorHandler(r *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	// Deleted outside of TF
-	if error.GetCode() == "NOT_FOUND" {
-		diags.AddWarning(
-			"Resource not found on delete.",
-			error.GetMessage(),
-		)
+	diags.Append(framework.CustomErrorResourceNotFoundWarning(r, p1Error)...)
 
-		return diags
-	}
+	if p1Error != nil {
+		// Last action in the policy
+		if v, ok := p1Error.GetDetailsOk(); ok && v != nil && len(v) > 0 {
+			if v[0].GetCode() == "CONSTRAINT_VIOLATION" {
+				if match, _ := regexp.MatchString("A currently effective revision cannot be deleted.", v[0].GetMessage()); match {
+					diags.AddWarning(
+						"Cannot delete the agreement localization revision, a currently effective revision cannot be deleted.",
+						"The revision is left in place but no longer managed by the provider.",
+					)
 
-	// Last action in the policy
-	if v, ok := error.GetDetailsOk(); ok && v != nil && len(v) > 0 {
-		if v[0].GetCode() == "CONSTRAINT_VIOLATION" {
-			if match, _ := regexp.MatchString("A currently effective revision cannot be deleted.", v[0].GetMessage()); match {
-				diags.AddWarning(
-					"Cannot delete the agreement localization revision, a currently effective revision cannot be deleted.",
-					"The revision is left in place but no longer managed by the provider.",
-				)
-
-				return diags
+					return diags
+				}
 			}
 		}
 	}
 
-	return nil
+	return diags
 }

@@ -569,22 +569,25 @@ func (r *NotificationPolicyResource) Delete(ctx context.Context, req resource.De
 	}
 }
 
-var notificationPolicyDeleteCustomError = func(p1Error model.P1Error) diag.Diagnostics {
+var notificationPolicyDeleteCustomError = func(r *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	// Undeletable default notifications policy
-	if v, ok := p1Error.GetDetailsOk(); ok && v != nil && len(v) > 0 {
-		if v[0].GetCode() == "CONSTRAINT_VIOLATION" {
-			if match, _ := regexp.MatchString("remove default notifications policy", v[0].GetMessage()); match {
+	if p1Error != nil {
+		// Undeletable default notifications policy
+		if v, ok := p1Error.GetDetailsOk(); ok && v != nil && len(v) > 0 {
+			if v[0].GetCode() == "CONSTRAINT_VIOLATION" {
+				if match, _ := regexp.MatchString("remove default notifications policy", v[0].GetMessage()); match {
 
-				diags.AddWarning("Cannot delete the default notifications policy", "Due to API restrictions, the provider cannot delete the default notifications policy for an environment.  The policy has been removed from Terraform state but has been left in place in the PingOne service.")
+					diags.AddWarning("Cannot delete the default notifications policy", "Due to API restrictions, the provider cannot delete the default notifications policy for an environment.  The policy has been removed from Terraform state but has been left in place in the PingOne service.")
 
-				return diags
+					return diags
+				}
 			}
 		}
 	}
 
-	return framework.CustomErrorResourceNotFoundWarning(p1Error)
+	diags.Append(framework.CustomErrorResourceNotFoundWarning(r, p1Error)...)
+	return diags
 }
 
 func (r *NotificationPolicyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
