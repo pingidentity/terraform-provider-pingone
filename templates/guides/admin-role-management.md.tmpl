@@ -64,7 +64,10 @@ PingOne Error Details:
 ID: f21b****-****-****-****-********a7d0
 Code: INVALID_DATA
 Message: The request could not be completed. One or more validation errors were in the request.
-Details object: [{"code":"UNIQUENESS_VIOLATION","message":"May not assign duplicate Role","target":"role"}]
+Details:
+  - Code:       UNIQUENESS_VIOLATION
+    Message:    May not assign duplicate Role
+    Target:     role
 ```
 
 The error occurs when a user, group, worker application or connection already has the role assignment at a scope that is greater than or equal to the scope being configured.
@@ -121,7 +124,9 @@ PingOne Error Details:
 ID: f21b****-****-****-****-********a7d0
 Code: ACCESS_FAILED
 Message: The request could not be completed. You do not have access to this resource.
-Details object: [{"code":"INSUFFICIENT_PERMISSIONS","message":"Actor does not have permissions to access worker application client secrets"}]
+Details:
+  - Code:       INSUFFICIENT_PERMISSIONS
+    Message:    Actor does not have permissions to access worker application client secrets
 ```
 
 The change in ability to manage a worker application's client secret typically occurs when the worker application is granted additional role permissions that the user, admin worker application or connection doesn't have.  In effect, it means the worker application whose secret cannot be managed has a higher level of privilege to manage configuration and data within the tenant.  The ability to view and change the secret is therefore restricted to mitigate privilege escalation issues where admin actors could potentially use the higher privileged worker application to make changes they are not authorised to make in the platform.
