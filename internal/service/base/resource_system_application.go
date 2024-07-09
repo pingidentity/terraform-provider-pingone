@@ -534,10 +534,10 @@ func (p *systemApplicationResourceModel) expand(ctx context.Context, apiClient *
 			UnhandledUnknownAsEmpty: false,
 		})...)
 
-		var groupsPlan []types.String
+		var groupsPlan []pingonetypes.ResourceIDValue
 		diags.Append(plan.Groups.ElementsAs(ctx, &groupsPlan, false)...)
 
-		groupsStr, d := framework.TFTypeStringSliceToStringSlice(groupsPlan, path.Root("access_control_group_options").AtName("groups"))
+		groupsStr, d := framework.TFTypePingOneResourceIDSliceToStringSlice(groupsPlan, path.Root("access_control_group_options").AtName("groups"))
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, nil, diags

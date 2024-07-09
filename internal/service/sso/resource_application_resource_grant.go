@@ -543,13 +543,13 @@ func (p *ApplicationResourceGrantResourceModel) getResourceWithScopes(ctx contex
 	resourceScopes := make([]management.ResourceScope, 0)
 	if !p.Scopes.IsNull() && !p.Scopes.IsUnknown() {
 
-		var scopesPlan []types.String
+		var scopesPlan []pingonetypes.ResourceIDValue
 		diags.Append(p.Scopes.ElementsAs(ctx, &scopesPlan, false)...)
 		if diags.HasError() {
 			return nil, nil, diags
 		}
 
-		scopes, d := framework.TFTypeStringSliceToStringSlice(scopesPlan, path.Root("scopes"))
+		scopes, d := framework.TFTypePingOneResourceIDSliceToStringSlice(scopesPlan, path.Root("scopes"))
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, nil, diags
@@ -642,13 +642,13 @@ func (p *ApplicationResourceGrantResourceModel) expand(ctx context.Context, reso
 
 	resourceObj := management.NewApplicationResourceGrantResource(resource.GetId())
 
-	var scopesPlan []types.String
+	var scopesPlan []pingonetypes.ResourceIDValue
 	diags.Append(p.Scopes.ElementsAs(ctx, &scopesPlan, false)...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
-	scopesStr, d := framework.TFTypeStringSliceToStringSlice(scopesPlan, path.Root("scopes"))
+	scopesStr, d := framework.TFTypePingOneResourceIDSliceToStringSlice(scopesPlan, path.Root("scopes"))
 	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags

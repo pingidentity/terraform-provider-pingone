@@ -594,13 +594,13 @@ func (p *webhookFilterOptionsResourceModelV1) expand(ctx context.Context) (*mana
 	data := management.NewSubscriptionFilterOptions(includedActionTypes)
 
 	if !p.IncludedApplicationIds.IsNull() && !p.IncludedApplicationIds.IsUnknown() {
-		var typePlan []types.String
+		var typePlan []pingonetypes.ResourceIDValue
 		diags.Append(p.IncludedApplicationIds.ElementsAs(ctx, &typePlan, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		typesStr, d := framework.TFTypeStringSliceToStringSlice(typePlan, path.Root("filter_options").AtName("included_application_ids"))
+		typesStr, d := framework.TFTypePingOneResourceIDSliceToStringSlice(typePlan, path.Root("filter_options").AtName("included_application_ids"))
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
@@ -615,13 +615,13 @@ func (p *webhookFilterOptionsResourceModelV1) expand(ctx context.Context) (*mana
 	}
 
 	if !p.IncludedPopulationIds.IsNull() && !p.IncludedPopulationIds.IsUnknown() {
-		var typePlan []types.String
+		var typePlan []pingonetypes.ResourceIDValue
 		diags.Append(p.IncludedPopulationIds.ElementsAs(ctx, &typePlan, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		typesStr, d := framework.TFTypeStringSliceToStringSlice(typePlan, path.Root("filter_options").AtName("included_population_ids"))
+		typesStr, d := framework.TFTypePingOneResourceIDSliceToStringSlice(typePlan, path.Root("filter_options").AtName("included_population_ids"))
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags

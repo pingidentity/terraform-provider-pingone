@@ -475,13 +475,13 @@ func (p *ResourceScopeOpenIDResourceModel) expand(ctx context.Context, apiClient
 
 	if !p.MappedClaims.IsNull() && !p.MappedClaims.IsUnknown() {
 
-		var plan []types.String
+		var plan []pingonetypes.ResourceIDValue
 		diags.Append(p.MappedClaims.ElementsAs(ctx, &plan, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		mappedClaims, d := framework.TFTypeStringSliceToStringSlice(plan, path.Root("mapped_claims"))
+		mappedClaims, d := framework.TFTypePingOneResourceIDSliceToStringSlice(plan, path.Root("mapped_claims"))
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
