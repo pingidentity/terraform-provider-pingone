@@ -1234,22 +1234,24 @@ func (r *PhoneDeliverySettingsResource) ImportState(ctx context.Context, req res
 	}
 }
 
-func phoneDeliverySettingsCreateUpdateCustomErrorHandler(error model.P1Error) diag.Diagnostics {
+func phoneDeliverySettingsCreateUpdateCustomErrorHandler(_ *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	// Invalid composition
-	if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
-		if code, ok := details[0].GetCodeOk(); ok && *code == "INVALID_VALUE" {
-			diags.AddError(
-				"Authentication error",
-				fmt.Sprintf("%s. Please check the credentials used to connect to Twilio/Syniverse and retry.", details[0].GetMessage()),
-			)
+	if p1Error != nil {
+		// Invalid composition
+		if details, ok := p1Error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+			if code, ok := details[0].GetCodeOk(); ok && *code == "INVALID_VALUE" {
+				diags.AddError(
+					"Authentication error",
+					fmt.Sprintf("%s. Please check the credentials used to connect to Twilio/Syniverse and retry.", details[0].GetMessage()),
+				)
 
-			return diags
+				return diags
+			}
 		}
 	}
 
-	return nil
+	return diags
 }
 
 func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context, serviceNumbers []management.NotificationsSettingsPhoneDeliverySettingsCustomNumbers) (*management.NotificationsSettingsPhoneDeliverySettings, diag.Diagnostics) {

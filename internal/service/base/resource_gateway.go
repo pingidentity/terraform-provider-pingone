@@ -1625,21 +1625,24 @@ func toStateUserTypesNewUserLookupAttributeMappingsOk(apiObject []management.Gat
 }
 
 var (
-	gatewayWriteErrors = func(error model.P1Error) diag.Diagnostics {
+	gatewayWriteErrors = func(r *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 		var diags diag.Diagnostics
 
-		// Invalid shared secret combination
-		if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
-			if code, ok := details[0].GetCodeOk(); ok && *code == "INVALID_VALUE" {
-				diags.AddError(
-					"Invalid Value",
-					details[0].GetMessage(),
-				)
+		if p1Error != nil {
+			// Invalid shared secret combination
+			if details, ok := p1Error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+				if code, ok := details[0].GetCodeOk(); ok && *code == "INVALID_VALUE" {
+					diags.AddError(
+						"Invalid Value",
+						details[0].GetMessage(),
+					)
 
-				return diags
+					return diags
+				}
 			}
 		}
 
-		return framework.DefaultCustomError(error)
+		diags.Append(framework.DefaultCustomError(r, p1Error)...)
+		return diags
 	}
 )

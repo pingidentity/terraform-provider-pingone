@@ -161,11 +161,11 @@ func RoleAssignmentScopeOkToTF(roleAssignmentScope *management.RoleAssignmentSco
 }
 
 var (
-	CreateRoleAssignmentErrorFunc = func(error model.P1Error) diag.Diagnostics {
+	CreateRoleAssignmentErrorFunc = func(_ *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 		var diags diag.Diagnostics
 
 		// Invalid role/scope combination
-		if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+		if details, ok := p1Error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 			if target, ok := details[0].GetTargetOk(); ok && *target == "scope" {
 				diags.AddError(
 					"Incompatible role and scope combination",
@@ -176,7 +176,7 @@ var (
 			}
 		}
 
-		return nil
+		return diags
 	}
 
 	RoleAssignmentRetryable = func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {

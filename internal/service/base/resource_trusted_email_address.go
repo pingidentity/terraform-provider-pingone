@@ -327,21 +327,23 @@ func (p *TrustedEmailAddressResourceModel) toState(apiObject *management.EmailDo
 	return diags
 }
 
-func trustedEmailAddressAPIErrors(error model.P1Error) diag.Diagnostics {
+func trustedEmailAddressAPIErrors(_ *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	// Domain not verified
-	if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
-		if code, ok := details[0].GetCodeOk(); ok && *code == "INVALID_VALUE" {
-			if target, ok := details[0].GetTargetOk(); ok && *target == "trustedEmail" {
-				diags.AddError(
-					"The domain of the given email address is not verified",
-					"Ensure that the domain of the given trusted email address has been verified first.  This can be configured with the `pingone_trusted_email_domain` resource.",
-				)
+	if p1Error != nil {
+		// Domain not verified
+		if details, ok := p1Error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+			if code, ok := details[0].GetCodeOk(); ok && *code == "INVALID_VALUE" {
+				if target, ok := details[0].GetTargetOk(); ok && *target == "trustedEmail" {
+					diags.AddError(
+						"The domain of the given email address is not verified",
+						"Ensure that the domain of the given trusted email address has been verified first.  This can be configured with the `pingone_trusted_email_domain` resource.",
+					)
 
-				return diags
+					return diags
+				}
 			}
 		}
 	}
-	return nil
+	return diags
 }

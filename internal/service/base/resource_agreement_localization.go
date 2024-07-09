@@ -499,20 +499,12 @@ func (p *AgreementLocalizationResourceModel) toState(apiObject *management.Agree
 	return diags
 }
 
-func agreementLocalizationDeleteErrorHandler(error model.P1Error) diag.Diagnostics {
+func agreementLocalizationDeleteErrorHandler(r *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	// Deleted outside of TF
-	if error.GetCode() == "NOT_FOUND" {
-		diags.AddWarning(
-			"Resource not found on delete.",
-			error.GetMessage(),
-		)
+	diags.Append(framework.CustomErrorResourceNotFoundWarning(r, p1Error)...)
 
-		return diags
-	}
-
-	if v, ok := error.GetDetailsOk(); ok && v != nil && len(v) > 0 {
+	if v, ok := p1Error.GetDetailsOk(); ok && v != nil && len(v) > 0 {
 		if v[0].GetCode() == "CONSTRAINT_VIOLATION" {
 			if match, _ := regexp.MatchString("Agreement language with effective revision can not be deleted.", v[0].GetMessage()); match {
 				diags.AddWarning(
@@ -525,5 +517,5 @@ func agreementLocalizationDeleteErrorHandler(error model.P1Error) diag.Diagnosti
 		}
 	}
 
-	return nil
+	return diags
 }
