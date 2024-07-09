@@ -684,8 +684,14 @@ func (p *NotificationPolicyResourceModel) expand(ctx context.Context) (*manageme
 			return nil, diags
 		}
 
-		var countries []string
-		diags.Append(countryLimitPlan.Countries.ElementsAs(ctx, &countries, false)...)
+		var countriesPlan []types.String
+		diags.Append(countryLimitPlan.Countries.ElementsAs(ctx, &countriesPlan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		countries, d := framework.TFTypeStringSliceToStringSlice(countriesPlan, path.Root("country_limit").AtName("countries"))
+		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}

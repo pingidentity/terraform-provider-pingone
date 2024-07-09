@@ -489,50 +489,11 @@ func (p *KeyResource) ValidateConfig(ctx context.Context, req resource.ValidateC
 	var data keyResourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	var validKeyLengths string
-	keyLengthValidationError := false
-	if data.Algorithm.Equal(types.StringValue(string(management.ENUMCERTIFICATEKEYALGORITHM_RSA))) && !slices.Contains(allowedKeyLengthsRSA, data.KeyLength.ValueInt64()) {
-
-		keyLengthStrs := make([]string, len(allowedKeyLengthsRSA))
-		for i, v := range allowedKeyLengthsRSA {
-			keyLengthStrs[i] = fmt.Sprintf("%d", v)
-		}
-
-		keyLengthValidationError = true
-		validKeyLengths = strings.Join(keyLengthStrs, "`, `")
-	}
-
-	if data.Algorithm.Equal(types.StringValue(string(management.ENUMCERTIFICATEKEYALGORITHM_EC))) && !slices.Contains(allowedKeyLengthsEC, data.KeyLength.ValueInt64()) {
-
-		keyLengthStrs := make([]string, len(allowedKeyLengthsEC))
-		for i, v := range allowedKeyLengthsEC {
-			keyLengthStrs[i] = fmt.Sprintf("%d", v)
-		}
-
-		keyLengthValidationError = true
-		validKeyLengths = strings.Join(keyLengthStrs, "`, `")
-	}
-
-	if keyLengthValidationError {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("key_length"),
-			"Invalid attribute combination",
-			fmt.Sprintf("When using an `algorithm` value of `%s`, only the following key lengths are valid: `%s`.", data.Algorithm.ValueString(), validKeyLengths),
-		)
-	}
-
-	if !data.CustomCrl.IsNull() && !data.UsageType.Equal(types.StringValue(string(management.ENUMCERTIFICATEKEYUSAGETYPE_ISSUANCE))) {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("custom_crl"),
-			"Invalid attribute combination",
-			"`custom_crl` can only be set for keys that have a `type` value of `ISSUANCE`.",
-		)
-	}
+	resp.Diagnostics.Append(data.validate(true)...)
 }
 
 func (r *KeyResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -577,6 +538,11 @@ func (r *KeyResource) Create(ctx context.Context, req resource.CreateRequest, re
 		return
 	}
 
+	resp.Diagnostics.Append(plan.validate(false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	var response *management.Certificate
 	if !plan.PKCS12FileBase64.IsNull() && !plan.PKCS12FileBase64.IsUnknown() {
 
@@ -616,12 +582,6 @@ func (r *KeyResource) Create(ctx context.Context, req resource.CreateRequest, re
 			&response,
 		)...)
 	} else {
-		// Validate
-		resp.Diagnostics.Append(plan.validate()...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
 		// Build the model for the API
 		certificateKey := plan.expand()
 
@@ -713,7 +673,7 @@ func (r *KeyResource) Update(ctx context.Context, req resource.UpdateRequest, re
 	}
 
 	// Validate
-	resp.Diagnostics.Append(plan.validate()...)
+	resp.Diagnostics.Append(plan.validate(false)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -880,15 +840,96 @@ func (p *keyResourceModel) expandUpdate() *management.CertificateKeyUpdate {
 	return data
 }
 
-func (p *keyResourceModel) validate() diag.Diagnostics {
+func (p *keyResourceModel) validate(allowUnknowns bool) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if !p.CustomCrl.IsNull() && !p.CustomCrl.IsUnknown() && !p.UsageType.Equal(types.StringValue(string(management.ENUMCERTIFICATEKEYUSAGETYPE_ISSUANCE))) {
+	if p.PKCS12FileBase64.IsUnknown() && !allowUnknowns {
 		diags.AddAttributeError(
-			path.Root("custom_crl"),
-			"Invalid attribute combination",
-			"`custom_crl` can only be set for keys that have a `type` value of `ISSUANCE`.",
+			path.Root("pkcs12_file_base64"),
+			"Invalid configuration",
+			"Current configuration is invalid as the `pkcs12_file_base64` value is unknown, cannot validate.",
 		)
+	}
+
+	if !p.PKCS12FileBase64.IsNull() && !p.PKCS12FileBase64.IsUnknown() {
+		_, err := base64.StdEncoding.DecodeString(p.PKCS12FileBase64.ValueString())
+		if err != nil {
+			diags.AddAttributeError(
+				path.Root("pkcs12_file_base64"),
+				"Cannot base64 decode provided PKCS12 key file.",
+				fmt.Sprintf("Please ensure the PKCS12 key file is base64 encoded.  Error: %s", err.Error()),
+			)
+
+			return diags
+		}
+	}
+
+	if p.PKCS12FileBase64.IsNull() {
+		if p.Algorithm.IsUnknown() && !allowUnknowns {
+			diags.AddAttributeError(
+				path.Root("algorithm"),
+				"Invalid configuration",
+				"Current configuration is invalid as the `algorithm` value is unknown, cannot validate.",
+			)
+		}
+
+		if p.KeyLength.IsUnknown() && !allowUnknowns {
+			diags.AddAttributeError(
+				path.Root("key_length"),
+				"Invalid configuration",
+				"Current configuration is invalid as the `key_length` value is unknown, cannot validate.",
+			)
+		}
+
+		if !p.Algorithm.IsNull() && !p.Algorithm.IsUnknown() && !p.KeyLength.IsNull() && !p.KeyLength.IsUnknown() {
+			var validKeyLengths string
+			keyLengthValidationError := false
+			if p.Algorithm.Equal(types.StringValue(string(management.ENUMCERTIFICATEKEYALGORITHM_RSA))) && !slices.Contains(allowedKeyLengthsRSA, p.KeyLength.ValueInt64()) {
+
+				keyLengthStrs := make([]string, len(allowedKeyLengthsRSA))
+				for i, v := range allowedKeyLengthsRSA {
+					keyLengthStrs[i] = fmt.Sprintf("%d", v)
+				}
+
+				keyLengthValidationError = true
+				validKeyLengths = strings.Join(keyLengthStrs, "`, `")
+			}
+
+			if p.Algorithm.Equal(types.StringValue(string(management.ENUMCERTIFICATEKEYALGORITHM_EC))) && !slices.Contains(allowedKeyLengthsEC, p.KeyLength.ValueInt64()) {
+
+				keyLengthStrs := make([]string, len(allowedKeyLengthsEC))
+				for i, v := range allowedKeyLengthsEC {
+					keyLengthStrs[i] = fmt.Sprintf("%d", v)
+				}
+
+				keyLengthValidationError = true
+				validKeyLengths = strings.Join(keyLengthStrs, "`, `")
+			}
+
+			if keyLengthValidationError {
+				diags.AddAttributeError(
+					path.Root("key_length"),
+					"Invalid attribute combination",
+					fmt.Sprintf("When using an `algorithm` value of `%s`, only the following key lengths are valid: `%s`.", p.Algorithm.ValueString(), validKeyLengths),
+				)
+			}
+		}
+
+		if p.CustomCrl.IsUnknown() && !allowUnknowns {
+			diags.AddAttributeError(
+				path.Root("custom_crl"),
+				"Invalid configuration",
+				"Current configuration is invalid as the `custom_crl` value is unknown, cannot validate.",
+			)
+		}
+
+		if !p.CustomCrl.IsNull() && !p.CustomCrl.IsUnknown() && !p.UsageType.Equal(types.StringValue(string(management.ENUMCERTIFICATEKEYUSAGETYPE_ISSUANCE))) {
+			diags.AddAttributeError(
+				path.Root("custom_crl"),
+				"Invalid attribute combination",
+				"`custom_crl` can only be set for keys that have a `type` value of `ISSUANCE`.",
+			)
+		}
 	}
 
 	return diags

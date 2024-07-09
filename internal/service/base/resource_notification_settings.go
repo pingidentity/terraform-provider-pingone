@@ -457,14 +457,20 @@ func (p *NotificationSettingsResourceModel) expand(ctx context.Context) (*manage
 
 	if !p.ProviderFallbackChain.IsNull() && !p.ProviderFallbackChain.IsUnknown() {
 
-		var plan []string
+		var plan []types.String
 		d := p.ProviderFallbackChain.ElementsAs(ctx, &plan, false)
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		data.SetSmsProvidersFallbackChain(plan)
+		smsProvidersFallbackChain, d := framework.TFTypeStringSliceToStringSlice(plan, path.Root("provider_fallback_chain"))
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetSmsProvidersFallbackChain(smsProvidersFallbackChain)
 	}
 
 	if !p.AllowedList.IsNull() && !p.AllowedList.IsUnknown() {

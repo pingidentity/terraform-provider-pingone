@@ -1110,8 +1110,14 @@ func (p *gatewayResourceModelV1) expand(ctx context.Context) (*management.Create
 
 	} else if gatewayType == management.ENUMGATEWAYTYPE_LDAP {
 
-		var serversPlan []string
+		var serversPlan []types.String
 		diags.Append(p.Servers.ElementsAs(ctx, &serversPlan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		servers, d := framework.TFTypeStringSliceToStringSlice(serversPlan, path.Root("servers"))
+		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
@@ -1122,7 +1128,7 @@ func (p *gatewayResourceModelV1) expand(ctx context.Context) (*management.Create
 			p.Enabled.ValueBool(),
 			p.BindDN.ValueString(),
 			p.BindPassword.ValueString(),
-			serversPlan,
+			servers,
 			management.EnumGatewayVendor(p.Vendor.ValueString()),
 		)
 
@@ -1254,15 +1260,21 @@ func (p *gatewayResourceModelV1) expand(ctx context.Context) (*management.Create
 func (p *gatewayUserTypeResourceModelV1) expandLDAPUserType(ctx context.Context, key string) (*management.GatewayTypeLDAPAllOfUserTypes, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var userLinkAttributesPlan []string
+	var userLinkAttributesPlan []types.String
 	diags.Append(p.UserLinkAttributes.ElementsAs(ctx, &userLinkAttributesPlan, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	userLinkAttributes, d := framework.TFTypeStringSliceToStringSlice(userLinkAttributesPlan, path.Root("user_types").AtName("user_link_attributes"))
+	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
 	data := management.NewGatewayTypeLDAPAllOfUserTypes(
 		key,
-		userLinkAttributesPlan,
+		userLinkAttributes,
 		management.EnumGatewayPasswordAuthority(p.PasswordAuthority.ValueString()),
 		p.SearchBaseDN.ValueString(),
 	)

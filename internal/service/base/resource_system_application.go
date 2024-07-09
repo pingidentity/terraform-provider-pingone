@@ -534,11 +534,17 @@ func (p *systemApplicationResourceModel) expand(ctx context.Context, apiClient *
 			UnhandledUnknownAsEmpty: false,
 		})...)
 
-		var groupsPlan []string
+		var groupsPlan []types.String
 		diags.Append(plan.Groups.ElementsAs(ctx, &groupsPlan, false)...)
 
+		groupsStr, d := framework.TFTypeStringSliceToStringSlice(groupsPlan, path.Root("access_control_group_options").AtName("groups"))
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, nil, diags
+		}
+
 		groups := make([]management.ApplicationAccessControlGroupGroupsInner, 0)
-		for _, v := range groupsPlan {
+		for _, v := range groupsStr {
 			groups = append(groups, *management.NewApplicationAccessControlGroupGroupsInner(v))
 		}
 

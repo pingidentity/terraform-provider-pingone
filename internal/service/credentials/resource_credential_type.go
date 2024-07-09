@@ -487,38 +487,12 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 func (r *CredentialTypeResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var data CredentialTypeResourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	var metaData MetadataModel
-	resp.Diagnostics.Append(data.Metadata.As(ctx, &metaData, basetypes.ObjectAsOptions{
-		UnhandledNullAsEmpty:    false,
-		UnhandledUnknownAsEmpty: false,
-	})...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	resp.Diagnostics.Append(data.validate(ctx, true)...)
 
-	var metadataFields []FieldsModel
-	resp.Diagnostics.Append(metaData.Fields.ElementsAs(ctx, &metadataFields, false)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	if data.ManagementMode != types.StringValue(string(credentials.ENUMCREDENTIALTYPEMANAGEMENTMODE_MANAGED)) {
-		for _, v := range metadataFields {
-			if v.Type == types.StringValue(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT)) && (v.Value.IsNull() || v.Value.IsUnknown()) {
-
-				resp.Diagnostics.AddAttributeError(
-					path.Root("metadata"),
-					"Invalid credential type configuration",
-					fmt.Sprintf("The configuration for `%s` is invalid.  The `fields.value` property is required when the `fields.type` property is `%s` and the credential `management_mode` property is undefined or `%s`.", v.Title.ValueString(), v.Type.ValueString(), string(credentials.ENUMCREDENTIALTYPEMANAGEMENTMODE_AUTOMATED)),
-				)
-			}
-		}
-	}
 }
 
 func (r *CredentialTypeResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -559,6 +533,11 @@ func (r *CredentialTypeResource) Create(ctx context.Context, req resource.Create
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(plan.validate(ctx, false)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -656,6 +635,11 @@ func (r *CredentialTypeResource) Update(ctx context.Context, req resource.Update
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(plan.validate(ctx, false)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -759,6 +743,42 @@ func (r *CredentialTypeResource) ImportState(ctx context.Context, req resource.I
 
 		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
 	}
+}
+
+func (p *CredentialTypeResourceModel) validate(ctx context.Context, allowUnknowns bool) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	var metaData *MetadataModel
+	diags.Append(p.Metadata.As(ctx, &metaData, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: allowUnknowns,
+	})...)
+	if diags.HasError() {
+		return diags
+	}
+
+	if metaData != nil {
+		var metadataFields []FieldsModel
+		diags.Append(metaData.Fields.ElementsAs(ctx, &metadataFields, allowUnknowns)...)
+		if diags.HasError() {
+			return diags
+		}
+
+		if p.ManagementMode != types.StringValue(string(credentials.ENUMCREDENTIALTYPEMANAGEMENTMODE_MANAGED)) {
+			for _, v := range metadataFields {
+				if v.Type == types.StringValue(string(credentials.ENUMCREDENTIALTYPEMETADATAFIELDSTYPE_ALPHANUMERIC_TEXT)) && (v.Value.IsNull() || v.Value.IsUnknown()) {
+
+					diags.AddAttributeError(
+						path.Root("metadata"),
+						"Invalid credential type configuration",
+						fmt.Sprintf("The configuration for `%s` is invalid.  The `fields.value` property is required when the `fields.type` property is `%s` and the credential `management_mode` property is undefined or `%s`.", v.Title.ValueString(), v.Type.ValueString(), string(credentials.ENUMCREDENTIALTYPEMANAGEMENTMODE_AUTOMATED)),
+					)
+				}
+			}
+		}
+	}
+
+	return diags
 }
 
 func (p *CredentialTypeResourceModel) expand(ctx context.Context) (*credentials.CredentialType, diag.Diagnostics) {

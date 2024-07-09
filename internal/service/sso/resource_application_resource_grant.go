@@ -543,16 +543,21 @@ func (p *ApplicationResourceGrantResourceModel) getResourceWithScopes(ctx contex
 	resourceScopes := make([]management.ResourceScope, 0)
 	if !p.Scopes.IsNull() && !p.Scopes.IsUnknown() {
 
-		var scopes []string
-		diags.Append(p.Scopes.ElementsAs(ctx, &scopes, false)...)
+		var scopesPlan []types.String
+		diags.Append(p.Scopes.ElementsAs(ctx, &scopesPlan, false)...)
+		if diags.HasError() {
+			return nil, nil, diags
+		}
+
+		scopes, d := framework.TFTypeStringSliceToStringSlice(scopesPlan, path.Root("scopes"))
+		diags.Append(d...)
 		if diags.HasError() {
 			return nil, nil, diags
 		}
 
 		resourceScopes, d = fetchResourceScopesFromIDs(ctx, apiClient, p.EnvironmentId.ValueString(), resource.GetId(), scopes, false)
+		diags.Append(d...)
 	}
-
-	diags.Append(d...)
 	if diags.HasError() {
 		return nil, nil, diags
 	}
@@ -637,14 +642,20 @@ func (p *ApplicationResourceGrantResourceModel) expand(ctx context.Context, reso
 
 	resourceObj := management.NewApplicationResourceGrantResource(resource.GetId())
 
-	var scopesPlan []string
+	var scopesPlan []types.String
 	diags.Append(p.Scopes.ElementsAs(ctx, &scopesPlan, false)...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
+	scopesStr, d := framework.TFTypeStringSliceToStringSlice(scopesPlan, path.Root("scopes"))
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
 	scopes := make([]management.ApplicationResourceGrantScopesInner, 0, len(scopesPlan))
-	for _, scope := range scopesPlan {
+	for _, scope := range scopesStr {
 		scopes = append(scopes, management.ApplicationResourceGrantScopesInner{
 			Id: scope,
 		})

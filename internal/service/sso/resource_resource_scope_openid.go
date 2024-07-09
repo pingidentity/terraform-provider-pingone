@@ -475,13 +475,19 @@ func (p *ResourceScopeOpenIDResourceModel) expand(ctx context.Context, apiClient
 
 	if !p.MappedClaims.IsNull() && !p.MappedClaims.IsUnknown() {
 
-		var plan []string
+		var plan []types.String
 		diags.Append(p.MappedClaims.ElementsAs(ctx, &plan, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		data.SetMappedClaims(plan)
+		mappedClaims, d := framework.TFTypeStringSliceToStringSlice(plan, path.Root("mapped_claims"))
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetMappedClaims(mappedClaims)
 	}
 
 	return data, diags

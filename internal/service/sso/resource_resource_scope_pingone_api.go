@@ -490,13 +490,19 @@ func (p *ResourceScopePingOneAPIResourceModel) expand(ctx context.Context, apiCl
 
 	if !p.SchemaAttributes.IsNull() && !p.SchemaAttributes.IsUnknown() {
 
-		var plan []string
+		var plan []types.String
 		diags.Append(p.SchemaAttributes.ElementsAs(ctx, &plan, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		data.SetSchemaAttributes(plan)
+		schemaAttributes, d := framework.TFTypeStringSliceToStringSlice(plan, path.Root("schema_attributes"))
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetSchemaAttributes(schemaAttributes)
 	}
 
 	return data, diags

@@ -972,14 +972,20 @@ func (p *environmentServiceModel) expand(ctx context.Context) (*management.BillO
 
 	if !p.Tags.IsNull() {
 
-		var servicesTagsPlan []string
+		var servicesTagsPlan []types.String
 		diags.Append(p.Tags.ElementsAs(ctx, &servicesTagsPlan, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
+		servicesTags, d := framework.TFTypeStringSliceToStringSlice(servicesTagsPlan, path.Root("tags"))
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
 		servicesTagsEnum := make([]management.EnumBillOfMaterialsProductTags, 0)
-		for _, v := range servicesTagsPlan {
+		for _, v := range servicesTags {
 			servicesTagsEnum = append(servicesTagsEnum, management.EnumBillOfMaterialsProductTags(v))
 		}
 

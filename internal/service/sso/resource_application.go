@@ -1664,52 +1664,11 @@ func (r *ApplicationResource) ValidateConfig(ctx context.Context, req resource.V
 	var data applicationResourceModelV1
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-
-	if !data.OIDCOptions.IsNull() && !data.OIDCOptions.IsUnknown() {
-		var plan applicationOIDCOptionsResourceModelV1
-		resp.Diagnostics.Append(data.OIDCOptions.As(ctx, &plan, basetypes.ObjectAsOptions{
-			UnhandledNullAsEmpty:    false,
-			UnhandledUnknownAsEmpty: false,
-		})...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		// Certificate based authentication
-		if !plan.CertificateBasedAuthentication.IsNull() && !plan.CertificateBasedAuthentication.IsUnknown() {
-			if !plan.Type.Equal(types.StringValue(string(management.ENUMAPPLICATIONTYPE_NATIVE_APP))) {
-				resp.Diagnostics.AddAttributeError(
-					path.Root("oidc_options").AtName("certificate_based_authentication"),
-					"Invalid configuration",
-					fmt.Sprintf("`certificate_based_authentication` can only be set with OIDC applications that have a `type` value of `%s`.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
-				)
-			}
-		}
-
-		// Wildcards in redirect URIs
-		if !plan.RedirectUris.IsNull() && !plan.RedirectUris.IsUnknown() {
-			var uris []string
-			resp.Diagnostics.Append(plan.RedirectUris.ElementsAs(ctx, &uris, false)...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			for _, uri := range uris {
-				if strings.Contains(uri, "*") {
-					if plan.AllowWildcardsInRedirectUris.IsNull() || plan.AllowWildcardsInRedirectUris.Equal(types.BoolValue(false)) {
-						resp.Diagnostics.AddAttributeError(
-							path.Root("oidc_options").AtName("redirect_uris"),
-							"Invalid configuration",
-							"Current configuration is invalid as wildcards are not allowed in redirect URIs.  Wildcards can be enabled by setting `allow_wildcard_in_redirect_uris` to `true`.",
-						)
-						break
-					}
-
-				}
-			}
-		}
+	if resp.Diagnostics.HasError() {
+		return
 	}
+
+	resp.Diagnostics.Append(data.validate(ctx, true)...)
 }
 
 func (r *ApplicationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -1724,6 +1683,11 @@ func (r *ApplicationResource) Create(ctx context.Context, req resource.CreateReq
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(plan.validate(ctx, false)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -1853,6 +1817,11 @@ func (r *ApplicationResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
+	resp.Diagnostics.Append(plan.validate(ctx, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Build the model for the API
 	application, d := plan.expandUpdate(ctx)
 	resp.Diagnostics = append(resp.Diagnostics, d...)
@@ -1973,6 +1942,99 @@ func applicationWriteCustomError(error model.P1Error) diag.Diagnostics {
 	return framework.DefaultCustomError(error)
 }
 
+func (p *applicationResourceModelV1) validate(ctx context.Context, allowUnknown bool) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	var plan *applicationOIDCOptionsResourceModelV1
+	diags.Append(p.OIDCOptions.As(ctx, &plan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: allowUnknown,
+	})...)
+	if diags.HasError() {
+		return diags
+	}
+
+	if plan != nil {
+		diags.Append(plan.validateCertificateBasedAuthentication(allowUnknown)...)
+		diags.Append(plan.validateWildcardInRedirectUri(ctx, allowUnknown)...)
+	}
+
+	return diags
+}
+
+func (p *applicationOIDCOptionsResourceModelV1) validateCertificateBasedAuthentication(allowUnknown bool) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if p.CertificateBasedAuthentication.IsUnknown() && !allowUnknown {
+		diags.AddAttributeError(
+			path.Root("oidc_options").AtName("certificate_based_authentication"),
+			"Invalid configuration",
+			"Current configuration is invalid as the `oidc_options.certificate_based_authentication` value is unknown, cannot validate.",
+		)
+	}
+
+	// Certificate based authentication
+	if !p.CertificateBasedAuthentication.IsNull() && !p.CertificateBasedAuthentication.IsUnknown() {
+		if !p.Type.Equal(types.StringValue(string(management.ENUMAPPLICATIONTYPE_NATIVE_APP))) {
+			diags.AddAttributeError(
+				path.Root("oidc_options").AtName("certificate_based_authentication"),
+				"Invalid configuration",
+				fmt.Sprintf("`certificate_based_authentication` can only be set with OIDC applications that have a `type` value of `%s`.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
+			)
+		}
+	}
+
+	return diags
+}
+
+func (p *applicationOIDCOptionsResourceModelV1) validateWildcardInRedirectUri(ctx context.Context, allowUnknown bool) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if p.RedirectUris.IsUnknown() && !allowUnknown {
+		diags.AddAttributeError(
+			path.Root("oidc_options").AtName("redirect_uris"),
+			"Invalid configuration",
+			"Current configuration is invalid as the `oidc_options.redirect_uris` value is unknown, and cannot validate wildcards.",
+		)
+	}
+
+	if p.AllowWildcardsInRedirectUris.IsUnknown() && !allowUnknown {
+		diags.AddAttributeError(
+			path.Root("oidc_options").AtName("allow_wildcard_in_redirect_uris"),
+			"Invalid configuration",
+			"Current configuration is invalid as `oidc_options.allow_wildcard_in_redirect_uris` value is unknown, and cannot validate wildcards presence in `oidc_options.redirect_uris`.",
+		)
+	}
+	if diags.HasError() {
+		return diags
+	}
+
+	if !p.RedirectUris.IsNull() && !p.RedirectUris.IsUnknown() {
+		var uris []types.String
+		diags.Append(p.RedirectUris.ElementsAs(ctx, &uris, false)...)
+		if diags.HasError() {
+			return diags
+		}
+
+		for _, uri := range uris {
+			if !uri.IsNull() && !uri.IsUnknown() {
+				if strings.Contains(uri.ValueString(), "*") {
+					if p.AllowWildcardsInRedirectUris.IsNull() || p.AllowWildcardsInRedirectUris.Equal(types.BoolValue(false)) {
+						diags.AddAttributeError(
+							path.Root("oidc_options").AtName("redirect_uris"),
+							"Invalid configuration",
+							"Current configuration is invalid as wildcards are not allowed in redirect URIs.  Wildcards can be enabled by setting `allow_wildcard_in_redirect_uris` to `true`.",
+						)
+						break
+					}
+				}
+			}
+		}
+	}
+
+	return diags
+}
+
 func (p *applicationResourceModelV1) expandCreate(ctx context.Context) (*management.CreateApplicationRequest, diag.Diagnostics) {
 	var d, diags diag.Diagnostics
 
@@ -2025,12 +2087,19 @@ func (p *applicationCorsSettingsResourceModelV1) expand() (*management.Applicati
 	data := management.NewApplicationCorsSettings(management.EnumApplicationCorsSettingsBehavior(p.Behavior.ValueString()))
 
 	if !p.Origins.IsNull() && !p.Origins.IsUnknown() {
-		var origins []string
-		d := p.Origins.ElementsAs(context.Background(), &origins, false)
+		var originsPlan []types.String
+		d := p.Origins.ElementsAs(context.Background(), &originsPlan, false)
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
+
+		origins, d := framework.TFTypeStringSliceToStringSlice(originsPlan, path.Root("cors_settings").AtName("origins"))
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
 		data.SetOrigins(origins)
 	}
 
@@ -2055,14 +2124,20 @@ func (p *applicationResourceModelV1) expandApplicationOIDC(ctx context.Context) 
 
 		grantTypes := make([]management.EnumApplicationOIDCGrantType, 0)
 
-		var grantTypesPlan []string
+		var grantTypesPlan []types.String
 
 		diags.Append(plan.GrantTypes.ElementsAs(ctx, &grantTypesPlan, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		for _, v := range grantTypesPlan {
+		grantTypesStr, d := framework.TFTypeStringSliceToStringSlice(grantTypesPlan, path.Root("oidc_options").AtName("grant_types"))
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		for _, v := range grantTypesStr {
 			grantTypes = append(grantTypes, management.EnumApplicationOIDCGrantType(v))
 		}
 
@@ -2143,16 +2218,22 @@ func (p *applicationResourceModelV1) expandApplicationOIDC(ctx context.Context) 
 		}
 
 		if !plan.ResponseTypes.IsNull() && !plan.ResponseTypes.IsUnknown() {
-			var responseTypesPlan []string
+			var responseTypesPlan []types.String
 
 			diags.Append(plan.ResponseTypes.ElementsAs(ctx, &responseTypesPlan, false)...)
 			if diags.HasError() {
 				return nil, diags
 			}
 
+			responseTypesStr, d := framework.TFTypeStringSliceToStringSlice(responseTypesPlan, path.Root("oidc_options").AtName("response_types"))
+			diags.Append(d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
 			obj := make([]management.EnumApplicationOIDCResponseType, 0)
 
-			for _, v := range responseTypesPlan {
+			for _, v := range responseTypesStr {
 				obj = append(obj, management.EnumApplicationOIDCResponseType(v))
 			}
 			data.SetResponseTypes(obj)
@@ -2171,14 +2252,19 @@ func (p *applicationResourceModelV1) expandApplicationOIDC(ctx context.Context) 
 		}
 
 		if !plan.RedirectUris.IsNull() && !plan.RedirectUris.IsUnknown() {
-			var redirectUrisPlan []string
-
+			var redirectUrisPlan []types.String
 			diags.Append(plan.RedirectUris.ElementsAs(ctx, &redirectUrisPlan, false)...)
 			if diags.HasError() {
 				return nil, diags
 			}
 
-			data.SetRedirectUris(redirectUrisPlan)
+			redirectUris, d := framework.TFTypeStringSliceToStringSlice(redirectUrisPlan, path.Root("oidc_options").AtName("redirect_uris"))
+			diags.Append(d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			data.SetRedirectUris(redirectUris)
 		}
 
 		if !plan.AllowWildcardsInRedirectUris.IsNull() && !plan.AllowWildcardsInRedirectUris.IsUnknown() {
@@ -2186,14 +2272,20 @@ func (p *applicationResourceModelV1) expandApplicationOIDC(ctx context.Context) 
 		}
 
 		if !plan.PostLogoutRedirectUris.IsNull() && !plan.PostLogoutRedirectUris.IsUnknown() {
-			var postLogoutRedirectUrisPlan []string
+			var postLogoutRedirectUrisPlan []types.String
 
 			diags.Append(plan.PostLogoutRedirectUris.ElementsAs(ctx, &postLogoutRedirectUrisPlan, false)...)
 			if diags.HasError() {
 				return nil, diags
 			}
 
-			data.SetPostLogoutRedirectUris(postLogoutRedirectUrisPlan)
+			redirectUris, d := framework.TFTypeStringSliceToStringSlice(postLogoutRedirectUrisPlan, path.Root("oidc_options").AtName("post_logout_redirect_uris"))
+			diags.Append(d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			data.SetPostLogoutRedirectUris(redirectUris)
 		}
 
 		if !plan.RefreshTokenDuration.IsNull() && !plan.RefreshTokenDuration.IsUnknown() {
@@ -2213,16 +2305,22 @@ func (p *applicationResourceModelV1) expandApplicationOIDC(ctx context.Context) 
 		}
 
 		if !p.Tags.IsNull() && !p.Tags.IsUnknown() {
-			var tagsPlan []string
+			var tagsPlan []types.String
 
 			diags.Append(p.Tags.ElementsAs(ctx, &tagsPlan, false)...)
 			if diags.HasError() {
 				return nil, diags
 			}
 
+			tagsStr, d := framework.TFTypeStringSliceToStringSlice(tagsPlan, path.Root("tags"))
+			diags.Append(d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
 			tags := make([]management.EnumApplicationTags, 0)
 
-			for _, v := range tagsPlan {
+			for _, v := range tagsStr {
 				tags = append(tags, management.EnumApplicationTags(v))
 			}
 
@@ -2360,16 +2458,22 @@ func (p *applicationOIDCMobileAppIntegrityDetectionResourceModelV1) expand(ctx c
 	googleVerificationIncluded := true && data.GetMode() == management.ENUMENABLEDSTATUS_ENABLED
 
 	if !p.ExcludedPlatforms.IsNull() && !p.ExcludedPlatforms.IsUnknown() {
-		var excludedPlatformsPlan []string
+		var excludedPlatformsPlan []types.String
 
 		diags.Append(p.ExcludedPlatforms.ElementsAs(ctx, &excludedPlatformsPlan, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
+		excludedPlatformsStr, d := framework.TFTypeStringSliceToStringSlice(excludedPlatformsPlan, path.Root("oidc_options").AtName("mobile_app").AtName("integrity_detection").AtName("excluded_platforms"))
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
 		excludedPlatforms := make([]management.EnumMobileIntegrityDetectionPlatform, 0)
 
-		for _, v := range excludedPlatformsPlan {
+		for _, v := range excludedPlatformsStr {
 			excludedPlatforms = append(excludedPlatforms, management.EnumMobileIntegrityDetectionPlatform(v))
 			if v == string(management.ENUMMOBILEINTEGRITYDETECTIONPLATFORM_GOOGLE) {
 				googleVerificationIncluded = false
@@ -2462,9 +2566,15 @@ func (p *applicationResourceModelV1) expandApplicationSAML(ctx context.Context) 
 			return nil, diags
 		}
 
-		var acsUrls []string
+		var acsUrlsPlan []types.String
 
-		diags.Append(plan.AcsUrls.ElementsAs(ctx, &acsUrls, false)...)
+		diags.Append(plan.AcsUrls.ElementsAs(ctx, &acsUrlsPlan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		acsUrls, d := framework.TFTypeStringSliceToStringSlice(acsUrlsPlan, path.Root("saml_options").AtName("acs_urls"))
+		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
@@ -2611,13 +2721,20 @@ func (p *applicationResourceModelV1) expandApplicationSAML(ctx context.Context) 
 
 			certificates := make([]management.ApplicationSAMLAllOfSpVerificationCertificates, 0)
 			if !spVerificationPlan.CertificateIds.IsNull() && !spVerificationPlan.CertificateIds.IsUnknown() {
-				var certificateIdsPlan []string
+				var certificateIdsPlan []pingonetypes.ResourceIDValue
 
 				diags.Append(spVerificationPlan.CertificateIds.ElementsAs(ctx, &certificateIdsPlan, false)...)
 				if diags.HasError() {
 					return nil, diags
 				}
-				for _, v := range certificateIdsPlan {
+
+				certificateIds, d := framework.TFTypePingOneResourceIDSliceToStringSlice(certificateIdsPlan, path.Root("saml_options").AtName("sp_verification").AtName("certificate_ids"))
+				diags.Append(d...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				for _, v := range certificateIds {
 					certificate := *management.NewApplicationSAMLAllOfSpVerificationCertificates(v)
 					certificates = append(certificates, certificate)
 				}
@@ -2730,14 +2847,20 @@ func (p *applicationResourceModelV1) expandApplicationCommon(ctx context.Context
 
 		groups := make([]management.ApplicationAccessControlGroupGroupsInner, 0)
 
-		var groupsPlan []string
+		var groupsPlan []pingonetypes.ResourceIDValue
 
 		diags.Append(plan.Groups.ElementsAs(ctx, &groupsPlan, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		for _, group := range groupsPlan {
+		groupsStr, d := framework.TFTypePingOneResourceIDSliceToStringSlice(groupsPlan, path.Root("access_control_group_options").AtName("groups"))
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		for _, group := range groupsStr {
 			groups = append(groups, *management.NewApplicationAccessControlGroupGroupsInner(group))
 		}
 
