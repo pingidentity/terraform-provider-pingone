@@ -154,6 +154,7 @@ BREAKING CHANGES:
 
 NOTES:
 
+* `data-source/pingone_license`: Migrated to plugin framework. ([#894](https://github.com/pingidentity/terraform-provider-pingone/issues/894))
 * `data-source/pingone_password_policy`: Migrated to plugin framework. ([#801](https://github.com/pingidentity/terraform-provider-pingone/issues/801))
 * `data-source/pingone_trusted_email_domain_dkim`: Migrated to plugin framework. ([#802](https://github.com/pingidentity/terraform-provider-pingone/issues/802))
 * `data-source/pingone_trusted_email_domain_ownership`: Migrated to plugin framework. ([#803](https://github.com/pingidentity/terraform-provider-pingone/issues/803))
