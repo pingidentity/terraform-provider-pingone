@@ -4795,6 +4795,56 @@ data "pingone_groups" "example_by_data_filter" {
 }
 ```
 
+## Data Source: pingone_license
+
+### `advanced_services` computed attribute data type change
+
+The `advanced_services` computed attribute is now a nested object type and no longer a list block type.
+
+### `advanced_services.pingid` computed attribute data type change
+
+The `advanced_services.pingid` computed attribute is now a nested object type and no longer a list block type.
+
+### `authorize` computed attribute data type change
+
+The `authorize` computed attribute is now a nested object type and no longer a list block type.
+
+### `credentials` computed attribute data type change
+
+The `credentials` computed attribute is now a nested object type and no longer a list block type.
+
+### `environments` computed attribute data type change
+
+The `environments` computed attribute is now a nested object type and no longer a list block type.
+
+### `fraud` computed attribute data type change
+
+The `fraud` computed attribute is now a nested object type and no longer a list block type.
+
+### `gateways` computed attribute data type change
+
+The `gateways` computed attribute is now a nested object type and no longer a list block type.
+
+### `intelligence` computed attribute data type change
+
+The `intelligence` computed attribute is now a nested object type and no longer a list block type.
+
+### `mfa` computed attribute data type change
+
+The `mfa` computed attribute is now a nested object type and no longer a list block type.
+
+### `orchestrate` computed attribute data type change
+
+The `orchestrate` computed attribute is now a nested object type and no longer a list block type.
+
+### `users` computed attribute data type change
+
+The `users` computed attribute is now a nested object type and no longer a list block type.
+
+### `verify` computed attribute data type change
+
+The `verify` computed attribute is now a nested object type and no longer a list block type.
+
 ## Data Source: pingone_licenses
 
 ### `data_filter` optional parameter renamed and data type changed

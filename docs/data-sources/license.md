@@ -2,12 +2,12 @@
 page_title: "pingone_license Data Source - terraform-provider-pingone"
 subcategory: "Platform"
 description: |-
-  Datasource to read detailed PingOne license data, selected by the license ID.
+  Data source to read detailed PingOne license data, selected by the license ID.
 ---
 
 # pingone_license (Data Source)
 
-Datasource to read detailed PingOne license data, selected by the license ID.
+Data source to read detailed PingOne license data, selected by the license ID.
 
 ## Example Usage
 
@@ -23,47 +23,47 @@ data "pingone_license" "my_license" {
 
 ### Required
 
-- `license_id` (String) A string that specifies the license resource’s unique identifier.
-- `organization_id` (String) A string that specifies the organization resource’s unique identifier associated with the license.
+- `license_id` (String) A string that specifies the license resource’s unique identifier.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `organization_id` (String) A string that specifies the organization resource’s unique identifier associated with the license.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Read-Only
 
-- `advanced_services` (List of Object) A block that describes features related to **advanced services**. (see [below for nested schema](#nestedatt--advanced_services))
+- `advanced_services` (Attributes) A single object that describes features related to **advanced services**. (see [below for nested schema](#nestedatt--advanced_services))
 - `assigned_environments_count` (Number) An integer that specifies the total number of environments associated with this license.
-- `authorize` (List of Object) A block that describes features related to the **authorize** services. (see [below for nested schema](#nestedatt--authorize))
-- `begins_at` (String) The date and time this license begins.
-- `credentials` (List of Object) A block that describes features related to the **credentials** services. (see [below for nested schema](#nestedatt--credentials))
-- `environments` (List of Object) A block that describes features related to the **environments** in the organization. (see [below for nested schema](#nestedatt--environments))
-- `expires_at` (String) The date and time this license expires. `TRIAL` licenses stop access to PingOne services at expiration. All other licenses trigger an event to send a notification when the license expires but do not block services.
-- `fraud` (List of Object) A block that describes features related to the **fraud** services. (see [below for nested schema](#nestedatt--fraud))
-- `gateways` (List of Object) A block that describes features related to the **gateway** services. (see [below for nested schema](#nestedatt--gateways))
+- `authorize` (Attributes) A single object that describes features related to the **authorize** services. (see [below for nested schema](#nestedatt--authorize))
+- `begins_at` (String) The RFC3339 date and time this license begins.
+- `credentials` (Attributes) A single object that describes features related to the **credentials** services. (see [below for nested schema](#nestedatt--credentials))
+- `environments` (Attributes) A single object that describes features related to the **environments** in the organization. (see [below for nested schema](#nestedatt--environments))
+- `expires_at` (String) The RFC3339 date and time this license expires. `TRIAL` licenses stop access to PingOne services at expiration. All other licenses trigger an event to send a notification when the license expires but do not block services.
+- `fraud` (Attributes) A single object that describes features related to the **fraud** services. (see [below for nested schema](#nestedatt--fraud))
+- `gateways` (Attributes) A single object that describes features related to the **gateway** services. (see [below for nested schema](#nestedatt--gateways))
 - `id` (String) The ID of this resource.
-- `intelligence` (List of Object) A block that describes features related to the **intelligence** services. (see [below for nested schema](#nestedatt--intelligence))
-- `mfa` (List of Object) A block that describes features related to the **mfa** service. (see [below for nested schema](#nestedatt--mfa))
+- `intelligence` (Attributes) A single object that describes features related to the **intelligence** services. (see [below for nested schema](#nestedatt--intelligence))
+- `mfa` (Attributes) A single object that describes features related to the **mfa** service. (see [below for nested schema](#nestedatt--mfa))
 - `name` (String) A string that specifies a descriptive name for the license.
-- `orchestrate` (List of Object) A block that describes features related to the **identity orchestration** services. (see [below for nested schema](#nestedatt--orchestrate))
+- `orchestrate` (Attributes) A single object that describes features related to the **identity orchestration** services. (see [below for nested schema](#nestedatt--orchestrate))
 - `package` (String) A string that specifies the license template on which this license is based. Options are `TRIAL`, `STANDARD`, `PREMIUM`, `MFA`, `RISK`, `MFARISK`, and `GLOBAL`.
 - `replaced_by_license_id` (String) A string that specifies the license ID of the license that replaces this license.
 - `replaces_license_id` (String) A string that specifies the license ID of the license that is replaced by this license.
-- `status` (String) A string that specifies the status of the license. Options are `ACTIVE`, `EXPIRED`, and `FUTURE`.
-- `terminates_at` (String) An attribute that designates the exact date and time when this license terminates access to PingOne services.
-- `users` (List of Object) A block that describes features related to the **users** in the organization. (see [below for nested schema](#nestedatt--users))
-- `verify` (List of Object) A block that describes features related to the **verify** services. (see [below for nested schema](#nestedatt--verify))
+- `status` (String) A string that specifies the status of the license.  Options are `ACTIVE`, `EXPIRED`, `FUTURE`, `TERMINATED`.
+- `terminates_at` (String) The RFC3339 date and time when this license terminates access to PingOne services.
+- `users` (Attributes) A single object that describes features related to the **users** in the organization. (see [below for nested schema](#nestedatt--users))
+- `verify` (Attributes) A single object that describes features related to the **verify** services. (see [below for nested schema](#nestedatt--verify))
 
 <a id="nestedatt--advanced_services"></a>
 ### Nested Schema for `advanced_services`
 
 Read-Only:
 
-- `pingid` (List of Object) (see [below for nested schema](#nestedobjatt--advanced_services--pingid))
+- `pingid` (Attributes) A single object that describes features related to **PingID** advanced service. (see [below for nested schema](#nestedatt--advanced_services--pingid))
 
-<a id="nestedobjatt--advanced_services--pingid"></a>
+<a id="nestedatt--advanced_services--pingid"></a>
 ### Nested Schema for `advanced_services.pingid`
 
 Read-Only:
 
-- `included` (Boolean)
-- `type` (String)
+- `included` (Boolean) A boolean that specifies whether the PingID advanced service is enabled in the organization.
+- `type` (String) A string that specifies the type of PingID advanced service.
 
 
 
@@ -72,8 +72,8 @@ Read-Only:
 
 Read-Only:
 
-- `allow_api_access_management` (Boolean)
-- `allow_dynamic_authorization` (Boolean)
+- `allow_api_access_management` (Boolean) A boolean that specifies whether to enable the PingOne Authorize API access management feature.
+- `allow_dynamic_authorization` (Boolean) A boolean that specifies whether to enable the PingOne Authorize dynamic authorization feature.
 
 
 <a id="nestedatt--credentials"></a>
@@ -81,7 +81,7 @@ Read-Only:
 
 Read-Only:
 
-- `allow_credentials` (Boolean)
+- `allow_credentials` (Boolean) A boolean that specifies whether to enable the PingOne Credentials feature.
 
 
 <a id="nestedatt--environments"></a>
@@ -89,13 +89,13 @@ Read-Only:
 
 Read-Only:
 
-- `allow_add_resources` (Boolean)
-- `allow_connections` (Boolean)
-- `allow_custom_domain` (Boolean)
-- `allow_custom_schema` (Boolean)
-- `allow_production` (Boolean)
-- `max` (Number)
-- `regions` (Set of String)
+- `allow_add_resources` (Boolean) A boolean that specifies whether the license supports creation of resources in the specified environment.
+- `allow_connections` (Boolean) A boolean that specifies whether the license supports creation of application connections in the specified environment.
+- `allow_custom_domain` (Boolean) A boolean that specifies whether the license supports creation of a custom domain in the specified environment.
+- `allow_custom_schema` (Boolean) A boolean that specifies whether the license supports using custom schema attributes in the specified environment.
+- `allow_production` (Boolean) A boolean that specifies whether production environments are allowed.
+- `max` (Number) An integer that specifies the maximum number of environments allowed.
+- `regions` (Set of String) A string that specifies the allowed regions associated with environments.  Options are `AP`, `AU`, `CA`, `EU`, `NA`.
 
 
 <a id="nestedatt--fraud"></a>
@@ -103,8 +103,8 @@ Read-Only:
 
 Read-Only:
 
-- `allow_account_protection` (Boolean)
-- `allow_bot_malicious_device_detection` (Boolean)
+- `allow_account_protection` (Boolean) A boolean that specifies whether to enable the account protection features of PingOne Fraud.
+- `allow_bot_malicious_device_detection` (Boolean) A boolean that specifies whether to enable the Malicious device detection features of PingOne Fraud.
 
 
 <a id="nestedatt--gateways"></a>
@@ -112,9 +112,9 @@ Read-Only:
 
 Read-Only:
 
-- `allow_kerberos_gateway` (Boolean)
-- `allow_ldap_gateway` (Boolean)
-- `allow_radius_gateway` (Boolean)
+- `allow_kerberos_gateway` (Boolean) A boolean that specifies whether to enable the Kerberos Gateway features of PingOne.
+- `allow_ldap_gateway` (Boolean) A boolean that specifies whether to enable the LDAP Gateway features of PingOne.
+- `allow_radius_gateway` (Boolean) A boolean that specifies whether to enable the RADIUS Gateway features of PingOne.
 
 
 <a id="nestedatt--intelligence"></a>
@@ -122,12 +122,12 @@ Read-Only:
 
 Read-Only:
 
-- `allow_advanced_predictors` (Boolean)
-- `allow_anonymous_network_detection` (Boolean)
-- `allow_data_consent` (Boolean)
-- `allow_geo_velocity` (Boolean)
-- `allow_reputation` (Boolean)
-- `allow_risk` (Boolean)
+- `allow_advanced_predictors` (Boolean) A boolean that specifies whether your license permits you to configure advanced risk features.
+- `allow_anonymous_network_detection` (Boolean) A boolean that specifies whether to use the intelligence anonymous network detection feature. For `TRIAL` (unpaid) licenses, the default value is `true`. For `ADMIN`, `GLOBAL`, `RISK`, and `MFARISK`, the default value is `true`.
+- `allow_data_consent` (Boolean) A boolean that specifies whether the customer has opted in to allow user and event behavior analytics (UEBA) data collection.
+- `allow_geo_velocity` (Boolean) A boolean that specifies whether to use the intelligence geo-velocity feature. For `TRIAL` (unpaid) licenses, the default value is `true`. For `ADMIN`, `GLOBAL`, `RISK`, and `MFARISK`, the default value is `true`.
+- `allow_reputation` (Boolean) A boolean that specifies whether to use the intelligence IP reputation feature. For `TRIAL` (unpaid) licenses, the default value is `true`. For `ADMIN`, `GLOBAL`, `RISK`, and `MFARISK`, the default value is `true`.
+- `allow_risk` (Boolean) A boolean that specifies whether your license permits you to configure risk features such as sign-on policies that include rules to detect anomalous changes to your locations (such as impossible travel). This capability is supported for `TRIAL`, `RISK`, and `MFARISK` license packages. Note: The sharing of user data to enable our machine-learning engine, which is integral to PingOne Risk, is captured in the license property `intelligence.allow_data_consent`, but it is not set to `true` by default in any license package. This license capability always requires active consent by the customer before it can be enabled, and if consent is given, then it allows the full scope of intelligence features included in PingOne Risk (and PingOne Risk plus MFA).
 
 
 <a id="nestedatt--mfa"></a>
@@ -135,13 +135,13 @@ Read-Only:
 
 Read-Only:
 
-- `allow_email_otp` (Boolean)
-- `allow_fido2_devices` (Boolean)
-- `allow_notification_outside_whitelist` (Boolean)
-- `allow_push_notification` (Boolean)
-- `allow_sms_otp` (Boolean)
-- `allow_totp` (Boolean)
-- `allow_voice_otp` (Boolean)
+- `allow_email_otp` (Boolean) A boolean that specifies whether Email OTP devices are allowed.
+- `allow_fido2_devices` (Boolean) A boolean that specifies whether FIDO2 devices are allowed. For `TRIAL` (unpaid) licenses, the default value is `true`. For other license package types, adoption of the feature determines the default value.
+- `allow_notification_outside_whitelist` (Boolean) A boolean that specifies whether the license supports sending notifications outside of the environment's whitelist.
+- `allow_push_notification` (Boolean) A boolean that specifies whether push notifications are allowed. For `TRIAL` (unpaid) licenses, the default value is `true`. For other license package types, adoption of the feature determines the default value.
+- `allow_sms_otp` (Boolean) A boolean that specifies whether SMS OTP devices are allowed.
+- `allow_totp` (Boolean) A boolean that specifies whether TOTP devices are allowed.
+- `allow_voice_otp` (Boolean) A boolean that specifies whether Voice OTP devices are allowed.
 
 
 <a id="nestedatt--orchestrate"></a>
@@ -149,7 +149,7 @@ Read-Only:
 
 Read-Only:
 
-- `allow_orchestration` (Boolean)
+- `allow_orchestration` (Boolean) A boolean that specifies whether the core orchestration services are allowed.
 
 
 <a id="nestedatt--users"></a>
@@ -157,21 +157,21 @@ Read-Only:
 
 Read-Only:
 
-- `allow_identity_providers` (Boolean)
-- `allow_inbound_provisioning` (Boolean)
-- `allow_my_account` (Boolean)
-- `allow_password_management_notifications` (Boolean)
-- `allow_password_only_authentication` (Boolean)
-- `allow_password_policy` (Boolean)
-- `allow_provisioning` (Boolean)
-- `allow_role_assignment` (Boolean)
-- `allow_update_self` (Boolean)
-- `allow_verification_flow` (Boolean)
-- `annual_active_included` (Number)
-- `entitled_to_support` (Boolean)
-- `max` (Number)
-- `max_hard_limit` (Number)
-- `monthly_active_included` (Number)
+- `allow_identity_providers` (Boolean) A boolean that specifies whether the license supports using external identity providers in the specified environment.
+- `allow_inbound_provisioning` (Boolean) A boolean that specifies whether the license supports using inbound provisioning capabilities in the specified environment.
+- `allow_my_account` (Boolean) A boolean that specifies whether the license supports using My Account capabilities in the specified environment.
+- `allow_password_management_notifications` (Boolean) A boolean that specifies whether the license supports sending password management notifications.
+- `allow_password_only_authentication` (Boolean) A boolean that specifies whether the license supports using password only login capabilities in the specified environment.
+- `allow_password_policy` (Boolean) A boolean that specifies whether the license supports using password policies in the specified environment.
+- `allow_provisioning` (Boolean) A boolean that specifies whether the license supports using provisioning capabilities in the specified environment.
+- `allow_role_assignment` (Boolean) A boolean that specifies whether the license supports role assignments in the specified environment.
+- `allow_update_self` (Boolean) A boolean that specifies whether the license supports allowing users to update their own profile.
+- `allow_verification_flow` (Boolean) A boolean that specifies whether the license supports using verification flows in the specified environment.
+- `annual_active_included` (Number) An integer that specifies a soft limit on the number of active identities across all environments on the license per year. This property is not visible if a value is not provided at the time the license is created.
+- `entitled_to_support` (Boolean) A boolean that specifies whether the license allows PingOne support.
+- `max` (Number) An integer that specifies the maximum number of users allowed per environment.
+- `max_hard_limit` (Number) An integer that specifies the maximum number of users (hard limit) allowed per environment.
+- `monthly_active_included` (Number) An integer that specifies a soft limit on the number of active identities across all environments on the license per month. This property is not visible if a value is not provided at the time the license is created.
 
 
 <a id="nestedatt--verify"></a>
@@ -179,7 +179,7 @@ Read-Only:
 
 Read-Only:
 
-- `allow_document_match` (Boolean)
-- `allow_face_match` (Boolean)
-- `allow_manual_id_inspection` (Boolean)
-- `allow_push_notifications` (Boolean)
+- `allow_document_match` (Boolean) A boolean that specifies whether to enable the PingOne Verify document matching feature.
+- `allow_face_match` (Boolean) A boolean that specifies whether to enable the PingOne Verify face matching feature.
+- `allow_manual_id_inspection` (Boolean) A boolean that specifies whether to enable the PingOne Verify manual ID inspection feature.
+- `allow_push_notifications` (Boolean) A boolean that specifies whether to enable the PingOne Verify push notifications feature.
