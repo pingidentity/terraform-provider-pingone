@@ -818,6 +818,7 @@ func (p *applicationResourceModelV0) schemaUpgradeOIDCOptionsV0toV1(ctx context.
 			AdditionalRefreshTokenReplayProtectionEnabled: priorStateData[0].AdditionalRefreshTokenReplayProtectionEnabled,
 			AllowWildcardsInRedirectUris:                  priorStateData[0].AllowWildcardsInRedirectUris,
 			CertificateBasedAuthentication:                certificateBasedAuthentication,
+			ClientId:                                      types.StringValue(priorStateData[0].ClientId.ValueString()),
 			CorsSettings:                                  corsSettings,
 			DevicePathId:                                  types.StringNull(),
 			DeviceCustomVerificationUri:                   types.StringNull(),
