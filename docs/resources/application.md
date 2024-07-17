@@ -303,6 +303,10 @@ Optional:
 - `support_unsigned_request_object` (Boolean) A boolean that specifies whether the request query parameter JWT is allowed to be unsigned. If `false` or null, an unsigned request object is not allowed.  Defaults to `false`.
 - `target_link_uri` (String) The URI for the application. If specified, PingOne will redirect application users to this URI after a user is authenticated. In the PingOne admin console, this becomes the value of the `target_link_uri` parameter used for the Initiate Single Sign-On URL field.  Both `http://` and `https://` URLs are permitted as well as custom mobile native schema (e.g., `org.bxretail.app://target`).
 
+Read-Only:
+
+- `client_id` (String) A string that specifies the application ID used to authenticate to the authorization server.
+
 <a id="nestedatt--oidc_options--certificate_based_authentication"></a>
 ### Nested Schema for `oidc_options.certificate_based_authentication`
 

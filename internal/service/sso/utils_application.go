@@ -107,6 +107,7 @@ func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.Appli
 		"additional_refresh_token_replay_protection_enabled": framework.BoolOkToTF(apiObject.GetAdditionalRefreshTokenReplayProtectionEnabledOk()),
 		"allow_wildcard_in_redirect_uris":                    framework.BoolOkToTF(apiObject.GetAllowWildcardInRedirectUrisOk()),
 		"certificate_based_authentication":                   kerberos,
+		"client_id":                                          framework.StringOkToTF(apiObject.GetIdOk()),
 		"cors_settings":                                      corsSettings,
 		"device_path_id":                                     framework.StringOkToTF(apiObject.GetDevicePathIdOk()),
 		"device_custom_verification_uri":                     framework.StringOkToTF(apiObject.GetDeviceCustomVerificationUriOk()),
