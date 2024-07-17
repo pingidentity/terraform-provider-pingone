@@ -257,6 +257,10 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						MarkdownDescription: oidcHomePageURLDescription.MarkdownDescription,
 						Computed:            true,
 					},
+					"client_id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application ID used to authenticate to the authorization server.").Description,
+						Computed:    true,
+					},
 					"device_path_id": schema.StringAttribute{
 						Description:         oidcOptionsDevicePathIdDescription.Description,
 						MarkdownDescription: oidcOptionsDevicePathIdDescription.MarkdownDescription,

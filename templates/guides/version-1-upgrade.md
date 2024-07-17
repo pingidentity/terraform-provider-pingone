@@ -326,42 +326,6 @@ resource "pingone_application" "my_awesome_application" {
 }
 ```
 
-### `oidc_options.client_id` computed attribute removed
-
-The `oidc_options.client_id` attribute has been removed from the `pingone_application` resource, as it is a duplicate of the application's own ID.
-
-Previous configuration example:
-
-```terraform
-resource "pingone_application" "my_awesome_application" {
-  # ... other configuration parameters
-
-  oidc_options {
-    # ... other configuration parameters
-  }
-}
-
-locals {
-  my_awesome_application_client_id = pingone_application.my_awesome_application.oidc_options[0].client_id
-}
-```
-
-New configuration example:
-
-```terraform
-resource "pingone_application" "my_awesome_application" {
-  # ... other configuration parameters
-
-  oidc_options = {
-    # ... other configuration parameters
-  }
-}
-
-locals {
-  my_awesome_application_client_id = pingone_application.my_awesome_application.id
-}
-```
-
 ### `oidc_options.client_secret` computed attribute removed
 
 The `oidc_options.client_secret` attribute has been removed from the `pingone_application` resource, and is now found in the `pingone_application_secret` resource and/or data source.  Using the `pingone_application_secret` resource and data source has the benefit of being able to track the state of, and manage, previous secrets when performing application secret rotation.
@@ -401,7 +365,7 @@ resource "pingone_application_secret" "my_awesome_application" {
 }
 
 locals {
-  my_awesome_application_client_id     = pingone_application.my_awesome_application.id
+  my_awesome_application_client_id     = pingone_application.my_awesome_application.oidc_options.client_id
   my_awesome_application_client_secret = pingone_application_secret.my_awesome_application.secret
 }
 ```
@@ -424,7 +388,7 @@ data "pingone_application_secret" "my_awesome_application" {
 }
 
 locals {
-  my_awesome_application_client_id     = pingone_application.my_awesome_application.id
+  my_awesome_application_client_id     = pingone_application.my_awesome_application.oidc_options.client_id
   my_awesome_application_client_secret = data.pingone_application_secret.my_awesome_application.secret
 }
 ```
@@ -4595,6 +4559,7 @@ Previous configuration example:
 ```terraform
 locals {
   demo_var = data.pingone_application.example.oidc_options[0].type
+  client_id = data.pingone_application.example.oidc_options[0].client_id
 }
 ```
 
@@ -4603,6 +4568,7 @@ New configuration example:
 ```terraform
 locals {
   demo_var = data.pingone_application.example.oidc_options.type
+  client_id = data.pingone_application.example.oidc_options.client_id
 }
 ```
 
@@ -4646,34 +4612,6 @@ locals {
 }
 ```
 
-### `oidc_options.client_id` computed attribute removed
-
-The `oidc_options.client_id` attribute has been removed from the `pingone_application` data source, as it is a duplicate of the application's own ID.
-
-Previous configuration example:
-
-```terraform
-data "pingone_application" "my_awesome_application" {
-  # ... other configuration parameters
-}
-
-locals {
-  my_awesome_application_client_id = data.pingone_application.my_awesome_application.oidc_options[0].client_id
-}
-```
-
-New configuration example:
-
-```terraform
-data "pingone_application" "my_awesome_application" {
-  # ... other configuration parameters
-}
-
-locals {
-  my_awesome_application_client_id = data.pingone_application.my_awesome_application.id
-}
-```
-
 ### `oidc_options.client_secret` computed attribute removed
 
 The `oidc_options.client_secret` attribute has been removed from the `pingone_application` data source, and is now found in the `pingone_application_secret` resource and/or data source.  Using the `pingone_application_secret` resource and data source has the benefit of being able to track the state of, and manage, previous secrets when performing application secret rotation.
@@ -4705,7 +4643,7 @@ resource "pingone_application_secret" "my_awesome_application" {
 }
 
 locals {
-  my_awesome_application_client_id     = data.pingone_application.my_awesome_application.id
+  my_awesome_application_client_id     = data.pingone_application.my_awesome_application.oidc_options.client_id
   my_awesome_application_client_secret = pingone_application_secret.my_awesome_application.secret
 }
 ```
@@ -4724,7 +4662,7 @@ data "pingone_application_secret" "my_awesome_application" {
 }
 
 locals {
-  my_awesome_application_client_id     = data.pingone_application.my_awesome_application.id
+  my_awesome_application_client_id     = data.pingone_application.my_awesome_application.oidc_options.client_id
   my_awesome_application_client_secret = data.pingone_application_secret.my_awesome_application.secret
 }
 ```

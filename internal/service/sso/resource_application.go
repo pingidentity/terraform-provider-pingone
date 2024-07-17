@@ -69,6 +69,7 @@ type applicationOIDCOptionsResourceModelV1 struct {
 	AdditionalRefreshTokenReplayProtectionEnabled types.Bool   `tfsdk:"additional_refresh_token_replay_protection_enabled"`
 	AllowWildcardsInRedirectUris                  types.Bool   `tfsdk:"allow_wildcard_in_redirect_uris"`
 	CertificateBasedAuthentication                types.Object `tfsdk:"certificate_based_authentication"`
+	ClientId                                      types.String `tfsdk:"client_id"`
 	CorsSettings                                  types.Object `tfsdk:"cors_settings"`
 	DevicePathId                                  types.String `tfsdk:"device_path_id"`
 	DeviceCustomVerificationUri                   types.String `tfsdk:"device_custom_verification_uri"`
@@ -184,6 +185,7 @@ var (
 		"additional_refresh_token_replay_protection_enabled": types.BoolType,
 		"allow_wildcard_in_redirect_uris":                    types.BoolType,
 		"certificate_based_authentication":                   types.ObjectType{AttrTypes: applicationOidcOptionsCertificateAuthenticationTFObjectTypes},
+		"client_id":                                          types.StringType,
 		"cors_settings":                                      types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
 		"device_path_id":                                     types.StringType,
 		"device_custom_verification_uri":                     types.StringType,
@@ -1121,6 +1123,15 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 								CustomType: pingonetypes.ResourceIDType{},
 							},
+						},
+					},
+
+					"client_id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application ID used to authenticate to the authorization server.").Description,
+						Computed:    true,
+
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
 						},
 					},
 
