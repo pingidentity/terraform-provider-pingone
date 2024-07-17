@@ -1,4 +1,4 @@
-## 1.0.0 (17 July 2024) :fire:
+## 1.0.0 (17 July 2024) :rocket:
 
 BREAKING CHANGES:
 
