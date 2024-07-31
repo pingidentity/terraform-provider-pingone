@@ -1,0 +1,1 @@
+terraform import pingone_authorize_editor_condition.example <environment_id>/<editor_condition_id>
