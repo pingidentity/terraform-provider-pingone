@@ -705,7 +705,7 @@ func (p *editorAttributeResourceModel) expand(ctx context.Context) (*authorize.A
 			return nil, diags
 		}
 
-		parent, d := plan.expand(ctx)
+		parent, d := plan.expand()
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
@@ -724,7 +724,7 @@ func (p *editorAttributeResourceModel) expand(ctx context.Context) (*authorize.A
 			return nil, diags
 		}
 
-		processor, d := plan.expand(ctx)
+		processor, d := plan.expand()
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
@@ -743,7 +743,7 @@ func (p *editorAttributeResourceModel) expand(ctx context.Context) (*authorize.A
 			return nil, diags
 		}
 
-		repetitionSource, d := plan.expand(ctx)
+		repetitionSource, d := plan.expand()
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
@@ -904,7 +904,7 @@ func (p *editorAttributeManagedEntityRestrictionsResourceModel) expand() *author
 	return data
 }
 
-func (p *editorAttributeParentResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataReferenceObjectDTO, diag.Diagnostics) {
+func (p *editorAttributeParentResourceModel) expand() (*authorize.AuthorizeEditorDataReferenceObjectDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data := authorize.NewAuthorizeEditorDataReferenceObjectDTO(p.Id.ValueString())
@@ -912,7 +912,7 @@ func (p *editorAttributeParentResourceModel) expand(ctx context.Context) (*autho
 	return data, diags
 }
 
-func (p *editorAttributeProcessorResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataProcessorDTO, diag.Diagnostics) {
+func (p *editorAttributeProcessorResourceModel) expand() (*authorize.AuthorizeEditorDataProcessorDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data := authorize.NewAuthorizeEditorDataProcessorDTO(
@@ -923,7 +923,7 @@ func (p *editorAttributeProcessorResourceModel) expand(ctx context.Context) (*au
 	return data, diags
 }
 
-func (p *editorAttributeRepetitionSourceResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataReferenceObjectDTO, diag.Diagnostics) {
+func (p *editorAttributeRepetitionSourceResourceModel) expand() (*authorize.AuthorizeEditorDataReferenceObjectDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data := authorize.NewAuthorizeEditorDataReferenceObjectDTO(p.Id.ValueString())
@@ -1008,26 +1008,26 @@ func (p *editorAttributeResourceModel) toState(apiObject *authorize.AuthorizeEdi
 	p.FullName = framework.StringOkToTF(apiObject.GetFullNameOk())
 
 	p.ManagedEntity, d = editorAttributeManagedEntityOkToTF(apiObject.GetManagedEntityOk())
-	diags = append(diags, d...)
+	diags.Append(d...)
 
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 
 	p.Parent, d = editorAttributeParentOkToTF(apiObject.GetParentOk())
-	diags = append(diags, d...)
+	diags.Append(d...)
 
 	p.Processor, d = editorAttributeProcessorOkToTF(apiObject.GetProcessorOk())
-	diags = append(diags, d...)
+	diags.Append(d...)
 
 	p.RepetitionSource, d = editorAttributeRepetitionSourceOkToTF(apiObject.GetRepetitionSourceOk())
-	diags = append(diags, d...)
+	diags.Append(d...)
 
 	p.Resolvers, d = editorAttributeResolversOkToTF(apiObject.GetResolversOk())
-	diags = append(diags, d...)
+	diags.Append(d...)
 
 	p.ValueSchema = framework.StringOkToTF(apiObject.GetValueSchemaOk())
 
 	p.ValueType, d = editorAttributeValueTypeOkToTF(apiObject.GetValueTypeOk())
-	diags = append(diags, d...)
+	diags.Append(d...)
 
 	p.Version = framework.StringOkToTF(apiObject.GetVersionOk())
 
@@ -1042,13 +1042,13 @@ func editorAttributeManagedEntityOkToTF(apiObject *authorize.AuthorizeEditorData
 	}
 
 	owner, d := editorAttributeManagedEntityOwnerOkToTF(apiObject.GetOwnerOk())
-	diags = append(diags, d...)
+	diags.Append(d...)
 
 	reference, d := editorAttributeManagedEntityReferenceOkToTF(apiObject.GetReferenceOk())
-	diags = append(diags, d...)
+	diags.Append(d...)
 
 	restrictions, d := editorAttributeManagedEntityRestrictionsOkToTF(apiObject.GetRestrictionsOk())
-	diags = append(diags, d...)
+	diags.Append(d...)
 
 	objValue, d := types.ObjectValue(editorAttributeManagedEntityTFObjectTypes, map[string]attr.Value{
 		"owner":        owner,
@@ -1068,7 +1068,7 @@ func editorAttributeManagedEntityOwnerOkToTF(apiObject *authorize.AuthorizeEdito
 	}
 
 	service, d := editorAttributeManagedEntityOwnerServiceOkToTF(apiObject.GetServiceOk())
-	diags = append(diags, d...)
+	diags.Append(d...)
 
 	objValue, d := types.ObjectValue(editorAttributeManagedEntityOwnerTFObjectTypes, map[string]attr.Value{
 		"service": service,
@@ -1179,10 +1179,10 @@ func editorAttributeResolversOkToTF(apiObject []authorize.AuthorizeEditorDataRes
 	for _, v := range apiObject {
 
 		condition, d := editorAttributeResolversConditionOkToTF(v.GetConditionOk())
-		diags = append(diags, d...)
+		diags.Append(d...)
 
 		processor, d := editorAttributeResolversProcessorOkToTF(v.GetProcessorOk())
-		diags = append(diags, d...)
+		diags.Append(d...)
 
 		flattenedObj, d := types.ObjectValue(editorAttributeResolversTFObjectTypes, map[string]attr.Value{
 			"condition": condition,
