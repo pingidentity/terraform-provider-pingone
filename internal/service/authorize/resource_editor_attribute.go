@@ -3,7 +3,6 @@ package authorize
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -816,7 +815,7 @@ func (p *editorAttributeManagedEntityResourceModel) expand(ctx context.Context) 
 			return nil, diags
 		}
 
-		reference := plan.expand(ctx)
+		reference := plan.expand()
 
 		data.SetReference(*reference)
 	}
@@ -831,7 +830,7 @@ func (p *editorAttributeManagedEntityResourceModel) expand(ctx context.Context) 
 			return nil, diags
 		}
 
-		restrictions := plan.expand(ctx)
+		restrictions := plan.expand()
 
 		data.SetRestrictions(*restrictions)
 	}
@@ -851,14 +850,14 @@ func (p *editorAttributeManagedEntityOwnerResourceModel) expand(ctx context.Cont
 		return nil, diags
 	}
 
-	service := servicePlan.expand(ctx)
+	service := servicePlan.expand()
 
 	data := authorize.NewAuthorizeEditorDataManagedEntityOwnerDTO(*service)
 
 	return data, diags
 }
 
-func (p *editorAttributeManagedEntityOwnerServiceResourceModel) expand(ctx context.Context) *authorize.AuthorizeEditorDataServiceObjectDTO {
+func (p *editorAttributeManagedEntityOwnerServiceResourceModel) expand() *authorize.AuthorizeEditorDataServiceObjectDTO {
 
 	data := authorize.NewAuthorizeEditorDataServiceObjectDTO(
 		p.Name.ValueString(),
@@ -867,7 +866,7 @@ func (p *editorAttributeManagedEntityOwnerServiceResourceModel) expand(ctx conte
 	return data
 }
 
-func (p *editorAttributeManagedEntityReferenceResourceModel) expand(ctx context.Context) *authorize.AuthorizeEditorDataManagedEntityManagedEntityReferenceDTO {
+func (p *editorAttributeManagedEntityReferenceResourceModel) expand() *authorize.AuthorizeEditorDataManagedEntityManagedEntityReferenceDTO {
 
 	data := authorize.NewAuthorizeEditorDataManagedEntityManagedEntityReferenceDTO()
 
@@ -890,7 +889,7 @@ func (p *editorAttributeManagedEntityReferenceResourceModel) expand(ctx context.
 	return data
 }
 
-func (p *editorAttributeManagedEntityRestrictionsResourceModel) expand(ctx context.Context) *authorize.AuthorizeEditorDataManagedEntityRestrictionsDTO {
+func (p *editorAttributeManagedEntityRestrictionsResourceModel) expand() *authorize.AuthorizeEditorDataManagedEntityRestrictionsDTO {
 
 	data := authorize.NewAuthorizeEditorDataManagedEntityRestrictionsDTO()
 
@@ -908,33 +907,87 @@ func (p *editorAttributeManagedEntityRestrictionsResourceModel) expand(ctx conte
 func (p *editorAttributeParentResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataReferenceObjectDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	log.Fatalf("Not implemented")
+	data := authorize.NewAuthorizeEditorDataReferenceObjectDTO(p.Id.ValueString())
 
-	return nil, diags
+	return data, diags
 }
 
 func (p *editorAttributeProcessorResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataProcessorDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	log.Fatalf("Not implemented")
+	data := authorize.NewAuthorizeEditorDataProcessorDTO(
+		p.Name.ValueString(),
+		p.Type.ValueString(),
+	)
 
-	return nil, diags
+	return data, diags
 }
 
 func (p *editorAttributeRepetitionSourceResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataReferenceObjectDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	log.Fatalf("Not implemented")
+	data := authorize.NewAuthorizeEditorDataReferenceObjectDTO(p.Id.ValueString())
 
-	return nil, diags
+	return data, diags
 }
 
 func (p *editorAttributeResolversResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataResolverDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	log.Fatalf("Not implemented")
+	data := authorize.NewAuthorizeEditorDataResolverDTO(p.Type.ValueString())
 
-	return nil, diags
+	if !p.Name.IsNull() && !p.Name.IsUnknown() {
+		data.SetName(p.Name.ValueString())
+	}
+
+	if !p.Condition.IsNull() && !p.Condition.IsUnknown() {
+		var plan *editorAttributeResolversConditionResourceModel
+		diags.Append(p.Condition.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		condition := plan.expand()
+
+		data.SetCondition(*condition)
+	}
+
+	if !p.Processor.IsNull() && !p.Processor.IsUnknown() {
+		var plan *editorAttributeResolversProcessorResourceModel
+		diags.Append(p.Processor.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		processor := plan.expand()
+
+		data.SetProcessor(*processor)
+	}
+
+	return data, diags
+}
+
+func (p *editorAttributeResolversConditionResourceModel) expand() *authorize.AuthorizeEditorDataConditionDTO {
+
+	data := authorize.NewAuthorizeEditorDataConditionDTO(p.Type.ValueString())
+
+	return data
+}
+
+func (p *editorAttributeResolversProcessorResourceModel) expand() *authorize.AuthorizeEditorDataProcessorDTO {
+
+	data := authorize.NewAuthorizeEditorDataProcessorDTO(
+		p.Name.ValueString(),
+		p.Type.ValueString(),
+	)
+
+	return data
 }
 
 func (p *editorAttributeResourceModel) toState(apiObject *authorize.AuthorizeEditorDataDefinitionsAttributeDefinitionDTO) diag.Diagnostics {
