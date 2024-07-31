@@ -73,13 +73,13 @@ func (r *EditorProcessorResource) Schema(ctx context.Context, req resource.Schem
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage Authorize editor statements in a PingOne environment.",
+		Description: "Resource to create and manage Authorize editor processors in a PingOne environment.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
 			"environment_id": framework.Attr_LinkID(
-				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to configure the Authorize editor statement in."),
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to configure the Authorize editor processor in."),
 			),
 
 			"name": schema.StringAttribute{

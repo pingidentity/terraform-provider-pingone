@@ -2,12 +2,12 @@
 page_title: "pingone_authorize_editor_processor Resource - terraform-provider-pingone"
 subcategory: "Authorize"
 description: |-
-  Resource to create and manage Authorize editor statements in a PingOne environment.
+  Resource to create and manage Authorize editor processors in a PingOne environment.
 ---
 
 # pingone_authorize_editor_processor (Resource)
 
-Resource to create and manage Authorize editor statements in a PingOne environment.
+Resource to create and manage Authorize editor processors in a PingOne environment.
 
 ## Example Usage
 
@@ -28,7 +28,7 @@ resource "pingone_authorize_editor_processor" "my_awesome_editor_processor" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to configure the Authorize editor statement in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `environment_id` (String) The ID of the environment to configure the Authorize editor processor in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String)
 - `processor` (Attributes) (see [below for nested schema](#nestedatt--processor))
 
