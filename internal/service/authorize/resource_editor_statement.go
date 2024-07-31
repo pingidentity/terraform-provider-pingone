@@ -35,9 +35,9 @@ type editorStatementResourceModel struct {
 	AppliesIf     types.String                 `tfsdk:"applies_if"`
 	Payload       types.String                 `tfsdk:"payload"`
 	Obligatory    types.Bool                   `tfsdk:"obligatory"`
-	/
-	Attributes    types.List                   `tfsdk:"attributes"`
-	Version       types.String                 `tfsdk:"version"`
+	// TODO: is this a list or set
+	Attributes types.List   `tfsdk:"attributes"`
+	Version    types.String `tfsdk:"version"`
 }
 
 type editorStatementAttributeResourceModel editorAttributeReferenceDataResourceModel
