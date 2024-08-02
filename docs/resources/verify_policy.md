@@ -52,7 +52,10 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
   description    = "Example - All Verification Checks Required"
 
   government_id = {
-    verify = "REQUIRED"
+    verify          = "REQUIRED"
+    provider_auto   = "VERIFF"
+    fail_expired_id = true
+    retry_attempts  = "2"
   }
 
   facial_comparison = {
@@ -270,7 +273,11 @@ Required:
 
 Optional:
 
+- `fail_expired_id` (Boolean) When enabled, Government ID verification fails if the document is expired.
 - `inspection_type` (String) Determine whether document authentication is automated, manual, or possibly both.  Options are `AUTOMATIC`, `MANUAL`, `STEP_UP`.
+- `provider_auto` (String) Provider to use for the automatic verification service.  Options are `MITEK`, `VERIFF`.  Defaults to `MITEK`.
+- `provider_manual` (String) Provider to use for the manual verification service.  Options are `MITEK`.  Defaults to `MITEK`.
+- `retry_attempts` (Number) Number of retries permitted when submitting images.  The allowed range is `0 - 3`.
 
 
 <a id="nestedatt--liveness"></a>
@@ -280,6 +287,10 @@ Required:
 
 - `threshold` (String) Liveness Check threshold requirements.  Options are `HIGH`, `LOW`, `MEDIUM`.  Defaults to `MEDIUM`.
 - `verify` (String) Controls Liveness Check verification requirements.  Options are `DISABLED`, `OPTIONAL`, `REQUIRED`.  Defaults to `DISABLED`.
+
+Optional:
+
+- `retry_attempts` (Number) Number of retries permitted when submitting images.  The allowed range is `0 - 3`.
 
 
 <a id="nestedatt--phone"></a>

@@ -140,7 +140,11 @@ Read-Only:
 
 Read-Only:
 
+- `fail_expired_id` (Boolean) When enabled, Government ID verification fails if the document is expired.
 - `inspection_type` (String) Determine whether document authentication is automated, manual, or possibly both.  Options are `AUTOMATIC`, `MANUAL`, `STEP_UP`.
+- `provider_auto` (String) Provider to use for the automatic verification service.  Options are `MITEK`, `VERIFF`.  Defaults to `MITEK`.
+- `provider_manual` (String) Provider to use for the manual verification service.  Options are `MITEK`.  Defaults to `MITEK`.
+- `retry_attempts` (Number) Number of retries permitted when submitting images.  The allowed range is `0 - 3`.
 - `verify` (String) Controls Government ID verification requirements.  Options are `DISABLED`, `OPTIONAL`, `REQUIRED`.  Defaults to `DISABLED`.
 
 
@@ -149,6 +153,7 @@ Read-Only:
 
 Read-Only:
 
+- `retry_attempts` (Number) Number of retries permitted when submitting images.  The allowed range is `0 - 3`.
 - `threshold` (String) Liveness Check threshold requirements.  Options are `HIGH`, `LOW`, `MEDIUM`.  Defaults to `MEDIUM`.
 - `verify` (String) Controls Liveness Check verification requirements.  Options are `DISABLED`, `OPTIONAL`, `REQUIRED`.  Defaults to `DISABLED`.
 

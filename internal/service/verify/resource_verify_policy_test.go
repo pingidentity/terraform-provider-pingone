@@ -123,12 +123,17 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.inspection_type", "AUTOMATIC"),
+		resource.TestCheckResourceAttr(resourceFullName, "government_id.fail_expired_id", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "government_id.provider_auto", "VERIFF"),
+		resource.TestCheckResourceAttr(resourceFullName, "government_id.provider_manual", "MITEK"),
+		resource.TestCheckResourceAttr(resourceFullName, "government_id.retry_attempts", "2"),
 
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.threshold", "HIGH"),
 
 		resource.TestCheckResourceAttr(resourceFullName, "liveness.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(resourceFullName, "liveness.threshold", "HIGH"),
+		resource.TestCheckResourceAttr(resourceFullName, "liveness.retry_attempts", "1"),
 
 		resource.TestCheckResourceAttr(resourceFullName, "email.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(resourceFullName, "email.create_mfa_device", "true"),
@@ -181,6 +186,8 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.inspection_type", "AUTOMATIC"),
+		resource.TestCheckResourceAttr(resourceFullName, "government_id.provider_auto", "MITEK"),
+		resource.TestCheckResourceAttr(resourceFullName, "government_id.provider_manual", "MITEK"),
 
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.verify", "DISABLED"),
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.threshold", "MEDIUM"),
@@ -475,6 +482,10 @@ resource "pingone_verify_policy" "%[2]s" {
   government_id = {
     verify          = "REQUIRED"
     inspection_type = "AUTOMATIC"
+    fail_expired_id = true
+    provider_auto   = "VERIFF"
+    provider_manual = "MITEK"
+    retry_attempts  = "2"
   }
 
   facial_comparison = {
@@ -483,8 +494,9 @@ resource "pingone_verify_policy" "%[2]s" {
   }
 
   liveness = {
-    verify    = "REQUIRED"
-    threshold = "HIGH"
+    verify         = "REQUIRED"
+    threshold      = "HIGH"
+    retry_attempts = "1"
   }
 
   email = {
