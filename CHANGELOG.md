@@ -10,6 +10,11 @@ NOTES:
 * bump `github.com/patrickcping/pingone-go-sdk-v2/verify` 0.6.0 => 0.7.0 ([#901](https://github.com/pingidentity/terraform-provider-pingone/issues/901))
 * bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.2 => 0.12.3 ([#901](https://github.com/pingidentity/terraform-provider-pingone/issues/901))
 
+ENHANCEMENTS:
+
+* `data_source/pingone_verify_policy`: Added support for the `fail_expired_id`, `provider_auto`, `provider_manual`, and `retry_attempts` properties. ([#888](https://github.com/pingidentity/terraform-provider-pingone/issues/888))
+* `resource/pingone_verify_policy`: Added support for the `fail_expired_id`, `provider_auto`, `provider_manual`, and `retry_attempts` properties. ([#888](https://github.com/pingidentity/terraform-provider-pingone/issues/888))
+
 ## 1.0.0 (17 July 2024) :rocket:
 
 BREAKING CHANGES:
