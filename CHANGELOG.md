@@ -1,5 +1,15 @@
 ## 1.1.0 (Unreleased)
 
+NOTES:
+
+* bump `github.com/hashicorp/terraform-plugin-framework-timetypes` 0.3.0 => 0.4.0 ([#901](https://github.com/pingidentity/terraform-provider-pingone/issues/901))
+* bump `github.com/hashicorp/terraform-plugin-framework-validators` 0.12.0 => 0.13.0 ([#901](https://github.com/pingidentity/terraform-provider-pingone/issues/901))
+* bump `github.com/hashicorp/terraform-plugin-framework` 1.9.0 => 1.10.0 ([#901](https://github.com/pingidentity/terraform-provider-pingone/issues/901))
+* bump `github.com/hashicorp/terraform-plugin-testing` 1.8.0 => 1.9.0 ([#901](https://github.com/pingidentity/terraform-provider-pingone/issues/901))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.42.0 => 0.43.0 ([#901](https://github.com/pingidentity/terraform-provider-pingone/issues/901))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/verify` 0.6.0 => 0.7.0 ([#901](https://github.com/pingidentity/terraform-provider-pingone/issues/901))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.2 => 0.12.3 ([#901](https://github.com/pingidentity/terraform-provider-pingone/issues/901))
+
 ## 1.0.0 (17 July 2024) :rocket:
 
 BREAKING CHANGES:
