@@ -1,3 +1,5 @@
+## 1.1.0 (Unreleased)
+
 ## 1.0.0 (17 July 2024) :rocket:
 
 BREAKING CHANGES:
