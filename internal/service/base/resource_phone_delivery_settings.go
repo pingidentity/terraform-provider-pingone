@@ -1234,22 +1234,24 @@ func (r *PhoneDeliverySettingsResource) ImportState(ctx context.Context, req res
 	}
 }
 
-func phoneDeliverySettingsCreateUpdateCustomErrorHandler(error model.P1Error) diag.Diagnostics {
+func phoneDeliverySettingsCreateUpdateCustomErrorHandler(_ *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	// Invalid composition
-	if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
-		if code, ok := details[0].GetCodeOk(); ok && *code == "INVALID_VALUE" {
-			diags.AddError(
-				"Authentication error",
-				fmt.Sprintf("%s. Please check the credentials used to connect to Twilio/Syniverse and retry.", details[0].GetMessage()),
-			)
+	if p1Error != nil {
+		// Invalid composition
+		if details, ok := p1Error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+			if code, ok := details[0].GetCodeOk(); ok && *code == "INVALID_VALUE" {
+				diags.AddError(
+					"Authentication error",
+					fmt.Sprintf("%s. Please check the credentials used to connect to Twilio/Syniverse and retry.", details[0].GetMessage()),
+				)
 
-			return diags
+				return diags
+			}
 		}
 	}
 
-	return nil
+	return diags
 }
 
 func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context, serviceNumbers []management.NotificationsSettingsPhoneDeliverySettingsCustomNumbers) (*management.NotificationsSettingsPhoneDeliverySettings, diag.Diagnostics) {
@@ -1410,8 +1412,14 @@ func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context, service
 						overriddenServiceNumber.SetSelected(true)
 
 						if !selectedNumberPlan.SupportedCountries.IsNull() && !selectedNumberPlan.SupportedCountries.IsUnknown() {
-							var supportedCountries []string
-							diags.Append(selectedNumberPlan.SupportedCountries.ElementsAs(ctx, &supportedCountries, false)...)
+							var supportedCountriesPlan []types.String
+							diags.Append(selectedNumberPlan.SupportedCountries.ElementsAs(ctx, &supportedCountriesPlan, false)...)
+							if diags.HasError() {
+								return nil, diags
+							}
+
+							supportedCountries, d := framework.TFTypeStringSliceToStringSlice(supportedCountriesPlan, path.Root("provider_custom").AtName("numbers").AtName("selected").AtName("supported_countries"))
+							diags.Append(d...)
 							if diags.HasError() {
 								return nil, diags
 							}
@@ -1481,16 +1489,22 @@ func phoneDeliverySettingsExpandNumbers(ctx context.Context, numbersPlan []Phone
 		)
 
 		if !numberPlan.Capabilities.IsNull() && !numberPlan.Capabilities.IsUnknown() {
-			var capabilitiesSlice []string
-			diags.Append(numberPlan.Capabilities.ElementsAs(ctx, &capabilitiesSlice, false)...)
+			var capabilitiesPlan []types.String
+			diags.Append(numberPlan.Capabilities.ElementsAs(ctx, &capabilitiesPlan, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			capabilitiesPlanStr, d := framework.TFTypeStringSliceToStringSlice(capabilitiesPlan, path.Root("provider_custom").AtName("numbers").AtName("capabilities"))
+			diags.Append(d...)
 			if diags.HasError() {
 				return nil, diags
 			}
 
 			capabilities := make([]management.EnumNotificationsSettingsPhoneDeliverySettingsCustomNumbersCapability, 0)
 
-			for _, capability := range capabilitiesSlice {
-				capabilities = append(capabilities, management.EnumNotificationsSettingsPhoneDeliverySettingsCustomNumbersCapability(capability))
+			for _, v := range capabilitiesPlanStr {
+				capabilities = append(capabilities, management.EnumNotificationsSettingsPhoneDeliverySettingsCustomNumbersCapability(v))
 			}
 			number.SetCapabilities(capabilities)
 		}
@@ -1504,8 +1518,14 @@ func phoneDeliverySettingsExpandNumbers(ctx context.Context, numbersPlan []Phone
 		}
 
 		if !numberPlan.SupportedCountries.IsNull() && !numberPlan.SupportedCountries.IsUnknown() {
-			var supportedCountries []string
-			diags.Append(numberPlan.SupportedCountries.ElementsAs(ctx, &supportedCountries, false)...)
+			var supportedCountriesPlan []types.String
+			diags.Append(numberPlan.SupportedCountries.ElementsAs(ctx, &supportedCountriesPlan, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			supportedCountries, d := framework.TFTypeStringSliceToStringSlice(supportedCountriesPlan, path.Root("provider_custom").AtName("numbers").AtName("supported_countries"))
+			diags.Append(d...)
 			if diags.HasError() {
 				return nil, diags
 			}

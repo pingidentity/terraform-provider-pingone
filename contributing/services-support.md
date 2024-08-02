@@ -6,14 +6,14 @@ The following describes the support of each of these services.
 
 | Service             | Provider code | Support | Roadmap |
 | ------------------- | ------------- | ------- | ------- |
-| PingOne platform    | base          |    :large_orange_diamond:     | Upcoming v1.0.0 |
-| PingOne SSO         | sso           |    :large_orange_diamond:     | Upcoming v1.0.0 |
-| PingOne DaVinci     | davinci       |    :x:     |  TBC  |
-| PingOne MFA         | mfa           |    :large_orange_diamond:     | Upcoming v1.0.0 |
-| PingOne Risk        | risk          |    :large_orange_diamond:     | Upcoming v1.0.0 |
-| PingOne Authorize   | authorize     |    :large_orange_diamond:     | Upcoming v1.0.0 |
-| PingOne Verify      | verify        |    :x:     |  TBC  |
-| PingOne Credentials | credentials   |    :large_orange_diamond:     | Upcoming v1.0.0 |
+| PingOne platform    | base          |    :white_check_mark:     |  |
+| PingOne SSO         | sso           |    :white_check_mark:     |  |
+| PingOne DaVinci     | davinci       |    :large_orange_diamond:   |  Upcoming 2024  |
+| PingOne MFA         | mfa           |    :white_check_mark:     |  |
+| PingOne Protect     | risk          |    :white_check_mark:     |  |
+| PingOne Authorize   | authorize     |    :white_check_mark:     |  |
+| PingOne Verify      | verify        |    :white_check_mark:     |  |
+| PingOne Credentials | credentials   |    :white_check_mark:     |  |
 
 Key:
 * :white_check_mark: - Supported / Released

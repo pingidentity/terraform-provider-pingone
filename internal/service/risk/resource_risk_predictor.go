@@ -1683,22 +1683,24 @@ func (r *RiskPredictorResource) ImportState(ctx context.Context, req resource.Im
 	}
 }
 
-func riskPredictorCreateUpdateCustomErrorHandler(error model.P1Error) diag.Diagnostics {
+func riskPredictorCreateUpdateCustomErrorHandler(_ *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	// Invalid composition
-	if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
-		if target, ok := details[0].GetTargetOk(); ok && *target == "composition.condition" {
-			diags.AddError(
-				"Invalid \"composition.condition\" policy JSON.",
-				"Please check the \"composition.condition\" policy JSON structure and contents and try again.",
-			)
+	if p1Error != nil {
+		// Invalid composition
+		if details, ok := p1Error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+			if target, ok := details[0].GetTargetOk(); ok && *target == "composition.condition" {
+				diags.AddError(
+					"Invalid \"composition.condition\" policy JSON.",
+					"Please check the \"composition.condition\" policy JSON structure and contents and try again.",
+				)
 
-			return diags
+				return diags
+			}
 		}
 	}
 
-	return nil
+	return diags
 }
 
 func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk.APIClient, managementApiClient *management.APIClient) (*risk.RiskPredictor, *string, diag.Diagnostics) {

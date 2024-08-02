@@ -972,14 +972,20 @@ func (p *environmentServiceModel) expand(ctx context.Context) (*management.BillO
 
 	if !p.Tags.IsNull() {
 
-		var servicesTagsPlan []string
+		var servicesTagsPlan []types.String
 		diags.Append(p.Tags.ElementsAs(ctx, &servicesTagsPlan, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
+		servicesTags, d := framework.TFTypeStringSliceToStringSlice(servicesTagsPlan, path.Root("tags"))
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
 		servicesTagsEnum := make([]management.EnumBillOfMaterialsProductTags, 0)
-		for _, v := range servicesTagsPlan {
+		for _, v := range servicesTags {
 			servicesTagsEnum = append(servicesTagsEnum, management.EnumBillOfMaterialsProductTags(v))
 		}
 
@@ -1123,34 +1129,36 @@ func toStateEnvironmentServicesBookmark(bookmarks []management.BillOfMaterialsPr
 
 }
 
-func environmentCreateCustomErrorHandler(error model.P1Error) diag.Diagnostics {
+func environmentCreateCustomErrorHandler(_ *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	// Invalid region
-	if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
-		if target, ok := details[0].GetTargetOk(); ok && *target == "region" {
+	if p1Error != nil {
+		// Invalid region
+		if details, ok := p1Error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+			if target, ok := details[0].GetTargetOk(); ok && *target == "region" {
+				diags.AddError(
+					fmt.Sprintf("Incompatible environment region for the organization tenant.  Allowed regions: %v.", details[0].GetInnerError().AllowedValues),
+					"Ensure the region parameter is correctly set.  If the region parameter is correctly set in the resource creation, please raise an issue with the provider maintainers.",
+				)
+
+				return diags
+			}
+		}
+
+		// DV FF
+		m, _ := regexp.MatchString("^Organization does not have Ping One DaVinci FF enabled", p1Error.GetMessage())
+
+		if m {
 			diags.AddError(
-				fmt.Sprintf("Incompatible environment region for the organization tenant.  Allowed regions: %v.", details[0].GetInnerError().AllowedValues),
-				"Ensure the region parameter is correctly set.  If the region parameter is correctly set in the resource creation, please raise an issue with the provider maintainers.",
+				"The PingOne DaVinci service is not enabled in this organization tenant.",
+				"To enable PingOne DaVinci, the service needs to be enabled in the organization by addition to the license or by enabling the feature flag.  Please contact your Ping customer account manager.",
 			)
 
 			return diags
 		}
 	}
 
-	// DV FF
-	m, _ := regexp.MatchString("^Organization does not have Ping One DaVinci FF enabled", error.GetMessage())
-
-	if m {
-		diags.AddError(
-			"The PingOne DaVinci service is not enabled in this organization tenant.",
-			"To enable PingOne DaVinci, the service needs to be enabled in the organization by addition to the license or by enabling the feature flag.  Please contact your Ping customer account manager.",
-		)
-
-		return diags
-	}
-
-	return nil
+	return diags
 }
 
 var retryEnvironmentDefault = func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {

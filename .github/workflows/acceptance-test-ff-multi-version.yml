@@ -57,9 +57,8 @@ jobs:
       fail-fast: false
       matrix:
         # list whatever Terraform versions here you would like to support
-        terraform: # We test the earliest supported (v1.4), and the latest supported (v1.8)
+        terraform: # We test the earliest supported (v1.4).  The latest supported is in the multi-region test
           - '1.4.*'
-          - '1.8.*'
       max-parallel: 1
     steps:
 

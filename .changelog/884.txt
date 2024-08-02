@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_language_update`: Fixed "The language must be enabled before it is set as the default" error when setting a language as enabled and the environment default.
+```

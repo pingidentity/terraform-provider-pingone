@@ -15,17 +15,23 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
-type CustomError func(model.P1Error) diag.Diagnostics
+type CustomError func(*http.Response, *model.P1Error) diag.Diagnostics
 
 var (
-	DefaultCustomError = func(error model.P1Error) diag.Diagnostics { return nil }
+	DefaultCustomError = func(_ *http.Response, _ *model.P1Error) diag.Diagnostics { return nil }
 
-	CustomErrorResourceNotFoundWarning = func(error model.P1Error) diag.Diagnostics {
+	CustomErrorResourceNotFoundWarning = func(r *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 		var diags diag.Diagnostics
 
 		// Deleted outside of TF
-		if error.GetCode() == "NOT_FOUND" {
-			diags.AddWarning("Requested resource not found", fmt.Sprintf("The requested resource configuration cannot be found in the PingOne service.  If the requested resource is managed in Terraform's state, it may have been removed outside of Terraform.\nAPI error: %s", error.GetMessage()))
+		if p1Error != nil && p1Error.GetCode() == "NOT_FOUND" {
+			diags.AddWarning("Requested resource not found", fmt.Sprintf("The requested resource configuration cannot be found in the PingOne service.  If the requested resource is managed in Terraform's state, it may have been removed outside of Terraform.\nAPI error: %s", p1Error.GetMessage()))
+
+			return diags
+		}
+
+		if r != nil && r.StatusCode == 404 {
+			diags.AddWarning("Requested resource not found", "The requested resource configuration cannot be found in the PingOne service.  If the requested resource is managed in Terraform's state, it may have been removed outside of Terraform.")
 
 			return diags
 		}
@@ -33,15 +39,17 @@ var (
 		return nil
 	}
 
-	CustomErrorInvalidValue = func(error model.P1Error) diag.Diagnostics {
+	CustomErrorInvalidValue = func(_ *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 		var diags diag.Diagnostics
 
 		// Value not allowed
-		if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
-			if target, ok := details[0].GetTargetOk(); ok && details[0].GetCode() == "INVALID_VALUE" && *target == "name" {
-				diags.AddError("Invalid Value", details[0].GetMessage())
+		if p1Error != nil {
+			if details, ok := p1Error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+				if target, ok := details[0].GetTargetOk(); ok && details[0].GetCode() == "INVALID_VALUE" && *target == "name" {
+					diags.AddError("Invalid Value", details[0].GetMessage())
 
-				return diags
+					return diags
+				}
 			}
 		}
 
@@ -90,14 +98,15 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f sdk.SDKInterfaceFunc,
 		switch t := err.(type) {
 		case *model.GenericOpenAPIError:
 
-			if v, ok := t.Model().(model.P1Error); ok && v.GetId() != "" {
+			model, ok := t.Model().(model.P1Error)
 
-				diags = customError(v)
-				if diags != nil {
-					return diags
-				}
+			diags = customError(r, &model)
+			if diags != nil {
+				return diags
+			}
 
-				summaryText, detailText := sdk.FormatPingOneError(requestID, v)
+			if ok && model.GetId() != "" {
+				summaryText, detailText := sdk.FormatPingOneError(requestID, model)
 
 				diags.AddError(summaryText, detailText)
 
@@ -106,12 +115,12 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f sdk.SDKInterfaceFunc,
 
 			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", requestID, t.Error()), "")
 
-			tflog.Error(ctx, fmt.Sprintf("Error when calling `%s`: %v\n\nFull response body: %+v", requestID, t.Error(), r.Body))
+			tflog.Error(ctx, fmt.Sprintf("Error when calling `%s`: %v\n\nResponse code: %d\nResponse content-type: %s\nFull response body: %+v", requestID, t.Error(), r.StatusCode, r.Header.Get("Content-Type"), r.Body))
 
 			return diags
 
 		case *url.Error:
-			tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s", t.Err.Error()))
+			tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s\n\nResponse code: %d\nResponse content-type: %s", t.Err.Error(), r.StatusCode, r.Header.Get("Content-Type")))
 
 			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", requestID, t.Error()), "")
 

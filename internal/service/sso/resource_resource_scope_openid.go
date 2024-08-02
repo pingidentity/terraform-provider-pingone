@@ -359,7 +359,7 @@ func (r *ResourceScopeOpenIDResource) Delete(ctx context.Context, req resource.D
 
 	if m {
 
-		resourceScope, d := fetchResourceScopeFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), resource.GetId(), data.Name.ValueString())
+		resourceScope, d := fetchResourceScopeFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), resource.GetId(), data.Name.ValueString(), true)
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -453,7 +453,7 @@ func (p *ResourceScopeOpenIDResourceModel) expand(ctx context.Context, apiClient
 	if m {
 		newScope = false
 
-		data, diags = fetchResourceScopeFromName(ctx, apiClient, p.EnvironmentId.ValueString(), resource.GetId(), p.Name.ValueString())
+		data, diags = fetchResourceScopeFromName(ctx, apiClient, p.EnvironmentId.ValueString(), resource.GetId(), p.Name.ValueString(), false)
 		if diags.HasError() {
 			return nil, diags
 		}
@@ -475,13 +475,19 @@ func (p *ResourceScopeOpenIDResourceModel) expand(ctx context.Context, apiClient
 
 	if !p.MappedClaims.IsNull() && !p.MappedClaims.IsUnknown() {
 
-		var plan []string
+		var plan []pingonetypes.ResourceIDValue
 		diags.Append(p.MappedClaims.ElementsAs(ctx, &plan, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		data.SetMappedClaims(plan)
+		mappedClaims, d := framework.TFTypePingOneResourceIDSliceToStringSlice(plan, path.Root("mapped_claims"))
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetMappedClaims(mappedClaims)
 	}
 
 	return data, diags

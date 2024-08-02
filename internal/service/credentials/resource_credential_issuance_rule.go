@@ -690,12 +690,21 @@ func (p *NotificationModel) expandNotificationModel(ctx context.Context) (*crede
 
 	// notification methods
 	if !p.Methods.IsNull() && !p.Methods.IsUnknown() {
-		var slice []string
-		diags.Append(p.Methods.ElementsAs(ctx, &slice, false)...)
+		var methodsPlan []types.String
+		diags.Append(p.Methods.ElementsAs(ctx, &methodsPlan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
 
-		enumSlice := make([]credentials.EnumCredentialIssuanceRuleNotificationMethod, len(slice))
-		for i := 0; i < len(slice); i++ {
-			enumVal, err := credentials.NewEnumCredentialIssuanceRuleNotificationMethodFromValue(slice[i])
+		methods, d := framework.TFTypeStringSliceToStringSlice(methodsPlan, path.Root("methods"))
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		enumSlice := make([]credentials.EnumCredentialIssuanceRuleNotificationMethod, len(methods))
+		for i := 0; i < len(methods); i++ {
+			enumVal, err := credentials.NewEnumCredentialIssuanceRuleNotificationMethodFromValue(methods[i])
 			if err != nil {
 				return nil, diags
 			}

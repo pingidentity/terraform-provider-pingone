@@ -393,21 +393,23 @@ func (p *AgreementEnableResourceModel) toState(apiObject *management.Agreement) 
 	return diags
 }
 
-func agreementEnableUpdateCustomErrorHandler(error model.P1Error) diag.Diagnostics {
+func agreementEnableUpdateCustomErrorHandler(_ *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if v, ok := error.GetDetailsOk(); ok && v != nil && len(v) > 0 {
-		if v[0].GetCode() == "CONSTRAINT_VIOLATION" {
-			if match, _ := regexp.MatchString("The agreement can not be enabled without supporting the default language configured for the environment.", v[0].GetMessage()); match {
-				diags.AddError(
-					v[0].GetMessage(),
-					"The agreement must have an enabled agreement localization for the default language of the environment.  Ensure that a `pingone_agreement_localization`, `pingone_agreement_localization_revision` and `pingone_agreement_localization_enable` resource exist for the default language, or the environment's default language is re-configured using the `pingone_language_update` resource.",
-				)
+	if p1Error != nil {
+		if v, ok := p1Error.GetDetailsOk(); ok && v != nil && len(v) > 0 {
+			if v[0].GetCode() == "CONSTRAINT_VIOLATION" {
+				if match, _ := regexp.MatchString("The agreement can not be enabled without supporting the default language configured for the environment.", v[0].GetMessage()); match {
+					diags.AddError(
+						v[0].GetMessage(),
+						"The agreement must have an enabled agreement localization for the default language of the environment.  Ensure that a `pingone_agreement_localization`, `pingone_agreement_localization_revision` and `pingone_agreement_localization_enable` resource exist for the default language, or the environment's default language is re-configured using the `pingone_language_update` resource.",
+					)
 
-				return diags
+					return diags
+				}
 			}
 		}
 	}
 
-	return nil
+	return diags
 }

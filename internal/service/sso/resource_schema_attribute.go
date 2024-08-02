@@ -740,8 +740,14 @@ func (p *SchemaAttributeResourceModelV1) expand(ctx context.Context, action stri
 		)
 
 		if !plan.ValuesPatternShouldMatch.IsNull() && !plan.ValuesPatternShouldMatch.IsUnknown() {
-			var values []string
-			diags.Append(plan.ValuesPatternShouldMatch.ElementsAs(ctx, &values, false)...)
+			var valuesPatternPlan []types.String
+			diags.Append(plan.ValuesPatternShouldMatch.ElementsAs(ctx, &valuesPatternPlan, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			values, d := framework.TFTypeStringSliceToStringSlice(valuesPatternPlan, path.Root("regex_validation").AtName("values_pattern_should_match"))
+			diags.Append(d...)
 			if diags.HasError() {
 				return nil, diags
 			}
@@ -750,8 +756,14 @@ func (p *SchemaAttributeResourceModelV1) expand(ctx context.Context, action stri
 		}
 
 		if !plan.ValuesPatternShouldNotMatch.IsNull() && !plan.ValuesPatternShouldNotMatch.IsUnknown() {
-			var values []string
-			diags.Append(plan.ValuesPatternShouldNotMatch.ElementsAs(ctx, &values, false)...)
+			var valuesPatternPlan []types.String
+			diags.Append(plan.ValuesPatternShouldNotMatch.ElementsAs(ctx, &valuesPatternPlan, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			values, d := framework.TFTypeStringSliceToStringSlice(valuesPatternPlan, path.Root("regex_validation").AtName("values_pattern_should_not_match"))
+			diags.Append(d...)
 			if diags.HasError() {
 				return nil, diags
 			}

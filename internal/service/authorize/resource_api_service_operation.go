@@ -609,15 +609,21 @@ func (p *APIServiceOperationResourceModel) expand(ctx context.Context) (*authori
 	}
 
 	if !p.Methods.IsNull() && !p.Methods.IsUnknown() {
-		var methodsPlan []string
+		var methodsPlan []types.String
 		diags.Append(p.Methods.ElementsAs(ctx, &methodsPlan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		methodsSlice, d := framework.TFTypeStringSliceToStringSlice(methodsPlan, path.Root("methods"))
+		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
 		methods := make([]authorize.EnumAPIServerOperationMethod, 0)
 
-		for _, methodPlan := range methodsPlan {
+		for _, methodPlan := range methodsSlice {
 			methods = append(methods, authorize.EnumAPIServerOperationMethod(methodPlan))
 		}
 

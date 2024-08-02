@@ -1,4 +1,16 @@
-## 1.0.0 (Unreleased)
+## 1.1.0 (Unreleased)
+
+NOTES:
+
+* bump `github.com/hashicorp/terraform-plugin-framework-timetypes` 0.3.0 => 0.4.0 ([#901](https://github.com/pingidentity/terraform-provider-pingone/issues/901))
+* bump `github.com/hashicorp/terraform-plugin-framework-validators` 0.12.0 => 0.13.0 ([#901](https://github.com/pingidentity/terraform-provider-pingone/issues/901))
+* bump `github.com/hashicorp/terraform-plugin-framework` 1.9.0 => 1.10.0 ([#901](https://github.com/pingidentity/terraform-provider-pingone/issues/901))
+* bump `github.com/hashicorp/terraform-plugin-testing` 1.8.0 => 1.9.0 ([#901](https://github.com/pingidentity/terraform-provider-pingone/issues/901))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.42.0 => 0.43.0 ([#901](https://github.com/pingidentity/terraform-provider-pingone/issues/901))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/verify` 0.6.0 => 0.7.0 ([#901](https://github.com/pingidentity/terraform-provider-pingone/issues/901))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.2 => 0.12.3 ([#901](https://github.com/pingidentity/terraform-provider-pingone/issues/901))
+
+## 1.0.0 (17 July 2024) :rocket:
 
 BREAKING CHANGES:
 
@@ -18,7 +30,7 @@ BREAKING CHANGES:
 * `data-source/pingone_application`: Changed the `saml_options.sp_verification` ([#682](https://github.com/pingidentity/terraform-provider-pingone/issues/682))
 * `data-source/pingone_application`: Changed the `saml_options` attribute data type. ([#682](https://github.com/pingidentity/terraform-provider-pingone/issues/682))
 * `data-source/pingone_application`: Removal of deprecated attribute `saml_options.sp_verification_certificate_ids`.  Use the `saml_options.sp_verification.certificate_ids` attribute going forward. ([#681](https://github.com/pingidentity/terraform-provider-pingone/issues/681))
-* `data-source/pingone_application`: Removed `oidc_options.client_id` and `oidc_options.client_secret`.  Use the `pingone_application_secret` resource or data source going forward. ([#781](https://github.com/pingidentity/terraform-provider-pingone/issues/781))
+* `data-source/pingone_application`: Removed `oidc_options.client_secret`.  Use the `pingone_application_secret` resource or data source going forward. ([#781](https://github.com/pingidentity/terraform-provider-pingone/issues/781))
 * `data-source/pingone_application`: Renamed `oidc_options.allow_wildcards_in_redirect_uris` to `oidc_options.allow_wildcard_in_redirect_uris` to align with the API. ([#887](https://github.com/pingidentity/terraform-provider-pingone/issues/887))
 * `data-source/pingone_application`: Renamed `oidc_options.token_endpoint_authn_method` to `oidc_options.token_endpoint_auth_method` to align with the API. ([#887](https://github.com/pingidentity/terraform-provider-pingone/issues/887))
 * `data-source/pingone_environment`: Changed the `service.bookmark` parameter data type and renamed to `services.bookmarks`. ([#665](https://github.com/pingidentity/terraform-provider-pingone/issues/665))
@@ -75,7 +87,7 @@ BREAKING CHANGES:
 * `resource/pingone_application`: Removal of deprecated parameter `saml_options.idp_signing_key_id`.  Use the `saml_options.idp_signing_key` parameter going forward. ([#656](https://github.com/pingidentity/terraform-provider-pingone/issues/656))
 * `resource/pingone_application`: Removal of deprecated parameter `saml_options.sp_verification_certificate_ids`.  Use the `saml_options.sp_verification.certificate_ids` parameter going forward. ([#681](https://github.com/pingidentity/terraform-provider-pingone/issues/681))
 * `resource/pingone_application`: Removal of deprecated parameters `oidc_options.bundle_id`, `oidc_options.package_name`.  Use the `oidc_options.mobile_app.bundle_id` and `oidc_options.mobile_app.package_name` parameters going forward. ([#656](https://github.com/pingidentity/terraform-provider-pingone/issues/656))
-* `resource/pingone_application`: Removed `oidc_options.client_id` and `oidc_options.client_secret`.  Use the `pingone_application_secret` resource or data source going forward. ([#781](https://github.com/pingidentity/terraform-provider-pingone/issues/781))
+* `resource/pingone_application`: Removed `oidc_options.client_secret`.  Use the `pingone_application_secret` resource or data source going forward. ([#781](https://github.com/pingidentity/terraform-provider-pingone/issues/781))
 * `resource/pingone_application`: Renamed `oidc_options.allow_wildcards_in_redirect_uris` to `oidc_options.allow_wildcard_in_redirect_uris` to align with the API. ([#887](https://github.com/pingidentity/terraform-provider-pingone/issues/887))
 * `resource/pingone_application`: Renamed `oidc_options.token_endpoint_authn_method` to `oidc_options.token_endpoint_auth_method` to align with the API. ([#887](https://github.com/pingidentity/terraform-provider-pingone/issues/887))
 * `resource/pingone_branding_settings`: Changed the `logo_image` parameter data type. ([#661](https://github.com/pingidentity/terraform-provider-pingone/issues/661))
@@ -154,6 +166,7 @@ BREAKING CHANGES:
 
 NOTES:
 
+* `data-source/pingone_license`: Migrated to plugin framework. ([#894](https://github.com/pingidentity/terraform-provider-pingone/issues/894))
 * `data-source/pingone_password_policy`: Migrated to plugin framework. ([#801](https://github.com/pingidentity/terraform-provider-pingone/issues/801))
 * `data-source/pingone_trusted_email_domain_dkim`: Migrated to plugin framework. ([#802](https://github.com/pingidentity/terraform-provider-pingone/issues/802))
 * `data-source/pingone_trusted_email_domain_ownership`: Migrated to plugin framework. ([#803](https://github.com/pingidentity/terraform-provider-pingone/issues/803))
@@ -234,6 +247,7 @@ BUG FIXES:
 * `resource/pingone_custom_domain_verify`: Fixed ineffectual `timeouts` configuration. ([#786](https://github.com/pingidentity/terraform-provider-pingone/issues/786))
 * `resource/pingone_gateway`: Fixed error when configuring gateways that are generic LDAP v3 compliant directories, or OpenDJ Directory servers. ([#871](https://github.com/pingidentity/terraform-provider-pingone/issues/871))
 * `resource/pingone_gateway`: Fixed issue that, when updating a `user_types` object, Terraform re-creates the full `user_types` object instead of updating the object in place. ([#798](https://github.com/pingidentity/terraform-provider-pingone/issues/798))
+* `resource/pingone_language_update`: Fixed "The language must be enabled before it is set as the default" error when setting a language as enabled and the environment default. ([#884](https://github.com/pingidentity/terraform-provider-pingone/issues/884))
 * `resource/pingone_language`: Correct `locale` validation to add missing ISO country codes. ([#858](https://github.com/pingidentity/terraform-provider-pingone/issues/858))
 * `resource/pingone_mfa_device_policy`: Fixed blocking error when attempting to destroy the default MFA device policy for the environment.  This is now a warning instead of an error. ([#845](https://github.com/pingidentity/terraform-provider-pingone/issues/845))
 * `resource/pingone_mfa_device_policy`: Resource can now be modified with Terraform if the `default` property is modified to `true` in the console or by API directly. ([#844](https://github.com/pingidentity/terraform-provider-pingone/issues/844))

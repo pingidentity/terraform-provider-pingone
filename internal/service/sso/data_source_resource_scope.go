@@ -247,7 +247,7 @@ func (r *ResourceScopeDataSource) Read(ctx context.Context, req datasource.ReadR
 	if !data.Name.IsNull() {
 
 		var d diag.Diagnostics
-		resourceScope, d = fetchResourceScopeFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), resource.GetId(), data.Name.ValueString())
+		resourceScope, d = fetchResourceScopeFromName(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), resource.GetId(), data.Name.ValueString(), true)
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -328,20 +328,27 @@ func fetchResourceScopeFromID(ctx context.Context, apiClient *management.APIClie
 	return resourceScope, diags
 }
 
-func fetchResourceScopeFromName(ctx context.Context, apiClient *management.APIClient, environmentID, resourceID, resourceScopeName string) (*management.ResourceScope, diag.Diagnostics) {
+func fetchResourceScopeFromName(ctx context.Context, apiClient *management.APIClient, environmentID, resourceID, resourceScopeName string, warnIfNotFound bool) (*management.ResourceScope, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	resourceScopes, d := fetchResourceScopesFromNames(ctx, apiClient, environmentID, resourceID, []string{resourceScopeName})
+	resourceScopes, d := fetchResourceScopesFromNames(ctx, apiClient, environmentID, resourceID, []string{resourceScopeName}, warnIfNotFound)
 	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
 	if len(resourceScopes) == 0 {
-		diags.AddError(
-			"Cannot find resource scope from ID",
-			fmt.Sprintf("The resource scope %s for resource %s in environment %s cannot be found", resourceScopeName, resourceID, environmentID),
-		)
+		if !warnIfNotFound {
+			diags.AddError(
+				"Cannot find resource scope from ID",
+				fmt.Sprintf("The resource scope %s for resource %s in environment %s cannot be found", resourceScopeName, resourceID, environmentID),
+			)
+		} else {
+			diags.AddWarning(
+				"Cannot find resource scope from ID",
+				fmt.Sprintf("The resource scope %s for resource %s in environment %s cannot be found", resourceScopeName, resourceID, environmentID),
+			)
+		}
 		return nil, diags
 	}
 
@@ -356,16 +363,21 @@ func fetchResourceScopeFromName(ctx context.Context, apiClient *management.APICl
 	return &resourceScopes[0], diags
 }
 
-func fetchResourceScopesFromIDs(ctx context.Context, apiClient *management.APIClient, environmentID string, resourceID string, resourceScopeIDs []string) ([]management.ResourceScope, diag.Diagnostics) {
-	return fetchResourceScopesFromIDOrNameSlice(ctx, apiClient, environmentID, resourceID, resourceScopeIDs, false)
+func fetchResourceScopesFromIDs(ctx context.Context, apiClient *management.APIClient, environmentID string, resourceID string, resourceScopeIDs []string, warnIfNotFound bool) ([]management.ResourceScope, diag.Diagnostics) {
+	return fetchResourceScopesFromIDOrNameSlice(ctx, apiClient, environmentID, resourceID, resourceScopeIDs, false, warnIfNotFound)
 }
 
-func fetchResourceScopesFromNames(ctx context.Context, apiClient *management.APIClient, environmentID string, resourceID string, resourceScopeNames []string) ([]management.ResourceScope, diag.Diagnostics) {
-	return fetchResourceScopesFromIDOrNameSlice(ctx, apiClient, environmentID, resourceID, resourceScopeNames, true)
+func fetchResourceScopesFromNames(ctx context.Context, apiClient *management.APIClient, environmentID string, resourceID string, resourceScopeNames []string, warnIfNotFound bool) ([]management.ResourceScope, diag.Diagnostics) {
+	return fetchResourceScopesFromIDOrNameSlice(ctx, apiClient, environmentID, resourceID, resourceScopeNames, true, warnIfNotFound)
 }
 
-func fetchResourceScopesFromIDOrNameSlice(ctx context.Context, apiClient *management.APIClient, environmentID, resourceID string, resourceScopeInputList []string, byName bool) ([]management.ResourceScope, diag.Diagnostics) {
+func fetchResourceScopesFromIDOrNameSlice(ctx context.Context, apiClient *management.APIClient, environmentID, resourceID string, resourceScopeInputList []string, byName bool, warnIfNotFound bool) ([]management.ResourceScope, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	errorFunction := framework.DefaultCustomError
+	if warnIfNotFound {
+		errorFunction = framework.CustomErrorResourceNotFoundWarning
+	}
 
 	var entityArray *management.EntityArray
 	diags.Append(framework.ParseResponse(
@@ -376,11 +388,26 @@ func fetchResourceScopesFromIDOrNameSlice(ctx context.Context, apiClient *manage
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 		},
 		"ReadAllResourceScopes",
-		framework.DefaultCustomError,
+		errorFunction,
 		sdk.DefaultCreateReadRetryable,
 		&entityArray,
 	)...)
 	if diags.HasError() {
+		return nil, diags
+	}
+
+	if entityArray == nil {
+		if warnIfNotFound {
+			diags.AddWarning(
+				"Cannot find resource scopes",
+				fmt.Sprintf("The resource scopes for environment %s cannot be found", environmentID),
+			)
+		} else {
+			diags.AddWarning(
+				"Cannot find resource scopes",
+				fmt.Sprintf("The resource scopes for environment %s cannot be found", environmentID),
+			)
+		}
 		return nil, diags
 	}
 

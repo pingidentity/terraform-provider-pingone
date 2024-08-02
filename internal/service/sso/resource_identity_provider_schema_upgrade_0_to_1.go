@@ -759,7 +759,7 @@ func (p *identityProviderSAMLResourceModelV0) schemaUpgradeIdpVerificationV0toV1
 	} else if planAttribute.IsUnknown() {
 		return types.ObjectUnknown(attributeTypes), diags
 	} else {
-		var priorStateData []string
+		var priorStateData []types.String
 		d := planAttribute.ElementsAs(ctx, &priorStateData, false)
 		diags.Append(d...)
 		if diags.HasError() {
@@ -774,7 +774,7 @@ func (p *identityProviderSAMLResourceModelV0) schemaUpgradeIdpVerificationV0toV1
 
 		for i, cert := range priorStateData {
 			certificatesArr[i] = identityProviderSAMLResourceIdPVerificationCertificatesModelV1{
-				Id: framework.PingOneResourceIDToTF(cert),
+				Id: framework.PingOneResourceIDToTF(cert.ValueString()),
 			}
 		}
 

@@ -1,6 +1,6 @@
 ## 0.29.2 (04 July 2024)
 
-**IMPORTANT** The 0.29.2 release is the final release of the `v0` major version.  The next production release will be the `v1.0` release.  Please review the [upgrade guide](https://registry.terraform.io/providers/pingidentity/pingone/1.0.0-rc2/docs/guides/version-1-upgrade) for details on preparing for breaking changes to the Terraform schema.
+**IMPORTANT** The 0.29.2 release is the final release of the `v0` major version.  The next production release will be the `v1.0` release.  Please review the [upgrade guide](https://registry.terraform.io/providers/pingidentity/pingone/latest/docs/guides/version-1-upgrade) for details on preparing for breaking changes to the Terraform schema.
 
 NOTES:
 

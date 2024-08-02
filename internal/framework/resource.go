@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	pingone "github.com/pingidentity/terraform-provider-pingone/internal/client"
@@ -90,6 +91,33 @@ func PingOneResourceIDListToTF(v []string) basetypes.ListValue {
 
 		return types.ListValueMust(pingonetypes.ResourceIDType{}, list)
 	}
+}
+
+func TFTypePingOneResourceIDSliceToStringSlice(v []pingonetypes.ResourceIDValue, path path.Path) ([]string, diag.Diagnostics) {
+	var sliceOut []string
+	var diags diag.Diagnostics
+
+	for _, vElement := range v {
+		if vElement.IsUnknown() {
+			diags.AddAttributeError(
+				path,
+				"Unexpected unknown resource ID slice value",
+				"Cannot convert a resource ID slice value to string as the slice value is unknown.  Please report this to the provider maintainers.",
+			)
+			continue
+		}
+		if vElement.IsNull() {
+			diags.AddAttributeError(
+				path,
+				"Unexpected null slice value",
+				"Cannot convert a resource ID slice value to string as the slice value is null.  Please report this to the provider maintainers.",
+			)
+			continue
+		}
+		sliceOut = append(sliceOut, vElement.ValueString())
+	}
+
+	return sliceOut, diags
 }
 
 func DaVinciResourceIDToTF(v string) davincitypes.ResourceIDValue {
@@ -371,6 +399,33 @@ func TFSetToStringSlice(ctx context.Context, v types.Set) []*string {
 	}
 
 	return sliceOut
+}
+
+func TFTypeStringSliceToStringSlice(v []types.String, path path.Path) ([]string, diag.Diagnostics) {
+	var sliceOut []string
+	var diags diag.Diagnostics
+
+	for _, vElement := range v {
+		if vElement.IsUnknown() {
+			diags.AddAttributeError(
+				path,
+				"Unexpected unknown slice value",
+				"Cannot convert an slice value to string as the slice value is unknown.  Please report this to the provider maintainers.",
+			)
+			continue
+		}
+		if vElement.IsNull() {
+			diags.AddAttributeError(
+				path,
+				"Unexpected null slice value",
+				"Cannot convert an slice value to string as the slice value is null.  Please report this to the provider maintainers.",
+			)
+			continue
+		}
+		sliceOut = append(sliceOut, vElement.ValueString())
+	}
+
+	return sliceOut, diags
 }
 
 type ImportComponent struct {

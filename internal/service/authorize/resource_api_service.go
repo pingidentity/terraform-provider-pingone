@@ -615,8 +615,14 @@ func (p *APIServiceResourceModel) expand(ctx context.Context) (*authorize.APISer
 		return nil, diags
 	}
 
-	var baseUrlsPlan []string
+	var baseUrlsPlan []types.String
 	diags.Append(p.BaseURLs.ElementsAs(ctx, &baseUrlsPlan, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	baseUrls, d := framework.TFTypeStringSliceToStringSlice(baseUrlsPlan, path.Root("base_urls"))
+	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
 	}
@@ -625,7 +631,7 @@ func (p *APIServiceResourceModel) expand(ctx context.Context) (*authorize.APISer
 
 	data := authorize.NewAPIServer(
 		*authorizationServer,
-		baseUrlsPlan,
+		baseUrls,
 		p.Name.ValueString(),
 	)
 

@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -224,8 +225,14 @@ func filterResults(ctx context.Context, filterPlan []framework.DataFilterModel, 
 			for k, v := range filterMap {
 				if filter.Name.ValueString() == k {
 
-					var filterValues []string
-					diags.Append(filter.Values.ElementsAs(ctx, &filterValues, false)...)
+					var filterValuesPlan []types.String
+					diags.Append(filter.Values.ElementsAs(ctx, &filterValuesPlan, false)...)
+					if diags.HasError() {
+						return nil, diags
+					}
+
+					filterValues, d := framework.TFTypeStringSliceToStringSlice(filterValuesPlan, path.Root("data_filters"))
+					diags.Append(d...)
 					if diags.HasError() {
 						return nil, diags
 					}

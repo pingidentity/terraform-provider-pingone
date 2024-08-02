@@ -1205,7 +1205,7 @@ func (r *RiskPolicyResource) Delete(ctx context.Context, req resource.DeleteRequ
 	}
 }
 
-var riskPolicyDeleteCustomError = func(p1Error model.P1Error) diag.Diagnostics {
+var riskPolicyDeleteCustomError = func(r *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	// Undeletable default risk policy
@@ -1220,7 +1220,8 @@ var riskPolicyDeleteCustomError = func(p1Error model.P1Error) diag.Diagnostics {
 		}
 	}
 
-	return framework.CustomErrorResourceNotFoundWarning(p1Error)
+	diags.Append(framework.CustomErrorResourceNotFoundWarning(r, p1Error)...)
+	return diags
 }
 
 func (r *RiskPolicyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -1257,11 +1258,11 @@ func (r *RiskPolicyResource) ImportState(ctx context.Context, req resource.Impor
 	}
 }
 
-func riskPolicyCreateUpdateCustomErrorHandler(error model.P1Error) diag.Diagnostics {
+func riskPolicyCreateUpdateCustomErrorHandler(r *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	// Invalid composition
-	if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+	if details, ok := p1Error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 		if target, ok := details[0].GetTargetOk(); ok && *target == "composition.condition" {
 			diags.AddError(
 				"Invalid \"composition.condition\" policy JSON.",
@@ -1272,7 +1273,7 @@ func riskPolicyCreateUpdateCustomErrorHandler(error model.P1Error) diag.Diagnost
 		}
 	}
 
-	return nil
+	return diags
 }
 
 func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.APIClient, managementApiClient *management.APIClient) (*risk.RiskPolicySet, diag.Diagnostics) {
@@ -1385,13 +1386,19 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 			}
 
 			if !conditionPlan.IPRange.IsNull() && !conditionPlan.IPRange.IsUnknown() {
-				var conditionIPRangePlan []string
+				var conditionIPRangePlan []types.String
 				diags.Append(conditionPlan.IPRange.ElementsAs(ctx, &conditionIPRangePlan, false)...)
 				if diags.HasError() {
 					return nil, diags
 				}
 
-				condition.SetIpRange(conditionIPRangePlan)
+				conditionIPRange, d := framework.TFTypeStringSliceToStringSlice(conditionIPRangePlan, path.Root("overrides").AtName("condition").AtName("ip_range"))
+				diags.Append(d...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				condition.SetIpRange(conditionIPRange)
 			}
 
 			// The Result
@@ -1456,15 +1463,21 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 	evaluatedPredictors := make([]risk.RiskPolicySetEvaluatedPredictorsInner, 0)
 
 	if !p.EvaluatedPredictors.IsNull() && !p.EvaluatedPredictors.IsUnknown() {
-		var plan []string
+		var plan []types.String
 		diags.Append(p.EvaluatedPredictors.ElementsAs(ctx, &plan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		evaluatedPredictorsStr, d := framework.TFTypeStringSliceToStringSlice(plan, path.Root("evaluated_predictors"))
+		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
 		configuredEvaluatedPredictorIDs := make(map[string]bool)
 
-		for _, predictorID := range plan {
+		for _, predictorID := range evaluatedPredictorsStr {
 			evaluatedPredictors = append(evaluatedPredictors, *risk.NewRiskPolicySetEvaluatedPredictorsInner(predictorID))
 			configuredEvaluatedPredictorIDs[predictorID] = true
 		}

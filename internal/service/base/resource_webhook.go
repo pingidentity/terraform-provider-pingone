@@ -579,8 +579,14 @@ func (p *webhookResourceModelV1) expand(ctx context.Context) (*management.Subscr
 func (p *webhookFilterOptionsResourceModelV1) expand(ctx context.Context) (*management.SubscriptionFilterOptions, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var includedActionTypes []string
-	diags.Append(p.IncludedActionTypes.ElementsAs(ctx, &includedActionTypes, false)...)
+	var includedActionTypesPlan []types.String
+	diags.Append(p.IncludedActionTypes.ElementsAs(ctx, &includedActionTypesPlan, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	includedActionTypes, d := framework.TFTypeStringSliceToStringSlice(includedActionTypesPlan, path.Root("filter_options").AtName("included_action_types"))
+	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
 	}
@@ -588,14 +594,20 @@ func (p *webhookFilterOptionsResourceModelV1) expand(ctx context.Context) (*mana
 	data := management.NewSubscriptionFilterOptions(includedActionTypes)
 
 	if !p.IncludedApplicationIds.IsNull() && !p.IncludedApplicationIds.IsUnknown() {
-		var typePlan []string
+		var typePlan []pingonetypes.ResourceIDValue
 		diags.Append(p.IncludedApplicationIds.ElementsAs(ctx, &typePlan, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
+		typesStr, d := framework.TFTypePingOneResourceIDSliceToStringSlice(typePlan, path.Root("filter_options").AtName("included_application_ids"))
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
 		objList := make([]management.SubscriptionFilterOptionsIncludedApplicationsInner, 0)
-		for _, v := range typePlan {
+		for _, v := range typesStr {
 			objList = append(objList, *management.NewSubscriptionFilterOptionsIncludedApplicationsInner(v))
 		}
 
@@ -603,14 +615,20 @@ func (p *webhookFilterOptionsResourceModelV1) expand(ctx context.Context) (*mana
 	}
 
 	if !p.IncludedPopulationIds.IsNull() && !p.IncludedPopulationIds.IsUnknown() {
-		var typePlan []string
+		var typePlan []pingonetypes.ResourceIDValue
 		diags.Append(p.IncludedPopulationIds.ElementsAs(ctx, &typePlan, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
+		typesStr, d := framework.TFTypePingOneResourceIDSliceToStringSlice(typePlan, path.Root("filter_options").AtName("included_population_ids"))
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
 		objList := make([]management.SubscriptionFilterOptionsIncludedApplicationsInner, 0)
-		for _, v := range typePlan {
+		for _, v := range typesStr {
 			objList = append(objList, *management.NewSubscriptionFilterOptionsIncludedApplicationsInner(v))
 		}
 
@@ -618,14 +636,20 @@ func (p *webhookFilterOptionsResourceModelV1) expand(ctx context.Context) (*mana
 	}
 
 	if !p.IncludedTags.IsNull() && !p.IncludedTags.IsUnknown() {
-		var typePlan []string
+		var typePlan []types.String
 		diags.Append(p.IncludedTags.ElementsAs(ctx, &typePlan, false)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
+		typesStr, d := framework.TFTypeStringSliceToStringSlice(typePlan, path.Root("filter_options").AtName("included_tags"))
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
 		objList := make([]management.EnumSubscriptionFilterIncludedTags, 0)
-		for _, v := range typePlan {
+		for _, v := range typesStr {
 			objList = append(objList, management.EnumSubscriptionFilterIncludedTags(v))
 		}
 

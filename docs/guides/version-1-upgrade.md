@@ -326,42 +326,6 @@ resource "pingone_application" "my_awesome_application" {
 }
 ```
 
-### `oidc_options.client_id` computed attribute removed
-
-The `oidc_options.client_id` attribute has been removed from the `pingone_application` resource, as it is a duplicate of the application's own ID.
-
-Previous configuration example:
-
-```terraform
-resource "pingone_application" "my_awesome_application" {
-  # ... other configuration parameters
-
-  oidc_options {
-    # ... other configuration parameters
-  }
-}
-
-locals {
-  my_awesome_application_client_id = pingone_application.my_awesome_application.oidc_options[0].client_id
-}
-```
-
-New configuration example:
-
-```terraform
-resource "pingone_application" "my_awesome_application" {
-  # ... other configuration parameters
-
-  oidc_options = {
-    # ... other configuration parameters
-  }
-}
-
-locals {
-  my_awesome_application_client_id = pingone_application.my_awesome_application.id
-}
-```
-
 ### `oidc_options.client_secret` computed attribute removed
 
 The `oidc_options.client_secret` attribute has been removed from the `pingone_application` resource, and is now found in the `pingone_application_secret` resource and/or data source.  Using the `pingone_application_secret` resource and data source has the benefit of being able to track the state of, and manage, previous secrets when performing application secret rotation.
@@ -401,7 +365,7 @@ resource "pingone_application_secret" "my_awesome_application" {
 }
 
 locals {
-  my_awesome_application_client_id     = pingone_application.my_awesome_application.id
+  my_awesome_application_client_id     = pingone_application.my_awesome_application.oidc_options.client_id
   my_awesome_application_client_secret = pingone_application_secret.my_awesome_application.secret
 }
 ```
@@ -424,7 +388,7 @@ data "pingone_application_secret" "my_awesome_application" {
 }
 
 locals {
-  my_awesome_application_client_id     = pingone_application.my_awesome_application.id
+  my_awesome_application_client_id     = pingone_application.my_awesome_application.oidc_options.client_id
   my_awesome_application_client_secret = data.pingone_application_secret.my_awesome_application.secret
 }
 ```
@@ -4530,51 +4494,121 @@ resource "pingone_webhook" "my_webhook" {
 
 The `access_control_group_options` computed attribute is now a nested object type and no longer a list type.
 
-### `external_link_options` computed attribute data type change
-
-The `external_link_options` computed attribute is now a nested object type and no longer a list type.
-
-### `icon` computed attribute data type change
-
-The `icon` computed attribute is now a nested object type and no longer a list type.
-
-### `oidc_options` computed attribute data type change
-
-The `oidc_options` computed attribute is now a nested object type and no longer a list type.
-
-### `oidc_options.allow_wildcards_in_redirect_uris` computed attribute renamed
-
-The `oidc_options.allow_wildcards_in_redirect_uris` computed attribute has been renamed to `oidc_options.allow_wildcard_in_redirect_uris` to align with the API.
-
-### `oidc_options.certificate_based_authentication` computed attribute data type change
-
-The `oidc_options.certificate_based_authentication` computed attribute is now a nested object type and no longer a list type.
-
-### `oidc_options.client_id` computed attribute removed
-
-The `oidc_options.client_id` attribute has been removed from the `pingone_application` data source, as it is a duplicate of the application's own ID.
-
 Previous configuration example:
 
 ```terraform
-data "pingone_application" "my_awesome_application" {
-  # ... other configuration parameters
-}
-
 locals {
-  my_awesome_application_client_id = data.pingone_application.my_awesome_application.oidc_options[0].client_id
+  demo_var = data.pingone_application.example.access_control_group_options[0].type
 }
 ```
 
 New configuration example:
 
 ```terraform
-data "pingone_application" "my_awesome_application" {
-  # ... other configuration parameters
-}
-
 locals {
-  my_awesome_application_client_id = data.pingone_application.my_awesome_application.id
+  demo_var = data.pingone_application.example.access_control_group_options.type
+}
+```
+
+### `external_link_options` computed attribute data type change
+
+The `external_link_options` computed attribute is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.external_link_options[0].home_page_url
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.external_link_options.home_page_url
+}
+```
+
+### `icon` computed attribute data type change
+
+The `icon` computed attribute is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.icon[0].href
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.icon.href
+}
+```
+
+### `oidc_options` computed attribute data type change
+
+The `oidc_options` computed attribute is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.oidc_options[0].type
+  client_id = data.pingone_application.example.oidc_options[0].client_id
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.oidc_options.type
+  client_id = data.pingone_application.example.oidc_options.client_id
+}
+```
+
+### `oidc_options.allow_wildcards_in_redirect_uris` computed attribute renamed
+
+The `oidc_options.allow_wildcards_in_redirect_uris` computed attribute has been renamed to `oidc_options.allow_wildcard_in_redirect_uris` to align with the API.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.oidc_options[0].allow_wildcards_in_redirect_uris
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.oidc_options.allow_wildcard_in_redirect_uris
+}
+```
+
+### `oidc_options.certificate_based_authentication` computed attribute data type change
+
+The `oidc_options.certificate_based_authentication` computed attribute is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.oidc_options[0].certificate_based_authentication[0].key_id
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.oidc_options.certificate_based_authentication.key_id
 }
 ```
 
@@ -4609,7 +4643,7 @@ resource "pingone_application_secret" "my_awesome_application" {
 }
 
 locals {
-  my_awesome_application_client_id     = data.pingone_application.my_awesome_application.id
+  my_awesome_application_client_id     = data.pingone_application.my_awesome_application.oidc_options.client_id
   my_awesome_application_client_secret = pingone_application_secret.my_awesome_application.secret
 }
 ```
@@ -4628,7 +4662,7 @@ data "pingone_application_secret" "my_awesome_application" {
 }
 
 locals {
-  my_awesome_application_client_id     = data.pingone_application.my_awesome_application.id
+  my_awesome_application_client_id     = data.pingone_application.my_awesome_application.oidc_options.client_id
   my_awesome_application_client_secret = data.pingone_application_secret.my_awesome_application.secret
 }
 ```
@@ -4637,41 +4671,201 @@ locals {
 
 The `oidc_options.cors_settings` computed attribute is now a nested object type and no longer a list type.
 
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.oidc_options[0].cors_settings[0].origins
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.oidc_options.cors_settings.origins
+}
+```
+
 ### `oidc_options.mobile_app` computed attribute data type change
 
 The `oidc_options.mobile_app` computed attribute is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.oidc_options[0].mobile_app[0].bundle_id
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.oidc_options.mobile_app.bundle_id
+}
+```
 
 ### `oidc_options.mobile_app.integrity_detection` computed attribute data type change
 
 The `oidc_options.mobile_app.integrity_detection` computed attribute is now a nested object type and no longer a list type.
 
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.oidc_options[0].mobile_app[0].integrity_detection[0].enabled
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.oidc_options.mobile_app.integrity_detection.enabled
+}
+```
+
 ### `oidc_options.mobile_app.integrity_detection.cache_duration` computed attribute data type change
 
 The `oidc_options.mobile_app.integrity_detection.cache_duration` computed attribute is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.oidc_options[0].mobile_app[0].integrity_detection[0].cache_duration[0].amount
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.oidc_options.mobile_app.integrity_detection.cache_duration.amount
+}
+```
 
 ### `oidc_options.mobile_app.integrity_detection.google_play` computed attribute data type change
 
 The `oidc_options.mobile_app.integrity_detection.google_play` computed attribute is now a nested object type and no longer a list type.
 
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.oidc_options[0].mobile_app[0].integrity_detection[0].google_play[0].verification_type
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.oidc_options.mobile_app.integrity_detection.google_play.verification_type
+}
+```
+
 ### `oidc_options.token_endpoint_authn_method` computed attribute renamed
 
 The `oidc_options.token_endpoint_authn_method` computed attribute has been renamed to `oidc_options.token_endpoint_auth_method` to align with the API.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.oidc_options[0].token_endpoint_authn_method
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.oidc_options.token_endpoint_auth_method
+}
+```
 
 ### `saml_options` computed attribute data type change
 
 The `saml_options` computed attribute is now a nested object type and no longer a list type.
 
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.saml_options[0].type
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.saml_options.type
+}
+```
+
 ### `saml_options.cors_settings` computed attribute data type change
 
 The `saml_options.cors_settings` computed attribute is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.saml_options[0].cors_settings[0].origins
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.saml_options.cors_settings.origins
+}
+```
 
 ### `saml_options.idp_signing_key` computed attribute data type change
 
 The `saml_options.idp_signing_key` computed attribute is now a nested object type and no longer a list type.
 
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.saml_options[0].idp_signing_key[0].key_id
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.saml_options.idp_signing_key.key_id
+}
+```
+
 ### `saml_options.sp_verification` computed attribute data type change
 
 The `saml_options.sp_verification` computed attribute is now a nested object type and no longer a list type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.saml_options[0].sp_verification[0].authn_request_signed
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_application.example.saml_options.sp_verification.authn_request_signed
+}
+```
 
 ### `saml_options.sp_verification_certificate_ids` computed attribute removed
 
@@ -4685,11 +4879,43 @@ The `region` computed attribute's values now aligns with the API request/respons
 
 ### `service` computed attribute rename and data type change
 
-The `service` computed attribute has been renamed to `services` and is now a nested object type and no longer a block type.
+The `service` computed attribute has been renamed to `services` and is now a nested list type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_environment.example.service[0].type
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_environment.example.services[0].type
+}
+```
 
 ### `service.bookmark` computed attribute rename and data type change
 
-The `service.bookmark` computed attribute has been renamed to `services.bookmarks` and is now a nested object type and no longer a block type.
+The `service.bookmark` computed attribute has been renamed to `services.bookmarks` and is now a nested list type and no longer a block type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_environment.example.service[0].bookmark[0].name
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_environment.example.services[0].bookmarks[0].name
+}
+```
 
 ## Data Source: pingone_flow_policies
 
@@ -4731,9 +4957,41 @@ data "pingone_flow_policies" "example_by_data_filter" {
 
 The `davinci_application` computed attribute is now a nested object type and no longer a list block type.
 
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_flow_policy.example.davinci_application[0].id
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_flow_policy.example.davinci_application.id
+}
+```
+
 ### `trigger` computed attribute data type change
 
 The `trigger` computed attribute is now a nested object type and no longer a list block type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_flow_policy.example.trigger[0].type
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_flow_policy.example.trigger.type
+}
+```
 
 ## Data Source: pingone_gateway
 
@@ -4741,25 +4999,121 @@ The `trigger` computed attribute is now a nested object type and no longer a lis
 
 The `radius_client` computed attribute has been renamed to `radius_clients` and is now a set of objects data type and no longer a block set type.
 
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_gateway.example.radius_client[0].ip
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_gateway.example.radius_clients[0].ip
+}
+```
+
 ### `user_type` computed attribute rename and data type change
 
 The `user_type` computed attribute has been renamed to `user_types` and is now a map of objects data type and no longer a block set of objects type.  The map key of the new data type is the name of the user type (previously the `user_type.name` parameter).
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_gateway.example.user_type[0].id
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_gateway.example.user_types["My user types"].id
+}
+```
 
 ### `user_type.push_password_changes_to_ldap` computed attribute rename
 
 The `user_type.push_password_changes_to_ldap` computed attribute has been renamed to `user_types.allow_password_changes`.
 
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_gateway.example.user_type[0].push_password_changes_to_ldap
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_gateway.example.user_types["My user types"].allow_password_changes
+}
+```
+
 ### `user_type.user_migration` computed attribute rename and data type change
 
 The `user_type.user_migration` computed attribute has been renamed to `user_types.new_user_lookup` and is now a single object data type and no longer a block set type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_gateway.example.user_type[0].user_migration[0].population_id
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_gateway.example.user_types["My user types"].new_user_lookup.population_id
+}
+```
 
 ### `user_type.user_migration.attribute_mapping` computed attribute rename and data type change
 
 The `user_type.user_migration.attribute_mapping` computed attribute has been renamed to `user_types.new_user_lookup.attribute_mappings` and is now a set of objects data type and no longer a block set type.
 
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_gateway.example.user_type[0].user_migration[0].attribute_mapping[0].name
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_gateway.example.user_types["My user types"].new_user_lookup.attribute_mappings[0].name
+}
+```
+
 ### `user_type.user_migration.lookup_filter_pattern` computed attribute rename
 
 The `user_type.user_migration.lookup_filter_pattern` computed attribute has been renamed to `user_types.new_user_lookup.ldap_filter_pattern`.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_gateway.example.user_type[0].user_migration[0].lookup_filter_pattern
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_gateway.example.user_types["My user types"].new_user_lookup.ldap_filter_pattern
+}
+```
 
 ## Data Source: pingone_groups
 
@@ -4792,6 +5146,248 @@ data "pingone_groups" "example_by_data_filter" {
       values = ["My first group", "My second group"]
     }
   ]
+}
+```
+
+## Data Source: pingone_license
+
+### `advanced_services` computed attribute data type change
+
+The `advanced_services` computed attribute is now a nested object type and no longer a list block type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_license.example.advanced_services[0].pingid[0].included
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_license.example.advanced_services.pingid.included
+}
+```
+
+### `advanced_services.pingid` computed attribute data type change
+
+The `advanced_services.pingid` computed attribute is now a nested object type and no longer a list block type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_license.example.advanced_services[0].pingid[0].included
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_license.example.advanced_services.pingid.included
+}
+```
+
+### `authorize` computed attribute data type change
+
+The `authorize` computed attribute is now a nested object type and no longer a list block type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_license.example.authorize[0].allow_api_access_management
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_license.example.authorize.allow_api_access_management
+}
+```
+
+### `credentials` computed attribute data type change
+
+The `credentials` computed attribute is now a nested object type and no longer a list block type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_license.example.credentials[0].allow_credentials
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_license.example.credentials.allow_credentials
+}
+```
+
+### `environments` computed attribute data type change
+
+The `environments` computed attribute is now a nested object type and no longer a list block type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_license.example.environments[0].allow_add_resources
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_license.example.environments.allow_add_resources
+}
+```
+
+### `fraud` computed attribute data type change
+
+The `fraud` computed attribute is now a nested object type and no longer a list block type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_license.example.fraud[0].allow_bot_malicious_device_detection
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_license.example.fraud.allow_bot_malicious_device_detection
+}
+```
+
+### `gateways` computed attribute data type change
+
+The `gateways` computed attribute is now a nested object type and no longer a list block type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_license.example.gateways[0].allow_ldap_gateway
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_license.example.gateways.allow_ldap_gateway
+}
+```
+
+### `intelligence` computed attribute data type change
+
+The `intelligence` computed attribute is now a nested object type and no longer a list block type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_license.example.intelligence[0].allow_advanced_predictors
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_license.example.intelligence.allow_advanced_predictors
+}
+```
+
+### `mfa` computed attribute data type change
+
+The `mfa` computed attribute is now a nested object type and no longer a list block type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_license.example.mfa[0].allow_push_notification
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_license.example.mfa.allow_push_notification
+}
+```
+
+### `orchestrate` computed attribute data type change
+
+The `orchestrate` computed attribute is now a nested object type and no longer a list block type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_license.example.orchestrate[0].allow_orchestration
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_license.example.orchestrate.allow_orchestration
+}
+```
+
+### `users` computed attribute data type change
+
+The `users` computed attribute is now a nested object type and no longer a list block type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_license.example.users[0].allow_password_management_notifications
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_license.example.users.allow_password_management_notifications
+}
+```
+
+### `verify` computed attribute data type change
+
+The `verify` computed attribute is now a nested object type and no longer a list block type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_license.example.verify[0].allow_push_notifications
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_license.example.verify.allow_push_notifications
 }
 ```
 
@@ -4867,9 +5463,41 @@ This parameter was previously deprecated and has been removed.  Consider using t
 
 The `account_lockout` computed attribute has been renamed to `lockout` and is now a nested object type and no longer a block list type.
 
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_password_policy.example.account_lockout[0].duration_seconds
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_password_policy.example.lockout.duration_seconds
+}
+```
+
 ### `account_lockout.fail_count` computed attribute renamed
 
 The `account_lockout.fail_count` computed attribute has been renamed to `lockout.failure_count`.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_password_policy.example.account_lockout[0].fail_count
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_password_policy.example.lockout.failure_count
+}
+```
 
 ### `bypass_policy` computed attribute removed
 
@@ -4879,33 +5507,161 @@ The `bypass_policy` computed attribute has no effect and has been removed.
 
 The `environment_default` computed attribute has been renamed to `default`.
 
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_password_policy.example.environment_default
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_password_policy.example.default
+}
+```
+
 ### `exclude_commonly_used_passwords` computed attribute renamed
 
 The `exclude_commonly_used_passwords` computed attribute has been renamed to `excludes_commonly_used_passwords`.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_password_policy.example.exclude_commonly_used_passwords
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_password_policy.example.excludes_commonly_used_passwords
+}
+```
 
 ### `exclude_profile_data` computed attribute renamed
 
 The `exclude_profile_data` computed attribute has been renamed to `excludes_profile_data`.
 
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_password_policy.example.exclude_profile_data
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_password_policy.example.excludes_profile_data
+}
+```
+
 ### `password_age.max` computed attribute moved
 
 The `password_age.max` computed attribute has been moved to `password_age_max`.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_password_policy.example.password_age[0].max
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_password_policy.example.password_age_max
+}
+```
 
 ### `password_age.min` computed attribute moved
 
 The `password_age.min` computed attribute has been moved to `password_age_min`.
 
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_password_policy.example.password_age[0].min
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_password_policy.example.password_age_min
+}
+```
+
 ### `password_history` computed attribute rename and data type change
 
 The `password_history` computed attribute has been renamed to `history` and is now a nested object type and no longer a block list type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_password_policy.example.password_history[0].count
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_password_policy.example.history.count
+}
+```
 
 ### `password_history.prior_password_count` computed attribute renamed
 
 The `password_history.prior_password_count` computed attribute has been renamed to `history.count`.
 
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_password_policy.example.password_history[0].count
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_password_policy.example.history.count
+}
+```
+
 ### `password_length` computed attribute rename and data type change
 
 The `password_length` computed attribute has been renamed to `length` and is now a nested object type and no longer a block list type.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_password_policy.example.password_length[0].max
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_password_policy.example.length.max
+}
+```
 
 ## Data Source: pingone_populations
 
@@ -5055,9 +5811,41 @@ The unnecessary `id` computed attribute has been removed.
 
 The `region` computed attribute has been renamed to `regions`.
 
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_trusted_email_domain_dkim.example.region[0].name
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_trusted_email_domain_dkim.example.regions[0].name
+}
+```
+
 ### `region.token` computed attribute renamed
 
 The `region.token` computed attribute has been renamed to `regions.tokens`.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_trusted_email_domain_dkim.example.region[0].token[0].key
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_trusted_email_domain_dkim.example.regions[0].tokens[0].key
+}
+```
 
 ## Data Source: pingone_trusted_email_domain_ownership
 
@@ -5068,6 +5856,22 @@ The unnecessary `id` computed attribute has been removed.
 ### `region` computed attribute renamed
 
 The `region` computed attribute has been renamed to `regions`.
+
+Previous configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_trusted_email_domain_ownership.example.region[0].name
+}
+```
+
+New configuration example:
+
+```terraform
+locals {
+  demo_var = data.pingone_trusted_email_domain_ownership.example.regions[0].name
+}
+```
 
 ## Data Source: pingone_user
 

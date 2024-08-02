@@ -150,33 +150,35 @@ func (r *CustomDomainVerifyResource) Create(ctx context.Context, req resource.Cr
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateDomain",
-		func(error model.P1Error) diag.Diagnostics {
+		func(_ *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 			var diags diag.Diagnostics
 
-			// Cannot validate against the authoritative name service
-			if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
-				m, _ := regexp.MatchString("^Error response from authoritative name servers: NXDOMAIN", details[0].GetMessage())
-				if m {
-					diags.AddError(
-						fmt.Sprintf("Cannot verify the domain - %s", details[0].GetMessage()),
-						"Please check the domain authority exists or is reachable.",
-					)
+			if p1Error != nil {
+				// Cannot validate against the authoritative name service
+				if details, ok := p1Error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+					m, _ := regexp.MatchString("^Error response from authoritative name servers: NXDOMAIN", details[0].GetMessage())
+					if m {
+						diags.AddError(
+							fmt.Sprintf("Cannot verify the domain - %s", details[0].GetMessage()),
+							"Please check the domain authority exists or is reachable.",
+						)
 
-					return diags
-				}
+						return diags
+					}
 
-				m, _ = regexp.MatchString("^No CNAME records found", details[0].GetMessage())
-				if m {
-					diags.AddError(
-						fmt.Sprintf("Cannot verify the domain - %s", details[0].GetMessage()),
-						"Please check the domain authority has the correct CNAME value set (hint: if using the \"pingone_custom_domain\" resource, the CNAME value to use is returned in the \"canonical_name\" attribute.)",
-					)
+					m, _ = regexp.MatchString("^No CNAME records found", details[0].GetMessage())
+					if m {
+						diags.AddError(
+							fmt.Sprintf("Cannot verify the domain - %s", details[0].GetMessage()),
+							"Please check the domain authority has the correct CNAME value set (hint: if using the \"pingone_custom_domain\" resource, the CNAME value to use is returned in the \"canonical_name\" attribute.)",
+						)
 
-					return diags
+						return diags
+					}
 				}
 			}
 
-			return nil
+			return diags
 		},
 		sdk.DefaultCreateReadRetryable,
 		&response,
