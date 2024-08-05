@@ -105,7 +105,7 @@ Required:
 
 - `key` (String, Sensitive) A string that Apple uses as an identifier to identify an authentication key.
 - `team_id` (String) A string that Apple uses as an identifier to identify teams.
-- `token_signing_key` (String, Sensitive) A string that Apple uses as the authentication token signing key to securely connect to APNS. This is the contents of a p8 file with a private key format.
+- `token_signing_key` (String, Sensitive) A string that Apple uses as the authentication token signing key to securely connect to APNS. This is the contents of a pkcs8 file with a private key format.
 
 
 <a id="nestedatt--fcm"></a>
