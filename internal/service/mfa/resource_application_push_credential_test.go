@@ -154,17 +154,20 @@ func TestAccApplicationPushCredential_APNS(t *testing.T) {
 
 	name := resourceName
 
+	pkcs8Key := os.Getenv("PINGONE_KEY_PKCS8")
+
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckAPNSPKCS8Key(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             mfa.ApplicationPushCredential_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationPushCredentialConfig_APNS(resourceName, name, fmt.Sprintf("%s1", name)),
+				Config: testAccApplicationPushCredentialConfig_APNS(resourceName, name, pkcs8Key),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -177,7 +180,7 @@ func TestAccApplicationPushCredential_APNS(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationPushCredentialConfig_APNS(resourceName, name, fmt.Sprintf("%s2", name)),
+				Config: testAccApplicationPushCredentialConfig_APNS(resourceName, name, pkcs8Key),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -290,12 +293,14 @@ func TestAccApplicationPushCredential_Change(t *testing.T) {
 	name := resourceName
 
 	firebaseCredentials := os.Getenv("PINGONE_GOOGLE_FIREBASE_CREDENTIALS")
+	pkcs8Key := os.Getenv("PINGONE_KEY_PKCS8")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckGoogleFirebaseCredentials(t)
+			acctest.PreCheckAPNSPKCS8Key(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             mfa.ApplicationPushCredential_CheckDestroy,
@@ -313,7 +318,7 @@ func TestAccApplicationPushCredential_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationPushCredentialConfig_APNS(resourceName, name, name),
+				Config: testAccApplicationPushCredentialConfig_APNS(resourceName, name, pkcs8Key),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -533,9 +538,12 @@ resource "pingone_mfa_application_push_credential" "%[2]s" {
   application_id = pingone_application.%[2]s.id
 
   apns = {
-    key               = "%[4]s"
+    key               = "%[3]s"
     team_id           = "team.id.updated"
-    token_signing_key = "-----BEGIN PRIVATE KEY-----%[4]s-----END PRIVATE KEY-----"
+    token_signing_key = <<EOT
+%[4]s
+EOT
+
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, key)
 }
