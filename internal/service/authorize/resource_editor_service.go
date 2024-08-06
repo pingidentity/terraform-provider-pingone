@@ -18,6 +18,11 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	int32validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int32validator"
+	listvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/listvalidator"
+	objectvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
+	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
+	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -168,6 +173,12 @@ var (
 	_ resource.ResourceWithImportState = &EditorServiceResource{}
 )
 
+const (
+	connectorServiceTypeValue = "CONNECTOR"
+	httpServiceTypeValue      = "HTTP"
+	noneServiceTypeValue      = "NONE"
+)
+
 // New Object
 func NewEditorServiceResource() resource.Resource {
 	return &EditorServiceResource{}
@@ -203,9 +214,28 @@ func (r *EditorServiceResource) Schema(ctx context.Context, req resource.SchemaR
 				},
 			},
 
+			"full_name": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+				Optional:    true,
+			},
+
 			"description": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
 				Optional:    true,
+			},
+
+			"parent": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+				Optional:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+						Required:    true,
+
+						CustomType: pingonetypes.ResourceIDType{},
+					},
+				},
 			},
 
 			"type": schema.StringAttribute{
@@ -213,47 +243,398 @@ func (r *EditorServiceResource) Schema(ctx context.Context, req resource.SchemaR
 				Optional:    true,
 			},
 
-			"enabled": schema.BoolAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-				Optional:    true,
-			},
-
-			"statements": schema.ListNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-				Optional:    true,
-
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{},
-				},
-			},
-
-			"condition": schema.SingleNestedAttribute{
+			"cache_settings": schema.SingleNestedAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
 				Optional:    true,
 
 				Attributes: map[string]schema.Attribute{
-					"type": schema.StringAttribute{
+					"ttl_seconds": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-						Required:    true,
+						Optional:    true,
 					},
 				},
 			},
 
-			"effect_settings": schema.SingleNestedAttribute{
+			"service_type": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
 				Required:    true,
-
-				Attributes: map[string]schema.Attribute{
-					"type": schema.StringAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-						Required:    true,
-					},
-				},
 			},
 
 			"version": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
 				Optional:    true,
+			},
+
+			"processor": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+				Optional:    true,
+
+				Validators: []validator.Object{
+					objectvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(noneServiceTypeValue),
+						path.MatchRoot("service_type"),
+					),
+				},
+
+				Attributes: map[string]schema.Attribute{
+					"name": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+						Required:    true,
+					},
+
+					"type": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+						Required:    true,
+					},
+				},
+			},
+
+			"value_type": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+				Optional:    true,
+
+				Validators: []validator.Object{
+					objectvalidatorinternal.IsRequiredIfMatchesPathValue(
+						types.StringValue(connectorServiceTypeValue),
+						path.MatchRoot("service_type"),
+					),
+					objectvalidatorinternal.IsRequiredIfMatchesPathValue(
+						types.StringValue(httpServiceTypeValue),
+						path.MatchRoot("service_type"),
+					),
+					objectvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(noneServiceTypeValue),
+						path.MatchRoot("service_type"),
+					),
+				},
+
+				Attributes: map[string]schema.Attribute{
+					"type": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+						Required:    true,
+					},
+				},
+			},
+
+			"service_settings": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+				Optional:    true,
+
+				Validators: []validator.Object{
+					objectvalidatorinternal.IsRequiredIfMatchesPathValue(
+						types.StringValue(connectorServiceTypeValue),
+						path.MatchRoot("service_type"),
+					),
+					objectvalidatorinternal.IsRequiredIfMatchesPathValue(
+						types.StringValue(httpServiceTypeValue),
+						path.MatchRoot("service_type"),
+					),
+					objectvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(noneServiceTypeValue),
+						path.MatchRoot("service_type"),
+					),
+				},
+
+				Attributes: map[string]schema.Attribute{
+					"maximum_concurrent_requests": schema.Int32Attribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+						Optional:    true,
+					},
+
+					"maximum_requests_per_second": schema.Float64Attribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+						Optional:    true,
+					},
+
+					"timeout_milliseconds": schema.Int32Attribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+						Optional:    true,
+
+						Validators: []validator.Int32{
+							int32validatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(connectorServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+							int32validatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(noneServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+						},
+					},
+
+					"url": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+						Optional:    true,
+
+						Validators: []validator.String{
+							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+								types.StringValue(httpServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+							stringvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(connectorServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+							stringvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(noneServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+						},
+					},
+
+					"verb": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+						Optional:    true,
+
+						Validators: []validator.String{
+							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+								types.StringValue(httpServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+							stringvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(connectorServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+							stringvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(noneServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+						},
+					},
+
+					"body": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+						Optional:    true,
+
+						Validators: []validator.String{
+							stringvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(connectorServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+							stringvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(noneServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+						},
+					},
+
+					"content_type": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+						Optional:    true,
+
+						Validators: []validator.String{
+							stringvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(connectorServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+							stringvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(noneServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+						},
+					},
+
+					"headers": schema.SetNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+						Optional:    true,
+
+						Validators: []validator.Set{
+							setvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(connectorServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+							setvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(noneServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+						},
+
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"key": schema.StringAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+									Required:    true,
+								},
+
+								"value": schema.SingleNestedAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+									Optional:    true,
+
+									Attributes: map[string]schema.Attribute{
+										"type": schema.StringAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+											Required:    true,
+										},
+									},
+								},
+							},
+						},
+					},
+
+					"authentication": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+						Optional:    true,
+
+						Validators: []validator.Object{
+							objectvalidatorinternal.IsRequiredIfMatchesPathValue(
+								types.StringValue(httpServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+							objectvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(connectorServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+							objectvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(noneServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+						},
+
+						Attributes: map[string]schema.Attribute{
+							"type": schema.StringAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+								Required:    true,
+							},
+						},
+					},
+
+					"tls_settings": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+						Optional:    true,
+
+						Validators: []validator.Object{
+							objectvalidatorinternal.IsRequiredIfMatchesPathValue(
+								types.StringValue(httpServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+							objectvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(connectorServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+							objectvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(noneServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+						},
+
+						Attributes: map[string]schema.Attribute{
+							"tls_validation_type": schema.StringAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+								Required:    true,
+							},
+						},
+					},
+
+					"channel": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+						Optional:    true,
+
+						Validators: []validator.String{
+							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+								types.StringValue(connectorServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+							stringvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(httpServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+							stringvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(noneServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+						},
+					},
+
+					"code": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+						Optional:    true,
+
+						Validators: []validator.String{
+							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+								types.StringValue(connectorServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+							stringvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(httpServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+							stringvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(noneServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+						},
+					},
+
+					"capability": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+						Optional:    true,
+
+						Validators: []validator.String{
+							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+								types.StringValue(connectorServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+							stringvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(httpServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+							stringvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(noneServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+						},
+					},
+
+					"schema_version": schema.Int32Attribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+						Optional:    true,
+
+						Validators: []validator.Int32{
+							int32validatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(httpServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+							int32validatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(noneServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+						},
+					},
+
+					"input_mappings": schema.ListNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+						Optional:    true,
+
+						Validators: []validator.List{
+							listvalidatorinternal.IsRequiredIfMatchesPathValue(
+								types.StringValue(connectorServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+							listvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(httpServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+							listvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(noneServiceTypeValue),
+								path.MatchRoot("service_type"),
+							),
+						},
+
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"property": schema.StringAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+									Required:    true,
+								},
+
+								"type": schema.StringAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+									Required:    true,
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -630,7 +1011,7 @@ func (p *editorServiceCacheSettingsResourceModel) expand() *authorize.AuthorizeE
 func (p *editorServiceResourceModel) expandConnectorService(ctx context.Context, commonData *authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTO) (*authorize.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if p.ServiceType.ValueString() == "CONNECTOR" {
+	if p.ServiceType.ValueString() == connectorServiceTypeValue {
 		return nil, diags
 	}
 
@@ -698,7 +1079,7 @@ func (p *editorServiceResourceModel) expandConnectorService(ctx context.Context,
 func (p *editorServiceResourceModel) expandHttpService(ctx context.Context, commonData *authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTO) (*authorize.AuthorizeEditorDataServicesHttpServiceDefinitionDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if p.ServiceType.ValueString() == "HTTP" {
+	if p.ServiceType.ValueString() == httpServiceTypeValue {
 		return nil, diags
 	}
 
@@ -766,7 +1147,7 @@ func (p *editorServiceResourceModel) expandHttpService(ctx context.Context, comm
 func (p *editorServiceResourceModel) expandNoneService(commonData *authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTO) (*authorize.AuthorizeEditorDataServicesNoneServiceDefinitionDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if p.ServiceType.ValueString() == "NONE" {
+	if p.ServiceType.ValueString() == noneServiceTypeValue {
 		return nil, diags
 	}
 

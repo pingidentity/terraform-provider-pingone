@@ -28,41 +28,124 @@ resource "pingone_authorize_editor_service" "my_awesome_editor_service" {
 
 ### Required
 
-- `effect_settings` (Attributes) (see [below for nested schema](#nestedatt--effect_settings))
 - `environment_id` (String) The ID of the environment to configure the Authorize editor service in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String)
+- `service_type` (String)
 
 ### Optional
 
-- `condition` (Attributes) (see [below for nested schema](#nestedatt--condition))
+- `cache_settings` (Attributes) (see [below for nested schema](#nestedatt--cache_settings))
 - `description` (String)
-- `enabled` (Boolean)
-- `statements` (Attributes List) (see [below for nested schema](#nestedatt--statements))
+- `full_name` (String)
+- `parent` (Attributes) (see [below for nested schema](#nestedatt--parent))
+- `processor` (Attributes) (see [below for nested schema](#nestedatt--processor))
+- `service_settings` (Attributes) (see [below for nested schema](#nestedatt--service_settings))
 - `type` (String)
+- `value_type` (Attributes) (see [below for nested schema](#nestedatt--value_type))
 - `version` (String)
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 
-<a id="nestedatt--effect_settings"></a>
-### Nested Schema for `effect_settings`
+<a id="nestedatt--cache_settings"></a>
+### Nested Schema for `cache_settings`
+
+Optional:
+
+- `ttl_seconds` (Number)
+
+
+<a id="nestedatt--parent"></a>
+### Nested Schema for `parent`
+
+Required:
+
+- `id` (String)
+
+
+<a id="nestedatt--processor"></a>
+### Nested Schema for `processor`
+
+Required:
+
+- `name` (String)
+- `type` (String)
+
+
+<a id="nestedatt--service_settings"></a>
+### Nested Schema for `service_settings`
+
+Optional:
+
+- `authentication` (Attributes) (see [below for nested schema](#nestedatt--service_settings--authentication))
+- `body` (String)
+- `capability` (String)
+- `channel` (String)
+- `code` (String)
+- `content_type` (String)
+- `headers` (Attributes Set) (see [below for nested schema](#nestedatt--service_settings--headers))
+- `input_mappings` (Attributes List) (see [below for nested schema](#nestedatt--service_settings--input_mappings))
+- `maximum_concurrent_requests` (Number)
+- `maximum_requests_per_second` (Number)
+- `schema_version` (Number)
+- `timeout_milliseconds` (Number)
+- `tls_settings` (Attributes) (see [below for nested schema](#nestedatt--service_settings--tls_settings))
+- `url` (String)
+- `verb` (String)
+
+<a id="nestedatt--service_settings--authentication"></a>
+### Nested Schema for `service_settings.authentication`
 
 Required:
 
 - `type` (String)
 
 
-<a id="nestedatt--condition"></a>
-### Nested Schema for `condition`
+<a id="nestedatt--service_settings--headers"></a>
+### Nested Schema for `service_settings.headers`
+
+Required:
+
+- `key` (String)
+
+Optional:
+
+- `value` (Attributes) (see [below for nested schema](#nestedatt--service_settings--headers--value))
+
+<a id="nestedatt--service_settings--headers--value"></a>
+### Nested Schema for `service_settings.headers.value`
 
 Required:
 
 - `type` (String)
 
 
-<a id="nestedatt--statements"></a>
-### Nested Schema for `statements`
+
+<a id="nestedatt--service_settings--input_mappings"></a>
+### Nested Schema for `service_settings.input_mappings`
+
+Required:
+
+- `property` (String)
+- `type` (String)
+
+
+<a id="nestedatt--service_settings--tls_settings"></a>
+### Nested Schema for `service_settings.tls_settings`
+
+Required:
+
+- `tls_validation_type` (String)
+
+
+
+<a id="nestedatt--value_type"></a>
+### Nested Schema for `value_type`
+
+Required:
+
+- `type` (String)
 
 ## Import
 
