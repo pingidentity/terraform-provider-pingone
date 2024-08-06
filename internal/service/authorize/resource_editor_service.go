@@ -2,6 +2,7 @@ package authorize
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
@@ -41,7 +43,7 @@ type editorServiceResourceModel struct {
 
 type editorServiceParentResourceModel editorAttributeReferenceDataResourceModel
 
-type editorServiceCacheSettingResourceModel struct {
+type editorServiceCacheSettingsResourceModel struct {
 	TtlSeconds types.Int32 `tfsdk:"ttl_seconds"`
 }
 
@@ -99,14 +101,63 @@ type editorServiceServiceSettingsInputMappingResourceModel struct {
 }
 
 var (
-	editorServiceStatementTFObjectTypes = map[string]attr.Type{}
+	editorServiceParentTFObjectTypes = map[string]attr.Type{
+		"id": pingonetypes.ResourceIDType{},
+	}
 
-	editorServiceConditionTFObjectTypes = map[string]attr.Type{
+	editorServiceCacheSettingsTFObjectTypes = map[string]attr.Type{
+		"ttl_seconds": types.Int32Type,
+	}
+
+	editorServiceProcessorTFObjectTypes = map[string]attr.Type{
+		"name": types.StringType,
 		"type": types.StringType,
 	}
 
-	editorServiceEffectSettingsTFObjectTypes = map[string]attr.Type{
+	editorServiceValueTypeTFObjectTypes = map[string]attr.Type{
 		"type": types.StringType,
+	}
+
+	editorServiceServiceSettingsTFObjectTypes = map[string]attr.Type{
+		"maximum_concurrent_requests": types.Int32Type,
+		"maximum_requests_per_second": types.Float64Type,
+
+		"timeout_milliseconds": types.Int32Type,
+		"url":                  types.StringType,
+		"verb":                 types.StringType,
+		"body":                 types.StringType,
+		"content_type":         types.StringType,
+		"headers":              types.SetType{ElemType: types.ObjectType{AttrTypes: editorServiceServiceSettingsHeadersTFObjectTypes}},
+		"authentication":       types.ObjectType{AttrTypes: editorServiceServiceSettingsAuthenticationTFObjectTypes},
+		"tls_settings":         types.ObjectType{AttrTypes: editorServiceServiceSettingsTlsSettingsTFObjectTypes},
+
+		"channel":        types.StringType,
+		"code":           types.StringType,
+		"capability":     types.StringType,
+		"schema_version": types.Int32Type,
+		"input_mappings": types.ListType{ElemType: types.ObjectType{AttrTypes: editorServiceServiceSettingsInputMappingsTFObjectTypes}},
+	}
+
+	editorServiceServiceSettingsHeadersTFObjectTypes = map[string]attr.Type{
+		"key":   types.StringType,
+		"value": types.ObjectType{AttrTypes: editorServiceServiceSettingsHeaderValueTFObjectTypes},
+	}
+
+	editorServiceServiceSettingsHeaderValueTFObjectTypes = map[string]attr.Type{
+		"type": types.StringType,
+	}
+
+	editorServiceServiceSettingsAuthenticationTFObjectTypes = map[string]attr.Type{
+		"type": types.StringType,
+	}
+
+	editorServiceServiceSettingsTlsSettingsTFObjectTypes = map[string]attr.Type{
+		"tls_validation_type": types.StringType,
+	}
+
+	editorServiceServiceSettingsInputMappingsTFObjectTypes = map[string]attr.Type{
+		"property": types.StringType,
+		"type":     types.StringType,
 	}
 )
 
@@ -448,13 +499,16 @@ func (r *EditorServiceResource) ImportState(ctx context.Context, req resource.Im
 func (p *editorServiceResourceModel) expandCreate(ctx context.Context) (*authorize.CreateServiceRequest, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
-	connectorService, d := p.expandConnectorService(ctx)
+	commonData, d := p.expandCommon(ctx)
 	diags.Append(d...)
 
-	httpService, d := p.expandHttpService(ctx)
+	connectorService, d := p.expandConnectorService(ctx, commonData)
 	diags.Append(d...)
 
-	noneService, d := p.expandNoneService(ctx)
+	httpService, d := p.expandHttpService(ctx, commonData)
+	diags.Append(d...)
+
+	noneService, d := p.expandNoneService(ctx, commonData)
 	diags.Append(d...)
 
 	if diags.HasError() {
@@ -473,13 +527,16 @@ func (p *editorServiceResourceModel) expandCreate(ctx context.Context) (*authori
 func (p *editorServiceResourceModel) expandUpdate(ctx context.Context) (*authorize.UpdateServiceRequest, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
-	connectorService, d := p.expandConnectorService(ctx)
+	commonData, d := p.expandCommon(ctx)
 	diags.Append(d...)
 
-	httpService, d := p.expandHttpService(ctx)
+	connectorService, d := p.expandConnectorService(ctx, commonData)
 	diags.Append(d...)
 
-	noneService, d := p.expandNoneService(ctx)
+	httpService, d := p.expandHttpService(ctx, commonData)
+	diags.Append(d...)
+
+	noneService, d := p.expandNoneService(ctx, commonData)
 	diags.Append(d...)
 
 	if diags.HasError() {
@@ -495,6 +552,436 @@ func (p *editorServiceResourceModel) expandUpdate(ctx context.Context) (*authori
 	return &data, diags
 }
 
+func (p *editorServiceResourceModel) expandCommon(ctx context.Context) (*authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTO, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := authorize.NewAuthorizeEditorDataDefinitionsServiceDefinitionDTO(
+		p.Name.ValueString(),
+		p.ServiceType.ValueString(),
+	)
+
+	if !p.FullName.IsNull() && !p.FullName.IsUnknown() {
+		data.SetFullName(p.FullName.ValueString())
+	}
+
+	if !p.Description.IsNull() && !p.Description.IsUnknown() {
+		data.SetDescription(p.Description.ValueString())
+	}
+
+	if !p.Version.IsNull() && !p.Version.IsUnknown() {
+		data.SetVersion(p.Version.ValueString())
+	}
+
+	if !p.Parent.IsNull() && !p.Parent.IsUnknown() {
+		var plan *editorServiceParentResourceModel
+		diags.Append(p.Parent.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		parent := plan.expand()
+
+		data.SetParent(*parent)
+	}
+
+	if !p.Type.IsNull() && !p.Type.IsUnknown() {
+		data.SetType(p.Type.ValueString())
+	}
+
+	if !p.CacheSettings.IsNull() && !p.CacheSettings.IsUnknown() {
+		var plan *editorServiceCacheSettingsResourceModel
+		diags.Append(p.CacheSettings.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		cacheSettings := plan.expand()
+
+		data.SetCacheSettings(*cacheSettings)
+	}
+
+	return data, diags
+}
+
+func (p *editorServiceParentResourceModel) expand() *authorize.AuthorizeEditorDataReferenceObjectDTO {
+
+	data := authorize.NewAuthorizeEditorDataReferenceObjectDTO(p.Id.ValueString())
+
+	return data
+}
+
+func (p *editorServiceCacheSettingsResourceModel) expand() *authorize.AuthorizeEditorDataCacheSettingsDTO {
+
+	data := authorize.NewAuthorizeEditorDataCacheSettingsDTO()
+
+	if !p.TtlSeconds.IsNull() && !p.TtlSeconds.IsUnknown() {
+		data.SetTtlSeconds(p.TtlSeconds.ValueInt32())
+	}
+
+	return data
+}
+
+func (p *editorServiceResourceModel) expandConnectorService(ctx context.Context, commonData *authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTO) (*authorize.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if p.ServiceType.ValueString() == "CONNECTOR" {
+		return nil, diags
+	}
+
+	// Use json.marshall and unmarshal to cast commonData to a AuthorizeEditorDataServicesConnectorServiceDefinitionDTO type
+	bytes, err := json.Marshal(commonData)
+	if err != nil {
+		diags.AddError("Failed to marshal data", err.Error())
+		return nil, diags
+	}
+
+	var data *authorize.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO
+	err = json.Unmarshal(bytes, &data)
+	if err != nil {
+		diags.AddError("Failed to unmarshal data", err.Error())
+		return nil, diags
+	}
+
+	var valueTypePlan *editorServiceValueTypeResourceModel
+	diags.Append(p.ValueType.As(ctx, &valueTypePlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	valueType := valueTypePlan.expand(ctx)
+
+	var serviceSettingsPlan *editorServiceServiceSettingsResourceModel
+	diags.Append(p.ServiceSettings.As(ctx, &serviceSettingsPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	serviceSettings, d := serviceSettingsPlan.expandConnector(ctx)
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	data.SetValueType(*valueType)
+	data.SetServiceSettings(*serviceSettings)
+
+	if !p.Processor.IsNull() && !p.Processor.IsUnknown() {
+		var plan *editorServiceProcessorResourceModel
+		diags.Append(p.Processor.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		processor := plan.expand()
+
+		data.SetProcessor(*processor)
+	}
+
+	return data, diags
+}
+
+func (p *editorServiceResourceModel) expandHttpService(ctx context.Context, commonData *authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTO) (*authorize.AuthorizeEditorDataServicesHttpServiceDefinitionDTO, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if p.ServiceType.ValueString() == "HTTP" {
+		return nil, diags
+	}
+
+	// Use json.marshall and unmarshal to cast commonData to a AuthorizeEditorDataServicesHttpServiceDefinitionDTO type
+	bytes, err := json.Marshal(commonData)
+	if err != nil {
+		diags.AddError("Failed to marshal data", err.Error())
+		return nil, diags
+	}
+
+	var data *authorize.AuthorizeEditorDataServicesHttpServiceDefinitionDTO
+	err = json.Unmarshal(bytes, &data)
+	if err != nil {
+		diags.AddError("Failed to unmarshal data", err.Error())
+		return nil, diags
+	}
+
+	var valueTypePlan *editorServiceValueTypeResourceModel
+	diags.Append(p.ValueType.As(ctx, &valueTypePlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	valueType := valueTypePlan.expand(ctx)
+
+	var serviceSettingsPlan *editorServiceServiceSettingsResourceModel
+	diags.Append(p.ServiceSettings.As(ctx, &serviceSettingsPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	serviceSettings, d := serviceSettingsPlan.expandHttp(ctx)
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	data.SetValueType(*valueType)
+	data.SetServiceSettings(*serviceSettings)
+
+	if !p.Processor.IsNull() && !p.Processor.IsUnknown() {
+		var plan *editorServiceProcessorResourceModel
+		diags.Append(p.Processor.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		processor := plan.expand()
+
+		data.SetProcessor(*processor)
+	}
+
+	return data, diags
+}
+
+func (p *editorServiceResourceModel) expandNoneService(ctx context.Context, commonData *authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTO) (*authorize.AuthorizeEditorDataServicesNoneServiceDefinitionDTO, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if p.ServiceType.ValueString() == "NONE" {
+		return nil, diags
+	}
+
+	// Use json.marshall and unmarshal to cast commonData to a AuthorizeEditorDataServicesNoneServiceDefinitionDTO type
+	bytes, err := json.Marshal(commonData)
+	if err != nil {
+		diags.AddError("Failed to marshal data", err.Error())
+		return nil, diags
+	}
+
+	var data *authorize.AuthorizeEditorDataServicesNoneServiceDefinitionDTO
+	err = json.Unmarshal(bytes, &data)
+	if err != nil {
+		diags.AddError("Failed to unmarshal data", err.Error())
+		return nil, diags
+	}
+
+	return data, diags
+}
+
+func (p *editorServiceValueTypeResourceModel) expand(ctx context.Context) *authorize.AuthorizeEditorDataValueTypeDTO {
+
+	data := authorize.NewAuthorizeEditorDataValueTypeDTO(
+		p.Type.ValueString(),
+	)
+
+	return data
+}
+
+func (p *editorServiceServiceSettingsResourceModel) expandConnector(ctx context.Context) (*authorize.AuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTO, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	inputMappings := make([]authorize.AuthorizeEditorDataInputMappingDTO, 0)
+
+	var inputMappingsPlan []editorServiceServiceSettingsInputMappingResourceModel
+	diags.Append(p.InputMappings.ElementsAs(ctx, &inputMappingsPlan, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	for _, inputMappingPlan := range inputMappingsPlan {
+		inputMappings = append(inputMappings, *inputMappingPlan.expand())
+	}
+
+	data := authorize.NewAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTO(
+		p.Channel.ValueString(),
+		p.Code.ValueString(),
+		p.Capability.ValueString(),
+		inputMappings,
+	)
+
+	if !p.MaximumConcurrentRequests.IsNull() && !p.MaximumConcurrentRequests.IsUnknown() {
+		data.SetMaximumConcurrentRequests(p.MaximumConcurrentRequests.ValueInt32())
+	}
+
+	if !p.MaximumRequestsPerSecond.IsNull() && !p.MaximumRequestsPerSecond.IsUnknown() {
+		data.SetMaximumRequestsPerSecond(p.MaximumRequestsPerSecond.ValueFloat64())
+	}
+
+	if !p.SchemaVersion.IsNull() && !p.SchemaVersion.IsUnknown() {
+		data.SetSchemaVersion(p.SchemaVersion.ValueInt32())
+	}
+
+	return data, diags
+}
+
+func (p *editorServiceServiceSettingsInputMappingResourceModel) expand() *authorize.AuthorizeEditorDataInputMappingDTO {
+
+	data := authorize.NewAuthorizeEditorDataInputMappingDTO(
+		p.Property.ValueString(),
+		p.Type.ValueString(),
+	)
+
+	return data
+}
+
+func (p *editorServiceServiceSettingsResourceModel) expandHttp(ctx context.Context) (*authorize.AuthorizeEditorDataServiceSettingsHttpServiceSettingsDTO, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var authenticationPlan *editorServiceServiceSettingsAuthenticationResourceModel
+	diags.Append(p.Authentication.As(ctx, &authenticationPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	authentication := authenticationPlan.expand()
+
+	var tlsSettingsPlan *editorServiceServiceSettingsTlsSettingsResourceModel
+	diags.Append(p.TlsSettings.As(ctx, &tlsSettingsPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	tlsSettings := tlsSettingsPlan.expand()
+
+	data := authorize.NewAuthorizeEditorDataServiceSettingsHttpServiceSettingsDTO(
+		p.Url.ValueString(),
+		p.Verb.ValueString(),
+		*authentication,
+		*tlsSettings,
+	)
+
+	if !p.MaximumConcurrentRequests.IsNull() && !p.MaximumConcurrentRequests.IsUnknown() {
+		data.SetMaximumConcurrentRequests(p.MaximumConcurrentRequests.ValueInt32())
+	}
+
+	if !p.MaximumRequestsPerSecond.IsNull() && !p.MaximumRequestsPerSecond.IsUnknown() {
+		data.SetMaximumRequestsPerSecond(p.MaximumRequestsPerSecond.ValueFloat64())
+	}
+
+	if !p.TimeoutMilliseconds.IsNull() && !p.TimeoutMilliseconds.IsUnknown() {
+		data.SetTimeoutMilliseconds(p.TimeoutMilliseconds.ValueInt32())
+	}
+
+	if !p.Body.IsNull() && !p.Body.IsUnknown() {
+		data.SetBody(p.Body.ValueString())
+	}
+
+	if !p.ContentType.IsNull() && !p.ContentType.IsUnknown() {
+		data.SetContentType(p.ContentType.ValueString())
+	}
+
+	if !p.Headers.IsNull() && !p.Headers.IsUnknown() {
+		headers := make([]authorize.AuthorizeEditorDataHttpRequestHeaderDTO, 0)
+
+		var plan []editorServiceServiceSettingsHeaderResourceModel
+		diags.Append(p.Headers.ElementsAs(ctx, &plan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		for _, headerPlan := range plan {
+			header, d := headerPlan.expand(ctx)
+			diags.Append(d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			headers = append(headers, *header)
+		}
+
+		data.SetHeaders(headers)
+	}
+
+	return data, diags
+}
+
+func (p *editorServiceServiceSettingsHeaderResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataHttpRequestHeaderDTO, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := authorize.NewAuthorizeEditorDataHttpRequestHeaderDTO(
+		p.Key.ValueString(),
+	)
+
+	if !p.Value.IsNull() && !p.Value.IsUnknown() {
+		var plan *editorServiceServiceSettingsHeaderValueResourceModel
+		diags.Append(p.Value.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		value := plan.expand()
+
+		data.SetValue(*value)
+	}
+
+	return data, diags
+}
+
+func (p *editorServiceServiceSettingsHeaderValueResourceModel) expand() *authorize.AuthorizeEditorDataInputDTO {
+
+	data := authorize.NewAuthorizeEditorDataInputDTO(
+		p.Type.ValueString(),
+	)
+
+	return data
+}
+
+func (p *editorServiceServiceSettingsAuthenticationResourceModel) expand() *authorize.AuthorizeEditorDataAuthenticationDTO {
+
+	data := authorize.NewAuthorizeEditorDataAuthenticationDTO(
+		p.Type.ValueString(),
+	)
+
+	return data
+}
+
+func (p *editorServiceServiceSettingsTlsSettingsResourceModel) expand() *authorize.AuthorizeEditorDataTlsSettingsDTO {
+
+	data := authorize.NewAuthorizeEditorDataTlsSettingsDTO(
+		p.TlsValidationType.ValueString(),
+	)
+
+	return data
+}
+
+func (p *editorServiceProcessorResourceModel) expand() *authorize.AuthorizeEditorDataProcessorDTO {
+
+	data := authorize.NewAuthorizeEditorDataProcessorDTO(
+		p.Name.ValueString(),
+		p.Type.ValueString(),
+	)
+
+	return data
+}
+
 func (p *editorServiceResourceModel) toState(apiObject *authorize.CreateService201Response) diag.Diagnostics {
 	var diags, d diag.Diagnostics
 
@@ -506,20 +993,332 @@ func (p *editorServiceResourceModel) toState(apiObject *authorize.CreateService2
 		return diags
 	}
 
-	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
-	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
-	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
-	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
+	apiObjectCommon := authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTO{}
 
-	p.Statements, d = editorServiceStatementsOkToTF(apiObject.GetStatementsOk())
+	if apiObject.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO != nil {
+		apiObjectCommon = authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTO{
+			Id:            apiObject.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO.Id,
+			Version:       apiObject.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO.Version,
+			Name:          apiObject.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO.Name,
+			FullName:      apiObject.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO.FullName,
+			Description:   apiObject.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO.Description,
+			Parent:        apiObject.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO.Parent,
+			Type:          apiObject.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO.Type,
+			CacheSettings: apiObject.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO.CacheSettings,
+			ServiceType:   apiObject.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO.ServiceType,
+		}
+	}
+
+	if apiObject.AuthorizeEditorDataServicesHttpServiceDefinitionDTO != nil {
+		apiObjectCommon = authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTO{
+			Id:            apiObject.AuthorizeEditorDataServicesHttpServiceDefinitionDTO.Id,
+			Version:       apiObject.AuthorizeEditorDataServicesHttpServiceDefinitionDTO.Version,
+			Name:          apiObject.AuthorizeEditorDataServicesHttpServiceDefinitionDTO.Name,
+			FullName:      apiObject.AuthorizeEditorDataServicesHttpServiceDefinitionDTO.FullName,
+			Description:   apiObject.AuthorizeEditorDataServicesHttpServiceDefinitionDTO.Description,
+			Parent:        apiObject.AuthorizeEditorDataServicesHttpServiceDefinitionDTO.Parent,
+			Type:          apiObject.AuthorizeEditorDataServicesHttpServiceDefinitionDTO.Type,
+			CacheSettings: apiObject.AuthorizeEditorDataServicesHttpServiceDefinitionDTO.CacheSettings,
+			ServiceType:   apiObject.AuthorizeEditorDataServicesHttpServiceDefinitionDTO.ServiceType,
+		}
+	}
+
+	if apiObject.AuthorizeEditorDataServicesNoneServiceDefinitionDTO != nil {
+		apiObjectCommon = authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTO{
+			Id:            apiObject.AuthorizeEditorDataServicesNoneServiceDefinitionDTO.Id,
+			Version:       apiObject.AuthorizeEditorDataServicesNoneServiceDefinitionDTO.Version,
+			Name:          apiObject.AuthorizeEditorDataServicesNoneServiceDefinitionDTO.Name,
+			FullName:      apiObject.AuthorizeEditorDataServicesNoneServiceDefinitionDTO.FullName,
+			Description:   apiObject.AuthorizeEditorDataServicesNoneServiceDefinitionDTO.Description,
+			Parent:        apiObject.AuthorizeEditorDataServicesNoneServiceDefinitionDTO.Parent,
+			Type:          apiObject.AuthorizeEditorDataServicesNoneServiceDefinitionDTO.Type,
+			CacheSettings: apiObject.AuthorizeEditorDataServicesNoneServiceDefinitionDTO.CacheSettings,
+			ServiceType:   apiObject.AuthorizeEditorDataServicesNoneServiceDefinitionDTO.ServiceType,
+		}
+	}
+
+	p.Id = framework.PingOneResourceIDOkToTF(apiObjectCommon.GetIdOk())
+	//p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObjectCommon.GetEnvironment().Id)
+	p.Name = framework.StringOkToTF(apiObjectCommon.GetNameOk())
+	p.FullName = framework.StringOkToTF(apiObjectCommon.GetFullNameOk())
+	p.Description = framework.StringOkToTF(apiObjectCommon.GetDescriptionOk())
+
+	p.Parent, d = editorServiceParentOkToTF(apiObjectCommon.GetParentOk())
 	diags.Append(d...)
 
-	p.Condition, d = editorServiceConditionOkToTF(apiObject.GetConditionOk())
+	p.Type = framework.StringOkToTF(apiObjectCommon.GetTypeOk())
+
+	p.CacheSettings, d = editorServiceCacheSettingsOkToTF(apiObjectCommon.GetCacheSettingsOk())
 	diags.Append(d...)
 
-	p.EffectSettings, d = editorServiceEffectSettingsOkToTF(apiObject.GetEffectSettingsOk())
-	diags.Append(d...)
+	p.ServiceType = framework.StringOkToTF(apiObjectCommon.GetServiceTypeOk())
+	p.Version = framework.StringOkToTF(apiObjectCommon.GetVersionOk())
+
+	p.Processor = types.ObjectNull(editorServiceProcessorTFObjectTypes)
+	p.ValueType = types.ObjectNull(editorServiceValueTypeTFObjectTypes)
+	p.ServiceSettings = types.ObjectNull(editorServiceServiceSettingsTFObjectTypes)
+
+	if v := apiObject.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO; v != nil {
+		p.Processor, d = editorServiceProcessorOkToTF(v.GetProcessorOk())
+		diags.Append(d...)
+
+		p.ValueType, d = editorServiceValueTypeOkToTF(v.GetValueTypeOk())
+		diags.Append(d...)
+
+		p.ServiceSettings, d = editorServiceServiceSettingsConnectorOkToTF(v.GetServiceSettingsOk())
+		diags.Append(d...)
+	}
+
+	if v := apiObject.AuthorizeEditorDataServicesHttpServiceDefinitionDTO; v != nil {
+		p.Processor, d = editorServiceProcessorOkToTF(v.GetProcessorOk())
+		diags.Append(d...)
+
+		p.ValueType, d = editorServiceValueTypeOkToTF(v.GetValueTypeOk())
+		diags.Append(d...)
+
+		p.ServiceSettings, d = editorServiceServiceSettingsHttpOkToTF(v.GetServiceSettingsOk())
+		diags.Append(d...)
+	}
+
+	// No implementation for "None" service
+	// if apiObject.AuthorizeEditorDataServicesNoneServiceDefinitionDTO != nil {}
 
 	return diags
+}
+
+func editorServiceParentOkToTF(apiObject *authorize.AuthorizeEditorDataReferenceObjectDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(editorServiceParentTFObjectTypes), diags
+	}
+
+	objValue, d := types.ObjectValue(editorServiceParentTFObjectTypes, map[string]attr.Value{
+		"id": framework.PingOneResourceIDOkToTF(apiObject.GetIdOk()),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func editorServiceCacheSettingsOkToTF(apiObject *authorize.AuthorizeEditorDataCacheSettingsDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(editorServiceCacheSettingsTFObjectTypes), diags
+	}
+
+	objValue, d := types.ObjectValue(editorServiceCacheSettingsTFObjectTypes, map[string]attr.Value{
+		"ttl_seconds": framework.Int32OkToTF(apiObject.GetTtlSecondsOk()),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func editorServiceProcessorOkToTF(apiObject *authorize.AuthorizeEditorDataProcessorDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(editorServiceProcessorTFObjectTypes), diags
+	}
+
+	objValue, d := types.ObjectValue(editorServiceProcessorTFObjectTypes, map[string]attr.Value{
+		"name": framework.StringOkToTF(apiObject.GetNameOk()),
+		"type": framework.StringOkToTF(apiObject.GetTypeOk()),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func editorServiceValueTypeOkToTF(apiObject *authorize.AuthorizeEditorDataValueTypeDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(editorServiceValueTypeTFObjectTypes), diags
+	}
+
+	objValue, d := types.ObjectValue(editorServiceValueTypeTFObjectTypes, map[string]attr.Value{
+		"type": framework.StringOkToTF(apiObject.GetTypeOk()),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func editorServiceServiceSettingsConnectorOkToTF(apiObject *authorize.AuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(editorServiceServiceSettingsTFObjectTypes), diags
+	}
+
+	inputMappings, d := editorServiceServiceSettingsConnectorInputMappingsOkToTF(apiObject.GetInputMappingsOk())
+	diags.Append(d...)
+
+	objValue, d := types.ObjectValue(editorServiceServiceSettingsTFObjectTypes, map[string]attr.Value{
+		"maximum_concurrent_requests": framework.Int32OkToTF(apiObject.GetMaximumConcurrentRequestsOk()),
+		"maximum_requests_per_second": framework.Float64OkToTF(apiObject.GetMaximumRequestsPerSecondOk()),
+
+		"timeout_milliseconds": types.Int32Null(),
+		"url":                  types.StringNull(),
+		"verb":                 types.StringNull(),
+		"body":                 types.StringNull(),
+		"content_type":         types.StringNull(),
+		"headers":              types.ObjectNull(editorServiceServiceSettingsHeadersTFObjectTypes),
+		"authentication":       types.ObjectNull(editorServiceServiceSettingsAuthenticationTFObjectTypes),
+		"tls_settings":         types.ObjectNull(editorServiceServiceSettingsTlsSettingsTFObjectTypes),
+
+		"channel":        framework.StringOkToTF(apiObject.GetChannelOk()),
+		"code":           framework.StringOkToTF(apiObject.GetCodeOk()),
+		"capability":     framework.StringOkToTF(apiObject.GetCapabilityOk()),
+		"schema_version": framework.Int32OkToTF(apiObject.GetSchemaVersionOk()),
+		"input_mappings": inputMappings,
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func editorServiceServiceSettingsConnectorInputMappingsOkToTF(apiObject []authorize.AuthorizeEditorDataInputMappingDTO, ok bool) (basetypes.ListValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	tfObjType := types.ObjectType{AttrTypes: editorServiceServiceSettingsInputMappingsTFObjectTypes}
+
+	if !ok || apiObject == nil {
+		return types.ListNull(tfObjType), diags
+	}
+
+	flattenedList := []attr.Value{}
+	for _, v := range apiObject {
+
+		flattenedObj, d := types.ObjectValue(editorServiceServiceSettingsInputMappingsTFObjectTypes, map[string]attr.Value{
+			"property": framework.StringOkToTF(v.GetPropertyOk()),
+			"type":     framework.StringOkToTF(v.GetTypeOk()),
+		})
+		diags.Append(d...)
+
+		flattenedList = append(flattenedList, flattenedObj)
+	}
+
+	returnVar, d := types.ListValue(tfObjType, flattenedList)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func editorServiceServiceSettingsHttpOkToTF(apiObject *authorize.AuthorizeEditorDataServiceSettingsHttpServiceSettingsDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(editorServiceServiceSettingsTFObjectTypes), diags
+	}
+
+	headers, d := editorServiceServiceSettingsHttpHeadersOkToTF(apiObject.GetHeadersOk())
+	diags.Append(d...)
+
+	authentication, d := editorServiceServiceSettingsHttpAuthenticationOkToTF(apiObject.GetAuthenticationOk())
+	diags.Append(d...)
+
+	tlsSettings, d := editorServiceServiceSettingsHttpTlsSettingsOkToTF(apiObject.GetTlsSettingsOk())
+	diags.Append(d...)
+
+	objValue, d := types.ObjectValue(editorServiceServiceSettingsTFObjectTypes, map[string]attr.Value{
+		"maximum_concurrent_requests": framework.Int32OkToTF(apiObject.GetMaximumConcurrentRequestsOk()),
+		"maximum_requests_per_second": framework.Float64OkToTF(apiObject.GetMaximumRequestsPerSecondOk()),
+
+		"timeout_milliseconds": framework.Int32OkToTF(apiObject.GetTimeoutMillisecondsOk()),
+		"url":                  framework.StringOkToTF(apiObject.GetUrlOk()),
+		"verb":                 framework.StringOkToTF(apiObject.GetVerbOk()),
+		"body":                 framework.StringOkToTF(apiObject.GetBodyOk()),
+		"content_type":         framework.StringOkToTF(apiObject.GetContentTypeOk()),
+		"headers":              headers,
+		"authentication":       authentication,
+		"tls_settings":         tlsSettings,
+
+		"channel":        types.StringNull(),
+		"code":           types.StringNull(),
+		"capability":     types.StringNull(),
+		"schema_version": types.Int32Null(),
+		"input_mappings": types.ListNull(types.ObjectType{AttrTypes: editorServiceServiceSettingsInputMappingsTFObjectTypes}),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func editorServiceServiceSettingsHttpHeadersOkToTF(apiObject []authorize.AuthorizeEditorDataHttpRequestHeaderDTO, ok bool) (basetypes.SetValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	tfObjType := types.ObjectType{AttrTypes: editorServiceServiceSettingsHeadersTFObjectTypes}
+
+	if !ok || apiObject == nil {
+		return types.SetNull(tfObjType), diags
+	}
+
+	flattenedList := []attr.Value{}
+	for _, v := range apiObject {
+
+		value, d := editorServiceServiceSettingsHttpHeadersValueOkToTF(v.GetValueOk())
+		diags.Append(d...)
+
+		flattenedObj, d := types.ObjectValue(editorServiceServiceSettingsHeadersTFObjectTypes, map[string]attr.Value{
+			"key":   framework.StringOkToTF(v.GetKeyOk()),
+			"value": value,
+		})
+		diags.Append(d...)
+
+		flattenedList = append(flattenedList, flattenedObj)
+	}
+
+	returnVar, d := types.SetValue(tfObjType, flattenedList)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func editorServiceServiceSettingsHttpHeadersValueOkToTF(apiObject *authorize.AuthorizeEditorDataInputDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(editorServiceServiceSettingsHeaderValueTFObjectTypes), diags
+	}
+
+	objValue, d := types.ObjectValue(editorServiceServiceSettingsHeaderValueTFObjectTypes, map[string]attr.Value{
+		"type": framework.StringOkToTF(apiObject.GetTypeOk()),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func editorServiceServiceSettingsHttpAuthenticationOkToTF(apiObject *authorize.AuthorizeEditorDataAuthenticationDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(editorServiceServiceSettingsAuthenticationTFObjectTypes), diags
+	}
+
+	objValue, d := types.ObjectValue(editorServiceServiceSettingsAuthenticationTFObjectTypes, map[string]attr.Value{
+		"type": framework.StringOkToTF(apiObject.GetTypeOk()),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func editorServiceServiceSettingsHttpTlsSettingsOkToTF(apiObject *authorize.AuthorizeEditorDataTlsSettingsDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(editorServiceServiceSettingsTlsSettingsTFObjectTypes), diags
+	}
+
+	objValue, d := types.ObjectValue(editorServiceServiceSettingsTlsSettingsTFObjectTypes, map[string]attr.Value{
+		"tls_validation_type": framework.StringOkToTF(apiObject.GetTlsValidationTypeOk()),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
 }

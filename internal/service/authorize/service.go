@@ -22,6 +22,7 @@ func Resources() []func() resource.Resource {
 		NewEditorConditionResource,
 		NewEditorProcessorResource,
 		NewEditorRuleResource,
+		NewEditorServiceResource,
 		NewEditorStatementResource,
 	}
 }
