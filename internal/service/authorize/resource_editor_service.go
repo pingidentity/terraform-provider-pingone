@@ -508,7 +508,7 @@ func (p *editorServiceResourceModel) expandCreate(ctx context.Context) (*authori
 	httpService, d := p.expandHttpService(ctx, commonData)
 	diags.Append(d...)
 
-	noneService, d := p.expandNoneService(ctx, commonData)
+	noneService, d := p.expandNoneService(commonData)
 	diags.Append(d...)
 
 	if diags.HasError() {
@@ -536,7 +536,7 @@ func (p *editorServiceResourceModel) expandUpdate(ctx context.Context) (*authori
 	httpService, d := p.expandHttpService(ctx, commonData)
 	diags.Append(d...)
 
-	noneService, d := p.expandNoneService(ctx, commonData)
+	noneService, d := p.expandNoneService(commonData)
 	diags.Append(d...)
 
 	if diags.HasError() {
@@ -657,7 +657,7 @@ func (p *editorServiceResourceModel) expandConnectorService(ctx context.Context,
 		return nil, diags
 	}
 
-	valueType := valueTypePlan.expand(ctx)
+	valueType := valueTypePlan.expand()
 
 	var serviceSettingsPlan *editorServiceServiceSettingsResourceModel
 	diags.Append(p.ServiceSettings.As(ctx, &serviceSettingsPlan, basetypes.ObjectAsOptions{
@@ -725,7 +725,7 @@ func (p *editorServiceResourceModel) expandHttpService(ctx context.Context, comm
 		return nil, diags
 	}
 
-	valueType := valueTypePlan.expand(ctx)
+	valueType := valueTypePlan.expand()
 
 	var serviceSettingsPlan *editorServiceServiceSettingsResourceModel
 	diags.Append(p.ServiceSettings.As(ctx, &serviceSettingsPlan, basetypes.ObjectAsOptions{
@@ -763,7 +763,7 @@ func (p *editorServiceResourceModel) expandHttpService(ctx context.Context, comm
 	return data, diags
 }
 
-func (p *editorServiceResourceModel) expandNoneService(ctx context.Context, commonData *authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTO) (*authorize.AuthorizeEditorDataServicesNoneServiceDefinitionDTO, diag.Diagnostics) {
+func (p *editorServiceResourceModel) expandNoneService(commonData *authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTO) (*authorize.AuthorizeEditorDataServicesNoneServiceDefinitionDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if p.ServiceType.ValueString() == "NONE" {
@@ -787,7 +787,7 @@ func (p *editorServiceResourceModel) expandNoneService(ctx context.Context, comm
 	return data, diags
 }
 
-func (p *editorServiceValueTypeResourceModel) expand(ctx context.Context) *authorize.AuthorizeEditorDataValueTypeDTO {
+func (p *editorServiceValueTypeResourceModel) expand() *authorize.AuthorizeEditorDataValueTypeDTO {
 
 	data := authorize.NewAuthorizeEditorDataValueTypeDTO(
 		p.Type.ValueString(),
