@@ -175,7 +175,7 @@ func (r *ApplicationPushCredentialResource) Schema(ctx context.Context, req reso
 					},
 
 					"token_signing_key": schema.StringAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that Apple uses as the authentication token signing key to securely connect to APNS. This is the contents of a p8 file with a private key format.").Description,
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that Apple uses as the authentication token signing key to securely connect to APNS. This is the contents of a pkcs8 file with a private key format.").Description,
 						Required:    true,
 						Sensitive:   true,
 
