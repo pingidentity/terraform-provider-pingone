@@ -473,7 +473,7 @@ func (p *notificationSettingsEmailResourceModelV1) toState(apiObject *management
 	p.Id = p.EnvironmentId
 
 	p.Host = framework.StringOkToTF(apiObject.GetHostOk())
-	p.Port = framework.Int32OkToTF(apiObject.GetPortOk())
+	p.Port = framework.Int32OkToInt64TF(apiObject.GetPortOk())
 	p.Protocol = framework.StringOkToTF(apiObject.GetProtocolOk())
 	p.Username = framework.StringOkToTF(apiObject.GetUsernameOk())
 

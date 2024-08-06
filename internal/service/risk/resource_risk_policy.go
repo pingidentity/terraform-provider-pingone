@@ -1682,8 +1682,8 @@ func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, 
 				// Policy thresholds medium and high
 				if between, ok := condition.GetBetweenOk(); ok {
 					betweenObj := map[string]attr.Value{
-						"min_score": framework.Int32OkToTF(between.GetMinScoreOk()),
-						"max_score": framework.Int32OkToTF(between.GetMaxScoreOk()),
+						"min_score": framework.Int32OkToInt64TF(between.GetMinScoreOk()),
+						"max_score": framework.Int32OkToInt64TF(between.GetMaxScoreOk()),
 					}
 
 					thresholdObj, d := types.ObjectValue(policyThresholdsTFObjectTypes, betweenObj)
@@ -1716,7 +1716,7 @@ func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, 
 						predictor := map[string]attr.Value{
 							"predictor_reference_value": framework.StringOkToTF(score.GetValueOk()),
 							"compact_name":              riskPolicyScoresCompactNameFromReferenceOk(score.GetValueOk()),
-							"score":                     framework.Int32OkToTF(score.GetScoreOk()),
+							"score":                     framework.Int32OkToInt64TF(score.GetScoreOk()),
 						}
 
 						flattenedObj, d := types.ObjectValue(policyScoresPredictorTFObjectTypes, predictor)
@@ -1744,7 +1744,7 @@ func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, 
 						predictor := map[string]attr.Value{
 							"predictor_reference_value": framework.StringOkToTF(weight.GetValueOk()),
 							"compact_name":              riskPolicyWeightsCompactNameFromReferenceOk(weight.GetValueOk()),
-							"weight":                    framework.Int32OkToTF(weight.GetWeightOk()),
+							"weight":                    framework.Int32OkToInt64TF(weight.GetWeightOk()),
 						}
 
 						flattenedObj, d := types.ObjectValue(policyWeightsPredictorTFObjectTypes, predictor)
@@ -1796,7 +1796,7 @@ func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, 
 
 				overrideMap := map[string]attr.Value{
 					"name":      framework.StringOkToTF(policy.GetNameOk()),
-					"priority":  framework.Int32OkToTF(policy.GetPriorityOk()),
+					"priority":  framework.Int32OkToInt64TF(policy.GetPriorityOk()),
 					"result":    resultObj,
 					"condition": conditionObj,
 				}

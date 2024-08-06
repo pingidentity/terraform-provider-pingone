@@ -1003,7 +1003,7 @@ func (p *verifyPolicyDataSourceModel) toStateTransaction(apiObject *verify.Trans
 		var d diag.Diagnostics
 
 		o := map[string]attr.Value{
-			"duration":  framework.Int32OkToTF(v.GetDurationOk()),
+			"duration":  framework.Int32OkToInt64TF(v.GetDurationOk()),
 			"time_unit": framework.EnumOkToTF(v.GetTimeUnitOk()),
 		}
 
@@ -1020,7 +1020,7 @@ func (p *verifyPolicyDataSourceModel) toStateTransaction(apiObject *verify.Trans
 		transactionDataCollectionTimeout := types.ObjectNull(genericTimeoutDataSourceServiceTFObjectTypes)
 		if t, ok := v.GetTimeoutOk(); ok {
 			o := map[string]attr.Value{
-				"duration":  framework.Int32OkToTF(t.GetDurationOk()),
+				"duration":  framework.Int32OkToInt64TF(t.GetDurationOk()),
 				"time_unit": framework.EnumOkToTF(t.GetTimeUnitOk()),
 			}
 
@@ -1065,7 +1065,7 @@ func (p *verifyPolicyDataSourceModel) toStateDevice(apiObject *verify.OTPDeviceC
 		attempts := types.ObjectNull(otpAttemptsDataSourceServiceTFObjectTypes)
 		if t, ok := v.GetAttemptsOk(); ok {
 			o := map[string]attr.Value{
-				"count": framework.Int32OkToTF(t.GetCountOk()),
+				"count": framework.Int32OkToInt64TF(t.GetCountOk()),
 			}
 
 			objValue, d := types.ObjectValue(otpAttemptsDataSourceServiceTFObjectTypes, o)
@@ -1080,7 +1080,7 @@ func (p *verifyPolicyDataSourceModel) toStateDevice(apiObject *verify.OTPDeviceC
 			cooldown := types.ObjectNull(genericTimeoutDataSourceServiceTFObjectTypes)
 			if c, ok := t.GetCooldownOk(); ok {
 				o := map[string]attr.Value{
-					"duration":  framework.Int32OkToTF(c.GetDurationOk()),
+					"duration":  framework.Int32OkToInt64TF(c.GetDurationOk()),
 					"time_unit": framework.EnumOkToTF(c.GetTimeUnitOk()),
 				}
 				objValue, d := types.ObjectValue(genericTimeoutDataSourceServiceTFObjectTypes, o)
@@ -1090,7 +1090,7 @@ func (p *verifyPolicyDataSourceModel) toStateDevice(apiObject *verify.OTPDeviceC
 			}
 
 			o := map[string]attr.Value{
-				"count":    framework.Int32OkToTF(t.GetCountOk()),
+				"count":    framework.Int32OkToInt64TF(t.GetCountOk()),
 				"cooldown": cooldown,
 			}
 			objValue, d := types.ObjectValue(otpDeliveriesDataSourceServiceTFObjectTypes, o)
@@ -1102,7 +1102,7 @@ func (p *verifyPolicyDataSourceModel) toStateDevice(apiObject *verify.OTPDeviceC
 		lifetime := types.ObjectNull(genericTimeoutDataSourceServiceTFObjectTypes)
 		if t, ok := v.GetLifeTimeOk(); ok {
 			o := map[string]attr.Value{
-				"duration":  framework.Int32OkToTF(t.GetDurationOk()),
+				"duration":  framework.Int32OkToInt64TF(t.GetDurationOk()),
 				"time_unit": framework.EnumOkToTF(t.GetTimeUnitOk()),
 			}
 
@@ -1159,7 +1159,7 @@ func (p *verifyPolicyDataSourceModel) toStateVoice(apiObject *verify.VoiceConfig
 		var d diag.Diagnostics
 
 		o := map[string]attr.Value{
-			"samples":         framework.Int32OkToTF(v.GetSamplesOk()),
+			"samples":         framework.Int32OkToInt64TF(v.GetSamplesOk()),
 			"voice_phrase_id": framework.PingOneResourceIDToTF(v.GetPhrase().Id),
 		}
 		objValue, d := types.ObjectValue(textDependentDataSourceServiceTFObjectTypes, o)

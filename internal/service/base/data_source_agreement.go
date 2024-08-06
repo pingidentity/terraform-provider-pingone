@@ -269,9 +269,9 @@ func (p *AgreementDataSourceModel) toState(apiObject *management.Agreement) diag
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
-	p.ReconsentPeriodDays = framework.Float32OkToTF(apiObject.GetReconsentPeriodDaysOk())
-	p.TotalUserConsents = framework.Int32OkToTF(apiObject.GetTotalConsentsOk())
-	p.ExpiredUserConsents = framework.Int32OkToTF(apiObject.GetTotalExpiredConsentsOk())
+	p.ReconsentPeriodDays = framework.Float32OkToFloat64TF(apiObject.GetReconsentPeriodDaysOk())
+	p.TotalUserConsents = framework.Int32OkToInt64TF(apiObject.GetTotalConsentsOk())
+	p.ExpiredUserConsents = framework.Int32OkToInt64TF(apiObject.GetTotalExpiredConsentsOk())
 	p.ConsentCountsUpdateAt = framework.TimeOkToTF(apiObject.GetConsentsAggregatedAtOk())
 
 	return diags

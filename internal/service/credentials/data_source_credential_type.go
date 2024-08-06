@@ -382,12 +382,12 @@ func toStateMetadataDataSource(metadata *credentials.CredentialTypeMetaData, ok 
 	// core metadata object
 	metadataMap := map[string]attr.Value{
 		"background_image":   framework.StringOkToTF(metadata.GetBackgroundImageOk()),
-		"bg_opacity_percent": framework.Int32OkToTF(metadata.GetBgOpacityPercentOk()),
+		"bg_opacity_percent": framework.Int32OkToInt64TF(metadata.GetBgOpacityPercentOk()),
 		"card_color":         framework.StringOkToTF(metadata.GetCardColorOk()),
-		"columns":            framework.Int32OkToTF(metadata.GetColumnsOk()),
+		"columns":            framework.Int32OkToInt64TF(metadata.GetColumnsOk()),
 		"description":        framework.StringOkToTF(metadata.GetDescriptionOk()),
 		"text_color":         framework.StringOkToTF(metadata.GetTextColorOk()),
-		"version":            framework.Int32OkToTF(metadata.GetVersionOk()),
+		"version":            framework.Int32OkToInt64TF(metadata.GetVersionOk()),
 		"logo_image":         framework.StringOkToTF(metadata.GetLogoImageOk()),
 		"name":               framework.StringOkToTF(metadata.GetNameOk()),
 	}

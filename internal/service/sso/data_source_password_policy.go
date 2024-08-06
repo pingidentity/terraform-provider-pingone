@@ -454,13 +454,13 @@ func (p *PasswordPolicyDataSourceModel) toState(apiObject *management.PasswordPo
 	p.MinCharacters, d = passwordPolicyMinCharactersOkToTF(apiObject.GetMinCharactersOk())
 	diags.Append(d...)
 
-	p.PasswordAgeMax = framework.Int32OkToTF(apiObject.GetMaxAgeDaysOk())
-	p.PasswordAgeMin = framework.Int32OkToTF(apiObject.GetMinAgeDaysOk())
-	p.MaxRepeatedCharacters = framework.Int32OkToTF(apiObject.GetMaxRepeatedCharactersOk())
-	p.MinComplexity = framework.Int32OkToTF(apiObject.GetMinComplexityOk())
-	p.MinUniqueCharacters = framework.Int32OkToTF(apiObject.GetMinUniqueCharactersOk())
+	p.PasswordAgeMax = framework.Int32OkToInt64TF(apiObject.GetMaxAgeDaysOk())
+	p.PasswordAgeMin = framework.Int32OkToInt64TF(apiObject.GetMinAgeDaysOk())
+	p.MaxRepeatedCharacters = framework.Int32OkToInt64TF(apiObject.GetMaxRepeatedCharactersOk())
+	p.MinComplexity = framework.Int32OkToInt64TF(apiObject.GetMinComplexityOk())
+	p.MinUniqueCharacters = framework.Int32OkToInt64TF(apiObject.GetMinUniqueCharactersOk())
 	p.NotSimilarToCurrent = framework.BoolOkToTF(apiObject.GetNotSimilarToCurrentOk())
-	p.PopulationCount = framework.Int32OkToTF(apiObject.GetPopulationCountOk())
+	p.PopulationCount = framework.Int32OkToInt64TF(apiObject.GetPopulationCountOk())
 
 	return diags
 }
