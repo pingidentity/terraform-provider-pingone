@@ -1,5 +1,10 @@
 ## 1.1.1 (Unreleased)
 
+NOTES:
+
+* `resource/pingone_environment`: Align example HCL with best practice on creating blank/empty DaVinci service environments. ([#907](https://github.com/pingidentity/terraform-provider-pingone/issues/907))
+* `resource/pingone_population_default`: Suppress warning on creation where the default population for an environment cannot be found. ([#906](https://github.com/pingidentity/terraform-provider-pingone/issues/906))
+
 ## 1.1.0 (05 August 2024)
 
 NOTES:
