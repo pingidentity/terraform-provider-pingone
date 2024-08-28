@@ -10,6 +10,7 @@ resource "pingone_environment" "my_environment" {
     },
     {
       type = "DaVinci"
+      tags = ["DAVINCI_MINIMAL"]
     },
     {
       type = "MFA"
