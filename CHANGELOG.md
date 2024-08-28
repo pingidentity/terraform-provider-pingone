@@ -1,4 +1,4 @@
-## 1.1.1 (Unreleased)
+## 1.1.1 (28 August 2024)
 
 NOTES:
 
