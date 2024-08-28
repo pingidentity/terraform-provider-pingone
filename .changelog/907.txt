@@ -1,0 +1,3 @@
+```release-note:note
+`resource/pingone_environment`: Align example HCL with best practice on creating blank/empty DaVinci service environments.
+```
