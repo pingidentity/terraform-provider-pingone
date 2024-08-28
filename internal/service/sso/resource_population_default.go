@@ -485,10 +485,10 @@ func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *managemen
 	population, err := stateConf.WaitForStateContext(ctx)
 
 	if err != nil {
-		diags.AddWarning(
-			"Cannot find default population",
-			fmt.Sprintf("The default population for environment %s cannot be found: %s", environmentID, err),
-		)
+		tflog.Warn(ctx, "Cannot find default population for the environment", map[string]interface{}{
+			"environment": environmentID,
+			"err":         err,
+		})
 
 		return nil, diags
 	}
