@@ -72,7 +72,7 @@ func TestAccCredentialIssuerProfileDataSource_NotFound(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCredentialIssuerProfileDataSource_NotFound(environmentName, licenseID, resourceName),
-				ExpectError: regexp.MustCompile("Error when calling `ReadCredentialIssuerProfile`: Issuer not found for environment"),
+				ExpectError: regexp.MustCompile("Error when calling `ReadCredentialIssuerProfile`: The request could not be completed. The requested resource was not found."),
 			},
 		},
 	})
