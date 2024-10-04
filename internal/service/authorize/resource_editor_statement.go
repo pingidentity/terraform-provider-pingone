@@ -501,7 +501,7 @@ func editorStatementAttributesOkToTF(apiObject []authorize.AuthorizeEditorDataRe
 func editorStatementReferenceObjectListOkToTF(apiObject []authorize.AuthorizeEditorDataReferenceObjectDTO, ok bool) (basetypes.ListValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	tfObjType := types.ObjectType{AttrTypes: editorAttributeReferenceObjectTFObjectTypes}
+	tfObjType := types.ObjectType{AttrTypes: editorReferenceObjectTFObjectTypes}
 
 	if !ok || apiObject == nil {
 		return types.ListNull(tfObjType), diags
@@ -510,7 +510,7 @@ func editorStatementReferenceObjectListOkToTF(apiObject []authorize.AuthorizeEdi
 	flattenedList := []attr.Value{}
 	for _, v := range apiObject {
 
-		flattenedObj, d := types.ObjectValue(editorAttributeReferenceObjectTFObjectTypes, map[string]attr.Value{
+		flattenedObj, d := types.ObjectValue(editorReferenceObjectTFObjectTypes, map[string]attr.Value{
 			"id": framework.PingOneResourceIDOkToTF(v.GetIdOk()),
 		})
 		diags.Append(d...)

@@ -6,14 +6,12 @@ import (
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
@@ -34,20 +32,6 @@ type editorProcessorResourceModel struct {
 	Processor     types.Object                 `tfsdk:"processor"`
 	Version       types.String                 `tfsdk:"version"`
 }
-
-type editorProcessorParentResourceModel editorAttributeReferenceDataResourceModel
-
-type editorProcessorProcessorResourceModel struct {
-	Name types.String `tfsdk:"name"`
-	Type types.String `tfsdk:"type"`
-}
-
-var (
-	editorProcessorProcessorTFObjectTypes = map[string]attr.Type{
-		"name": types.StringType,
-		"type": types.StringType,
-	}
-)
 
 // Framework interfaces
 var (
@@ -101,36 +85,9 @@ func (r *EditorProcessorResource) Schema(ctx context.Context, req resource.Schem
 				Optional:    true,
 			},
 
-			"parent": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-				Optional:    true,
+			"parent": parentObjectSchema("processor"),
 
-				Attributes: map[string]schema.Attribute{
-					"id": schema.StringAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-						Required:    true,
-
-						CustomType: pingonetypes.ResourceIDType{},
-					},
-				},
-			},
-
-			"processor": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-				Required:    true,
-
-				Attributes: map[string]schema.Attribute{
-					"name": schema.StringAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-						Required:    true,
-					},
-
-					"type": schema.StringAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-						Required:    true,
-					},
-				},
-			},
+			"processor": dataProcessorObjectSchema("processor"),
 
 			"version": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
@@ -380,16 +337,11 @@ func (r *EditorProcessorResource) ImportState(ctx context.Context, req resource.
 func (p *editorProcessorResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataDefinitionsProcessorDefinitionDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var valueProcessorPlan *editorProcessorProcessorResourceModel
-	diags.Append(p.Processor.As(ctx, &valueProcessorPlan, basetypes.ObjectAsOptions{
-		UnhandledNullAsEmpty:    false,
-		UnhandledUnknownAsEmpty: false,
-	})...)
+	processor, d := expandEditorDataProcessor(ctx, p.Processor)
+	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
 	}
-
-	processor := valueProcessorPlan.expand()
 
 	// Main object
 	data := authorize.NewAuthorizeEditorDataDefinitionsProcessorDefinitionDTO(
@@ -406,16 +358,11 @@ func (p *editorProcessorResourceModel) expand(ctx context.Context) (*authorize.A
 	}
 
 	if !p.Parent.IsNull() && !p.Parent.IsUnknown() {
-		var plan *editorProcessorParentResourceModel
-		diags.Append(p.Parent.As(ctx, &plan, basetypes.ObjectAsOptions{
-			UnhandledNullAsEmpty:    false,
-			UnhandledUnknownAsEmpty: false,
-		})...)
+		parent, d := expandEditorParent(ctx, p.Parent)
+		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
-
-		parent := plan.expand()
 
 		data.SetParent(*parent)
 	}
@@ -425,23 +372,6 @@ func (p *editorProcessorResourceModel) expand(ctx context.Context) (*authorize.A
 	}
 
 	return data, diags
-}
-
-func (p *editorProcessorProcessorResourceModel) expand() *authorize.AuthorizeEditorDataProcessorDTO {
-
-	data := authorize.NewAuthorizeEditorDataProcessorDTO(
-		p.Name.ValueString(),
-		p.Type.ValueString(),
-	)
-
-	return data
-}
-
-func (p *editorProcessorParentResourceModel) expand() *authorize.AuthorizeEditorDataReferenceObjectDTO {
-
-	data := authorize.NewAuthorizeEditorDataReferenceObjectDTO(p.Id.ValueString())
-
-	return data
 }
 
 func (p *editorProcessorResourceModel) toState(apiObject *authorize.AuthorizeEditorDataDefinitionsProcessorDefinitionDTO) diag.Diagnostics {
@@ -462,31 +392,11 @@ func (p *editorProcessorResourceModel) toState(apiObject *authorize.AuthorizeEdi
 	p.FullName = framework.StringOkToTF(apiObject.GetFullNameOk())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 
-	p.Parent, d = editorProcessorParentOkToTF(apiObject.GetParentOk())
+	p.Parent, d = editorParentOkToTF(apiObject.GetParentOk())
 	diags.Append(d...)
 
-	p.Processor, d = editorProcessorProcessorOkToTF(apiObject.GetProcessorOk())
+	p.Processor, d = editorDataProcessorOkToTF(apiObject.GetProcessorOk())
 	diags.Append(d...)
 
 	return diags
-}
-
-func editorProcessorParentOkToTF(apiObject *authorize.AuthorizeEditorDataReferenceObjectDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
-	return editorAttributeDataReferenceObjectOkToTF(apiObject, ok)
-}
-
-func editorProcessorProcessorOkToTF(apiObject *authorize.AuthorizeEditorDataProcessorDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if !ok || apiObject == nil {
-		return types.ObjectNull(editorProcessorProcessorTFObjectTypes), diags
-	}
-
-	objValue, d := types.ObjectValue(editorProcessorProcessorTFObjectTypes, map[string]attr.Value{
-		"name": framework.StringOkToTF(apiObject.GetNameOk()),
-		"type": framework.StringOkToTF(apiObject.GetTypeOk()),
-	})
-	diags.Append(d...)
-
-	return objValue, diags
 }

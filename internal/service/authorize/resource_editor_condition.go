@@ -35,8 +35,6 @@ type editorConditionResourceModel struct {
 	Version       types.String                 `tfsdk:"version"`
 }
 
-type editorConditionParentResourceModel editorAttributeReferenceDataResourceModel
-
 type editorConditionConditionResourceModel struct {
 	Type types.String `tfsdk:"type"`
 }
@@ -99,19 +97,7 @@ func (r *EditorConditionResource) Schema(ctx context.Context, req resource.Schem
 				Optional:    true,
 			},
 
-			"parent": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-				Optional:    true,
-
-				Attributes: map[string]schema.Attribute{
-					"id": schema.StringAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-						Required:    true,
-
-						CustomType: pingonetypes.ResourceIDType{},
-					},
-				},
-			},
+			"parent": parentObjectSchema("condition"),
 
 			"condition": schema.SingleNestedAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
@@ -399,16 +385,11 @@ func (p *editorConditionResourceModel) expand(ctx context.Context) (*authorize.A
 	}
 
 	if !p.Parent.IsNull() && !p.Parent.IsUnknown() {
-		var plan *editorConditionParentResourceModel
-		diags.Append(p.Parent.As(ctx, &plan, basetypes.ObjectAsOptions{
-			UnhandledNullAsEmpty:    false,
-			UnhandledUnknownAsEmpty: false,
-		})...)
+		parent, d := expandEditorParent(ctx, p.Parent)
+		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
-
-		parent := plan.expand()
 
 		data.SetParent(*parent)
 	}
@@ -423,15 +404,8 @@ func (p *editorConditionResourceModel) expand(ctx context.Context) (*authorize.A
 func (p *editorConditionConditionResourceModel) expand() *authorize.AuthorizeEditorDataConditionDTO {
 
 	data := authorize.NewAuthorizeEditorDataConditionDTO(
-		p.Type.ValueString(),
+		authorize.EnumAuthorizeEditorDataConditionDTOType(p.Type.ValueString()),
 	)
-
-	return data
-}
-
-func (p *editorConditionParentResourceModel) expand() *authorize.AuthorizeEditorDataReferenceObjectDTO {
-
-	data := authorize.NewAuthorizeEditorDataReferenceObjectDTO(p.Id.ValueString())
 
 	return data
 }
@@ -454,17 +428,13 @@ func (p *editorConditionResourceModel) toState(apiObject *authorize.AuthorizeEdi
 	p.FullName = framework.StringOkToTF(apiObject.GetFullNameOk())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 
-	p.Parent, d = editorConditionParentOkToTF(apiObject.GetParentOk())
+	p.Parent, d = editorParentOkToTF(apiObject.GetParentOk())
 	diags.Append(d...)
 
 	p.Condition, d = editorConditionConditionOkToTF(apiObject.GetConditionOk())
 	diags.Append(d...)
 
 	return diags
-}
-
-func editorConditionParentOkToTF(apiObject *authorize.AuthorizeEditorDataReferenceObjectDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
-	return editorAttributeDataReferenceObjectOkToTF(apiObject, ok)
 }
 
 func editorConditionConditionOkToTF(apiObject *authorize.AuthorizeEditorDataConditionDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
@@ -475,7 +445,7 @@ func editorConditionConditionOkToTF(apiObject *authorize.AuthorizeEditorDataCond
 	}
 
 	objValue, d := types.ObjectValue(editorConditionConditionTFObjectTypes, map[string]attr.Value{
-		"type": framework.StringOkToTF(apiObject.GetTypeOk()),
+		"type": framework.EnumOkToTF(apiObject.GetTypeOk()),
 	})
 	diags.Append(d...)
 

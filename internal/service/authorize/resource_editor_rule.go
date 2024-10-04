@@ -551,7 +551,7 @@ func editorRuleConditionOkToTF(apiObject *authorize.AuthorizeEditorDataCondition
 	}
 
 	objValue, d := types.ObjectValue(editorRuleConditionTFObjectTypes, map[string]attr.Value{
-		"type": framework.StringOkToTF(apiObject.GetTypeOk()),
+		"type": framework.EnumOkToTF(apiObject.GetTypeOk()),
 	})
 	diags.Append(d...)
 
@@ -566,7 +566,7 @@ func editorRuleEffectSettingsOkToTF(apiObject *authorize.AuthorizeEditorDataRule
 	}
 
 	objValue, d := types.ObjectValue(editorRuleEffectSettingsTFObjectTypes, map[string]attr.Value{
-		"type": framework.StringOkToTF(apiObject.GetTypeOk()),
+		"type": framework.EnumOkToTF(apiObject.GetTypeOk()),
 	})
 	diags.Append(d...)
 
