@@ -46,7 +46,7 @@ func dataResolverObjectSchemaAttributes() (attributes map[string]schema.Attribut
 
 	attributes = map[string]schema.Attribute{
 		"condition": schema.ListNestedAttribute{
-			Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+			Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies configuration settings for an authorization condition to apply to the resolver.").Description,
 			Optional:    true,
 
 			NestedObject: schema.NestedAttributeObject{
@@ -55,12 +55,12 @@ func dataResolverObjectSchemaAttributes() (attributes map[string]schema.Attribut
 		},
 
 		"name": schema.StringAttribute{
-			Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+			Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a name to apply to the resolver.").Description,
 			Optional:    true,
 		},
 
 		"processor": schema.ListNestedAttribute{
-			Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+			Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies configuration settings for a processor to apply to the resolver.").Description,
 			Optional:    true,
 
 			NestedObject: schema.NestedAttributeObject{
