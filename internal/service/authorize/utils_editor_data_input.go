@@ -127,7 +127,7 @@ func (p *editorDataInputResourceModel) expandAttributeInput(ctx context.Context)
 	}
 
 	data := authorize.NewAuthorizeEditorDataInputsAttributeInputDTO(
-		p.Type.ValueString(),
+		authorize.EnumAuthorizeEditorDataInputDTOType(p.Type.ValueString()),
 		*attribute,
 	)
 
@@ -136,7 +136,7 @@ func (p *editorDataInputResourceModel) expandAttributeInput(ctx context.Context)
 
 func (p *editorDataInputResourceModel) expandConstantInput() *authorize.AuthorizeEditorDataInputsConstantInputDTO {
 	data := authorize.NewAuthorizeEditorDataInputsConstantInputDTO(
-		p.Type.ValueString(),
+		authorize.EnumAuthorizeEditorDataInputDTOType(p.Type.ValueString()),
 		p.Value.ValueString(),
 	)
 
