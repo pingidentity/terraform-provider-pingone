@@ -117,7 +117,13 @@ func TestAccEditorProcessor_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckResourceAttr(resourceFullName, "description", "Test application role"),
+		resource.TestCheckResourceAttr(resourceFullName, "description", "Test processor"),
+		resource.TestCheckResourceAttr(resourceFullName, "full_name", name),
+		resource.TestMatchResourceAttr(resourceFullName, "parent.id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test child processor", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.type", "JSON_PATH"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.expression", "$$.data.item2"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.value_type.type", "STRING"),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
@@ -125,6 +131,12 @@ func TestAccEditorProcessor_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
 		resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "full_name"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "parent"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test processor", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.type", "JSON_PATH"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.expression", "$$.data.item"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.value_type.type", "STRING"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -244,10 +256,40 @@ func testAccEditorProcessorConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_authorize_editor_processor" "%[2]s-parent" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  processor = {
+    name = "%[3]s Test parent processor"
+    type = "JSON_PATH"
+
+    expression = "$.data.item.parent"
+    value_type = {
+      type = "STRING"
+    }
+  }
+}
+
 resource "pingone_authorize_editor_processor" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-  description    = "Test application role"
+  description    = "Test processor"
+  full_name      = "%[3]s"
+
+  parent = {
+    id = pingone_authorize_editor_processor.%[2]s-parent.id
+  }
+
+  processor = {
+    name = "%[3]s Test child processor"
+    type = "JSON_PATH"
+
+    expression = "$.data.item2"
+    value_type = {
+      type = "STRING"
+    }
+  }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -258,5 +300,15 @@ func testAccEditorProcessorConfig_Minimal(resourceName, name string) string {
 resource "pingone_authorize_editor_processor" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+
+  processor = {
+    name = "%[3]s Test processor"
+    type = "JSON_PATH"
+
+    expression = "$.data.item"
+    value_type = {
+      type = "STRING"
+    }
+  }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

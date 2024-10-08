@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
@@ -28,6 +29,7 @@ type editorProcessorResourceModel struct {
 	Description   types.String                 `tfsdk:"description"`
 	FullName      types.String                 `tfsdk:"full_name"`
 	Name          types.String                 `tfsdk:"name"`
+	Type          types.String                 `tfsdk:"type"`
 	Parent        types.Object                 `tfsdk:"parent"`
 	Processor     types.Object                 `tfsdk:"processor"`
 	Version       types.String                 `tfsdk:"version"`
@@ -73,6 +75,13 @@ func (r *EditorProcessorResource) Schema(ctx context.Context, req resource.Schem
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
 				},
+			},
+
+			"type": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that describes the type of the resource.").Description,
+				Computed:    true,
+
+				Default: stringdefault.StaticString("PROCESSOR"),
 			},
 
 			"full_name": schema.StringAttribute{
@@ -351,6 +360,7 @@ func (p *editorProcessorResourceModel) expand(ctx context.Context) (*authorize.A
 	// Main object
 	data := authorize.NewAuthorizeEditorDataDefinitionsProcessorDefinitionDTO(
 		p.Name.ValueString(),
+		authorize.EnumAuthorizeEditorDataDefinitionsProcessorDefinitionDTOType(p.Type.ValueString()),
 		*processor,
 	)
 
@@ -393,9 +403,9 @@ func (p *editorProcessorResourceModel) toState(ctx context.Context, apiObject *a
 	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
 	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
+	p.Type = framework.EnumOkToTF(apiObject.GetTypeOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.FullName = framework.StringOkToTF(apiObject.GetFullNameOk())
-	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 
 	p.Parent, d = editorParentOkToTF(apiObject.GetParentOk())
 	diags.Append(d...)
