@@ -7,6 +7,8 @@ import (
 	"net/http"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -186,100 +188,128 @@ func (r *EditorServiceResource) Schema(ctx context.Context, req resource.SchemaR
 	const attrMinLength = 1
 
 	serviceTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The type of service.",
+		"A string that specifies the type of service.",
 	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataDefinitionsServiceDefinitionDTOTypeEnumValues)
 
 	processorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"An object that specifies configuration settings for the processor to transform the value returned from the resolver.",
 	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR), string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)))
 
 	valueTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"An object that specifies configuration settings for the final output type of the service.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR), string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)))
 
 	serviceSettingsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"An object that specifies configuration settings for the service connection.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR), string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)))
 
+	serviceSettingsMaximumConcurrentRequestsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the number of maximum concurrent requests to the service. The value must be greater than or equal to `1`.",
+	)
+
+	serviceSettingsMaximumRequestsPerSecondDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A floating point number that specifies the number of maximum requests per second to the service. The value must be greater than `0`.",
+	)
+
+	serviceSettingsTimeoutMillisecondsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the timeout, in milliseconds, when attempting connection to the service. The value must be between `0` and `3000`.",
+	)
+
 	serviceSettingsUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A string that specifies the URL of the HTTP service.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)))
 
 	serviceSettingsVerbDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)))
+		"A string that specifies the HTTP method to use.",
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP))).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataServiceSettingsHttpServiceSettingsDTOVerbEnumValues)
 
 	serviceSettingsBodyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A string that specifies the body of the HTTP request.",
 	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)))
 
 	serviceSettingsContentTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A string that specifies the content type of the HTTP request.  The service will use the value of this field to set the `Content-Type` header.",
 	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)))
 
 	serviceSettingsHeadersDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A set of objects that specify the headers to include in the HTTP request.",
 	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)))
 
 	serviceSettingsAuthenticationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"An object that specifies configuration settings for authenticating to the service.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)))
-
-	serviceSettingsTlsSettingsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)))
-
-	serviceSettingsChannelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)))
-
-	serviceSettingsCodeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)))
-
-	serviceSettingsCapabilityDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)))
-
-	serviceSettingsSchemaVersionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)))
-
-	serviceSettingsInputMappingsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)))
 
 	serviceSettingsAuthenticationTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A string that specifies the type of service authentication to use.",
 	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataAuthenticationDTOTypeEnumValues)
 
 	serviceSettingsAuthenticationNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"An object that specifies configuration settings for the user name to use for basic authentication.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_BASIC)))
 
 	serviceSettingsAuthenticationPasswordDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"An object that specifies configuration settings for the user password to use for basic authentication.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_BASIC)))
 
 	serviceSettingsAuthenticationTokenEndpointDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A string that specifies the HTTPS token endpoint to use for authentication.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)))
 
 	serviceSettingsAuthenticationClientIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A string that specifies the client ID to use for client credentials authentication.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)))
 
 	serviceSettingsAuthenticationClientSecretDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"An object that specifies configuration settings for the client secret to use for client credentials authentication.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)))
 
 	serviceSettingsAuthenticationScopeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A string that specifies the scope(s) to request from the token endpoint during client credentials authentication.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)))
 
 	serviceSettingsAuthenticationTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"An object that specifies configuration settings for the token value to use for static token authentication.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_TOKEN)))
+
+	serviceSettingsTlsSettingsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An object that specifies configuration settings when connecting to the service using TLS.",
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)))
+
+	serviceSettingsTlsSettingsTlsValidationTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the TLS validation type.",
+	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataTlsSettingsDTOTlsValidationTypeEnumValues)
+
+	serviceSettingsChannelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the connector channel to use for the service.",
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR))).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTOChannelEnumValues)
+
+	serviceSettingsCodeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the connector code to use for the service.",
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR))).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTOCodeEnumValues)
+
+	serviceSettingsCapabilityDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the connector capability associated with the connector code and channel.",
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)))
+
+	serviceSettingsSchemaVersionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the schema version of the connector template.",
+	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)))
+
+	serviceSettingsInputMappingsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A list of objects that specify configuration settings for the input mappings to use for the service.  Input mappings may be attribute based, or input based.",
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)))
+
+	serviceSettingsInputMappingTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the input mapping type.",
+	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataInputMappingDTOTypeEnumValues)
+
+	serviceSettingsInputMappingValueRefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An object that specifies configuration settings for the trust framework attribute to use as an input mapping.",
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_ATTRIBUTE)))
+
+	serviceSettingsInputMappingValueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the value for the input mapping.",
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_INPUT)))
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -293,7 +323,7 @@ func (r *EditorServiceResource) Schema(ctx context.Context, req resource.SchemaR
 			),
 
 			"name": schema.StringAttribute{ // DONE
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A user-friendly service name.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a user-friendly service name.").Description,
 				Required:    true,
 
 				Validators: []validator.String{
@@ -302,29 +332,29 @@ func (r *EditorServiceResource) Schema(ctx context.Context, req resource.SchemaR
 			},
 
 			"full_name": schema.StringAttribute{ // DOC ISSUE
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A unique name generated by the system for each service resource. It is the concatenation of names in the service resource hierarchy.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a unique name generated by the system for each service resource. It is the concatenation of names in the service resource hierarchy.").Description,
 				Optional:    true,
 			},
 
 			"description": schema.StringAttribute{ // DONE
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("The authorization service resource's description.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the authorization service resource's description.").Description,
 				Optional:    true,
 			},
 
 			"parent": parentObjectSchema("service"),
 
 			"type": schema.StringAttribute{ // DOC ISSUE
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("The resource type.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that describes the resource type.").Description,
 				Computed:    true,
 			},
 
 			"cache_settings": schema.SingleNestedAttribute{ // DONE
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("The service's cache settings.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies configuration settings for cache settings to apply to the service responses.").Description,
 				Optional:    true,
 
 				Attributes: map[string]schema.Attribute{
 					"ttl_seconds": schema.Int32Attribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("The service's time to live in seconds.").Description,
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the time to live (in seconds) for the service cache.").Description,
 						Optional:    true,
 					},
 				},
@@ -341,7 +371,7 @@ func (r *EditorServiceResource) Schema(ctx context.Context, req resource.SchemaR
 			},
 
 			"version": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A random ID generated by the system for concurrency control purposes.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that describes a random ID generated by the system for concurrency control purposes.").Description,
 				Computed:    true,
 			},
 
@@ -406,18 +436,33 @@ func (r *EditorServiceResource) Schema(ctx context.Context, req resource.SchemaR
 
 				Attributes: map[string]schema.Attribute{
 					"maximum_concurrent_requests": schema.Int32Attribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-						Optional:    true,
+						Description:         serviceSettingsMaximumConcurrentRequestsDescription.Description,
+						MarkdownDescription: serviceSettingsMaximumConcurrentRequestsDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.Int32{
+							int32validator.AtLeast(1),
+						},
 					},
 
 					"maximum_requests_per_second": schema.Float64Attribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-						Optional:    true,
+						Description:         serviceSettingsMaximumRequestsPerSecondDescription.Description,
+						MarkdownDescription: serviceSettingsMaximumRequestsPerSecondDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.Float64{
+							float64validator.AtLeast(0.1),
+						},
 					},
 
 					"timeout_milliseconds": schema.Int32Attribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-						Optional:    true,
+						Description:         serviceSettingsTimeoutMillisecondsDescription.Description,
+						MarkdownDescription: serviceSettingsTimeoutMillisecondsDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.Int32{
+							int32validator.Between(0, 3000),
+						},
 					},
 
 					"url": schema.StringAttribute{
@@ -443,6 +488,7 @@ func (r *EditorServiceResource) Schema(ctx context.Context, req resource.SchemaR
 						Optional:            true,
 
 						Validators: []validator.String{
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataServiceSettingsHttpServiceSettingsDTOVerbEnumValues)...),
 							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
 								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)),
 								path.MatchRoot("service_type"),
@@ -495,12 +541,12 @@ func (r *EditorServiceResource) Schema(ctx context.Context, req resource.SchemaR
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"key": schema.StringAttribute{
-									Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the header key.").Description,
 									Required:    true,
 								},
 
 								"value": schema.SingleNestedAttribute{
-									Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies configuration settings for the header value.  The header value may be configured as an authorization attribute, or a constant value.").Description,
 									Optional:    true,
 
 									Attributes: dataInputObjectSchemaAttributes(),
@@ -549,7 +595,7 @@ func (r *EditorServiceResource) Schema(ctx context.Context, req resource.SchemaR
 									),
 								},
 
-								Attributes: referenceIdObjectSchemaAttributes(),
+								Attributes: referenceIdObjectSchemaAttributes(framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the user name reference used to authenticate the service.")),
 							},
 
 							"password": schema.SingleNestedAttribute{
@@ -564,7 +610,7 @@ func (r *EditorServiceResource) Schema(ctx context.Context, req resource.SchemaR
 									),
 								},
 
-								Attributes: referenceIdObjectSchemaAttributes(),
+								Attributes: referenceIdObjectSchemaAttributes(framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the password reference used to authenticate the service.")),
 							},
 
 							// type == "CLIENT_CREDENTIALS"
@@ -606,7 +652,7 @@ func (r *EditorServiceResource) Schema(ctx context.Context, req resource.SchemaR
 									),
 								},
 
-								Attributes: referenceIdObjectSchemaAttributes(),
+								Attributes: referenceIdObjectSchemaAttributes(framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the client secret reference used to authenticate the service.")),
 							},
 
 							"scope": schema.StringAttribute{
@@ -638,7 +684,7 @@ func (r *EditorServiceResource) Schema(ctx context.Context, req resource.SchemaR
 									),
 								},
 
-								Attributes: referenceIdObjectSchemaAttributes(),
+								Attributes: referenceIdObjectSchemaAttributes(framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the token reference used to authenticate the service.")),
 							},
 						},
 					},
@@ -661,8 +707,13 @@ func (r *EditorServiceResource) Schema(ctx context.Context, req resource.SchemaR
 
 						Attributes: map[string]schema.Attribute{
 							"tls_validation_type": schema.StringAttribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-								Required:    true,
+								Description:         serviceSettingsTlsSettingsTlsValidationTypeDescription.Description,
+								MarkdownDescription: serviceSettingsTlsSettingsTlsValidationTypeDescription.MarkdownDescription,
+								Required:            true,
+
+								Validators: []validator.String{
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataTlsSettingsDTOTlsValidationTypeEnumValues)...),
+								},
 							},
 						},
 					},
@@ -673,6 +724,7 @@ func (r *EditorServiceResource) Schema(ctx context.Context, req resource.SchemaR
 						Optional:            true,
 
 						Validators: []validator.String{
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTOChannelEnumValues)...),
 							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
 								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)),
 								path.MatchRoot("service_type"),
@@ -690,6 +742,7 @@ func (r *EditorServiceResource) Schema(ctx context.Context, req resource.SchemaR
 						Optional:            true,
 
 						Validators: []validator.String{
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTOCodeEnumValues)...),
 							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
 								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)),
 								path.MatchRoot("service_type"),
@@ -755,8 +808,49 @@ func (r *EditorServiceResource) Schema(ctx context.Context, req resource.SchemaR
 								},
 
 								"type": schema.StringAttribute{
-									Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-									Required:    true,
+									Description:         serviceSettingsInputMappingTypeDescription.Description,
+									MarkdownDescription: serviceSettingsInputMappingTypeDescription.MarkdownDescription,
+									Required:            true,
+
+									Validators: []validator.String{
+										stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataInputMappingDTOTypeEnumValues)...),
+									},
+								},
+
+								"value_ref": schema.SingleNestedAttribute{
+									Description:         serviceSettingsInputMappingValueRefDescription.Description,
+									MarkdownDescription: serviceSettingsInputMappingValueRefDescription.MarkdownDescription,
+									Optional:            true,
+
+									Validators: []validator.Object{
+										objectvalidatorinternal.IsRequiredIfMatchesPathValue(
+											types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_ATTRIBUTE)),
+											path.MatchRoot("type"),
+										),
+										objectvalidatorinternal.ConflictsIfMatchesPathValue(
+											types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_INPUT)),
+											path.MatchRoot("type"),
+										),
+									},
+
+									Attributes: referenceIdObjectSchemaAttributes(framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the authorization attribute in the trust framework.")),
+								},
+
+								"value": schema.StringAttribute{
+									Description:         serviceSettingsInputMappingValueDescription.Description,
+									MarkdownDescription: serviceSettingsInputMappingValueDescription.MarkdownDescription,
+									Optional:            true,
+
+									Validators: []validator.String{
+										stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+											types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_INPUT)),
+											path.MatchRoot("type"),
+										),
+										stringvalidatorinternal.ConflictsIfMatchesPathValue(
+											types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_ATTRIBUTE)),
+											path.MatchRoot("type"),
+										),
+									},
 								},
 							},
 						},

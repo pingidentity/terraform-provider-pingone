@@ -24,15 +24,15 @@ import (
 func dataInputObjectSchemaAttributes() (attributes map[string]schema.Attribute) {
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A string that specifies the type of the data value.",
 	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataInputDTOTypeEnumValues)
 
 	attributeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"An object that specifies configuration settings for the authorization attribute to use as the data value.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAINPUTDTOTYPE_ATTRIBUTE)))
 
 	valueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A string that specifies a constant text value to use as the data value.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAINPUTDTOTYPE_CONSTANT)))
 
 	attributes = map[string]schema.Attribute{
@@ -51,11 +51,15 @@ func dataInputObjectSchemaAttributes() (attributes map[string]schema.Attribute) 
 			MarkdownDescription: attributeDescription.MarkdownDescription,
 			Optional:            true,
 
-			Attributes: referenceIdObjectSchemaAttributes(),
+			Attributes: referenceIdObjectSchemaAttributes(framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the authorization attribute in the trust framework.")),
 
 			Validators: []validator.Object{
 				objectvalidatorinternal.IsRequiredIfMatchesPathValue(
 					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAINPUTDTOTYPE_ATTRIBUTE)),
+					path.MatchRoot("service_type"),
+				),
+				objectvalidatorinternal.ConflictsIfMatchesPathValue(
+					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAINPUTDTOTYPE_CONSTANT)),
 					path.MatchRoot("service_type"),
 				),
 			},
@@ -69,6 +73,10 @@ func dataInputObjectSchemaAttributes() (attributes map[string]schema.Attribute) 
 			Validators: []validator.String{
 				stringvalidatorinternal.IsRequiredIfMatchesPathValue(
 					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAINPUTDTOTYPE_CONSTANT)),
+					path.MatchRoot("service_type"),
+				),
+				stringvalidatorinternal.ConflictsIfMatchesPathValue(
+					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAINPUTDTOTYPE_ATTRIBUTE)),
 					path.MatchRoot("service_type"),
 				),
 			},

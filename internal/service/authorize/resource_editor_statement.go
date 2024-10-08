@@ -131,7 +131,7 @@ func (r *EditorStatementResource) Schema(ctx context.Context, req resource.Schem
 				Required:    true,
 
 				NestedObject: schema.NestedAttributeObject{
-					Attributes: referenceIdObjectSchemaAttributes(),
+					Attributes: referenceIdObjectSchemaAttributes(framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the authorization attribute in the trust framework.")),
 				},
 			},
 

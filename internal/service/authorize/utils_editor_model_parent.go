@@ -16,7 +16,7 @@ func parentObjectSchema(descriptionName string) schema.SingleNestedAttribute {
 		Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An object that specifies configuration settings for the %s resource's parent.", descriptionName)).Description,
 		Optional:    true,
 
-		Attributes: referenceIdObjectSchemaAttributes(),
+		Attributes: referenceIdObjectSchemaAttributes(framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the parent resource.")),
 	}
 }
 

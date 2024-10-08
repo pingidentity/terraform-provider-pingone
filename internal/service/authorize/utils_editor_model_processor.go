@@ -3,6 +3,7 @@ package authorize
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -16,12 +17,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
-	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	listvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/listvalidator"
 	objectvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
+
+const processorNestedIterationMaxDepth = 2
 
 func dataProcessorObjectSchemaAttributes() (attributes map[string]schema.Attribute) {
 	const initialIteration = 1
@@ -29,9 +31,23 @@ func dataProcessorObjectSchemaAttributes() (attributes map[string]schema.Attribu
 }
 func dataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes map[string]schema.Attribute) {
 
+	supportedProcessorTypes := authorize.AllowedEnumAuthorizeEditorDataProcessorDTOTypeEnumValues
+
+	if iteration >= processorNestedIterationMaxDepth {
+
+		newSupportedTypes := []authorize.EnumAuthorizeEditorDataProcessorDTOType{
+			"JSON_PATH",
+			"REFERENCE",
+			"SPEL",
+			"XPATH",
+		}
+
+		supportedProcessorTypes = newSupportedTypes
+	}
+
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the resource's processor type.",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataProcessorDTOTypeEnumValues)
+		"A string that specifies the processor type.",
+	).AllowedValuesEnum(supportedProcessorTypes)
 
 	processorsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The list of processors to apply in the given order.",
@@ -46,21 +62,16 @@ func dataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes m
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_COLLECTION_TRANSFORM)))
 
 	expressionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		fmt.Sprintf("A string that specifies the expression to use. If the `type` is `%s`, the expression should be a valid JSON path expression, if the `type` is `%s`, the expression should be a valid SpEL expression and if the `type` is `%s`, the expression should be a valid XPath expression.", string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_JSON_PATH), string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_SPEL), string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_XPATH)),
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`, `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_JSON_PATH), string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_SPEL), string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_XPATH)))
 
 	valueTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"An object that specifies the output type of the value.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`, `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_JSON_PATH), string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_SPEL), string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_XPATH)))
 
 	processorRefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"An object that specifies configuration settings for the authorization processor to reference.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_REFERENCE)))
-
-	if iteration == 10 {
-		attributes = map[string]schema.Attribute{}
-		return attributes
-	}
 
 	attributes = map[string]schema.Attribute{
 		"name": schema.StringAttribute{
@@ -74,12 +85,14 @@ func dataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes m
 			Required:            true,
 
 			Validators: []validator.String{
-				stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataProcessorDTOTypeEnumValues)...),
+				stringvalidator.OneOf(utils.EnumSliceToStringSlice(supportedProcessorTypes)...),
 			},
 		},
+	}
 
-		// type == "CHAIN"
-		"processors": schema.ListNestedAttribute{
+	// type == "CHAIN"
+	if slices.Contains(supportedProcessorTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_CHAIN) {
+		attributes["processors"] = schema.ListNestedAttribute{
 			Description:         processorsDescription.Description,
 			MarkdownDescription: processorsDescription.MarkdownDescription,
 			Optional:            true,
@@ -94,10 +107,12 @@ func dataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes m
 			NestedObject: schema.NestedAttributeObject{
 				Attributes: dataProcessorObjectSchemaAttributesIteration(iteration + 1),
 			},
-		},
+		}
+	}
 
-		// type == "COLLECTION_FILTER"
-		"predicate": schema.SingleNestedAttribute{
+	// type == "COLLECTION_FILTER"
+	if slices.Contains(supportedProcessorTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_COLLECTION_FILTER) {
+		attributes["predicate"] = schema.SingleNestedAttribute{
 			Description:         predicateDescription.Description,
 			MarkdownDescription: predicateDescription.MarkdownDescription,
 			Optional:            true,
@@ -110,10 +125,12 @@ func dataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes m
 			},
 
 			Attributes: dataProcessorObjectSchemaAttributesIteration(iteration + 1),
-		},
+		}
+	}
 
-		// type == "COLLECTION_TRANSFORM"
-		"processor": schema.SingleNestedAttribute{
+	// type == "COLLECTION_TRANSFORM"
+	if slices.Contains(supportedProcessorTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_COLLECTION_TRANSFORM) {
+		attributes["processor"] = schema.SingleNestedAttribute{
 			Description:         processorDescription.Description,
 			MarkdownDescription: processorDescription.MarkdownDescription,
 			Optional:            true,
@@ -126,10 +143,14 @@ func dataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes m
 			},
 
 			Attributes: dataProcessorObjectSchemaAttributesIteration(iteration + 1),
-		},
+		}
+	}
 
-		// type == "JSON_PATH", type == "SPEL", type == "XPATH"
-		"expression": schema.StringAttribute{
+	// type == "JSON_PATH", type == "SPEL", type == "XPATH"
+	if slices.Contains(supportedProcessorTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_JSON_PATH) ||
+		slices.Contains(supportedProcessorTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_SPEL) ||
+		slices.Contains(supportedProcessorTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_XPATH) {
+		attributes["expression"] = schema.StringAttribute{
 			Description:         expressionDescription.Description,
 			MarkdownDescription: expressionDescription.MarkdownDescription,
 			Optional:            true,
@@ -148,11 +169,12 @@ func dataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes m
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 			},
-		},
+		}
 
-		"value_type": schema.SingleNestedAttribute{
-			Description: valueTypeDescription.Description,
-			Optional:    true,
+		attributes["value_type"] = schema.SingleNestedAttribute{
+			Description:         valueTypeDescription.Description,
+			MarkdownDescription: valueTypeDescription.MarkdownDescription,
+			Optional:            true,
 
 			Validators: []validator.Object{
 				objectvalidatorinternal.IsRequiredIfMatchesPathValue(
@@ -170,10 +192,12 @@ func dataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes m
 			},
 
 			Attributes: valueTypeObjectSchemaAttributes(),
-		},
+		}
+	}
 
-		// type == "REFERENCE"
-		"processor_ref": schema.SingleNestedAttribute{
+	// type == "REFERENCE"
+	if slices.Contains(supportedProcessorTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_REFERENCE) {
+		attributes["processor_ref"] = schema.SingleNestedAttribute{
 			Description:         processorRefDescription.Description,
 			MarkdownDescription: processorRefDescription.MarkdownDescription,
 			Optional:            true,
@@ -185,15 +209,8 @@ func dataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes m
 				),
 			},
 
-			Attributes: map[string]schema.Attribute{
-				"id": schema.StringAttribute{
-					Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-					Required:    true,
-
-					CustomType: pingonetypes.ResourceIDType{},
-				},
-			},
-		},
+			Attributes: referenceIdObjectSchemaAttributes(framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the authorization processor in the trust framework.")),
+		}
 	}
 
 	return attributes

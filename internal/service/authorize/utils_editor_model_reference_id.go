@@ -13,10 +13,14 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
 
-func referenceIdObjectSchemaAttributes() (attributes map[string]schema.Attribute) {
+func referenceIdObjectSchemaAttributes(description framework.SchemaAttributeDescription) (attributes map[string]schema.Attribute) {
+
+	description = description.AppendMarkdownString("Must be a valid PingOne resource ID.")
+
 	attributes = map[string]schema.Attribute{
 		"id": schema.StringAttribute{
-			Description: framework.SchemaAttributeDescriptionFromMarkdown("Must be a valid PingOne resource ID.").Description,
+			Description: description.Description,
+			MarkdownDescription: description.MarkdownDescription,
 			Required:    true,
 
 			CustomType: pingonetypes.ResourceIDType{},

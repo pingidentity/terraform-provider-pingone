@@ -22,6 +22,8 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
+const conditionNestedIterationMaxDepth = 2
+
 func dataConditionObjectSchemaAttributes() (attributes map[string]schema.Attribute) {
 	const initialIteration = 1
 	return dataConditionObjectSchemaAttributesIteration(initialIteration)
@@ -57,7 +59,7 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 		"",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_REFERENCE)))
 
-	if iteration == 10 {
+	if iteration >= conditionNestedIterationMaxDepth {
 		attributes = map[string]schema.Attribute{}
 		return attributes
 	}
@@ -165,7 +167,7 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 			MarkdownDescription: referenceDescription.MarkdownDescription,
 			Optional:            true,
 
-			Attributes: referenceIdObjectSchemaAttributes(),
+			Attributes: referenceIdObjectSchemaAttributes(framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the authorization condition reference in the trust framework.")),
 
 			Validators: []validator.Object{
 				objectvalidatorinternal.IsRequiredIfMatchesPathValue(

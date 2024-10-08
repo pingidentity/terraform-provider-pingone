@@ -88,7 +88,7 @@ func dataResolverObjectSchemaAttributes() (attributes map[string]schema.Attribut
 			MarkdownDescription: valueRefDescription.MarkdownDescription,
 			Optional:            true,
 
-			Attributes: referenceIdObjectSchemaAttributes(),
+			Attributes: referenceIdObjectSchemaAttributes(framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A string that specifies the ID of the authorization attribute (if `type` is `%s`) or the authorization service (if `type` is `%s`) in the trust framework.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_ATTRIBUTE), string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SERVICE)))),
 
 			Validators: []validator.Object{
 				objectvalidatorinternal.IsRequiredIfMatchesPathValue(

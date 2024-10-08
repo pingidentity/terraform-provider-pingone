@@ -178,7 +178,7 @@ func (r *EditorPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
 						Required:    true,
 
-						Attributes: referenceIdObjectSchemaAttributes(),
+						Attributes: referenceIdObjectSchemaAttributes(framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the authorization policy repetition source in the policy manager.")),
 					},
 
 					"decision": schema.StringAttribute{
