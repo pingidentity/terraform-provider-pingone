@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
@@ -60,6 +61,18 @@ func (r *EditorStatementResource) Schema(ctx context.Context, req resource.Schem
 	// schema descriptions and validation settings
 	const attrMinLength = 1
 
+	appliesToDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies what result the statement applies to.",
+	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataStatementsReferenceableStatementDTOAppliesToEnumValues)
+
+	appliesIfDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies when to attach a final decision.",
+	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataStatementsReferenceableStatementDTOAppliesIfEnumValues)
+
+	obligatoryDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the statement must be fulfilled as a condition of authorizing the decision request.",
+	).DefaultValue(false)
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage an authorization statement for the PingOne Authorize Policy Manager in a PingOne environment.",
@@ -72,7 +85,7 @@ func (r *EditorStatementResource) Schema(ctx context.Context, req resource.Schem
 			),
 
 			"name": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a unique name for the authorization statement.").Description,
 				Required:    true,
 
 				Validators: []validator.String{
@@ -81,12 +94,12 @@ func (r *EditorStatementResource) Schema(ctx context.Context, req resource.Schem
 			},
 
 			"description": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a description to apply to the resource statement.").Description,
 				Optional:    true,
 			},
 
 			"code": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the statement code.").Description,
 				Required:    true,
 
 				Validators: []validator.String{
@@ -95,8 +108,9 @@ func (r *EditorStatementResource) Schema(ctx context.Context, req resource.Schem
 			},
 
 			"applies_to": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-				Required:    true,
+				Description:         appliesToDescription.Description,
+				MarkdownDescription: appliesToDescription.MarkdownDescription,
+				Required:            true,
 
 				Validators: []validator.String{
 					stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataStatementsReferenceableStatementDTOAppliesToEnumValues)...),
@@ -104,16 +118,17 @@ func (r *EditorStatementResource) Schema(ctx context.Context, req resource.Schem
 			},
 
 			"applies_if": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-				Required:    true,
+				Description:         appliesIfDescription.Description,
+				MarkdownDescription: appliesIfDescription.MarkdownDescription,
+				Required:            true,
 
 				Validators: []validator.String{
-					stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataStatementsReferenceableStatementDTOAppliesToEnumValues)...),
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataStatementsReferenceableStatementDTOAppliesIfEnumValues)...),
 				},
 			},
 
 			"payload": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the statement payload.").Description,
 				Required:    true,
 
 				Validators: []validator.String{
@@ -122,12 +137,16 @@ func (r *EditorStatementResource) Schema(ctx context.Context, req resource.Schem
 			},
 
 			"obligatory": schema.BoolAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-				Optional:    true,
+				Description:         obligatoryDescription.Description,
+				MarkdownDescription: obligatoryDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: booldefault.StaticBool(false),
 			},
 
 			"attributes": schema.ListNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("An list of objects that specify configuration settings for the authorization attributes to attach to the statement.").Description,
 				Required:    true,
 
 				NestedObject: schema.NestedAttributeObject{
@@ -136,7 +155,7 @@ func (r *EditorStatementResource) Schema(ctx context.Context, req resource.Schem
 			},
 
 			"version": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that describes a random ID generated by the system for concurrency control purposes.").Description,
 				Computed:    true,
 			},
 		},
