@@ -138,7 +138,7 @@ func (r *EditorRuleResource) Schema(ctx context.Context, req resource.SchemaRequ
 			},
 
 			"effect_settings": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies configuration settings that determine how the children are combined to produce an outcome for the policy.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies configuration settings that determine how child rules are combined to produce an outcome for the policy.").Description,
 				Required:    true,
 
 				Attributes: dataRulesEffectSettingsObjectSchemaAttributes(),

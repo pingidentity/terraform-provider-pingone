@@ -28,7 +28,7 @@ resource "pingone_authorize_editor_rule" "my_awesome_editor_rule" {
 
 ### Required
 
-- `effect_settings` (Attributes) An object that specifies configuration settings that determine how the children are combined to produce an outcome for the policy. (see [below for nested schema](#nestedatt--effect_settings))
+- `effect_settings` (Attributes) An object that specifies configuration settings that determine how child rules are combined to produce an outcome for the policy. (see [below for nested schema](#nestedatt--effect_settings))
 - `environment_id` (String) The ID of the environment to configure the Authorize editor rule in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) A string that specifies a user-friendly name for the authorization rule.  The value must be unique.
 

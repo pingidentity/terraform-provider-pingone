@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -88,9 +89,17 @@ func (r *EditorPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 	// schema descriptions and validation settings
 	const attrMinLength = 1
 
+	enabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.",
+	).DefaultValue(true)
+
 	combiningAlgorithmAlgorithmDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A string that specifies the algorithm that determines how rules are combined to produce an authorization decision.",
 	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataPoliciesCombiningAlgorithmDTOAlgorithmEnumValues)
+
+	repetitionSettingsDecisionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the decision filter.",
+	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataPoliciesRepetitionSettingsDTODecisionEnumValues)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -104,7 +113,7 @@ func (r *EditorPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 			),
 
 			"name": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a user-friendly name to apply to the authorization policy.  The value must be unique.").Description,
 				Required:    true,
 
 				Validators: []validator.String{
@@ -113,18 +122,22 @@ func (r *EditorPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 			},
 
 			"type": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the type of the policy.").Description,
 				Optional:    true,
 			},
 
 			"description": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a description to apply to the policy.").Description,
 				Optional:    true,
 			},
 
 			"enabled": schema.BoolAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-				Optional:    true,
+				Description:         enabledDescription.Description,
+				MarkdownDescription: enabledDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: booldefault.StaticBool(true),
 			},
 
 			// "statements": schema.ListNestedAttribute{
@@ -137,14 +150,14 @@ func (r *EditorPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 			// },
 
 			"condition": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies configuration settings for an authorization condition to apply to the policy.").Description,
 				Optional:    true,
 
 				Attributes: dataConditionObjectSchemaAttributes(),
 			},
 
 			"combining_algorithm": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies configuration settings that determine how rules are combined to produce an authorization decision.").Description,
 				Required:    true,
 
 				Attributes: map[string]schema.Attribute{
@@ -170,20 +183,21 @@ func (r *EditorPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 			// },
 
 			"repetition_settings": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies configuration settings that appies the policy to each item of the specific attribute, filtered by decision.").Description,
 				Optional:    true,
 
 				Attributes: map[string]schema.Attribute{
 					"source": schema.SingleNestedAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies configuration settings for the source associated with the policy rule.").Description,
 						Required:    true,
 
 						Attributes: referenceIdObjectSchemaAttributes(framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the authorization policy repetition source in the policy manager.")),
 					},
 
 					"decision": schema.StringAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-						Required:    true,
+						Description:         repetitionSettingsDecisionDescription.Description,
+						MarkdownDescription: repetitionSettingsDecisionDescription.MarkdownDescription,
+						Required:            true,
 
 						Validators: []validator.String{
 							stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataPoliciesRepetitionSettingsDTODecisionEnumValues)...),
@@ -200,7 +214,7 @@ func (r *EditorPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 			},
 
 			"version": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a random ID generated by the system for concurrency control purposes.").Description,
 				Computed:    true,
 			},
 		},
