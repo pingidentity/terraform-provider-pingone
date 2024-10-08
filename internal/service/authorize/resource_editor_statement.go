@@ -7,18 +7,17 @@ import (
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -35,12 +34,9 @@ type editorStatementResourceModel struct {
 	AppliesIf     types.String                 `tfsdk:"applies_if"`
 	Payload       types.String                 `tfsdk:"payload"`
 	Obligatory    types.Bool                   `tfsdk:"obligatory"`
-	// TODO: is this a list or set
-	Attributes types.List   `tfsdk:"attributes"`
-	Version    types.String `tfsdk:"version"`
+	Attributes    types.Set                    `tfsdk:"attributes"`
+	Version       types.String                 `tfsdk:"version"`
 }
-
-type editorStatementAttributeResourceModel editorAttributeReferenceDataResourceModel
 
 // Framework interfaces
 var (
@@ -66,7 +62,7 @@ func (r *EditorStatementResource) Schema(ctx context.Context, req resource.Schem
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage Authorize editor statements in a PingOne environment.",
+		Description: "Resource to create and manage an authorization statement for the PingOne Authorize Policy Manager in a PingOne environment.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -103,7 +99,7 @@ func (r *EditorStatementResource) Schema(ctx context.Context, req resource.Schem
 				Required:    true,
 
 				Validators: []validator.String{
-					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataStatementsReferenceableStatementDTOAppliesToEnumValues)...),
 				},
 			},
 
@@ -112,7 +108,7 @@ func (r *EditorStatementResource) Schema(ctx context.Context, req resource.Schem
 				Required:    true,
 
 				Validators: []validator.String{
-					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataStatementsReferenceableStatementDTOAppliesToEnumValues)...),
 				},
 			},
 
@@ -130,25 +126,18 @@ func (r *EditorStatementResource) Schema(ctx context.Context, req resource.Schem
 				Optional:    true,
 			},
 
-			"version": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-				Optional:    true,
-			},
-
 			"attributes": schema.ListNestedAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
 				Required:    true,
 
 				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-							Required:    true,
-
-							CustomType: pingonetypes.ResourceIDType{},
-						},
-					},
+					Attributes: referenceIdObjectSchemaAttributes(),
 				},
+			},
+
+			"version": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+				Computed:    true,
 			},
 		},
 	}
@@ -204,7 +193,7 @@ func (r *EditorStatementResource) Create(ctx context.Context, req resource.Creat
 	}
 
 	// Run the API call
-	var response *authorize.AuthorizeEditorDataStatementsStatementDTO
+	var response *authorize.AuthorizeEditorDataStatementsReferenceableStatementDTO
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
@@ -246,7 +235,7 @@ func (r *EditorStatementResource) Read(ctx context.Context, req resource.ReadReq
 	}
 
 	// Run the API call
-	var response *authorize.AuthorizeEditorDataStatementsStatementDTO
+	var response *authorize.AuthorizeEditorDataStatementsReferenceableStatementDTO
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
@@ -298,7 +287,7 @@ func (r *EditorStatementResource) Update(ctx context.Context, req resource.Updat
 	}
 
 	// Run the API call
-	var response *authorize.AuthorizeEditorDataStatementsStatementDTO
+	var response *authorize.AuthorizeEditorDataStatementsReferenceableStatementDTO
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
@@ -395,7 +384,7 @@ func (p *editorStatementResourceModel) expandCreate(ctx context.Context) (*autho
 	var diags diag.Diagnostics
 
 	attributes := make([]authorize.AuthorizeEditorDataReferenceObjectDTO, 0)
-	var valueAttributesPlan []editorStatementAttributeResourceModel
+	var valueAttributesPlan []editorReferenceDataResourceModel
 	diags.Append(p.Attributes.ElementsAs(ctx, &valueAttributesPlan, false)...)
 	if diags.HasError() {
 		return nil, diags
@@ -409,8 +398,8 @@ func (p *editorStatementResourceModel) expandCreate(ctx context.Context) (*autho
 	data := authorize.NewAuthorizeEditorDataStatementsStatementDTO(
 		p.Name.ValueString(),
 		p.Code.ValueString(),
-		p.AppliesTo.ValueString(),
-		p.AppliesIf.ValueString(),
+		authorize.EnumAuthorizeEditorDataStatementsStatementDTOAppliesTo(p.AppliesTo.ValueString()),
+		authorize.EnumAuthorizeEditorDataStatementsStatementDTOAppliesIf(p.AppliesIf.ValueString()),
 		p.Payload.ValueString(),
 		attributes,
 	)
@@ -456,16 +445,7 @@ func (p *editorStatementResourceModel) expandUpdate(ctx context.Context) (*autho
 	return data, diags
 }
 
-func (p *editorStatementAttributeResourceModel) expand() *authorize.AuthorizeEditorDataReferenceObjectDTO {
-
-	data := authorize.NewAuthorizeEditorDataReferenceObjectDTO(
-		p.Id.ValueString(),
-	)
-
-	return data
-}
-
-func (p *editorStatementResourceModel) toState(apiObject *authorize.AuthorizeEditorDataStatementsStatementDTO) diag.Diagnostics {
+func (p *editorStatementResourceModel) toState(apiObject *authorize.AuthorizeEditorDataStatementsReferenceableStatementDTO) diag.Diagnostics {
 	var diags, d diag.Diagnostics
 
 	if apiObject == nil {
@@ -477,49 +457,18 @@ func (p *editorStatementResourceModel) toState(apiObject *authorize.AuthorizeEdi
 	}
 
 	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
+	// p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.Code = framework.StringOkToTF(apiObject.GetCodeOk())
-	p.AppliesTo = framework.StringOkToTF(apiObject.GetAppliesToOk())
-	p.AppliesIf = framework.StringOkToTF(apiObject.GetAppliesIfOk())
+	p.AppliesTo = framework.EnumOkToTF(apiObject.GetAppliesToOk())
+	p.AppliesIf = framework.EnumOkToTF(apiObject.GetAppliesIfOk())
 	p.Payload = framework.StringOkToTF(apiObject.GetPayloadOk())
 	p.Obligatory = framework.BoolOkToTF(apiObject.GetObligatoryOk())
-	// TODO: this isn't returned?
-	// p.Version = framework.PingOneResourceIDOkToTF(apiObject.GetVersionOk())
+	p.Version = framework.StringOkToTF(apiObject.GetVersionOk())
 
-	p.Attributes, d = editorStatementAttributesOkToTF(apiObject.GetAttributesOk())
+	p.Attributes, d = editorDataReferenceObjectOkToSetTF(apiObject.GetAttributesOk())
 	diags = append(diags, d...)
 
 	return diags
-}
-
-func editorStatementAttributesOkToTF(apiObject []authorize.AuthorizeEditorDataReferenceObjectDTO, ok bool) (basetypes.ListValue, diag.Diagnostics) {
-	return editorStatementReferenceObjectListOkToTF(apiObject, ok)
-}
-
-func editorStatementReferenceObjectListOkToTF(apiObject []authorize.AuthorizeEditorDataReferenceObjectDTO, ok bool) (basetypes.ListValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	tfObjType := types.ObjectType{AttrTypes: editorReferenceObjectTFObjectTypes}
-
-	if !ok || apiObject == nil {
-		return types.ListNull(tfObjType), diags
-	}
-
-	flattenedList := []attr.Value{}
-	for _, v := range apiObject {
-
-		flattenedObj, d := types.ObjectValue(editorReferenceObjectTFObjectTypes, map[string]attr.Value{
-			"id": framework.PingOneResourceIDOkToTF(v.GetIdOk()),
-		})
-		diags.Append(d...)
-
-		flattenedList = append(flattenedList, flattenedObj)
-	}
-
-	returnVar, d := types.ListValue(tfObjType, flattenedList)
-	diags.Append(d...)
-
-	return returnVar, diags
 }

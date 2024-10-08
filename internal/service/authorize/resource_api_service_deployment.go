@@ -534,7 +534,7 @@ func apiServiceDeploymentStatusOkToTF(apiObject *authorize.APIServerDeploymentSt
 	}
 
 	objValue, d := types.ObjectValue(apiServiceDeploymentStatusTFObjectTypes, map[string]attr.Value{
-		"code":  framework.StringOkToTF(apiObject.GetCodeOk()),
+		"code":  framework.EnumOkToTF(apiObject.GetCodeOk()),
 		"error": errorObj,
 	})
 	diags.Append(d...)

@@ -2,7 +2,6 @@ package authorize
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -17,7 +16,7 @@ import (
 func referenceIdObjectSchemaAttributes() (attributes map[string]schema.Attribute) {
 	attributes = map[string]schema.Attribute{
 		"id": schema.StringAttribute{
-			Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A string that specifies the %s resource's parent ID.  Must be a valid PingOne resource ID.", descriptionName)).Description,
+			Description: framework.SchemaAttributeDescriptionFromMarkdown("Must be a valid PingOne resource ID.").Description,
 			Required:    true,
 
 			CustomType: pingonetypes.ResourceIDType{},
@@ -55,6 +54,30 @@ func expandEditorReferenceData(ctx context.Context, referenceData basetypes.Obje
 func (p *editorReferenceDataResourceModel) expand() *authorize.AuthorizeEditorDataReferenceObjectDTO {
 	data := authorize.NewAuthorizeEditorDataReferenceObjectDTO(p.Id.ValueString())
 	return data
+}
+
+func editorDataReferenceObjectOkToSetTF(apiObject []authorize.AuthorizeEditorDataReferenceObjectDTO, ok bool) (basetypes.SetValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	tfObjType := types.ObjectType{AttrTypes: editorReferenceObjectTFObjectTypes}
+
+	if !ok || apiObject == nil {
+		return types.SetNull(tfObjType), diags
+	}
+
+	flattenedList := []attr.Value{}
+	for _, v := range apiObject {
+
+		flattenedObj, d := editorDataReferenceObjectOkToTF(&v, true)
+		diags.Append(d...)
+
+		flattenedList = append(flattenedList, flattenedObj)
+	}
+
+	returnVar, d := types.SetValue(tfObjType, flattenedList)
+	diags.Append(d...)
+
+	return returnVar, diags
 }
 
 func editorDataReferenceObjectOkToTF(apiObject *authorize.AuthorizeEditorDataReferenceObjectDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {

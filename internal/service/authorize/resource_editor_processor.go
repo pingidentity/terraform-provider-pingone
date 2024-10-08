@@ -57,7 +57,7 @@ func (r *EditorProcessorResource) Schema(ctx context.Context, req resource.Schem
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage Authorize editor processors in a PingOne environment.",
+		Description: "Resource to create and manage an authorization processor for the PingOne Authorize Trust Framework in a PingOne environment.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -87,11 +87,16 @@ func (r *EditorProcessorResource) Schema(ctx context.Context, req resource.Schem
 
 			"parent": parentObjectSchema("processor"),
 
-			"processor": dataProcessorObjectSchema("processor"),
+			"processor": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+				Required:    true,
+
+				Attributes: dataProcessorObjectSchemaAttributes(),
+			},
 
 			"version": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-				Optional:    true,
+				Computed:    true,
 			},
 		},
 	}
@@ -168,7 +173,7 @@ func (r *EditorProcessorResource) Create(ctx context.Context, req resource.Creat
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(state.toState(ctx, response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -213,7 +218,7 @@ func (r *EditorProcessorResource) Read(ctx context.Context, req resource.ReadReq
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response)...)
+	resp.Diagnostics.Append(data.toState(ctx, response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -262,7 +267,7 @@ func (r *EditorProcessorResource) Update(ctx context.Context, req resource.Updat
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(state.toState(ctx, response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -374,7 +379,7 @@ func (p *editorProcessorResourceModel) expand(ctx context.Context) (*authorize.A
 	return data, diags
 }
 
-func (p *editorProcessorResourceModel) toState(apiObject *authorize.AuthorizeEditorDataDefinitionsProcessorDefinitionDTO) diag.Diagnostics {
+func (p *editorProcessorResourceModel) toState(ctx context.Context, apiObject *authorize.AuthorizeEditorDataDefinitionsProcessorDefinitionDTO) diag.Diagnostics {
 	var diags, d diag.Diagnostics
 
 	if apiObject == nil {
@@ -395,7 +400,8 @@ func (p *editorProcessorResourceModel) toState(apiObject *authorize.AuthorizeEdi
 	p.Parent, d = editorParentOkToTF(apiObject.GetParentOk())
 	diags.Append(d...)
 
-	p.Processor, d = editorDataProcessorOkToTF(apiObject.GetProcessorOk())
+	processorVal, ok := apiObject.GetProcessorOk()
+	p.Processor, d = editorDataProcessorOkToTF(ctx, processorVal, ok)
 	diags.Append(d...)
 
 	return diags

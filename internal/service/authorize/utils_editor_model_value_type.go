@@ -17,8 +17,9 @@ import (
 
 func valueTypeObjectSchemaAttributes() (attributes map[string]schema.Attribute) {
 
-	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown("")
-	typeDescription = typeDescription.AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataValueTypeDTOEnumValues)
+	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataValueTypeDTOEnumValues)
 
 	attributes = map[string]schema.Attribute{
 		"type": schema.StringAttribute{

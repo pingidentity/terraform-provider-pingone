@@ -6,14 +6,12 @@ import (
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
@@ -41,71 +39,9 @@ type editorAttributeResourceModel struct {
 	ValueSchema      types.String                 `tfsdk:"value_schema"`
 }
 
-type editorAttributeManagedEntityResourceModel struct {
-	Owner        types.Object `tfsdk:"owner"`
-	Reference    types.Object `tfsdk:"reference"`
-	Restrictions types.Object `tfsdk:"restrictions"`
-}
-
-type editorAttributeManagedEntityOwnerResourceModel struct {
-	Service types.Object `tfsdk:"service"`
-}
-
-type editorAttributeManagedEntityOwnerServiceResourceModel struct {
-	Name types.String `tfsdk:"name"`
-}
-
-type editorAttributeManagedEntityReferenceResourceModel struct {
-	Id         types.String `tfsdk:"id"`
-	Type       types.String `tfsdk:"type"`
-	Name       types.String `tfsdk:"name"`
-	UiDeepLink types.String `tfsdk:"ui_deep_link"`
-}
-
-type editorAttributeManagedEntityRestrictionsResourceModel struct {
-	ReadOnly         types.Bool `tfsdk:"read_only"`
-	DisallowChildren types.Bool `tfsdk:"disallow_children"`
-}
-
 type editorAttributeResolversConditionResourceModel struct {
 	Type types.String `tfsdk:"type"`
 }
-
-var (
-	editorAttributeManagedEntityTFObjectTypes = map[string]attr.Type{
-		"owner":        types.ObjectType{AttrTypes: editorAttributeManagedEntityOwnerTFObjectTypes},
-		"reference":    types.ObjectType{AttrTypes: editorAttributeManagedEntityReferenceTFObjectTypes},
-		"restrictions": types.ObjectType{AttrTypes: editorAttributeManagedEntityRestrictionsTFObjectTypes},
-	}
-
-	editorAttributeManagedEntityOwnerTFObjectTypes = map[string]attr.Type{
-		"service": types.ObjectType{AttrTypes: editorAttributeManagedEntityOwnerServiceTFObjectTypes},
-	}
-
-	editorAttributeManagedEntityOwnerServiceTFObjectTypes = map[string]attr.Type{
-		"name": types.StringType,
-	}
-
-	editorAttributeManagedEntityReferenceTFObjectTypes = map[string]attr.Type{
-		"id":           types.StringType,
-		"type":         types.StringType,
-		"name":         types.StringType,
-		"ui_deep_link": types.StringType,
-	}
-
-	editorAttributeManagedEntityRestrictionsTFObjectTypes = map[string]attr.Type{
-		"read_only":         types.BoolType,
-		"disallow_children": types.BoolType,
-	}
-
-	editorAttributeResolversConditionTFObjectTypes = map[string]attr.Type{
-		"type": types.StringType,
-	}
-
-	editorAttributeValueTypeTFObjectTypes = map[string]attr.Type{
-		"type": types.StringType,
-	}
-)
 
 // Framework interfaces
 var (
@@ -135,7 +71,7 @@ func (r *EditorAttributeResource) Schema(ctx context.Context, req resource.Schem
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage authorization attributes for the PingOne Authorize Trust Framework in a PingOne environment.",
+		Description: "Resource to create and manage an authorization attribute for the PingOne Authorize Trust Framework in a PingOne environment.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(), // DONE
@@ -164,70 +100,7 @@ func (r *EditorAttributeResource) Schema(ctx context.Context, req resource.Schem
 				MarkdownDescription: managedEntityDescription.MarkdownDescription,
 				Optional:            true,
 
-				Attributes: map[string]schema.Attribute{
-					"owner": schema.SingleNestedAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-						Computed:    true,
-
-						Attributes: map[string]schema.Attribute{
-							"service": schema.SingleNestedAttribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-								Computed:    true,
-
-								Attributes: map[string]schema.Attribute{
-									"name": schema.StringAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-										Computed:    true,
-									},
-								},
-							},
-						},
-					},
-
-					"reference": schema.SingleNestedAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-						Computed:    true,
-
-						Attributes: map[string]schema.Attribute{
-							"id": schema.StringAttribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-								Computed:    true,
-							},
-
-							"type": schema.StringAttribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-								Computed:    true,
-							},
-
-							"name": schema.StringAttribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-								Computed:    true,
-							},
-
-							"ui_deep_link": schema.StringAttribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-								Computed:    true,
-							},
-						},
-					},
-
-					"restrictions": schema.SingleNestedAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-						Computed:    true,
-
-						Attributes: map[string]schema.Attribute{
-							"read_only": schema.BoolAttribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-								Computed:    true,
-							},
-
-							"disallow_children": schema.BoolAttribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-								Computed:    true,
-							},
-						},
-					},
-				},
+				Attributes: managedEntityObjectSchemaAttributes(),
 			},
 
 			"name": schema.StringAttribute{ // DONE
@@ -538,16 +411,8 @@ func (p *editorAttributeResourceModel) expand(ctx context.Context) (*authorize.A
 	}
 
 	if !p.ManagedEntity.IsNull() && !p.ManagedEntity.IsUnknown() {
-		var plan *editorAttributeManagedEntityResourceModel
-		diags.Append(p.ManagedEntity.As(ctx, &plan, basetypes.ObjectAsOptions{
-			UnhandledNullAsEmpty:    false,
-			UnhandledUnknownAsEmpty: false,
-		})...)
-		if diags.HasError() {
-			return nil, diags
-		}
 
-		managedEntity, d := plan.expand(ctx)
+		managedEntity, d := expandEditorManagedEntity(ctx, p.ManagedEntity)
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
@@ -619,125 +484,6 @@ func (p *editorAttributeResourceModel) expand(ctx context.Context) (*authorize.A
 	return data, diags
 }
 
-func (p *editorAttributeManagedEntityResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataManagedEntityDTO, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	var ownerPlan *editorAttributeManagedEntityOwnerResourceModel
-	diags.Append(p.Owner.As(ctx, &ownerPlan, basetypes.ObjectAsOptions{
-		UnhandledNullAsEmpty:    false,
-		UnhandledUnknownAsEmpty: false,
-	})...)
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	owner, d := ownerPlan.expand(ctx)
-	diags.Append(d...)
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	data := authorize.NewAuthorizeEditorDataManagedEntityDTO(*owner)
-
-	if !p.Reference.IsNull() && !p.Reference.IsUnknown() {
-		var plan *editorAttributeManagedEntityReferenceResourceModel
-		diags.Append(p.Reference.As(ctx, &plan, basetypes.ObjectAsOptions{
-			UnhandledNullAsEmpty:    false,
-			UnhandledUnknownAsEmpty: false,
-		})...)
-		if diags.HasError() {
-			return nil, diags
-		}
-
-		reference := plan.expand()
-
-		data.SetReference(*reference)
-	}
-
-	if !p.Restrictions.IsNull() && !p.Restrictions.IsUnknown() {
-		var plan *editorAttributeManagedEntityRestrictionsResourceModel
-		diags.Append(p.Restrictions.As(ctx, &plan, basetypes.ObjectAsOptions{
-			UnhandledNullAsEmpty:    false,
-			UnhandledUnknownAsEmpty: false,
-		})...)
-		if diags.HasError() {
-			return nil, diags
-		}
-
-		restrictions := plan.expand()
-
-		data.SetRestrictions(*restrictions)
-	}
-
-	return data, diags
-}
-
-func (p *editorAttributeManagedEntityOwnerResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataManagedEntityOwnerDTO, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	var servicePlan *editorAttributeManagedEntityOwnerServiceResourceModel
-	diags.Append(p.Service.As(ctx, &servicePlan, basetypes.ObjectAsOptions{
-		UnhandledNullAsEmpty:    false,
-		UnhandledUnknownAsEmpty: false,
-	})...)
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	service := servicePlan.expand()
-
-	data := authorize.NewAuthorizeEditorDataManagedEntityOwnerDTO(*service)
-
-	return data, diags
-}
-
-func (p *editorAttributeManagedEntityOwnerServiceResourceModel) expand() *authorize.AuthorizeEditorDataServiceObjectDTO {
-
-	data := authorize.NewAuthorizeEditorDataServiceObjectDTO(
-		p.Name.ValueString(),
-	)
-
-	return data
-}
-
-func (p *editorAttributeManagedEntityReferenceResourceModel) expand() *authorize.AuthorizeEditorDataManagedEntityManagedEntityReferenceDTO {
-
-	data := authorize.NewAuthorizeEditorDataManagedEntityManagedEntityReferenceDTO()
-
-	if !p.Id.IsNull() && !p.Id.IsUnknown() {
-		data.SetId(p.Id.ValueString())
-	}
-
-	if !p.Type.IsNull() && !p.Type.IsUnknown() {
-		data.SetType(p.Type.ValueString())
-	}
-
-	if !p.Name.IsNull() && !p.Name.IsUnknown() {
-		data.SetName(p.Name.ValueString())
-	}
-
-	if !p.UiDeepLink.IsNull() && !p.UiDeepLink.IsUnknown() {
-		data.SetUiDeepLink(p.UiDeepLink.ValueString())
-	}
-
-	return data
-}
-
-func (p *editorAttributeManagedEntityRestrictionsResourceModel) expand() *authorize.AuthorizeEditorDataManagedEntityRestrictionsDTO {
-
-	data := authorize.NewAuthorizeEditorDataManagedEntityRestrictionsDTO()
-
-	if !p.ReadOnly.IsNull() && !p.ReadOnly.IsUnknown() {
-		data.SetReadOnly(p.ReadOnly.ValueBool())
-	}
-
-	if !p.DisallowChildren.IsNull() && !p.DisallowChildren.IsUnknown() {
-		data.SetDisallowChildren(p.DisallowChildren.ValueBool())
-	}
-
-	return data
-}
-
 func (p *editorAttributeResourceModel) toState(ctx context.Context, apiObject *authorize.AuthorizeEditorDataDefinitionsAttributeDefinitionDTO) diag.Diagnostics {
 	var diags, d diag.Diagnostics
 
@@ -755,7 +501,7 @@ func (p *editorAttributeResourceModel) toState(ctx context.Context, apiObject *a
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.FullName = framework.StringOkToTF(apiObject.GetFullNameOk())
 
-	p.ManagedEntity, d = editorAttributeManagedEntityOkToTF(apiObject.GetManagedEntityOk())
+	p.ManagedEntity, d = editorManagedEntityOkToTF(apiObject.GetManagedEntityOk())
 	diags.Append(d...)
 
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
@@ -783,112 +529,4 @@ func (p *editorAttributeResourceModel) toState(ctx context.Context, apiObject *a
 	p.Version = framework.StringOkToTF(apiObject.GetVersionOk())
 
 	return diags
-}
-
-func editorAttributeManagedEntityOkToTF(apiObject *authorize.AuthorizeEditorDataManagedEntityDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags, d diag.Diagnostics
-
-	if !ok || apiObject == nil {
-		return types.ObjectNull(editorAttributeManagedEntityTFObjectTypes), diags
-	}
-
-	owner, d := editorAttributeManagedEntityOwnerOkToTF(apiObject.GetOwnerOk())
-	diags.Append(d...)
-
-	reference, d := editorAttributeManagedEntityReferenceOkToTF(apiObject.GetReferenceOk())
-	diags.Append(d...)
-
-	restrictions, d := editorAttributeManagedEntityRestrictionsOkToTF(apiObject.GetRestrictionsOk())
-	diags.Append(d...)
-
-	objValue, d := types.ObjectValue(editorAttributeManagedEntityTFObjectTypes, map[string]attr.Value{
-		"owner":        owner,
-		"reference":    reference,
-		"restrictions": restrictions,
-	})
-	diags.Append(d...)
-
-	return objValue, diags
-}
-
-func editorAttributeManagedEntityOwnerOkToTF(apiObject *authorize.AuthorizeEditorDataManagedEntityOwnerDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if !ok || apiObject == nil {
-		return types.ObjectNull(editorAttributeManagedEntityOwnerTFObjectTypes), diags
-	}
-
-	service, d := editorAttributeManagedEntityOwnerServiceOkToTF(apiObject.GetServiceOk())
-	diags.Append(d...)
-
-	objValue, d := types.ObjectValue(editorAttributeManagedEntityOwnerTFObjectTypes, map[string]attr.Value{
-		"service": service,
-	})
-	diags.Append(d...)
-
-	return objValue, diags
-}
-
-func editorAttributeManagedEntityOwnerServiceOkToTF(apiObject *authorize.AuthorizeEditorDataServiceObjectDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if !ok || apiObject == nil {
-		return types.ObjectNull(editorAttributeManagedEntityOwnerServiceTFObjectTypes), diags
-	}
-
-	objValue, d := types.ObjectValue(editorAttributeManagedEntityOwnerServiceTFObjectTypes, map[string]attr.Value{
-		"name": framework.StringOkToTF(apiObject.GetNameOk()),
-	})
-	diags.Append(d...)
-
-	return objValue, diags
-}
-
-func editorAttributeManagedEntityReferenceOkToTF(apiObject *authorize.AuthorizeEditorDataManagedEntityManagedEntityReferenceDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if !ok || apiObject == nil {
-		return types.ObjectNull(editorAttributeManagedEntityReferenceTFObjectTypes), diags
-	}
-
-	objValue, d := types.ObjectValue(editorAttributeManagedEntityReferenceTFObjectTypes, map[string]attr.Value{
-		"id":           framework.StringOkToTF(apiObject.GetIdOk()),
-		"type":         framework.StringOkToTF(apiObject.GetTypeOk()),
-		"name":         framework.StringOkToTF(apiObject.GetNameOk()),
-		"ui_deep_link": framework.StringOkToTF(apiObject.GetUiDeepLinkOk()),
-	})
-	diags.Append(d...)
-
-	return objValue, diags
-}
-
-func editorAttributeManagedEntityRestrictionsOkToTF(apiObject *authorize.AuthorizeEditorDataManagedEntityRestrictionsDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if !ok || apiObject == nil {
-		return types.ObjectNull(editorAttributeManagedEntityRestrictionsTFObjectTypes), diags
-	}
-
-	objValue, d := types.ObjectValue(editorAttributeManagedEntityRestrictionsTFObjectTypes, map[string]attr.Value{
-		"read_only":         framework.BoolOkToTF(apiObject.GetReadOnlyOk()),
-		"disallow_children": framework.BoolOkToTF(apiObject.GetDisallowChildrenOk()),
-	})
-	diags.Append(d...)
-
-	return objValue, diags
-}
-
-func editorAttributeResolversConditionOkToTF(apiObject *authorize.AuthorizeEditorDataConditionDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if !ok || apiObject == nil {
-		return types.ObjectNull(editorAttributeResolversConditionTFObjectTypes), diags
-	}
-
-	objValue, d := types.ObjectValue(editorAttributeResolversConditionTFObjectTypes, map[string]attr.Value{
-		"type": framework.EnumOkToTF(apiObject.GetTypeOk()),
-	})
-	diags.Append(d...)
-
-	return objValue, diags
 }

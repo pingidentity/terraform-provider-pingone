@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
@@ -69,7 +68,7 @@ func (r *EditorConditionResource) Schema(ctx context.Context, req resource.Schem
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage Authorize editor conditions in a PingOne environment.",
+		Description: "Resource to create and manage an authorization condition for the PingOne Authorize Trust Framework in a PingOne environment.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -103,17 +102,12 @@ func (r *EditorConditionResource) Schema(ctx context.Context, req resource.Schem
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
 				Required:    true,
 
-				Attributes: map[string]schema.Attribute{
-					"type": schema.StringAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-						Required:    true,
-					},
-				},
+				Attributes: dataConditionObjectSchemaAttributes(),
 			},
 
 			"version": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-				Optional:    true,
+				Computed:    true,
 			},
 		},
 	}
@@ -190,7 +184,7 @@ func (r *EditorConditionResource) Create(ctx context.Context, req resource.Creat
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(state.toState(ctx, response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -235,7 +229,7 @@ func (r *EditorConditionResource) Read(ctx context.Context, req resource.ReadReq
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response)...)
+	resp.Diagnostics.Append(data.toState(ctx, response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -284,7 +278,7 @@ func (r *EditorConditionResource) Update(ctx context.Context, req resource.Updat
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(state.toState(ctx, response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -359,16 +353,11 @@ func (r *EditorConditionResource) ImportState(ctx context.Context, req resource.
 func (p *editorConditionResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataDefinitionsConditionDefinitionDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var valueConditionPlan *editorConditionConditionResourceModel
-	diags.Append(p.Condition.As(ctx, &valueConditionPlan, basetypes.ObjectAsOptions{
-		UnhandledNullAsEmpty:    false,
-		UnhandledUnknownAsEmpty: false,
-	})...)
+	condition, d := expandEditorDataCondition(ctx, p.Condition)
+	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
 	}
-
-	condition := valueConditionPlan.expand()
 
 	// Main object
 	data := authorize.NewAuthorizeEditorDataDefinitionsConditionDefinitionDTO(
@@ -401,16 +390,7 @@ func (p *editorConditionResourceModel) expand(ctx context.Context) (*authorize.A
 	return data, diags
 }
 
-func (p *editorConditionConditionResourceModel) expand() *authorize.AuthorizeEditorDataConditionDTO {
-
-	data := authorize.NewAuthorizeEditorDataConditionDTO(
-		authorize.EnumAuthorizeEditorDataConditionDTOType(p.Type.ValueString()),
-	)
-
-	return data
-}
-
-func (p *editorConditionResourceModel) toState(apiObject *authorize.AuthorizeEditorDataDefinitionsConditionDefinitionDTO) diag.Diagnostics {
+func (p *editorConditionResourceModel) toState(ctx context.Context, apiObject *authorize.AuthorizeEditorDataDefinitionsConditionDefinitionDTO) diag.Diagnostics {
 	var diags, d diag.Diagnostics
 
 	if apiObject == nil {
@@ -431,23 +411,9 @@ func (p *editorConditionResourceModel) toState(apiObject *authorize.AuthorizeEdi
 	p.Parent, d = editorParentOkToTF(apiObject.GetParentOk())
 	diags.Append(d...)
 
-	p.Condition, d = editorConditionConditionOkToTF(apiObject.GetConditionOk())
+	conditionValue, ok := apiObject.GetConditionOk()
+	p.Condition, d = editorDataConditionOkToTF(ctx, conditionValue, ok)
 	diags.Append(d...)
 
 	return diags
-}
-
-func editorConditionConditionOkToTF(apiObject *authorize.AuthorizeEditorDataConditionDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if !ok || apiObject == nil {
-		return types.ObjectNull(editorConditionConditionTFObjectTypes), diags
-	}
-
-	objValue, d := types.ObjectValue(editorConditionConditionTFObjectTypes, map[string]attr.Value{
-		"type": framework.EnumOkToTF(apiObject.GetTypeOk()),
-	})
-	diags.Append(d...)
-
-	return objValue, diags
 }

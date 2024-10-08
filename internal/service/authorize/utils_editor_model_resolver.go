@@ -43,14 +43,6 @@ func dataResolverObjectSchemaAttributes() (attributes map[string]schema.Attribut
 		"",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_USER)))
 
-	queryTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataAttributeResolversUserQueryDTOTypeEnumValues)
-
-	queryUserIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAATTRIBUTERESOLVERSUSERQUERYDTOTYPE_USER_ID)))
-
 	attributes = map[string]schema.Attribute{
 		"condition": schema.ListNestedAttribute{
 			Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
@@ -162,30 +154,7 @@ func dataResolverObjectSchemaAttributes() (attributes map[string]schema.Attribut
 			MarkdownDescription: queryDescription.MarkdownDescription,
 			Optional:            true,
 
-			Attributes: map[string]schema.Attribute{
-				"type": schema.StringAttribute{
-					Description:         queryTypeDescription.Description,
-					MarkdownDescription: queryTypeDescription.MarkdownDescription,
-					Required:            true,
-
-					Validators: []validator.String{
-						stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataAttributeResolversUserQueryDTOTypeEnumValues)...),
-					},
-				},
-
-				"user_id": schema.StringAttribute{
-					Description:         queryUserIdDescription.Description,
-					MarkdownDescription: queryUserIdDescription.MarkdownDescription,
-					Optional:            true,
-
-					Validators: []validator.String{
-						stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-							types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAATTRIBUTERESOLVERSUSERQUERYDTOTYPE_USER_ID)),
-							path.MatchRelative().AtParent().AtName("type"),
-						),
-					},
-				},
-			},
+			Attributes: dataResolverQueryObjectSchemaAttributes(),
 
 			Validators: []validator.Object{
 				objectvalidatorinternal.IsRequiredIfMatchesPathValue(
@@ -210,26 +179,16 @@ type editorDataResolverResourceModel struct {
 	Query     types.Object `tfsdk:"query"`
 }
 
-type editorDataResolverQueryResourceModel struct {
-	Type   types.String `tfsdk:"type"`
-	UserId types.String `tfsdk:"user_id"`
-}
-
 var (
 	editorDataResolverTFObjectTypes = map[string]attr.Type{
-		"condition":  types.ObjectType{AttrTypes: editorAttributeResolversConditionTFObjectTypes},
+		"condition":  types.ObjectType{AttrTypes: editorDataConditionTFObjectTypes},
 		"name":       types.StringType,
 		"processor":  types.ObjectType{AttrTypes: editorDataProcessorTFObjectTypes},
 		"type":       types.StringType,
 		"value_ref":  types.ObjectType{AttrTypes: editorReferenceObjectTFObjectTypes},
 		"value_type": types.ObjectType{AttrTypes: editorValueTypeTFObjectTypes},
 		"value":      types.StringType,
-		"query":      types.ObjectType{AttrTypes: editorResolverQueryTFObjectTypes},
-	}
-
-	editorResolverQueryTFObjectTypes = map[string]attr.Type{
-		"type":    types.StringType,
-		"user_id": types.StringType,
+		"query":      types.ObjectType{AttrTypes: editorDataResolverQueryTFObjectTypes},
 	}
 )
 
@@ -595,6 +554,12 @@ func (p *editorDataResolverResourceModel) expandSystemResolver(ctx context.Conte
 func (p *editorDataResolverResourceModel) expandUserResolver(ctx context.Context) (*authorize.AuthorizeEditorDataAttributeResolversUserResolverDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	query, d := expandEditorResolverQuery(ctx, p.Query)
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
 	data := authorize.NewAuthorizeEditorDataAttributeResolversUserResolverDTO(
 		authorize.EnumAuthorizeEditorDataResolverDTOType(p.Type.ValueString()),
 		*query,
@@ -698,6 +663,17 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 	switch t := apiObject.GetActualInstance().(type) {
 	case authorize.AuthorizeEditorDataAttributeResolversAttributeResolverDTO:
 
+		conditionValue, ok := t.GetConditionOk()
+		condition, d := editorDataConditionOkToTF(ctx, conditionValue, ok)
+		diags.Append(d...)
+
+		processorValue, ok := t.GetProcessorOk()
+		processor, d := editorDataProcessorOkToTF(ctx, processorValue, ok)
+		diags.Append(d...)
+
+		valueRef, d := editorDataReferenceObjectOkToTF(t.GetValueOk())
+		diags.Append(d...)
+
 		attributeMap = map[string]attr.Value{
 			"condition": condition,
 			"name":      framework.StringOkToTF(t.GetNameOk()),
@@ -707,6 +683,17 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 		}
 
 	case authorize.AuthorizeEditorDataAttributeResolversConstantResolverDTO:
+
+		conditionValue, ok := t.GetConditionOk()
+		condition, d := editorDataConditionOkToTF(ctx, conditionValue, ok)
+		diags.Append(d...)
+
+		processorValue, ok := t.GetProcessorOk()
+		processor, d := editorDataProcessorOkToTF(ctx, processorValue, ok)
+		diags.Append(d...)
+
+		valueType, d := editorValueTypeOkToTF(t.GetValueTypeOk())
+		diags.Append(d...)
 
 		attributeMap = map[string]attr.Value{
 			"condition":  condition,
@@ -719,6 +706,14 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 
 	case authorize.AuthorizeEditorDataAttributeResolversCurrentRepetitionValueResolverDTO:
 
+		conditionValue, ok := t.GetConditionOk()
+		condition, d := editorDataConditionOkToTF(ctx, conditionValue, ok)
+		diags.Append(d...)
+
+		processorValue, ok := t.GetProcessorOk()
+		processor, d := editorDataProcessorOkToTF(ctx, processorValue, ok)
+		diags.Append(d...)
+
 		attributeMap = map[string]attr.Value{
 			"condition": condition,
 			"name":      framework.StringOkToTF(t.GetNameOk()),
@@ -727,6 +722,14 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 		}
 
 	case authorize.AuthorizeEditorDataAttributeResolversCurrentUserIDResolverDTO:
+
+		conditionValue, ok := t.GetConditionOk()
+		condition, d := editorDataConditionOkToTF(ctx, conditionValue, ok)
+		diags.Append(d...)
+
+		processorValue, ok := t.GetProcessorOk()
+		processor, d := editorDataProcessorOkToTF(ctx, processorValue, ok)
+		diags.Append(d...)
 
 		attributeMap = map[string]attr.Value{
 			"condition": condition,
@@ -737,6 +740,14 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 
 	case authorize.AuthorizeEditorDataAttributeResolversRequestResolverDTO:
 
+		conditionValue, ok := t.GetConditionOk()
+		condition, d := editorDataConditionOkToTF(ctx, conditionValue, ok)
+		diags.Append(d...)
+
+		processorValue, ok := t.GetProcessorOk()
+		processor, d := editorDataProcessorOkToTF(ctx, processorValue, ok)
+		diags.Append(d...)
+
 		attributeMap = map[string]attr.Value{
 			"condition": condition,
 			"name":      framework.StringOkToTF(t.GetNameOk()),
@@ -745,6 +756,17 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 		}
 
 	case authorize.AuthorizeEditorDataAttributeResolversServiceResolverDTO:
+
+		conditionValue, ok := t.GetConditionOk()
+		condition, d := editorDataConditionOkToTF(ctx, conditionValue, ok)
+		diags.Append(d...)
+
+		processorValue, ok := t.GetProcessorOk()
+		processor, d := editorDataProcessorOkToTF(ctx, processorValue, ok)
+		diags.Append(d...)
+
+		valueRef, d := editorDataReferenceObjectOkToTF(t.GetValueOk())
+		diags.Append(d...)
 
 		attributeMap = map[string]attr.Value{
 			"condition": condition,
@@ -756,6 +778,14 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 
 	case authorize.AuthorizeEditorDataAttributeResolversSystemResolverDTO:
 
+		conditionValue, ok := t.GetConditionOk()
+		condition, d := editorDataConditionOkToTF(ctx, conditionValue, ok)
+		diags.Append(d...)
+
+		processorValue, ok := t.GetProcessorOk()
+		processor, d := editorDataProcessorOkToTF(ctx, processorValue, ok)
+		diags.Append(d...)
+
 		attributeMap = map[string]attr.Value{
 			"condition": condition,
 			"name":      framework.StringOkToTF(t.GetNameOk()),
@@ -765,6 +795,18 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 		}
 
 	case authorize.AuthorizeEditorDataAttributeResolversUserResolverDTO:
+
+		conditionValue, ok := t.GetConditionOk()
+		condition, d := editorDataConditionOkToTF(ctx, conditionValue, ok)
+		diags.Append(d...)
+
+		processorValue, ok := t.GetProcessorOk()
+		processor, d := editorDataProcessorOkToTF(ctx, processorValue, ok)
+		diags.Append(d...)
+
+		queryValue, ok := t.GetQueryOk()
+		query, d := editorDataResolverQueryOkToTF(ctx, queryValue, ok)
+		diags.Append(d...)
 
 		attributeMap = map[string]attr.Value{
 			"condition": condition,
@@ -801,7 +843,7 @@ func editorDataResolverConvertEmptyValuesToTFNulls(attributeMap map[string]attr.
 		"value_ref":  types.ObjectNull(editorReferenceObjectTFObjectTypes),
 		"value_type": types.ObjectNull(editorValueTypeTFObjectTypes),
 		"value":      types.StringNull(),
-		"query":      types.ObjectNull(editorResolverQueryTFObjectTypes),
+		"query":      types.ObjectNull(editorDataResolverQueryTFObjectTypes),
 	}
 
 	for k := range nullMap {
