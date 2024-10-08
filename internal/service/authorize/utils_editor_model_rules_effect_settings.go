@@ -23,11 +23,11 @@ import (
 func dataRulesEffectSettingsObjectSchemaAttributes() (attributes map[string]schema.Attribute) {
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A string that specifies the type of the policy combination effect settings.",
 	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataRulesEffectSettingsDTOTypeEnumValues)
 
 	conditionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"An object that specifies the configuration settings for the condition to apply to the conditional policy combination effect settings.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_CONDITIONAL_DENY_ELSE_PERMIT), string(authorize.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_CONDITIONAL_PERMIT_ELSE_DENY)))
 
 	attributes = map[string]schema.Attribute{
@@ -60,6 +60,14 @@ func dataRulesEffectSettingsObjectSchemaAttributes() (attributes map[string]sche
 				),
 				objectvalidatorinternal.IsRequiredIfMatchesPathValue(
 					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_CONDITIONAL_PERMIT_ELSE_DENY)),
+					path.MatchRelative().AtParent().AtName("type"),
+				),
+				objectvalidatorinternal.ConflictsIfMatchesPathValue(
+					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_UNCONDITIONAL_DENY)),
+					path.MatchRelative().AtParent().AtName("type"),
+				),
+				objectvalidatorinternal.ConflictsIfMatchesPathValue(
+					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_UNCONDITIONAL_PERMIT)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 			},

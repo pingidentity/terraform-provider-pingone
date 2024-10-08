@@ -31,7 +31,7 @@ func dataProcessorObjectSchemaAttributes() (attributes map[string]schema.Attribu
 }
 func dataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes map[string]schema.Attribute) {
 
-	supportedProcessorTypes := authorize.AllowedEnumAuthorizeEditorDataProcessorDTOTypeEnumValues
+	supportedTypes := authorize.AllowedEnumAuthorizeEditorDataProcessorDTOTypeEnumValues
 
 	if iteration >= processorNestedIterationMaxDepth {
 
@@ -42,12 +42,12 @@ func dataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes m
 			"XPATH",
 		}
 
-		supportedProcessorTypes = newSupportedTypes
+		supportedTypes = newSupportedTypes
 	}
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the processor type.",
-	).AllowedValuesEnum(supportedProcessorTypes)
+	).AllowedValuesEnum(supportedTypes)
 
 	processorsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The list of processors to apply in the given order.",
@@ -85,13 +85,13 @@ func dataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes m
 			Required:            true,
 
 			Validators: []validator.String{
-				stringvalidator.OneOf(utils.EnumSliceToStringSlice(supportedProcessorTypes)...),
+				stringvalidator.OneOf(utils.EnumSliceToStringSlice(supportedTypes)...),
 			},
 		},
 	}
 
 	// type == "CHAIN"
-	if slices.Contains(supportedProcessorTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_CHAIN) {
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_CHAIN) {
 		attributes["processors"] = schema.ListNestedAttribute{
 			Description:         processorsDescription.Description,
 			MarkdownDescription: processorsDescription.MarkdownDescription,
@@ -111,7 +111,7 @@ func dataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes m
 	}
 
 	// type == "COLLECTION_FILTER"
-	if slices.Contains(supportedProcessorTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_COLLECTION_FILTER) {
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_COLLECTION_FILTER) {
 		attributes["predicate"] = schema.SingleNestedAttribute{
 			Description:         predicateDescription.Description,
 			MarkdownDescription: predicateDescription.MarkdownDescription,
@@ -129,7 +129,7 @@ func dataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes m
 	}
 
 	// type == "COLLECTION_TRANSFORM"
-	if slices.Contains(supportedProcessorTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_COLLECTION_TRANSFORM) {
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_COLLECTION_TRANSFORM) {
 		attributes["processor"] = schema.SingleNestedAttribute{
 			Description:         processorDescription.Description,
 			MarkdownDescription: processorDescription.MarkdownDescription,
@@ -147,9 +147,9 @@ func dataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes m
 	}
 
 	// type == "JSON_PATH", type == "SPEL", type == "XPATH"
-	if slices.Contains(supportedProcessorTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_JSON_PATH) ||
-		slices.Contains(supportedProcessorTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_SPEL) ||
-		slices.Contains(supportedProcessorTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_XPATH) {
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_JSON_PATH) ||
+		slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_SPEL) ||
+		slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_XPATH) {
 		attributes["expression"] = schema.StringAttribute{
 			Description:         expressionDescription.Description,
 			MarkdownDescription: expressionDescription.MarkdownDescription,
@@ -196,7 +196,7 @@ func dataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes m
 	}
 
 	// type == "REFERENCE"
-	if slices.Contains(supportedProcessorTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_REFERENCE) {
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_REFERENCE) {
 		attributes["processor_ref"] = schema.SingleNestedAttribute{
 			Description:         processorRefDescription.Description,
 			MarkdownDescription: processorRefDescription.MarkdownDescription,

@@ -3,6 +3,7 @@ package authorize
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -31,38 +32,46 @@ func dataConditionObjectSchemaAttributes() (attributes map[string]schema.Attribu
 
 func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes map[string]schema.Attribute) {
 
+	supportedTypes := authorize.AllowedEnumAuthorizeEditorDataConditionDTOTypeEnumValues
+
+	if iteration >= conditionNestedIterationMaxDepth {
+
+		newSupportedTypes := []authorize.EnumAuthorizeEditorDataConditionDTOType{
+			"COMPARISON",
+			"EMPTY",
+			"REFERENCE",
+		}
+
+		supportedTypes = newSupportedTypes
+	}
+
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the condition type.",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataConditionDTOTypeEnumValues)
+		"A string that specifies the authorization condition type.",
+	).AllowedValuesEnum(supportedTypes)
 
 	comparatorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataConditionsComparisonConditionDTOComparatorEnumValues).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON)))
+		"A string that specifies the comparison operator used to evaluate the authorization condition.",
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON))).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataConditionsComparisonConditionDTOComparatorEnumValues)
 
 	leftDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"An object that specifies configuration settings that apply to the left side of the authorization condition statement.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON)))
 
 	rightDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"An object that specifies configuration settings that apply to the right side of the authorization condition statement.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON)))
 
 	conditionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A set of objects that specifies configuration settings for multiple authorization conditions to evaluate.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_AND), string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_OR)))
 
 	conditionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"An object that specifies configuration settings for a single authorization condition to evaluate.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_NOT)))
 
 	referenceDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"An object that specifies configuration settings for the authorization condition reference to evaluate.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_REFERENCE)))
-
-	if iteration >= conditionNestedIterationMaxDepth {
-		attributes = map[string]schema.Attribute{}
-		return attributes
-	}
 
 	attributes = map[string]schema.Attribute{
 		"type": schema.StringAttribute{
@@ -71,12 +80,14 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 			Required:            true,
 
 			Validators: []validator.String{
-				stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataConditionDTOTypeEnumValues)...),
+				stringvalidator.OneOf(utils.EnumSliceToStringSlice(supportedTypes)...),
 			},
 		},
+	}
 
-		// type == "COMPARISON"
-		"comparator": schema.StringAttribute{
+	// type == "COMPARISON"
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON) {
+		attributes["comparator"] = schema.StringAttribute{
 			Description:         comparatorDescription.Description,
 			MarkdownDescription: comparatorDescription.MarkdownDescription,
 			Required:            true,
@@ -88,9 +99,9 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 			},
-		},
+		}
 
-		"left": schema.SingleNestedAttribute{
+		attributes["left"] = schema.SingleNestedAttribute{
 			Description:         leftDescription.Description,
 			MarkdownDescription: leftDescription.MarkdownDescription,
 			Optional:            true,
@@ -103,9 +114,9 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 			},
 
 			Attributes: dataConditionComparandObjectSchemaAttributes(),
-		},
+		}
 
-		"right": schema.SingleNestedAttribute{
+		attributes["right"] = schema.SingleNestedAttribute{
 			Description:         rightDescription.Description,
 			MarkdownDescription: rightDescription.MarkdownDescription,
 			Optional:            true,
@@ -118,10 +129,13 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 			},
 
 			Attributes: dataConditionComparandObjectSchemaAttributes(),
-		},
+		}
+	}
 
-		// type == "AND", type == "OR"
-		"conditions": schema.SetNestedAttribute{
+	// type == "AND", type == "OR"
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_AND) ||
+		slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_OR) {
+		attributes["conditions"] = schema.SetNestedAttribute{
 			Description:         conditionsDescription.Description,
 			MarkdownDescription: conditionsDescription.MarkdownDescription,
 			Optional:            true,
@@ -140,13 +154,15 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 			NestedObject: schema.NestedAttributeObject{
 				Attributes: dataConditionObjectSchemaAttributesIteration(iteration + 1),
 			},
-		},
+		}
+	}
 
-		// type == "EMPTY"
-		// (same as base object)
+	// type == "EMPTY"
+	// (same as base object)
 
-		// type == "NOT"
-		"condition": schema.SingleNestedAttribute{
+	// type == "NOT"
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_NOT) {
+		attributes["condition"] = schema.SingleNestedAttribute{
 			Description:         conditionDescription.Description,
 			MarkdownDescription: conditionDescription.MarkdownDescription,
 			Optional:            true,
@@ -159,10 +175,12 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 			},
 
 			Attributes: dataConditionObjectSchemaAttributesIteration(iteration + 1),
-		},
+		}
+	}
 
-		// type == "REFERENCE"
-		"reference": schema.SingleNestedAttribute{
+	// type == "REFERENCE"
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_REFERENCE) {
+		attributes["reference"] = schema.SingleNestedAttribute{
 			Description:         referenceDescription.Description,
 			MarkdownDescription: referenceDescription.MarkdownDescription,
 			Optional:            true,
@@ -175,7 +193,7 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 			},
-		},
+		}
 	}
 
 	return attributes

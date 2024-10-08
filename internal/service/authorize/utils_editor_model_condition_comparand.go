@@ -24,15 +24,15 @@ import (
 func dataConditionComparandObjectSchemaAttributes() (attributes map[string]schema.Attribute) {
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the condition comparand type.",
+		"A string that specifies the authorization condition comparand type.",
 	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataConditionsComparandDTOTypeEnumValues)
 
 	idDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONSCOMPARANDDTOTYPE_ATTRIBUTE)))
+		"A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.",
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONSCOMPARANDDTOTYPE_ATTRIBUTE))).AppendMarkdownString("Must be a valid PingOne resource ID.")
 
 	valueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"A string that specifies a constant text value to use as the condition comparand.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONSCOMPARANDDTOTYPE_CONSTANT)))
 
 	attributes = map[string]schema.Attribute{
