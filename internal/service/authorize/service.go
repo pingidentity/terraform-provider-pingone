@@ -18,13 +18,13 @@ func Resources() []func() resource.Resource {
 		NewApplicationResourcePermissionResource,
 		NewApplicationRolePermissionResource,
 		NewApplicationRoleResource,
-		NewEditorAttributeResource,
-		NewEditorConditionResource,
-		NewEditorPolicyResource,
-		NewEditorProcessorResource,
-		NewEditorRuleResource,
-		NewEditorServiceResource,
-		NewEditorStatementResource,
+		NewTrustFrameworkAttributeResource,
+		NewTrustFrameworkConditionResource,
+		NewPolicyManagementPolicyResource,
+		NewTrustFrameworkProcessorResource,
+		NewPolicyManagementRuleResource,
+		NewTrustFrameworkServiceResource,
+		NewPolicyManagementStatementResource,
 	}
 }
 
