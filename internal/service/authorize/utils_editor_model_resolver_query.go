@@ -55,7 +55,7 @@ func dataResolverQueryObjectSchemaAttributes() (attributes map[string]schema.Att
 		},
 	}
 
-	return
+	return attributes
 }
 
 type editorDataResolverQueryResourceModel struct {
@@ -80,7 +80,7 @@ func expandEditorResolverQuery(ctx context.Context, query basetypes.ObjectValue)
 		return
 	}
 
-	queryObject, d := plan.expand(ctx)
+	queryObject, d := plan.expand()
 	diags.Append(d...)
 	if diags.HasError() {
 		return
@@ -89,7 +89,7 @@ func expandEditorResolverQuery(ctx context.Context, query basetypes.ObjectValue)
 	return
 }
 
-func (p *editorDataResolverQueryResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataAttributeResolversUserQueryDTO, diag.Diagnostics) {
+func (p *editorDataResolverQueryResourceModel) expand() (*authorize.AuthorizeEditorDataAttributeResolversUserQueryDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data := authorize.AuthorizeEditorDataAttributeResolversUserQueryDTO{}

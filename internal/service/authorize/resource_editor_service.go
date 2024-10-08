@@ -1295,8 +1295,7 @@ func (p *editorServiceServiceSettingsInputMappingResourceModel) expand(ctx conte
 		data.AuthorizeEditorDataInputMappingsAttributeInputMappingDTO, d = p.expandAttributeType(ctx)
 		diags.Append(d...)
 	case authorize.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_INPUT:
-		data.AuthorizeEditorDataInputMappingsInputInputMappingDTO, d = p.expandInputType(ctx)
-		diags.Append(d...)
+		data.AuthorizeEditorDataInputMappingsInputInputMappingDTO = p.expandInputType()
 	default:
 		diags.AddError(
 			"Invalid input mapping type",
@@ -1329,8 +1328,7 @@ func (p *editorServiceServiceSettingsInputMappingResourceModel) expandAttributeT
 	return data, diags
 }
 
-func (p *editorServiceServiceSettingsInputMappingResourceModel) expandInputType(ctx context.Context) (*authorize.AuthorizeEditorDataInputMappingsInputInputMappingDTO, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func (p *editorServiceServiceSettingsInputMappingResourceModel) expandInputType() *authorize.AuthorizeEditorDataInputMappingsInputInputMappingDTO {
 
 	data := authorize.NewAuthorizeEditorDataInputMappingsInputInputMappingDTO(
 		p.Property.ValueString(),
@@ -1338,7 +1336,7 @@ func (p *editorServiceServiceSettingsInputMappingResourceModel) expandInputType(
 		p.Value.ValueString(),
 	)
 
-	return data, diags
+	return data
 }
 
 func (p *editorServiceServiceSettingsResourceModel) expandHttp(ctx context.Context) (*authorize.AuthorizeEditorDataServiceSettingsHttpServiceSettingsDTO, diag.Diagnostics) {

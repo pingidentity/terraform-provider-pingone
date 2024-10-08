@@ -79,7 +79,7 @@ func managedEntityObjectSchemaAttributes() (attributes map[string]schema.Attribu
 		},
 	}
 
-	return
+	return attributes
 }
 
 type editorManagedEntityResourceModel struct {

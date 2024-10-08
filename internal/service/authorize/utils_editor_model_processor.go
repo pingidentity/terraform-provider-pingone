@@ -59,7 +59,7 @@ func dataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes m
 
 	if iteration == 10 {
 		attributes = map[string]schema.Attribute{}
-		return
+		return attributes
 	}
 
 	attributes = map[string]schema.Attribute{
@@ -196,7 +196,7 @@ func dataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes m
 		},
 	}
 
-	return
+	return attributes
 }
 
 type editorDataProcessorResourceModel struct {

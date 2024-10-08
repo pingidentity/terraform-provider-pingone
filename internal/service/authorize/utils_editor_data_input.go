@@ -75,7 +75,7 @@ func dataInputObjectSchemaAttributes() (attributes map[string]schema.Attribute) 
 		},
 	}
 
-	return
+	return attributes
 }
 
 type editorDataInputResourceModel struct {

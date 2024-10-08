@@ -165,7 +165,7 @@ func dataResolverObjectSchemaAttributes() (attributes map[string]schema.Attribut
 		},
 	}
 
-	return
+	return attributes
 }
 
 type editorDataResolverResourceModel struct {

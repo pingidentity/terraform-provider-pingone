@@ -77,7 +77,7 @@ func dataConditionComparandObjectSchemaAttributes() (attributes map[string]schem
 		},
 	}
 
-	return
+	return attributes
 }
 
 type editorDataConditionComparandResourceModel struct {

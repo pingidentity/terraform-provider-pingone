@@ -68,7 +68,7 @@ func dataRulesEffectSettingsObjectSchemaAttributes() (attributes map[string]sche
 		},
 	}
 
-	return
+	return attributes
 }
 
 type editorDataRulesEffectSettingsResourceModel struct {

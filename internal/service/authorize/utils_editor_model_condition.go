@@ -59,7 +59,7 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 
 	if iteration == 10 {
 		attributes = map[string]schema.Attribute{}
-		return
+		return attributes
 	}
 
 	attributes = map[string]schema.Attribute{
@@ -176,7 +176,7 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 		},
 	}
 
-	return
+	return attributes
 }
 
 type editorDataConditionResourceModel struct {
@@ -250,8 +250,8 @@ func (p *editorDataConditionResourceModel) expand(ctx context.Context) (*authori
 		data.AuthorizeEditorDataConditionsNotConditionDTO, d = p.expandNotCondition(ctx)
 		diags.Append(d...)
 	case authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_OR:
-		data.AuthorizeEditorDataConditionsOrConditionDTO, d = p.expandOrCondition(ctx)
-		diags.Append(d...)
+		data.AuthorizeEditorDataConditionsOrConditionDTO = p.expandOrCondition( /*ctx*/ )
+		// diags.Append(d...)
 	case authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_REFERENCE:
 		data.AuthorizeEditorDataConditionsReferenceConditionDTO, d = p.expandReferenceCondition(ctx)
 		diags.Append(d...)
@@ -346,33 +346,33 @@ func (p *editorDataConditionResourceModel) expandNotCondition(ctx context.Contex
 	return data, diags
 }
 
-func (p *editorDataConditionResourceModel) expandOrCondition(ctx context.Context) (*authorize.AuthorizeEditorDataConditionsOrConditionDTO, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func (p *editorDataConditionResourceModel) expandOrCondition( /*ctx context.Context*/ ) *authorize.AuthorizeEditorDataConditionsOrConditionDTO { //, diag.Diagnostics) {
+	// var diags diag.Diagnostics
 
-	var plan []editorDataConditionResourceModel
-	diags.Append(p.Conditions.ElementsAs(ctx, &plan, false)...)
-	if diags.HasError() {
-		return nil, diags
-	}
+	// var plan []editorDataConditionResourceModel
+	// diags.Append(p.Conditions.ElementsAs(ctx, &plan, false)...)
+	// if diags.HasError() {
+	// 	return nil, diags
+	// }
 
-	conditions := make([]authorize.AuthorizeEditorDataConditionDTO, 0, len(plan))
-	for _, conditionPlan := range plan {
+	// conditions := make([]authorize.AuthorizeEditorDataConditionDTO, 0, len(plan))
+	// for _, conditionPlan := range plan {
 
-		conditionObject, d := conditionPlan.expand(ctx)
-		diags.Append(d...)
-		if diags.HasError() {
-			return nil, diags
-		}
+	// 	conditionObject, d := conditionPlan.expand(ctx)
+	// 	diags.Append(d...)
+	// 	if diags.HasError() {
+	// 		return nil, diags
+	// 	}
 
-		conditions = append(conditions, *conditionObject)
-	}
+	// 	conditions = append(conditions, *conditionObject)
+	// }
 
 	data := authorize.NewAuthorizeEditorDataConditionsOrConditionDTO(
 		authorize.EnumAuthorizeEditorDataConditionDTOType(p.Type.ValueString()),
 		// conditions,
 	)
 
-	return data, diags
+	return data
 }
 
 func (p *editorDataConditionResourceModel) expandReferenceCondition(ctx context.Context) (*authorize.AuthorizeEditorDataConditionsReferenceConditionDTO, diag.Diagnostics) {
