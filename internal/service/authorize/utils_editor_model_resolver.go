@@ -3,6 +3,7 @@ package authorize
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -24,23 +25,23 @@ import (
 func dataResolverObjectSchemaAttributes() (attributes map[string]schema.Attribute) {
 
 	resolversTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the attribute resource's resolver type.",
+		"A string that specifies the resolver type.",
 	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataResolverDTOTypeEnumValues)
 
 	valueRefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		fmt.Sprintf("A string that specifies configuration settings for the authorization attribute (if `type` is `%s`) or the authorization service (if `type` is `%s`) to use as the data value.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_ATTRIBUTE), string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SERVICE)),
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_ATTRIBUTE), string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SERVICE)))
 
 	valueTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"An object that describes configuration settings for the output value type when using a constant value.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT)))
 
 	valueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataAttributeResolversSystemResolverDTOValueEnumValues).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT), string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SYSTEM)))
+		fmt.Sprintf("A string that specifies a constant text value to use as the resulting data value.  If `type` is `%s`, the options are `%s`.  If `type` is `%s`, any value can be configured.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SYSTEM), strings.Join(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataAttributeResolversSystemResolverDTOValueEnumValues), "`, `"), string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT)),
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT), string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SYSTEM)))
 
 	queryDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"",
+		"An object that specifies configuration settings for the query to use to resolve the data value.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_USER)))
 
 	attributes = map[string]schema.Attribute{
@@ -49,12 +50,7 @@ func dataResolverObjectSchemaAttributes() (attributes map[string]schema.Attribut
 			Optional:    true,
 
 			NestedObject: schema.NestedAttributeObject{
-				Attributes: map[string]schema.Attribute{
-					"type": schema.StringAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-						Required:    true,
-					},
-				},
+				Attributes: dataConditionObjectSchemaAttributes(),
 			},
 		},
 
