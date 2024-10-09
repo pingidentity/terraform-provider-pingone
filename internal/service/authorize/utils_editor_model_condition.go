@@ -90,7 +90,7 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 		attributes["comparator"] = schema.StringAttribute{
 			Description:         comparatorDescription.Description,
 			MarkdownDescription: comparatorDescription.MarkdownDescription,
-			Required:            true,
+			Optional:            true,
 
 			Validators: []validator.String{
 				stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataConditionsComparisonConditionDTOComparatorEnumValues)...),
