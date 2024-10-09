@@ -1,1 +1,1 @@
-terraform import pingone_authorize_editor_processor.example <environment_id>/<editor_processor_id>
+terraform import pingone_authorize_trust_framework_processor.example <environment_id>/<authorization_processor_id>

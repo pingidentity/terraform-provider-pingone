@@ -193,5 +193,5 @@ Required:
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-terraform import pingone_authorize_editor_processor.example <environment_id>/<editor_processor_id>
+terraform import pingone_authorize_trust_framework_processor.example <environment_id>/<authorization_processor_id>
 ```
