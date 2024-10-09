@@ -118,6 +118,10 @@ func TestAccTrustFrameworkCondition_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "description", "Test application role"),
+		resource.TestCheckResourceAttr(resourceFullName, "full_name", name),
+		resource.TestMatchResourceAttr(resourceFullName, "parent.id", verify.P1ResourceIDRegexpFullString),
+		// resource.TestCheckResourceAttr(resourceFullName, "type", "CONDITION"),
+		resource.TestMatchResourceAttr(resourceFullName, "version", verify.P1ResourceIDRegexpFullString),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
@@ -125,6 +129,10 @@ func TestAccTrustFrameworkCondition_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
 		resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "full_name"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "parent"),
+		// resource.TestCheckResourceAttr(resourceFullName, "type", "CONDITION"),
+		resource.TestMatchResourceAttr(resourceFullName, "version", verify.P1ResourceIDRegexpFullString),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -187,6 +195,540 @@ func TestAccTrustFrameworkCondition_Full(t *testing.T) {
 	})
 }
 
+func TestAccTrustFrameworkCondition_ConditionType_And(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_processor.%s", resourceName)
+
+	name := resourceName
+
+	typeCheck1 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "condition.type", "AND"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.comparator"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.condition"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.conditions.#", "3"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]string{
+			"type": "EMPTY",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]string{
+			"type":        "COMPARISON",
+			"comparator":  "EQUALS",
+			"left.type":   "CONSTANT",
+			"left.value":  "test",
+			"right.type":  "CONSTANT",
+			"right.value": "test1",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]string{
+			"type":                  "NOT",
+			"condition.type":        "COMPARISON",
+			"condition.comparator":  "EQUALS",
+			"condition.left.type":   "CONSTANT",
+			"condition.left.value":  "test2",
+			"condition.right.type":  "CONSTANT",
+			"condition.right.value": "test3",
+		}),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.left"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.reference"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.right"),
+	)
+
+	typeCheck2 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "condition.type", "AND"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.comparator"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.condition"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.conditions.#", "2"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]string{
+			"type": "EMPTY",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]string{
+			"type":                  "NOT",
+			"condition.type":        "COMPARISON",
+			"condition.comparator":  "EQUALS",
+			"condition.left.type":   "CONSTANT",
+			"condition.left.value":  "test2",
+			"condition.right.type":  "CONSTANT",
+			"condition.right.value": "test3",
+		}),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.left"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.reference"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.right"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             authorize.TrustFrameworkCondition_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// From scratch
+			{
+				Config: testAccTrustFrameworkConditionConfig_Condition_And1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Change
+			{
+				Config: testAccTrustFrameworkConditionConfig_Condition_And2(resourceName, name),
+				Check:  typeCheck2,
+			},
+			{
+				Config: testAccTrustFrameworkConditionConfig_Condition_And1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccTrustFrameworkCondition_ConditionType_Comparison(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_processor.%s", resourceName)
+
+	name := resourceName
+
+	typeCheck1 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "condition.type", "COMPARISON"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.comparator", "CONTAINS"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.condition"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.conditions"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.left.type", "CONSTANT"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.left.value", "test2"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.reference"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.right.type", "CONSTANT"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.right.value", "test3"),
+	)
+
+	typeCheck2 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "condition.type", "AND"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.comparator", "EQUALS"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.condition"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.conditions"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.left.type", "CONSTANT"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.left.value", "test3"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.reference"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.right.type", "ATTRIBUTE"),
+		resource.TestMatchResourceAttr(resourceFullName, "condition.right.value", verify.P1ResourceIDRegexpFullString),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             authorize.TrustFrameworkCondition_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// From scratch
+			{
+				Config: testAccTrustFrameworkConditionConfig_Condition_Comparison1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Change
+			{
+				Config: testAccTrustFrameworkConditionConfig_Condition_Comparison2(resourceName, name),
+				Check:  typeCheck2,
+			},
+			{
+				Config: testAccTrustFrameworkConditionConfig_Condition_Comparison1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccTrustFrameworkCondition_ConditionType_Empty(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_processor.%s", resourceName)
+
+	name := resourceName
+
+	typeCheck1 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "condition.type", "EMPTY"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.comparator"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.condition"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.conditions"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.left"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.reference"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.right"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             authorize.TrustFrameworkCondition_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// From scratch
+			{
+				Config: testAccTrustFrameworkConditionConfig_Condition_Empty(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccTrustFrameworkCondition_ConditionType_Not(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_processor.%s", resourceName)
+
+	name := resourceName
+
+	typeCheck1 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "condition.type", "NOT"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.comparator"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.condition.type", "EMPTY"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.conditions"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.left"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.reference"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.right"),
+	)
+
+	typeCheck2 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "condition.type", "NOT"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.comparator"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.condition.type", "COMPARISON"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.condition.comparator", "EQUALS"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.condition.left.type", "CONSTANT"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.condition.left.value", "test3"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.condition.right.type", "CONSTANT"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.condition.right.value", "test4"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.conditions"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.left"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.reference"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.right"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             authorize.TrustFrameworkCondition_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// From scratch
+			{
+				Config: testAccTrustFrameworkConditionConfig_Condition_Not1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			{
+				Config: testAccTrustFrameworkConditionConfig_Condition_Not2(resourceName, name),
+				Check:  typeCheck2,
+			},
+			{
+				Config: testAccTrustFrameworkConditionConfig_Condition_Not1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccTrustFrameworkCondition_ConditionType_Or(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_processor.%s", resourceName)
+
+	name := resourceName
+
+	typeCheck1 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "condition.type", "OR"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.comparator"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.condition"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.conditions.#", "3"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]string{
+			"type": "EMPTY",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]string{
+			"type":        "COMPARISON",
+			"comparator":  "EQUALS",
+			"left.type":   "CONSTANT",
+			"left.value":  "test",
+			"right.type":  "CONSTANT",
+			"right.value": "test1",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]string{
+			"type":                  "NOT",
+			"condition.type":        "COMPARISON",
+			"condition.comparator":  "EQUALS",
+			"condition.left.type":   "CONSTANT",
+			"condition.left.value":  "test2",
+			"condition.right.type":  "CONSTANT",
+			"condition.right.value": "test3",
+		}),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.left"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.reference"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.right"),
+	)
+
+	typeCheck2 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "condition.type", "AND"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.comparator"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.condition"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.conditions.#", "2"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]string{
+			"type": "EMPTY",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]string{
+			"type":                  "NOT",
+			"condition.type":        "COMPARISON",
+			"condition.comparator":  "EQUALS",
+			"condition.left.type":   "CONSTANT",
+			"condition.left.value":  "test2",
+			"condition.right.type":  "CONSTANT",
+			"condition.right.value": "test3",
+		}),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.left"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.reference"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.right"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             authorize.TrustFrameworkCondition_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// From scratch
+			{
+				Config: testAccTrustFrameworkConditionConfig_Condition_Or1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Change
+			{
+				Config: testAccTrustFrameworkConditionConfig_Condition_Or2(resourceName, name),
+				Check:  typeCheck2,
+			},
+			{
+				Config: testAccTrustFrameworkConditionConfig_Condition_Or1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccTrustFrameworkCondition_ConditionType_Reference(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_processor.%s", resourceName)
+
+	name := resourceName
+
+	typeCheck1 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "condition.type", "REFERENCE"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.comparator"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.condition"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.conditions"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.left"),
+		resource.TestMatchResourceAttr(resourceFullName, "condition.reference.id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.right"),
+	)
+
+	typeCheck2 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "condition.type", "REFERENCE"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.comparator"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.condition"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.conditions"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.left"),
+		resource.TestMatchResourceAttr(resourceFullName, "condition.reference.id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.right"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             authorize.TrustFrameworkCondition_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// From scratch
+			{
+				Config: testAccTrustFrameworkConditionConfig_Condition_Reference1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Change
+			{
+				Config: testAccTrustFrameworkConditionConfig_Condition_Reference2(resourceName, name),
+				Check:  typeCheck2,
+			},
+			{
+				Config: testAccTrustFrameworkConditionConfig_Condition_Reference1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccTrustFrameworkCondition_ConditionType_Change(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_processor.%s", resourceName)
+
+	name := resourceName
+
+	typeCheck1 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "condition.type", "EMPTY"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.comparator"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.condition"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.conditions"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.left"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.reference.id"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.right"),
+	)
+
+	typeCheck2 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "condition.type", "REFERENCE"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.comparator"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.condition"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.conditions"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.left"),
+		resource.TestMatchResourceAttr(resourceFullName, "condition.reference.id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.right"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             authorize.TrustFrameworkCondition_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// From scratch
+			{
+				Config: testAccTrustFrameworkConditionConfig_Condition_Empty(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Change
+			{
+				Config: testAccTrustFrameworkConditionConfig_Condition_Reference2(resourceName, name),
+				Check:  typeCheck2,
+			},
+			{
+				Config: testAccTrustFrameworkConditionConfig_Condition_Empty(resourceName, name),
+				Check:  typeCheck1,
+			},
+		},
+	})
+}
+
 func TestAccTrustFrameworkCondition_BadParameters(t *testing.T) {
 	t.Parallel()
 
@@ -237,6 +779,10 @@ func testAccTrustFrameworkConditionConfig_NewEnv(environmentName, licenseID, res
 resource "pingone_authorize_trust_framework_condition" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[3]s"
+
+  condition = {
+    type = "EMPTY"
+  }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -244,19 +790,391 @@ func testAccTrustFrameworkConditionConfig_Full(resourceName, name string) string
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_authorize_trust_framework_condition" "%[2]s-parent" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  condition = {
+    type = "EMPTY"
+  }
+}
+
 resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "Test application role"
+  full_name      = "%[3]s"
+
+  parent = {
+    id = pingone_authorize_trust_framework_condition.%[2]s-parent.id
+  }
+
+  condition = {
+    type = "EMPTY"
+  }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkConditionConfig_Minimal(resourceName, name string) string {
+	return testAccTrustFrameworkConditionConfig_Condition_Empty(resourceName, name)
+}
+
+func testAccTrustFrameworkConditionConfig_Condition_And1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
 resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+
+  condition = {
+    type = "AND"
+
+    conditions = [
+      {
+        type = "EMPTY"
+      },
+      {
+        type       = "COMPARISON"
+        comparator = "EQUALS"
+
+        left = {
+          type  = "CONSTANT"
+          value = "test"
+        }
+
+        right = {
+          type  = "CONSTANT"
+          value = "test1"
+        }
+      },
+      {
+        type = "NOT"
+
+        condition = {
+          type       = "COMPARISON"
+          comparator = "EQUALS"
+
+          left = {
+            type  = "CONSTANT"
+            value = "test2"
+          }
+
+          right = {
+            type  = "CONSTANT"
+            value = "test3"
+          }
+        }
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccTrustFrameworkConditionConfig_Condition_And2(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_authorize_trust_framework_condition" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  condition = {
+    type = "AND"
+
+    conditions = [
+      {
+        type = "EMPTY"
+      },
+      {
+        type = "NOT"
+
+        condition = {
+          type       = "COMPARISON"
+          comparator = "EQUALS"
+
+          left = {
+            type  = "CONSTANT"
+            value = "test1"
+          }
+
+          right = {
+            type  = "CONSTANT"
+            value = "test1"
+          }
+        }
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccTrustFrameworkConditionConfig_Condition_Comparison1(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_authorize_trust_framework_condition" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  condition = {
+    type       = "COMPARISON"
+    comparator = "CONTAINS"
+
+    left = {
+      type  = "CONSTANT"
+      value = "test2"
+    }
+
+    right = {
+      type  = "CONSTANT"
+      value = "test3"
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccTrustFrameworkConditionConfig_Condition_Comparison2(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+}
+
+resource "pingone_authorize_trust_framework_condition" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  condition = {
+    type       = "COMPARISON"
+    comparator = "EQUALS"
+
+    left = {
+      type  = "CONSTANT"
+      value = "test3"
+    }
+
+    right = {
+      type = "ATTRIBUTE"
+      id   = pingone_authorize_trust_framework_attribute.%[2]s.id
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccTrustFrameworkConditionConfig_Condition_Empty(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_authorize_trust_framework_condition" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  condition = {
+    type = "EMPTY"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccTrustFrameworkConditionConfig_Condition_Not1(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_authorize_trust_framework_condition" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  condition = {
+    type = "NOT"
+
+    condition = {
+      type = "EMPTY"
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccTrustFrameworkConditionConfig_Condition_Not2(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_authorize_trust_framework_condition" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  condition = {
+    type = "NOT"
+
+    condition = {
+      type       = "COMPARISON"
+      comparator = "EQUALS"
+
+      left = {
+        type  = "CONSTANT"
+        value = "test3"
+      }
+
+      right = {
+        type = "CONSTANT"
+        id   = "test4"
+      }
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccTrustFrameworkConditionConfig_Condition_Or1(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_authorize_trust_framework_condition" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  condition = {
+    type = "OR"
+
+    conditions = [
+      {
+        type = "EMPTY"
+      },
+      {
+        type = "COMPARISON"
+
+        left = {
+          type  = "CONSTANT"
+          value = "test"
+        }
+
+        right = {
+          type  = "CONSTANT"
+          value = "test1"
+        }
+      },
+      {
+        type = "NOT"
+
+        condition = {
+          type       = "COMPARISON"
+          comparator = "EQUALS"
+
+          left = {
+            type  = "CONSTANT"
+            value = "test2"
+          }
+
+          right = {
+            type  = "CONSTANT"
+            value = "test3"
+          }
+        }
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccTrustFrameworkConditionConfig_Condition_Or2(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_authorize_trust_framework_condition" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  condition = {
+    type = "OR"
+
+    conditions = [
+      {
+        type = "EMPTY"
+      },
+      {
+        type = "NOT"
+
+        condition = {
+          type       = "COMPARISON"
+          comparator = "EQUALS"
+
+          left = {
+            type  = "CONSTANT"
+            value = "test1"
+          }
+
+          right = {
+            type  = "CONSTANT"
+            value = "test1"
+          }
+        }
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccTrustFrameworkConditionConfig_Condition_Reference1(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_authorize_trust_framework_condition" "%[2]s-ref1" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  condition = {
+    type = "EMPTY"
+  }
+}
+
+resource "pingone_authorize_trust_framework_condition" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  condition = {
+    type = "REFERENCE"
+
+    reference = {
+      id = pingone_authorize_trust_framework_condition.%[2]s-ref1.id
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccTrustFrameworkConditionConfig_Condition_Reference2(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_authorize_trust_framework_condition" "%[2]s-ref1" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  condition = {
+    type = "EMPTY"
+  }
+}
+
+resource "pingone_authorize_trust_framework_condition" "%[2]s-ref2" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  condition = {
+    type = "NOT"
+    condition = {
+      type = "EMPTY"
+    }
+  }
+}
+
+resource "pingone_authorize_trust_framework_condition" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  condition = {
+    type = "REFERENCE"
+
+    reference = {
+      id = pingone_authorize_trust_framework_condition.%[2]s-ref2.id
+    }
+  }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
