@@ -19,9 +19,9 @@ func referenceIdObjectSchemaAttributes(description framework.SchemaAttributeDesc
 
 	attributes = map[string]schema.Attribute{
 		"id": schema.StringAttribute{
-			Description: description.Description,
+			Description:         description.Description,
 			MarkdownDescription: description.MarkdownDescription,
-			Required:    true,
+			Required:            true,
 
 			CustomType: pingonetypes.ResourceIDType{},
 		},

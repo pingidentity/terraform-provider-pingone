@@ -186,6 +186,9 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 	// schema descriptions and validation settings
 	const attrMinLength = 1
+	const attrMinMaxRequestsPerSecond = 0.1
+	const attrMinTimeoutMilliseconds = 0
+	const attrMaxTimeoutMilliseconds = 3000
 
 	serviceTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of service.",
@@ -451,7 +454,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 						Optional:            true,
 
 						Validators: []validator.Float64{
-							float64validator.AtLeast(0.1),
+							float64validator.AtLeast(attrMinMaxRequestsPerSecond),
 						},
 					},
 
@@ -461,7 +464,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 						Optional:            true,
 
 						Validators: []validator.Int32{
-							int32validator.Between(0, 3000),
+							int32validator.Between(attrMinTimeoutMilliseconds, attrMaxTimeoutMilliseconds),
 						},
 					},
 
