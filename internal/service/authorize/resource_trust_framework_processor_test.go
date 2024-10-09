@@ -121,9 +121,6 @@ func TestAccTrustFrameworkProcessor_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "full_name", name),
 		resource.TestMatchResourceAttr(resourceFullName, "parent.id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test child processor", name)),
-		resource.TestCheckResourceAttr(resourceFullName, "processor.type", "JSON_PATH"),
-		resource.TestCheckResourceAttr(resourceFullName, "processor.expression", "$$.data.item2"),
-		resource.TestCheckResourceAttr(resourceFullName, "processor.value_type.type", "STRING"),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
@@ -134,9 +131,6 @@ func TestAccTrustFrameworkProcessor_Full(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "full_name"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "parent"),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test processor", name)),
-		resource.TestCheckResourceAttr(resourceFullName, "processor.type", "JSON_PATH"),
-		resource.TestCheckResourceAttr(resourceFullName, "processor.expression", "$$.data.item"),
-		resource.TestCheckResourceAttr(resourceFullName, "processor.value_type.type", "STRING"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -194,6 +188,622 @@ func TestAccTrustFrameworkProcessor_Full(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccTrustFrameworkProcessor_ProcessorType_Chain(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_processor.%s", resourceName)
+
+	name := resourceName
+
+	typeCheck1 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test chain processor", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.type", "CHAIN"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.expression"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.predicate"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor_ref"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.#", "3"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.0.name", fmt.Sprintf("%s Test chain processor 1", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.0.type", "JSON_PATH"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.0.expression", "$.data.item1"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.0.value_type.type", "STRING"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.1.name", fmt.Sprintf("%s Test chain processor 2", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.1.type", "JSON_PATH"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.1.expression", "$.data.item2"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.1.value_type.type", "STRING"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.2.name", fmt.Sprintf("%s Test chain processor 3", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.2.type", "JSON_PATH"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.2.expression", "$.data.item3"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.2.value_type.type", "BOOLEAN"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.value_type"),
+	)
+
+	typeCheck2 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test chain processor", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.type", "CHAIN"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.expression"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.predicate"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor_ref"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.#", "3"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.0.name", fmt.Sprintf("%s Test chain processor 1", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.0.type", "JSON_PATH"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.0.expression", "$.data.item1"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.0.value_type.type", "STRING"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.1.name", fmt.Sprintf("%s Test chain processor 3", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.1.type", "JSON_PATH"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.1.expression", "$.data.item3"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.1.value_type.type", "BOOLEAN"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.2.name", fmt.Sprintf("%s Test chain processor 2", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.2.type", "JSON_PATH"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.2.expression", "$.data.item2"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.2.value_type.type", "STRING"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.value_type"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             authorize.TrustFrameworkProcessor_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// From scratch
+			{
+				Config: testAccTrustFrameworkProcessorConfig_Processor_Chain1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Change order of processors
+			{
+				Config: testAccTrustFrameworkProcessorConfig_Processor_Chain2(resourceName, name),
+				Check:  typeCheck2,
+			},
+			{
+				Config: testAccTrustFrameworkProcessorConfig_Processor_Chain1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccTrustFrameworkProcessor_ProcessorType_CollectionFilter(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_processor.%s", resourceName)
+
+	name := resourceName
+
+	typeCheck1 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test processor", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.type", "COLLECTION_FILTER"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.expression"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.predicate.name", fmt.Sprintf("%s Test predicate processor 1", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.predicate.type", "JSON_PATH"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.predicate.expression", "$.data.item1"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.predicate.value_type", "STRING"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor_ref"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processors"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.value_type"),
+	)
+
+	typeCheck2 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test processor", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.type", "COLLECTION_FILTER"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.expression"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.predicate.name", fmt.Sprintf("%s Test predicate processor 2", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.predicate.type", "SPEL"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.predicate.expression", "'Hello SpEL'.concat('!')"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.predicate.value_type", "STRING"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor_ref"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processors"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.value_type"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             authorize.TrustFrameworkProcessor_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// From scratch
+			{
+				Config: testAccTrustFrameworkProcessorConfig_Processor_CollectionFilter1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Change predicate processor
+			{
+				Config: testAccTrustFrameworkProcessorConfig_Processor_CollectionFilter2(resourceName, name),
+				Check:  typeCheck2,
+			},
+			{
+				Config: testAccTrustFrameworkProcessorConfig_Processor_CollectionFilter1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccTrustFrameworkProcessor_ProcessorType_CollectionTransform(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_processor.%s", resourceName)
+
+	name := resourceName
+
+	typeCheck1 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test processor", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.type", "COLLECTION_TRANSFORM"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.expression"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.predicate"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processor.name", fmt.Sprintf("%s Test collection transform processor 1", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processor.type", "JSON_PATH"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processor.expression", "$.data.item1"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processor.value_type", "STRING"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor_ref"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processors"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.value_type"),
+	)
+
+	typeCheck2 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test processor", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.type", "COLLECTION_TRANSFORM"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.expression"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.predicate"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processor.name", fmt.Sprintf("%s Test collection transform processor 2", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processor.type", "SPEL"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processor.expression", "'Hello SpEL'.concat('!')"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processor.value_type", "STRING"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor_ref"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processors"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.value_type"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             authorize.TrustFrameworkProcessor_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// From scratch
+			{
+				Config: testAccTrustFrameworkProcessorConfig_Processor_CollectionTransform1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Change predicate processor
+			{
+				Config: testAccTrustFrameworkProcessorConfig_Processor_CollectionTransform2(resourceName, name),
+				Check:  typeCheck2,
+			},
+			{
+				Config: testAccTrustFrameworkProcessorConfig_Processor_CollectionTransform1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccTrustFrameworkProcessor_ProcessorType_Json_Path(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_processor.%s", resourceName)
+
+	name := resourceName
+
+	typeCheck1 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test processor", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.type", "JSON_PATH"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.expression", "$.data.item"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.predicate"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor_ref"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processors"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.value_type.type", "STRING"),
+	)
+
+	typeCheck2 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test processor", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.type", "JSON_PATH"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.expression", "$.data.item2"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.predicate"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor_ref"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processors"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.value_type.type", "BOOLEAN"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             authorize.TrustFrameworkProcessor_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// From scratch
+			{
+				Config: testAccTrustFrameworkProcessorConfig_Processor_Json_Path1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Change predicate processor
+			{
+				Config: testAccTrustFrameworkProcessorConfig_Processor_Json_Path2(resourceName, name),
+				Check:  typeCheck2,
+			},
+			{
+				Config: testAccTrustFrameworkProcessorConfig_Processor_Json_Path1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccTrustFrameworkProcessor_ProcessorType_Reference(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_processor.%s", resourceName)
+
+	name := resourceName
+
+	typeCheck1 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test processor", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.type", "REFERENCE"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.expression"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.predicate"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor"),
+		resource.TestMatchResourceAttr(resourceFullName, "processor.processor_ref", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processors"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.value_type"),
+	)
+
+	typeCheck2 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test processor", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.type", "REFERENCE"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.expression"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.predicate"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor"),
+		resource.TestMatchResourceAttr(resourceFullName, "processor.processor_ref", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processors"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.value_type"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             authorize.TrustFrameworkProcessor_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// From scratch
+			{
+				Config: testAccTrustFrameworkProcessorConfig_Processor_Reference1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Change predicate processor
+			{
+				Config: testAccTrustFrameworkProcessorConfig_Processor_Reference2(resourceName, name),
+				Check:  typeCheck2,
+			},
+			{
+				Config: testAccTrustFrameworkProcessorConfig_Processor_Reference1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccTrustFrameworkProcessor_ProcessorType_SpEL(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_processor.%s", resourceName)
+
+	name := resourceName
+
+	typeCheck1 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test processor", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.type", "SPEL"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.expression", "'Hello SpEL'.concat('!')"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.predicate"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor_ref"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processors"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.value_type.type", "STRING"),
+	)
+
+	typeCheck2 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test processor", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.type", "SPEL"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.expression", "'Hello world'.concat('!')"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.predicate"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor_ref"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processors"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.value_type.type", "STRING"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             authorize.TrustFrameworkProcessor_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// From scratch
+			{
+				Config: testAccTrustFrameworkProcessorConfig_Processor_SpEL1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Change predicate processor
+			{
+				Config: testAccTrustFrameworkProcessorConfig_Processor_SpEL2(resourceName, name),
+				Check:  typeCheck2,
+			},
+			{
+				Config: testAccTrustFrameworkProcessorConfig_Processor_SpEL1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccTrustFrameworkProcessor_ProcessorType_XPath(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_processor.%s", resourceName)
+
+	name := resourceName
+
+	typeCheck1 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test processor", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.type", "XPATH"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.expression", "/bookstore/book[last()]"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.predicate"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor_ref"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processors"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.value_type.type", "STRING"),
+	)
+
+	typeCheck2 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test processor", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.type", "XPATH"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.expression", "/bookstore/book[first()]"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.predicate"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor_ref"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processors"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.value_type.type", "BOOLEAN"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             authorize.TrustFrameworkProcessor_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// From scratch
+			{
+				Config: testAccTrustFrameworkProcessorConfig_Processor_XPath1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Change predicate processor
+			{
+				Config: testAccTrustFrameworkProcessorConfig_Processor_XPath2(resourceName, name),
+				Check:  typeCheck2,
+			},
+			{
+				Config: testAccTrustFrameworkProcessorConfig_Processor_XPath1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccTrustFrameworkProcessor_ProcessorType_Change(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_processor.%s", resourceName)
+
+	name := resourceName
+
+	typeCheck1 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test chain processor", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.type", "CHAIN"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.expression"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.predicate"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor_ref"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.#", "3"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.0.name", fmt.Sprintf("%s Test chain processor 1", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.0.type", "JSON_PATH"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.0.expression", "$.data.item1"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.0.value_type.type", "STRING"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.1.name", fmt.Sprintf("%s Test chain processor 2", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.1.type", "JSON_PATH"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.1.expression", "$.data.item2"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.1.value_type.type", "STRING"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.2.name", fmt.Sprintf("%s Test chain processor 3", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.2.type", "JSON_PATH"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.2.expression", "$.data.item3"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.2.value_type.type", "BOOLEAN"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.value_type"),
+	)
+
+	typeCheck2 := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test processor", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.type", "XPATH"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.expression", "/bookstore/book[first()]"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.predicate"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor_ref"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processors"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.value_type.type", "BOOLEAN"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             authorize.TrustFrameworkProcessor_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// From scratch
+			{
+				Config: testAccTrustFrameworkProcessorConfig_Processor_Chain1(resourceName, name),
+				Check:  typeCheck1,
+			},
+			// Change processor
+			{
+				Config: testAccTrustFrameworkProcessorConfig_Processor_XPath2(resourceName, name),
+				Check:  typeCheck2,
+			},
+			{
+				Config: testAccTrustFrameworkProcessorConfig_Processor_Chain1(resourceName, name),
+				Check:  typeCheck1,
 			},
 		},
 	})
@@ -294,6 +904,200 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s" {
 }
 
 func testAccTrustFrameworkProcessorConfig_Minimal(resourceName, name string) string {
+	return testAccTrustFrameworkProcessorConfig_Processor_Json_Path1(resourceName, name)
+}
+
+func testAccTrustFrameworkProcessorConfig_Processor_Chain1(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_authorize_trust_framework_processor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  processor = {
+    name = "%[3]s Test chain processor"
+    type = "CHAIN"
+
+    processors = [
+      {
+        name = "%[3]s Test chain processor 1"
+        type = "JSON_PATH"
+
+        expression = "$.data.item1"
+        value_type = {
+          type = "STRING"
+        }
+      },
+      {
+        name = "%[3]s Test chain processor 2"
+        type = "JSON_PATH"
+
+        expression = "$.data.item2"
+        value_type = {
+          type = "STRING"
+        }
+      },
+      {
+        name = "%[3]s Test chain processor 3"
+        type = "JSON_PATH"
+
+        expression = "$.data.item3"
+        value_type = {
+          type = "BOOLEAN"
+        }
+      },
+    ],
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccTrustFrameworkProcessorConfig_Processor_Chain2(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_authorize_trust_framework_processor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  processor = {
+    name = "%[3]s Test chain processor"
+    type = "CHAIN"
+
+    processors = [
+      {
+        name = "%[3]s Test chain processor 1"
+        type = "JSON_PATH"
+
+        expression = "$.data.item1"
+        value_type = {
+          type = "STRING"
+        }
+      },
+      {
+        name = "%[3]s Test chain processor 3"
+        type = "JSON_PATH"
+
+        expression = "$.data.item3"
+        value_type = {
+          type = "BOOLEAN"
+        }
+      },
+      {
+        name = "%[3]s Test chain processor 2"
+        type = "JSON_PATH"
+
+        expression = "$.data.item2"
+        value_type = {
+          type = "STRING"
+        }
+      },
+    ],
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccTrustFrameworkProcessorConfig_Processor_CollectionFilter1(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_authorize_trust_framework_processor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  processor = {
+    name = "%[3]s Test processor"
+    type = "COLLECTION_FILTER"
+
+    predicate = {
+      name = "%[3]s Test predicate processor 1"
+      type = "JSON_PATH"
+
+      expression = "$.data.item1"
+      value_type = {
+        type = "STRING"
+      }
+    },
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccTrustFrameworkProcessorConfig_Processor_CollectionFilter2(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_authorize_trust_framework_processor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  processor = {
+    name = "%[3]s Test processor"
+    type = "COLLECTION_FILTER"
+
+    predicate = {
+      name = "%[3]s Test predicate processor 2"
+      type = "SPEL"
+
+      expression = "'Hello SpEL'.concat('!')"
+      value_type = {
+        type = "STRING"
+      }
+    },
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccTrustFrameworkProcessorConfig_Processor_CollectionTransform1(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_authorize_trust_framework_processor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  processor = {
+    name = "%[3]s Test processor"
+    type = "COLLECTION_TRANSFORM"
+
+    processor = {
+      name = "%[3]s Test collection transform processor 1"
+      type = "JSON_PATH"
+
+      expression = "$.data.item1"
+      value_type = {
+        type = "STRING"
+      }
+    },
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccTrustFrameworkProcessorConfig_Processor_CollectionTransform2(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_authorize_trust_framework_processor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  processor = {
+    name = "%[3]s Test processor"
+    type = "COLLECTION_TRANSFORM"
+
+    processor = {
+      name = "%[3]s Test collection transform processor 2"
+      type = "SPEL"
+
+      expression = "'Hello SpEL'.concat('!')"
+      value_type = {
+        type = "STRING"
+      }
+    },
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccTrustFrameworkProcessorConfig_Processor_Json_Path1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -308,6 +1112,204 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s" {
     expression = "$.data.item"
     value_type = {
       type = "STRING"
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccTrustFrameworkProcessorConfig_Processor_Json_Path2(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_authorize_trust_framework_processor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  processor = {
+    name = "%[3]s Test processor"
+    type = "JSON_PATH"
+
+    expression = "$.data.item2"
+    value_type = {
+      type = "BOOLEAN"
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccTrustFrameworkProcessorConfig_Processor_Reference1(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_authorize_trust_framework_processor" "%[2]s_ref1" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  processor = {
+    name = "%[3]s Test ref processor1"
+    type = "JSON_PATH"
+
+    expression = "$.data.item"
+    value_type = {
+      type = "STRING"
+    }
+  }
+}
+
+resource "pingone_authorize_trust_framework_processor" "%[2]s_ref2" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  processor = {
+    name = "%[3]s Test ref processor2"
+    type = "JSON_PATH"
+
+    expression = "$.data.item1"
+    value_type = {
+      type = "BOOLEAN"
+    }
+  }
+}
+
+resource "pingone_authorize_trust_framework_processor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  processor = {
+    name = "%[3]s Test processor"
+    type = "REFERENCE"
+
+    processor_ref = {
+      id = pingone_authorize_trust_framework_processor.%[2]s_ref1.id
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccTrustFrameworkProcessorConfig_Processor_Reference2(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_authorize_trust_framework_processor" "%[2]s_ref1" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  processor = {
+    name = "%[3]s Test ref processor1"
+    type = "JSON_PATH"
+
+    expression = "$.data.item"
+    value_type = {
+      type = "STRING"
+    }
+  }
+}
+
+resource "pingone_authorize_trust_framework_processor" "%[2]s_ref2" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  processor = {
+    name = "%[3]s Test ref processor2"
+    type = "JSON_PATH"
+
+    expression = "$.data.item1"
+    value_type = {
+      type = "BOOLEAN"
+    }
+  }
+}
+
+resource "pingone_authorize_trust_framework_processor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  processor = {
+    name = "%[3]s Test processor"
+    type = "REFERENCE"
+
+    processor_ref = {
+      id = pingone_authorize_trust_framework_processor.%[2]s_ref2.id
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccTrustFrameworkProcessorConfig_Processor_SpEL1(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_authorize_trust_framework_processor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  processor = {
+    name = "%[3]s Test processor"
+    type = "SPEL"
+
+    expression = "'Hello SpEL'.concat('!')"
+    value_type = {
+      type = "STRING"
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccTrustFrameworkProcessorConfig_Processor_SpEL2(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_authorize_trust_framework_processor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  processor = {
+    name = "%[3]s Test processor"
+    type = "SPEL"
+
+    expression = "'Hello world'.concat('!')"
+    value_type = {
+      type = "STRING"
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccTrustFrameworkProcessorConfig_Processor_XPath1(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_authorize_trust_framework_processor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  processor = {
+    name = "%[3]s Test processor"
+    type = "XPATH"
+
+    expression = "/bookstore/book[last()]"
+    value_type = {
+      type = "STRING"
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccTrustFrameworkProcessorConfig_Processor_XPath2(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_authorize_trust_framework_processor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  processor = {
+    name = "%[3]s Test processor"
+    type = "XPATH"
+
+    expression = "/bookstore/book[first()]"
+    value_type = {
+      type = "BOOLEAN"
     }
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
