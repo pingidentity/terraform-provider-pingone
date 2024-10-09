@@ -859,6 +859,16 @@ func testAccTrustFrameworkProcessorConfig_NewEnv(environmentName, licenseID, res
 resource "pingone_authorize_trust_framework_processor" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[3]s"
+
+  processor = {
+    name = "%[3]s Test processor"
+    type = "JSON_PATH"
+
+    expression = "$.data.item"
+    value_type = {
+      type = "STRING"
+    }
+  }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
