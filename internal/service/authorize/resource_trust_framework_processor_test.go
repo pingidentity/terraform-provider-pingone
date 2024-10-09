@@ -121,6 +121,8 @@ func TestAccTrustFrameworkProcessor_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "full_name", name),
 		resource.TestMatchResourceAttr(resourceFullName, "parent.id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test child processor", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "type", "PROCESSOR"),
+		resource.TestMatchResourceAttr(resourceFullName, "version", verify.P1ResourceIDRegexpFullString),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
@@ -131,6 +133,8 @@ func TestAccTrustFrameworkProcessor_Full(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "full_name"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "parent"),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test processor", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "type", "PROCESSOR"),
+		resource.TestMatchResourceAttr(resourceFullName, "version", verify.P1ResourceIDRegexpFullString),
 	)
 
 	resource.Test(t, resource.TestCase{
