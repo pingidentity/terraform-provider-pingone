@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
@@ -28,6 +29,7 @@ type trustFrameworkConditionResourceModel struct {
 	Description   types.String                 `tfsdk:"description"`
 	FullName      types.String                 `tfsdk:"full_name"`
 	Name          types.String                 `tfsdk:"name"`
+	Type          types.String                 `tfsdk:"type"`
 	Parent        types.Object                 `tfsdk:"parent"`
 	Condition     types.Object                 `tfsdk:"condition"`
 	Version       types.String                 `tfsdk:"version"`
@@ -73,6 +75,13 @@ func (r *TrustFrameworkConditionResource) Schema(ctx context.Context, req resour
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
 				},
+			},
+
+			"type": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that describes the type of the resource.").Description,
+				Computed:    true,
+
+				Default: stringdefault.StaticString("CONDITION"),
 			},
 
 			"full_name": schema.StringAttribute{

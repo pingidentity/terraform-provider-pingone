@@ -120,7 +120,7 @@ func TestAccTrustFrameworkCondition_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "description", "Test application role"),
 		resource.TestCheckResourceAttr(resourceFullName, "full_name", name),
 		resource.TestMatchResourceAttr(resourceFullName, "parent.id", verify.P1ResourceIDRegexpFullString),
-		// resource.TestCheckResourceAttr(resourceFullName, "type", "CONDITION"),
+		resource.TestCheckResourceAttr(resourceFullName, "type", "CONDITION"),
 		resource.TestMatchResourceAttr(resourceFullName, "version", verify.P1ResourceIDRegexpFullString),
 	)
 
@@ -131,7 +131,7 @@ func TestAccTrustFrameworkCondition_Full(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "full_name"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "parent"),
-		// resource.TestCheckResourceAttr(resourceFullName, "type", "CONDITION"),
+		resource.TestCheckResourceAttr(resourceFullName, "type", "CONDITION"),
 		resource.TestMatchResourceAttr(resourceFullName, "version", verify.P1ResourceIDRegexpFullString),
 	)
 
