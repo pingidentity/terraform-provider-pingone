@@ -28,7 +28,7 @@ func TestAccTrustFrameworkCondition_RemovalDrift(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	var fido2PolicyID, environmentID string
+	var conditionID, environmentID string
 
 	var p1Client *client.Client
 	var ctx = context.Background()
@@ -48,11 +48,11 @@ func TestAccTrustFrameworkCondition_RemovalDrift(t *testing.T) {
 			// Configure
 			{
 				Config: testAccTrustFrameworkConditionConfig_Minimal(resourceName, name),
-				Check:  authorize.TrustFrameworkCondition_GetIDs(resourceFullName, &environmentID, &fido2PolicyID),
+				Check:  authorize.TrustFrameworkCondition_GetIDs(resourceFullName, &environmentID, &conditionID),
 			},
 			{
 				PreConfig: func() {
-					authorize.TrustFrameworkCondition_RemovalDrift_PreConfig(ctx, p1Client.API.AuthorizeAPIClient, t, environmentID, fido2PolicyID)
+					authorize.TrustFrameworkCondition_RemovalDrift_PreConfig(ctx, p1Client.API.AuthorizeAPIClient, t, environmentID, conditionID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -60,7 +60,7 @@ func TestAccTrustFrameworkCondition_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccTrustFrameworkConditionConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  authorize.TrustFrameworkCondition_GetIDs(resourceFullName, &environmentID, &fido2PolicyID),
+				Check:  authorize.TrustFrameworkCondition_GetIDs(resourceFullName, &environmentID, &conditionID),
 			},
 			{
 				PreConfig: func() {
@@ -812,7 +812,7 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   condition = {
     type = "EMPTY"
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkConditionConfig_Minimal(resourceName, name string) string {
@@ -868,7 +868,7 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
       }
     ]
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkConditionConfig_Condition_And2(resourceName, name string) string {
@@ -906,7 +906,7 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
       }
     ]
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkConditionConfig_Condition_Comparison1(resourceName, name string) string {
@@ -931,7 +931,7 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
       value = "test3"
     }
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkConditionConfig_Condition_Comparison2(resourceName, name string) string {
@@ -960,7 +960,7 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
       id   = pingone_authorize_trust_framework_attribute.%[2]s.id
     }
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkConditionConfig_Condition_Empty(resourceName, name string) string {
@@ -974,7 +974,7 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   condition = {
     type = "EMPTY"
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkConditionConfig_Condition_Not1(resourceName, name string) string {
@@ -992,7 +992,7 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
       type = "EMPTY"
     }
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkConditionConfig_Condition_Not2(resourceName, name string) string {
@@ -1021,7 +1021,7 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
       }
     }
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkConditionConfig_Condition_Or1(resourceName, name string) string {
@@ -1072,7 +1072,7 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
       }
     ]
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkConditionConfig_Condition_Or2(resourceName, name string) string {
@@ -1110,7 +1110,7 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
       }
     ]
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkConditionConfig_Condition_Reference1(resourceName, name string) string {
@@ -1137,7 +1137,7 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
       id = pingone_authorize_trust_framework_condition.%[2]s-ref1.id
     }
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkConditionConfig_Condition_Reference2(resourceName, name string) string {
@@ -1176,5 +1176,5 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
       id = pingone_authorize_trust_framework_condition.%[2]s-ref2.id
     }
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }

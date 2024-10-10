@@ -161,7 +161,7 @@ func editorDataInputOkToTF(ctx context.Context, apiObject *authorize.AuthorizeEd
 	attributeMap := map[string]attr.Value{}
 
 	switch t := apiObject.GetActualInstance().(type) {
-	case authorize.AuthorizeEditorDataInputsAttributeInputDTO:
+	case *authorize.AuthorizeEditorDataInputsAttributeInputDTO:
 
 		attributeResp, ok := t.GetAttributeOk()
 		value, d := editorDataReferenceObjectOkToTF(attributeResp, ok)
@@ -173,7 +173,7 @@ func editorDataInputOkToTF(ctx context.Context, apiObject *authorize.AuthorizeEd
 			"value":     types.StringNull(),
 		}
 
-	case authorize.AuthorizeEditorDataInputsConstantInputDTO:
+	case *authorize.AuthorizeEditorDataInputsConstantInputDTO:
 
 		attributeMap = map[string]attr.Value{
 			"type":      framework.EnumOkToTF(t.GetTypeOk()),

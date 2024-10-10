@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
@@ -57,6 +56,10 @@ func (r *TrustFrameworkConditionResource) Schema(ctx context.Context, req resour
 	// schema descriptions and validation settings
 	const attrMinLength = 1
 
+	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that describes the resource type.",
+	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataDefinitionsConditionDefinitionDTOTypeEnumValues)
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage an authorization condition for the PingOne Authorize Trust Framework in a PingOne environment.",
@@ -78,10 +81,9 @@ func (r *TrustFrameworkConditionResource) Schema(ctx context.Context, req resour
 			},
 
 			"type": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that describes the type of the resource.").Description,
-				Computed:    true,
-
-				Default: stringdefault.StaticString("CONDITION"),
+				Description:         typeDescription.Description,
+				MarkdownDescription: typeDescription.MarkdownDescription,
+				Computed:            true,
 			},
 
 			"full_name": schema.StringAttribute{
@@ -183,7 +185,9 @@ func (r *TrustFrameworkConditionResource) Create(ctx context.Context, req resour
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(state.toState(ctx, response)...)
-	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	if !resp.Diagnostics.HasError() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	}
 }
 
 func (r *TrustFrameworkConditionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -228,7 +232,9 @@ func (r *TrustFrameworkConditionResource) Read(ctx context.Context, req resource
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(ctx, response)...)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	if !resp.Diagnostics.HasError() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	}
 }
 
 func (r *TrustFrameworkConditionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -277,7 +283,9 @@ func (r *TrustFrameworkConditionResource) Update(ctx context.Context, req resour
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(state.toState(ctx, response)...)
-	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	if !resp.Diagnostics.HasError() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	}
 }
 
 func (r *TrustFrameworkConditionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

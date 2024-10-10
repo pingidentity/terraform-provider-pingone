@@ -449,7 +449,7 @@ func editorDataConditionOkToTF(ctx context.Context, apiObject *authorize.Authori
 	attributeMap := map[string]attr.Value{}
 
 	switch t := apiObject.GetActualInstance().(type) {
-	case authorize.AuthorizeEditorDataConditionsAndConditionDTO:
+	case *authorize.AuthorizeEditorDataConditionsAndConditionDTO:
 
 		conditionsResp, ok := t.GetConditionsOk()
 		conditions, d := editorDataConditionsOkToSetTF(ctx, conditionsResp, ok)
@@ -460,7 +460,7 @@ func editorDataConditionOkToTF(ctx context.Context, apiObject *authorize.Authori
 			"conditions": conditions,
 		}
 
-	case authorize.AuthorizeEditorDataConditionsComparisonConditionDTO:
+	case *authorize.AuthorizeEditorDataConditionsComparisonConditionDTO:
 
 		leftResp, ok := t.GetLeftOk()
 		left, d := editorDataConditionComparandOkToTF(ctx, leftResp, ok)
@@ -477,13 +477,13 @@ func editorDataConditionOkToTF(ctx context.Context, apiObject *authorize.Authori
 			"right":      right,
 		}
 
-	case authorize.AuthorizeEditorDataConditionsEmptyConditionDTO:
+	case *authorize.AuthorizeEditorDataConditionsEmptyConditionDTO:
 
 		attributeMap = map[string]attr.Value{
 			"type": framework.EnumOkToTF(t.GetTypeOk()),
 		}
 
-	case authorize.AuthorizeEditorDataConditionsNotConditionDTO:
+	case *authorize.AuthorizeEditorDataConditionsNotConditionDTO:
 
 		conditionResp, ok := t.GetConditionOk()
 		condition, d := editorDataConditionOkToTF(ctx, conditionResp, ok)
@@ -494,7 +494,7 @@ func editorDataConditionOkToTF(ctx context.Context, apiObject *authorize.Authori
 			"condition": condition,
 		}
 
-	case authorize.AuthorizeEditorDataConditionsOrConditionDTO:
+	case *authorize.AuthorizeEditorDataConditionsOrConditionDTO:
 
 		// conditionsResp, ok := t.GetConditionsOk()
 		// conditions, d := editorDataConditionsOkToSetTF(ctx, conditionsResp, ok)
@@ -505,7 +505,7 @@ func editorDataConditionOkToTF(ctx context.Context, apiObject *authorize.Authori
 			// "conditions": conditions,
 		}
 
-	case authorize.AuthorizeEditorDataConditionsReferenceConditionDTO:
+	case *authorize.AuthorizeEditorDataConditionsReferenceConditionDTO:
 
 		reference, d := editorDataReferenceObjectOkToTF(t.GetReferenceOk())
 		diags.Append(d...)

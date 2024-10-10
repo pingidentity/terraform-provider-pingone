@@ -192,14 +192,14 @@ func editorDataConditionComparandOkToTF(ctx context.Context, apiObject *authoriz
 	attributeMap := map[string]attr.Value{}
 
 	switch t := apiObject.GetActualInstance().(type) {
-	case authorize.AuthorizeEditorDataConditionsComparandsAttributeComparandDTO:
+	case *authorize.AuthorizeEditorDataConditionsComparandsAttributeComparandDTO:
 
 		attributeMap = map[string]attr.Value{
 			"type": framework.EnumOkToTF(t.GetTypeOk()),
 			"id":   framework.StringOkToTF(t.GetIdOk()),
 		}
 
-	case authorize.AuthorizeEditorDataConditionsComparandsConstantComparandDTO:
+	case *authorize.AuthorizeEditorDataConditionsComparandsConstantComparandDTO:
 
 		attributeMap = map[string]attr.Value{
 			"type":  framework.EnumOkToTF(t.GetTypeOk()),

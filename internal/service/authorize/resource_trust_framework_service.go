@@ -190,21 +190,25 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 	const attrMinTimeoutMilliseconds = 0
 	const attrMaxTimeoutMilliseconds = 3000
 
+	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that describes the resource type.",
+	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataDefinitionsServiceDefinitionDTOTypeEnumValues)
+
 	serviceTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of service.",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataDefinitionsServiceDefinitionDTOTypeEnumValues)
+	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataDefinitionsServiceDefinitionDTOServiceTypeEnumValues)
 
 	processorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings for the processor to transform the value returned from the resolver.",
-	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR), string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)))
+	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR), string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
 
 	valueTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings for the final output type of the service.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR), string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR), string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
 
 	serviceSettingsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings for the service connection.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR), string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR), string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
 
 	serviceSettingsMaximumConcurrentRequestsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that specifies the number of maximum concurrent requests to the service. The value must be greater than or equal to `1`.",
@@ -220,27 +224,27 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 	serviceSettingsUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the URL of the HTTP service.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
 
 	serviceSettingsVerbDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the HTTP method to use.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP))).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataServiceSettingsHttpServiceSettingsDTOVerbEnumValues)
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP))).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataServiceSettingsHttpServiceSettingsDTOVerbEnumValues)
 
 	serviceSettingsBodyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the body of the HTTP request.",
-	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)))
+	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
 
 	serviceSettingsContentTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the content type of the HTTP request.  The service will use the value of this field to set the `Content-Type` header.",
-	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)))
+	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
 
 	serviceSettingsHeadersDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A set of objects that specify the headers to include in the HTTP request.",
-	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)))
+	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
 
 	serviceSettingsAuthenticationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings for authenticating to the service.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
 
 	serviceSettingsAuthenticationTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of service authentication to use.",
@@ -276,7 +280,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 	serviceSettingsTlsSettingsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings when connecting to the service using TLS.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
 
 	serviceSettingsTlsSettingsTlsValidationTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the TLS validation type.",
@@ -284,23 +288,23 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 	serviceSettingsChannelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the connector channel to use for the service.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR))).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTOChannelEnumValues)
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR))).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTOChannelEnumValues)
 
 	serviceSettingsCodeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the connector code to use for the service.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR))).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTOCodeEnumValues)
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR))).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTOCodeEnumValues)
 
 	serviceSettingsCapabilityDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the connector capability associated with the connector code and channel.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)))
 
 	serviceSettingsSchemaVersionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that specifies the schema version of the connector template.",
-	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)))
+	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)))
 
 	serviceSettingsInputMappingsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A list of objects that specify configuration settings for the input mappings to use for the service.  Input mappings may be attribute based, or input based.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)))
 
 	serviceSettingsInputMappingTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the input mapping type.",
@@ -347,8 +351,9 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 			"parent": parentObjectSchema("service"),
 
 			"type": schema.StringAttribute{ // DOC ISSUE
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that describes the resource type.").Description,
-				Computed:    true,
+				Description:         typeDescription.Description,
+				MarkdownDescription: typeDescription.MarkdownDescription,
+				Computed:            true,
 			},
 
 			"cache_settings": schema.SingleNestedAttribute{ // DONE
@@ -369,7 +374,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 				Required:            true,
 
 				Validators: []validator.String{
-					stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataDefinitionsServiceDefinitionDTOTypeEnumValues)...),
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataDefinitionsServiceDefinitionDTOServiceTypeEnumValues)...),
 				},
 			},
 
@@ -386,7 +391,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 				Validators: []validator.Object{
 					objectvalidatorinternal.ConflictsIfMatchesPathValue(
-						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_NONE)),
+						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_NONE)),
 						path.MatchRelative().AtParent().AtName("type"),
 					),
 				},
@@ -401,15 +406,15 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 				Validators: []validator.Object{
 					objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)),
+						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 						path.MatchRoot("service_type"),
 					),
 					objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)),
+						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
 						path.MatchRoot("service_type"),
 					),
 					objectvalidatorinternal.ConflictsIfMatchesPathValue(
-						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_NONE)),
+						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_NONE)),
 						path.MatchRoot("service_type"),
 					),
 				},
@@ -424,15 +429,15 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 				Validators: []validator.Object{
 					objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)),
+						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 						path.MatchRoot("service_type"),
 					),
 					objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)),
+						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
 						path.MatchRoot("service_type"),
 					),
 					objectvalidatorinternal.ConflictsIfMatchesPathValue(
-						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_NONE)),
+						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_NONE)),
 						path.MatchRoot("service_type"),
 					),
 				},
@@ -475,11 +480,11 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 						Validators: []validator.String{
 							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)),
+								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
 								path.MatchRoot("service_type"),
 							),
 							stringvalidatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)),
+								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 								path.MatchRoot("service_type"),
 							),
 						},
@@ -493,11 +498,11 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 						Validators: []validator.String{
 							stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataServiceSettingsHttpServiceSettingsDTOVerbEnumValues)...),
 							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)),
+								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
 								path.MatchRoot("service_type"),
 							),
 							stringvalidatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)),
+								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 								path.MatchRoot("service_type"),
 							),
 						},
@@ -510,7 +515,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 						Validators: []validator.String{
 							stringvalidatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)),
+								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 								path.MatchRoot("service_type"),
 							),
 						},
@@ -523,7 +528,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 						Validators: []validator.String{
 							stringvalidatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)),
+								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 								path.MatchRoot("service_type"),
 							),
 						},
@@ -536,7 +541,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 						Validators: []validator.Set{
 							setvalidatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)),
+								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 								path.MatchRoot("service_type"),
 							),
 						},
@@ -565,11 +570,11 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 						Validators: []validator.Object{
 							objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)),
+								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
 								path.MatchRoot("service_type"),
 							),
 							objectvalidatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)),
+								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 								path.MatchRoot("service_type"),
 							),
 						},
@@ -699,11 +704,11 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 						Validators: []validator.Object{
 							objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)),
+								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
 								path.MatchRoot("service_type"),
 							),
 							objectvalidatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)),
+								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 								path.MatchRoot("service_type"),
 							),
 						},
@@ -729,11 +734,11 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 						Validators: []validator.String{
 							stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTOChannelEnumValues)...),
 							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)),
+								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 								path.MatchRoot("service_type"),
 							),
 							stringvalidatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)),
+								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
 								path.MatchRoot("service_type"),
 							),
 						},
@@ -747,11 +752,11 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 						Validators: []validator.String{
 							stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTOCodeEnumValues)...),
 							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)),
+								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 								path.MatchRoot("service_type"),
 							),
 							stringvalidatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)),
+								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
 								path.MatchRoot("service_type"),
 							),
 						},
@@ -764,11 +769,11 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 						Validators: []validator.String{
 							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)),
+								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 								path.MatchRoot("service_type"),
 							),
 							stringvalidatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)),
+								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
 								path.MatchRoot("service_type"),
 							),
 						},
@@ -781,7 +786,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 						Validators: []validator.Int32{
 							int32validatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)),
+								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
 								path.MatchRoot("service_type"),
 							),
 						},
@@ -794,11 +799,11 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 						Validators: []validator.List{
 							listvalidatorinternal.IsRequiredIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR)),
+								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 								path.MatchRoot("service_type"),
 							),
 							listvalidatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP)),
+								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
 								path.MatchRoot("service_type"),
 							),
 						},
@@ -936,7 +941,9 @@ func (r *TrustFrameworkServiceResource) Create(ctx context.Context, req resource
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(state.toState(ctx, response)...)
-	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	if !resp.Diagnostics.HasError() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	}
 }
 
 func (r *TrustFrameworkServiceResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -981,7 +988,9 @@ func (r *TrustFrameworkServiceResource) Read(ctx context.Context, req resource.R
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(ctx, response)...)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	if !resp.Diagnostics.HasError() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	}
 }
 
 func (r *TrustFrameworkServiceResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -1030,7 +1039,9 @@ func (r *TrustFrameworkServiceResource) Update(ctx context.Context, req resource
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(state.toState(ctx, response)...)
-	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	if !resp.Diagnostics.HasError() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	}
 }
 
 func (r *TrustFrameworkServiceResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -1112,14 +1123,14 @@ func (p *trustFrameworkServiceResourceModel) expand(ctx context.Context) (*autho
 		return nil, diags
 	}
 
-	switch authorize.EnumAuthorizeEditorDataDefinitionsServiceDefinitionDTOType(p.ServiceType.ValueString()) {
-	case authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR:
+	switch authorize.EnumAuthorizeEditorDataDefinitionsServiceDefinitionDTOServiceType(p.ServiceType.ValueString()) {
+	case authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR:
 		data.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO, d = p.expandConnectorService(ctx, commonData)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP:
+	case authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP:
 		data.AuthorizeEditorDataServicesHttpServiceDefinitionDTO, d = p.expandHttpService(ctx, commonData)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_NONE:
+	case authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_NONE:
 		data.AuthorizeEditorDataServicesNoneServiceDefinitionDTO, d = p.expandNoneService(commonData)
 		diags.Append(d...)
 	default:
@@ -1141,7 +1152,7 @@ func (p *trustFrameworkServiceResourceModel) expandCommon(ctx context.Context) (
 
 	data := authorize.NewAuthorizeEditorDataDefinitionsServiceDefinitionDTOCommon(
 		p.Name.ValueString(),
-		p.ServiceType.ValueString(),
+		authorize.EnumAuthorizeEditorDataDefinitionsServiceDefinitionDTOServiceType(p.ServiceType.ValueString()),
 	)
 
 	if !p.FullName.IsNull() && !p.FullName.IsUnknown() {
@@ -1164,10 +1175,6 @@ func (p *trustFrameworkServiceResourceModel) expandCommon(ctx context.Context) (
 		}
 
 		data.SetParent(*parent)
-	}
-
-	if !p.Type.IsNull() && !p.Type.IsUnknown() {
-		data.SetType(authorize.EnumAuthorizeEditorDataDefinitionsServiceDefinitionDTOType(p.Type.ValueString()))
 	}
 
 	if !p.CacheSettings.IsNull() && !p.CacheSettings.IsUnknown() {
@@ -1202,7 +1209,7 @@ func (p *trustFrameworkServiceCacheSettingsResourceModel) expand() *authorize.Au
 func (p *trustFrameworkServiceResourceModel) expandConnectorService(ctx context.Context, commonData *authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTOCommon) (*authorize.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if p.ServiceType.ValueString() == string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_CONNECTOR) {
+	if p.ServiceType.ValueString() == string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR) {
 		return nil, diags
 	}
 
@@ -1260,7 +1267,7 @@ func (p *trustFrameworkServiceResourceModel) expandConnectorService(ctx context.
 func (p *trustFrameworkServiceResourceModel) expandHttpService(ctx context.Context, commonData *authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTOCommon) (*authorize.AuthorizeEditorDataServicesHttpServiceDefinitionDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if p.ServiceType.ValueString() == string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_HTTP) {
+	if p.ServiceType.ValueString() == string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP) {
 		return nil, diags
 	}
 
@@ -1318,7 +1325,7 @@ func (p *trustFrameworkServiceResourceModel) expandHttpService(ctx context.Conte
 func (p *trustFrameworkServiceResourceModel) expandNoneService(commonData *authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTOCommon) (*authorize.AuthorizeEditorDataServicesNoneServiceDefinitionDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if p.ServiceType.ValueString() == string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOTYPE_NONE) {
+	if p.ServiceType.ValueString() == string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_NONE) {
 		return nil, diags
 	}
 
@@ -1725,7 +1732,7 @@ func (p *trustFrameworkServiceResourceModel) toState(ctx context.Context, apiObj
 	p.CacheSettings, d = trustFrameworkServiceCacheSettingsOkToTF(apiObjectCommon.GetCacheSettingsOk())
 	diags.Append(d...)
 
-	p.ServiceType = framework.StringOkToTF(apiObjectCommon.GetServiceTypeOk())
+	p.ServiceType = framework.EnumOkToTF(apiObjectCommon.GetServiceTypeOk())
 	p.Version = framework.StringOkToTF(apiObjectCommon.GetVersionOk())
 
 	p.Processor = types.ObjectNull(editorDataProcessorTFObjectTypes)
@@ -1841,7 +1848,7 @@ func trustFrameworkServiceServiceSettingsConnectorInputMappingOkToTF(ctx context
 	attributeMap := map[string]attr.Value{}
 
 	switch t := apiObject.GetActualInstance().(type) {
-	case authorize.AuthorizeEditorDataInputMappingsAttributeInputMappingDTO:
+	case *authorize.AuthorizeEditorDataInputMappingsAttributeInputMappingDTO:
 
 		valueResp, ok := t.GetValueOk()
 		value, d := editorDataReferenceObjectOkToTF(valueResp, ok)
@@ -1853,7 +1860,7 @@ func trustFrameworkServiceServiceSettingsConnectorInputMappingOkToTF(ctx context
 			"value_ref": value,
 		}
 
-	case authorize.AuthorizeEditorDataInputMappingsInputInputMappingDTO:
+	case *authorize.AuthorizeEditorDataInputMappingsInputInputMappingDTO:
 
 		attributeMap = map[string]attr.Value{
 			"type":     framework.EnumOkToTF(t.GetTypeOk()),
@@ -2004,7 +2011,7 @@ func trustFrameworkServiceServiceSettingsHttpAuthenticationOkToTF(ctx context.Co
 	attributeMap := map[string]attr.Value{}
 
 	switch t := apiObject.GetActualInstance().(type) {
-	case authorize.AuthorizeEditorDataAuthenticationsBasicAuthenticationDTO:
+	case *authorize.AuthorizeEditorDataAuthenticationsBasicAuthenticationDTO:
 
 		nameResp, ok := t.GetNameOk()
 		name, d := editorDataReferenceObjectOkToTF(nameResp, ok)
@@ -2020,7 +2027,7 @@ func trustFrameworkServiceServiceSettingsHttpAuthenticationOkToTF(ctx context.Co
 			"password": password,
 		}
 
-	case authorize.AuthorizeEditorDataAuthenticationsClientCredentialsAuthenticationDTO:
+	case *authorize.AuthorizeEditorDataAuthenticationsClientCredentialsAuthenticationDTO:
 
 		clientSecretResp, ok := t.GetClientSecretOk()
 		clientSecret, d := editorDataReferenceObjectOkToTF(clientSecretResp, ok)
@@ -2034,13 +2041,13 @@ func trustFrameworkServiceServiceSettingsHttpAuthenticationOkToTF(ctx context.Co
 			"scope":          framework.StringOkToTF(t.GetScopeOk()),
 		}
 
-	case authorize.AuthorizeEditorDataAuthenticationsNoneAuthenticationDTO:
+	case *authorize.AuthorizeEditorDataAuthenticationsNoneAuthenticationDTO:
 
 		attributeMap = map[string]attr.Value{
 			"type": framework.EnumOkToTF(t.GetTypeOk()),
 		}
 
-	case authorize.AuthorizeEditorDataAuthenticationsTokenAuthenticationDTO:
+	case *authorize.AuthorizeEditorDataAuthenticationsTokenAuthenticationDTO:
 
 		tokenResp, ok := t.GetTokenOk()
 		token, d := editorDataReferenceObjectOkToTF(tokenResp, ok)

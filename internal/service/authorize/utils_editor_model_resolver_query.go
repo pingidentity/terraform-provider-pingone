@@ -131,7 +131,7 @@ func editorDataResolverQueryOkToTF(ctx context.Context, apiObject *authorize.Aut
 	attributeMap := map[string]attr.Value{}
 
 	switch t := apiObject.GetActualInstance().(type) {
-	case authorize.AuthorizeEditorDataAttributeResolversUserQueryUserIdQueryDTO:
+	case *authorize.AuthorizeEditorDataAttributeResolversUserQueryUserIdQueryDTO:
 
 		attributeMap = map[string]attr.Value{
 			"type":    framework.EnumOkToTF(t.GetTypeOk()),

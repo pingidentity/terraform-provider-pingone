@@ -396,6 +396,13 @@ func DaVinciFlowPolicySandboxEnvironment() string {
 		}`
 }
 
+func AuthorizePMTFSandboxEnvironment() string {
+	return `
+		data "pingone_environment" "general_test" {
+			name = "tf-testacc-static-authorize-test"
+		}`
+}
+
 func CheckParentEnvironmentDestroy(ctx context.Context, apiClient *management.APIClient, environmentID string) (bool, error) {
 	environment, r, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentID).Execute()
 

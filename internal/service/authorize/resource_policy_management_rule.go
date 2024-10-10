@@ -224,7 +224,9 @@ func (r *PolicyManagementRuleResource) Create(ctx context.Context, req resource.
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(state.toState(ctx, response)...)
-	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	if !resp.Diagnostics.HasError() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	}
 }
 
 func (r *PolicyManagementRuleResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -269,7 +271,9 @@ func (r *PolicyManagementRuleResource) Read(ctx context.Context, req resource.Re
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(ctx, response)...)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	if !resp.Diagnostics.HasError() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	}
 }
 
 func (r *PolicyManagementRuleResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -318,7 +322,9 @@ func (r *PolicyManagementRuleResource) Update(ctx context.Context, req resource.
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(state.toState(ctx, response)...)
-	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	if !resp.Diagnostics.HasError() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	}
 }
 
 func (r *PolicyManagementRuleResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

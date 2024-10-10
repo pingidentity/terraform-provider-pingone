@@ -28,7 +28,7 @@ func TestAccTrustFrameworkAttribute_RemovalDrift(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	var fido2PolicyID, environmentID string
+	var attributeID, environmentID string
 
 	var p1Client *client.Client
 	var ctx = context.Background()
@@ -48,11 +48,11 @@ func TestAccTrustFrameworkAttribute_RemovalDrift(t *testing.T) {
 			// Configure
 			{
 				Config: testAccTrustFrameworkAttributeConfig_Minimal(resourceName, name),
-				Check:  authorize.TrustFrameworkAttribute_GetIDs(resourceFullName, &environmentID, &fido2PolicyID),
+				Check:  authorize.TrustFrameworkAttribute_GetIDs(resourceFullName, &environmentID, &attributeID),
 			},
 			{
 				PreConfig: func() {
-					authorize.TrustFrameworkAttribute_RemovalDrift_PreConfig(ctx, p1Client.API.AuthorizeAPIClient, t, environmentID, fido2PolicyID)
+					authorize.TrustFrameworkAttribute_RemovalDrift_PreConfig(ctx, p1Client.API.AuthorizeAPIClient, t, environmentID, attributeID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -60,7 +60,7 @@ func TestAccTrustFrameworkAttribute_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccTrustFrameworkAttributeConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  authorize.TrustFrameworkAttribute_GetIDs(resourceFullName, &environmentID, &fido2PolicyID),
+				Check:  authorize.TrustFrameworkAttribute_GetIDs(resourceFullName, &environmentID, &attributeID),
 			},
 			{
 				PreConfig: func() {
@@ -118,6 +118,7 @@ func TestAccTrustFrameworkAttribute_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "description", "Test application role"),
+		resource.TestCheckResourceAttr(resourceFullName, "type", "ATTRIBUTE"),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
@@ -125,6 +126,7 @@ func TestAccTrustFrameworkAttribute_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
 		resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+		resource.TestCheckResourceAttr(resourceFullName, "type", "ATTRIBUTE"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -248,7 +250,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "Test application role"
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkAttributeConfig_Minimal(resourceName, name string) string {
@@ -258,5 +260,5 @@ func testAccTrustFrameworkAttributeConfig_Minimal(resourceName, name string) str
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }

@@ -657,7 +657,7 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 	attributeMap := map[string]attr.Value{}
 
 	switch t := apiObject.GetActualInstance().(type) {
-	case authorize.AuthorizeEditorDataAttributeResolversAttributeResolverDTO:
+	case *authorize.AuthorizeEditorDataAttributeResolversAttributeResolverDTO:
 
 		conditionValue, ok := t.GetConditionOk()
 		condition, d := editorDataConditionOkToTF(ctx, conditionValue, ok)
@@ -678,7 +678,7 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 			"value_ref": valueRef,
 		}
 
-	case authorize.AuthorizeEditorDataAttributeResolversConstantResolverDTO:
+	case *authorize.AuthorizeEditorDataAttributeResolversConstantResolverDTO:
 
 		conditionValue, ok := t.GetConditionOk()
 		condition, d := editorDataConditionOkToTF(ctx, conditionValue, ok)
@@ -700,7 +700,7 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 			"value":      framework.StringOkToTF(t.GetValueOk()),
 		}
 
-	case authorize.AuthorizeEditorDataAttributeResolversCurrentRepetitionValueResolverDTO:
+	case *authorize.AuthorizeEditorDataAttributeResolversCurrentRepetitionValueResolverDTO:
 
 		conditionValue, ok := t.GetConditionOk()
 		condition, d := editorDataConditionOkToTF(ctx, conditionValue, ok)
@@ -717,7 +717,7 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 			"type":      framework.EnumOkToTF(t.GetTypeOk()),
 		}
 
-	case authorize.AuthorizeEditorDataAttributeResolversCurrentUserIDResolverDTO:
+	case *authorize.AuthorizeEditorDataAttributeResolversCurrentUserIDResolverDTO:
 
 		conditionValue, ok := t.GetConditionOk()
 		condition, d := editorDataConditionOkToTF(ctx, conditionValue, ok)
@@ -734,7 +734,7 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 			"type":      framework.EnumOkToTF(t.GetTypeOk()),
 		}
 
-	case authorize.AuthorizeEditorDataAttributeResolversRequestResolverDTO:
+	case *authorize.AuthorizeEditorDataAttributeResolversRequestResolverDTO:
 
 		conditionValue, ok := t.GetConditionOk()
 		condition, d := editorDataConditionOkToTF(ctx, conditionValue, ok)
@@ -751,7 +751,7 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 			"type":      framework.EnumOkToTF(t.GetTypeOk()),
 		}
 
-	case authorize.AuthorizeEditorDataAttributeResolversServiceResolverDTO:
+	case *authorize.AuthorizeEditorDataAttributeResolversServiceResolverDTO:
 
 		conditionValue, ok := t.GetConditionOk()
 		condition, d := editorDataConditionOkToTF(ctx, conditionValue, ok)
@@ -772,7 +772,7 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 			"value_ref": valueRef,
 		}
 
-	case authorize.AuthorizeEditorDataAttributeResolversSystemResolverDTO:
+	case *authorize.AuthorizeEditorDataAttributeResolversSystemResolverDTO:
 
 		conditionValue, ok := t.GetConditionOk()
 		condition, d := editorDataConditionOkToTF(ctx, conditionValue, ok)
@@ -790,7 +790,7 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 			"value":     framework.EnumOkToTF(t.GetValueOk()),
 		}
 
-	case authorize.AuthorizeEditorDataAttributeResolversUserResolverDTO:
+	case *authorize.AuthorizeEditorDataAttributeResolversUserResolverDTO:
 
 		conditionValue, ok := t.GetConditionOk()
 		condition, d := editorDataConditionOkToTF(ctx, conditionValue, ok)

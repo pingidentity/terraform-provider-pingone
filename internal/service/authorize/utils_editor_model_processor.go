@@ -25,6 +25,13 @@ import (
 
 const processorNestedIterationMaxDepth = 2
 
+var newSupportedTypes = []authorize.EnumAuthorizeEditorDataProcessorDTOType{
+	"JSON_PATH",
+	"REFERENCE",
+	"SPEL",
+	"XPATH",
+}
+
 func dataProcessorObjectSchemaAttributes() (attributes map[string]schema.Attribute) {
 	const initialIteration = 1
 	return dataProcessorObjectSchemaAttributesIteration(initialIteration)
@@ -34,14 +41,6 @@ func dataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes m
 	supportedTypes := authorize.AllowedEnumAuthorizeEditorDataProcessorDTOTypeEnumValues
 
 	if iteration >= processorNestedIterationMaxDepth {
-
-		newSupportedTypes := []authorize.EnumAuthorizeEditorDataProcessorDTOType{
-			"JSON_PATH",
-			"REFERENCE",
-			"SPEL",
-			"XPATH",
-		}
-
 		supportedTypes = newSupportedTypes
 	}
 
@@ -227,30 +226,47 @@ type editorDataProcessorResourceModel struct {
 	ProcessorRef types.Object `tfsdk:"processor_ref"`
 }
 
-var editorDataProcessorTFObjectTypes = initializeEditorDataProcessorTFObjectTypes()
+var editorDataProcessorTFObjectTypes = initializeEditorDataProcessorTFObjectTypes(1)
 
-func initializeEditorDataProcessorTFObjectTypes() map[string]attr.Type {
-	return map[string]attr.Type{
+func initializeEditorDataProcessorTFObjectTypes(iteration int) map[string]attr.Type {
+
+	supportedTypes := authorize.AllowedEnumAuthorizeEditorDataProcessorDTOTypeEnumValues
+
+	if iteration >= processorNestedIterationMaxDepth {
+		supportedTypes = newSupportedTypes
+	}
+
+	attrMap := map[string]attr.Type{
 		"name": types.StringType,
 		"type": types.StringType,
-		"processors": types.ListType{
-			ElemType: types.ObjectType{AttrTypes: nil}, // Temporarily set to nil
-		},
-		"predicate":     types.ObjectType{AttrTypes: nil}, // Temporarily set to nil
-		"processor":     types.ObjectType{AttrTypes: nil}, // Temporarily set to nil
-		"expression":    types.StringType,
-		"value_type":    types.ObjectType{AttrTypes: editorValueTypeTFObjectTypes},
-		"processor_ref": types.ObjectType{AttrTypes: editorReferenceObjectTFObjectTypes},
 	}
-}
 
-func init() {
-	// Now set the correct AttrTypes to break the initialization cycle
-	editorDataProcessorTFObjectTypes["processors"] = types.ListType{
-		ElemType: types.ObjectType{AttrTypes: editorDataProcessorTFObjectTypes},
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_CHAIN) {
+		attrMap["processors"] = types.ListType{
+			ElemType: types.ObjectType{AttrTypes: initializeEditorDataProcessorTFObjectTypes(iteration + 1)},
+		}
 	}
-	editorDataProcessorTFObjectTypes["predicate"] = types.ObjectType{AttrTypes: editorDataProcessorTFObjectTypes}
-	editorDataProcessorTFObjectTypes["processor"] = types.ObjectType{AttrTypes: editorDataProcessorTFObjectTypes}
+
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_COLLECTION_FILTER) {
+		attrMap["predicate"] = types.ObjectType{AttrTypes: initializeEditorDataProcessorTFObjectTypes(iteration + 1)}
+	}
+
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_COLLECTION_TRANSFORM) {
+		attrMap["processor"] = types.ObjectType{AttrTypes: initializeEditorDataProcessorTFObjectTypes(iteration + 1)}
+	}
+
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_JSON_PATH) ||
+		slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_SPEL) ||
+		slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_XPATH) {
+		attrMap["expression"] = types.StringType
+		attrMap["value_type"] = types.ObjectType{AttrTypes: editorValueTypeTFObjectTypes}
+	}
+
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_REFERENCE) {
+		attrMap["processor_ref"] = types.ObjectType{AttrTypes: editorReferenceObjectTFObjectTypes}
+	}
+
+	return attrMap
 }
 
 func expandEditorDataProcessor(ctx context.Context, processor basetypes.ObjectValue) (processorObject *authorize.AuthorizeEditorDataProcessorDTO, diags diag.Diagnostics) {
@@ -455,27 +471,36 @@ func (p *editorDataProcessorResourceModel) expandXPATHProcessor(ctx context.Cont
 }
 
 func editorDataProcessorOkToTF(ctx context.Context, apiObject *authorize.AuthorizeEditorDataProcessorDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	const initialIteration = 1
+	return editorDataProcessorOkToTFIteration(ctx, initialIteration, apiObject, ok)
+}
+
+func editorDataProcessorOkToTFIteration(ctx context.Context, iteration int, apiObject *authorize.AuthorizeEditorDataProcessorDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil || cmp.Equal(apiObject, &authorize.AuthorizeEditorDataProcessorDTO{}) {
-		return types.ObjectNull(editorDataProcessorTFObjectTypes), diags
+		return types.ObjectNull(initializeEditorDataProcessorTFObjectTypes(iteration)), diags
 	}
 
 	attributeMap := map[string]attr.Value{}
 
 	switch t := apiObject.GetActualInstance().(type) {
-	case authorize.AuthorizeEditorDataProcessorsChainProcessorDTO:
+	case *authorize.AuthorizeEditorDataProcessorsChainProcessorDTO:
+
+		processorsResp, ok := t.GetProcessorsOk()
+		processors, d := editorDataProcessorsOkToListTFIteration(ctx, iteration+1, processorsResp, ok)
+		diags.Append(d...)
 
 		attributeMap = map[string]attr.Value{
 			"name":       framework.StringOkToTF(t.GetNameOk()),
 			"type":       framework.EnumOkToTF(t.GetTypeOk()),
-			"processors": nil,
+			"processors": processors,
 		}
 
-	case authorize.AuthorizeEditorDataProcessorsCollectionFilterProcessorDTO:
+	case *authorize.AuthorizeEditorDataProcessorsCollectionFilterProcessorDTO:
 
 		predicateResp, ok := t.GetPredicateOk()
-		predicate, d := editorDataProcessorOkToTF(ctx, predicateResp, ok)
+		predicate, d := editorDataProcessorOkToTFIteration(ctx, iteration+1, predicateResp, ok)
 		diags.Append(d...)
 
 		attributeMap = map[string]attr.Value{
@@ -484,10 +509,10 @@ func editorDataProcessorOkToTF(ctx context.Context, apiObject *authorize.Authori
 			"predicate": predicate,
 		}
 
-	case authorize.AuthorizeEditorDataProcessorsCollectionTransformProcessorDTO:
+	case *authorize.AuthorizeEditorDataProcessorsCollectionTransformProcessorDTO:
 
 		processorResp, ok := t.GetProcessorOk()
-		processor, d := editorDataProcessorOkToTF(ctx, processorResp, ok)
+		processor, d := editorDataProcessorOkToTFIteration(ctx, iteration+1, processorResp, ok)
 		diags.Append(d...)
 
 		attributeMap = map[string]attr.Value{
@@ -496,7 +521,7 @@ func editorDataProcessorOkToTF(ctx context.Context, apiObject *authorize.Authori
 			"processor": processor,
 		}
 
-	case authorize.AuthorizeEditorDataProcessorsJsonPathProcessorDTO:
+	case *authorize.AuthorizeEditorDataProcessorsJsonPathProcessorDTO:
 
 		valueType, d := editorValueTypeOkToTF(t.GetValueTypeOk())
 		diags.Append(d...)
@@ -504,11 +529,11 @@ func editorDataProcessorOkToTF(ctx context.Context, apiObject *authorize.Authori
 		attributeMap = map[string]attr.Value{
 			"name":       framework.StringOkToTF(t.GetNameOk()),
 			"type":       framework.EnumOkToTF(t.GetTypeOk()),
-			"expression": framework.StringOkToTF(t.GetNameOk()),
+			"expression": framework.StringOkToTF(t.GetExpressionOk()),
 			"value_type": valueType,
 		}
 
-	case authorize.AuthorizeEditorDataProcessorsReferenceProcessorDTO:
+	case *authorize.AuthorizeEditorDataProcessorsReferenceProcessorDTO:
 
 		processorRef, d := editorDataReferenceObjectOkToTF(t.GetProcessorOk())
 		diags.Append(d...)
@@ -519,7 +544,7 @@ func editorDataProcessorOkToTF(ctx context.Context, apiObject *authorize.Authori
 			"processor_ref": processorRef,
 		}
 
-	case authorize.AuthorizeEditorDataProcessorsSpelProcessorDTO:
+	case *authorize.AuthorizeEditorDataProcessorsSpelProcessorDTO:
 
 		valueType, d := editorValueTypeOkToTF(t.GetValueTypeOk())
 		diags.Append(d...)
@@ -527,11 +552,11 @@ func editorDataProcessorOkToTF(ctx context.Context, apiObject *authorize.Authori
 		attributeMap = map[string]attr.Value{
 			"name":       framework.StringOkToTF(t.GetNameOk()),
 			"type":       framework.EnumOkToTF(t.GetTypeOk()),
-			"expression": framework.StringOkToTF(t.GetNameOk()),
+			"expression": framework.StringOkToTF(t.GetExpressionOk()),
 			"value_type": valueType,
 		}
 
-	case authorize.AuthorizeEditorDataProcessorsXPathProcessorDTO:
+	case *authorize.AuthorizeEditorDataProcessorsXPathProcessorDTO:
 
 		valueType, d := editorValueTypeOkToTF(t.GetValueTypeOk())
 		diags.Append(d...)
@@ -539,7 +564,7 @@ func editorDataProcessorOkToTF(ctx context.Context, apiObject *authorize.Authori
 		attributeMap = map[string]attr.Value{
 			"name":       framework.StringOkToTF(t.GetNameOk()),
 			"type":       framework.EnumOkToTF(t.GetTypeOk()),
-			"expression": framework.StringOkToTF(t.GetNameOk()),
+			"expression": framework.StringOkToTF(t.GetExpressionOk()),
 			"value_type": valueType,
 		}
 
@@ -551,26 +576,78 @@ func editorDataProcessorOkToTF(ctx context.Context, apiObject *authorize.Authori
 			"Invalid processor type",
 			"The processor type is not supported.  Please raise an issue with the provider maintainers.",
 		)
+		return types.ObjectNull(initializeEditorDataProcessorTFObjectTypes(iteration)), diags
 	}
 
-	attributeMap = editorDataProcessorConvertEmptyValuesToTFNulls(attributeMap)
+	attributeMap = editorDataProcessorConvertEmptyValuesToTFNulls(attributeMap, iteration)
 
-	objValue, d := types.ObjectValue(editorDataProcessorTFObjectTypes, attributeMap)
+	objValue, d := types.ObjectValue(initializeEditorDataProcessorTFObjectTypes(iteration), attributeMap)
 	diags.Append(d...)
 
 	return objValue, diags
 }
 
-func editorDataProcessorConvertEmptyValuesToTFNulls(attributeMap map[string]attr.Value) map[string]attr.Value {
+func editorDataProcessorsOkToListTFIteration(ctx context.Context, iteration int, apiObject []authorize.AuthorizeEditorDataProcessorDTO, ok bool) (basetypes.ListValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	tfObjType := types.ObjectType{AttrTypes: initializeEditorDataProcessorTFObjectTypes(iteration)}
+
+	if !ok || apiObject == nil {
+		return types.ListNull(tfObjType), diags
+	}
+
+	flattenedList := []attr.Value{}
+	for _, v := range apiObject {
+
+		flattenedObj, d := editorDataProcessorOkToTFIteration(ctx, iteration+1, &v, true)
+		diags.Append(d...)
+		if diags.HasError() {
+			return types.ListNull(tfObjType), diags
+		}
+
+		flattenedList = append(flattenedList, flattenedObj)
+	}
+
+	returnVar, d := types.ListValue(tfObjType, flattenedList)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func editorDataProcessorConvertEmptyValuesToTFNulls(attributeMap map[string]attr.Value, iteration int) map[string]attr.Value {
+
+	supportedTypes := authorize.AllowedEnumAuthorizeEditorDataProcessorDTOTypeEnumValues
+
+	if iteration >= processorNestedIterationMaxDepth {
+		supportedTypes = newSupportedTypes
+	}
+
 	nullMap := map[string]attr.Value{
-		"name":          types.StringNull(),
-		"type":          types.StringNull(),
-		"processors":    types.ListNull(types.ObjectType{AttrTypes: editorDataProcessorTFObjectTypes}),
-		"predicate":     types.ObjectNull(editorDataProcessorTFObjectTypes),
-		"processor":     types.ObjectNull(editorDataProcessorTFObjectTypes),
-		"expression":    types.StringNull(),
-		"value_type":    types.ObjectNull(editorValueTypeTFObjectTypes),
-		"processor_ref": types.ObjectNull(editorReferenceObjectTFObjectTypes),
+		"name": types.StringNull(),
+		"type": types.StringNull(),
+	}
+
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_CHAIN) {
+		nullMap["processors"] = types.ListNull(types.ObjectType{AttrTypes: initializeEditorDataProcessorTFObjectTypes(iteration + 1)})
+	}
+
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_COLLECTION_FILTER) {
+		nullMap["predicate"] = types.ObjectNull(initializeEditorDataProcessorTFObjectTypes(iteration + 1))
+	}
+
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_COLLECTION_TRANSFORM) {
+		nullMap["processor"] = types.ObjectNull(initializeEditorDataProcessorTFObjectTypes(iteration + 1))
+	}
+
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_JSON_PATH) ||
+		slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_SPEL) ||
+		slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_XPATH) {
+		nullMap["expression"] = types.StringNull()
+		nullMap["value_type"] = types.ObjectNull(editorValueTypeTFObjectTypes)
+	}
+
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_REFERENCE) {
+		nullMap["processor_ref"] = types.ObjectNull(editorReferenceObjectTFObjectTypes)
 	}
 
 	for k := range nullMap {

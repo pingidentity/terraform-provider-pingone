@@ -234,7 +234,9 @@ func (r *PolicyManagementStatementResource) Create(ctx context.Context, req reso
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(state.toState(response)...)
-	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	if !resp.Diagnostics.HasError() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	}
 }
 
 func (r *PolicyManagementStatementResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -279,7 +281,9 @@ func (r *PolicyManagementStatementResource) Read(ctx context.Context, req resour
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(response)...)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	if !resp.Diagnostics.HasError() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	}
 }
 
 func (r *PolicyManagementStatementResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -328,7 +332,9 @@ func (r *PolicyManagementStatementResource) Update(ctx context.Context, req reso
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(state.toState(response)...)
-	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	if !resp.Diagnostics.HasError() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	}
 }
 
 func (r *PolicyManagementStatementResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

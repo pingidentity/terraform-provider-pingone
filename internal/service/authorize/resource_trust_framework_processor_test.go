@@ -28,7 +28,7 @@ func TestAccTrustFrameworkProcessor_RemovalDrift(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	var fido2PolicyID, environmentID string
+	var processorID, environmentID string
 
 	var p1Client *client.Client
 	var ctx = context.Background()
@@ -48,11 +48,11 @@ func TestAccTrustFrameworkProcessor_RemovalDrift(t *testing.T) {
 			// Configure
 			{
 				Config: testAccTrustFrameworkProcessorConfig_Minimal(resourceName, name),
-				Check:  authorize.TrustFrameworkProcessor_GetIDs(resourceFullName, &environmentID, &fido2PolicyID),
+				Check:  authorize.TrustFrameworkProcessor_GetIDs(resourceFullName, &environmentID, &processorID),
 			},
 			{
 				PreConfig: func() {
-					authorize.TrustFrameworkProcessor_RemovalDrift_PreConfig(ctx, p1Client.API.AuthorizeAPIClient, t, environmentID, fido2PolicyID)
+					authorize.TrustFrameworkProcessor_RemovalDrift_PreConfig(ctx, p1Client.API.AuthorizeAPIClient, t, environmentID, processorID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -60,7 +60,7 @@ func TestAccTrustFrameworkProcessor_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccTrustFrameworkProcessorConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  authorize.TrustFrameworkProcessor_GetIDs(resourceFullName, &environmentID, &fido2PolicyID),
+				Check:  authorize.TrustFrameworkProcessor_GetIDs(resourceFullName, &environmentID, &processorID),
 			},
 			{
 				PreConfig: func() {
@@ -899,7 +899,6 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "Test processor"
-  full_name      = "%[3]s"
 
   parent = {
     id = pingone_authorize_trust_framework_processor.%[2]s-parent.id
@@ -914,7 +913,7 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s" {
       type = "STRING"
     }
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkProcessorConfig_Minimal(resourceName, name string) string {
@@ -963,7 +962,7 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s" {
       },
     ],
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkProcessorConfig_Processor_Chain2(resourceName, name string) string {
@@ -1008,7 +1007,7 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s" {
       },
     ],
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkProcessorConfig_Processor_CollectionFilter1(resourceName, name string) string {
@@ -1033,7 +1032,7 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s" {
       }
     },
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkProcessorConfig_Processor_CollectionFilter2(resourceName, name string) string {
@@ -1058,7 +1057,7 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s" {
       }
     },
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkProcessorConfig_Processor_CollectionTransform1(resourceName, name string) string {
@@ -1083,7 +1082,7 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s" {
       }
     },
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkProcessorConfig_Processor_CollectionTransform2(resourceName, name string) string {
@@ -1108,7 +1107,7 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s" {
       }
     },
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkProcessorConfig_Processor_Json_Path1(resourceName, name string) string {
@@ -1128,7 +1127,7 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s" {
       type = "STRING"
     }
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkProcessorConfig_Processor_Json_Path2(resourceName, name string) string {
@@ -1148,7 +1147,7 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s" {
       type = "BOOLEAN"
     }
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkProcessorConfig_Processor_Reference1(resourceName, name string) string {
@@ -1197,7 +1196,7 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s" {
       id = pingone_authorize_trust_framework_processor.%[2]s_ref1.id
     }
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkProcessorConfig_Processor_Reference2(resourceName, name string) string {
@@ -1246,7 +1245,7 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s" {
       id = pingone_authorize_trust_framework_processor.%[2]s_ref2.id
     }
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkProcessorConfig_Processor_SpEL1(resourceName, name string) string {
@@ -1266,7 +1265,7 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s" {
       type = "STRING"
     }
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkProcessorConfig_Processor_SpEL2(resourceName, name string) string {
@@ -1286,7 +1285,7 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s" {
       type = "STRING"
     }
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkProcessorConfig_Processor_XPath1(resourceName, name string) string {
@@ -1306,7 +1305,7 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s" {
       type = "STRING"
     }
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkProcessorConfig_Processor_XPath2(resourceName, name string) string {
@@ -1326,5 +1325,5 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s" {
       type = "BOOLEAN"
     }
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }

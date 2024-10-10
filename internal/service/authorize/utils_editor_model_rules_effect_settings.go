@@ -202,7 +202,7 @@ func editorDataRulesEffectSettingsOkToTF(ctx context.Context, apiObject *authori
 	attributeMap := map[string]attr.Value{}
 
 	switch t := apiObject.GetActualInstance().(type) {
-	case authorize.AuthorizeEditorDataRulesEffectSettingsConditionalDenyElsePermitDTO:
+	case *authorize.AuthorizeEditorDataRulesEffectSettingsConditionalDenyElsePermitDTO:
 
 		conditionResp, ok := t.GetConditionOk()
 		condition, d := editorDataConditionOkToTF(ctx, conditionResp, ok)
@@ -213,7 +213,7 @@ func editorDataRulesEffectSettingsOkToTF(ctx context.Context, apiObject *authori
 			"condition": condition,
 		}
 
-	case authorize.AuthorizeEditorDataRulesEffectSettingsConditionalPermitElseDenyDTO:
+	case *authorize.AuthorizeEditorDataRulesEffectSettingsConditionalPermitElseDenyDTO:
 
 		conditionResp, ok := t.GetConditionOk()
 		condition, d := editorDataConditionOkToTF(ctx, conditionResp, ok)
@@ -224,13 +224,13 @@ func editorDataRulesEffectSettingsOkToTF(ctx context.Context, apiObject *authori
 			"condition": condition,
 		}
 
-	case authorize.AuthorizeEditorDataRulesEffectSettingsUnconditionalDenyDTO:
+	case *authorize.AuthorizeEditorDataRulesEffectSettingsUnconditionalDenyDTO:
 
 		attributeMap = map[string]attr.Value{
 			"type": framework.EnumOkToTF(t.GetTypeOk()),
 		}
 
-	case authorize.AuthorizeEditorDataRulesEffectSettingsUnconditionalPermitDTO:
+	case *authorize.AuthorizeEditorDataRulesEffectSettingsUnconditionalPermitDTO:
 
 		attributeMap = map[string]attr.Value{
 			"type": framework.EnumOkToTF(t.GetTypeOk()),

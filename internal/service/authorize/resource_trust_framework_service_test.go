@@ -28,7 +28,7 @@ func TestAccTrustFrameworkService_RemovalDrift(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	var fido2PolicyID, environmentID string
+	var serviceID, environmentID string
 
 	var p1Client *client.Client
 	var ctx = context.Background()
@@ -48,11 +48,11 @@ func TestAccTrustFrameworkService_RemovalDrift(t *testing.T) {
 			// Configure
 			{
 				Config: testAccTrustFrameworkServiceConfig_Minimal(resourceName, name),
-				Check:  authorize.TrustFrameworkService_GetIDs(resourceFullName, &environmentID, &fido2PolicyID),
+				Check:  authorize.TrustFrameworkService_GetIDs(resourceFullName, &environmentID, &serviceID),
 			},
 			{
 				PreConfig: func() {
-					authorize.TrustFrameworkService_RemovalDrift_PreConfig(ctx, p1Client.API.AuthorizeAPIClient, t, environmentID, fido2PolicyID)
+					authorize.TrustFrameworkService_RemovalDrift_PreConfig(ctx, p1Client.API.AuthorizeAPIClient, t, environmentID, serviceID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -60,7 +60,7 @@ func TestAccTrustFrameworkService_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccTrustFrameworkServiceConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  authorize.TrustFrameworkService_GetIDs(resourceFullName, &environmentID, &fido2PolicyID),
+				Check:  authorize.TrustFrameworkService_GetIDs(resourceFullName, &environmentID, &serviceID),
 			},
 			{
 				PreConfig: func() {
@@ -807,7 +807,7 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
   cache_settings = {
     ttl_seconds = 300
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkServiceConfig_Minimal(resourceName, name string) string {
@@ -819,7 +819,7 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
   name           = "%[3]s"
 
   service_type = "NONE"
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkServiceConfig_Service_HTTP_Full1(resourceName, name string) string {
@@ -933,7 +933,7 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
   value_type = {
     type = "JSON"
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkServiceConfig_Service_HTTP_Full2(resourceName, name string) string {
@@ -1014,7 +1014,7 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
   value_type = {
     type = "XML"
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkServiceConfig_Service_HTTP_Minimal(resourceName, name string) string {
@@ -1043,7 +1043,7 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
   value_type = {
     type = "STRING"
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkServiceConfig_Service_Connector_Full1(resourceName, name string) string {
@@ -1135,7 +1135,7 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
   value_type = {
     type = "JSON"
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkServiceConfig_Service_Connector_Full2(resourceName, name string) string {
@@ -1196,7 +1196,7 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
   value_type = {
     type = "XML"
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkServiceConfig_Service_Connector_Minimal(resourceName, name string) string {
@@ -1233,7 +1233,7 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
   value_type = {
     type = "STRING"
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkServiceConfig_Service_None_Full(resourceName, name string) string {
@@ -1249,7 +1249,7 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
   cache_settings = {
     ttl_seconds = 300
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccTrustFrameworkServiceConfig_Service_None_Minimal(resourceName, name string) string {
@@ -1261,5 +1261,5 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
   name           = "%[3]s"
 
   service_type = "NONE"
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }

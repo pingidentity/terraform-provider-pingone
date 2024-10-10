@@ -28,7 +28,7 @@ func TestAccPolicyManagementStatement_RemovalDrift(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	var fido2PolicyID, environmentID string
+	var statementID, environmentID string
 
 	var p1Client *client.Client
 	var ctx = context.Background()
@@ -48,11 +48,11 @@ func TestAccPolicyManagementStatement_RemovalDrift(t *testing.T) {
 			// Configure
 			{
 				Config: testAccPolicyManagementStatementConfig_Minimal(resourceName, name),
-				Check:  authorize.PolicyManagementStatement_GetIDs(resourceFullName, &environmentID, &fido2PolicyID),
+				Check:  authorize.PolicyManagementStatement_GetIDs(resourceFullName, &environmentID, &statementID),
 			},
 			{
 				PreConfig: func() {
-					authorize.PolicyManagementStatement_RemovalDrift_PreConfig(ctx, p1Client.API.AuthorizeAPIClient, t, environmentID, fido2PolicyID)
+					authorize.PolicyManagementStatement_RemovalDrift_PreConfig(ctx, p1Client.API.AuthorizeAPIClient, t, environmentID, statementID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -60,7 +60,7 @@ func TestAccPolicyManagementStatement_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccPolicyManagementStatementConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  authorize.PolicyManagementStatement_GetIDs(resourceFullName, &environmentID, &fido2PolicyID),
+				Check:  authorize.PolicyManagementStatement_GetIDs(resourceFullName, &environmentID, &statementID),
 			},
 			{
 				PreConfig: func() {
@@ -248,7 +248,7 @@ resource "pingone_authorize_policy_management_statement" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "Test application role"
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccPolicyManagementStatementConfig_Minimal(resourceName, name string) string {
@@ -258,5 +258,5 @@ func testAccPolicyManagementStatementConfig_Minimal(resourceName, name string) s
 resource "pingone_authorize_policy_management_statement" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
