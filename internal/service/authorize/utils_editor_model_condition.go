@@ -473,10 +473,8 @@ func editorDataConditionOkToTFIteration(ctx context.Context, iteration int, apiO
 		conditions, d := editorDataConditionsOkToSetTF(ctx, conditionsResp, ok)
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"type":       framework.EnumOkToTF(t.GetTypeOk()),
-			"conditions": conditions,
-		}
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["conditions"] = conditions
 
 	case *authorize.AuthorizeEditorDataConditionsComparisonConditionDTO:
 
@@ -488,18 +486,14 @@ func editorDataConditionOkToTFIteration(ctx context.Context, iteration int, apiO
 		right, d := editorDataConditionComparandOkToTF(ctx, rightResp, ok)
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"type":       framework.EnumOkToTF(t.GetTypeOk()),
-			"comparator": framework.EnumOkToTF(t.GetComparatorOk()),
-			"left":       left,
-			"right":      right,
-		}
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["comparator"] = framework.EnumOkToTF(t.GetComparatorOk())
+		attributeMap["left"] = left
+		attributeMap["right"] = right
 
 	case *authorize.AuthorizeEditorDataConditionsEmptyConditionDTO:
 
-		attributeMap = map[string]attr.Value{
-			"type": framework.EnumOkToTF(t.GetTypeOk()),
-		}
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 
 	case *authorize.AuthorizeEditorDataConditionsNotConditionDTO:
 
@@ -507,10 +501,8 @@ func editorDataConditionOkToTFIteration(ctx context.Context, iteration int, apiO
 		condition, d := editorDataConditionOkToTFIteration(ctx, iteration+1, conditionResp, ok)
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"type":      framework.EnumOkToTF(t.GetTypeOk()),
-			"condition": condition,
-		}
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["condition"] = condition
 
 	case *authorize.AuthorizeEditorDataConditionsOrConditionDTO:
 
@@ -518,20 +510,16 @@ func editorDataConditionOkToTFIteration(ctx context.Context, iteration int, apiO
 		// conditions, d := editorDataConditionsOkToSetTF(ctx, conditionsResp, ok)
 		// diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"type": framework.EnumOkToTF(t.GetTypeOk()),
-			// "conditions": conditions,
-		}
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		// attributeMap["conditions"]= conditions
 
 	case *authorize.AuthorizeEditorDataConditionsReferenceConditionDTO:
 
 		reference, d := editorDataReferenceObjectOkToTF(t.GetReferenceOk())
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"type":      framework.EnumOkToTF(t.GetTypeOk()),
-			"reference": reference,
-		}
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["reference"] = reference
 
 	default:
 		tflog.Error(ctx, "Invalid condition type", map[string]interface{}{

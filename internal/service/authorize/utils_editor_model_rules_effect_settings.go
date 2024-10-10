@@ -208,10 +208,8 @@ func editorDataRulesEffectSettingsOkToTF(ctx context.Context, apiObject *authori
 		condition, d := editorDataConditionOkToTF(ctx, conditionResp, ok)
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"type":      framework.EnumOkToTF(t.GetTypeOk()),
-			"condition": condition,
-		}
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["condition"] = condition
 
 	case *authorize.AuthorizeEditorDataRulesEffectSettingsConditionalPermitElseDenyDTO:
 
@@ -219,22 +217,16 @@ func editorDataRulesEffectSettingsOkToTF(ctx context.Context, apiObject *authori
 		condition, d := editorDataConditionOkToTF(ctx, conditionResp, ok)
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"type":      framework.EnumOkToTF(t.GetTypeOk()),
-			"condition": condition,
-		}
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["condition"] = condition
 
 	case *authorize.AuthorizeEditorDataRulesEffectSettingsUnconditionalDenyDTO:
 
-		attributeMap = map[string]attr.Value{
-			"type": framework.EnumOkToTF(t.GetTypeOk()),
-		}
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 
 	case *authorize.AuthorizeEditorDataRulesEffectSettingsUnconditionalPermitDTO:
 
-		attributeMap = map[string]attr.Value{
-			"type": framework.EnumOkToTF(t.GetTypeOk()),
-		}
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 
 	default:
 		tflog.Error(ctx, "Invalid Rules Effect Settings type", map[string]interface{}{

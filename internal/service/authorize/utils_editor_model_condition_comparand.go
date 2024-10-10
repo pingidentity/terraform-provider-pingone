@@ -194,17 +194,13 @@ func editorDataConditionComparandOkToTF(ctx context.Context, apiObject *authoriz
 	switch t := apiObject.GetActualInstance().(type) {
 	case *authorize.AuthorizeEditorDataConditionsComparandsAttributeComparandDTO:
 
-		attributeMap = map[string]attr.Value{
-			"type": framework.EnumOkToTF(t.GetTypeOk()),
-			"id":   framework.StringOkToTF(t.GetIdOk()),
-		}
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["id"] = framework.StringOkToTF(t.GetIdOk())
 
 	case *authorize.AuthorizeEditorDataConditionsComparandsConstantComparandDTO:
 
-		attributeMap = map[string]attr.Value{
-			"type":  framework.EnumOkToTF(t.GetTypeOk()),
-			"value": framework.StringOkToTF(t.GetValueOk()),
-		}
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["value"] = framework.StringOkToTF(t.GetValueOk())
 
 	default:
 		tflog.Error(ctx, "Invalid condition comparand type", map[string]interface{}{

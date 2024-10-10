@@ -128,15 +128,13 @@ func editorDataResolverQueryOkToTF(ctx context.Context, apiObject *authorize.Aut
 		return types.ObjectNull(editorDataResolverQueryTFObjectTypes), diags
 	}
 
-	attributeMap := map[string]attr.Value{}
+	var attributeMap = map[string]attr.Value{}
 
 	switch t := apiObject.GetActualInstance().(type) {
 	case *authorize.AuthorizeEditorDataAttributeResolversUserQueryUserIdQueryDTO:
 
-		attributeMap = map[string]attr.Value{
-			"type":    framework.EnumOkToTF(t.GetTypeOk()),
-			"user_id": framework.StringOkToTF(t.GetUserIdOk()),
-		}
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["user_id"] = framework.StringOkToTF(t.GetUserIdOk())
 
 	default:
 		tflog.Error(ctx, "Invalid resolver query type", map[string]interface{}{

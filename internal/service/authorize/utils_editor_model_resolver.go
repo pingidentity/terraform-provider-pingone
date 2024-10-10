@@ -670,13 +670,11 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 		valueRef, d := editorDataReferenceObjectOkToTF(t.GetValueOk())
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"condition": condition,
-			"name":      framework.StringOkToTF(t.GetNameOk()),
-			"processor": processor,
-			"type":      framework.EnumOkToTF(t.GetTypeOk()),
-			"value_ref": valueRef,
-		}
+		attributeMap["condition"] = condition
+		attributeMap["name"] = framework.StringOkToTF(t.GetNameOk())
+		attributeMap["processor"] = processor
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["value_ref"] = valueRef
 
 	case *authorize.AuthorizeEditorDataAttributeResolversConstantResolverDTO:
 
@@ -691,14 +689,12 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 		valueType, d := editorValueTypeOkToTF(t.GetValueTypeOk())
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"condition":  condition,
-			"name":       framework.StringOkToTF(t.GetNameOk()),
-			"processor":  processor,
-			"type":       framework.EnumOkToTF(t.GetTypeOk()),
-			"value_type": valueType,
-			"value":      framework.StringOkToTF(t.GetValueOk()),
-		}
+		attributeMap["condition"] = condition
+		attributeMap["name"] = framework.StringOkToTF(t.GetNameOk())
+		attributeMap["processor"] = processor
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["value_type"] = valueType
+		attributeMap["value"] = framework.StringOkToTF(t.GetValueOk())
 
 	case *authorize.AuthorizeEditorDataAttributeResolversCurrentRepetitionValueResolverDTO:
 
@@ -710,12 +706,10 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 		processor, d := editorDataProcessorOkToTF(ctx, processorValue, ok)
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"condition": condition,
-			"name":      framework.StringOkToTF(t.GetNameOk()),
-			"processor": processor,
-			"type":      framework.EnumOkToTF(t.GetTypeOk()),
-		}
+		attributeMap["condition"] = condition
+		attributeMap["name"] = framework.StringOkToTF(t.GetNameOk())
+		attributeMap["processor"] = processor
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 
 	case *authorize.AuthorizeEditorDataAttributeResolversCurrentUserIDResolverDTO:
 
@@ -727,12 +721,10 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 		processor, d := editorDataProcessorOkToTF(ctx, processorValue, ok)
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"condition": condition,
-			"name":      framework.StringOkToTF(t.GetNameOk()),
-			"processor": processor,
-			"type":      framework.EnumOkToTF(t.GetTypeOk()),
-		}
+		attributeMap["condition"] = condition
+		attributeMap["name"] = framework.StringOkToTF(t.GetNameOk())
+		attributeMap["processor"] = processor
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 
 	case *authorize.AuthorizeEditorDataAttributeResolversRequestResolverDTO:
 
@@ -744,12 +736,10 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 		processor, d := editorDataProcessorOkToTF(ctx, processorValue, ok)
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"condition": condition,
-			"name":      framework.StringOkToTF(t.GetNameOk()),
-			"processor": processor,
-			"type":      framework.EnumOkToTF(t.GetTypeOk()),
-		}
+		attributeMap["condition"] = condition
+		attributeMap["name"] = framework.StringOkToTF(t.GetNameOk())
+		attributeMap["processor"] = processor
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 
 	case *authorize.AuthorizeEditorDataAttributeResolversServiceResolverDTO:
 
@@ -764,13 +754,11 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 		valueRef, d := editorDataReferenceObjectOkToTF(t.GetValueOk())
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"condition": condition,
-			"name":      framework.StringOkToTF(t.GetNameOk()),
-			"processor": processor,
-			"type":      framework.EnumOkToTF(t.GetTypeOk()),
-			"value_ref": valueRef,
-		}
+		attributeMap["condition"] = condition
+		attributeMap["name"] = framework.StringOkToTF(t.GetNameOk())
+		attributeMap["processor"] = processor
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["value_ref"] = valueRef
 
 	case *authorize.AuthorizeEditorDataAttributeResolversSystemResolverDTO:
 
@@ -782,13 +770,11 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 		processor, d := editorDataProcessorOkToTF(ctx, processorValue, ok)
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"condition": condition,
-			"name":      framework.StringOkToTF(t.GetNameOk()),
-			"processor": processor,
-			"type":      framework.EnumOkToTF(t.GetTypeOk()),
-			"value":     framework.EnumOkToTF(t.GetValueOk()),
-		}
+		attributeMap["condition"] = condition
+		attributeMap["name"] = framework.StringOkToTF(t.GetNameOk())
+		attributeMap["processor"] = processor
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["value"] = framework.EnumOkToTF(t.GetValueOk())
 
 	case *authorize.AuthorizeEditorDataAttributeResolversUserResolverDTO:
 
@@ -804,13 +790,11 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 		query, d := editorDataResolverQueryOkToTF(ctx, queryValue, ok)
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"condition": condition,
-			"name":      framework.StringOkToTF(t.GetNameOk()),
-			"processor": processor,
-			"type":      framework.EnumOkToTF(t.GetTypeOk()),
-			"query":     query,
-		}
+		attributeMap["condition"] = condition
+		attributeMap["name"] = framework.StringOkToTF(t.GetNameOk())
+		attributeMap["processor"] = processor
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["query"] = query
 
 	default:
 		tflog.Error(ctx, "Invalid resolver type", map[string]interface{}{

@@ -1854,19 +1854,15 @@ func trustFrameworkServiceServiceSettingsConnectorInputMappingOkToTF(ctx context
 		value, d := editorDataReferenceObjectOkToTF(valueResp, ok)
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"type":      framework.EnumOkToTF(t.GetTypeOk()),
-			"property":  framework.StringOkToTF(t.GetPropertyOk()),
-			"value_ref": value,
-		}
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["property"] = framework.StringOkToTF(t.GetPropertyOk())
+		attributeMap["value_ref"] = value
 
 	case *authorize.AuthorizeEditorDataInputMappingsInputInputMappingDTO:
 
-		attributeMap = map[string]attr.Value{
-			"type":     framework.EnumOkToTF(t.GetTypeOk()),
-			"property": framework.StringOkToTF(t.GetPropertyOk()),
-			"value":    framework.StringOkToTF(t.GetValueOk()),
-		}
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["property"] = framework.StringOkToTF(t.GetPropertyOk())
+		attributeMap["value"] = framework.StringOkToTF(t.GetValueOk())
 
 	default:
 		tflog.Error(ctx, "Invalid service setting connector input mapping type", map[string]interface{}{
@@ -2022,11 +2018,9 @@ func trustFrameworkServiceServiceSettingsHttpAuthenticationOkToTF(ctx context.Co
 		password, d := editorDataReferenceObjectOkToTF(passwordResp, ok)
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"type":     framework.EnumOkToTF(t.GetTypeOk()),
-			"name":     name,
-			"password": password,
-		}
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["name"] = name
+		attributeMap["password"] = password
 
 	case *authorize.AuthorizeEditorDataAuthenticationsClientCredentialsAuthenticationDTO:
 
@@ -2034,19 +2028,15 @@ func trustFrameworkServiceServiceSettingsHttpAuthenticationOkToTF(ctx context.Co
 		clientSecret, d := editorDataReferenceObjectOkToTF(clientSecretResp, ok)
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"type":           framework.EnumOkToTF(t.GetTypeOk()),
-			"token_endpoint": framework.StringOkToTF(t.GetTokenEndpointOk()),
-			"client_id":      framework.StringOkToTF(t.GetClientIdOk()),
-			"client_secret":  clientSecret,
-			"scope":          framework.StringOkToTF(t.GetScopeOk()),
-		}
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["token_endpoint"] = framework.StringOkToTF(t.GetTokenEndpointOk())
+		attributeMap["client_id"] = framework.StringOkToTF(t.GetClientIdOk())
+		attributeMap["client_secret"] = clientSecret
+		attributeMap["scope"] = framework.StringOkToTF(t.GetScopeOk())
 
 	case *authorize.AuthorizeEditorDataAuthenticationsNoneAuthenticationDTO:
 
-		attributeMap = map[string]attr.Value{
-			"type": framework.EnumOkToTF(t.GetTypeOk()),
-		}
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 
 	case *authorize.AuthorizeEditorDataAuthenticationsTokenAuthenticationDTO:
 
@@ -2054,10 +2044,8 @@ func trustFrameworkServiceServiceSettingsHttpAuthenticationOkToTF(ctx context.Co
 		token, d := editorDataReferenceObjectOkToTF(tokenResp, ok)
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"type":  framework.EnumOkToTF(t.GetTypeOk()),
-			"token": token,
-		}
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["token"] = token
 
 	default:
 		tflog.Error(ctx, "Invalid service settings authentication type", map[string]interface{}{

@@ -491,11 +491,9 @@ func editorDataProcessorOkToTFIteration(ctx context.Context, iteration int, apiO
 		processors, d := editorDataProcessorsOkToListTFIteration(ctx, iteration+1, processorsResp, ok)
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"name":       framework.StringOkToTF(t.GetNameOk()),
-			"type":       framework.EnumOkToTF(t.GetTypeOk()),
-			"processors": processors,
-		}
+		attributeMap["name"] = framework.StringOkToTF(t.GetNameOk())
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["processors"] = processors
 
 	case *authorize.AuthorizeEditorDataProcessorsCollectionFilterProcessorDTO:
 
@@ -503,11 +501,9 @@ func editorDataProcessorOkToTFIteration(ctx context.Context, iteration int, apiO
 		predicate, d := editorDataProcessorOkToTFIteration(ctx, iteration+1, predicateResp, ok)
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"name":      framework.StringOkToTF(t.GetNameOk()),
-			"type":      framework.EnumOkToTF(t.GetTypeOk()),
-			"predicate": predicate,
-		}
+		attributeMap["name"] = framework.StringOkToTF(t.GetNameOk())
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["predicate"] = predicate
 
 	case *authorize.AuthorizeEditorDataProcessorsCollectionTransformProcessorDTO:
 
@@ -515,58 +511,48 @@ func editorDataProcessorOkToTFIteration(ctx context.Context, iteration int, apiO
 		processor, d := editorDataProcessorOkToTFIteration(ctx, iteration+1, processorResp, ok)
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"name":      framework.StringOkToTF(t.GetNameOk()),
-			"type":      framework.EnumOkToTF(t.GetTypeOk()),
-			"processor": processor,
-		}
+		attributeMap["name"] = framework.StringOkToTF(t.GetNameOk())
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["processor"] = processor
 
 	case *authorize.AuthorizeEditorDataProcessorsJsonPathProcessorDTO:
 
 		valueType, d := editorValueTypeOkToTF(t.GetValueTypeOk())
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"name":       framework.StringOkToTF(t.GetNameOk()),
-			"type":       framework.EnumOkToTF(t.GetTypeOk()),
-			"expression": framework.StringOkToTF(t.GetExpressionOk()),
-			"value_type": valueType,
-		}
+		attributeMap["name"] = framework.StringOkToTF(t.GetNameOk())
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["expression"] = framework.StringOkToTF(t.GetExpressionOk())
+		attributeMap["value_type"] = valueType
 
 	case *authorize.AuthorizeEditorDataProcessorsReferenceProcessorDTO:
 
 		processorRef, d := editorDataReferenceObjectOkToTF(t.GetProcessorOk())
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"name":          framework.StringOkToTF(t.GetNameOk()),
-			"type":          framework.EnumOkToTF(t.GetTypeOk()),
-			"processor_ref": processorRef,
-		}
+		attributeMap["name"] = framework.StringOkToTF(t.GetNameOk())
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["processor_ref"] = processorRef
 
 	case *authorize.AuthorizeEditorDataProcessorsSpelProcessorDTO:
 
 		valueType, d := editorValueTypeOkToTF(t.GetValueTypeOk())
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"name":       framework.StringOkToTF(t.GetNameOk()),
-			"type":       framework.EnumOkToTF(t.GetTypeOk()),
-			"expression": framework.StringOkToTF(t.GetExpressionOk()),
-			"value_type": valueType,
-		}
+		attributeMap["name"] = framework.StringOkToTF(t.GetNameOk())
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["expression"] = framework.StringOkToTF(t.GetExpressionOk())
+		attributeMap["value_type"] = valueType
 
 	case *authorize.AuthorizeEditorDataProcessorsXPathProcessorDTO:
 
 		valueType, d := editorValueTypeOkToTF(t.GetValueTypeOk())
 		diags.Append(d...)
 
-		attributeMap = map[string]attr.Value{
-			"name":       framework.StringOkToTF(t.GetNameOk()),
-			"type":       framework.EnumOkToTF(t.GetTypeOk()),
-			"expression": framework.StringOkToTF(t.GetExpressionOk()),
-			"value_type": valueType,
-		}
+		attributeMap["name"] = framework.StringOkToTF(t.GetNameOk())
+		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
+		attributeMap["expression"] = framework.StringOkToTF(t.GetExpressionOk())
+		attributeMap["value_type"] = valueType
 
 	default:
 		tflog.Error(ctx, "Invalid processor type", map[string]interface{}{
