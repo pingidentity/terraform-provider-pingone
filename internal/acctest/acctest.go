@@ -77,7 +77,8 @@ type MinMaxChecks struct {
 type EnumFeatureFlag string
 
 const (
-	ENUMFEATUREFLAG_DAVINCI EnumFeatureFlag = "DAVINCI"
+	ENUMFEATUREFLAG_DAVINCI       EnumFeatureFlag = "DAVINCI"
+	ENUMFEATUREFLAG_AUTHORIZEPMTF EnumFeatureFlag = "AUTHORIZEPMTF"
 )
 
 func PreCheckClient(t *testing.T) {
