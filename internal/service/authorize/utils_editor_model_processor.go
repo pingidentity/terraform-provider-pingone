@@ -25,7 +25,7 @@ import (
 
 const processorNestedIterationMaxDepth = 2
 
-var newSupportedTypes = []authorize.EnumAuthorizeEditorDataProcessorDTOType{
+var leafProcessorTypes = []authorize.EnumAuthorizeEditorDataProcessorDTOType{
 	"JSON_PATH",
 	"REFERENCE",
 	"SPEL",
@@ -41,7 +41,7 @@ func dataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes m
 	supportedTypes := authorize.AllowedEnumAuthorizeEditorDataProcessorDTOTypeEnumValues
 
 	if iteration >= processorNestedIterationMaxDepth {
-		supportedTypes = newSupportedTypes
+		supportedTypes = leafProcessorTypes
 	}
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -233,7 +233,7 @@ func initializeEditorDataProcessorTFObjectTypes(iteration int) map[string]attr.T
 	supportedTypes := authorize.AllowedEnumAuthorizeEditorDataProcessorDTOTypeEnumValues
 
 	if iteration >= processorNestedIterationMaxDepth {
-		supportedTypes = newSupportedTypes
+		supportedTypes = leafProcessorTypes
 	}
 
 	attrMap := map[string]attr.Type{
@@ -619,7 +619,7 @@ func editorDataProcessorConvertEmptyValuesToTFNulls(attributeMap map[string]attr
 	supportedTypes := authorize.AllowedEnumAuthorizeEditorDataProcessorDTOTypeEnumValues
 
 	if iteration >= processorNestedIterationMaxDepth {
-		supportedTypes = newSupportedTypes
+		supportedTypes = leafProcessorTypes
 	}
 
 	nullMap := map[string]attr.Value{

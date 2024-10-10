@@ -25,6 +25,12 @@ import (
 
 const conditionNestedIterationMaxDepth = 2
 
+var leafConditionTypes = []authorize.EnumAuthorizeEditorDataConditionDTOType{
+	"COMPARISON",
+	"EMPTY",
+	"REFERENCE",
+}
+
 func dataConditionObjectSchemaAttributes() (attributes map[string]schema.Attribute) {
 	const initialIteration = 1
 	return dataConditionObjectSchemaAttributesIteration(initialIteration)
@@ -35,14 +41,7 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 	supportedTypes := authorize.AllowedEnumAuthorizeEditorDataConditionDTOTypeEnumValues
 
 	if iteration >= conditionNestedIterationMaxDepth {
-
-		newSupportedTypes := []authorize.EnumAuthorizeEditorDataConditionDTOType{
-			"COMPARISON",
-			"EMPTY",
-			"REFERENCE",
-		}
-
-		supportedTypes = newSupportedTypes
+		supportedTypes = leafConditionTypes
 	}
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -209,28 +208,42 @@ type editorDataConditionResourceModel struct {
 	Reference  types.Object `tfsdk:"reference"`
 }
 
-var editorDataConditionTFObjectTypes = initializeEditorDataConditionTFObjectTypes()
+var editorDataConditionTFObjectTypes = initializeEditorDataConditionTFObjectTypes(1)
 
-func initializeEditorDataConditionTFObjectTypes() map[string]attr.Type {
-	return map[string]attr.Type{
-		"type":       types.StringType,
-		"comparator": types.StringType,
-		"left":       types.ObjectType{AttrTypes: editorDataConditionComparandTFObjectTypes},
-		"right":      types.ObjectType{AttrTypes: editorDataConditionComparandTFObjectTypes},
-		"conditions": types.ListType{
-			ElemType: types.ObjectType{AttrTypes: nil}, // Temporarily set to nil
-		},
-		"condition": types.ObjectType{AttrTypes: nil}, // Temporarily set to nil
-		"reference": types.ObjectType{AttrTypes: editorReferenceObjectTFObjectTypes},
-	}
-}
+func initializeEditorDataConditionTFObjectTypes(iteration int) map[string]attr.Type {
 
-func init() {
-	// Now set the correct AttrTypes to break the initialization cycle
-	editorDataConditionTFObjectTypes["conditions"] = types.ListType{
-		ElemType: types.ObjectType{AttrTypes: editorDataConditionTFObjectTypes},
+	supportedTypes := authorize.AllowedEnumAuthorizeEditorDataConditionDTOTypeEnumValues
+
+	if iteration >= conditionNestedIterationMaxDepth {
+		supportedTypes = leafConditionTypes
 	}
-	editorDataConditionTFObjectTypes["condition"] = types.ObjectType{AttrTypes: editorDataConditionTFObjectTypes}
+
+	attrMap := map[string]attr.Type{
+		"type": types.StringType,
+	}
+
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON) {
+		attrMap["comparator"] = types.StringType
+		attrMap["left"] = types.ObjectType{AttrTypes: editorDataConditionComparandTFObjectTypes}
+		attrMap["right"] = types.ObjectType{AttrTypes: editorDataConditionComparandTFObjectTypes}
+	}
+
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_AND) ||
+		slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_OR) {
+		attrMap["conditions"] = types.ListType{
+			ElemType: types.ObjectType{AttrTypes: initializeEditorDataConditionTFObjectTypes(iteration + 1)},
+		}
+	}
+
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_NOT) {
+		attrMap["condition"] = types.ObjectType{AttrTypes: initializeEditorDataConditionTFObjectTypes(iteration + 1)}
+	}
+
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_REFERENCE) {
+		attrMap["reference"] = types.ObjectType{AttrTypes: editorReferenceObjectTFObjectTypes}
+	}
+
+	return attrMap
 }
 
 func expandEditorDataCondition(ctx context.Context, condition basetypes.ObjectValue) (conditionObject *authorize.AuthorizeEditorDataConditionDTO, diags diag.Diagnostics) {
@@ -440,10 +453,15 @@ func editorDataConditionsOkToSetTF(ctx context.Context, apiObject []authorize.Au
 }
 
 func editorDataConditionOkToTF(ctx context.Context, apiObject *authorize.AuthorizeEditorDataConditionDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	const initialIteration = 1
+	return editorDataConditionOkToTFIteration(ctx, initialIteration, apiObject, ok)
+}
+
+func editorDataConditionOkToTFIteration(ctx context.Context, iteration int, apiObject *authorize.AuthorizeEditorDataConditionDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil || cmp.Equal(apiObject, &authorize.AuthorizeEditorDataConditionDTO{}) {
-		return types.ObjectNull(editorDataConditionTFObjectTypes), diags
+		return types.ObjectNull(initializeEditorDataConditionTFObjectTypes(iteration)), diags
 	}
 
 	attributeMap := map[string]attr.Value{}
@@ -486,7 +504,7 @@ func editorDataConditionOkToTF(ctx context.Context, apiObject *authorize.Authori
 	case *authorize.AuthorizeEditorDataConditionsNotConditionDTO:
 
 		conditionResp, ok := t.GetConditionOk()
-		condition, d := editorDataConditionOkToTF(ctx, conditionResp, ok)
+		condition, d := editorDataConditionOkToTFIteration(ctx, iteration+1, conditionResp, ok)
 		diags.Append(d...)
 
 		attributeMap = map[string]attr.Value{
@@ -523,9 +541,10 @@ func editorDataConditionOkToTF(ctx context.Context, apiObject *authorize.Authori
 			"Invalid condition type",
 			"The condition type is not supported.  Please raise an issue with the provider maintainers.",
 		)
+		return types.ObjectNull(initializeEditorDataConditionTFObjectTypes(iteration)), diags
 	}
 
-	attributeMap = editorDataConditionConvertEmptyValuesToTFNulls(attributeMap)
+	attributeMap = editorDataConditionConvertEmptyValuesToTFNulls(attributeMap, iteration)
 
 	objValue, d := types.ObjectValue(editorDataConditionTFObjectTypes, attributeMap)
 	diags.Append(d...)
@@ -533,15 +552,35 @@ func editorDataConditionOkToTF(ctx context.Context, apiObject *authorize.Authori
 	return objValue, diags
 }
 
-func editorDataConditionConvertEmptyValuesToTFNulls(attributeMap map[string]attr.Value) map[string]attr.Value {
+func editorDataConditionConvertEmptyValuesToTFNulls(attributeMap map[string]attr.Value, iteration int) map[string]attr.Value {
+
+	supportedTypes := authorize.AllowedEnumAuthorizeEditorDataConditionDTOTypeEnumValues
+
+	if iteration >= conditionNestedIterationMaxDepth {
+		supportedTypes = leafConditionTypes
+	}
+
 	nullMap := map[string]attr.Value{
-		"type":       types.StringNull(),
-		"comparator": types.StringNull(),
-		"left":       types.ObjectNull(editorDataConditionComparandTFObjectTypes),
-		"right":      types.ObjectNull(editorDataConditionComparandTFObjectTypes),
-		"conditions": types.ListNull(types.ObjectType{AttrTypes: editorDataConditionTFObjectTypes}),
-		"condition":  types.ObjectNull(editorDataConditionTFObjectTypes),
-		"reference":  types.ObjectNull(editorReferenceObjectTFObjectTypes),
+		"type": types.StringNull(),
+	}
+
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON) {
+		nullMap["comparator"] = types.StringNull()
+		nullMap["left"] = types.ObjectNull(editorDataConditionComparandTFObjectTypes)
+		nullMap["right"] = types.ObjectNull(editorDataConditionComparandTFObjectTypes)
+	}
+
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_AND) ||
+		slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_OR) {
+		nullMap["conditions"] = types.ListNull(types.ObjectType{AttrTypes: initializeEditorDataConditionTFObjectTypes(iteration + 1)})
+	}
+
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_NOT) {
+		nullMap["condition"] = types.ObjectNull(initializeEditorDataConditionTFObjectTypes(iteration + 1))
+	}
+
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_REFERENCE) {
+		nullMap["reference"] = types.ObjectNull(editorReferenceObjectTFObjectTypes)
 	}
 
 	for k := range nullMap {

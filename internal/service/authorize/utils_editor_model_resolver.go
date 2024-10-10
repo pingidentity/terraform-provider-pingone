@@ -820,6 +820,7 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 			"Invalid resolver type",
 			"The resolver type is not supported.  Please raise an issue with the provider maintainers.",
 		)
+		return types.ObjectNull(editorDataResolverTFObjectTypes), diags
 	}
 
 	attributeMap = editorDataResolverConvertEmptyValuesToTFNulls(attributeMap)

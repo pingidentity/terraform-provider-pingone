@@ -244,6 +244,7 @@ func editorDataRulesEffectSettingsOkToTF(ctx context.Context, apiObject *authori
 			"Invalid Rules Effect Settings type",
 			"The rules effect settings type is not supported.  Please raise an issue with the provider maintainers.",
 		)
+		return types.ObjectNull(editorDataRulesEffectSettingsTFObjectTypes), diags
 	}
 
 	attributeMap = editorDataRulesEffectSettingsConvertEmptyValuesToTFNulls(attributeMap)

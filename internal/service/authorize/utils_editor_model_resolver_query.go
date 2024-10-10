@@ -146,6 +146,7 @@ func editorDataResolverQueryOkToTF(ctx context.Context, apiObject *authorize.Aut
 			"Invalid resolver query type",
 			"The resolver query type is not supported.  Please raise an issue with the provider maintainers.",
 		)
+		return types.ObjectNull(editorDataResolverQueryTFObjectTypes), diags
 	}
 
 	attributeMap = editorDataResolverConvertEmptyValuesToTFNulls(attributeMap)

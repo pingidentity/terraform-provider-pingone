@@ -214,6 +214,7 @@ func editorDataConditionComparandOkToTF(ctx context.Context, apiObject *authoriz
 			"Invalid condition comparand type",
 			"The condition comparand type is not supported.  Please raise an issue with the provider maintainers.",
 		)
+		return types.ObjectNull(editorDataConditionComparandTFObjectTypes), diags
 	}
 
 	attributeMap = editorDataConditionComparandConvertEmptyValuesToTFNulls(attributeMap)
