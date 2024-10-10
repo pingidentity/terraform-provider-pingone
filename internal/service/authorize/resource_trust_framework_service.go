@@ -1876,6 +1876,7 @@ func trustFrameworkServiceServiceSettingsConnectorInputMappingOkToTF(ctx context
 			"Invalid service setting connector input mapping type",
 			"The service setting connector input mapping type is not supported.  Please raise an issue with the provider maintainers.",
 		)
+		return types.ObjectNull(trustFrameworkServiceServiceSettingsInputMappingsTFObjectTypes), diags
 	}
 
 	attributeMap = trustFrameworkServiceServiceSettingsConnectorInputMappingConvertEmptyValuesToTFNulls(attributeMap)
@@ -2066,6 +2067,7 @@ func trustFrameworkServiceServiceSettingsHttpAuthenticationOkToTF(ctx context.Co
 			"Invalid service settings authentication type",
 			"The service settings authentication type is not supported.  Please raise an issue with the provider maintainers.",
 		)
+		return types.ObjectNull(trustFrameworkServiceServiceSettingsAuthenticationTFObjectTypes), diags
 	}
 
 	attributeMap = trustFrameworkServiceServiceSettingsAuthenticationConvertEmptyValuesToTFNulls(attributeMap)
