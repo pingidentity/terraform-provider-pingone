@@ -884,13 +884,13 @@ func (p *passwordPolicyResourceModelV1) toState(apiObject *management.PasswordPo
 	p.MinCharacters, d = passwordPolicyMinCharactersOkToTF(apiObject.GetMinCharactersOk())
 	diags.Append(d...)
 
-	p.PasswordAgeMax = framework.Int32OkToTF(apiObject.GetMaxAgeDaysOk())
-	p.PasswordAgeMin = framework.Int32OkToTF(apiObject.GetMinAgeDaysOk())
-	p.MaxRepeatedCharacters = framework.Int32OkToTF(apiObject.GetMaxRepeatedCharactersOk())
-	p.MinComplexity = framework.Int32OkToTF(apiObject.GetMinComplexityOk())
-	p.MinUniqueCharacters = framework.Int32OkToTF(apiObject.GetMinUniqueCharactersOk())
+	p.PasswordAgeMax = framework.Int32OkToInt64TF(apiObject.GetMaxAgeDaysOk())
+	p.PasswordAgeMin = framework.Int32OkToInt64TF(apiObject.GetMinAgeDaysOk())
+	p.MaxRepeatedCharacters = framework.Int32OkToInt64TF(apiObject.GetMaxRepeatedCharactersOk())
+	p.MinComplexity = framework.Int32OkToInt64TF(apiObject.GetMinComplexityOk())
+	p.MinUniqueCharacters = framework.Int32OkToInt64TF(apiObject.GetMinUniqueCharactersOk())
 	p.NotSimilarToCurrent = framework.BoolOkToTF(apiObject.GetNotSimilarToCurrentOk())
-	p.PopulationCount = framework.Int32OkToTF(apiObject.GetPopulationCountOk())
+	p.PopulationCount = framework.Int32OkToInt64TF(apiObject.GetPopulationCountOk())
 
 	return diags
 }
@@ -903,8 +903,8 @@ func passwordPolicyHistoryOkToTF(apiObject *management.PasswordPolicyHistory, ok
 	}
 
 	o := map[string]attr.Value{
-		"count":          framework.Int32OkToTF(apiObject.GetCountOk()),
-		"retention_days": framework.Int32OkToTF(apiObject.GetRetentionDaysOk()),
+		"count":          framework.Int32OkToInt64TF(apiObject.GetCountOk()),
+		"retention_days": framework.Int32OkToInt64TF(apiObject.GetRetentionDaysOk()),
 	}
 
 	returnVar, d := types.ObjectValue(passwordPolicyHistoryTFObjectTypes, o)
@@ -921,8 +921,8 @@ func passwordPolicyLengthOkToTF(apiObject *management.PasswordPolicyLength, ok b
 	}
 
 	o := map[string]attr.Value{
-		"max": framework.Int32OkToTF(apiObject.GetMaxOk()),
-		"min": framework.Int32OkToTF(apiObject.GetMinOk()),
+		"max": framework.Int32OkToInt64TF(apiObject.GetMaxOk()),
+		"min": framework.Int32OkToInt64TF(apiObject.GetMinOk()),
 	}
 
 	returnVar, d := types.ObjectValue(passwordPolicyLengthTFObjectTypes, o)
@@ -939,8 +939,8 @@ func passwordPolicyLockoutOkToTF(apiObject *management.PasswordPolicyLockout, ok
 	}
 
 	o := map[string]attr.Value{
-		"duration_seconds": framework.Int32OkToTF(apiObject.GetDurationSecondsOk()),
-		"failure_count":    framework.Int32OkToTF(apiObject.GetFailureCountOk()),
+		"duration_seconds": framework.Int32OkToInt64TF(apiObject.GetDurationSecondsOk()),
+		"failure_count":    framework.Int32OkToInt64TF(apiObject.GetFailureCountOk()),
 	}
 
 	returnVar, d := types.ObjectValue(passwordPolicyLockoutTFObjectTypes, o)
@@ -957,10 +957,10 @@ func passwordPolicyMinCharactersOkToTF(apiObject *management.PasswordPolicyMinCh
 	}
 
 	o := map[string]attr.Value{
-		"alphabetical_uppercase": framework.Int32OkToTF(apiObject.GetABCDEFGHIJKLMNOPQRSTUVWXYZOk()),
-		"alphabetical_lowercase": framework.Int32OkToTF(apiObject.GetAbcdefghijklmnopqrstuvwxyzOk()),
-		"numeric":                framework.Int32OkToTF(apiObject.GetVar0123456789Ok()),
-		"special_characters":     framework.Int32OkToTF(apiObject.GetSpecialCharOk()),
+		"alphabetical_uppercase": framework.Int32OkToInt64TF(apiObject.GetABCDEFGHIJKLMNOPQRSTUVWXYZOk()),
+		"alphabetical_lowercase": framework.Int32OkToInt64TF(apiObject.GetAbcdefghijklmnopqrstuvwxyzOk()),
+		"numeric":                framework.Int32OkToInt64TF(apiObject.GetVar0123456789Ok()),
+		"special_characters":     framework.Int32OkToInt64TF(apiObject.GetSpecialCharOk()),
 	}
 
 	returnVar, d := types.ObjectValue(passwordPolicyMinCharactersTFObjectTypes, o)

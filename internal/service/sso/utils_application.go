@@ -111,8 +111,8 @@ func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.Appli
 		"cors_settings":                                      corsSettings,
 		"device_path_id":                                     framework.StringOkToTF(apiObject.GetDevicePathIdOk()),
 		"device_custom_verification_uri":                     framework.StringOkToTF(apiObject.GetDeviceCustomVerificationUriOk()),
-		"device_timeout":                                     framework.Int32OkToTF(apiObject.GetDeviceTimeoutOk()),
-		"device_polling_interval":                            framework.Int32OkToTF(apiObject.GetDevicePollingIntervalOk()),
+		"device_timeout":                                     framework.Int32OkToInt64TF(apiObject.GetDeviceTimeoutOk()),
+		"device_polling_interval":                            framework.Int32OkToInt64TF(apiObject.GetDevicePollingIntervalOk()),
 		"grant_types":                                        framework.EnumSetOkToTF(apiObject.GetGrantTypesOk()),
 		"home_page_url":                                      framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
 		"initiate_login_uri":                                 framework.StringOkToTF(apiObject.GetInitiateLoginUriOk()),
@@ -120,13 +120,13 @@ func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.Appli
 		"jwks":                                               framework.StringOkToTF(apiObject.GetJwksOk()),
 		"mobile_app":                                         mobileApp,
 		"par_requirement":                                    framework.EnumOkToTF(apiObject.GetParRequirementOk()),
-		"par_timeout":                                        framework.Int32OkToTF(apiObject.GetParTimeoutOk()),
+		"par_timeout":                                        framework.Int32OkToInt64TF(apiObject.GetParTimeoutOk()),
 		"pkce_enforcement":                                   framework.EnumOkToTF(apiObject.GetPkceEnforcementOk()),
 		"post_logout_redirect_uris":                          framework.StringSetOkToTF(apiObject.GetPostLogoutRedirectUrisOk()),
 		"redirect_uris":                                      framework.StringSetOkToTF(apiObject.GetRedirectUrisOk()),
-		"refresh_token_duration":                             framework.Int32OkToTF(apiObject.GetRefreshTokenDurationOk()),
-		"refresh_token_rolling_duration":                     framework.Int32OkToTF(apiObject.GetRefreshTokenRollingDurationOk()),
-		"refresh_token_rolling_grace_period_duration":        framework.Int32OkToTF(apiObject.GetRefreshTokenRollingGracePeriodDurationOk()),
+		"refresh_token_duration":                             framework.Int32OkToInt64TF(apiObject.GetRefreshTokenDurationOk()),
+		"refresh_token_rolling_duration":                     framework.Int32OkToInt64TF(apiObject.GetRefreshTokenRollingDurationOk()),
+		"refresh_token_rolling_grace_period_duration":        framework.Int32OkToInt64TF(apiObject.GetRefreshTokenRollingGracePeriodDurationOk()),
 		"require_signed_request_object":                      framework.BoolOkToTF(apiObject.GetRequireSignedRequestObjectOk()),
 		"response_types":                                     framework.EnumSetOkToTF(apiObject.GetResponseTypesOk()),
 		"support_unsigned_request_object":                    framework.BoolOkToTF(apiObject.GetSupportUnsignedRequestObjectOk()),
@@ -205,7 +205,7 @@ func applicationMobileAppOkToTF(ctx context.Context, apiObject *management.Appli
 			return types.ObjectNull(applicationOidcMobileAppTFObjectTypes), diags
 		}
 
-		attributesMap["passcode_refresh_seconds"] = framework.Int32OkToTF(v.GetDurationOk())
+		attributesMap["passcode_refresh_seconds"] = framework.Int32OkToInt64TF(v.GetDurationOk())
 	}
 
 	returnVar, d := types.ObjectValue(applicationOidcMobileAppTFObjectTypes, attributesMap)
@@ -268,7 +268,7 @@ func applicationMobileAppIntegrityDetectionCacheDurationOkToTF(apiObject *manage
 	}
 
 	attributesMap := map[string]attr.Value{
-		"amount": framework.Int32OkToTF(apiObject.GetAmountOk()),
+		"amount": framework.Int32OkToInt64TF(apiObject.GetAmountOk()),
 		"units":  framework.EnumOkToTF(apiObject.GetUnitsOk()),
 	}
 
@@ -319,7 +319,7 @@ func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Ob
 
 	attributesMap := map[string]attr.Value{
 		"acs_urls":                       framework.StringSetOkToTF(apiObject.GetAcsUrlsOk()),
-		"assertion_duration":             framework.Int32OkToTF(apiObject.GetAssertionDurationOk()),
+		"assertion_duration":             framework.Int32OkToInt64TF(apiObject.GetAssertionDurationOk()),
 		"assertion_signed_enabled":       framework.BoolOkToTF(apiObject.GetAssertionSignedOk()),
 		"cors_settings":                  corsSettings,
 		"enable_requested_authn_context": framework.BoolOkToTF(apiObject.GetEnableRequestedAuthnContextOk()),
@@ -331,7 +331,7 @@ func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Ob
 		"slo_binding":                    framework.EnumOkToTF(apiObject.GetSloBindingOk()),
 		"slo_endpoint":                   framework.StringOkToTF(apiObject.GetSloEndpointOk()),
 		"slo_response_endpoint":          framework.StringOkToTF(apiObject.GetSloResponseEndpointOk()),
-		"slo_window":                     framework.Int32OkToTF(apiObject.GetSloWindowOk()),
+		"slo_window":                     framework.Int32OkToInt64TF(apiObject.GetSloWindowOk()),
 		"sp_encryption":                  spEncryption,
 		"sp_entity_id":                   framework.StringOkToTF(apiObject.GetSpEntityIdOk()),
 		"sp_verification":                spVerification,

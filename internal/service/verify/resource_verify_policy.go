@@ -1080,14 +1080,14 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
 					o := map[string]attr.Value{
-						"duration":  framework.Int32ToTF(defaultTransactionDuration),
+						"duration":  framework.Int32ToInt64TF(defaultTransactionDuration),
 						"time_unit": framework.EnumOkToTF(defaultTransactionTimeUnit, true),
 					}
 					timeoutObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"duration":  framework.Int32ToTF(defaultTransactionDataCollectionDuration),
+						"duration":  framework.Int32ToInt64TF(defaultTransactionDataCollectionDuration),
 						"time_unit": framework.EnumOkToTF(defaultTransactionTimeUnit, true),
 					}
 					dataCollectionTimeoutObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
@@ -2239,7 +2239,7 @@ func (p *verifyPolicyResourceModel) toStateGovernmentId(apiObject *verify.Govern
 	retryAttempts := types.Int64Null()
 	if v, ok := apiObject.GetRetryOk(); ok {
 		if t, ok := v.GetAttemptsOk(); ok {
-			retryAttempts = framework.Int32ToTF(*t)
+			retryAttempts = framework.Int32ToInt64TF(*t)
 		}
 	}
 
@@ -2289,7 +2289,7 @@ func (p *verifyPolicyResourceModel) toStateLiveness(apiObject *verify.LivenessCo
 	retryAttempts := types.Int64Null()
 	if v, ok := apiObject.GetRetryOk(); ok {
 		if t, ok := v.GetAttemptsOk(); ok {
-			retryAttempts = framework.Int32ToTF(*t)
+			retryAttempts = framework.Int32ToInt64TF(*t)
 		}
 	}
 
@@ -2315,7 +2315,7 @@ func (p *verifyPolicyResourceModel) toStateTransaction(apiObject *verify.Transac
 		var d diag.Diagnostics
 
 		o := map[string]attr.Value{
-			"duration":  framework.Int32OkToTF(v.GetDurationOk()),
+			"duration":  framework.Int32OkToInt64TF(v.GetDurationOk()),
 			"time_unit": framework.EnumOkToTF(v.GetTimeUnitOk()),
 		}
 
@@ -2332,7 +2332,7 @@ func (p *verifyPolicyResourceModel) toStateTransaction(apiObject *verify.Transac
 		transactionDataCollectionTimeout := types.ObjectNull(genericTimeoutServiceTFObjectTypes)
 		if t, ok := v.GetTimeoutOk(); ok {
 			o := map[string]attr.Value{
-				"duration":  framework.Int32OkToTF(t.GetDurationOk()),
+				"duration":  framework.Int32OkToInt64TF(t.GetDurationOk()),
 				"time_unit": framework.EnumOkToTF(t.GetTimeUnitOk()),
 			}
 
@@ -2377,7 +2377,7 @@ func (p *verifyPolicyResourceModel) toStateDevice(apiObject *verify.OTPDeviceCon
 		attempts := types.ObjectNull(otpAttemptsServiceTFObjectTypes)
 		if t, ok := v.GetAttemptsOk(); ok {
 			o := map[string]attr.Value{
-				"count": framework.Int32OkToTF(t.GetCountOk()),
+				"count": framework.Int32OkToInt64TF(t.GetCountOk()),
 			}
 
 			objValue, d := types.ObjectValue(otpAttemptsServiceTFObjectTypes, o)
@@ -2392,7 +2392,7 @@ func (p *verifyPolicyResourceModel) toStateDevice(apiObject *verify.OTPDeviceCon
 			cooldown := types.ObjectNull(genericTimeoutServiceTFObjectTypes)
 			if c, ok := t.GetCooldownOk(); ok {
 				o := map[string]attr.Value{
-					"duration":  framework.Int32OkToTF(c.GetDurationOk()),
+					"duration":  framework.Int32OkToInt64TF(c.GetDurationOk()),
 					"time_unit": framework.EnumOkToTF(c.GetTimeUnitOk()),
 				}
 				objValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
@@ -2402,7 +2402,7 @@ func (p *verifyPolicyResourceModel) toStateDevice(apiObject *verify.OTPDeviceCon
 			}
 
 			o := map[string]attr.Value{
-				"count":    framework.Int32OkToTF(t.GetCountOk()),
+				"count":    framework.Int32OkToInt64TF(t.GetCountOk()),
 				"cooldown": cooldown,
 			}
 			objValue, d := types.ObjectValue(otpDeliveriesServiceTFObjectTypes, o)
@@ -2414,7 +2414,7 @@ func (p *verifyPolicyResourceModel) toStateDevice(apiObject *verify.OTPDeviceCon
 		lifetime := types.ObjectNull(genericTimeoutServiceTFObjectTypes)
 		if t, ok := v.GetLifeTimeOk(); ok {
 			o := map[string]attr.Value{
-				"duration":  framework.Int32OkToTF(t.GetDurationOk()),
+				"duration":  framework.Int32OkToInt64TF(t.GetDurationOk()),
 				"time_unit": framework.EnumOkToTF(t.GetTimeUnitOk()),
 			}
 
@@ -2471,7 +2471,7 @@ func (p *verifyPolicyResourceModel) toStateVoice(apiObject *verify.VoiceConfigur
 		var d diag.Diagnostics
 
 		o := map[string]attr.Value{
-			"samples":         framework.Int32OkToTF(v.GetSamplesOk()),
+			"samples":         framework.Int32OkToInt64TF(v.GetSamplesOk()),
 			"voice_phrase_id": framework.StringToTF(v.GetPhrase().Id),
 		}
 		objValue, d := types.ObjectValue(textDependentServiceTFObjectTypes, o)

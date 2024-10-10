@@ -2652,7 +2652,7 @@ func (p *formResourceModel) toState(apiObject *management.Form) diag.Diagnostics
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.Category = framework.EnumOkToTF(apiObject.GetCategoryOk())
-	p.Cols = framework.Int32OkToTF(apiObject.GetColsOk())
+	p.Cols = framework.Int32OkToInt64TF(apiObject.GetColsOk())
 	p.FieldTypes = framework.EnumSetOkToTF(apiObject.GetFieldTypesOk())
 	p.MarkOptional = framework.BoolOkToTF(apiObject.GetMarkOptionalOk())
 	p.MarkRequired = framework.BoolOkToTF(apiObject.GetMarkRequiredOk())
@@ -3078,9 +3078,9 @@ func formComponentsFieldsPositionOkToTF(apiObject *management.FormFieldCommonPos
 	}
 
 	objValue, d := types.ObjectValue(formComponentsFieldsPositionTFObjectTypes, map[string]attr.Value{
-		"col":   framework.Int32OkToTF(apiObject.GetColOk()),
-		"row":   framework.Int32OkToTF(apiObject.GetRowOk()),
-		"width": framework.Int32OkToTF(apiObject.GetWidthOk()),
+		"col":   framework.Int32OkToInt64TF(apiObject.GetColOk()),
+		"row":   framework.Int32OkToInt64TF(apiObject.GetRowOk()),
+		"width": framework.Int32OkToInt64TF(apiObject.GetWidthOk()),
 	})
 	diags.Append(d...)
 
@@ -3147,10 +3147,10 @@ func formComponentsFieldsStylesOkToTF(apiObject *management.FormStyles, ok bool)
 		"background_color": framework.StringOkToTF(apiObject.GetBackgroundColorOk()),
 		"border_color":     framework.StringOkToTF(apiObject.GetBorderColorOk()),
 		"enabled":          framework.BoolOkToTF(apiObject.GetEnabledOk()),
-		"height":           framework.Int32OkToTF(apiObject.GetHeightOk()),
+		"height":           framework.Int32OkToInt64TF(apiObject.GetHeightOk()),
 		"padding":          padding,
 		"text_color":       framework.StringOkToTF(apiObject.GetTextColorOk()),
-		"width":            framework.Int32OkToTF(apiObject.GetWidthOk()),
+		"width":            framework.Int32OkToInt64TF(apiObject.GetWidthOk()),
 		"width_unit":       framework.EnumOkToTF(apiObject.GetWidthUnitOk()),
 	})
 	diags.Append(d...)
@@ -3195,10 +3195,10 @@ func formComponentsFieldsPaddingOkToTF(apiObject *management.FormStylesPadding, 
 	}
 
 	objValue, d := types.ObjectValue(formComponentsFieldsFieldStylesPaddingTFObjectTypes, map[string]attr.Value{
-		"bottom": framework.Int32OkToTF(apiObject.GetBottomOk()),
-		"left":   framework.Int32OkToTF(apiObject.GetLeftOk()),
-		"right":  framework.Int32OkToTF(apiObject.GetRightOk()),
-		"top":    framework.Int32OkToTF(apiObject.GetTopOk()),
+		"bottom": framework.Int32OkToInt64TF(apiObject.GetBottomOk()),
+		"left":   framework.Int32OkToInt64TF(apiObject.GetLeftOk()),
+		"right":  framework.Int32OkToInt64TF(apiObject.GetRightOk()),
+		"top":    framework.Int32OkToInt64TF(apiObject.GetTopOk()),
 	})
 	diags.Append(d...)
 
