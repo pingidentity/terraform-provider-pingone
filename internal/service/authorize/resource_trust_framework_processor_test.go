@@ -917,7 +917,23 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s" {
 }
 
 func testAccTrustFrameworkProcessorConfig_Minimal(resourceName, name string) string {
-	return testAccTrustFrameworkProcessorConfig_Processor_Json_Path1(resourceName, name)
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_authorize_trust_framework_processor" "%[2]s-parent" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-parent"
+
+  processor = {
+    name = "%[3]s Test parent processor"
+    type = "JSON_PATH"
+
+    expression = "$.data.item.parent"
+    value_type = {
+      type = "STRING"
+    }
+  }
+}`, testAccTrustFrameworkProcessorConfig_Processor_Json_Path1(resourceName, name), resourceName, name)
 }
 
 func testAccTrustFrameworkProcessorConfig_Processor_Chain1(resourceName, name string) string {
