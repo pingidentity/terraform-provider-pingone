@@ -525,7 +525,7 @@ func (p *ResourceResourceModel) toState(apiObject *management.Resource) diag.Dia
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.Type = framework.EnumOkToTF(apiObject.GetTypeOk())
 	p.Audience = framework.StringOkToTF(apiObject.GetAudienceOk())
-	p.AccessTokenValiditySeconds = framework.Int32OkToTF(apiObject.GetAccessTokenValiditySecondsOk())
+	p.AccessTokenValiditySeconds = framework.Int32OkToInt64TF(apiObject.GetAccessTokenValiditySecondsOk())
 
 	p.ApplicationPermissionsSettings, d = resourceApplicationPermissionsSettingsOk(apiObject.GetApplicationPermissionsSettingsOk())
 	diags.Append(d...)

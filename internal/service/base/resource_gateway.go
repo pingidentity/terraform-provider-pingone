@@ -1502,7 +1502,7 @@ func toStateRadiusNetworkPolicyServerOk(apiObject *management.GatewayTypeRADIUSA
 
 	o := map[string]attr.Value{
 		"ip":   framework.StringOkToTF(apiObject.GetIpOk()),
-		"port": framework.Int32OkToTF(apiObject.GetPortOk()),
+		"port": framework.Int32OkToInt64TF(apiObject.GetPortOk()),
 	}
 
 	returnVar, d := types.ObjectValue(gatewayRadiusNetworkPolicyServerTFObjectTypes, o)
@@ -1526,7 +1526,7 @@ func toStateKerberosOk(apiObject *management.GatewayTypeLDAPAllOfKerberos, ok bo
 	o := map[string]attr.Value{
 		"service_account_password":         serviceAccountPassword,
 		"service_account_upn":              framework.StringOkToTF(apiObject.GetServiceAccountUserPrincipalNameOk()),
-		"retain_previous_credentials_mins": framework.Int32OkToTF(apiObject.GetMinutesToRetainPreviousCredentialsOk()),
+		"retain_previous_credentials_mins": framework.Int32OkToInt64TF(apiObject.GetMinutesToRetainPreviousCredentialsOk()),
 	}
 
 	returnVar, d := types.ObjectValue(gatewayKerberosTFObjectTypes, o)

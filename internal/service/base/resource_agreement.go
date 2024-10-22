@@ -356,7 +356,7 @@ func (p *AgreementResourceModel) toState(apiObject *management.Agreement) diag.D
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
-	p.ReconsentPeriodDays = framework.Float32OkToTF(apiObject.GetReconsentPeriodDaysOk())
+	p.ReconsentPeriodDays = framework.Float32OkToFloat64TF(apiObject.GetReconsentPeriodDaysOk())
 
 	return diags
 }

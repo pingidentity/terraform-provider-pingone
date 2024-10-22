@@ -340,7 +340,7 @@ func (p *ApplicationFlowPolicyAssignmentResourceModel) toState(apiObject *manage
 	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.ApplicationId = framework.PingOneResourceIDToTF(*apiObject.GetApplication().Id)
 	p.FlowPolicyId = framework.DaVinciResourceIDToTF(apiObject.GetFlowPolicy().Id)
-	p.Priority = framework.Int32OkToTF(apiObject.GetPriorityOk())
+	p.Priority = framework.Int32OkToInt64TF(apiObject.GetPriorityOk())
 
 	return diags
 }

@@ -526,13 +526,13 @@ func (p *keyRotationPolicyResourceModel) toState(apiObject *management.KeyRotati
 	p.Algorithm = framework.EnumOkToTF(apiObject.GetAlgorithmOk())
 	p.CurrentKeyId = framework.PingOneResourceIDOkToTF(apiObject.GetCurrentKeyIdOk())
 	p.SubjectDn = framework.StringOkToTF(apiObject.GetDnOk())
-	p.KeyLength = framework.Int32OkToTF(apiObject.GetKeyLengthOk())
+	p.KeyLength = framework.Int32OkToInt64TF(apiObject.GetKeyLengthOk())
 	p.NextKeyId = framework.PingOneResourceIDOkToTF(apiObject.GetNextKeyIdOk())
 	p.RotatedAt = framework.TimeOkToTF(apiObject.GetRotatedAtOk())
-	p.RotationPeriod = framework.Int32OkToTF(apiObject.GetRotationPeriodOk())
+	p.RotationPeriod = framework.Int32OkToInt64TF(apiObject.GetRotationPeriodOk())
 	p.SignatureAlgorithm = framework.EnumOkToTF(apiObject.GetSignatureAlgorithmOk())
 	p.UsageType = framework.EnumOkToTF(apiObject.GetUsageTypeOk())
-	p.ValidityPeriod = framework.Int32OkToTF(apiObject.GetValidityPeriodOk())
+	p.ValidityPeriod = framework.Int32OkToInt64TF(apiObject.GetValidityPeriodOk())
 
 	return diags
 }

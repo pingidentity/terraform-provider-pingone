@@ -41,7 +41,7 @@ var (
 		// Value not allowed
 		if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 			if target, ok := details[0].GetTargetOk(); ok && details[0].GetCode() == "INVALID_VALUE" && *target == "name" {
-				diags = diag.FromErr(fmt.Errorf(details[0].GetMessage()))
+				diags = diag.FromErr(fmt.Errorf("%s", details[0].GetMessage()))
 
 				return diags
 			}
