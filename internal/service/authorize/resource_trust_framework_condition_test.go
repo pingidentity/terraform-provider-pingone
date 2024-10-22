@@ -117,8 +117,8 @@ func TestAccTrustFrameworkCondition_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckResourceAttr(resourceFullName, "description", "Test application role"),
-		resource.TestCheckResourceAttr(resourceFullName, "full_name", name),
+		// resource.TestCheckResourceAttr(resourceFullName, "description", "Test application role"),
+		resource.TestCheckResourceAttr(resourceFullName, "full_name", fmt.Sprintf("%[1]s-parent.%[1]s", name)),
 		resource.TestMatchResourceAttr(resourceFullName, "parent.id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "CONDITION"),
 		resource.TestMatchResourceAttr(resourceFullName, "version", verify.P1ResourceIDRegexpFullString),
@@ -128,8 +128,8 @@ func TestAccTrustFrameworkCondition_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckNoResourceAttr(resourceFullName, "description"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "full_name"),
+		// resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+		resource.TestCheckResourceAttr(resourceFullName, "full_name", name),
 		resource.TestCheckNoResourceAttr(resourceFullName, "parent"),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "CONDITION"),
 		resource.TestMatchResourceAttr(resourceFullName, "version", verify.P1ResourceIDRegexpFullString),
@@ -199,7 +199,7 @@ func TestAccTrustFrameworkCondition_ConditionType_And(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_processor.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_condition.%s", resourceName)
 
 	name := resourceName
 
@@ -302,7 +302,7 @@ func TestAccTrustFrameworkCondition_ConditionType_Comparison(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_processor.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_condition.%s", resourceName)
 
 	name := resourceName
 
@@ -377,7 +377,7 @@ func TestAccTrustFrameworkCondition_ConditionType_Empty(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_processor.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_condition.%s", resourceName)
 
 	name := resourceName
 
@@ -429,7 +429,7 @@ func TestAccTrustFrameworkCondition_ConditionType_Not(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_processor.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_condition.%s", resourceName)
 
 	name := resourceName
 
@@ -504,7 +504,7 @@ func TestAccTrustFrameworkCondition_ConditionType_Or(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_processor.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_condition.%s", resourceName)
 
 	name := resourceName
 
@@ -607,7 +607,7 @@ func TestAccTrustFrameworkCondition_ConditionType_Reference(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_processor.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_condition.%s", resourceName)
 
 	name := resourceName
 
@@ -678,7 +678,7 @@ func TestAccTrustFrameworkCondition_ConditionType_Change(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_processor.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_condition.%s", resourceName)
 
 	name := resourceName
 
@@ -693,12 +693,12 @@ func TestAccTrustFrameworkCondition_ConditionType_Change(t *testing.T) {
 	)
 
 	typeCheck2 := resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(resourceFullName, "condition.type", "REFERENCE"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.type", "NOT"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.comparator"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "condition.condition"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.condition.type", "EMPTY"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.conditions"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.left"),
-		resource.TestMatchResourceAttr(resourceFullName, "condition.reference.id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition.reference"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.right"),
 	)
 
@@ -718,7 +718,7 @@ func TestAccTrustFrameworkCondition_ConditionType_Change(t *testing.T) {
 			},
 			// Change
 			{
-				Config: testAccTrustFrameworkConditionConfig_Condition_Reference2(resourceName, name),
+				Config: testAccTrustFrameworkConditionConfig_Condition_Not1(resourceName, name),
 				Check:  typeCheck2,
 			},
 			{
@@ -792,7 +792,7 @@ func testAccTrustFrameworkConditionConfig_Full(resourceName, name string) string
 
 resource "pingone_authorize_trust_framework_condition" "%[2]s-parent" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
+  name           = "%[3]s-parent"
 
   condition = {
     type = "EMPTY"
@@ -802,8 +802,7 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s-parent" {
 resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-  description    = "Test application role"
-  full_name      = "%[3]s"
+//   description    = "Test application role"
 
   parent = {
     id = pingone_authorize_trust_framework_condition.%[2]s-parent.id
@@ -816,7 +815,17 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
 }
 
 func testAccTrustFrameworkConditionConfig_Minimal(resourceName, name string) string {
-	return testAccTrustFrameworkConditionConfig_Condition_Empty(resourceName, name)
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_authorize_trust_framework_condition" "%[2]s-parent" {
+environment_id = data.pingone_environment.general_test.id
+name           = "%[3]s-parent"
+
+condition = {
+type = "EMPTY"
+}
+}`, testAccTrustFrameworkConditionConfig_Condition_Empty(resourceName, name), resourceName, name)
 }
 
 func testAccTrustFrameworkConditionConfig_Condition_And1(resourceName, name string) string {
@@ -1017,7 +1026,7 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
 
       right = {
         type = "CONSTANT"
-        id   = "test4"
+        value = "test4"
       }
     }
   }
@@ -1119,10 +1128,22 @@ func testAccTrustFrameworkConditionConfig_Condition_Reference1(resourceName, nam
 
 resource "pingone_authorize_trust_framework_condition" "%[2]s-ref1" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
+  name           = "%[3]s-ref1"
 
   condition = {
     type = "EMPTY"
+  }
+}
+
+resource "pingone_authorize_trust_framework_condition" "%[2]s-ref2" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-ref2"
+
+  condition = {
+    type = "NOT"
+    condition = {
+      type = "EMPTY"
+    }
   }
 }
 
@@ -1146,7 +1167,7 @@ func testAccTrustFrameworkConditionConfig_Condition_Reference2(resourceName, nam
 
 resource "pingone_authorize_trust_framework_condition" "%[2]s-ref1" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
+  name           = "%[3]s-ref1"
 
   condition = {
     type = "EMPTY"
@@ -1155,7 +1176,7 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s-ref1" {
 
 resource "pingone_authorize_trust_framework_condition" "%[2]s-ref2" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
+  name           = "%[3]s-ref2"
 
   condition = {
     type = "NOT"

@@ -81,14 +81,14 @@ func dataConditionComparandObjectSchemaAttributes() (attributes map[string]schem
 }
 
 type editorDataConditionComparandResourceModel struct {
-	Type  types.String `tfsdk:"type"`
-	Id    types.String `tfsdk:"id"`
-	Value types.String `tfsdk:"value"`
+	Type  types.String                 `tfsdk:"type"`
+	Id    pingonetypes.ResourceIDValue `tfsdk:"id"`
+	Value types.String                 `tfsdk:"value"`
 }
 
 var editorDataConditionComparandTFObjectTypes = map[string]attr.Type{
 	"type":  types.StringType,
-	"id":    types.StringType,
+	"id":    pingonetypes.ResourceIDType{},
 	"value": types.StringType,
 }
 
@@ -195,7 +195,7 @@ func editorDataConditionComparandOkToTF(ctx context.Context, apiObject *authoriz
 	case *authorize.AuthorizeEditorDataConditionsComparandsAttributeComparandDTO:
 
 		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
-		attributeMap["id"] = framework.StringOkToTF(t.GetIdOk())
+		attributeMap["id"] = framework.PingOneResourceIDOkToTF(t.GetIdOk())
 
 	case *authorize.AuthorizeEditorDataConditionsComparandsConstantComparandDTO:
 
@@ -224,7 +224,7 @@ func editorDataConditionComparandOkToTF(ctx context.Context, apiObject *authoriz
 func editorDataConditionComparandConvertEmptyValuesToTFNulls(attributeMap map[string]attr.Value) map[string]attr.Value {
 	nullMap := map[string]attr.Value{
 		"type":  types.StringNull(),
-		"id":    types.StringNull(),
+		"id":    pingonetypes.NewResourceIDNull(),
 		"value": types.StringNull(),
 	}
 
