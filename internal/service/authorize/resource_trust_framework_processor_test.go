@@ -117,8 +117,8 @@ func TestAccTrustFrameworkProcessor_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckResourceAttr(resourceFullName, "description", "Test processor"),
-		resource.TestCheckResourceAttr(resourceFullName, "full_name", name),
+		// resource.TestCheckResourceAttr(resourceFullName, "description", "Test processor"),
+		resource.TestCheckResourceAttr(resourceFullName, "full_name", fmt.Sprintf("%[1]s-parent.%[1]s", name)),
 		resource.TestMatchResourceAttr(resourceFullName, "parent.id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test child processor", name)),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "PROCESSOR"),
@@ -129,8 +129,8 @@ func TestAccTrustFrameworkProcessor_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckNoResourceAttr(resourceFullName, "description"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "full_name"),
+		// resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+		resource.TestCheckResourceAttr(resourceFullName, "full_name", name),
 		resource.TestCheckNoResourceAttr(resourceFullName, "parent"),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test processor", name)),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "PROCESSOR"),
@@ -309,7 +309,7 @@ func TestAccTrustFrameworkProcessor_ProcessorType_CollectionFilter(t *testing.T)
 		resource.TestCheckResourceAttr(resourceFullName, "processor.predicate.name", fmt.Sprintf("%s Test predicate processor 1", name)),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.predicate.type", "JSON_PATH"),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.predicate.expression", "$.data.item1"),
-		resource.TestCheckResourceAttr(resourceFullName, "processor.predicate.value_type", "STRING"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.predicate.value_type.type", "BOOLEAN"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor_ref"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processors"),
@@ -323,7 +323,7 @@ func TestAccTrustFrameworkProcessor_ProcessorType_CollectionFilter(t *testing.T)
 		resource.TestCheckResourceAttr(resourceFullName, "processor.predicate.name", fmt.Sprintf("%s Test predicate processor 2", name)),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.predicate.type", "SPEL"),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.predicate.expression", "'Hello SpEL'.concat('!')"),
-		resource.TestCheckResourceAttr(resourceFullName, "processor.predicate.value_type", "STRING"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.predicate.value_type.type", "BOOLEAN"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor_ref"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processors"),
@@ -339,6 +339,10 @@ func TestAccTrustFrameworkProcessor_ProcessorType_CollectionFilter(t *testing.T)
 		CheckDestroy:             authorize.TrustFrameworkProcessor_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			{
+				Config:      testAccTrustFrameworkProcessorConfig_Processor_CollectionFilter_InvalidValueType(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid argument combination`),
+			},
 			// From scratch
 			{
 				Config: testAccTrustFrameworkProcessorConfig_Processor_CollectionFilter1(resourceName, name),
@@ -389,7 +393,7 @@ func TestAccTrustFrameworkProcessor_ProcessorType_CollectionTransform(t *testing
 		resource.TestCheckResourceAttr(resourceFullName, "processor.processor.name", fmt.Sprintf("%s Test collection transform processor 1", name)),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.processor.type", "JSON_PATH"),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.processor.expression", "$.data.item1"),
-		resource.TestCheckResourceAttr(resourceFullName, "processor.processor.value_type", "STRING"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processor.value_type.type", "STRING"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor_ref"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processors"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.value_type"),
@@ -403,7 +407,7 @@ func TestAccTrustFrameworkProcessor_ProcessorType_CollectionTransform(t *testing
 		resource.TestCheckResourceAttr(resourceFullName, "processor.processor.name", fmt.Sprintf("%s Test collection transform processor 2", name)),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.processor.type", "SPEL"),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.processor.expression", "'Hello SpEL'.concat('!')"),
-		resource.TestCheckResourceAttr(resourceFullName, "processor.processor.value_type", "STRING"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processor.value_type.type", "STRING"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor_ref"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processors"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.value_type"),
@@ -539,7 +543,7 @@ func TestAccTrustFrameworkProcessor_ProcessorType_Reference(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.expression"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.predicate"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor"),
-		resource.TestMatchResourceAttr(resourceFullName, "processor.processor_ref", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "processor.processor_ref.id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processors"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.value_type"),
 	)
@@ -550,7 +554,7 @@ func TestAccTrustFrameworkProcessor_ProcessorType_Reference(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.expression"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.predicate"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor"),
-		resource.TestMatchResourceAttr(resourceFullName, "processor.processor_ref", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "processor.processor_ref.id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processors"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.value_type"),
 	)
@@ -882,7 +886,7 @@ func testAccTrustFrameworkProcessorConfig_Full(resourceName, name string) string
 
 resource "pingone_authorize_trust_framework_processor" "%[2]s-parent" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
+  name           = "%[3]s-parent"
 
   processor = {
     name = "%[3]s Test parent processor"
@@ -898,7 +902,7 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s-parent" {
 resource "pingone_authorize_trust_framework_processor" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-  description    = "Test processor"
+  //   description    = "Test processor"
 
   parent = {
     id = pingone_authorize_trust_framework_processor.%[2]s-parent.id
@@ -1026,7 +1030,7 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s" {
 }`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
-func testAccTrustFrameworkProcessorConfig_Processor_CollectionFilter1(resourceName, name string) string {
+func testAccTrustFrameworkProcessorConfig_Processor_CollectionFilter_InvalidValueType(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -1051,6 +1055,31 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s" {
 }`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
+func testAccTrustFrameworkProcessorConfig_Processor_CollectionFilter1(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_authorize_trust_framework_processor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  processor = {
+    name = "%[3]s Test processor"
+    type = "COLLECTION_FILTER"
+
+    predicate = {
+      name = "%[3]s Test predicate processor 1"
+      type = "JSON_PATH"
+
+      expression = "$.data.item1"
+      value_type = {
+        type = "BOOLEAN"
+      }
+    },
+  }
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
+}
+
 func testAccTrustFrameworkProcessorConfig_Processor_CollectionFilter2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -1069,7 +1098,7 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s" {
 
       expression = "'Hello SpEL'.concat('!')"
       value_type = {
-        type = "STRING"
+        type = "BOOLEAN"
       }
     },
   }
@@ -1172,7 +1201,7 @@ func testAccTrustFrameworkProcessorConfig_Processor_Reference1(resourceName, nam
 
 resource "pingone_authorize_trust_framework_processor" "%[2]s_ref1" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
+  name           = "%[3]s-ref1"
 
   processor = {
     name = "%[3]s Test ref processor1"
@@ -1187,7 +1216,7 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s_ref1" {
 
 resource "pingone_authorize_trust_framework_processor" "%[2]s_ref2" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
+  name           = "%[3]s-ref2"
 
   processor = {
     name = "%[3]s Test ref processor2"
@@ -1221,7 +1250,7 @@ func testAccTrustFrameworkProcessorConfig_Processor_Reference2(resourceName, nam
 
 resource "pingone_authorize_trust_framework_processor" "%[2]s_ref1" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
+  name           = "%[3]s-ref1"
 
   processor = {
     name = "%[3]s Test ref processor1"
@@ -1236,7 +1265,7 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s_ref1" {
 
 resource "pingone_authorize_trust_framework_processor" "%[2]s_ref2" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
+  name           = "%[3]s-ref2"
 
   processor = {
     name = "%[3]s Test ref processor2"

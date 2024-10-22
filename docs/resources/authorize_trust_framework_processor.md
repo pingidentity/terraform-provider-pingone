@@ -97,7 +97,7 @@ Required:
 
 Required:
 
-- `type` (String) A string that specifies the type of the value.  Options are `BOOLEAN`, `COLLECTION`, `DATE_TIME`, `DURATION`, `JSON`, `LOCAL_DATE`, `LOCAL_DATE_TIME`, `LOCAL_TIME`, `NUMBER`, `PERIOD`, `STRING`, `TIME_PERIOD`, `XML`, `ZONED_DATE_TIME`.
+- `type` (String) A string that specifies the type of the value.  Options are `BOOLEAN`, `COLLECTION`, `DATE_TIME`, `DURATION`, `JSON`, `LOCAL_DATE`, `LOCAL_DATE_TIME`, `LOCAL_TIME`, `NUMBER`, `PERIOD`, `STRING`, `TIME_PERIOD`, `XML`, `ZONED_DATE_TIME`.  Must be `BOOLEAN` when the processor type (`processor.type`) is `COLLECTION_FILTER`
 
 
 
@@ -128,7 +128,7 @@ Required:
 
 Required:
 
-- `type` (String) A string that specifies the type of the value.  Options are `BOOLEAN`, `COLLECTION`, `DATE_TIME`, `DURATION`, `JSON`, `LOCAL_DATE`, `LOCAL_DATE_TIME`, `LOCAL_TIME`, `NUMBER`, `PERIOD`, `STRING`, `TIME_PERIOD`, `XML`, `ZONED_DATE_TIME`.
+- `type` (String) A string that specifies the type of the value.  Options are `BOOLEAN`, `COLLECTION`, `DATE_TIME`, `DURATION`, `JSON`, `LOCAL_DATE`, `LOCAL_DATE_TIME`, `LOCAL_TIME`, `NUMBER`, `PERIOD`, `STRING`, `TIME_PERIOD`, `XML`, `ZONED_DATE_TIME`.  Must be `BOOLEAN` when the processor type (`processor.type`) is `COLLECTION_FILTER`
 
 
 
@@ -167,7 +167,7 @@ Required:
 
 Required:
 
-- `type` (String) A string that specifies the type of the value.  Options are `BOOLEAN`, `COLLECTION`, `DATE_TIME`, `DURATION`, `JSON`, `LOCAL_DATE`, `LOCAL_DATE_TIME`, `LOCAL_TIME`, `NUMBER`, `PERIOD`, `STRING`, `TIME_PERIOD`, `XML`, `ZONED_DATE_TIME`.
+- `type` (String) A string that specifies the type of the value.  Options are `BOOLEAN`, `COLLECTION`, `DATE_TIME`, `DURATION`, `JSON`, `LOCAL_DATE`, `LOCAL_DATE_TIME`, `LOCAL_TIME`, `NUMBER`, `PERIOD`, `STRING`, `TIME_PERIOD`, `XML`, `ZONED_DATE_TIME`.  Must be `BOOLEAN` when the processor type (`processor.type`) is `COLLECTION_FILTER`
 
 
 
@@ -176,7 +176,7 @@ Required:
 
 Required:
 
-- `type` (String) A string that specifies the type of the value.  Options are `BOOLEAN`, `COLLECTION`, `DATE_TIME`, `DURATION`, `JSON`, `LOCAL_DATE`, `LOCAL_DATE_TIME`, `LOCAL_TIME`, `NUMBER`, `PERIOD`, `STRING`, `TIME_PERIOD`, `XML`, `ZONED_DATE_TIME`.
+- `type` (String) A string that specifies the type of the value.  Options are `BOOLEAN`, `COLLECTION`, `DATE_TIME`, `DURATION`, `JSON`, `LOCAL_DATE`, `LOCAL_DATE_TIME`, `LOCAL_TIME`, `NUMBER`, `PERIOD`, `STRING`, `TIME_PERIOD`, `XML`, `ZONED_DATE_TIME`.  Must be `BOOLEAN` when the processor type (`processor.type`) is `COLLECTION_FILTER`
 
 
 

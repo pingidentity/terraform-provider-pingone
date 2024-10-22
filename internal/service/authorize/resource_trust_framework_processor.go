@@ -25,13 +25,13 @@ type TrustFrameworkProcessorResource serviceClientType
 type trustFrameworkProcessorResourceModel struct {
 	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
 	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	Description   types.String                 `tfsdk:"description"`
-	FullName      types.String                 `tfsdk:"full_name"`
-	Name          types.String                 `tfsdk:"name"`
-	Type          types.String                 `tfsdk:"type"`
-	Parent        types.Object                 `tfsdk:"parent"`
-	Processor     types.Object                 `tfsdk:"processor"`
-	Version       types.String                 `tfsdk:"version"`
+	// Description   types.String                 `tfsdk:"description"`
+	FullName  types.String `tfsdk:"full_name"`
+	Name      types.String `tfsdk:"name"`
+	Type      types.String `tfsdk:"type"`
+	Parent    types.Object `tfsdk:"parent"`
+	Processor types.Object `tfsdk:"processor"`
+	Version   types.String `tfsdk:"version"`
 }
 
 // Framework interfaces
@@ -91,10 +91,10 @@ func (r *TrustFrameworkProcessorResource) Schema(ctx context.Context, req resour
 				Computed:    true,
 			},
 
-			"description": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a description to apply to the authorization processor.").Description,
-				Optional:    true,
-			},
+			// "description": schema.StringAttribute{
+			// 	Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a description to apply to the authorization processor.").Description,
+			// 	Optional:    true,
+			// },
 
 			"parent": parentObjectSchema("processor"),
 
@@ -156,7 +156,7 @@ func (r *TrustFrameworkProcessorResource) Create(ctx context.Context, req resour
 	}
 
 	// Build the model for the API
-	trustFrameworkProcessor, d := plan.expand(ctx)
+	trustFrameworkProcessor, d := plan.expand(ctx, nil)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -256,8 +256,27 @@ func (r *TrustFrameworkProcessorResource) Update(ctx context.Context, req resour
 		return
 	}
 
+	var getResponse *authorize.AuthorizeEditorDataDefinitionsProcessorDefinitionDTO
+	resp.Diagnostics.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorProcessorsApi.GetProcessor(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+		},
+		"GetProcessor-Update",
+		framework.DefaultCustomError,
+		nil,
+		&getResponse,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	version := getResponse.GetVersion()
+
 	// Build the model for the API
-	trustFrameworkProcessor, d := plan.expand(ctx)
+	trustFrameworkProcessor, d := plan.expand(ctx, &version)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -359,7 +378,7 @@ func (r *TrustFrameworkProcessorResource) ImportState(ctx context.Context, req r
 	}
 }
 
-func (p *trustFrameworkProcessorResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataDefinitionsProcessorDefinitionDTO, diag.Diagnostics) {
+func (p *trustFrameworkProcessorResourceModel) expand(ctx context.Context, updateVersionId *string) (*authorize.AuthorizeEditorDataDefinitionsProcessorDefinitionDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	processor, d := expandEditorDataProcessor(ctx, p.Processor)
@@ -374,9 +393,9 @@ func (p *trustFrameworkProcessorResourceModel) expand(ctx context.Context) (*aut
 		*processor,
 	)
 
-	if !p.Description.IsNull() && !p.Description.IsUnknown() {
-		data.SetDescription(p.Description.ValueString())
-	}
+	// if !p.Description.IsNull() && !p.Description.IsUnknown() {
+	// 	data.SetDescription(p.Description.ValueString())
+	// }
 
 	if !p.FullName.IsNull() && !p.FullName.IsUnknown() {
 		data.SetFullName(p.FullName.ValueString())
@@ -392,8 +411,12 @@ func (p *trustFrameworkProcessorResourceModel) expand(ctx context.Context) (*aut
 		data.SetParent(*parent)
 	}
 
-	if !p.Version.IsNull() && !p.Version.IsUnknown() {
-		data.SetVersion(p.Version.ValueString())
+	if updateVersionId != nil {
+		data.SetVersion(*updateVersionId)
+
+		if !p.Id.IsNull() && !p.Id.IsUnknown() {
+			data.SetId(p.Id.ValueString())
+		}
 	}
 
 	return data, diags
@@ -412,7 +435,7 @@ func (p *trustFrameworkProcessorResourceModel) toState(ctx context.Context, apiO
 
 	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
 	//p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
-	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
+	// p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.FullName = framework.StringOkToTF(apiObject.GetFullNameOk())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Type = framework.EnumOkToTF(apiObject.GetTypeOk())

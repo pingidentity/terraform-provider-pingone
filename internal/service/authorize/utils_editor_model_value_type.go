@@ -12,14 +12,27 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
-func valueTypeObjectSchemaAttributes() (attributes map[string]schema.Attribute) {
+func valueTypeObjectSchemaAttributes(customValidators ...stringvalidatorinternal.CustomStringValidatorModel) (attributes map[string]schema.Attribute) {
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of the value.",
 	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataValueTypeDTOEnumValues)
+
+	validators := []validator.String{
+		stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataValueTypeDTOEnumValues)...),
+	}
+
+	if len(customValidators) > 0 {
+		for _, customValidator := range customValidators {
+			validators = append(validators, customValidator.Validators...)
+			typeDescription = typeDescription.Append(customValidator.Description)
+		}
+
+	}
 
 	attributes = map[string]schema.Attribute{
 		"type": schema.StringAttribute{
@@ -27,9 +40,7 @@ func valueTypeObjectSchemaAttributes() (attributes map[string]schema.Attribute) 
 			MarkdownDescription: typeDescription.MarkdownDescription,
 			Required:            true,
 
-			Validators: []validator.String{
-				stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataValueTypeDTOEnumValues)...),
-			},
+			Validators: validators,
 		},
 	}
 

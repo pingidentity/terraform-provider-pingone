@@ -68,6 +68,10 @@ func dataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes m
 		"An object that specifies the output type of the value.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`, `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_JSON_PATH), string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_SPEL), string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_XPATH)))
 
+	valueTypeValueCollectionFilterDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("Must be `%s` when the processor type (`processor.type`) is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAVALUETYPEDTO_BOOLEAN), string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_COLLECTION_FILTER)),
+	)
+
 	processorRefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings for the authorization processor to reference.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_REFERENCE)))
@@ -190,7 +194,19 @@ func dataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes m
 				),
 			},
 
-			Attributes: valueTypeObjectSchemaAttributes(),
+			Attributes: valueTypeObjectSchemaAttributes(
+				// If processor type is collection filter, then the value type value must be `BOOLEAN`
+				stringvalidatorinternal.CustomStringValidatorModel{
+					Description: valueTypeValueCollectionFilterDescription,
+					Validators: []validator.String{
+						stringvalidatorinternal.ShouldBeDefinedValueIfPathMatchesValue(
+							types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAVALUETYPEDTO_BOOLEAN)),
+							types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_COLLECTION_FILTER)),
+							path.MatchRoot("processor").AtName("type"),
+						),
+					},
+				},
+			),
 		}
 	}
 
@@ -215,15 +231,23 @@ func dataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes m
 	return attributes
 }
 
-type editorDataProcessorResourceModel struct {
+type editorDataProcessorLeafResourceModel struct {
 	Name         types.String `tfsdk:"name"`
 	Type         types.String `tfsdk:"type"`
-	Processors   types.List   `tfsdk:"processors"`
-	Predicate    types.Object `tfsdk:"predicate"`
-	Processor    types.Object `tfsdk:"processor"`
 	Expression   types.String `tfsdk:"expression"`
 	ValueType    types.Object `tfsdk:"value_type"`
 	ProcessorRef types.Object `tfsdk:"processor_ref"`
+}
+
+type editorDataProcessorResourceModel struct {
+	Name         types.String `tfsdk:"name"`
+	Type         types.String `tfsdk:"type"`
+	Expression   types.String `tfsdk:"expression"`
+	ValueType    types.Object `tfsdk:"value_type"`
+	ProcessorRef types.Object `tfsdk:"processor_ref"`
+	Processors   types.List   `tfsdk:"processors"`
+	Predicate    types.Object `tfsdk:"predicate"`
+	Processor    types.Object `tfsdk:"processor"`
 }
 
 var editorDataProcessorTFObjectTypes = initializeEditorDataProcessorTFObjectTypes(1)
@@ -270,17 +294,40 @@ func initializeEditorDataProcessorTFObjectTypes(iteration int) map[string]attr.T
 }
 
 func expandEditorDataProcessor(ctx context.Context, processor basetypes.ObjectValue) (processorObject *authorize.AuthorizeEditorDataProcessorDTO, diags diag.Diagnostics) {
-	var plan *editorDataProcessorResourceModel
-	diags.Append(processor.As(ctx, &plan, basetypes.ObjectAsOptions{
-		UnhandledNullAsEmpty:    false,
-		UnhandledUnknownAsEmpty: false,
-	})...)
-	if diags.HasError() {
-		return
-	}
+	const initialIteration = 1
+	return expandEditorDataProcessorIteration(ctx, processor, initialIteration)
+}
 
-	processorObject, d := plan.expand(ctx)
-	diags.Append(d...)
+func expandEditorDataProcessorIteration(ctx context.Context, processor basetypes.ObjectValue, iteration int32) (processorObject *authorize.AuthorizeEditorDataProcessorDTO, diags diag.Diagnostics) {
+	var d diag.Diagnostics
+
+	leaf := iteration >= processorNestedIterationMaxDepth
+
+	if leaf {
+		var plan *editorDataProcessorLeafResourceModel
+		diags.Append(processor.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return
+		}
+
+		processorObject, d = plan.expand(ctx)
+		diags.Append(d...)
+	} else {
+		var plan *editorDataProcessorResourceModel
+		diags.Append(processor.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return
+		}
+
+		processorObject, d = plan.expand(ctx, iteration)
+		diags.Append(d...)
+	}
 	if diags.HasError() {
 		return
 	}
@@ -288,20 +335,75 @@ func expandEditorDataProcessor(ctx context.Context, processor basetypes.ObjectVa
 	return
 }
 
-func (p *editorDataProcessorResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataProcessorDTO, diag.Diagnostics) {
+func expandEditorDataProcessors(ctx context.Context, processor basetypes.ListValue) (processorObject []authorize.AuthorizeEditorDataProcessorDTO, diags diag.Diagnostics) {
+	const initialIteration = 1
+	return expandEditorDataProcessorsIteration(ctx, processor, initialIteration)
+}
+
+func expandEditorDataProcessorsIteration(ctx context.Context, processors basetypes.ListValue, iteration int32) (processorObjects []authorize.AuthorizeEditorDataProcessorDTO, diags diag.Diagnostics) {
+
+	leaf := iteration >= processorNestedIterationMaxDepth
+
+	if leaf {
+
+		var plan []editorDataProcessorLeafResourceModel
+		diags.Append(processors.ElementsAs(ctx, &plan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		processorObjects = make([]authorize.AuthorizeEditorDataProcessorDTO, 0, len(plan))
+		for _, processorPlan := range plan {
+
+			processorObject, d := processorPlan.expand(ctx)
+			diags.Append(d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			processorObjects = append(processorObjects, *processorObject)
+		}
+
+	} else {
+
+		var plan []editorDataProcessorResourceModel
+		diags.Append(processors.ElementsAs(ctx, &plan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		processorObjects = make([]authorize.AuthorizeEditorDataProcessorDTO, 0, len(plan))
+		for _, processorPlan := range plan {
+
+			processorObject, d := processorPlan.expand(ctx, iteration)
+			diags.Append(d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			processorObjects = append(processorObjects, *processorObject)
+		}
+
+	}
+
+	return
+
+}
+
+func (p *editorDataProcessorResourceModel) expand(ctx context.Context, iteration int32) (*authorize.AuthorizeEditorDataProcessorDTO, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
 	data := authorize.AuthorizeEditorDataProcessorDTO{}
 
 	switch authorize.EnumAuthorizeEditorDataProcessorDTOType(p.Type.ValueString()) {
 	case authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_CHAIN:
-		data.AuthorizeEditorDataProcessorsChainProcessorDTO, d = p.expandChainProcessor(ctx)
+		data.AuthorizeEditorDataProcessorsChainProcessorDTO, d = p.expandChainProcessor(ctx, iteration)
 		diags.Append(d...)
 	case authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_COLLECTION_FILTER:
-		data.AuthorizeEditorDataProcessorsCollectionFilterProcessorDTO, d = p.expandCollectionFilterProcessor(ctx)
+		data.AuthorizeEditorDataProcessorsCollectionFilterProcessorDTO, d = p.expandCollectionFilterProcessor(ctx, iteration)
 		diags.Append(d...)
 	case authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_COLLECTION_TRANSFORM:
-		data.AuthorizeEditorDataProcessorsCollectionTransformProcessorDTO, d = p.expandCollectionTransformProcessor(ctx)
+		data.AuthorizeEditorDataProcessorsCollectionTransformProcessorDTO, d = p.expandCollectionTransformProcessor(ctx, iteration)
 		diags.Append(d...)
 	case authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_JSON_PATH:
 		data.AuthorizeEditorDataProcessorsJsonPathProcessorDTO, d = p.expandJsonPathProcessor(ctx)
@@ -329,25 +431,60 @@ func (p *editorDataProcessorResourceModel) expand(ctx context.Context) (*authori
 	return &data, diags
 }
 
-func (p *editorDataProcessorResourceModel) expandChainProcessor(ctx context.Context) (*authorize.AuthorizeEditorDataProcessorsChainProcessorDTO, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func (p *editorDataProcessorLeafResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataProcessorDTO, diag.Diagnostics) {
+	var diags, d diag.Diagnostics
 
-	var plan []editorDataProcessorResourceModel
-	diags.Append(p.Processors.ElementsAs(ctx, &plan, false)...)
+	data := authorize.AuthorizeEditorDataProcessorDTO{}
+
+	switch authorize.EnumAuthorizeEditorDataProcessorDTOType(p.Type.ValueString()) {
+	case authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_CHAIN:
+		diags.AddError(
+			"Invalid leaf processor type",
+			fmt.Sprintf("The leaf processor type '%s' is not supported.  Please raise an issue with the provider maintainers.", p.Type.ValueString()),
+		)
+	case authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_COLLECTION_FILTER:
+		diags.AddError(
+			"Invalid leaf processor type",
+			fmt.Sprintf("The leaf processor type '%s' is not supported.  Please raise an issue with the provider maintainers.", p.Type.ValueString()),
+		)
+	case authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_COLLECTION_TRANSFORM:
+		diags.AddError(
+			"Invalid leaf processor type",
+			fmt.Sprintf("The leaf processor type '%s' is not supported.  Please raise an issue with the provider maintainers.", p.Type.ValueString()),
+		)
+	case authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_JSON_PATH:
+		data.AuthorizeEditorDataProcessorsJsonPathProcessorDTO, d = p.expandJsonPathProcessor(ctx)
+		diags.Append(d...)
+	case authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_REFERENCE:
+		data.AuthorizeEditorDataProcessorsReferenceProcessorDTO, d = p.expandReferenceProcessor(ctx)
+		diags.Append(d...)
+	case authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_SPEL:
+		data.AuthorizeEditorDataProcessorsSpelProcessorDTO, d = p.expandSPELProcessor(ctx)
+		diags.Append(d...)
+	case authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_XPATH:
+		data.AuthorizeEditorDataProcessorsXPathProcessorDTO, d = p.expandXPATHProcessor(ctx)
+		diags.Append(d...)
+	default:
+		diags.AddError(
+			"Invalid processor type",
+			fmt.Sprintf("The processor type '%s' is not supported.  Please raise an issue with the provider maintainers.", p.Type.ValueString()),
+		)
+	}
+
 	if diags.HasError() {
 		return nil, diags
 	}
 
-	processors := make([]authorize.AuthorizeEditorDataProcessorDTO, 0, len(plan))
-	for _, processorPlan := range plan {
+	return &data, diags
+}
 
-		processorObject, d := processorPlan.expand(ctx)
-		diags.Append(d...)
-		if diags.HasError() {
-			return nil, diags
-		}
+func (p *editorDataProcessorResourceModel) expandChainProcessor(ctx context.Context, iteration int32) (*authorize.AuthorizeEditorDataProcessorsChainProcessorDTO, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
-		processors = append(processors, *processorObject)
+	processors, d := expandEditorDataProcessorsIteration(ctx, p.Processors, iteration+1)
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
 	}
 
 	data := authorize.NewAuthorizeEditorDataProcessorsChainProcessorDTO(
@@ -359,10 +496,10 @@ func (p *editorDataProcessorResourceModel) expandChainProcessor(ctx context.Cont
 	return data, diags
 }
 
-func (p *editorDataProcessorResourceModel) expandCollectionFilterProcessor(ctx context.Context) (*authorize.AuthorizeEditorDataProcessorsCollectionFilterProcessorDTO, diag.Diagnostics) {
+func (p *editorDataProcessorResourceModel) expandCollectionFilterProcessor(ctx context.Context, iteration int32) (*authorize.AuthorizeEditorDataProcessorsCollectionFilterProcessorDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	predicate, d := expandEditorDataProcessor(ctx, p.Processor)
+	predicate, d := expandEditorDataProcessorIteration(ctx, p.Predicate, iteration+1)
 	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
@@ -377,10 +514,10 @@ func (p *editorDataProcessorResourceModel) expandCollectionFilterProcessor(ctx c
 	return data, diags
 }
 
-func (p *editorDataProcessorResourceModel) expandCollectionTransformProcessor(ctx context.Context) (*authorize.AuthorizeEditorDataProcessorsCollectionTransformProcessorDTO, diag.Diagnostics) {
+func (p *editorDataProcessorResourceModel) expandCollectionTransformProcessor(ctx context.Context, iteration int32) (*authorize.AuthorizeEditorDataProcessorsCollectionTransformProcessorDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	processor, d := expandEditorDataProcessor(ctx, p.Processor)
+	processor, d := expandEditorDataProcessorIteration(ctx, p.Processor, iteration+1)
 	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
@@ -396,74 +533,106 @@ func (p *editorDataProcessorResourceModel) expandCollectionTransformProcessor(ct
 }
 
 func (p *editorDataProcessorResourceModel) expandJsonPathProcessor(ctx context.Context) (*authorize.AuthorizeEditorDataProcessorsJsonPathProcessorDTO, diag.Diagnostics) {
+	return expandJsonPathProcessor(ctx, p.ValueType, p.Name, p.Expression)
+}
+
+func (p *editorDataProcessorResourceModel) expandReferenceProcessor(ctx context.Context) (*authorize.AuthorizeEditorDataProcessorsReferenceProcessorDTO, diag.Diagnostics) {
+	return expandReferenceProcessor(ctx, p.ProcessorRef, p.Name)
+}
+
+func (p *editorDataProcessorResourceModel) expandSPELProcessor(ctx context.Context) (*authorize.AuthorizeEditorDataProcessorsSpelProcessorDTO, diag.Diagnostics) {
+	return expandSPELProcessor(ctx, p.ValueType, p.Name, p.Expression)
+}
+
+func (p *editorDataProcessorResourceModel) expandXPATHProcessor(ctx context.Context) (*authorize.AuthorizeEditorDataProcessorsXPathProcessorDTO, diag.Diagnostics) {
+	return expandXPATHProcessor(ctx, p.ValueType, p.Name, p.Expression)
+}
+
+func (p *editorDataProcessorLeafResourceModel) expandJsonPathProcessor(ctx context.Context) (*authorize.AuthorizeEditorDataProcessorsJsonPathProcessorDTO, diag.Diagnostics) {
+	return expandJsonPathProcessor(ctx, p.ValueType, p.Name, p.Expression)
+}
+
+func (p *editorDataProcessorLeafResourceModel) expandReferenceProcessor(ctx context.Context) (*authorize.AuthorizeEditorDataProcessorsReferenceProcessorDTO, diag.Diagnostics) {
+	return expandReferenceProcessor(ctx, p.ProcessorRef, p.Name)
+}
+
+func (p *editorDataProcessorLeafResourceModel) expandSPELProcessor(ctx context.Context) (*authorize.AuthorizeEditorDataProcessorsSpelProcessorDTO, diag.Diagnostics) {
+	return expandSPELProcessor(ctx, p.ValueType, p.Name, p.Expression)
+}
+
+func (p *editorDataProcessorLeafResourceModel) expandXPATHProcessor(ctx context.Context) (*authorize.AuthorizeEditorDataProcessorsXPathProcessorDTO, diag.Diagnostics) {
+	return expandXPATHProcessor(ctx, p.ValueType, p.Name, p.Expression)
+}
+
+func expandJsonPathProcessor(ctx context.Context, valueTypeP basetypes.ObjectValue, name, expression basetypes.StringValue) (*authorize.AuthorizeEditorDataProcessorsJsonPathProcessorDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	valueType, d := expandEditorValueType(ctx, p.ValueType)
+	valueType, d := expandEditorValueType(ctx, valueTypeP)
 	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
 	data := authorize.NewAuthorizeEditorDataProcessorsJsonPathProcessorDTO(
-		p.Name.ValueString(),
-		authorize.EnumAuthorizeEditorDataProcessorDTOType(p.Type.ValueString()),
-		p.Expression.ValueString(),
+		name.ValueString(),
+		authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_JSON_PATH,
+		expression.ValueString(),
 		*valueType,
 	)
 
 	return data, diags
 }
 
-func (p *editorDataProcessorResourceModel) expandReferenceProcessor(ctx context.Context) (*authorize.AuthorizeEditorDataProcessorsReferenceProcessorDTO, diag.Diagnostics) {
+func expandReferenceProcessor(ctx context.Context, referenceData basetypes.ObjectValue, name basetypes.StringValue) (*authorize.AuthorizeEditorDataProcessorsReferenceProcessorDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	processorRef, d := expandEditorReferenceData(ctx, p.ProcessorRef)
+	processorRef, d := expandEditorReferenceData(ctx, referenceData)
 	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
 	data := authorize.NewAuthorizeEditorDataProcessorsReferenceProcessorDTO(
-		p.Name.ValueString(),
-		authorize.EnumAuthorizeEditorDataProcessorDTOType(p.Type.ValueString()),
+		name.ValueString(),
+		authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_REFERENCE,
 		*processorRef,
 	)
 
 	return data, diags
 }
 
-func (p *editorDataProcessorResourceModel) expandSPELProcessor(ctx context.Context) (*authorize.AuthorizeEditorDataProcessorsSpelProcessorDTO, diag.Diagnostics) {
+func expandSPELProcessor(ctx context.Context, valueTypeP basetypes.ObjectValue, name, expression basetypes.StringValue) (*authorize.AuthorizeEditorDataProcessorsSpelProcessorDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	valueType, d := expandEditorValueType(ctx, p.ValueType)
+	valueType, d := expandEditorValueType(ctx, valueTypeP)
 	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
 	data := authorize.NewAuthorizeEditorDataProcessorsSpelProcessorDTO(
-		p.Name.ValueString(),
-		authorize.EnumAuthorizeEditorDataProcessorDTOType(p.Type.ValueString()),
-		p.Expression.ValueString(),
+		name.ValueString(),
+		authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_SPEL,
+		expression.ValueString(),
 		*valueType,
 	)
 
 	return data, diags
 }
 
-func (p *editorDataProcessorResourceModel) expandXPATHProcessor(ctx context.Context) (*authorize.AuthorizeEditorDataProcessorsXPathProcessorDTO, diag.Diagnostics) {
+func expandXPATHProcessor(ctx context.Context, valueTypeP basetypes.ObjectValue, name, expression basetypes.StringValue) (*authorize.AuthorizeEditorDataProcessorsXPathProcessorDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	valueType, d := expandEditorValueType(ctx, p.ValueType)
+	valueType, d := expandEditorValueType(ctx, valueTypeP)
 	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
 	data := authorize.NewAuthorizeEditorDataProcessorsXPathProcessorDTO(
-		p.Name.ValueString(),
-		authorize.EnumAuthorizeEditorDataProcessorDTOType(p.Type.ValueString()),
-		p.Expression.ValueString(),
+		name.ValueString(),
+		authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_XPATH,
+		expression.ValueString(),
 		*valueType,
 	)
 
