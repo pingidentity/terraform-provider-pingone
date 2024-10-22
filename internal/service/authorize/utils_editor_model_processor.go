@@ -252,7 +252,7 @@ type editorDataProcessorResourceModel struct {
 
 var editorDataProcessorTFObjectTypes = initializeEditorDataProcessorTFObjectTypes(1)
 
-func initializeEditorDataProcessorTFObjectTypes(iteration int) map[string]attr.Type {
+func initializeEditorDataProcessorTFObjectTypes(iteration int32) map[string]attr.Type {
 
 	supportedTypes := authorize.AllowedEnumAuthorizeEditorDataProcessorDTOTypeEnumValues
 
@@ -644,7 +644,7 @@ func editorDataProcessorOkToTF(ctx context.Context, apiObject *authorize.Authori
 	return editorDataProcessorOkToTFIteration(ctx, initialIteration, apiObject, ok)
 }
 
-func editorDataProcessorOkToTFIteration(ctx context.Context, iteration int, apiObject *authorize.AuthorizeEditorDataProcessorDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func editorDataProcessorOkToTFIteration(ctx context.Context, iteration int32, apiObject *authorize.AuthorizeEditorDataProcessorDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil || cmp.Equal(apiObject, &authorize.AuthorizeEditorDataProcessorDTO{}) {
@@ -742,7 +742,7 @@ func editorDataProcessorOkToTFIteration(ctx context.Context, iteration int, apiO
 	return objValue, diags
 }
 
-func editorDataProcessorsOkToListTFIteration(ctx context.Context, iteration int, apiObject []authorize.AuthorizeEditorDataProcessorDTO, ok bool) (basetypes.ListValue, diag.Diagnostics) {
+func editorDataProcessorsOkToListTFIteration(ctx context.Context, iteration int32, apiObject []authorize.AuthorizeEditorDataProcessorDTO, ok bool) (basetypes.ListValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	tfObjType := types.ObjectType{AttrTypes: initializeEditorDataProcessorTFObjectTypes(iteration)}
@@ -769,7 +769,7 @@ func editorDataProcessorsOkToListTFIteration(ctx context.Context, iteration int,
 	return returnVar, diags
 }
 
-func editorDataProcessorConvertEmptyValuesToTFNulls(attributeMap map[string]attr.Value, iteration int) map[string]attr.Value {
+func editorDataProcessorConvertEmptyValuesToTFNulls(attributeMap map[string]attr.Value, iteration int32) map[string]attr.Value {
 
 	supportedTypes := authorize.AllowedEnumAuthorizeEditorDataProcessorDTOTypeEnumValues
 
