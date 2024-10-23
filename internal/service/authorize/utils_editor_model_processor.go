@@ -754,7 +754,7 @@ func editorDataProcessorsOkToListTFIteration(ctx context.Context, iteration int3
 	flattenedList := []attr.Value{}
 	for _, v := range apiObject {
 
-		flattenedObj, d := editorDataProcessorOkToTFIteration(ctx, iteration+1, &v, true)
+		flattenedObj, d := editorDataProcessorOkToTFIteration(ctx, iteration, &v, true)
 		diags.Append(d...)
 		if diags.HasError() {
 			return types.ListNull(tfObjType), diags
