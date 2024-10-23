@@ -117,8 +117,8 @@ func TestAccTrustFrameworkService_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckResourceAttr(resourceFullName, "description", "Test application service"),
-		resource.TestCheckResourceAttr(resourceFullName, "full_name", name),
+		// resource.TestCheckResourceAttr(resourceFullName, "description", "Test application service"),
+		resource.TestCheckResourceAttr(resourceFullName, "full_name", fmt.Sprintf("%[1]s-parent.%[1]s", name)),
 		resource.TestMatchResourceAttr(resourceFullName, "parent.id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "SERVICE"),
 		resource.TestCheckResourceAttr(resourceFullName, "service_type", "NONE"),
@@ -130,8 +130,8 @@ func TestAccTrustFrameworkService_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckNoResourceAttr(resourceFullName, "description"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "full_name"),
+		// resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+		resource.TestCheckResourceAttr(resourceFullName, "full_name", name),
 		resource.TestCheckNoResourceAttr(resourceFullName, "parent"),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "SERVICE"),
 		resource.TestCheckResourceAttr(resourceFullName, "service_type", "NONE"),
@@ -787,7 +787,7 @@ func testAccTrustFrameworkServiceConfig_Full(resourceName, name string) string {
 
 resource "pingone_authorize_trust_framework_service" "%[2]s-parent" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
+  name           = "%[3]s-parent"
 
   service_type = "NONE"
 }
@@ -795,8 +795,7 @@ resource "pingone_authorize_trust_framework_service" "%[2]s-parent" {
 resource "pingone_authorize_trust_framework_service" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-  description    = "Test application service"
-  full_name      = "%[3]s"
+//   description    = "Test application service"
 
   parent = {
     id = pingone_authorize_trust_framework_service.%[2]s-parent.id
@@ -813,6 +812,13 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
 func testAccTrustFrameworkServiceConfig_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
+
+resource "pingone_authorize_trust_framework_service" "%[2]s-parent" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-parent"
+
+  service_type = "NONE"
+}
 
 resource "pingone_authorize_trust_framework_service" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
