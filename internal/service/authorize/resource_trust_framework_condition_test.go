@@ -246,9 +246,9 @@ func TestAccTrustFrameworkCondition_ConditionType_And(t *testing.T) {
 			"condition.type":        "COMPARISON",
 			"condition.comparator":  "EQUALS",
 			"condition.left.type":   "CONSTANT",
-			"condition.left.value":  "test2",
+			"condition.left.value":  "test1",
 			"condition.right.type":  "CONSTANT",
-			"condition.right.value": "test3",
+			"condition.right.value": "test1",
 		}),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.left"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.reference"),
@@ -539,7 +539,7 @@ func TestAccTrustFrameworkCondition_ConditionType_Or(t *testing.T) {
 	)
 
 	typeCheck2 := resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(resourceFullName, "condition.type", "AND"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.type", "OR"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.comparator"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.condition"),
 		resource.TestCheckResourceAttr(resourceFullName, "condition.conditions.#", "2"),
@@ -551,9 +551,9 @@ func TestAccTrustFrameworkCondition_ConditionType_Or(t *testing.T) {
 			"condition.type":        "COMPARISON",
 			"condition.comparator":  "EQUALS",
 			"condition.left.type":   "CONSTANT",
-			"condition.left.value":  "test2",
+			"condition.left.value":  "test1",
 			"condition.right.type":  "CONSTANT",
-			"condition.right.value": "test3",
+			"condition.right.value": "test1",
 		}),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.left"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.reference"),
@@ -1049,7 +1049,8 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
         type = "EMPTY"
       },
       {
-        type = "COMPARISON"
+        type       = "COMPARISON"
+        comparator = "EQUALS"
 
         left = {
           type  = "CONSTANT"
