@@ -802,7 +802,7 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s-parent" {
 resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-//   description    = "Test application role"
+  //   description    = "Test application role"
 
   parent = {
     id = pingone_authorize_trust_framework_condition.%[2]s-parent.id
@@ -819,12 +819,12 @@ func testAccTrustFrameworkConditionConfig_Minimal(resourceName, name string) str
 	%[1]s
 
 resource "pingone_authorize_trust_framework_condition" "%[2]s-parent" {
-environment_id = data.pingone_environment.general_test.id
-name           = "%[3]s-parent"
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-parent"
 
-condition = {
-type = "EMPTY"
-}
+  condition = {
+    type = "EMPTY"
+  }
 }`, testAccTrustFrameworkConditionConfig_Condition_Empty(resourceName, name), resourceName, name)
 }
 
@@ -1025,7 +1025,7 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
       }
 
       right = {
-        type = "CONSTANT"
+        type  = "CONSTANT"
         value = "test4"
       }
     }

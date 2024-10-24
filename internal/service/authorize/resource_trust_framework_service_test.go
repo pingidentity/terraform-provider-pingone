@@ -795,7 +795,7 @@ resource "pingone_authorize_trust_framework_service" "%[2]s-parent" {
 resource "pingone_authorize_trust_framework_service" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-//   description    = "Test application service"
+  //   description    = "Test application service"
 
   parent = {
     id = pingone_authorize_trust_framework_service.%[2]s-parent.id
