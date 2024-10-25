@@ -45,13 +45,11 @@ func dataResolverObjectSchemaAttributes() (attributes map[string]schema.Attribut
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_USER)))
 
 	attributes = map[string]schema.Attribute{
-		"condition": schema.ListNestedAttribute{
+		"condition": schema.SingleNestedAttribute{
 			Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies configuration settings for an authorization condition to apply to the resolver.").Description,
 			Optional:    true,
 
-			NestedObject: schema.NestedAttributeObject{
-				Attributes: dataConditionObjectSchemaAttributes(),
-			},
+			Attributes: dataConditionObjectSchemaAttributes(),
 		},
 
 		"name": schema.StringAttribute{
@@ -59,13 +57,11 @@ func dataResolverObjectSchemaAttributes() (attributes map[string]schema.Attribut
 			Optional:    true,
 		},
 
-		"processor": schema.ListNestedAttribute{
+		"processor": schema.SingleNestedAttribute{
 			Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies configuration settings for a processor to apply to the resolver.").Description,
 			Optional:    true,
 
-			NestedObject: schema.NestedAttributeObject{
-				Attributes: dataProcessorObjectSchemaAttributes(),
-			},
+			Attributes: dataProcessorObjectSchemaAttributes(),
 		},
 
 		"type": schema.StringAttribute{
@@ -130,16 +126,18 @@ func dataResolverObjectSchemaAttributes() (attributes map[string]schema.Attribut
 			Optional:            true,
 
 			Validators: []validator.String{
-				stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT)),
-					path.MatchRelative().AtParent().AtName("type"),
-				),
-				stringvalidator.All(
+				stringvalidator.Any(
 					stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SYSTEM)),
+						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT)),
 						path.MatchRelative().AtParent().AtName("type"),
 					),
-					stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataAttributeResolversSystemResolverDTOValueEnumValues)...),
+					stringvalidator.All(
+						stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+							types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SYSTEM)),
+							path.MatchRelative().AtParent().AtName("type"),
+						),
+						stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataAttributeResolversSystemResolverDTOValueEnumValues)...),
+					),
 				),
 			},
 		},
@@ -817,7 +815,7 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 
 func editorDataResolverConvertEmptyValuesToTFNulls(attributeMap map[string]attr.Value) map[string]attr.Value {
 	nullMap := map[string]attr.Value{
-		"condition":  types.ObjectNull(editorDataResolverTFObjectTypes),
+		"condition":  types.ObjectNull(editorDataConditionTFObjectTypes),
 		"name":       types.StringNull(),
 		"processor":  types.ObjectNull(editorDataProcessorTFObjectTypes),
 		"type":       types.StringNull(),
