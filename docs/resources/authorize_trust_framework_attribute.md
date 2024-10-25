@@ -202,7 +202,7 @@ Optional:
 - `name` (String) A string that specifies a name to apply to the resolver.
 - `processor` (Attributes) An object that specifies configuration settings for a processor to apply to the resolver. (see [below for nested schema](#nestedatt--resolvers--processor))
 - `query` (Attributes) An object that specifies configuration settings for the query to use to resolve the data value.  This field is required when `type` is `USER`. (see [below for nested schema](#nestedatt--resolvers--query))
-- `value` (String) A string that specifies a constant text value to use as the resulting data value.  If `type` is `SYSTEM`, the options are `NULL`, `CURRENT_DATE_TIME`.  If `type` is `CONSTANT`, any value can be configured.  This field is required when `type` is `CONSTANT` or `SYSTEM`.
+- `value` (String, Sensitive) A string that specifies a constant text value to use as the resulting data value.  If `type` is `SYSTEM`, the options are `NULL`, `CURRENT_DATE_TIME`.  If `type` is `CONSTANT`, any value can be configured.  This field is required when `type` is `CONSTANT` or `SYSTEM`.
 - `value_ref` (Attributes) A string that specifies configuration settings for the authorization attribute (if `type` is `ATTRIBUTE`) or the authorization service (if `type` is `SERVICE`) to use as the data value.  This field is required when `type` is `ATTRIBUTE` or `SERVICE`. (see [below for nested schema](#nestedatt--resolvers--value_ref))
 - `value_type` (Attributes) An object that describes configuration settings for the output value type when using a constant value.  This field is required when `type` is `CONSTANT`. (see [below for nested schema](#nestedatt--resolvers--value_type))
 
