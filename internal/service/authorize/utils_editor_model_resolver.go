@@ -124,6 +124,7 @@ func dataResolverObjectSchemaAttributes() (attributes map[string]schema.Attribut
 			Description:         valueDescription.Description,
 			MarkdownDescription: valueDescription.MarkdownDescription,
 			Optional:            true,
+			Sensitive:           true,
 
 			Validators: []validator.String{
 				stringvalidator.Any(
