@@ -145,8 +145,8 @@ func (r *PolicyManagementStatementResource) Schema(ctx context.Context, req reso
 				Default: booldefault.StaticBool(false),
 			},
 
-			"attributes": schema.ListNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("An list of objects that specify configuration settings for the authorization attributes to attach to the statement.").Description,
+			"attributes": schema.SetNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("An set of objects that specify configuration settings for the authorization attributes to attach to the statement.").Description,
 				Required:    true,
 
 				NestedObject: schema.NestedAttributeObject{
@@ -302,8 +302,28 @@ func (r *PolicyManagementStatementResource) Update(ctx context.Context, req reso
 		return
 	}
 
+	// Run the API call
+	var getResponse *authorize.AuthorizeEditorDataStatementsReferenceableStatementDTO
+	resp.Diagnostics.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorStatementsApi.GetStatement(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+		},
+		"GetStatement-Update",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+		&getResponse,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	version := getResponse.GetVersion()
+
 	// Build the model for the API
-	policyManagementStatement, d := plan.expandUpdate(ctx)
+	policyManagementStatement, d := plan.expandUpdate(ctx, version)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -440,7 +460,7 @@ func (p *policyManagementStatementResourceModel) expandCreate(ctx context.Contex
 	return data, diags
 }
 
-func (p *policyManagementStatementResourceModel) expandUpdate(ctx context.Context) (*authorize.AuthorizeEditorDataStatementsReferenceableStatementDTO, diag.Diagnostics) {
+func (p *policyManagementStatementResourceModel) expandUpdate(ctx context.Context, versionId string) (*authorize.AuthorizeEditorDataStatementsReferenceableStatementDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	dataCreate, d := p.expandCreate(ctx)
@@ -463,8 +483,12 @@ func (p *policyManagementStatementResourceModel) expandUpdate(ctx context.Contex
 		return nil, diags
 	}
 
-	if !p.Version.IsNull() && !p.Version.IsUnknown() {
-		data.SetVersion(p.Version.ValueString())
+	if versionId != "" {
+		data.SetVersion(versionId)
+
+		if !p.Id.IsNull() && !p.Id.IsUnknown() {
+			data.SetId(p.Id.ValueString())
+		}
 	}
 
 	return data, diags

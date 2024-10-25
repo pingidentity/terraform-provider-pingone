@@ -117,7 +117,17 @@ func TestAccPolicyManagementStatement_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckResourceAttr(resourceFullName, "description", "Test application role"),
+		resource.TestCheckResourceAttr(resourceFullName, "description", "Test statement"),
+		resource.TestCheckResourceAttr(resourceFullName, "code", "my statement"),
+		resource.TestCheckResourceAttr(resourceFullName, "applies_to", "PERMIT"),
+		resource.TestCheckResourceAttr(resourceFullName, "applies_if", "FINAL_DECISION_MATCHES"),
+		resource.TestCheckResourceAttr(resourceFullName, "payload", "{\"foo\":\"bar\"}"),
+		resource.TestCheckResourceAttr(resourceFullName, "obligatory", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "attributes.#", "3"),
+		resource.TestMatchResourceAttr(resourceFullName, "attributes.0.id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "attributes.1.id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "attributes.2.id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "version", verify.P1ResourceIDRegexpFullString),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
@@ -125,6 +135,15 @@ func TestAccPolicyManagementStatement_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
 		resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+		resource.TestCheckResourceAttr(resourceFullName, "code", "my statement 1"),
+		resource.TestCheckResourceAttr(resourceFullName, "applies_to", "DENY"),
+		resource.TestCheckResourceAttr(resourceFullName, "applies_if", "PATH_MATCHES"),
+		resource.TestCheckResourceAttr(resourceFullName, "payload", "{\"foo\":\"bar\",\"foo2\":\"bar2\"}"),
+		resource.TestCheckResourceAttr(resourceFullName, "obligatory", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "attributes.#", "2"),
+		resource.TestMatchResourceAttr(resourceFullName, "attributes.0.id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "attributes.1.id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "version", verify.P1ResourceIDRegexpFullString),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -244,10 +263,80 @@ func testAccPolicyManagementStatementConfig_Full(resourceName, name string) stri
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-1"
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-2"
+
+  resolvers = [
+    {
+      type = "CONSTANT"
+      value_type = {
+        type = "STRING"
+      }
+      value = "test1"
+    }
+  ]
+
+  value_type = {
+    type = "JSON"
+  }
+}
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-3" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-3"
+
+  resolvers = [
+    {
+      type = "CONSTANT"
+      value_type = {
+        type = "STRING"
+      }
+      value = "test"
+    }
+  ]
+
+  value_type = {
+    type = "JSON"
+  }
+}
+
 resource "pingone_authorize_policy_management_statement" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-  description    = "Test application role"
+  description    = "Test statement"
+
+  code = "my statement"
+
+  applies_to = "PERMIT"
+  applies_if = "FINAL_DECISION_MATCHES"
+
+  payload = jsonencode({
+    "foo" : "bar"
+  })
+
+  obligatory = true
+
+  attributes = [
+    {
+      id = pingone_authorize_trust_framework_attribute.%[2]s-1.id
+    },
+    {
+      id = pingone_authorize_trust_framework_attribute.%[2]s-2.id
+    },
+    {
+      id = pingone_authorize_trust_framework_attribute.%[2]s-3.id
+    },
+  ]
 }`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
@@ -255,8 +344,74 @@ func testAccPolicyManagementStatementConfig_Minimal(resourceName, name string) s
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-1"
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-2"
+
+  resolvers = [
+    {
+      type = "CONSTANT"
+      value_type = {
+        type = "STRING"
+      }
+      value = "test1"
+    }
+  ]
+
+  value_type = {
+    type = "JSON"
+  }
+}
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-3" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-3"
+
+  resolvers = [
+    {
+      type = "CONSTANT"
+      value_type = {
+        type = "STRING"
+      }
+      value = "test"
+    }
+  ]
+
+  value_type = {
+    type = "JSON"
+  }
+}
+
 resource "pingone_authorize_policy_management_statement" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+
+  code = "my statement 1"
+
+  applies_to = "DENY"
+  applies_if = "PATH_MATCHES"
+
+  payload = jsonencode({
+    "foo" : "bar",
+    "foo2" : "bar2"
+  })
+
+  attributes = [
+    {
+      id = pingone_authorize_trust_framework_attribute.%[2]s-2.id
+    },
+    {
+      id = pingone_authorize_trust_framework_attribute.%[2]s-1.id
+    },
+  ]
 }`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
