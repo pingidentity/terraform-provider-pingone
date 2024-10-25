@@ -251,11 +251,11 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataAuthenticationDTOTypeEnumValues)
 
 	serviceSettingsAuthenticationNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An object that specifies configuration settings for the user name to use for basic authentication.",
+		"An object that specifies Trust Framework authorization attribute that contains the user name to use for basic authentication.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_BASIC)))
 
 	serviceSettingsAuthenticationPasswordDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An object that specifies configuration settings for the user password to use for basic authentication.",
+		"An object that specifies the Trust Framework authorization attribute that contains the user password to use for basic authentication.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_BASIC)))
 
 	serviceSettingsAuthenticationTokenEndpointDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -267,7 +267,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)))
 
 	serviceSettingsAuthenticationClientSecretDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An object that specifies configuration settings for the client secret to use for client credentials authentication.",
+		"An object that specifies the Trust Framework authorization attribute that contains the client secret to use for client credentials authentication.",
 	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)))
 
 	serviceSettingsAuthenticationScopeDescription := framework.SchemaAttributeDescriptionFromMarkdown(

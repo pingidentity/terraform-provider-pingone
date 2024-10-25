@@ -597,33 +597,33 @@ func TestAccTrustFrameworkService_Service_None(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Full
 			{
-				Config: testAccTrustFrameworkServiceConfig_Service_Connector_Full1(resourceName, name),
+				Config: testAccTrustFrameworkServiceConfig_Service_None_Full(resourceName, name),
 				Check:  fullCheck1,
 			},
 			{
-				Config:  testAccTrustFrameworkServiceConfig_Service_Connector_Full1(resourceName, name),
+				Config:  testAccTrustFrameworkServiceConfig_Service_None_Full(resourceName, name),
 				Destroy: true,
 			},
 			// Minimal
 			{
-				Config: testAccTrustFrameworkServiceConfig_Service_Connector_Minimal(resourceName, name),
+				Config: testAccTrustFrameworkServiceConfig_Service_None_Minimal(resourceName, name),
 				Check:  minimalCheck,
 			},
 			{
-				Config:  testAccTrustFrameworkServiceConfig_Service_Connector_Minimal(resourceName, name),
+				Config:  testAccTrustFrameworkServiceConfig_Service_None_Minimal(resourceName, name),
 				Destroy: true,
 			},
 			// Change
 			{
-				Config: testAccTrustFrameworkServiceConfig_Service_Connector_Full1(resourceName, name),
+				Config: testAccTrustFrameworkServiceConfig_Service_None_Full(resourceName, name),
 				Check:  fullCheck1,
 			},
 			{
-				Config: testAccTrustFrameworkServiceConfig_Service_Connector_Minimal(resourceName, name),
+				Config: testAccTrustFrameworkServiceConfig_Service_None_Minimal(resourceName, name),
 				Check:  minimalCheck,
 			},
 			{
-				Config: testAccTrustFrameworkServiceConfig_Service_Connector_Full1(resourceName, name),
+				Config: testAccTrustFrameworkServiceConfig_Service_None_Full(resourceName, name),
 				Check:  fullCheck1,
 			},
 			// Test importing the resource
@@ -834,7 +834,74 @@ func testAccTrustFrameworkServiceConfig_Service_HTTP_Full1(resourceName, name st
 
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-header" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
+  name           = "%[3]s-header"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-basic-auth-username" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-basic-auth-username"
+
+  resolvers = [
+    {
+      type = "CONSTANT"
+      value_type = {
+        type = "STRING"
+      }
+      value = "username"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-basic-auth-password" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-basic-auth-password"
+
+  resolvers = [
+    {
+      type = "CONSTANT"
+      value_type = {
+        type = "STRING"
+      }
+      value = "password"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-client-secret" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-client-secret"
+
+  resolvers = [
+    {
+      type = "CONSTANT"
+      value_type = {
+        type = "STRING"
+      }
+      value = "clientsecret"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
 }
 
 resource "pingone_authorize_trust_framework_service" "%[2]s" {
@@ -887,11 +954,11 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
       type = "BASIC"
 
       name = {
-        id = "??"
+        id = pingone_authorize_trust_framework_attribute.%[2]s-basic-auth-username.id
       }
 
       password = {
-        id = "??"
+        id = pingone_authorize_trust_framework_attribute.%[2]s-basic-auth-password.id
       }
     }
 
@@ -948,7 +1015,74 @@ func testAccTrustFrameworkServiceConfig_Service_HTTP_Full2(resourceName, name st
 
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-header" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
+  name           = "%[3]s-header"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-basic-auth-username" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-basic-auth-username"
+
+  resolvers = [
+    {
+      type = "CONSTANT"
+      value_type = {
+        type = "STRING"
+      }
+      value = "username"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-basic-auth-password" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-basic-auth-password"
+
+  resolvers = [
+    {
+      type = "CONSTANT"
+      value_type = {
+        type = "STRING"
+      }
+      value = "password"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-client-secret" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-client-secret"
+
+  resolvers = [
+    {
+      type = "CONSTANT"
+      value_type = {
+        type = "STRING"
+      }
+      value = "clientsecret"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
 }
 
 resource "pingone_authorize_trust_framework_service" "%[2]s" {
@@ -978,7 +1112,7 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
       client_id = "test_client_id"
 
       client_secret = {
-        id = "??"
+        id = pingone_authorize_trust_framework_attribute.%[2]s-client-secret.id
       }
 
       scope          = "scope1 scope2 scope3"
@@ -1027,6 +1161,78 @@ func testAccTrustFrameworkServiceConfig_Service_HTTP_Minimal(resourceName, name 
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-header" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-header"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-basic-auth-username" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-basic-auth-username"
+
+  resolvers = [
+    {
+      type = "CONSTANT"
+      value_type = {
+        type = "STRING"
+      }
+      value = "username"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-basic-auth-password" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-basic-auth-password"
+
+  resolvers = [
+    {
+      type = "CONSTANT"
+      value_type = {
+        type = "STRING"
+      }
+      value = "password"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-client-secret" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-client-secret"
+
+  resolvers = [
+    {
+      type = "CONSTANT"
+      value_type = {
+        type = "STRING"
+      }
+      value = "clientsecret"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
 resource "pingone_authorize_trust_framework_service" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
@@ -1056,9 +1262,19 @@ func testAccTrustFrameworkServiceConfig_Service_Connector_Full1(resourceName, na
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_authorize_trust_framework_attribute" "%[2]s-input_mapping" {
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-header" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "JSON"
+  }
 }
 
 resource "pingone_authorize_trust_framework_service" "%[2]s" {
@@ -1151,6 +1367,16 @@ func testAccTrustFrameworkServiceConfig_Service_Connector_Full2(resourceName, na
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-header" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "JSON"
+  }
 }
 
 resource "pingone_authorize_trust_framework_service" "%[2]s" {

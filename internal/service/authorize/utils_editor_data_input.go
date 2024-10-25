@@ -69,6 +69,7 @@ func dataInputObjectSchemaAttributes() (attributes map[string]schema.Attribute) 
 			Description:         valueDescription.Description,
 			MarkdownDescription: valueDescription.MarkdownDescription,
 			Optional:            true,
+			Sensitive:           true,
 
 			Validators: []validator.String{
 				stringvalidatorinternal.IsRequiredIfMatchesPathValue(
@@ -105,16 +106,16 @@ func (p *editorDataInputResourceModel) expand(ctx context.Context) (*authorize.A
 
 	data := authorize.AuthorizeEditorDataInputDTO{}
 
-	switch authorize.EnumAuthorizeEditorDataInputMappingDTOType(p.Type.ValueString()) {
-	case authorize.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_ATTRIBUTE:
+	switch authorize.EnumAuthorizeEditorDataInputDTOType(p.Type.ValueString()) {
+	case authorize.ENUMAUTHORIZEEDITORDATAINPUTDTOTYPE_ATTRIBUTE:
 		data.AuthorizeEditorDataInputsAttributeInputDTO, d = p.expandAttributeInput(ctx)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_INPUT:
+	case authorize.ENUMAUTHORIZEEDITORDATAINPUTDTOTYPE_CONSTANT:
 		data.AuthorizeEditorDataInputsConstantInputDTO = p.expandConstantInput()
 	default:
 		diags.AddError(
-			"Invalid service settings header value input mapping type",
-			fmt.Sprintf("The service settings header value input mapping type '%s' is not supported.  Please raise an issue with the provider maintainers.", p.Type.ValueString()),
+			"Invalid data input type",
+			fmt.Sprintf("The data input type '%s' is not supported.  Please raise an issue with the provider maintainers.", p.Type.ValueString()),
 		)
 	}
 
