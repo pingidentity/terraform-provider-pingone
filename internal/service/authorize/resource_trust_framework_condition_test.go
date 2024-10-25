@@ -319,7 +319,7 @@ func TestAccTrustFrameworkCondition_ConditionType_Comparison(t *testing.T) {
 	)
 
 	typeCheck2 := resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(resourceFullName, "condition.type", "AND"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.type", "COMPARISON"),
 		resource.TestCheckResourceAttr(resourceFullName, "condition.comparator", "EQUALS"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.condition"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.conditions"),
@@ -327,7 +327,7 @@ func TestAccTrustFrameworkCondition_ConditionType_Comparison(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "condition.left.value", "test3"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.reference"),
 		resource.TestCheckResourceAttr(resourceFullName, "condition.right.type", "ATTRIBUTE"),
-		resource.TestMatchResourceAttr(resourceFullName, "condition.right.value", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "condition.right.id", verify.P1ResourceIDRegexpFullString),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -922,6 +922,25 @@ func testAccTrustFrameworkConditionConfig_Condition_Comparison1(resourceName, na
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  resolvers = [
+    {
+      type = "CONSTANT"
+      value_type = {
+        type = "STRING"
+      }
+      value = "test"
+    }
+  ]
+
+  value_type = {
+    type = "JSON"
+  }
+}
+
 resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
@@ -949,6 +968,21 @@ func testAccTrustFrameworkConditionConfig_Condition_Comparison2(resourceName, na
 
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  resolvers = [
+    {
+      type = "CONSTANT"
+      value_type = {
+        type = "STRING"
+      }
+      value = "test"
+    }
+  ]
+
+  value_type = {
+    type = "JSON"
+  }
 }
 
 resource "pingone_authorize_trust_framework_condition" "%[2]s" {
