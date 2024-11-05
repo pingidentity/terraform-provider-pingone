@@ -117,7 +117,7 @@ func TestAccTrustFrameworkAttribute_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		// resource.TestCheckResourceAttr(resourceFullName, "description", "Test attribute"),
+		resource.TestCheckResourceAttr(resourceFullName, "description", "Test attribute full"),
 		resource.TestCheckResourceAttr(resourceFullName, "full_name", fmt.Sprintf("%[1]s-parent.%[1]s", name)),
 		resource.TestMatchResourceAttr(resourceFullName, "parent.id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "default_value", "test"),
@@ -134,7 +134,7 @@ func TestAccTrustFrameworkAttribute_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		// resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+		resource.TestCheckResourceAttr(resourceFullName, "description", "Test attribute"),
 		resource.TestCheckResourceAttr(resourceFullName, "full_name", name),
 		resource.TestCheckNoResourceAttr(resourceFullName, "parent"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "default_value"),
@@ -216,7 +216,7 @@ func TestAccTrustFrameworkAttribute_ComplexAttributes(t *testing.T) {
 	name := resourceName
 
 	attribute1Check := resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(resourceFullName, "default_value", "{\"foo\": \"bar\"}"),
+		resource.TestCheckResourceAttr(resourceFullName, "default_value", "{\"foo\":\"bar\"}"),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test chain processor", name)),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.type", "CHAIN"),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.0.name", fmt.Sprintf("%s Test chain processor 1", name)),
@@ -230,7 +230,7 @@ func TestAccTrustFrameworkAttribute_ComplexAttributes(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.2.name", fmt.Sprintf("%s Test chain processor 3", name)),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.2.type", "JSON_PATH"),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.2.expression", "$.data.item3"),
-		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.2.value_type.type", "BOOLEAN"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.2.value_type.type", "JSON"),
 		resource.TestCheckResourceAttr(resourceFullName, "resolvers.#", "3"),
 		resource.TestCheckResourceAttr(resourceFullName, "resolvers.0.name", fmt.Sprintf("%s Test Attribute Resolver", name)),
 		resource.TestCheckResourceAttr(resourceFullName, "resolvers.1.name", fmt.Sprintf("%s Test Constant Resolver", name)),
@@ -1115,6 +1115,7 @@ func testAccTrustFrameworkAttributeConfig_NewEnv(environmentName, licenseID, res
 resource "pingone_authorize_trust_framework_attribute" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[3]s"
+    description    = "Test attribute"
 
   value_type = {
     type = "STRING"
@@ -1129,6 +1130,7 @@ func testAccTrustFrameworkAttributeConfig_Full(resourceName, name string) string
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-parent" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-parent"
+  description    = "Test attribute"
 
   value_type = {
     type = "STRING"
@@ -1138,7 +1140,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-parent" {
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-  //   description    = "Test attribute"
+  description    = "Test attribute full"
 
   parent = {
     id = pingone_authorize_trust_framework_attribute.%[2]s-parent.id
@@ -1179,6 +1181,7 @@ func testAccTrustFrameworkAttributeConfig_Minimal(resourceName, name string) str
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-parent" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-parent"
+  description    = "Test attribute"
 
   value_type = {
     type = "STRING"
@@ -1188,6 +1191,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-parent" {
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test attribute"
 
   value_type = {
     type = "STRING"
@@ -1202,6 +1206,7 @@ func testAccTrustFrameworkAttributeConfig_ComplexAttribute1(resourceName, name s
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-resolver" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-resolver"
+  description    = "Test attribute"
 
   value_type = {
     type = "STRING"
@@ -1211,6 +1216,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-resolver" {
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test attribute"
 
   default_value = jsonencode({ "foo" : "bar" })
 
@@ -1411,9 +1417,20 @@ func testAccTrustFrameworkAttributeConfig_ComplexAttribute2(resourceName, name s
 	return fmt.Sprintf(`
 %[1]s
 
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-resolver" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-resolver"
+  description    = "Test attribute"
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test attribute"
 
   processor = {
     name = "%[3]s Test processor"
@@ -1546,6 +1563,9 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
 
       type  = "CONSTANT"
       value = "test"
+	  value_type = {
+	  		type = "STRING"
+		}
 
       condition = {
         type       = "COMPARISON"
@@ -1587,6 +1607,7 @@ func testAccTrustFrameworkAttributeConfig_Resolver_Attribute_Full(resourceName, 
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-resolver" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-resolver"
+  description    = "Test attribute"
 
   value_type = {
     type = "STRING"
@@ -1596,6 +1617,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-resolver" {
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test attribute"
 
   resolvers = [
     {
@@ -1673,6 +1695,7 @@ func testAccTrustFrameworkAttributeConfig_Resolver_Attribute_Min(resourceName, n
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-resolver" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-resolver"
+  description    = "Test attribute"
 
   value_type = {
     type = "STRING"
@@ -1682,6 +1705,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-resolver" {
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test attribute"
 
   resolvers = [
     {
@@ -1705,6 +1729,7 @@ func testAccTrustFrameworkAttributeConfig_Resolver_Constant_Full(resourceName, n
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test attribute"
 
   resolvers = [
     {
@@ -1783,6 +1808,7 @@ func testAccTrustFrameworkAttributeConfig_Resolver_Constant_Min(resourceName, na
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test attribute"
 
   resolvers = [
     {
@@ -1807,6 +1833,7 @@ func testAccTrustFrameworkAttributeConfig_Resolver_CurrentRepetitionValue_Full(r
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test attribute"
 
   resolvers = [
     {
@@ -1881,6 +1908,7 @@ func testAccTrustFrameworkAttributeConfig_Resolver_CurrentRepetitionValue_Min(re
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test attribute"
 
   resolvers = [
     {
@@ -1901,6 +1929,7 @@ func testAccTrustFrameworkAttributeConfig_Resolver_CurrentUserId_Full(resourceNa
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test attribute"
 
   resolvers = [
     {
@@ -1975,6 +2004,7 @@ func testAccTrustFrameworkAttributeConfig_Resolver_CurrentUserId_Min(resourceNam
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test attribute"
 
   resolvers = [
     {
@@ -1995,6 +2025,7 @@ func testAccTrustFrameworkAttributeConfig_Resolver_Request_Full(resourceName, na
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test attribute"
 
   resolvers = [
     {
@@ -2069,6 +2100,7 @@ func testAccTrustFrameworkAttributeConfig_Resolver_Request_Min(resourceName, nam
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test attribute"
 
   resolvers = [
     {
@@ -2092,6 +2124,7 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test attribute"
 
   resolvers = [
     {
@@ -2172,6 +2205,7 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test attribute"
 
   resolvers = [
     {
@@ -2195,6 +2229,7 @@ func testAccTrustFrameworkAttributeConfig_Resolver_System_Full(resourceName, nam
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test attribute"
 
   resolvers = [
     {
@@ -2270,6 +2305,7 @@ func testAccTrustFrameworkAttributeConfig_Resolver_System_Min(resourceName, name
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test attribute"
 
   resolvers = [
     {
@@ -2305,6 +2341,7 @@ resource "pingone_user" "%[2]s" {
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test attribute"
 
   resolvers = [
     {
@@ -2397,6 +2434,7 @@ resource "pingone_user" "%[2]s" {
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test attribute"
 
   resolvers = [
     {
