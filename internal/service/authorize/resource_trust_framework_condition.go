@@ -25,13 +25,13 @@ type TrustFrameworkConditionResource serviceClientType
 type trustFrameworkConditionResourceModel struct {
 	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
 	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	// Description   types.String                 `tfsdk:"description"`
-	FullName  types.String `tfsdk:"full_name"`
-	Name      types.String `tfsdk:"name"`
-	Type      types.String `tfsdk:"type"`
-	Parent    types.Object `tfsdk:"parent"`
-	Condition types.Object `tfsdk:"condition"`
-	Version   types.String `tfsdk:"version"`
+	Description   types.String                 `tfsdk:"description"`
+	FullName      types.String                 `tfsdk:"full_name"`
+	Name          types.String                 `tfsdk:"name"`
+	Type          types.String                 `tfsdk:"type"`
+	Parent        types.Object                 `tfsdk:"parent"`
+	Condition     types.Object                 `tfsdk:"condition"`
+	Version       types.String                 `tfsdk:"version"`
 }
 
 // Framework interfaces
@@ -91,10 +91,14 @@ func (r *TrustFrameworkConditionResource) Schema(ctx context.Context, req resour
 				Computed:    true,
 			},
 
-			// "description": schema.StringAttribute{
-			// 	Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a description to apply to the authorization condition.").Description,
-			// 	Optional:    true,
-			// },
+			"description": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a description to apply to the authorization condition.").Description,
+				Required:    true,
+
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+				},
+			},
 
 			"parent": parentObjectSchema("condition"),
 
@@ -391,9 +395,9 @@ func (p *trustFrameworkConditionResourceModel) expand(ctx context.Context, updat
 		*condition,
 	)
 
-	// if !p.Description.IsNull() && !p.Description.IsUnknown() {
-	// 	data.SetDescription(p.Description.ValueString())
-	// }
+	if !p.Description.IsNull() && !p.Description.IsUnknown() {
+		data.SetDescription(p.Description.ValueString())
+	}
 
 	// if !p.FullName.IsNull() && !p.FullName.IsUnknown() {
 	// 	data.SetFullName(p.FullName.ValueString())
@@ -434,7 +438,7 @@ func (p *trustFrameworkConditionResourceModel) toState(ctx context.Context, apiO
 	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
 	//p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
-	// p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
+	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.FullName = framework.StringOkToTF(apiObject.GetFullNameOk())
 	p.Type = framework.EnumOkToTF(apiObject.GetTypeOk())
 
