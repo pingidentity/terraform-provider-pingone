@@ -94,10 +94,6 @@ func (r *TrustFrameworkProcessorResource) Schema(ctx context.Context, req resour
 			"description": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a description to apply to the authorization processor.").Description,
 				Required:    true,
-
-				Validators: []validator.String{
-					stringvalidator.LengthAtLeast(attrMinLength),
-				},
 			},
 
 			"parent": parentObjectSchema("processor"),

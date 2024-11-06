@@ -95,9 +95,6 @@ func (r *TrustFrameworkAttributeResource) Schema(ctx context.Context, req resour
 			"description": schema.StringAttribute{ // DONE
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a description to apply to the authorization attribute resource.").Description,
 				Required:    true,
-				Validators: []validator.String{
-					stringvalidator.LengthAtLeast(attrMinLength),
-				},
 			},
 
 			"full_name": schema.StringAttribute{ // DONE
