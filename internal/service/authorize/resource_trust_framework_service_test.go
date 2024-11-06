@@ -117,7 +117,7 @@ func TestAccTrustFrameworkService_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		// resource.TestCheckResourceAttr(resourceFullName, "description", "Test application service"),
+		resource.TestCheckResourceAttr(resourceFullName, "description", "Test application service full"),
 		resource.TestCheckResourceAttr(resourceFullName, "full_name", fmt.Sprintf("%[1]s-parent.%[1]s", name)),
 		resource.TestMatchResourceAttr(resourceFullName, "parent.id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "SERVICE"),
@@ -130,7 +130,7 @@ func TestAccTrustFrameworkService_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		// resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+		resource.TestCheckResourceAttr(resourceFullName, "description", "Test application service"),
 		resource.TestCheckResourceAttr(resourceFullName, "full_name", name),
 		resource.TestCheckNoResourceAttr(resourceFullName, "parent"),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "SERVICE"),
@@ -225,7 +225,7 @@ func TestAccTrustFrameworkService_Service_HTTP(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.capability"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.channel"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.code"),
-		resource.TestCheckResourceAttr(resourceFullName, "service_settings.content-type", "application/json"),
+		resource.TestCheckResourceAttr(resourceFullName, "service_settings.content_type", "application/json"),
 		resource.TestCheckResourceAttr(resourceFullName, "service_settings.headers.#", "3"),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.headers.*", map[string]string{
 			"key":         "my_custom_header",
@@ -270,7 +270,7 @@ func TestAccTrustFrameworkService_Service_HTTP(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.capability"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.channel"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.code"),
-		resource.TestCheckResourceAttr(resourceFullName, "service_settings.content-type", "application/text"),
+		resource.TestCheckResourceAttr(resourceFullName, "service_settings.content_type", "application/text"),
 		resource.TestCheckResourceAttr(resourceFullName, "service_settings.headers.#", "2"),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.headers.*", map[string]string{
 			"key":         "my_custom_header",
@@ -309,13 +309,13 @@ func TestAccTrustFrameworkService_Service_HTTP(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.capability"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.channel"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.code"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.content-type"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.content_type"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.headers"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.input_mappings"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.maximum_concurrent_requests"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.maximum_requests_per_second"),
+		resource.TestCheckResourceAttr(resourceFullName, "service_settings.maximum_concurrent_requests", "6"),
+		resource.TestCheckResourceAttr(resourceFullName, "service_settings.maximum_requests_per_second", "10"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.schema_version"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.timeout_milliseconds"),
+		resource.TestCheckResourceAttr(resourceFullName, "service_settings.timeout_milliseconds", "2000"),
 		resource.TestCheckResourceAttr(resourceFullName, "service_settings.tls_settings.tls_validation_type", "DEFAULT"),
 		resource.TestCheckResourceAttr(resourceFullName, "service_settings.url", "https://pingidentity.com"),
 		resource.TestCheckResourceAttr(resourceFullName, "service_settings.verb", "GET"),
@@ -402,26 +402,51 @@ func TestAccTrustFrameworkService_Service_Connector(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.#", "3"), // processors tested in processors_test
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.authentication"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.body"),
-		resource.TestCheckResourceAttr(resourceFullName, "service_settings.capability", "CAPABILITY1"),
+		resource.TestCheckResourceAttr(resourceFullName, "service_settings.capability", "createRiskEvaluation"),
 		resource.TestCheckResourceAttr(resourceFullName, "service_settings.channel", "AUTHORIZE"),
 		resource.TestCheckResourceAttr(resourceFullName, "service_settings.code", "P1_RISK"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.content_type"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.headers"),
-		resource.TestCheckResourceAttr(resourceFullName, "service_settings.input_mappings.#", "3"),
-		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
-			"property": "??",
-			"type":     "INPUT",
-			"value":    "input1",
-		}),
+		resource.TestCheckResourceAttr(resourceFullName, "service_settings.input_mappings.#", "8"),
 		resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]*regexp.Regexp{
-			"property":  regexp.MustCompile(`^??$`),
-			"type":      regexp.MustCompile(`^ATTRIBUTE$`),
-			"value_ref": verify.P1ResourceIDRegexpFullString,
+			"property":     regexp.MustCompile(`^userId$`),
+			"type":         regexp.MustCompile(`^ATTRIBUTE$`),
+			"value_ref.id": verify.P1ResourceIDRegexpFullString,
 		}),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
-			"property": "??",
+			"property": "userType",
 			"type":     "INPUT",
-			"value":    "input2",
+			"value":    "test2",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
+			"property": "ipAddress",
+			"type":     "INPUT",
+			"value":    "test3",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
+			"property": "applicationId",
+			"type":     "INPUT",
+			"value":    "test4",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
+			"property": "applicationName",
+			"type":     "INPUT",
+			"value":    "test5",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
+			"property": "sessionId",
+			"type":     "INPUT",
+			"value":    "test6",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
+			"property": "browserData",
+			"type":     "INPUT",
+			"value":    "test7",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
+			"property": "riskPolicySetId",
+			"type":     "INPUT",
+			"value":    "test8",
 		}),
 		resource.TestCheckResourceAttr(resourceFullName, "service_settings.maximum_concurrent_requests", "6"),
 		resource.TestCheckResourceAttr(resourceFullName, "service_settings.maximum_requests_per_second", "10"),
@@ -440,21 +465,21 @@ func TestAccTrustFrameworkService_Service_Connector(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "processor.type", "JSON_PATH"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.authentication"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.body"),
-		resource.TestCheckResourceAttr(resourceFullName, "service_settings.capability", "CAPABILITY2"),
+		resource.TestCheckResourceAttr(resourceFullName, "service_settings.capability", "updateRiskEvaluation"),
 		resource.TestCheckResourceAttr(resourceFullName, "service_settings.channel", "AUTHORIZE"),
 		resource.TestCheckResourceAttr(resourceFullName, "service_settings.code", "P1_RISK"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.content_type"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.headers"),
 		resource.TestCheckResourceAttr(resourceFullName, "service_settings.input_mappings.#", "2"),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
-			"property": "??",
+			"property": "completionStatus",
 			"type":     "INPUT",
-			"value":    "input1",
+			"value":    "completed",
 		}),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
-			"property": "??",
+			"property": "riskId",
 			"type":     "INPUT",
-			"value":    "input2",
+			"value":    "test",
 		}),
 		resource.TestCheckResourceAttr(resourceFullName, "service_settings.maximum_concurrent_requests", "4"),
 		resource.TestCheckResourceAttr(resourceFullName, "service_settings.maximum_requests_per_second", "11"),
@@ -472,26 +497,26 @@ func TestAccTrustFrameworkService_Service_Connector(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.authentication"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.body"),
-		resource.TestCheckResourceAttr(resourceFullName, "service_settings.capability", "CAPABILITY2"),
+		resource.TestCheckResourceAttr(resourceFullName, "service_settings.capability", "createRiskEvaluation"),
 		resource.TestCheckResourceAttr(resourceFullName, "service_settings.channel", "AUTHORIZE"),
 		resource.TestCheckResourceAttr(resourceFullName, "service_settings.code", "P1_RISK"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.content_type"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.headers"),
-		resource.TestCheckResourceAttr(resourceFullName, "service_settings.input_mappings.#", "2"),
-		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
-			"property": "??",
-			"type":     "INPUT",
-			"value":    "input1",
-		}),
-		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
-			"property": "??",
-			"type":     "INPUT",
-			"value":    "input2",
-		}),
-		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.maximum_concurrent_requests"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.maximum_requests_per_second"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.schema_version"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.timeout_milliseconds"),
+		resource.TestCheckResourceAttr(resourceFullName, "service_settings.input_mappings.#", "0"),
+		// resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
+		// 	"property": "??",
+		// 	"type":     "INPUT",
+		// 	"value":    "input1",
+		// }),
+		// resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
+		// 	"property": "??",
+		// 	"type":     "INPUT",
+		// 	"value":    "input2",
+		// }),
+		resource.TestCheckResourceAttr(resourceFullName, "service_settings.maximum_concurrent_requests", "6"),
+		resource.TestCheckResourceAttr(resourceFullName, "service_settings.maximum_requests_per_second", "10"),
+		resource.TestCheckResourceAttr(resourceFullName, "service_settings.schema_version", "1"),
+		resource.TestCheckResourceAttr(resourceFullName, "service_settings.timeout_milliseconds", "2000"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.tls_settings"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.url"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.verb"),
@@ -776,6 +801,7 @@ func testAccTrustFrameworkServiceConfig_NewEnv(environmentName, licenseID, resou
 resource "pingone_authorize_trust_framework_service" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[3]s"
+  description    = "Test application service"
 
   service_type = "NONE"
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
@@ -788,6 +814,7 @@ func testAccTrustFrameworkServiceConfig_Full(resourceName, name string) string {
 resource "pingone_authorize_trust_framework_service" "%[2]s-parent" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-parent"
+  description    = "Test application service"
 
   service_type = "NONE"
 }
@@ -795,7 +822,7 @@ resource "pingone_authorize_trust_framework_service" "%[2]s-parent" {
 resource "pingone_authorize_trust_framework_service" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-  //   description    = "Test application service"
+    description    = "Test application service full"
 
   parent = {
     id = pingone_authorize_trust_framework_service.%[2]s-parent.id
@@ -816,6 +843,7 @@ func testAccTrustFrameworkServiceConfig_Minimal(resourceName, name string) strin
 resource "pingone_authorize_trust_framework_service" "%[2]s-parent" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-parent"
+  description    = "Test application service"
 
   service_type = "NONE"
 }
@@ -823,6 +851,7 @@ resource "pingone_authorize_trust_framework_service" "%[2]s-parent" {
 resource "pingone_authorize_trust_framework_service" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test application service"
 
   service_type = "NONE"
 }`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
@@ -835,6 +864,7 @@ func testAccTrustFrameworkServiceConfig_Service_HTTP_Full1(resourceName, name st
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-header" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-header"
+  description    = "Test application service"
 
   resolvers = [
     {
@@ -850,6 +880,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-header" {
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-basic-auth-username" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-basic-auth-username"
+  description    = "Test application service"
 
   resolvers = [
     {
@@ -869,6 +900,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-basic-auth-usernam
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-basic-auth-password" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-basic-auth-password"
+  description    = "Test application service"
 
   resolvers = [
     {
@@ -888,6 +920,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-basic-auth-passwor
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-client-secret" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-client-secret"
+  description    = "Test application service"
 
   resolvers = [
     {
@@ -907,6 +940,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-client-secret" {
 resource "pingone_authorize_trust_framework_service" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test application service"
 
   service_type = "HTTP"
 
@@ -934,7 +968,7 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
 
         expression = "$.data.item3"
         value_type = {
-          type = "BOOLEAN"
+          type = "JSON"
         }
       },
       {
@@ -1016,6 +1050,7 @@ func testAccTrustFrameworkServiceConfig_Service_HTTP_Full2(resourceName, name st
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-header" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-header"
+  description    = "Test application service"
 
   resolvers = [
     {
@@ -1031,6 +1066,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-header" {
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-basic-auth-username" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-basic-auth-username"
+  description    = "Test application service"
 
   resolvers = [
     {
@@ -1050,6 +1086,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-basic-auth-usernam
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-basic-auth-password" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-basic-auth-password"
+  description    = "Test application service"
 
   resolvers = [
     {
@@ -1069,6 +1106,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-basic-auth-passwor
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-client-secret" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-client-secret"
+  description    = "Test application service"
 
   resolvers = [
     {
@@ -1088,6 +1126,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-client-secret" {
 resource "pingone_authorize_trust_framework_service" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test application service"
 
   service_type = "HTTP"
 
@@ -1164,6 +1203,7 @@ func testAccTrustFrameworkServiceConfig_Service_HTTP_Minimal(resourceName, name 
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-header" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-header"
+  description    = "Test application service"
 
   resolvers = [
     {
@@ -1179,6 +1219,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-header" {
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-basic-auth-username" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-basic-auth-username"
+  description    = "Test application service"
 
   resolvers = [
     {
@@ -1198,6 +1239,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-basic-auth-usernam
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-basic-auth-password" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-basic-auth-password"
+  description    = "Test application service"
 
   resolvers = [
     {
@@ -1217,6 +1259,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-basic-auth-passwor
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-client-secret" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-client-secret"
+  description    = "Test application service"
 
   resolvers = [
     {
@@ -1236,6 +1279,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-client-secret" {
 resource "pingone_authorize_trust_framework_service" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test application service"
 
   service_type = "HTTP"
 
@@ -1243,6 +1287,10 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
     authentication = {
       type = "NONE"
     }
+
+    maximum_concurrent_requests = 6
+    maximum_requests_per_second = 10
+    timeout_milliseconds        = 2000
 
     tls_settings = {
       tls_validation_type = "DEFAULT"
@@ -1262,9 +1310,10 @@ func testAccTrustFrameworkServiceConfig_Service_Connector_Full1(resourceName, na
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_authorize_trust_framework_attribute" "%[2]s-header" {
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-user" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test application service"
 
   resolvers = [
     {
@@ -1280,6 +1329,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-header" {
 resource "pingone_authorize_trust_framework_service" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test application service"
 
   service_type = "CONNECTOR"
 
@@ -1307,7 +1357,7 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
 
         expression = "$.data.item3"
         value_type = {
-          type = "BOOLEAN"
+          type = "JSON"
         }
       },
       {
@@ -1323,29 +1373,53 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
   }
 
   service_settings = {
-    capability = "CAPABILITY1"
+    capability = "createRiskEvaluation"
     channel    = "AUTHORIZE"
     code       = "P1_RISK"
 
     input_mappings = [
       {
-        property = "??"
-        type     = "INPUT"
-
-        value = "input1"
-      },
-      {
-        property = "??"
-        type     = "ATTRIBUTE"
-
-        value_ref = pingone_authorize_trust_framework_attribute.%[2]s-input_mapping.id
-      },
-      {
-        property = "??"
-        type     = "INPUT"
-
-        value = "input2"
-      },
+                            type =  "ATTRIBUTE"
+                            property =  "userId"
+                            value_ref = {
+							id = pingone_authorize_trust_framework_attribute.%[2]s-user.id
+}
+                        },
+                        {
+                            type =  "INPUT"
+                            property =  "userType"
+                            value =  "test2"
+                        },
+                        {
+                            type =  "INPUT"
+                            property =  "ipAddress"
+                            value =  "test3"
+                        },
+                        {
+                            type =  "INPUT"
+                            property =  "applicationId"
+                            value =  "test4"
+                        },
+                        {
+                            type =  "INPUT"
+                            property =  "applicationName"
+                            value =  "test5"
+                        },
+                        {
+                            type =  "INPUT"
+                            property =  "sessionId"
+                            value =  "test6"
+                        },
+                        {
+                            type =  "INPUT"
+                            property =  "browserData"
+                            value =  "test7"
+                        },
+                        {
+                            type =  "INPUT"
+                            property =  "riskPolicySetId"
+                            value =  "test8"
+                        }
     ]
 
     maximum_concurrent_requests = 6
@@ -1364,9 +1438,10 @@ func testAccTrustFrameworkServiceConfig_Service_Connector_Full2(resourceName, na
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_authorize_trust_framework_attribute" "%[2]s-header" {
+		resource "pingone_authorize_trust_framework_attribute" "%[2]s-user" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test application service"
 
   resolvers = [
     {
@@ -1382,6 +1457,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-header" {
 resource "pingone_authorize_trust_framework_service" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test application service"
 
   service_type = "CONNECTOR"
 
@@ -1400,22 +1476,22 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
   }
 
   service_settings = {
-    capability = "CAPABILITY2"
+    capability = "updateRiskEvaluation"
     channel    = "AUTHORIZE"
     code       = "P1_RISK"
 
     input_mappings = [
       {
-        property = "??"
+        property = "completionStatus"
         type     = "INPUT"
 
-        value = "input1"
+        value = "completed"
       },
       {
-        property = "??"
+        property = "riskId"
         type     = "INPUT"
 
-        value = "input2"
+        value = "test"
       },
     ]
 
@@ -1435,31 +1511,40 @@ func testAccTrustFrameworkServiceConfig_Service_Connector_Minimal(resourceName, 
 	return fmt.Sprintf(`
 		%[1]s
 
+		resource "pingone_authorize_trust_framework_attribute" "%[2]s-user" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "Test application service"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "JSON"
+  }
+}
+
 resource "pingone_authorize_trust_framework_service" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test application service"
 
   service_type = "CONNECTOR"
 
   service_settings = {
-    capability = "CAPABILITY2"
+    capability = "createRiskEvaluation"
     channel    = "AUTHORIZE"
     code       = "P1_RISK"
 
-    input_mappings = [
-      {
-        property = "??"
-        type     = "INPUT"
+    input_mappings = []
 
-        value = "input1"
-      },
-      {
-        property = "??"
-        type     = "INPUT"
-
-        value = "input2"
-      },
-    ]
+	    maximum_concurrent_requests = 6
+    maximum_requests_per_second = 10
+    schema_version              = "1"
+    timeout_milliseconds        = 2000
   }
 
   value_type = {
@@ -1475,6 +1560,7 @@ func testAccTrustFrameworkServiceConfig_Service_None_Full(resourceName, name str
 resource "pingone_authorize_trust_framework_service" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test application service"
 
   service_type = "NONE"
 
@@ -1491,6 +1577,7 @@ func testAccTrustFrameworkServiceConfig_Service_None_Minimal(resourceName, name 
 resource "pingone_authorize_trust_framework_service" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test application service"
 
   service_type = "NONE"
 }`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)

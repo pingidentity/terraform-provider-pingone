@@ -36,19 +36,19 @@ import (
 type TrustFrameworkServiceResource serviceClientType
 
 type trustFrameworkServiceResourceModel struct {
-	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
-	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	Name          types.String                 `tfsdk:"name"`
-	FullName      types.String                 `tfsdk:"full_name"`
-	// Description     types.String                 `tfsdk:"description"`
-	Parent          types.Object `tfsdk:"parent"`
-	Type            types.String `tfsdk:"type"`
-	CacheSettings   types.Object `tfsdk:"cache_settings"`
-	ServiceType     types.String `tfsdk:"service_type"`
-	Version         types.String `tfsdk:"version"`
-	Processor       types.Object `tfsdk:"processor"`
-	ValueType       types.Object `tfsdk:"value_type"`
-	ServiceSettings types.Object `tfsdk:"service_settings"`
+	Id              pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId   pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name            types.String                 `tfsdk:"name"`
+	FullName        types.String                 `tfsdk:"full_name"`
+	Description     types.String                 `tfsdk:"description"`
+	Parent          types.Object                 `tfsdk:"parent"`
+	Type            types.String                 `tfsdk:"type"`
+	CacheSettings   types.Object                 `tfsdk:"cache_settings"`
+	ServiceType     types.String                 `tfsdk:"service_type"`
+	Version         types.String                 `tfsdk:"version"`
+	Processor       types.Object                 `tfsdk:"processor"`
+	ValueType       types.Object                 `tfsdk:"value_type"`
+	ServiceSettings types.Object                 `tfsdk:"service_settings"`
 }
 
 type trustFrameworkServiceCacheSettingsResourceModel struct {
@@ -343,10 +343,14 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 				Computed:    true,
 			},
 
-			// "description": schema.StringAttribute{ // DONE
-			// 	Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the authorization service resource's description.").Description,
-			// 	Optional:    true,
-			// },
+			"description": schema.StringAttribute{ // DONE
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the authorization service resource's description.").Description,
+				Required:    true,
+
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+				},
+			},
 
 			"parent": parentObjectSchema("service"),
 
@@ -446,7 +450,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 					"maximum_concurrent_requests": schema.Int32Attribute{
 						Description:         serviceSettingsMaximumConcurrentRequestsDescription.Description,
 						MarkdownDescription: serviceSettingsMaximumConcurrentRequestsDescription.MarkdownDescription,
-						Optional:            true,
+						Required:            true,
 
 						Validators: []validator.Int32{
 							int32validator.AtLeast(1),
@@ -456,7 +460,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 					"maximum_requests_per_second": schema.Float64Attribute{
 						Description:         serviceSettingsMaximumRequestsPerSecondDescription.Description,
 						MarkdownDescription: serviceSettingsMaximumRequestsPerSecondDescription.MarkdownDescription,
-						Optional:            true,
+						Required:            true,
 
 						Validators: []validator.Float64{
 							float64validator.AtLeast(attrMinMaxRequestsPerSecond),
@@ -466,7 +470,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 					"timeout_milliseconds": schema.Int32Attribute{
 						Description:         serviceSettingsTimeoutMillisecondsDescription.Description,
 						MarkdownDescription: serviceSettingsTimeoutMillisecondsDescription.MarkdownDescription,
-						Optional:            true,
+						Required:            true,
 
 						Validators: []validator.Int32{
 							int32validator.Between(attrMinTimeoutMilliseconds, attrMaxTimeoutMilliseconds),
@@ -1210,9 +1214,9 @@ func (p *trustFrameworkServiceResourceModel) expandCommon(ctx context.Context, u
 	// 	data.SetFullName(p.FullName.ValueString())
 	// }
 
-	// if !p.Description.IsNull() && !p.Description.IsUnknown() {
-	// 	data.SetDescription(p.Description.ValueString())
-	// }
+	if !p.Description.IsNull() && !p.Description.IsUnknown() {
+		data.SetDescription(p.Description.ValueString())
+	}
 
 	if !p.Parent.IsNull() && !p.Parent.IsUnknown() {
 		parent, d := expandEditorParent(ctx, p.Parent)
@@ -1435,6 +1439,10 @@ func (p *trustFrameworkServiceServiceSettingsResourceModel) expandConnector(ctx 
 
 	if !p.MaximumRequestsPerSecond.IsNull() && !p.MaximumRequestsPerSecond.IsUnknown() {
 		data.SetMaximumRequestsPerSecond(p.MaximumRequestsPerSecond.ValueFloat64())
+	}
+
+	if !p.TimeoutMilliseconds.IsNull() && !p.TimeoutMilliseconds.IsUnknown() {
+		data.SetTimeoutMilliseconds(p.TimeoutMilliseconds.ValueInt32())
 	}
 
 	if !p.SchemaVersion.IsNull() && !p.SchemaVersion.IsUnknown() {
@@ -1777,7 +1785,7 @@ func (p *trustFrameworkServiceResourceModel) toState(ctx context.Context, apiObj
 	//p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObjectCommon.GetEnvironment().Id)
 	p.Name = framework.StringOkToTF(apiObjectCommon.GetNameOk())
 	p.FullName = framework.StringOkToTF(apiObjectCommon.GetFullNameOk())
-	// p.Description = framework.StringOkToTF(apiObjectCommon.GetDescriptionOk())
+	p.Description = framework.StringOkToTF(apiObjectCommon.GetDescriptionOk())
 
 	p.Parent, d = editorParentOkToTF(apiObjectCommon.GetParentOk())
 	diags.Append(d...)
@@ -1854,6 +1862,7 @@ func trustFrameworkServiceServiceSettingsConnectorOkToTF(ctx context.Context, ap
 	attributeMap := map[string]attr.Value{
 		"maximum_concurrent_requests": framework.Int32OkToTF(apiObject.GetMaximumConcurrentRequestsOk()),
 		"maximum_requests_per_second": framework.Float64OkToTF(apiObject.GetMaximumRequestsPerSecondOk()),
+		"timeout_milliseconds":        framework.Int32OkToTF(apiObject.GetTimeoutMillisecondsOk()),
 		"channel":                     framework.EnumOkToTF(apiObject.GetChannelOk()),
 		"code":                        framework.EnumOkToTF(apiObject.GetCodeOk()),
 		"capability":                  framework.StringOkToTF(apiObject.GetCapabilityOk()),
@@ -1940,10 +1949,10 @@ func trustFrameworkServiceServiceSettingsConnectorInputMappingOkToTF(ctx context
 
 func trustFrameworkServiceServiceSettingsConnectorInputMappingConvertEmptyValuesToTFNulls(attributeMap map[string]attr.Value) map[string]attr.Value {
 	nullMap := map[string]attr.Value{
-		"type":       types.StringNull(),
-		"comparator": types.StringNull(),
-		"value_ref":  types.ObjectNull(editorReferenceObjectTFObjectTypes),
-		"value":      types.StringNull(),
+		"type":      types.StringNull(),
+		"property":  types.StringNull(),
+		"value_ref": types.ObjectNull(editorReferenceObjectTFObjectTypes),
+		"value":     types.StringNull(),
 	}
 
 	for k := range nullMap {
@@ -2003,7 +2012,7 @@ func trustFrameworkServiceServiceSettingsConvertEmptyValuesToTFNulls(attributeMa
 		"verb":                        types.StringNull(),
 		"body":                        types.StringNull(),
 		"content_type":                types.StringNull(),
-		"headers":                     types.ObjectNull(trustFrameworkServiceServiceSettingsHeadersTFObjectTypes),
+		"headers":                     types.SetNull(types.ObjectType{AttrTypes: trustFrameworkServiceServiceSettingsHeadersTFObjectTypes}),
 		"authentication":              types.ObjectNull(trustFrameworkServiceServiceSettingsAuthenticationTFObjectTypes),
 		"tls_settings":                types.ObjectNull(trustFrameworkServiceServiceSettingsTlsSettingsTFObjectTypes),
 		"channel":                     types.StringNull(),

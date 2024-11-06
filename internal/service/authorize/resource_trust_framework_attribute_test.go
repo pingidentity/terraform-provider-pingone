@@ -2119,6 +2119,11 @@ func testAccTrustFrameworkAttributeConfig_Resolver_Service_Full(resourceName, na
 %[1]s
 
 resource "pingone_authorize_trust_framework_service" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "Test application service"
+
+  service_type = "NONE"
 }
 
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
@@ -2200,6 +2205,11 @@ func testAccTrustFrameworkAttributeConfig_Resolver_Service_Min(resourceName, nam
 %[1]s
 
 resource "pingone_authorize_trust_framework_service" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "Test application service"
+
+  service_type = "NONE"
 }
 
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
