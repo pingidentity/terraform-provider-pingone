@@ -25,13 +25,13 @@ type TrustFrameworkProcessorResource serviceClientType
 type trustFrameworkProcessorResourceModel struct {
 	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
 	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	// Description   types.String                 `tfsdk:"description"`
-	FullName  types.String `tfsdk:"full_name"`
-	Name      types.String `tfsdk:"name"`
-	Type      types.String `tfsdk:"type"`
-	Parent    types.Object `tfsdk:"parent"`
-	Processor types.Object `tfsdk:"processor"`
-	Version   types.String `tfsdk:"version"`
+	Description   types.String                 `tfsdk:"description"`
+	FullName      types.String                 `tfsdk:"full_name"`
+	Name          types.String                 `tfsdk:"name"`
+	Type          types.String                 `tfsdk:"type"`
+	Parent        types.Object                 `tfsdk:"parent"`
+	Processor     types.Object                 `tfsdk:"processor"`
+	Version       types.String                 `tfsdk:"version"`
 }
 
 // Framework interfaces
@@ -91,10 +91,14 @@ func (r *TrustFrameworkProcessorResource) Schema(ctx context.Context, req resour
 				Computed:    true,
 			},
 
-			// "description": schema.StringAttribute{
-			// 	Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a description to apply to the authorization processor.").Description,
-			// 	Optional:    true,
-			// },
+			"description": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a description to apply to the authorization processor.").Description,
+				Required:    true,
+
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+				},
+			},
 
 			"parent": parentObjectSchema("processor"),
 
@@ -393,9 +397,9 @@ func (p *trustFrameworkProcessorResourceModel) expand(ctx context.Context, updat
 		*processor,
 	)
 
-	// if !p.Description.IsNull() && !p.Description.IsUnknown() {
-	// 	data.SetDescription(p.Description.ValueString())
-	// }
+	if !p.Description.IsNull() && !p.Description.IsUnknown() {
+		data.SetDescription(p.Description.ValueString())
+	}
 
 	if !p.FullName.IsNull() && !p.FullName.IsUnknown() {
 		data.SetFullName(p.FullName.ValueString())
@@ -435,7 +439,7 @@ func (p *trustFrameworkProcessorResourceModel) toState(ctx context.Context, apiO
 
 	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
 	//p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
-	// p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
+	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.FullName = framework.StringOkToTF(apiObject.GetFullNameOk())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Type = framework.EnumOkToTF(apiObject.GetTypeOk())

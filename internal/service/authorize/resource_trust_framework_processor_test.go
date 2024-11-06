@@ -117,7 +117,7 @@ func TestAccTrustFrameworkProcessor_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		// resource.TestCheckResourceAttr(resourceFullName, "description", "Test processor"),
+		resource.TestCheckResourceAttr(resourceFullName, "description", "Test processor full"),
 		resource.TestCheckResourceAttr(resourceFullName, "full_name", fmt.Sprintf("%[1]s-parent.%[1]s", name)),
 		resource.TestMatchResourceAttr(resourceFullName, "parent.id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test child processor", name)),
@@ -129,7 +129,7 @@ func TestAccTrustFrameworkProcessor_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		// resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+		resource.TestCheckResourceAttr(resourceFullName, "description", "Test processor"),
 		resource.TestCheckResourceAttr(resourceFullName, "full_name", name),
 		resource.TestCheckNoResourceAttr(resourceFullName, "parent"),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test processor", name)),
@@ -867,6 +867,7 @@ func testAccTrustFrameworkProcessorConfig_NewEnv(environmentName, licenseID, res
 resource "pingone_authorize_trust_framework_processor" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[3]s"
+    description    = "Test processor"
 
   processor = {
     name = "%[3]s Test processor"
@@ -887,6 +888,7 @@ func testAccTrustFrameworkProcessorConfig_Full(resourceName, name string) string
 resource "pingone_authorize_trust_framework_processor" "%[2]s-parent" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-parent"
+    description    = "Test processor"
 
   processor = {
     name = "%[3]s Test parent processor"
@@ -902,7 +904,7 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s-parent" {
 resource "pingone_authorize_trust_framework_processor" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-  //   description    = "Test processor"
+    description    = "Test processor full"
 
   parent = {
     id = pingone_authorize_trust_framework_processor.%[2]s-parent.id
@@ -927,6 +929,7 @@ func testAccTrustFrameworkProcessorConfig_Minimal(resourceName, name string) str
 resource "pingone_authorize_trust_framework_processor" "%[2]s-parent" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-parent"
+    description    = "Test processor"
 
   processor = {
     name = "%[3]s Test parent processor"
@@ -947,6 +950,7 @@ func testAccTrustFrameworkProcessorConfig_Processor_Chain1(resourceName, name st
 resource "pingone_authorize_trust_framework_processor" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+    description    = "Test processor"
 
   processor = {
     name = "%[3]s Test chain processor"
@@ -992,6 +996,7 @@ func testAccTrustFrameworkProcessorConfig_Processor_Chain2(resourceName, name st
 resource "pingone_authorize_trust_framework_processor" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+    description    = "Test processor"
 
   processor = {
     name = "%[3]s Test chain processor"
@@ -1037,6 +1042,7 @@ func testAccTrustFrameworkProcessorConfig_Processor_CollectionFilter_InvalidValu
 resource "pingone_authorize_trust_framework_processor" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+    description    = "Test processor"
 
   processor = {
     name = "%[3]s Test processor"
@@ -1062,6 +1068,7 @@ func testAccTrustFrameworkProcessorConfig_Processor_CollectionFilter1(resourceNa
 resource "pingone_authorize_trust_framework_processor" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+    description    = "Test processor"
 
   processor = {
     name = "%[3]s Test processor"
@@ -1087,6 +1094,7 @@ func testAccTrustFrameworkProcessorConfig_Processor_CollectionFilter2(resourceNa
 resource "pingone_authorize_trust_framework_processor" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+    description    = "Test processor"
 
   processor = {
     name = "%[3]s Test processor"
@@ -1112,6 +1120,7 @@ func testAccTrustFrameworkProcessorConfig_Processor_CollectionTransform1(resourc
 resource "pingone_authorize_trust_framework_processor" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+    description    = "Test processor"
 
   processor = {
     name = "%[3]s Test processor"
@@ -1137,6 +1146,7 @@ func testAccTrustFrameworkProcessorConfig_Processor_CollectionTransform2(resourc
 resource "pingone_authorize_trust_framework_processor" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+    description    = "Test processor"
 
   processor = {
     name = "%[3]s Test processor"
@@ -1162,6 +1172,7 @@ func testAccTrustFrameworkProcessorConfig_Processor_Json_Path1(resourceName, nam
 resource "pingone_authorize_trust_framework_processor" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+    description    = "Test processor"
 
   processor = {
     name = "%[3]s Test processor"
@@ -1182,6 +1193,7 @@ func testAccTrustFrameworkProcessorConfig_Processor_Json_Path2(resourceName, nam
 resource "pingone_authorize_trust_framework_processor" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+    description    = "Test processor"
 
   processor = {
     name = "%[3]s Test processor"
@@ -1202,6 +1214,7 @@ func testAccTrustFrameworkProcessorConfig_Processor_Reference1(resourceName, nam
 resource "pingone_authorize_trust_framework_processor" "%[2]s_ref1" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-ref1"
+    description    = "Test processor"
 
   processor = {
     name = "%[3]s Test ref processor1"
@@ -1217,6 +1230,7 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s_ref1" {
 resource "pingone_authorize_trust_framework_processor" "%[2]s_ref2" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-ref2"
+    description    = "Test processor"
 
   processor = {
     name = "%[3]s Test ref processor2"
@@ -1232,6 +1246,7 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s_ref2" {
 resource "pingone_authorize_trust_framework_processor" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+    description    = "Test processor"
 
   processor = {
     name = "%[3]s Test processor"
@@ -1251,6 +1266,7 @@ func testAccTrustFrameworkProcessorConfig_Processor_Reference2(resourceName, nam
 resource "pingone_authorize_trust_framework_processor" "%[2]s_ref1" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-ref1"
+    description    = "Test processor"
 
   processor = {
     name = "%[3]s Test ref processor1"
@@ -1266,6 +1282,7 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s_ref1" {
 resource "pingone_authorize_trust_framework_processor" "%[2]s_ref2" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-ref2"
+    description    = "Test processor"
 
   processor = {
     name = "%[3]s Test ref processor2"
@@ -1281,6 +1298,7 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s_ref2" {
 resource "pingone_authorize_trust_framework_processor" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+    description    = "Test processor"
 
   processor = {
     name = "%[3]s Test processor"
@@ -1300,6 +1318,7 @@ func testAccTrustFrameworkProcessorConfig_Processor_SpEL1(resourceName, name str
 resource "pingone_authorize_trust_framework_processor" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+    description    = "Test processor"
 
   processor = {
     name = "%[3]s Test processor"
@@ -1320,6 +1339,7 @@ func testAccTrustFrameworkProcessorConfig_Processor_SpEL2(resourceName, name str
 resource "pingone_authorize_trust_framework_processor" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+    description    = "Test processor"
 
   processor = {
     name = "%[3]s Test processor"
@@ -1340,6 +1360,7 @@ func testAccTrustFrameworkProcessorConfig_Processor_XPath1(resourceName, name st
 resource "pingone_authorize_trust_framework_processor" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+    description    = "Test processor"
 
   processor = {
     name = "%[3]s Test processor"
@@ -1360,6 +1381,7 @@ func testAccTrustFrameworkProcessorConfig_Processor_XPath2(resourceName, name st
 resource "pingone_authorize_trust_framework_processor" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+    description    = "Test processor"
 
   processor = {
     name = "%[3]s Test processor"
