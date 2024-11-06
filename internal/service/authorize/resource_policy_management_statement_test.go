@@ -117,7 +117,7 @@ func TestAccPolicyManagementStatement_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckResourceAttr(resourceFullName, "description", "Test statement"),
+		resource.TestCheckResourceAttr(resourceFullName, "description", "Test statement full"),
 		resource.TestCheckResourceAttr(resourceFullName, "code", "my statement"),
 		resource.TestCheckResourceAttr(resourceFullName, "applies_to", "PERMIT"),
 		resource.TestCheckResourceAttr(resourceFullName, "applies_if", "FINAL_DECISION_MATCHES"),
@@ -134,7 +134,7 @@ func TestAccPolicyManagementStatement_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+		resource.TestCheckResourceAttr(resourceFullName, "description", "Test statement"),
 		resource.TestCheckResourceAttr(resourceFullName, "code", "my statement 1"),
 		resource.TestCheckResourceAttr(resourceFullName, "applies_to", "DENY"),
 		resource.TestCheckResourceAttr(resourceFullName, "applies_if", "PATH_MATCHES"),
@@ -253,9 +253,59 @@ func testAccPolicyManagementStatementConfig_NewEnv(environmentName, licenseID, r
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-1" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[3]s-1"
+  description    = "Test attribute"
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-2" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[3]s-2"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CONSTANT"
+      value_type = {
+        type = "STRING"
+      }
+      value = "test1"
+    }
+  ]
+
+  value_type = {
+    type = "JSON"
+  }
+}
+
 resource "pingone_authorize_policy_management_statement" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[3]s"
+  description    = "Test statement"
+
+  code = "my statement 1"
+
+  applies_to = "DENY"
+  applies_if = "PATH_MATCHES"
+
+  payload = jsonencode({
+    "foo" : "bar",
+    "foo2" : "bar2"
+  })
+
+  attributes = [
+    {
+      id = pingone_authorize_trust_framework_attribute.%[2]s-2.id
+    },
+    {
+      id = pingone_authorize_trust_framework_attribute.%[2]s-1.id
+    },
+  ]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -266,6 +316,7 @@ func testAccPolicyManagementStatementConfig_Full(resourceName, name string) stri
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-1" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-1"
+  description    = "Test attribute"
 
   value_type = {
     type = "STRING"
@@ -275,6 +326,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-1" {
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-2" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-2"
+  description    = "Test attribute"
 
   resolvers = [
     {
@@ -294,6 +346,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-2" {
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-3" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-3"
+  description    = "Test attribute"
 
   resolvers = [
     {
@@ -313,7 +366,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-3" {
 resource "pingone_authorize_policy_management_statement" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-  description    = "Test statement"
+  description    = "Test statement full"
 
   code = "my statement"
 
@@ -347,6 +400,7 @@ func testAccPolicyManagementStatementConfig_Minimal(resourceName, name string) s
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-1" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-1"
+  description    = "Test attribute"
 
   value_type = {
     type = "STRING"
@@ -356,6 +410,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-1" {
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-2" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-2"
+  description    = "Test attribute"
 
   resolvers = [
     {
@@ -375,6 +430,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-2" {
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-3" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-3"
+  description    = "Test attribute"
 
   resolvers = [
     {
@@ -394,6 +450,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-3" {
 resource "pingone_authorize_policy_management_statement" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test statement"
 
   code = "my statement 1"
 
