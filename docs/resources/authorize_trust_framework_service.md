@@ -57,6 +57,7 @@ resource "pingone_authorize_trust_framework_service" "my_awesome_service" {
 
 ### Required
 
+- `description` (String) A string that specifies the authorization service resource's description.
 - `environment_id` (String) The ID of the environment to configure the Authorize editor service in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) A string that specifies a user-friendly service name.
 - `service_type` (String) A string that specifies the type of service.  Options are `CONNECTOR`, `HTTP`, `NONE`.
@@ -222,6 +223,12 @@ Required:
 <a id="nestedatt--service_settings"></a>
 ### Nested Schema for `service_settings`
 
+Required:
+
+- `maximum_concurrent_requests` (Number) An integer that specifies the number of maximum concurrent requests to the service. The value must be greater than or equal to `1`.
+- `maximum_requests_per_second` (Number) A floating point number that specifies the number of maximum requests per second to the service. The value must be greater than `0`.
+- `timeout_milliseconds` (Number) An integer that specifies the timeout, in milliseconds, when attempting connection to the service. The value must be between `0` and `3000`.
+
 Optional:
 
 - `authentication` (Attributes) An object that specifies configuration settings for authenticating to the service.  This field is required when `service_type` is `HTTP`. (see [below for nested schema](#nestedatt--service_settings--authentication))
@@ -232,10 +239,7 @@ Optional:
 - `content_type` (String) A string that specifies the content type of the HTTP request.  The service will use the value of this field to set the `Content-Type` header.  This field is optional when `service_type` is `HTTP`.
 - `headers` (Attributes Set) A set of objects that specify the headers to include in the HTTP request.  This field is optional when `service_type` is `HTTP`. (see [below for nested schema](#nestedatt--service_settings--headers))
 - `input_mappings` (Attributes List) A list of objects that specify configuration settings for the input mappings to use for the service.  Input mappings may be attribute based, or input based.  This field is required when `service_type` is `CONNECTOR`. (see [below for nested schema](#nestedatt--service_settings--input_mappings))
-- `maximum_concurrent_requests` (Number) An integer that specifies the number of maximum concurrent requests to the service. The value must be greater than or equal to `1`.
-- `maximum_requests_per_second` (Number) A floating point number that specifies the number of maximum requests per second to the service. The value must be greater than `0`.
 - `schema_version` (Number) An integer that specifies the schema version of the connector template.  This field is optional when `service_type` is `CONNECTOR`.
-- `timeout_milliseconds` (Number) An integer that specifies the timeout, in milliseconds, when attempting connection to the service. The value must be between `0` and `3000`.
 - `tls_settings` (Attributes) An object that specifies configuration settings when connecting to the service using TLS.  This field is required when `service_type` is `HTTP`. (see [below for nested schema](#nestedatt--service_settings--tls_settings))
 - `url` (String) A string that specifies the URL of the HTTP service.  This field is required when `service_type` is `HTTP`.
 - `verb` (String) A string that specifies the HTTP method to use.  This field is required when `service_type` is `HTTP`.  Options are `DELETE`, `GET`, `HEAD`, `POST`, `PUT`.
