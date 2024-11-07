@@ -29,17 +29,15 @@ resource "pingone_authorize_policy_management_policy" "my_awesome_policy" {
 ### Required
 
 - `combining_algorithm` (Attributes) An object that specifies configuration settings that determine how rules are combined to produce an authorization decision. (see [below for nested schema](#nestedatt--combining_algorithm))
+- `description` (String) A string that specifies a description to apply to the policy.
 - `environment_id` (String) The ID of the environment to configure the Authorize editor policy in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) A string that specifies a user-friendly name to apply to the authorization policy.  The value must be unique.
 
 ### Optional
 
 - `condition` (Attributes) An object that specifies configuration settings for an authorization condition to apply to the policy. (see [below for nested schema](#nestedatt--condition))
-- `description` (String) A string that specifies a description to apply to the policy.
 - `enabled` (Boolean) A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.  Defaults to `true`.
-- `managed_entity` (Attributes) (see [below for nested schema](#nestedatt--managed_entity))
 - `repetition_settings` (Attributes) An object that specifies configuration settings that appies the policy to each item of the specific attribute, filtered by decision. (see [below for nested schema](#nestedatt--repetition_settings))
-- `type` (String) A string that specifies the type of the policy.
 
 ### Read-Only
 
@@ -400,52 +398,6 @@ Optional:
 
 - `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
 - `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
-
-
-
-<a id="nestedatt--managed_entity"></a>
-### Nested Schema for `managed_entity`
-
-Read-Only:
-
-- `owner` (Attributes) (see [below for nested schema](#nestedatt--managed_entity--owner))
-- `reference` (Attributes) (see [below for nested schema](#nestedatt--managed_entity--reference))
-- `restrictions` (Attributes) (see [below for nested schema](#nestedatt--managed_entity--restrictions))
-
-<a id="nestedatt--managed_entity--owner"></a>
-### Nested Schema for `managed_entity.owner`
-
-Read-Only:
-
-- `service` (Attributes) (see [below for nested schema](#nestedatt--managed_entity--owner--service))
-
-<a id="nestedatt--managed_entity--owner--service"></a>
-### Nested Schema for `managed_entity.owner.service`
-
-Read-Only:
-
-- `name` (String)
-
-
-
-<a id="nestedatt--managed_entity--reference"></a>
-### Nested Schema for `managed_entity.reference`
-
-Read-Only:
-
-- `id` (String)
-- `name` (String)
-- `type` (String)
-- `ui_deep_link` (String)
-
-
-<a id="nestedatt--managed_entity--restrictions"></a>
-### Nested Schema for `managed_entity.restrictions`
-
-Read-Only:
-
-- `disallow_children` (Boolean)
-- `read_only` (Boolean)
 
 
 

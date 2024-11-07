@@ -117,14 +117,28 @@ func TestAccPolicyManagementPolicy_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckResourceAttr(resourceFullName, "description", "Test application role"),
+		resource.TestCheckResourceAttr(resourceFullName, "description", "Test policy full"),
+		resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
+		// resource.TestCheckResourceAttr(resourceFullName, "statements.#", "2"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.type", "OR"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.conditions.#", "2"),
+		resource.TestCheckResourceAttr(resourceFullName, "combining_algorithm.algorithm", "FIRST_APPLICABLE"),
+		resource.TestMatchResourceAttr(resourceFullName, "repetition_settings.source.id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "repetition_settings.decision", "PERMIT"),
+		resource.TestMatchResourceAttr(resourceFullName, "version", verify.P1ResourceIDRegexpFullString),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+		resource.TestCheckResourceAttr(resourceFullName, "description", "Test policy"),
+		resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "statements"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "condition"),
+		resource.TestCheckResourceAttr(resourceFullName, "combining_algorithm.algorithm", "PERMIT_OVERRIDES"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "repetition_settings"),
+		resource.TestMatchResourceAttr(resourceFullName, "version", verify.P1ResourceIDRegexpFullString),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -237,6 +251,11 @@ func testAccPolicyManagementPolicyConfig_NewEnv(environmentName, licenseID, reso
 resource "pingone_authorize_policy_management_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[3]s"
+  description    = "Test policy"
+
+  combining_algorithm = {
+    algorithm = "PERMIT_OVERRIDES"
+  }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -244,10 +263,63 @@ func testAccPolicyManagementPolicyConfig_Full(resourceName, name string) string 
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "Test attribute"
+
+  value_type = {
+    type = "COLLECTION"
+  }
+}
+
 resource "pingone_authorize_policy_management_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-  description    = "Test application role"
+  description    = "Test policy full"
+
+  enabled = false
+
+  //   statements = []
+
+  condition = {
+    type = "OR"
+
+    conditions = [
+      {
+        type = "EMPTY"
+      },
+      {
+        type = "NOT"
+
+        condition = {
+          type       = "COMPARISON"
+          comparator = "EQUALS"
+
+          left = {
+            type  = "CONSTANT"
+            value = "test1"
+          }
+
+          right = {
+            type  = "CONSTANT"
+            value = "test1"
+          }
+        }
+      }
+    ]
+  }
+
+  combining_algorithm = {
+    algorithm = "FIRST_APPLICABLE"
+  }
+
+  repetition_settings = {
+    source = {
+      id = pingone_authorize_trust_framework_attribute.%[2]s.id
+    }
+    decision = "PERMIT"
+  }
 }`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
@@ -255,8 +327,23 @@ func testAccPolicyManagementPolicyConfig_Minimal(resourceName, name string) stri
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "Test attribute"
+
+  value_type = {
+    type = "COLLECTION"
+  }
+}
+
 resource "pingone_authorize_policy_management_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test policy"
+
+  combining_algorithm = {
+    algorithm = "PERMIT_OVERRIDES"
+  }
 }`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
