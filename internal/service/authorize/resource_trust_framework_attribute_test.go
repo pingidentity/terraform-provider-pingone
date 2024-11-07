@@ -124,7 +124,7 @@ func TestAccTrustFrameworkAttribute_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test processor", name)),
 		resource.TestCheckResourceAttr(resourceFullName, "resolvers.#", "1"),
 		// resource.TestCheckResourceAttr(resourceFullName, "managed_entity", "1"),
-		// resource.TestCheckResourceAttr(resourceFullName, "repetition_source", "1"),
+		resource.TestMatchResourceAttr(resourceFullName, "repetition_source.id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "ATTRIBUTE"),
 		resource.TestCheckResourceAttr(resourceFullName, "value_type.type", "STRING"),
 		resource.TestMatchResourceAttr(resourceFullName, "version", verify.P1ResourceIDRegexpFullString),
@@ -141,7 +141,7 @@ func TestAccTrustFrameworkAttribute_Full(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor"),
 		resource.TestCheckResourceAttr(resourceFullName, "resolvers.#", "0"),
 		// resource.TestCheckResourceAttr(resourceFullName, "managed_entity", "1"),
-		// resource.TestCheckResourceAttr(resourceFullName, "repetition_source", "1"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "repetition_source"),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "ATTRIBUTE"),
 		resource.TestCheckResourceAttr(resourceFullName, "value_type.type", "STRING"),
 		resource.TestMatchResourceAttr(resourceFullName, "version", verify.P1ResourceIDRegexpFullString),
@@ -1137,6 +1137,16 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-parent" {
   }
 }
 
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-repetition" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-repetition"
+  description    = "Test attribute"
+
+  value_type = {
+    type = "COLLECTION"
+  }
+}
+
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
@@ -1147,6 +1157,10 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   }
 
   default_value = "test"
+
+  repetition_source = {
+    id = pingone_authorize_trust_framework_attribute.%[2]s-repetition.id
+  }
 
   processor = {
     name = "%[3]s Test processor"
@@ -1185,6 +1199,16 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-parent" {
 
   value_type = {
     type = "STRING"
+  }
+}
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-repetition" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-repetition"
+  description    = "Test attribute"
+
+  value_type = {
+    type = "COLLECTION"
   }
 }
 

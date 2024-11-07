@@ -32,13 +32,13 @@ type trustFrameworkAttributeResourceModel struct {
 	Type          types.String                 `tfsdk:"type"`
 	FullName      types.String                 `tfsdk:"full_name"`
 	// ManagedEntity    types.Object                 `tfsdk:"managed_entity"`
-	Name      types.String `tfsdk:"name"`
-	Parent    types.Object `tfsdk:"parent"`
-	Processor types.Object `tfsdk:"processor"`
-	// RepetitionSource types.Object `tfsdk:"repetition_source"`
-	Resolvers types.List   `tfsdk:"resolvers"`
-	ValueType types.Object `tfsdk:"value_type"`
-	Version   types.String `tfsdk:"version"`
+	Name             types.String `tfsdk:"name"`
+	Parent           types.Object `tfsdk:"parent"`
+	Processor        types.Object `tfsdk:"processor"`
+	RepetitionSource types.Object `tfsdk:"repetition_source"`
+	Resolvers        types.List   `tfsdk:"resolvers"`
+	ValueType        types.Object `tfsdk:"value_type"`
+	Version          types.String `tfsdk:"version"`
 	// ValueSchema types.String `tfsdk:"value_schema"`
 }
 
@@ -133,7 +133,7 @@ func (r *TrustFrameworkAttributeResource) Schema(ctx context.Context, req resour
 				Attributes: dataProcessorObjectSchemaAttributes(),
 			},
 
-			// "repetition_source": repetitionSourceObjectSchema("attribute"),
+			"repetition_source": repetitionSourceObjectSchema("attribute"),
 
 			"resolvers": schema.ListNestedAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A list of objects that specifies configuration settings for the authorization attribute's resolvers.").Description,
@@ -484,15 +484,15 @@ func (p *trustFrameworkAttributeResourceModel) expand(ctx context.Context, updat
 		data.SetProcessor(*processor)
 	}
 
-	// if !p.RepetitionSource.IsNull() && !p.RepetitionSource.IsUnknown() {
-	// 	repetitionSource, d := expandEditorRepetitionSource(ctx, p.RepetitionSource)
-	// 	diags.Append(d...)
-	// 	if diags.HasError() {
-	// 		return nil, diags
-	// 	}
+	if !p.RepetitionSource.IsNull() && !p.RepetitionSource.IsUnknown() {
+		repetitionSource, d := expandEditorRepetitionSource(ctx, p.RepetitionSource)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
 
-	// 	data.SetRepetitionSource(*repetitionSource)
-	// }
+		data.SetRepetitionSource(*repetitionSource)
+	}
 
 	if !p.Resolvers.IsNull() && !p.Resolvers.IsUnknown() {
 		var plan []editorDataResolverResourceModel
@@ -562,8 +562,8 @@ func (p *trustFrameworkAttributeResourceModel) toState(ctx context.Context, apiO
 	p.Processor, d = editorDataProcessorOkToTF(ctx, processor, ok)
 	diags.Append(d...)
 
-	// p.RepetitionSource, d = editorRepetitionSourceOkToTF(apiObject.GetRepetitionSourceOk())
-	// diags.Append(d...)
+	p.RepetitionSource, d = editorRepetitionSourceOkToTF(apiObject.GetRepetitionSourceOk())
+	diags.Append(d...)
 
 	resolvers, ok := apiObject.GetResolversOk()
 	p.Resolvers, d = editorResolversOkToListTF(ctx, resolvers, ok)

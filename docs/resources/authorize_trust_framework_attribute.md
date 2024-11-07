@@ -38,6 +38,7 @@ resource "pingone_authorize_trust_framework_attribute" "my_awesome_attribute" {
 - `default_value` (String) A string that specifies the value to use if no resolvers are defined or if an error occurred with the resolvers or processors.
 - `parent` (Attributes) An object that specifies configuration settings for the attribute resource's parent. (see [below for nested schema](#nestedatt--parent))
 - `processor` (Attributes) An object that specifies configuration settings for the authorization attribute resource's processor. (see [below for nested schema](#nestedatt--processor))
+- `repetition_source` (Attributes) An object that specifies configuration settings for the attribute resource's repetition source. (see [below for nested schema](#nestedatt--repetition_source))
 - `resolvers` (Attributes List) A list of objects that specifies configuration settings for the authorization attribute's resolvers. (see [below for nested schema](#nestedatt--resolvers))
 
 ### Read-Only
@@ -188,6 +189,14 @@ Required:
 
 - `type` (String) A string that specifies the type of the value.  Options are `BOOLEAN`, `COLLECTION`, `DATE_TIME`, `DURATION`, `JSON`, `LOCAL_DATE`, `LOCAL_DATE_TIME`, `LOCAL_TIME`, `NUMBER`, `PERIOD`, `STRING`, `TIME_PERIOD`, `XML`, `ZONED_DATE_TIME`.  Must be `BOOLEAN` when the processor type (`processor.type`) is `COLLECTION_FILTER`
 
+
+
+<a id="nestedatt--repetition_source"></a>
+### Nested Schema for `repetition_source`
+
+Required:
+
+- `id` (String) A string that specifies the attribute resource's repetition source ID.  Must be a valid PingOne resource ID.
 
 
 <a id="nestedatt--resolvers"></a>
