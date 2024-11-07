@@ -13,8 +13,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
@@ -31,30 +33,15 @@ type policyManagementRuleResourceModel struct {
 	Name          types.String                 `tfsdk:"name"`
 	Description   types.String                 `tfsdk:"description"`
 	Enabled       types.Bool                   `tfsdk:"enabled"`
-	// Statements     types.List                   `tfsdk:"statements"`
+	// Statements     types.List   `tfsdk:"statements"`
 	Condition      types.Object `tfsdk:"condition"`
 	EffectSettings types.Object `tfsdk:"effect_settings"`
 	Version        types.String `tfsdk:"version"`
 }
 
-// type policyManagementRuleStatementResourceModel struct {
-// }
-
 type policyManagementRuleEffectSettingsResourceModel struct {
 	Type types.String `tfsdk:"type"`
 }
-
-var (
-	// policyManagementRuleStatementTFObjectTypes = map[string]attr.Type{}
-
-	policyManagementRuleConditionTFObjectTypes = map[string]attr.Type{
-		"type": types.StringType,
-	}
-
-	policyManagementRuleEffectSettingsTFObjectTypes = map[string]attr.Type{
-		"type": types.StringType,
-	}
-)
 
 // Framework interfaces
 var (
@@ -104,12 +91,7 @@ func (r *PolicyManagementRuleResource) Schema(ctx context.Context, req resource.
 
 			"description": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a description to apply to the authorization rule.").Description,
-				Optional:    true,
-			},
-
-			"type": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the authorization rule type.").Description,
-				Optional:    true,
+				Required:    true,
 			},
 
 			"enabled": schema.BoolAttribute{
@@ -133,6 +115,17 @@ func (r *PolicyManagementRuleResource) Schema(ctx context.Context, req resource.
 			"condition": schema.SingleNestedAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies configuration settings for conditions to apply to the authorization rule.").Description,
 				Optional:    true,
+				Computed:    true,
+
+				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
+					attributeMap := map[string]attr.Value{
+						"type": types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_EMPTY)),
+					}
+
+					attributeMap = editorDataConditionConvertEmptyValuesToTFNulls(attributeMap, 1)
+
+					return types.ObjectValueMust(editorDataConditionTFObjectTypes, attributeMap)
+				}()),
 
 				Attributes: dataConditionObjectSchemaAttributes(),
 			},
@@ -292,8 +285,28 @@ func (r *PolicyManagementRuleResource) Update(ctx context.Context, req resource.
 		return
 	}
 
+	// Run the API call
+	var getResponse *authorize.AuthorizeEditorDataRulesReferenceableRuleDTO
+	resp.Diagnostics.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorRulesApi.GetRule(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+		},
+		"GetRule-Update",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+		&getResponse,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	version := getResponse.GetVersion()
+
 	// Build the model for the API
-	policyManagementRule, d := plan.expandUpdate(ctx)
+	policyManagementRule, d := plan.expandUpdate(ctx, version)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -448,7 +461,7 @@ func (p *policyManagementRuleResourceModel) expandCreate(ctx context.Context) (*
 	return data, diags
 }
 
-func (p *policyManagementRuleResourceModel) expandUpdate(ctx context.Context) (*authorize.AuthorizeEditorDataRulesReferenceableRuleDTO, diag.Diagnostics) {
+func (p *policyManagementRuleResourceModel) expandUpdate(ctx context.Context, versionId string) (*authorize.AuthorizeEditorDataRulesReferenceableRuleDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	dataCreate, d := p.expandCreate(ctx)
@@ -471,8 +484,12 @@ func (p *policyManagementRuleResourceModel) expandUpdate(ctx context.Context) (*
 		return nil, diags
 	}
 
-	if !p.Version.IsNull() && !p.Version.IsUnknown() {
-		data.SetVersion(p.Version.ValueString())
+	if versionId != "" {
+		data.SetVersion(versionId)
+
+		if !p.Id.IsNull() && !p.Id.IsUnknown() {
+			data.SetId(p.Id.ValueString())
+		}
 	}
 
 	return data, diags
@@ -490,9 +507,8 @@ func (p *policyManagementRuleResourceModel) toState(ctx context.Context, apiObje
 	}
 
 	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
+	// p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
-	// p.Type = framework.EnumOkToTF(apiObject.GetTypeOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
 
@@ -506,6 +522,8 @@ func (p *policyManagementRuleResourceModel) toState(ctx context.Context, apiObje
 	effectSettingsVal, ok := apiObject.GetEffectSettingsOk()
 	p.EffectSettings, d = editorDataRulesEffectSettingsOkToTF(ctx, effectSettingsVal, ok)
 	diags.Append(d...)
+
+	p.Version = framework.StringOkToTF(apiObject.GetVersionOk())
 
 	return diags
 }

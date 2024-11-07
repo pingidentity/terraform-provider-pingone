@@ -117,14 +117,29 @@ func TestAccPolicyManagementRule_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckResourceAttr(resourceFullName, "description", "Test application role"),
+		resource.TestCheckResourceAttr(resourceFullName, "description", "Test rule full"),
+		resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
+		// resource.TestCheckResourceAttr(resourceFullName, "statements.#", "1"),
+		// resource.TestMatchResourceAttr(resourceFullName, "statements.0.id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.type", "OR"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.conditions.#", "2"),
+		resource.TestCheckResourceAttr(resourceFullName, "effect_settings.type", "CONDITIONAL_PERMIT_ELSE_DENY"),
+		resource.TestCheckResourceAttr(resourceFullName, "effect_settings.condition.type", "OR"),
+		resource.TestCheckResourceAttr(resourceFullName, "effect_settings.condition.conditions.#", "2"),
+		resource.TestMatchResourceAttr(resourceFullName, "version", verify.P1ResourceIDRegexpFullString),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+		resource.TestCheckResourceAttr(resourceFullName, "description", "Test rule"),
+		resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "statements"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.type", "EMPTY"),
+		resource.TestCheckResourceAttr(resourceFullName, "effect_settings.type", "UNCONDITIONAL_DENY"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "effect_settings.condition"),
+		resource.TestMatchResourceAttr(resourceFullName, "version", verify.P1ResourceIDRegexpFullString),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -237,6 +252,11 @@ func testAccPolicyManagementRuleConfig_NewEnv(environmentName, licenseID, resour
 resource "pingone_authorize_policy_management_rule" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[3]s"
+  description    = "Test rule"
+
+  effect_settings = {
+    type = "UNCONDITIONAL_DENY"
+  }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -247,7 +267,75 @@ func testAccPolicyManagementRuleConfig_Full(resourceName, name string) string {
 resource "pingone_authorize_policy_management_rule" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-  description    = "Test application role"
+  description    = "Test rule full"
+
+  enabled = false
+
+  //   statements = [
+  //     {
+  //       id = pingone_authorize_policy_management_statement.%[2]s.id
+  //     }
+  //   ]
+
+  condition = {
+    type = "OR"
+
+    conditions = [
+      {
+        type = "EMPTY"
+      },
+      {
+        type = "NOT"
+
+        condition = {
+          type       = "COMPARISON"
+          comparator = "EQUALS"
+
+          left = {
+            type  = "CONSTANT"
+            value = "test1"
+          }
+
+          right = {
+            type  = "CONSTANT"
+            value = "test1"
+          }
+        }
+      }
+    ]
+  }
+
+  effect_settings = {
+    type = "CONDITIONAL_PERMIT_ELSE_DENY"
+
+    condition = {
+      type = "OR"
+
+      conditions = [
+        {
+          type = "EMPTY"
+        },
+        {
+          type = "NOT"
+
+          condition = {
+            type       = "COMPARISON"
+            comparator = "EQUALS"
+
+            left = {
+              type  = "CONSTANT"
+              value = "test1"
+            }
+
+            right = {
+              type  = "CONSTANT"
+              value = "test1"
+            }
+          }
+        }
+      ]
+    }
+  }
 }`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
@@ -258,5 +346,10 @@ func testAccPolicyManagementRuleConfig_Minimal(resourceName, name string) string
 resource "pingone_authorize_policy_management_rule" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+  description    = "Test rule"
+
+  effect_settings = {
+    type = "UNCONDITIONAL_DENY"
+  }
 }`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
