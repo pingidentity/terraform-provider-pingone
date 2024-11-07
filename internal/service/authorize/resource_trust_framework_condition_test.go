@@ -779,7 +779,7 @@ func testAccTrustFrameworkConditionConfig_NewEnv(environmentName, licenseID, res
 resource "pingone_authorize_trust_framework_condition" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[3]s"
-    description    = "Test application role"
+  description    = "Test application role"
 
   condition = {
     type = "EMPTY"
@@ -794,7 +794,7 @@ func testAccTrustFrameworkConditionConfig_Full(resourceName, name string) string
 resource "pingone_authorize_trust_framework_condition" "%[2]s-parent" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-parent"
-    description    = "Test application role"
+  description    = "Test application role"
 
   condition = {
     type = "EMPTY"
@@ -804,7 +804,7 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s-parent" {
 resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-    description    = "Test application role full"
+  description    = "Test application role full"
 
   parent = {
     id = pingone_authorize_trust_framework_condition.%[2]s-parent.id
@@ -823,7 +823,7 @@ func testAccTrustFrameworkConditionConfig_Minimal(resourceName, name string) str
 resource "pingone_authorize_trust_framework_condition" "%[2]s-parent" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-parent"
-    description    = "Test application role"
+  description    = "Test application role"
 
   condition = {
     type = "EMPTY"
@@ -838,7 +838,7 @@ func testAccTrustFrameworkConditionConfig_Condition_And1(resourceName, name stri
 resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-    description    = "Test application role"
+  description    = "Test application role"
 
   condition = {
     type = "AND"
@@ -891,7 +891,7 @@ func testAccTrustFrameworkConditionConfig_Condition_And2(resourceName, name stri
 resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-    description    = "Test application role"
+  description    = "Test application role"
 
   condition = {
     type = "AND"
@@ -930,7 +930,7 @@ func testAccTrustFrameworkConditionConfig_Condition_Comparison1(resourceName, na
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-    description    = "Test application role"
+  description    = "Test application role"
 
   resolvers = [
     {
@@ -950,7 +950,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
 resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-    description    = "Test application role"
+  description    = "Test application role"
 
   condition = {
     type       = "COMPARISON"
@@ -976,7 +976,7 @@ func testAccTrustFrameworkConditionConfig_Condition_Comparison2(resourceName, na
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-    description    = "Test application role"
+  description    = "Test application role"
 
   resolvers = [
     {
@@ -996,7 +996,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
 resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-    description    = "Test application role"
+  description    = "Test application role"
 
   condition = {
     type       = "COMPARISON"
@@ -1022,7 +1022,7 @@ func testAccTrustFrameworkConditionConfig_Condition_Empty(resourceName, name str
 resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-    description    = "Test application role"
+  description    = "Test application role"
 
   condition = {
     type = "EMPTY"
@@ -1037,7 +1037,7 @@ func testAccTrustFrameworkConditionConfig_Condition_Not1(resourceName, name stri
 resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-    description    = "Test application role"
+  description    = "Test application role"
 
   condition = {
     type = "NOT"
@@ -1056,7 +1056,7 @@ func testAccTrustFrameworkConditionConfig_Condition_Not2(resourceName, name stri
 resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-    description    = "Test application role"
+  description    = "Test application role"
 
   condition = {
     type = "NOT"
@@ -1086,7 +1086,7 @@ func testAccTrustFrameworkConditionConfig_Condition_Or1(resourceName, name strin
 resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-    description    = "Test application role"
+  description    = "Test application role"
 
   condition = {
     type = "OR"
@@ -1139,7 +1139,7 @@ func testAccTrustFrameworkConditionConfig_Condition_Or2(resourceName, name strin
 resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-    description    = "Test application role"
+  description    = "Test application role"
 
   condition = {
     type = "OR"
@@ -1178,7 +1178,7 @@ func testAccTrustFrameworkConditionConfig_Condition_Reference1(resourceName, nam
 resource "pingone_authorize_trust_framework_condition" "%[2]s-ref1" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-ref1"
-    description    = "Test application role"
+  description    = "Test application role"
 
   condition = {
     type = "EMPTY"
@@ -1188,7 +1188,7 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s-ref1" {
 resource "pingone_authorize_trust_framework_condition" "%[2]s-ref2" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-ref2"
-    description    = "Test application role"
+  description    = "Test application role"
 
   condition = {
     type = "NOT"
@@ -1201,7 +1201,7 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s-ref2" {
 resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-    description    = "Test application role"
+  description    = "Test application role"
 
   condition = {
     type = "REFERENCE"
@@ -1220,7 +1220,7 @@ func testAccTrustFrameworkConditionConfig_Condition_Reference2(resourceName, nam
 resource "pingone_authorize_trust_framework_condition" "%[2]s-ref1" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-ref1"
-    description    = "Test application role"
+  description    = "Test application role"
 
   condition = {
     type = "EMPTY"
@@ -1230,7 +1230,7 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s-ref1" {
 resource "pingone_authorize_trust_framework_condition" "%[2]s-ref2" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-ref2"
-    description    = "Test application role"
+  description    = "Test application role"
 
   condition = {
     type = "NOT"
@@ -1243,7 +1243,7 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s-ref2" {
 resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-    description    = "Test application role"
+  description    = "Test application role"
 
   condition = {
     type = "REFERENCE"

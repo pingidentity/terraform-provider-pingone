@@ -1115,7 +1115,7 @@ func testAccTrustFrameworkAttributeConfig_NewEnv(environmentName, licenseID, res
 resource "pingone_authorize_trust_framework_attribute" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[3]s"
-    description    = "Test attribute"
+  description    = "Test attribute"
 
   value_type = {
     type = "STRING"
@@ -1563,9 +1563,9 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
 
       type  = "CONSTANT"
       value = "test"
-	  value_type = {
-	  		type = "STRING"
-		}
+      value_type = {
+        type = "STRING"
+      }
 
       condition = {
         type       = "COMPARISON"

@@ -822,7 +822,7 @@ resource "pingone_authorize_trust_framework_service" "%[2]s-parent" {
 resource "pingone_authorize_trust_framework_service" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-    description    = "Test application service full"
+  description    = "Test application service full"
 
   parent = {
     id = pingone_authorize_trust_framework_service.%[2]s-parent.id
@@ -1379,47 +1379,47 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
 
     input_mappings = [
       {
-                            type =  "ATTRIBUTE"
-                            property =  "userId"
-                            value_ref = {
-							id = pingone_authorize_trust_framework_attribute.%[2]s-user.id
-}
-                        },
-                        {
-                            type =  "INPUT"
-                            property =  "userType"
-                            value =  "test2"
-                        },
-                        {
-                            type =  "INPUT"
-                            property =  "ipAddress"
-                            value =  "test3"
-                        },
-                        {
-                            type =  "INPUT"
-                            property =  "applicationId"
-                            value =  "test4"
-                        },
-                        {
-                            type =  "INPUT"
-                            property =  "applicationName"
-                            value =  "test5"
-                        },
-                        {
-                            type =  "INPUT"
-                            property =  "sessionId"
-                            value =  "test6"
-                        },
-                        {
-                            type =  "INPUT"
-                            property =  "browserData"
-                            value =  "test7"
-                        },
-                        {
-                            type =  "INPUT"
-                            property =  "riskPolicySetId"
-                            value =  "test8"
-                        }
+        type     = "ATTRIBUTE"
+        property = "userId"
+        value_ref = {
+          id = pingone_authorize_trust_framework_attribute.%[2]s-user.id
+        }
+      },
+      {
+        type     = "INPUT"
+        property = "userType"
+        value    = "test2"
+      },
+      {
+        type     = "INPUT"
+        property = "ipAddress"
+        value    = "test3"
+      },
+      {
+        type     = "INPUT"
+        property = "applicationId"
+        value    = "test4"
+      },
+      {
+        type     = "INPUT"
+        property = "applicationName"
+        value    = "test5"
+      },
+      {
+        type     = "INPUT"
+        property = "sessionId"
+        value    = "test6"
+      },
+      {
+        type     = "INPUT"
+        property = "browserData"
+        value    = "test7"
+      },
+      {
+        type     = "INPUT"
+        property = "riskPolicySetId"
+        value    = "test8"
+      }
     ]
 
     maximum_concurrent_requests = 6
@@ -1438,7 +1438,7 @@ func testAccTrustFrameworkServiceConfig_Service_Connector_Full2(resourceName, na
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_authorize_trust_framework_attribute" "%[2]s-user" {
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-user" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "Test application service"
@@ -1511,7 +1511,7 @@ func testAccTrustFrameworkServiceConfig_Service_Connector_Minimal(resourceName, 
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_authorize_trust_framework_attribute" "%[2]s-user" {
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-user" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "Test application service"
@@ -1541,7 +1541,7 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
 
     input_mappings = []
 
-	    maximum_concurrent_requests = 6
+    maximum_concurrent_requests = 6
     maximum_requests_per_second = 10
     schema_version              = "1"
     timeout_milliseconds        = 2000
