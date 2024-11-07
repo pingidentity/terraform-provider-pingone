@@ -10,6 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
@@ -84,6 +86,10 @@ func (r *TrustFrameworkConditionResource) Schema(ctx context.Context, req resour
 				Description:         typeDescription.Description,
 				MarkdownDescription: typeDescription.MarkdownDescription,
 				Computed:            true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"full_name": schema.StringAttribute{
@@ -394,10 +400,6 @@ func (p *trustFrameworkConditionResourceModel) expand(ctx context.Context, updat
 	if !p.Description.IsNull() && !p.Description.IsUnknown() {
 		data.SetDescription(p.Description.ValueString())
 	}
-
-	// if !p.FullName.IsNull() && !p.FullName.IsUnknown() {
-	// 	data.SetFullName(p.FullName.ValueString())
-	// }
 
 	if !p.Parent.IsNull() && !p.Parent.IsUnknown() {
 		parent, d := expandEditorParent(ctx, p.Parent)

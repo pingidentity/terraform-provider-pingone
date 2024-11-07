@@ -23,7 +23,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
-const conditionNestedIterationMaxDepth = 3
+const conditionNestedIterationMaxDepth = 4
 
 var leafConditionTypes = []authorize.EnumAuthorizeEditorDataConditionDTOType{
 	"COMPARISON",

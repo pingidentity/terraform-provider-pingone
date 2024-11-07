@@ -147,9 +147,9 @@ func editorDataResolverQueryOkToTF(ctx context.Context, apiObject *authorize.Aut
 		return types.ObjectNull(editorDataResolverQueryTFObjectTypes), diags
 	}
 
-	attributeMap = editorDataResolverConvertEmptyValuesToTFNulls(attributeMap)
+	attributeMap = editorDataResolverQueryConvertEmptyValuesToTFNulls(attributeMap)
 
-	objValue, d := types.ObjectValue(editorDataResolverTFObjectTypes, attributeMap)
+	objValue, d := types.ObjectValue(editorDataResolverQueryTFObjectTypes, attributeMap)
 	diags.Append(d...)
 
 	return objValue, diags

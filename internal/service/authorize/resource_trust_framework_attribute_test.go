@@ -123,7 +123,7 @@ func TestAccTrustFrameworkAttribute_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "default_value", "test"),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test processor", name)),
 		resource.TestCheckResourceAttr(resourceFullName, "resolvers.#", "1"),
-		// resource.TestCheckResourceAttr(resourceFullName, "managed_entity", "1"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "managed_entity"),
 		resource.TestMatchResourceAttr(resourceFullName, "repetition_source.id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "ATTRIBUTE"),
 		resource.TestCheckResourceAttr(resourceFullName, "value_type.type", "STRING"),
@@ -140,7 +140,7 @@ func TestAccTrustFrameworkAttribute_Full(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "default_value"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor"),
 		resource.TestCheckResourceAttr(resourceFullName, "resolvers.#", "0"),
-		// resource.TestCheckResourceAttr(resourceFullName, "managed_entity", "1"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "managed_entity"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "repetition_source"),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "ATTRIBUTE"),
 		resource.TestCheckResourceAttr(resourceFullName, "value_type.type", "STRING"),
@@ -2358,18 +2358,14 @@ func testAccTrustFrameworkAttributeConfig_Resolver_User_Full(resourceName, name 
 	return fmt.Sprintf(`
 %[1]s
 
-resource "pingone_population" "%[2]s" {
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-user" {
   environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-user"
+  description    = "Test attribute"
 
-  name = "%[3]s"
-}
-
-resource "pingone_user" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  username      = "%[3]s"
-  email         = "%[3]s@pingidentity.com"
-  population_id = pingone_population.%[2]s.id
+  value_type = {
+    type = "STRING"
+  }
 }
 
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
@@ -2384,7 +2380,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
       type = "USER"
       query = {
         type    = "USER_ID"
-        user_id = pingone_user.%[2]s.id
+        user_id = pingone_authorize_trust_framework_attribute.%[2]s-user.id
       }
 
       condition = {
@@ -2451,18 +2447,14 @@ func testAccTrustFrameworkAttributeConfig_Resolver_User_Min(resourceName, name s
 	return fmt.Sprintf(`
 %[1]s
 
-resource "pingone_population" "%[2]s" {
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-user" {
   environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-user"
+  description    = "Test attribute"
 
-  name = "%[3]s"
-}
-
-resource "pingone_user" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  username      = "%[3]s"
-  email         = "%[3]s@pingidentity.com"
-  population_id = pingone_population.%[2]s.id
+  value_type = {
+    type = "STRING"
+  }
 }
 
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
@@ -2475,7 +2467,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
       type = "USER"
       query = {
         type    = "USER_ID"
-        user_id = pingone_user.%[2]s.id
+        user_id = pingone_authorize_trust_framework_attribute.%[2]s-user.id
       }
     }
   ]

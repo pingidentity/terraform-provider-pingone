@@ -12,6 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
@@ -25,20 +27,20 @@ import (
 type TrustFrameworkAttributeResource serviceClientType
 
 type trustFrameworkAttributeResourceModel struct {
-	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
-	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	DefaultValue  types.String                 `tfsdk:"default_value"`
-	Description   types.String                 `tfsdk:"description"`
-	Type          types.String                 `tfsdk:"type"`
-	FullName      types.String                 `tfsdk:"full_name"`
-	// ManagedEntity    types.Object                 `tfsdk:"managed_entity"`
-	Name             types.String `tfsdk:"name"`
-	Parent           types.Object `tfsdk:"parent"`
-	Processor        types.Object `tfsdk:"processor"`
-	RepetitionSource types.Object `tfsdk:"repetition_source"`
-	Resolvers        types.List   `tfsdk:"resolvers"`
-	ValueType        types.Object `tfsdk:"value_type"`
-	Version          types.String `tfsdk:"version"`
+	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	DefaultValue     types.String                 `tfsdk:"default_value"`
+	Description      types.String                 `tfsdk:"description"`
+	Type             types.String                 `tfsdk:"type"`
+	FullName         types.String                 `tfsdk:"full_name"`
+	ManagedEntity    types.Object                 `tfsdk:"managed_entity"`
+	Name             types.String                 `tfsdk:"name"`
+	Parent           types.Object                 `tfsdk:"parent"`
+	Processor        types.Object                 `tfsdk:"processor"`
+	RepetitionSource types.Object                 `tfsdk:"repetition_source"`
+	Resolvers        types.List                   `tfsdk:"resolvers"`
+	ValueType        types.Object                 `tfsdk:"value_type"`
+	Version          types.String                 `tfsdk:"version"`
 	// ValueSchema types.String `tfsdk:"value_schema"`
 }
 
@@ -72,9 +74,9 @@ func (r *TrustFrameworkAttributeResource) Schema(ctx context.Context, req resour
 		"A string that describes the resource type.",
 	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataDefinitionsAttributeDefinitionDTOTypeEnumValues)
 
-	// managedEntityDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-	// 	"An object that specifies configuration settings for a system-assigned set of restrictions and metadata related to the resource.",
-	// )
+	managedEntityDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An object that specifies configuration settings for a system-assigned set of restrictions and metadata related to the resource.",
+	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -106,15 +108,19 @@ func (r *TrustFrameworkAttributeResource) Schema(ctx context.Context, req resour
 				Description:         typeDescription.Description,
 				MarkdownDescription: typeDescription.MarkdownDescription,
 				Computed:            true,
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 
-			// "managed_entity": schema.SingleNestedAttribute{ // TODO: DOC ERROR - Object Not in docs
-			// 	Description:         managedEntityDescription.Description,
-			// 	MarkdownDescription: managedEntityDescription.MarkdownDescription,
-			// 	Computed:            true,
+			"managed_entity": schema.SingleNestedAttribute{ // TODO: DOC ERROR - Object Not in docs
+				Description:         managedEntityDescription.Description,
+				MarkdownDescription: managedEntityDescription.MarkdownDescription,
+				Computed:            true,
 
-			// 	Attributes: managedEntityObjectSchemaAttributes(),
-			// },
+				Attributes: managedEntityObjectSchemaAttributes(),
+			},
 
 			"name": schema.StringAttribute{ // DONE
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a user-friendly authorization attribute name.  The value must be unique.").Description,
@@ -449,10 +455,6 @@ func (p *trustFrameworkAttributeResourceModel) expand(ctx context.Context, updat
 		data.SetDescription(p.Description.ValueString())
 	}
 
-	// if !p.FullName.IsNull() && !p.FullName.IsUnknown() {
-	// 	data.SetFullName(p.FullName.ValueString())
-	// }
-
 	// if !p.ManagedEntity.IsNull() && !p.ManagedEntity.IsUnknown() {
 
 	// 	managedEntity, d := expandEditorManagedEntity(ctx, p.ManagedEntity)
@@ -549,7 +551,7 @@ func (p *trustFrameworkAttributeResourceModel) toState(ctx context.Context, apiO
 	p.Type = framework.EnumOkToTF(apiObject.GetTypeOk())
 	p.FullName = framework.StringOkToTF(apiObject.GetFullNameOk())
 
-	// p.ManagedEntity, d = editorManagedEntityOkToTF(apiObject.GetManagedEntityOk())
+	p.ManagedEntity, d = editorManagedEntityOkToTF(apiObject.GetManagedEntityOk())
 	diags.Append(d...)
 
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
