@@ -35,7 +35,10 @@ linters:
 
 linters-settings:
   errcheck:
-    ignore: github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema:ForceNew|Set,fmt:.*,io:Close
+    exclude-functions:
+      - (*github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema.ResourceData).Set
+      - (*github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema.ResourceData).ForceNew
+      - io:Close
   
   mnd:
     checks:
