@@ -108,26 +108,44 @@ func (r *EnvironmentsDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
-	filterFunction := func() (any, *http.Response, error) {
-		return r.Client.ManagementAPIClient.EnvironmentsApi.ReadAllEnvironments(ctx).Filter(data.ScimFilter.ValueString()).Execute()
-	}
-
-	var entityArray *management.EntityArray
+	var environments []management.Environment
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		filterFunction,
+		func() (any, *http.Response, error) {
+			pagedIterator := r.Client.ManagementAPIClient.EnvironmentsApi.ReadAllEnvironments(ctx).Filter(data.ScimFilter.ValueString()).Execute()
+
+			returnEnvironments := make([]management.Environment, 0)
+
+			var initialHttpResponse *http.Response
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return nil, pageCursor.HTTPResponse, err
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if environments, ok := pageCursor.EntityArray.Embedded.GetEnvironmentsOk(); ok {
+					returnEnvironments = append(returnEnvironments, environments...)
+				}
+			}
+
+			return returnEnvironments, initialHttpResponse, nil
+		},
 		"ReadAllEnvironments",
 		framework.DefaultCustomError,
 		nil,
-		&entityArray,
+		&environments,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(entityArray.Embedded.GetEnvironments())...)
+	resp.Diagnostics.Append(data.toState(environments)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

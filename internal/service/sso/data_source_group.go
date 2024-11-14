@@ -206,7 +206,8 @@ func (r *GroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.GroupsApi.ReadAllGroups(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
+			// We expect only one result, so get just the initial page
+			fO, fR, fErr := r.Client.ManagementAPIClient.GroupsApi.ReadAllGroups(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Limit(2).ExecuteInitialPage()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadAllGroups",
@@ -219,6 +220,8 @@ func (r *GroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	}
 
 	if groups, ok := entityArray.Embedded.GetGroupsOk(); ok && len(groups) > 0 && groups[0].Id != nil {
+
+		// FIXME: issue error for multiple groups found
 
 		group = groups[0]
 

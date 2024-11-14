@@ -50,23 +50,25 @@ func sweepGroups(region string) error {
 
 	for _, environment := range environments {
 
-		respGroupsList, _, err := apiClient.GroupsApi.ReadAllGroups(ctx, environment.GetId()).Execute()
-		if err != nil {
-			return fmt.Errorf("Error getting groups: %s", err)
-		}
+		pagedIterator := apiClient.GroupsApi.ReadAllGroups(ctx, environment.GetId()).Execute()
+		for pageCursor, err := range pagedIterator {
+			if err != nil {
+				return fmt.Errorf("Error getting groups: %s", err)
+			}
 
-		if groups, ok := respGroupsList.Embedded.GetGroupsOk(); ok {
+			if groups, ok := pageCursor.EntityArray.Embedded.GetGroupsOk(); ok {
 
-			for _, group := range groups {
+				for _, group := range groups {
 
-				_, err := apiClient.GroupsApi.DeleteGroup(ctx, environment.GetId(), group.GetId()).Execute()
+					_, err := apiClient.GroupsApi.DeleteGroup(ctx, environment.GetId(), group.GetId()).Execute()
 
-				if err != nil {
-					log.Printf("Error destroying group %s during sweep: %s", group.GetName(), err)
+					if err != nil {
+						log.Printf("Error destroying group %s during sweep: %s", group.GetName(), err)
+					}
+
 				}
 
 			}
-
 		}
 
 	}
@@ -93,24 +95,26 @@ func sweepPopulations(region string) error {
 
 	for _, environment := range environments {
 
-		respPopsList, _, err := apiClient.PopulationsApi.ReadAllPopulations(ctx, environment.GetId()).Execute()
-		if err != nil {
-			return fmt.Errorf("Error getting populations: %s", err)
-		}
+		pagedIterator := apiClient.PopulationsApi.ReadAllPopulations(ctx, environment.GetId()).Execute()
+		for pageCursor, err := range pagedIterator {
+			if err != nil {
+				return fmt.Errorf("Error getting populations: %s", err)
+			}
 
-		if populations, ok := respPopsList.Embedded.GetPopulationsOk(); ok {
+			if populations, ok := pageCursor.EntityArray.Embedded.GetPopulationsOk(); ok {
 
-			for _, population := range populations {
+				for _, population := range populations {
 
-				if (population.GetName() != "Default") && (strings.HasPrefix(population.GetName(), "default-")) {
+					if (population.GetName() != "Default") && (strings.HasPrefix(population.GetName(), "default-")) {
 
-					_, err := apiClient.PopulationsApi.DeletePopulation(ctx, environment.GetId(), population.GetId()).Execute()
+						_, err := apiClient.PopulationsApi.DeletePopulation(ctx, environment.GetId(), population.GetId()).Execute()
 
-					if err != nil {
-						log.Printf("Error destroying population %s during sweep: %s", population.GetName(), err)
+						if err != nil {
+							log.Printf("Error destroying population %s during sweep: %s", population.GetName(), err)
+						}
 					}
-				}
 
+				}
 			}
 		}
 
@@ -138,21 +142,23 @@ func sweepSOPs(region string) error {
 
 	for _, environment := range environments {
 
-		respList, _, err := apiClient.SignOnPoliciesApi.ReadAllSignOnPolicies(ctx, environment.GetId()).Execute()
-		if err != nil {
-			return fmt.Errorf("Error getting sign on policies: %s", err)
-		}
+		pagedIterator := apiClient.SignOnPoliciesApi.ReadAllSignOnPolicies(ctx, environment.GetId()).Execute()
+		for pageCursor, err := range pagedIterator {
+			if err != nil {
+				return fmt.Errorf("Error getting sign on policies: %s", err)
+			}
 
-		if signOnPolicies, ok := respList.Embedded.GetSignOnPoliciesOk(); ok {
+			if signOnPolicies, ok := pageCursor.EntityArray.Embedded.GetSignOnPoliciesOk(); ok {
 
-			for _, signOnPolicy := range signOnPolicies {
+				for _, signOnPolicy := range signOnPolicies {
 
-				_, err := apiClient.SignOnPoliciesApi.DeleteSignOnPolicy(ctx, environment.GetId(), signOnPolicy.GetId()).Execute()
+					_, err := apiClient.SignOnPoliciesApi.DeleteSignOnPolicy(ctx, environment.GetId(), signOnPolicy.GetId()).Execute()
 
-				if err != nil {
-					log.Printf("Error destroying sign-on policy %s during sweep: %s", signOnPolicy.GetName(), err)
+					if err != nil {
+						log.Printf("Error destroying sign-on policy %s during sweep: %s", signOnPolicy.GetName(), err)
+					}
+
 				}
-
 			}
 		}
 

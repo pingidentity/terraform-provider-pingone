@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -102,32 +101,53 @@ func (r *VerifyPoliciesDataSource) Read(ctx context.Context, req datasource.Read
 	}
 
 	// Run the API call
-	var entityArray *verify.EntityArray
+	var verifyPolicyIDs []string
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.VerifyAPIClient.VerifyPoliciesApi.ReadAllVerifyPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			pagedIterator := r.Client.VerifyAPIClient.VerifyPoliciesApi.ReadAllVerifyPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
+
+			var initialHttpResponse *http.Response
+
+			foundIDs := make([]string, 0)
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if pageCursor.EntityArray.Embedded != nil && pageCursor.EntityArray.Embedded.VerifyPolicies != nil {
+					for _, permission := range pageCursor.EntityArray.Embedded.GetVerifyPolicies() {
+						foundIDs = append(foundIDs, permission.GetId())
+					}
+				}
+			}
+
+			return foundIDs, initialHttpResponse, nil
 		},
 		"ReadAllVerifyPolicies",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-		&entityArray,
+		&verifyPolicyIDs,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(data.EnvironmentId.ValueString(), entityArray.Embedded.GetVerifyPolicies())...)
+	resp.Diagnostics.Append(data.toState(data.EnvironmentId.ValueString(), verifyPolicyIDs)...) // entityArray.Embedded.GetVerifyPolicies())...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (p *verifyPoliciesDataSourceModel) toState(environmentID string, verifyPolicies []verify.VerifyPolicy) diag.Diagnostics {
+func (p *verifyPoliciesDataSourceModel) toState(environmentID string, verifyPolicyIDs []string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if verifyPolicies == nil || environmentID == "" {
+	if verifyPolicyIDs == nil || environmentID == "" {
 		diags.AddError(
 			"Data object missing",
 			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
@@ -136,13 +156,8 @@ func (p *verifyPoliciesDataSourceModel) toState(environmentID string, verifyPoli
 		return diags
 	}
 
-	list := make([]string, 0)
-	for _, item := range verifyPolicies {
-		list = append(list, item.GetId())
-	}
-
 	p.Id = framework.PingOneResourceIDToTF(environmentID)
-	p.Ids = framework.PingOneResourceIDListToTF(list)
+	p.Ids = framework.PingOneResourceIDListToTF(verifyPolicyIDs)
 
 	return diags
 }

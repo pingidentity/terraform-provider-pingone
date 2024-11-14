@@ -433,25 +433,46 @@ func (r *PopulationResource) readUsers(ctx context.Context, environmentID, popul
 		scimFilter := fmt.Sprintf(`population.id eq "%s"`, populationID)
 
 		// Run the API call
-		var entityArray *management.EntityArray
+		var users []management.User
 		diags.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ManagementAPIClient.UsersApi.ReadAllUsers(ctx, environmentID).Filter(scimFilter).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentID, fO, fR, fErr)
+				pagedIterator := r.Client.ManagementAPIClient.UsersApi.ReadAllUsers(ctx, environmentID).Filter(scimFilter).Execute()
+
+				var initialHttpResponse *http.Response
+
+				foundUsers := make([]management.User, 0)
+
+				for pageCursor, err := range pagedIterator {
+					if err != nil {
+						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentID, nil, pageCursor.HTTPResponse, err)
+					}
+
+					if initialHttpResponse == nil {
+						initialHttpResponse = pageCursor.HTTPResponse
+					}
+
+					if pageCursor.EntityArray.Embedded != nil && pageCursor.EntityArray.Embedded.Users != nil {
+						for _, item := range pageCursor.EntityArray.Embedded.GetUsers() {
+							foundUsers = append(foundUsers, item)
+						}
+					}
+				}
+
+				return foundUsers, initialHttpResponse, nil
 			},
 			"ReadAllUsers",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&entityArray,
+			&users,
 		)...)
 
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		return entityArray.Embedded.GetUsers(), nil
+		return users, nil
 	}
 
 	if r.options.Population.ContainsUsersForceDelete {

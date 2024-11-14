@@ -141,53 +141,62 @@ func (r *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
-	var organization management.Organization
+	var organization *management.Organization
 
 	if !data.Name.IsNull() {
 
 		// Run the API call
-		var entityArray *management.EntityArray
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.ManagementAPIClient.OrganizationsApi.ReadAllOrganizations(ctx).Execute()
+				pagedIterator := r.Client.ManagementAPIClient.OrganizationsApi.ReadAllOrganizations(ctx).Execute()
+
+				var initialHttpResponse *http.Response
+
+				for pageCursor, err := range pagedIterator {
+					if err != nil {
+						return nil, pageCursor.HTTPResponse, err
+					}
+
+					if initialHttpResponse == nil {
+						initialHttpResponse = pageCursor.HTTPResponse
+					}
+
+					if organizations, ok := pageCursor.EntityArray.Embedded.GetOrganizationsOk(); ok {
+
+						for _, organizationItem := range organizations {
+
+							if organizationItem.GetName() == data.Name.ValueString() {
+								return organizationItem, pageCursor.HTTPResponse, nil
+							}
+						}
+					}
+
+				}
+
+				return nil, initialHttpResponse, nil
 			},
 			"ReadAllOrganizations",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&entityArray,
+			&organization,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		if organizations, ok := entityArray.Embedded.GetOrganizationsOk(); ok {
-
-			found := false
-			for _, organizationItem := range organizations {
-
-				if organizationItem.GetName() == data.Name.ValueString() {
-					organization = organizationItem
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				resp.Diagnostics.AddError(
-					"Cannot find organization from name",
-					fmt.Sprintf("The organization %s cannot be found", data.Name.String()),
-				)
-				return
-			}
-
+		if organization == nil {
+			resp.Diagnostics.AddError(
+				"Cannot find organization from name",
+				fmt.Sprintf("The organization %s cannot be found", data.Name.String()),
+			)
+			return
 		}
 
 	} else if !data.OrganizationId.IsNull() {
 
 		// Run the API call
-		var response *management.Organization
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
@@ -197,13 +206,12 @@ func (r *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRe
 			"ReadOneOrganization",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&response,
+			&organization,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		organization = *response
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",
@@ -213,7 +221,7 @@ func (r *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRe
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&organization)...)
+	resp.Diagnostics.Append(data.toState(organization)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

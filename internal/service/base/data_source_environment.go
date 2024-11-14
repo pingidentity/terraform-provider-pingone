@@ -267,7 +267,8 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.ManagementAPIClient.EnvironmentsApi.ReadAllEnvironments(ctx).Filter(scimFilter).Execute()
+				// Return just the initial page because the filter should match only one environment
+				return r.Client.ManagementAPIClient.EnvironmentsApi.ReadAllEnvironments(ctx).Filter(scimFilter).Limit(2).ExecuteInitialPage()
 			},
 			"ReadAllEnvironments",
 			framework.DefaultCustomError,
@@ -279,6 +280,14 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 		}
 
 		if environments, ok := entityArray.Embedded.GetEnvironmentsOk(); ok {
+
+			// FIXME: multiple results issue
+			if len(environments) > 1 {
+				resp.Diagnostics.AddError(
+					"Multiple environments found",
+					fmt.Sprintf("Multiple environments found with the name %s.  Please refine the filter or use the `environment_id` field to retrieve the environment.", data.Name.String()),
+				)
+			}
 
 			found := false
 			for _, environmentItem := range environments {

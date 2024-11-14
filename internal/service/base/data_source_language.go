@@ -134,12 +134,35 @@ func datasourcePingOneLanguageRead(ctx context.Context, d *schema.ResourceData, 
 func findLanguageByLocale(ctx context.Context, apiClient *management.APIClient, environmentID, locale string) (*management.Language, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	respList, diags := sdk.ParseResponse(
+	response, diags := sdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.LanguagesApi.ReadLanguages(ctx, environmentID).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
+			pagedIterator := apiClient.LanguagesApi.ReadLanguages(ctx, environmentID).Execute()
+
+			var initialHttpResponse *http.Response
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if languages, ok := pageCursor.EntityArray.Embedded.GetLanguagesOk(); ok {
+
+					for _, language := range languages {
+
+						if language.Language.GetLocale() == locale {
+							return language.Language, pageCursor.HTTPResponse, nil
+						}
+					}
+				}
+			}
+
+			return nil, initialHttpResponse, nil
 		},
 		"ReadAllLanguages",
 		sdk.DefaultCustomError,
@@ -149,77 +172,75 @@ func findLanguageByLocale(ctx context.Context, apiClient *management.APIClient, 
 		return nil, diags
 	}
 
-	respObject := respList.(*management.EntityArray)
+	if response == nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Cannot find language by locale %s", locale),
+		})
 
-	var resp *management.Language
-	if languages, ok := respObject.Embedded.GetLanguagesOk(); ok {
-
-		found := false
-		for _, language := range languages {
-
-			if language.Language.GetLocale() == locale {
-				resp = language.Language
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Cannot find language by locale %s", locale),
-			})
-
-			return nil, diags
-		}
-
+		return nil, diags
 	}
 
-	return resp, diags
+	language, ok := response.(*management.Language)
+	if !ok {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Unexpected language %s", locale),
+		})
+	}
+
+	return language, diags
 }
 
 func findLanguageByLocale_Framework(ctx context.Context, apiClient *management.APIClient, environmentID, locale string) (*management.Language, diagframework.Diagnostics) {
 	var diags diagframework.Diagnostics
 
-	var respObject *management.EntityArray
+	var resp *management.Language
 	diags.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.LanguagesApi.ReadLanguages(ctx, environmentID).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
+			pagedIterator := apiClient.LanguagesApi.ReadLanguages(ctx, environmentID).Execute()
+
+			var initialHttpResponse *http.Response
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if languages, ok := pageCursor.EntityArray.Embedded.GetLanguagesOk(); ok {
+					for _, language := range languages {
+
+						if language.Language.GetLocale() == locale {
+							return language.Language, pageCursor.HTTPResponse, nil
+						}
+					}
+				}
+			}
+
+			return nil, initialHttpResponse, nil
 		},
 		"ReadAllLanguages-F",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-		&respObject,
+		&resp,
 	)...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
-	var resp *management.Language
-	if languages, ok := respObject.Embedded.GetLanguagesOk(); ok {
+	if resp == nil {
+		diags.AddError(
+			fmt.Sprintf("Cannot find language by locale %s", locale),
+			"The language was not found in the list of languages from the locale provided.",
+		)
 
-		found := false
-		for _, language := range languages {
-
-			if language.Language.GetLocale() == locale {
-				resp = language.Language
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			diags.AddError(
-				fmt.Sprintf("Cannot find language by locale %s", locale),
-				"The language was not found in the list of languages from the locale provided.",
-			)
-
-			return nil, diags
-		}
-
+		return nil, diags
 	}
 
 	return resp, diags

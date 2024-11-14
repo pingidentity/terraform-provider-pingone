@@ -445,54 +445,63 @@ func (r *GatewayDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 	} else if !data.Name.IsNull() {
 		// Run the API call
-		var entityArray *management.EntityArray
+		var response *management.CreateGateway201Response
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ManagementAPIClient.GatewaysApi.ReadAllGateways(ctx, data.EnvironmentId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				// fO, fR, fErr := r.Client.ManagementAPIClient.GatewaysApi.ReadAllGateways(ctx, data.EnvironmentId.ValueString()).Execute()
+				pagedIterator := r.Client.ManagementAPIClient.GatewaysApi.ReadAllGateways(ctx, data.EnvironmentId.ValueString()).Execute()
+
+				var initialHttpResponse *http.Response
+
+				for pageCursor, err := range pagedIterator {
+					if err != nil {
+						return nil, pageCursor.HTTPResponse, err
+					}
+
+					if initialHttpResponse == nil {
+						initialHttpResponse = pageCursor.HTTPResponse
+					}
+
+					if gateways, ok := pageCursor.EntityArray.Embedded.GetGatewaysOk(); ok {
+
+						for _, gatewayObject := range gateways {
+							if gateway := gatewayObject.Gateway; gateway != nil && gateway.GetId() != "" && gateway.GetName() == data.Name.ValueString() {
+								return gateway, pageCursor.HTTPResponse, nil
+
+							} else if gateway := gatewayObject.GatewayTypeLDAP; gateway != nil && gateway.GetId() != "" && gateway.GetName() == data.Name.ValueString() {
+								return gateway, pageCursor.HTTPResponse, nil
+
+							} else if gateway := gatewayObject.GatewayTypeRADIUS; gateway != nil && gateway.GetId() != "" && gateway.GetName() == data.Name.ValueString() {
+								return gateway, pageCursor.HTTPResponse, nil
+
+							}
+						}
+
+					}
+				}
+
+				return nil, initialHttpResponse, nil
 			},
 			"ReadAllGateways",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&entityArray,
+			&response,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		if gateways, ok := entityArray.Embedded.GetGatewaysOk(); ok {
-			found := false
-
-			for _, gatewayObject := range gateways {
-				if gateway := gatewayObject.Gateway; gateway != nil && gateway.GetId() != "" && gateway.GetName() == data.Name.ValueString() {
-					gatewayInstance = gateway
-					found = true
-					break
-
-				} else if gateway := gatewayObject.GatewayTypeLDAP; gateway != nil && gateway.GetId() != "" && gateway.GetName() == data.Name.ValueString() {
-					gatewayInstance = gateway
-					found = true
-					break
-
-				} else if gateway := gatewayObject.GatewayTypeRADIUS; gateway != nil && gateway.GetId() != "" && gateway.GetName() == data.Name.ValueString() {
-					gatewayInstance = gateway
-					found = true
-					break
-
-				}
-			}
-
-			if !found {
-				resp.Diagnostics.AddError(
-					"Cannot find the gateway from name",
-					fmt.Sprintf("The gateway name %s for environment %s cannot be found", data.Name.String(), data.EnvironmentId.String()),
-				)
-				return
-			}
-
+		if response == nil {
+			resp.Diagnostics.AddError(
+				"Cannot find the gateway from name",
+				fmt.Sprintf("The gateway name %s for environment %s cannot be found", data.Name.String(), data.EnvironmentId.String()),
+			)
+			return
 		}
+
+		gatewayInstance = response.GetActualInstance()
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",

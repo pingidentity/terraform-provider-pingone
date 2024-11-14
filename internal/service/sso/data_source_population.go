@@ -190,7 +190,8 @@ func (r *PopulationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
+			// We only expect one result, so just get the initial page
+			fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Limit(2).ExecuteInitialPage()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadAllPopulations",
@@ -203,6 +204,8 @@ func (r *PopulationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	}
 
 	if populations, ok := entityArray.Embedded.GetPopulationsOk(); ok && len(populations) > 0 && populations[0].Id != nil {
+
+		// FIXME: Multiple results found error
 
 		population = populations[0]
 

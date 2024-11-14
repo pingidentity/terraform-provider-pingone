@@ -546,44 +546,53 @@ func (p *IdentityProviderAttributeResourceModel) expand(ctx context.Context, api
 
 	if overrideExisting {
 
-		var respList *management.EntityArray
 		diags.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := apiClient.IdentityProviderAttributesApi.ReadAllIdentityProviderAttributes(ctx, p.EnvironmentId.ValueString(), p.IdentityProviderId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, p.EnvironmentId.ValueString(), fO, fR, fErr)
+				pagedIterator := apiClient.IdentityProviderAttributesApi.ReadAllIdentityProviderAttributes(ctx, p.EnvironmentId.ValueString(), p.IdentityProviderId.ValueString()).Execute()
+
+				var initialHttpResponse *http.Response
+
+				for pageCursor, err := range pagedIterator {
+					if err != nil {
+						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, p.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					}
+
+					if initialHttpResponse == nil {
+						initialHttpResponse = pageCursor.HTTPResponse
+					}
+
+					if idpAttributes, ok := pageCursor.EntityArray.Embedded.GetAttributesOk(); ok {
+
+						for _, idpAttribute := range idpAttributes {
+
+							if idpAttribute.IdentityProviderAttribute.GetName() == p.Name.ValueString() {
+								return idpAttribute.IdentityProviderAttribute, pageCursor.HTTPResponse, nil
+							}
+						}
+
+					}
+				}
+
+				return nil, initialHttpResponse, nil
 			},
 			"ReadAllIdentityProviderAttributes",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&respList,
+			&data,
 		)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		if idpAttributes, ok := respList.Embedded.GetAttributesOk(); ok {
+		if data == nil {
+			diags.AddError(
+				fmt.Sprintf("Cannot find identity provider attribute %s", p.Name.ValueString()),
+				"The identity provider attribute cannot be found by the provided name.",
+			)
 
-			found := false
-			for _, idpAttribute := range idpAttributes {
-
-				if idpAttribute.IdentityProviderAttribute.GetName() == p.Name.ValueString() {
-					data = idpAttribute.IdentityProviderAttribute
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				diags.AddError(
-					fmt.Sprintf("Cannot find identity provider attribute %s", p.Name.ValueString()),
-					"The identity provider attribute cannot be found by the provided name.",
-				)
-
-				return nil, diags
-			}
-
+			return nil, diags
 		}
 
 		data.SetValue(p.Value.ValueString())

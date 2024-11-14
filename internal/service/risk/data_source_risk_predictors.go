@@ -18,68 +18,73 @@ import (
 func riskPredictorFetchIDsFromCompactNames(ctx context.Context, apiClient *risk.APIClient, managementApiClient *management.APIClient, environmentID string, predictorCompactNames []string) ([]string, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var entityArray *risk.EntityArray
+	riskPredictorIDsMap := make(map[string]string)
 	diags.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.RiskAdvancedPredictorsApi.ReadAllRiskPredictors(ctx, environmentID).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, managementApiClient, environmentID, fO, fR, fErr)
+			pagedIterator := apiClient.RiskAdvancedPredictorsApi.ReadAllRiskPredictors(ctx, environmentID).Execute()
+
+			var initialHttpResponse *http.Response
+
+			riskPredictorIDsMap := make(map[string]string)
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, managementApiClient, environmentID, nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if riskPredictors, ok := pageCursor.EntityArray.Embedded.GetRiskPredictorsOk(); ok {
+
+					for _, riskPredictor := range riskPredictors {
+
+						riskPredictorActualInstance := riskPredictor.GetActualInstance()
+
+						// Get the ID and compact name of the risk predictor
+						var predictor struct {
+							ID          string `json:"id"`
+							CompactName string `json:"compactName"`
+						}
+
+						predictorBytes, err := json.Marshal(riskPredictorActualInstance)
+						if err != nil {
+							return nil, pageCursor.HTTPResponse, err
+						}
+
+						err = json.Unmarshal(predictorBytes, &predictor)
+						if err != nil {
+							return nil, pageCursor.HTTPResponse, err
+						}
+
+						// Add the ID to the map of all risk predictors
+						if predictor.ID != "" && predictor.CompactName != "" {
+							riskPredictorIDsMap[predictor.CompactName] = predictor.ID
+						}
+					}
+				}
+			}
+
+			return riskPredictorIDsMap, initialHttpResponse, nil
 		},
 		"ReadAllRiskPredictors",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-		&entityArray,
+		&riskPredictorIDsMap,
 	)...)
 	if diags.HasError() {
 		return nil, diags
-	}
-
-	riskPredictorIDs := make(map[string]string)
-
-	if riskPredictors, ok := entityArray.Embedded.GetRiskPredictorsOk(); ok {
-
-		for _, riskPredictor := range riskPredictors {
-
-			riskPredictorActualInstance := riskPredictor.GetActualInstance()
-
-			// Get the ID and compact name of the risk predictor
-			var predictor struct {
-				ID          string `json:"id"`
-				CompactName string `json:"compactName"`
-			}
-
-			predictorBytes, err := json.Marshal(riskPredictorActualInstance)
-			if err != nil {
-				diags.AddError(
-					"Cannot marshal risk predictor",
-					fmt.Sprintf("Error marshalling risk predictor: %s", err),
-				)
-				return nil, diags
-			}
-
-			err = json.Unmarshal(predictorBytes, &predictor)
-			if err != nil {
-				diags.AddError(
-					"Cannot unmarshal risk predictor",
-					fmt.Sprintf("Error unmarshalling risk predictor: %s", err),
-				)
-				return nil, diags
-			}
-
-			// Add the ID to the map of all risk predictors
-			if predictor.ID != "" && predictor.CompactName != "" {
-				riskPredictorIDs[predictor.CompactName] = predictor.ID
-			}
-		}
 	}
 
 	// Check that all the input risk predictors were found
 	returnVar := make([]string, 0)
 
 	for _, predictorCompactName := range predictorCompactNames {
-		if _, ok := riskPredictorIDs[predictorCompactName]; ok {
-			returnVar = append(returnVar, riskPredictorIDs[predictorCompactName])
+		if _, ok := riskPredictorIDsMap[predictorCompactName]; ok {
+			returnVar = append(returnVar, riskPredictorIDsMap[predictorCompactName])
 		} else {
 			diags.AddError(
 				"Cannot find risk predictor from compact name",

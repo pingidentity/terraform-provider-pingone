@@ -136,54 +136,62 @@ func (r *TrustedEmailDomainDataSource) Read(ctx context.Context, req datasource.
 		return
 	}
 
-	var emailDomain management.EmailDomain
+	var emailDomain *management.EmailDomain
 
 	if !data.DomainName.IsNull() {
 
 		// Run the API call
-		var entityArray *management.EntityArray
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ManagementAPIClient.TrustedEmailDomainsApi.ReadAllTrustedEmailDomains(ctx, data.EnvironmentId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				pagedIterator := r.Client.ManagementAPIClient.TrustedEmailDomainsApi.ReadAllTrustedEmailDomains(ctx, data.EnvironmentId.ValueString()).Execute()
+
+				var initialHttpResponse *http.Response
+
+				for pageCursor, err := range pagedIterator {
+					if err != nil {
+						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					}
+
+					if initialHttpResponse == nil {
+						initialHttpResponse = pageCursor.HTTPResponse
+					}
+
+					if emailDomains, ok := pageCursor.EntityArray.Embedded.GetEmailDomainsOk(); ok {
+
+						for _, emailDomainItem := range emailDomains {
+
+							if emailDomainItem.GetDomainName() == data.DomainName.ValueString() {
+								return emailDomainItem, pageCursor.HTTPResponse, nil
+							}
+						}
+
+					}
+				}
+
+				return nil, initialHttpResponse, nil
 			},
 			"ReadAllTrustedEmailDomains",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&entityArray,
+			&emailDomain,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		if emailDomains, ok := entityArray.Embedded.GetEmailDomainsOk(); ok {
-
-			found := false
-			for _, emailDomainItem := range emailDomains {
-
-				if emailDomainItem.GetDomainName() == data.DomainName.ValueString() {
-					emailDomain = emailDomainItem
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				resp.Diagnostics.AddError(
-					"Cannot find trusted email domain from domain_name",
-					fmt.Sprintf("The trusted email domain %s for environment %s cannot be found", data.DomainName.String(), data.EnvironmentId.String()),
-				)
-				return
-			}
-
+		if emailDomain == nil {
+			resp.Diagnostics.AddError(
+				"Cannot find trusted email domain from domain_name",
+				fmt.Sprintf("The trusted email domain %s for environment %s cannot be found", data.DomainName.String(), data.EnvironmentId.String()),
+			)
+			return
 		}
 
 	} else if !data.EmailDomainId.IsNull() {
 
 		// Run the API call
-		var response *management.EmailDomain
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
@@ -194,13 +202,12 @@ func (r *TrustedEmailDomainDataSource) Read(ctx context.Context, req datasource.
 			"ReadOneTrustedEmailDomain",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&response,
+			&emailDomain,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		emailDomain = *response
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",
@@ -210,7 +217,7 @@ func (r *TrustedEmailDomainDataSource) Read(ctx context.Context, req datasource.
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&emailDomain)...)
+	resp.Diagnostics.Append(data.toState(emailDomain)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

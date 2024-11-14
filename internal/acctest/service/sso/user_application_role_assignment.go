@@ -22,6 +22,7 @@ func UserApplicationRoleAssignment_CheckDestroy(s *terraform.State) error {
 
 	apiClient := p1Client.API.ManagementAPIClient
 
+mainloop:
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "pingone_user_application_role_assignment" {
 			continue
@@ -45,24 +46,35 @@ func UserApplicationRoleAssignment_CheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		response, r, err := apiClient.UserApplicationRoleAssignmentsApi.ReadUserApplicationRoleAssignments(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["user_id"]).Execute()
+		pagedIterator := apiClient.UserApplicationRoleAssignmentsApi.ReadUserApplicationRoleAssignments(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["user_id"]).Execute()
 
-		shouldContinue, err = acctest.CheckForResourceDestroy(r, err)
-		if err != nil {
-			return err
-		}
+		found := false
 
-		if response == nil {
-			return fmt.Errorf("PingOne User Application Role Assignment list cannot be found")
-		}
+	pagedIteratorLoop:
+		for pageCursor, err := range pagedIterator {
+			shouldContinue, err = acctest.CheckForResourceDestroy(pageCursor.HTTPResponse, err)
+			if err != nil {
+				return err
+			}
 
-		for _, roleAssignment := range response.Embedded.GetRoles() {
-			if v, ok := roleAssignment.UserApplicationRoleAssignment.GetIdOk(); ok && v != nil && *v == rs.Primary.Attributes["application_role_id"] {
-				shouldContinue = false
+			// Environment not found
+			if shouldContinue {
+				continue mainloop
+			}
+
+			if pageCursor.EntityArray == nil {
+				return fmt.Errorf("PingOne User Application Role Assignment list cannot be found")
+			}
+
+			for _, roleAssignment := range pageCursor.EntityArray.Embedded.GetRoles() {
+				if v, ok := roleAssignment.UserApplicationRoleAssignment.GetIdOk(); ok && v != nil && *v == rs.Primary.Attributes["application_role_id"] {
+					found = true
+					break pagedIteratorLoop
+				}
 			}
 		}
 
-		if shouldContinue {
+		if !found {
 			continue
 		}
 

@@ -1712,89 +1712,99 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 	var riskPredictorCommonData *risk.RiskPredictorCommon
 
 	// Check if this is attempting to overwrite an existing predictor.  We'll only allows overwriting where deletable = false
-	var response *risk.EntityArray
 	diags.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.RiskAdvancedPredictorsApi.ReadAllRiskPredictors(ctx, p.EnvironmentId.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, managementApiClient, p.EnvironmentId.ValueString(), fO, fR, fErr)
+			pagedIterator := apiClient.RiskAdvancedPredictorsApi.ReadAllRiskPredictors(ctx, p.EnvironmentId.ValueString()).Execute()
+
+			var initialHttpResponse *http.Response
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, managementApiClient, p.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if predictors, ok := pageCursor.EntityArray.Embedded.GetRiskPredictorsOk(); ok {
+
+					for _, predictor := range predictors {
+						predictorObject := predictor.GetActualInstance()
+
+						var predictorId string
+						var predictorCompactName string
+						var predictorDeletable bool
+
+						switch t := predictorObject.(type) {
+						case *risk.RiskPredictorAdversaryInTheMiddle:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
+						case *risk.RiskPredictorAnonymousNetwork:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
+						case *risk.RiskPredictorBotDetection:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
+						case *risk.RiskPredictorComposite:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
+						case *risk.RiskPredictorCustom:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
+						case *risk.RiskPredictorDevice:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
+						case *risk.RiskPredictorEmailReputation:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
+						case *risk.RiskPredictorGeovelocity:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
+						case *risk.RiskPredictorIPReputation:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
+						case *risk.RiskPredictorUserLocationAnomaly:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
+						case *risk.RiskPredictorUserRiskBehavior:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
+						case *risk.RiskPredictorVelocity:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
+						}
+
+						if strings.EqualFold(predictorCompactName, p.CompactName.ValueString()) && !predictorDeletable {
+							return predictorId, pageCursor.HTTPResponse, nil
+						}
+					}
+				}
+			}
+
+			return nil, initialHttpResponse, nil
 		},
 		"ReadAllRiskPredictors",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-		&response,
+		&overwriteRiskPredictorId,
 	)...)
 	if diags.HasError() {
 		return nil, nil, diags
-	}
-
-	if predictors, ok := response.Embedded.GetRiskPredictorsOk(); ok {
-
-		for _, predictor := range predictors {
-			predictorObject := predictor.GetActualInstance()
-
-			var predictorId string
-			var predictorCompactName string
-			var predictorDeletable bool
-
-			switch t := predictorObject.(type) {
-			case *risk.RiskPredictorAdversaryInTheMiddle:
-				predictorId = t.GetId()
-				predictorCompactName = t.GetCompactName()
-				predictorDeletable = t.GetDeletable()
-			case *risk.RiskPredictorAnonymousNetwork:
-				predictorId = t.GetId()
-				predictorCompactName = t.GetCompactName()
-				predictorDeletable = t.GetDeletable()
-			case *risk.RiskPredictorBotDetection:
-				predictorId = t.GetId()
-				predictorCompactName = t.GetCompactName()
-				predictorDeletable = t.GetDeletable()
-			case *risk.RiskPredictorComposite:
-				predictorId = t.GetId()
-				predictorCompactName = t.GetCompactName()
-				predictorDeletable = t.GetDeletable()
-			case *risk.RiskPredictorCustom:
-				predictorId = t.GetId()
-				predictorCompactName = t.GetCompactName()
-				predictorDeletable = t.GetDeletable()
-			case *risk.RiskPredictorDevice:
-				predictorId = t.GetId()
-				predictorCompactName = t.GetCompactName()
-				predictorDeletable = t.GetDeletable()
-			case *risk.RiskPredictorEmailReputation:
-				predictorId = t.GetId()
-				predictorCompactName = t.GetCompactName()
-				predictorDeletable = t.GetDeletable()
-			case *risk.RiskPredictorGeovelocity:
-				predictorId = t.GetId()
-				predictorCompactName = t.GetCompactName()
-				predictorDeletable = t.GetDeletable()
-			case *risk.RiskPredictorIPReputation:
-				predictorId = t.GetId()
-				predictorCompactName = t.GetCompactName()
-				predictorDeletable = t.GetDeletable()
-			case *risk.RiskPredictorUserLocationAnomaly:
-				predictorId = t.GetId()
-				predictorCompactName = t.GetCompactName()
-				predictorDeletable = t.GetDeletable()
-			case *risk.RiskPredictorUserRiskBehavior:
-				predictorId = t.GetId()
-				predictorCompactName = t.GetCompactName()
-				predictorDeletable = t.GetDeletable()
-			case *risk.RiskPredictorVelocity:
-				predictorId = t.GetId()
-				predictorCompactName = t.GetCompactName()
-				predictorDeletable = t.GetDeletable()
-			}
-
-			if strings.EqualFold(predictorCompactName, p.CompactName.ValueString()) && !predictorDeletable {
-				overwriteRiskPredictorId = &predictorId
-
-				break
-			}
-		}
 	}
 
 	riskPredictorCommonData = risk.NewRiskPredictorCommon(p.Name.ValueString(), p.CompactName.ValueString(), risk.EnumPredictorType(p.Type.ValueString()))

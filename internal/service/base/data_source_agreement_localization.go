@@ -204,62 +204,70 @@ func (r *AgreementLocalizationDataSource) Read(ctx context.Context, req datasour
 		return
 	}
 
-	var agreementLocalization management.AgreementLanguage
+	var agreementLocalization *management.AgreementLanguage
 
 	if !data.DisplayName.IsNull() || !data.Locale.IsNull() {
 
 		// Run the API call
-		var entityArray *management.EntityArray
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ManagementAPIClient.AgreementLanguagesResourcesApi.ReadAllAgreementLanguages(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				pagedIterator := r.Client.ManagementAPIClient.AgreementLanguagesResourcesApi.ReadAllAgreementLanguages(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString()).Execute()
+
+				var initialHttpResponse *http.Response
+
+				for pageCursor, err := range pagedIterator {
+					if err != nil {
+						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					}
+
+					if initialHttpResponse == nil {
+						initialHttpResponse = pageCursor.HTTPResponse
+					}
+
+					if agreementLocalizations, ok := pageCursor.EntityArray.Embedded.GetLanguagesOk(); ok {
+
+						for _, localizationItem := range agreementLocalizations {
+
+							if (!data.DisplayName.IsNull() && localizationItem.AgreementLanguage.GetDisplayName() == data.DisplayName.ValueString()) ||
+								(!data.Locale.IsNull() && localizationItem.AgreementLanguage.GetLocale() == data.Locale.ValueString()) {
+								return *localizationItem.AgreementLanguage, pageCursor.HTTPResponse, nil
+							}
+
+						}
+					}
+				}
+
+				return nil, initialHttpResponse, nil
 			},
 			"ReadAllAgreementLanguages",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&entityArray,
+			&agreementLocalization,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		if agreementLocalizations, ok := entityArray.Embedded.GetLanguagesOk(); ok {
-
-			found := false
-			for _, localizationItem := range agreementLocalizations {
-
-				if (!data.DisplayName.IsNull() && localizationItem.AgreementLanguage.GetDisplayName() == data.DisplayName.ValueString()) ||
-					(!data.Locale.IsNull() && localizationItem.AgreementLanguage.GetLocale() == data.Locale.ValueString()) {
-					agreementLocalization = *localizationItem.AgreementLanguage
-					found = true
-					break
-				}
+		if agreementLocalization == nil {
+			var identifier string
+			if !data.DisplayName.IsNull() {
+				identifier = data.DisplayName.String()
+			} else if !data.Locale.IsNull() {
+				identifier = data.Locale.String()
 			}
 
-			if !found {
-				var identifier string
-				if !data.DisplayName.IsNull() {
-					identifier = data.DisplayName.String()
-				} else if !data.Locale.IsNull() {
-					identifier = data.Locale.String()
-				}
-
-				resp.Diagnostics.AddError(
-					"Cannot find agreement localization from name or locale",
-					fmt.Sprintf("The agreement localization %s for environment %s cannot be found", identifier, data.EnvironmentId.String()),
-				)
-				return
-			}
-
+			resp.Diagnostics.AddError(
+				"Cannot find agreement localization from name or locale",
+				fmt.Sprintf("The agreement localization %s for environment %s cannot be found", identifier, data.EnvironmentId.String()),
+			)
+			return
 		}
 
 	} else if !data.AgreementLocalizationId.IsNull() {
 
 		// Run the API call
-		var response *management.AgreementLanguage
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
@@ -270,13 +278,12 @@ func (r *AgreementLocalizationDataSource) Read(ctx context.Context, req datasour
 			"ReadOneAgreementLanguage",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&response,
+			&agreementLocalization,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		agreementLocalization = *response
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",
@@ -296,7 +303,7 @@ func (r *AgreementLocalizationDataSource) Read(ctx context.Context, req datasour
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&agreementLocalization, languageResponse.GetId())...)
+	resp.Diagnostics.Append(data.toState(agreementLocalization, languageResponse.GetId())...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

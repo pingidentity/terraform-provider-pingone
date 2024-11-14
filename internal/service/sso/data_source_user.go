@@ -665,7 +665,8 @@ func (r *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.UsersApi.ReadAllUsers(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
+			// We expect just one result, so get just the initial page
+			fO, fR, fErr := r.Client.ManagementAPIClient.UsersApi.ReadAllUsers(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Limit(2).ExecuteInitialPage()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadAllUsers",
@@ -678,7 +679,9 @@ func (r *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	}
 
 	var responseEnabled *management.UserEnabled
-	if users, ok := response.Embedded.GetUsersOk(); ok && len(users) > 0 && users[0].Id != nil {
+	if users, ok := response.Embedded.GetUsersOk(); ok && len(users) > 0 {
+
+		// FIXME: multiple results
 
 		user = users[0]
 

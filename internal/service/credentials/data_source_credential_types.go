@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -102,33 +101,54 @@ func (r *CredentialTypesDataSource) Read(ctx context.Context, req datasource.Rea
 	}
 
 	// Run the API call
-	var entityArray *credentials.EntityArray
+	var credentialTypeIDs []string
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.CredentialsAPIClient.CredentialTypesApi.ReadAllCredentialTypes(ctx, data.EnvironmentId.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			pagedIterator := r.Client.CredentialsAPIClient.CredentialTypesApi.ReadAllCredentialTypes(ctx, data.EnvironmentId.ValueString()).Execute()
+
+			var initialHttpResponse *http.Response
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if pageCursor.EntityArray.Embedded != nil && pageCursor.EntityArray.Embedded.Items != nil {
+					for _, credentialType := range pageCursor.EntityArray.Embedded.GetItems() {
+						if credentialType.CredentialType != nil && credentialType.CredentialType.Id != nil {
+							credentialTypeIDs = append(credentialTypeIDs, *credentialType.CredentialType.Id)
+						}
+					}
+				}
+			}
+
+			return credentialTypeIDs, initialHttpResponse, nil
 		},
 		"ReadAllCredentialTypes",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-		&entityArray,
+		&credentialTypeIDs,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(data.EnvironmentId.ValueString(), entityArray.GetEmbedded().Items)...)
+	resp.Diagnostics.Append(data.toState(data.EnvironmentId.ValueString(), credentialTypeIDs)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 
 }
 
-func (p *CredentialTypesDataSourceModel) toState(environmentID string, credentialTypes []credentials.EntityArrayEmbeddedItemsInner) diag.Diagnostics {
+func (p *CredentialTypesDataSourceModel) toState(environmentID string, credentialTypeIDs []string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if credentialTypes == nil || environmentID == "" {
+	if credentialTypeIDs == nil || environmentID == "" {
 		diags.AddError(
 			"Data object missing",
 			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
@@ -137,15 +157,10 @@ func (p *CredentialTypesDataSourceModel) toState(environmentID string, credentia
 		return diags
 	}
 
-	list := make([]string, 0)
-	for _, item := range credentialTypes {
-		list = append(list, *item.CredentialType.Id)
-	}
-
 	var d diag.Diagnostics
 
 	p.Id = framework.PingOneResourceIDToTF(environmentID)
-	p.Ids, d = framework.StringSliceToTF(list)
+	p.Ids, d = framework.StringSliceToTF(credentialTypeIDs)
 	diags.Append(d...)
 
 	return diags

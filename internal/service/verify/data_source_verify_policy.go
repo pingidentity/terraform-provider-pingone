@@ -827,11 +827,10 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
-	var verifyPolicy verify.VerifyPolicy
+	var verifyPolicy *verify.VerifyPolicy
 
 	if !data.VerifyPolicyId.IsNull() {
 		// Run the API call
-		var response *verify.VerifyPolicy
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
@@ -842,93 +841,109 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 			"ReadOneVerifyPolicy",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&response,
+			&verifyPolicy,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
-
-		verifyPolicy = *response
 
 	} else if !data.Name.IsNull() {
 		// Run the API call
-		var entityArray *verify.EntityArray
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.VerifyAPIClient.VerifyPoliciesApi.ReadAllVerifyPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				pagedIterator := r.Client.VerifyAPIClient.VerifyPoliciesApi.ReadAllVerifyPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
+
+				var initialHttpResponse *http.Response
+
+				for pageCursor, err := range pagedIterator {
+					if err != nil {
+						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					}
+
+					if initialHttpResponse == nil {
+						initialHttpResponse = pageCursor.HTTPResponse
+					}
+
+					if verifyPolicies, ok := pageCursor.EntityArray.Embedded.GetVerifyPoliciesOk(); ok {
+
+						for _, verifyPolicyItem := range verifyPolicies {
+
+							if verifyPolicyItem.GetName() == data.Name.ValueString() {
+								return verifyPolicyItem, initialHttpResponse, nil
+							}
+						}
+					}
+				}
+
+				return nil, initialHttpResponse, nil
 			},
 			"ReadAllVerifyPolicies",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&entityArray,
+			&verifyPolicy,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		if verifyPolicies, ok := entityArray.Embedded.GetVerifyPoliciesOk(); ok {
-
-			found := false
-			for _, verifyPolicyItem := range verifyPolicies {
-
-				if verifyPolicyItem.GetName() == data.Name.ValueString() {
-					verifyPolicy = verifyPolicyItem
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				resp.Diagnostics.AddError(
-					"Cannot find verify policy from name",
-					fmt.Sprintf("The verify policy name %s for environment %s cannot be found", data.Name.String(), data.EnvironmentId.String()),
-				)
-				return
-			}
-
+		if verifyPolicy == nil {
+			resp.Diagnostics.AddError(
+				"Cannot find verify policy from name",
+				fmt.Sprintf("The verify policy name %s for environment %s cannot be found", data.Name.String(), data.EnvironmentId.String()),
+			)
+			return
 		}
+
 	} else if data.Default.ValueBool() {
 		// Run the API call
-		var entityArray *verify.EntityArray
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.VerifyAPIClient.VerifyPoliciesApi.ReadAllVerifyPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				pagedIterator := r.Client.VerifyAPIClient.VerifyPoliciesApi.ReadAllVerifyPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
+
+				var initialHttpResponse *http.Response
+
+				for pageCursor, err := range pagedIterator {
+					if err != nil {
+						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					}
+
+					if initialHttpResponse == nil {
+						initialHttpResponse = pageCursor.HTTPResponse
+					}
+
+					if verifyPolicies, ok := pageCursor.EntityArray.Embedded.GetVerifyPoliciesOk(); ok {
+
+						for _, verifyPolicyItem := range verifyPolicies {
+
+							if verifyPolicyItem.GetDefault() {
+								return verifyPolicyItem, initialHttpResponse, nil
+							}
+						}
+
+					}
+				}
+
+				return nil, initialHttpResponse, nil
 			},
 			"ReadAllVerifyPolicies",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&entityArray,
+			&verifyPolicy,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		if verifyPolicies, ok := entityArray.Embedded.GetVerifyPoliciesOk(); ok {
-
-			found := false
-			for _, verifyPolicyItem := range verifyPolicies {
-
-				if verifyPolicyItem.GetDefault() {
-					verifyPolicy = verifyPolicyItem
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				resp.Diagnostics.AddError(
-					"Cannot find default verify policy",
-					fmt.Sprintf("The default verify policy for environment %s cannot be found", data.EnvironmentId.String()),
-				)
-				return
-			}
-
+		if verifyPolicy == nil {
+			resp.Diagnostics.AddError(
+				"Cannot find default verify policy",
+				fmt.Sprintf("The default verify policy for environment %s cannot be found", data.EnvironmentId.String()),
+			)
+			return
 		}
 
 	} else {
@@ -940,7 +955,7 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&verifyPolicy)...)
+	resp.Diagnostics.Append(data.toState(verifyPolicy)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

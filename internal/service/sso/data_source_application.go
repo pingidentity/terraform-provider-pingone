@@ -707,7 +707,8 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationsApi.ReadAllApplications(ctx, data.EnvironmentId.ValueString()).Execute()
+				// We expect only one result so just fetch the initial page
+				fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationsApi.ReadAllApplications(ctx, data.EnvironmentId.ValueString()).ExecuteInitialPage()
 				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadAllApplications",
@@ -720,6 +721,9 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 		}
 
 		if applications, ok := entityArray.Embedded.GetApplicationsOk(); ok {
+
+			// FIXME: Multiple results
+
 			found := false
 
 			var applicationObj management.ReadOneApplication200Response
