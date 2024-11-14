@@ -351,7 +351,7 @@ Optional:
 - `google_play` (Attributes) A single object that describes Google Play Integrity API credential settings for Android device integrity detection.  Required when `excluded_platforms` is unset or does not include `GOOGLE`. (see [below for nested schema](#nestedatt--oidc_options--mobile_app--integrity_detection--google_play))
 
 <a id="nestedatt--oidc_options--mobile_app--integrity_detection--cache_duration"></a>
-### Nested Schema for `oidc_options.mobile_app.integrity_detection.google_play`
+### Nested Schema for `oidc_options.mobile_app.integrity_detection.cache_duration`
 
 Required:
 
