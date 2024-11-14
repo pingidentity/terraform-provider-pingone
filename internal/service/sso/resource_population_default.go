@@ -456,7 +456,7 @@ func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *managemen
 							for _, populationItem := range populations {
 
 								if populationItem.GetDefault() {
-									return populationItem, pageCursor.HTTPResponse, nil
+									return &populationItem, pageCursor.HTTPResponse, nil
 								}
 							}
 						}
@@ -496,8 +496,7 @@ func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *managemen
 		return nil, diags
 	}
 
-	returnVar := population.(management.Population)
+	returnVar := population.(*management.Population)
 
-	return &returnVar, diags
-
+	return returnVar, diags
 }

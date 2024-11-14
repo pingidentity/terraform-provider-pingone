@@ -206,11 +206,11 @@ func (r *PopulationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 					for _, p := range populations {
 
 						if !data.Name.IsNull() && p.GetName() == data.Name.ValueString() {
-							return p, pageCursor.HTTPResponse, nil
+							return &p, pageCursor.HTTPResponse, nil
 						}
 
 						if !data.PopulationId.IsNull() && p.GetId() == data.PopulationId.ValueString() {
-							return p, pageCursor.HTTPResponse, nil
+							return &p, pageCursor.HTTPResponse, nil
 						}
 					}
 				}

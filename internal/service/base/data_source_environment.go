@@ -283,7 +283,7 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 						for _, environmentItem := range environments {
 
 							if environmentItem.GetName() == data.Name.ValueString() {
-								return environmentItem, initialHttpResponse, nil
+								return &environmentItem, initialHttpResponse, nil
 							}
 						}
 

@@ -197,7 +197,7 @@ func (r *DigitalWalletApplicationDataSource) Read(ctx context.Context, req datas
 						for _, digitalWalletAppItem := range digitalWalletApps {
 
 							if *digitalWalletAppItem.GetApplication().Id == data.ApplicationId.ValueString() {
-								return digitalWalletAppItem, pageCursor.HTTPResponse, nil
+								return &digitalWalletAppItem, pageCursor.HTTPResponse, nil
 							}
 						}
 
@@ -248,7 +248,7 @@ func (r *DigitalWalletApplicationDataSource) Read(ctx context.Context, req datas
 						for _, digitalWalletAppItem := range digitalWalletApps {
 
 							if digitalWalletAppItem.GetName() == data.Name.ValueString() {
-								return digitalWalletAppItem, pageCursor.HTTPResponse, nil
+								return &digitalWalletAppItem, pageCursor.HTTPResponse, nil
 							}
 						}
 

@@ -274,7 +274,7 @@ func (r *AlertChannelResource) Read(ctx context.Context, req resource.ReadReques
 					if alertChannels, ok := embedded.GetAlertChannelsOk(); ok {
 						for _, alertChannel := range alertChannels {
 							if alertChannel.GetId() == data.Id.ValueString() {
-								return alertChannel, pageCursor.HTTPResponse, nil
+								return &alertChannel, pageCursor.HTTPResponse, nil
 							}
 						}
 					}

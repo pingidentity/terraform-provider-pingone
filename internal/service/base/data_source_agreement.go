@@ -198,7 +198,7 @@ func (r *AgreementDataSource) Read(ctx context.Context, req datasource.ReadReque
 
 						for _, agreementItem := range agreements {
 							if agreementItem.GetName() == data.Name.ValueString() {
-								return agreementItem, pageCursor.HTTPResponse, nil
+								return &agreementItem, pageCursor.HTTPResponse, nil
 							}
 						}
 					}

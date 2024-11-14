@@ -681,15 +681,15 @@ func (r *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 					for _, u := range users {
 
 						if !data.Username.IsNull() && u.GetUsername() == data.Username.ValueString() {
-							return u, pageCursor.HTTPResponse, nil
+							return &u, pageCursor.HTTPResponse, nil
 						}
 
 						if !data.UserId.IsNull() && u.GetId() == data.UserId.ValueString() {
-							return u, pageCursor.HTTPResponse, nil
+							return &u, pageCursor.HTTPResponse, nil
 						}
 
 						if !data.Email.IsNull() && u.GetEmail() == data.Email.ValueString() {
-							return u, pageCursor.HTTPResponse, nil
+							return &u, pageCursor.HTTPResponse, nil
 						}
 					}
 

@@ -739,7 +739,7 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 							}
 
 							if applicationName == data.Name.ValueString() {
-								return applicationObj, pageCursor.HTTPResponse, nil
+								return &applicationObj, pageCursor.HTTPResponse, nil
 							}
 						}
 					}

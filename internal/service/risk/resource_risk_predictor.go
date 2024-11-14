@@ -1790,7 +1790,7 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 						}
 
 						if strings.EqualFold(predictorCompactName, p.CompactName.ValueString()) && !predictorDeletable {
-							return predictorId, pageCursor.HTTPResponse, nil
+							return &predictorId, pageCursor.HTTPResponse, nil
 						}
 					}
 				}

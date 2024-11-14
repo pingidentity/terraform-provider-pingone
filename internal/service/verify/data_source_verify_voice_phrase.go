@@ -205,7 +205,7 @@ func (r *VoicePhraseDataSource) Read(ctx context.Context, req datasource.ReadReq
 						for _, voicePhraseItem := range voicePhrases {
 
 							if voicePhraseItem.GetDisplayName() == data.DisplayName.ValueString() {
-								return voicePhraseItem, pageCursor.HTTPResponse, nil
+								return &voicePhraseItem, pageCursor.HTTPResponse, nil
 							}
 						}
 					}

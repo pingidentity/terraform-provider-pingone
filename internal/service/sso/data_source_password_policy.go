@@ -389,7 +389,7 @@ func (r *PasswordPolicyDataSource) Read(ctx context.Context, req datasource.Read
 
 						for _, passwordPolicyObject := range passwordPolicies {
 							if passwordPolicyObject.GetId() != "" && passwordPolicyObject.GetName() == data.Name.ValueString() {
-								return passwordPolicyObject, pageCursor.HTTPResponse, nil
+								return &passwordPolicyObject, pageCursor.HTTPResponse, nil
 							}
 						}
 

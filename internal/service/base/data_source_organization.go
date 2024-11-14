@@ -168,7 +168,7 @@ func (r *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRe
 						for _, organizationItem := range organizations {
 
 							if organizationItem.GetName() == data.Name.ValueString() {
-								return organizationItem, pageCursor.HTTPResponse, nil
+								return &organizationItem, pageCursor.HTTPResponse, nil
 							}
 						}
 					}

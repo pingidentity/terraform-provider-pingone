@@ -222,11 +222,11 @@ func (r *GroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 					for _, g := range groups {
 
 						if !data.Name.IsNull() && g.GetName() == data.Name.ValueString() {
-							return g, pageCursor.HTTPResponse, nil
+							return &g, pageCursor.HTTPResponse, nil
 						}
 
 						if !data.GroupId.IsNull() && g.GetId() == data.GroupId.ValueString() {
-							return g, pageCursor.HTTPResponse, nil
+							return &g, pageCursor.HTTPResponse, nil
 						}
 					}
 				}

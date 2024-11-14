@@ -467,13 +467,19 @@ func (r *GatewayDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 						for _, gatewayObject := range gateways {
 							if gateway := gatewayObject.Gateway; gateway != nil && gateway.GetId() != "" && gateway.GetName() == data.Name.ValueString() {
-								return gateway, pageCursor.HTTPResponse, nil
+								return &management.CreateGateway201Response{
+									Gateway: gateway,
+								}, pageCursor.HTTPResponse, nil
 
 							} else if gateway := gatewayObject.GatewayTypeLDAP; gateway != nil && gateway.GetId() != "" && gateway.GetName() == data.Name.ValueString() {
-								return gateway, pageCursor.HTTPResponse, nil
+								return &management.CreateGateway201Response{
+									GatewayTypeLDAP: gateway,
+								}, pageCursor.HTTPResponse, nil
 
 							} else if gateway := gatewayObject.GatewayTypeRADIUS; gateway != nil && gateway.GetId() != "" && gateway.GetName() == data.Name.ValueString() {
-								return gateway, pageCursor.HTTPResponse, nil
+								return &management.CreateGateway201Response{
+									GatewayTypeRADIUS: gateway,
+								}, pageCursor.HTTPResponse, nil
 
 							}
 						}
