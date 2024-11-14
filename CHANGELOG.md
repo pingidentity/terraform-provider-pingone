@@ -1,5 +1,10 @@
 ## 1.2.0 (Unreleased)
 
+NOTES:
+
+* Corrected broken documentation bookmark references. ([#931](https://github.com/pingidentity/terraform-provider-pingone/issues/931))
+* Upgraded go version to 1.23 to align with the go [release policy](https://go.dev/doc/devel/release#policy). ([#931](https://github.com/pingidentity/terraform-provider-pingone/issues/931))
+
 ## 1.1.1 (28 August 2024)
 
 NOTES:
