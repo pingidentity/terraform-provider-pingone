@@ -450,14 +450,13 @@ func (r *GatewayDataSource) Read(ctx context.Context, req datasource.ReadRequest
 			ctx,
 
 			func() (any, *http.Response, error) {
-				// fO, fR, fErr := r.Client.ManagementAPIClient.GatewaysApi.ReadAllGateways(ctx, data.EnvironmentId.ValueString()).Execute()
 				pagedIterator := r.Client.ManagementAPIClient.GatewaysApi.ReadAllGateways(ctx, data.EnvironmentId.ValueString()).Execute()
 
 				var initialHttpResponse *http.Response
 
 				for pageCursor, err := range pagedIterator {
 					if err != nil {
-						return nil, pageCursor.HTTPResponse, err
+						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
 					}
 
 					if initialHttpResponse == nil {

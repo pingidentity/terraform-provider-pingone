@@ -837,11 +837,6 @@ func FetchApplicationsByTypeWithTimeout(ctx context.Context, apiClient *manageme
 						}
 					}
 
-					// FIXME: multiple applications found
-					if len(foundApplications) > 1 && expectAtLeastOneResult {
-						return foundApplications, initialHttpResponse, fmt.Errorf("More than one application found, only one application expected for type %s", string(applicationType))
-					}
-
 					return nil, initialHttpResponse, nil
 				},
 				"ReadAllApplications",
@@ -858,6 +853,10 @@ func FetchApplicationsByTypeWithTimeout(ctx context.Context, apiClient *manageme
 				"len(applicationResponse)": len(applicationResponse),
 				"result":                   strings.ToLower(strconv.FormatBool(len(applicationResponse) > 0)),
 			})
+
+			if len(applicationResponse) == 0 && expectAtLeastOneResult {
+				return applicationResponse, "err", fmt.Errorf("No applications found, at least one application expected for type %s", string(applicationType))
+			}
 
 			return applicationResponse, strings.ToLower(strconv.FormatBool(len(applicationResponse) > 0)), nil
 		},

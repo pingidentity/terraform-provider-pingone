@@ -255,64 +255,63 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	var environment management.Environment
+	var environment *management.Environment
 
 	if !data.Name.IsNull() {
 
 		scimFilter := fmt.Sprintf("name sw \"%s\"", data.Name.ValueString())
 
 		// Run the API call
-		var entityArray *management.EntityArray
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				// Return just the initial page because the filter should match only one environment
-				return r.Client.ManagementAPIClient.EnvironmentsApi.ReadAllEnvironments(ctx).Filter(scimFilter).Limit(2).ExecuteInitialPage()
+				pagedIterator := r.Client.ManagementAPIClient.EnvironmentsApi.ReadAllEnvironments(ctx).Filter(scimFilter).Execute()
+
+				var initialHttpResponse *http.Response
+
+				for pageCursor, err := range pagedIterator {
+					if err != nil {
+						return nil, pageCursor.HTTPResponse, err
+					}
+
+					if initialHttpResponse == nil {
+						initialHttpResponse = pageCursor.HTTPResponse
+					}
+
+					if environments, ok := pageCursor.EntityArray.Embedded.GetEnvironmentsOk(); ok {
+						for _, environmentItem := range environments {
+
+							if environmentItem.GetName() == data.Name.ValueString() {
+								return environmentItem, initialHttpResponse, nil
+							}
+						}
+
+					}
+				}
+
+				return nil, initialHttpResponse, nil
 			},
 			"ReadAllEnvironments",
 			framework.DefaultCustomError,
 			retryEnvironmentDefault,
-			&entityArray,
+			&environment,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		if environments, ok := entityArray.Embedded.GetEnvironmentsOk(); ok {
-
-			// FIXME: multiple results issue
-			if len(environments) > 1 {
-				resp.Diagnostics.AddError(
-					"Multiple environments found",
-					fmt.Sprintf("Multiple environments found with the name %s.  Please refine the filter or use the `environment_id` field to retrieve the environment.", data.Name.String()),
-				)
-			}
-
-			found := false
-			for _, environmentItem := range environments {
-
-				if environmentItem.GetName() == data.Name.ValueString() {
-					environment = environmentItem
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				resp.Diagnostics.AddError(
-					"Cannot find environment from name",
-					fmt.Sprintf("The environment %s cannot be found", data.Name.String()),
-				)
-				return
-			}
-
+		if environment == nil {
+			resp.Diagnostics.AddError(
+				"Cannot find environment from name",
+				fmt.Sprintf("The environment %s cannot be found", data.Name.String()),
+			)
+			return
 		}
 
 	} else if !data.EnvironmentId.IsNull() {
 
 		// Run the API call
-		var response *management.Environment
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
@@ -323,13 +322,12 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 			"ReadOneEnvironment",
 			framework.DefaultCustomError,
 			retryEnvironmentDefault,
-			&response,
+			&environment,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		environment = *response
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",
@@ -357,7 +355,7 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&environment, billOfMaterialsResponse)...)
+	resp.Diagnostics.Append(data.toState(environment, billOfMaterialsResponse)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
