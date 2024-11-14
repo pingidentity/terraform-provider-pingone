@@ -3,7 +3,7 @@ SWEEP_DIR=./internal/sweep
 NAMESPACE=pingidentity
 PKG_NAME=pingone
 BINARY=terraform-provider-${NAME}
-VERSION=1.1.1
+VERSION=1.2.0
 OS_ARCH=linux_amd64
 
 default: install
@@ -17,7 +17,7 @@ fmtcheck:
 
 build:
 	go mod tidy
-	go mod vendor
+	go work vendor
 	go build -v .
 
 install: build

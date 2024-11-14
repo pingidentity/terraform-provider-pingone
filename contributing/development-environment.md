@@ -2,8 +2,8 @@
 
 ## Requirements
 
-- [Terraform](https://www.terraform.io/downloads.html) 1.3+ (to run acceptance tests)
-- [Go](https://golang.org/doc/install) 1.21+ (to build and test the provider plugin)
+- [Terraform](https://www.terraform.io/downloads.html) 1.4+ (to run acceptance tests)
+- [Go](https://golang.org/doc/install) 1.23.3+ (to build and test the provider plugin)
 
 ## Quick Start
 
@@ -78,12 +78,12 @@ Occasionally, development may include changes to the [PingOne GO SDK](https://gi
 ```
 module github.com/pingidentity/terraform-provider-pingone
 
-go 1.21
+go 1.23.3
 
 replace github.com/patrickcping/pingone-go-sdk-v2/management => ../pingone-go-sdk-v2/management
 
 require (
-	github.com/patrickcping/pingone-go-sdk-v2/management v0.1.0
+	github.com/patrickcping/pingone-go-sdk-v2/management v0.x.x
   
   ...
 )
@@ -94,6 +94,6 @@ require (
 Once updated, run the following to update the vendor cache and build the project:
 
 ```shell
-$ go mod vendor
+$ go work vendor
 $ make build
 ```
