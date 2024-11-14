@@ -235,7 +235,7 @@ Required:
 - `count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.
 
 <a id="nestedatt--email--otp--failure--cool_down"></a>
-### Nested Schema for `email.otp.failure.count`
+### Nested Schema for `email.otp.failure.cool_down`
 
 Required:
 
@@ -338,7 +338,7 @@ Optional:
 - `time_period` (Attributes) A single object that specifies push limit time period settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--push_limit--time_period))
 
 <a id="nestedatt--mobile--applications--push_limit--lock_duration"></a>
-### Nested Schema for `mobile.applications.push_limit.time_period`
+### Nested Schema for `mobile.applications.push_limit.lock_duration`
 
 Required:
 
@@ -388,7 +388,7 @@ Optional:
 - `count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. The minimum value is `1`, maximum is `7`, and the default is `3`.
 
 <a id="nestedatt--mobile--otp--failure--cool_down"></a>
-### Nested Schema for `mobile.otp.failure.count`
+### Nested Schema for `mobile.otp.failure.cool_down`
 
 Required:
 
@@ -429,7 +429,7 @@ Required:
 - `count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.
 
 <a id="nestedatt--sms--otp--failure--cool_down"></a>
-### Nested Schema for `sms.otp.failure.count`
+### Nested Schema for `sms.otp.failure.cool_down`
 
 Required:
 
@@ -522,7 +522,7 @@ Required:
 - `count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.
 
 <a id="nestedatt--voice--otp--failure--cool_down"></a>
-### Nested Schema for `voice.otp.failure.count`
+### Nested Schema for `voice.otp.failure.cool_down`
 
 Required:
 

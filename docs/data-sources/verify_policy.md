@@ -91,7 +91,7 @@ Read-Only:
 - `count` (Number) Allowed maximum number of OTP deliveries.
 
 <a id="nestedatt--email--otp--deliveries--cooldown"></a>
-### Nested Schema for `email.otp.deliveries.count`
+### Nested Schema for `email.otp.deliveries.cooldown`
 
 Read-Only:
 
@@ -194,7 +194,7 @@ Read-Only:
 - `count` (Number) Allowed maximum number of OTP deliveries.
 
 <a id="nestedatt--phone--otp--deliveries--cooldown"></a>
-### Nested Schema for `phone.otp.deliveries.count`
+### Nested Schema for `phone.otp.deliveries.cooldown`
 
 Read-Only:
 
