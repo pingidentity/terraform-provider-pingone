@@ -225,6 +225,7 @@ Optional:
 
 - `failure` (Attributes) A single object that allows configuration of email OTP failure settings. (see [below for nested schema](#nestedatt--email--otp--failure))
 - `lifetime` (Attributes) A single object that allows configuration of email OTP lifetime settings. (see [below for nested schema](#nestedatt--email--otp--lifetime))
+- `otp_length` (Number) An integer that specifies the length of the OTP that is shown to users.  Minimum length is `6` digits and maximum is `10` digits.  Defaults to `6`.
 
 <a id="nestedatt--email--otp--failure"></a>
 ### Nested Schema for `email.otp.failure`
@@ -419,6 +420,7 @@ Optional:
 
 - `failure` (Attributes) A single object that allows configuration of SMS OTP failure settings. (see [below for nested schema](#nestedatt--sms--otp--failure))
 - `lifetime` (Attributes) A single object that allows configuration of SMS OTP lifetime settings. (see [below for nested schema](#nestedatt--sms--otp--lifetime))
+- `otp_length` (Number) An integer that specifies the length of the OTP that is shown to users.  Minimum length is `6` digits and maximum is `10` digits.  Defaults to `6`.
 
 <a id="nestedatt--sms--otp--failure"></a>
 ### Nested Schema for `sms.otp.failure`
@@ -512,6 +514,7 @@ Optional:
 
 - `failure` (Attributes) A single object that allows configuration of voice OTP failure settings. (see [below for nested schema](#nestedatt--voice--otp--failure))
 - `lifetime` (Attributes) A single object that allows configuration of voice OTP lifetime settings. (see [below for nested schema](#nestedatt--voice--otp--lifetime))
+- `otp_length` (Number) An integer that specifies the length of the OTP that is shown to users.  Minimum length is `6` digits and maximum is `10` digits.  Defaults to `6`.
 
 <a id="nestedatt--voice--otp--failure"></a>
 ### Nested Schema for `voice.otp.failure`
