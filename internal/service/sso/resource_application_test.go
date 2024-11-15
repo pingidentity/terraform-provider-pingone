@@ -2848,7 +2848,7 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.enable_requested_authn_context", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.nameid_format", "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.response_is_signed", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.session_not_on_or_after_duration", "10"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.session_not_on_or_after_duration", "64"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.slo_binding", "HTTP_REDIRECT"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.slo_endpoint", "https://www.pingidentity.com/sloendpoint"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.slo_response_endpoint", "https://www.pingidentity.com/sloresponseendpoint"),
@@ -4394,13 +4394,14 @@ resource "pingone_application" "%[3]s" {
       key_id    = pingone_key.%[3]s.id
       algorithm = pingone_key.%[3]s.signature_algorithm
     }
-    enable_requested_authn_context = true
-    nameid_format                  = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-    response_is_signed             = true
-    slo_binding                    = "HTTP_REDIRECT"
-    slo_endpoint                   = "https://www.pingidentity.com/sloendpoint"
-    slo_response_endpoint          = "https://www.pingidentity.com/sloresponseendpoint"
-    slo_window                     = 3
+    enable_requested_authn_context   = true
+    nameid_format                    = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+    response_is_signed               = true
+    session_not_on_or_after_duration = 64
+    slo_binding                      = "HTTP_REDIRECT"
+    slo_endpoint                     = "https://www.pingidentity.com/sloendpoint"
+    slo_response_endpoint            = "https://www.pingidentity.com/sloresponseendpoint"
+    slo_window                       = 3
 
     default_target_url = "https://www.pingidentity.com/relaystate"
 

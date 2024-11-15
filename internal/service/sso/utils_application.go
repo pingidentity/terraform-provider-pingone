@@ -328,7 +328,7 @@ func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Ob
 		"default_target_url":               framework.StringOkToTF(apiObject.GetDefaultTargetUrlOk()),
 		"nameid_format":                    framework.StringOkToTF(apiObject.GetNameIdFormatOk()),
 		"response_is_signed":               framework.BoolOkToTF(apiObject.GetResponseSignedOk()),
-		"session_not_on_or_after_duration": framework.Int32ActualOkToTF(apiObject.GetSessionNotOnOrAfterDurationOk()),
+		"session_not_on_or_after_duration": framework.Int32OkToTF(apiObject.GetSessionNotOnOrAfterDurationOk()),
 		"slo_binding":                      framework.EnumOkToTF(apiObject.GetSloBindingOk()),
 		"slo_endpoint":                     framework.StringOkToTF(apiObject.GetSloEndpointOk()),
 		"slo_response_endpoint":            framework.StringOkToTF(apiObject.GetSloResponseEndpointOk()),

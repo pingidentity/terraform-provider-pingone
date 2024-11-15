@@ -602,6 +602,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 		"A boolean that specifies whether the SAML assertion response itself should be signed.",
 	).DefaultValue(false)
 
+	const samlOptionsSessionNotOnOrAfterDurationMin = 60
 	samlOptionsSessionNotOnOrAfterDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that specifies a value for if the SAML application requires a different `SessionNotOnOrAfter` attribute value within the `AuthnStatement` element than the `NotOnOrAfter` value set by the `assertion_duration` property.",
 	)
@@ -1457,6 +1458,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Description:         samlOptionsSessionNotOnOrAfterDurationDescription.Description,
 						MarkdownDescription: samlOptionsSessionNotOnOrAfterDurationDescription.MarkdownDescription,
 						Optional:            true,
+
+						Validators: []validator.Int32{
+							int32validator.AtLeast(samlOptionsSessionNotOnOrAfterDurationMin),
+						},
 					},
 
 					"slo_binding": schema.StringAttribute{
