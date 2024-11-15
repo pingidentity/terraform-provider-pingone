@@ -67,8 +67,9 @@ type MFADevicePolicyOfflineDeviceResourceModel struct {
 }
 
 type MFADevicePolicyOfflineDeviceOtpResourceModel struct {
-	Failure  types.Object `tfsdk:"failure"`
-	Lifetime types.Object `tfsdk:"lifetime"`
+	Failure   types.Object `tfsdk:"failure"`
+	Lifetime  types.Object `tfsdk:"lifetime"`
+	OtpLength types.Int32  `tfsdk:"otp_length"`
 }
 
 type MFADevicePolicyOtpResourceModel struct {
@@ -149,8 +150,9 @@ var (
 	}
 
 	MFADevicePolicyOfflineDeviceOtpTFObjectTypes = map[string]attr.Type{
-		"failure":  types.ObjectType{AttrTypes: MFADevicePolicyFailureTFObjectTypes},
-		"lifetime": types.ObjectType{AttrTypes: MFADevicePolicyTimePeriodTFObjectTypes},
+		"failure":    types.ObjectType{AttrTypes: MFADevicePolicyFailureTFObjectTypes},
+		"lifetime":   types.ObjectType{AttrTypes: MFADevicePolicyTimePeriodTFObjectTypes},
+		"otp_length": types.Int32Type,
 	}
 
 	MFADevicePolicyFailureTFObjectTypes = map[string]attr.Type{
@@ -869,6 +871,10 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 	const otpFailureCountDefault = 3
 	const otpFailureCoolDownDurationDefault = 0
 	const otpLifetimeDurationDefault = 30
+	const otpOtpLengthDefault = 6
+
+	const otpOtpLengthMin = 6
+	const otpOtpLengthMax = 10
 
 	pairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A boolean that, when set to `true`, prevents users from pairing new devices with the %s method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.", descriptionMethod),
@@ -877,6 +883,10 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 	otpCoolDownDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of time unit for `duration`.",
 	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitEnumValues)
+
+	otpOtpLengthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that specifies the length of the OTP that is shown to users.  Minimum length is `%d` digits and maximum is `%d` digits.", otpOtpLengthMin, otpOtpLengthMax),
+	).DefaultValue(otpOtpLengthDefault)
 
 	promptForNicknameOnPairingDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.",
@@ -929,6 +939,7 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 								"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
 							},
 						),
+						"otp_length": types.Int32Value(otpOtpLengthDefault),
 					},
 				)),
 
@@ -986,6 +997,19 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 									stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitEnumValues)...),
 								},
 							},
+						},
+					},
+
+					"otp_length": schema.Int32Attribute{
+						Description:         otpOtpLengthDescription.Description,
+						MarkdownDescription: otpOtpLengthDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: int32default.StaticInt32(otpOtpLengthDefault),
+
+						Validators: []validator.Int32{
+							int32validator.Between(otpOtpLengthMin, otpOtpLengthMax),
 						},
 					},
 				},
@@ -1511,6 +1535,10 @@ func (p *MFADevicePolicyOfflineDeviceOtpResourceModel) expand(ctx context.Contex
 		*failure,
 	)
 
+	if !p.OtpLength.IsNull() && !p.OtpLength.IsUnknown() {
+		data.SetOtpLength(p.OtpLength.ValueInt32())
+	}
+
 	return data, diags
 }
 
@@ -2026,8 +2054,9 @@ func toStateMfaDevicePolicyOfflineDeviceOtp(apiObject *mfa.DeviceAuthenticationP
 	}
 
 	o := map[string]attr.Value{
-		"failure":  failure,
-		"lifetime": lifetime,
+		"failure":    failure,
+		"lifetime":   lifetime,
+		"otp_length": framework.Int32OkToTF(apiObject.GetOtpLengthOk()),
 	}
 
 	objValue, d := types.ObjectValue(MFADevicePolicyOfflineDeviceOtpTFObjectTypes, o)
