@@ -500,7 +500,7 @@ func toStateEmailSource(emailSource interface{}, ok bool) (types.Object, diag.Di
 	var emailSourceMap map[string]attr.Value
 
 	switch t := emailSource.(type) {
-	case *management.NotificationsSettingsEmailDeliverySettingsFrom:
+	case *management.NotificationsSettingsEmailDeliverySettingsSMTPAllOfFrom:
 		if t.GetAddress() == "" {
 			return types.ObjectNull(emailSourceTFObjectTypes), diags
 		}
@@ -511,7 +511,7 @@ func toStateEmailSource(emailSource interface{}, ok bool) (types.Object, diag.Di
 
 		emailSourceMap["name"] = framework.StringOkToTF(t.GetNameOk())
 
-	case *management.NotificationsSettingsEmailDeliverySettingsReplyTo:
+	case *management.NotificationsSettingsEmailDeliverySettingsSMTPAllOfReplyTo:
 		if t.GetAddress() == "" {
 			return types.ObjectNull(emailSourceTFObjectTypes), diags
 		}

@@ -232,7 +232,7 @@ func (r *AgreementLocalizationDataSource) Read(ctx context.Context, req datasour
 
 							if (!data.DisplayName.IsNull() && localizationItem.AgreementLanguage.GetDisplayName() == data.DisplayName.ValueString()) ||
 								(!data.Locale.IsNull() && localizationItem.AgreementLanguage.GetLocale() == data.Locale.ValueString()) {
-								return *localizationItem.AgreementLanguage, pageCursor.HTTPResponse, nil
+								return localizationItem.AgreementLanguage, pageCursor.HTTPResponse, nil
 							}
 
 						}

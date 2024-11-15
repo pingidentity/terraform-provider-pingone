@@ -871,7 +871,7 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 						for _, verifyPolicyItem := range verifyPolicies {
 
 							if verifyPolicyItem.GetName() == data.Name.ValueString() {
-								return verifyPolicyItem, initialHttpResponse, nil
+								return &verifyPolicyItem, pageCursor.HTTPResponse, nil
 							}
 						}
 					}
@@ -920,7 +920,7 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 						for _, verifyPolicyItem := range verifyPolicies {
 
 							if verifyPolicyItem.GetDefault() {
-								return verifyPolicyItem, initialHttpResponse, nil
+								return &verifyPolicyItem, pageCursor.HTTPResponse, nil
 							}
 						}
 

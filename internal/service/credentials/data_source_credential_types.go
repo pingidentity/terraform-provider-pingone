@@ -110,6 +110,8 @@ func (r *CredentialTypesDataSource) Read(ctx context.Context, req datasource.Rea
 
 			var initialHttpResponse *http.Response
 
+			foundIDs := make([]string, 0)
+
 			for pageCursor, err := range pagedIterator {
 				if err != nil {
 					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
@@ -122,13 +124,13 @@ func (r *CredentialTypesDataSource) Read(ctx context.Context, req datasource.Rea
 				if pageCursor.EntityArray.Embedded != nil && pageCursor.EntityArray.Embedded.Items != nil {
 					for _, credentialType := range pageCursor.EntityArray.Embedded.GetItems() {
 						if credentialType.CredentialType != nil && credentialType.CredentialType.Id != nil {
-							credentialTypeIDs = append(credentialTypeIDs, *credentialType.CredentialType.Id)
+							foundIDs = append(foundIDs, *credentialType.CredentialType.Id)
 						}
 					}
 				}
 			}
 
-			return credentialTypeIDs, initialHttpResponse, nil
+			return foundIDs, initialHttpResponse, nil
 		},
 		"ReadAllCredentialTypes",
 		framework.DefaultCustomError,

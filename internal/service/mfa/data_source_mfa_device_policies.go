@@ -124,7 +124,7 @@ func (r *MFADevicePoliciesDataSource) Read(ctx context.Context, req datasource.R
 			}
 		}
 
-		return nil, initialHttpResponse, nil
+		return devicePolicyIDs, initialHttpResponse, nil
 	}
 
 	var devicePolicyIDs []string

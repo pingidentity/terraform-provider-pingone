@@ -837,7 +837,7 @@ func FetchApplicationsByTypeWithTimeout(ctx context.Context, apiClient *manageme
 						}
 					}
 
-					return nil, initialHttpResponse, nil
+					return foundApplications, initialHttpResponse, nil
 				},
 				"ReadAllApplications",
 				framework.DefaultCustomError,
@@ -855,7 +855,7 @@ func FetchApplicationsByTypeWithTimeout(ctx context.Context, apiClient *manageme
 			})
 
 			if len(applicationResponse) == 0 && expectAtLeastOneResult {
-				return applicationResponse, "err", fmt.Errorf("No applications found, at least one application expected for type %s", string(applicationType))
+				return nil, "false", nil
 			}
 
 			return applicationResponse, strings.ToLower(strconv.FormatBool(len(applicationResponse) > 0)), nil
