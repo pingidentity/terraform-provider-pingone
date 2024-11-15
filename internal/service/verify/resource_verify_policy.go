@@ -1080,14 +1080,14 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
 					o := map[string]attr.Value{
-						"duration":  framework.Int32ToInt64TF(defaultTransactionDuration),
+						"duration":  framework.Int32ToTF(defaultTransactionDuration),
 						"time_unit": framework.EnumOkToTF(defaultTransactionTimeUnit, true),
 					}
 					timeoutObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"duration":  framework.Int32ToInt64TF(defaultTransactionDataCollectionDuration),
+						"duration":  framework.Int32ToTF(defaultTransactionDataCollectionDuration),
 						"time_unit": framework.EnumOkToTF(defaultTransactionTimeUnit, true),
 					}
 					dataCollectionTimeoutObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
@@ -2239,7 +2239,7 @@ func (p *verifyPolicyResourceModel) toStateGovernmentId(apiObject *verify.Govern
 	retryAttempts := types.Int32Null()
 	if v, ok := apiObject.GetRetryOk(); ok {
 		if t, ok := v.GetAttemptsOk(); ok {
-			retryAttempts = framework.Int32ToInt64TF(*t)
+			retryAttempts = framework.Int32ToTF(*t)
 		}
 	}
 
@@ -2289,7 +2289,7 @@ func (p *verifyPolicyResourceModel) toStateLiveness(apiObject *verify.LivenessCo
 	retryAttempts := types.Int32Null()
 	if v, ok := apiObject.GetRetryOk(); ok {
 		if t, ok := v.GetAttemptsOk(); ok {
-			retryAttempts = framework.Int32ToInt64TF(*t)
+			retryAttempts = framework.Int32ToTF(*t)
 		}
 	}
 

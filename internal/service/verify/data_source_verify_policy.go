@@ -1015,7 +1015,7 @@ func (p *verifyPolicyDataSourceModel) toStateGovernmentId(apiObject *verify.Gove
 	retryAttempts := types.Int32Null()
 	if v, ok := apiObject.GetRetryOk(); ok {
 		if t, ok := v.GetAttemptsOk(); ok {
-			retryAttempts = framework.Int32ToInt64TF(*t)
+			retryAttempts = framework.Int32ToTF(*t)
 		}
 	}
 
@@ -1065,7 +1065,7 @@ func (p *verifyPolicyDataSourceModel) toStateLiveness(apiObject *verify.Liveness
 	retryAttempts := types.Int32Null()
 	if v, ok := apiObject.GetRetryOk(); ok {
 		if t, ok := v.GetAttemptsOk(); ok {
-			retryAttempts = framework.Int32ToInt64TF(*t)
+			retryAttempts = framework.Int32ToTF(*t)
 		}
 	}
 
