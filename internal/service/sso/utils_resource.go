@@ -159,9 +159,7 @@ func fetchResources(ctx context.Context, apiClient *management.APIClient, enviro
 				}
 
 				if pageCursor.EntityArray.Embedded != nil && pageCursor.EntityArray.Embedded.Resources != nil {
-					for _, item := range pageCursor.EntityArray.Embedded.GetResources() {
-						foundResources = append(foundResources, item)
-					}
+					foundResources = append(foundResources, pageCursor.EntityArray.Embedded.GetResources()...)
 				}
 			}
 

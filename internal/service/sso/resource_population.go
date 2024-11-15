@@ -454,9 +454,7 @@ func (r *PopulationResource) readUsers(ctx context.Context, environmentID, popul
 					}
 
 					if pageCursor.EntityArray.Embedded != nil && pageCursor.EntityArray.Embedded.Users != nil {
-						for _, item := range pageCursor.EntityArray.Embedded.GetUsers() {
-							foundUsers = append(foundUsers, item)
-						}
+						foundUsers = append(foundUsers, pageCursor.EntityArray.Embedded.GetUsers()...)
 					}
 				}
 
