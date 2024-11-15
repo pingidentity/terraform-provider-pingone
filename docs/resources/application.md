@@ -398,6 +398,7 @@ Optional:
 - `home_page_url` (String) A string that specifies the custom home page URL for the application.
 - `nameid_format` (String) A string that specifies the format of the Subject NameID attibute in the SAML assertion.
 - `response_is_signed` (Boolean) A boolean that specifies whether the SAML assertion response itself should be signed.  Defaults to `false`.
+- `session_not_on_or_after_duration` (Number) An integer that specifies a value for if the SAML application requires a different `SessionNotOnOrAfter` attribute value within the `AuthnStatement` element than the `NotOnOrAfter` value set by the `assertion_duration` property.
 - `slo_binding` (String) A string that specifies the binding protocol to be used for the logout response.  Options are `HTTP_POST`, `HTTP_REDIRECT`.  Existing configurations with no data default to `HTTP_POST`.  Defaults to `HTTP_POST`.
 - `slo_endpoint` (String) A string that specifies the logout endpoint URL. This is an optional property. However, if a logout endpoint URL is not defined, logout actions result in an error.
 - `slo_response_endpoint` (String) A string that specifies the endpoint URL to submit the logout response. If a value is not provided, the `slo_endpoint` property value is used to submit SLO response.
