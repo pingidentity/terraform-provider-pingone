@@ -34,13 +34,13 @@ type PasswordPolicyDataSourceModel struct {
 	Length                        types.Object                 `tfsdk:"length"`
 	Lockout                       types.Object                 `tfsdk:"lockout"`
 	MinCharacters                 types.Object                 `tfsdk:"min_characters"`
-	PasswordAgeMax                types.Int64                  `tfsdk:"password_age_max"`
-	PasswordAgeMin                types.Int64                  `tfsdk:"password_age_min"`
-	MaxRepeatedCharacters         types.Int64                  `tfsdk:"max_repeated_characters"`
-	MinComplexity                 types.Int64                  `tfsdk:"min_complexity"`
-	MinUniqueCharacters           types.Int64                  `tfsdk:"min_unique_characters"`
+	PasswordAgeMax                types.Int32                  `tfsdk:"password_age_max"`
+	PasswordAgeMin                types.Int32                  `tfsdk:"password_age_min"`
+	MaxRepeatedCharacters         types.Int32                  `tfsdk:"max_repeated_characters"`
+	MinComplexity                 types.Int32                  `tfsdk:"min_complexity"`
+	MinUniqueCharacters           types.Int32                  `tfsdk:"min_unique_characters"`
 	NotSimilarToCurrent           types.Bool                   `tfsdk:"not_similar_to_current"`
-	PopulationCount               types.Int64                  `tfsdk:"population_count"`
+	PopulationCount               types.Int32                  `tfsdk:"population_count"`
 }
 
 // Framework interfaces
@@ -183,12 +183,12 @@ func (r *PasswordPolicyDataSource) Schema(ctx context.Context, req datasource.Sc
 				Computed:    true,
 
 				Attributes: map[string]schema.Attribute{
-					"count": schema.Int64Attribute{
+					"count": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of prior passwords to keep for prevention of password re-use. The value must be a positive, non-zero integer.").Description,
 						Computed:    true,
 					},
 
-					"retention_days": schema.Int64Attribute{
+					"retention_days": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the length of time to keep recent passwords for prevention of password re-use. The value must be a positive, non-zero integer.").Description,
 						Computed:    true,
 					},
@@ -200,13 +200,13 @@ func (r *PasswordPolicyDataSource) Schema(ctx context.Context, req datasource.Sc
 				Computed:    true,
 
 				Attributes: map[string]schema.Attribute{
-					"max": schema.Int64Attribute{
+					"max": schema.Int32Attribute{
 						Description:         passwordLengthMaxDescription.Description,
 						MarkdownDescription: passwordLengthMaxDescription.MarkdownDescription,
 						Computed:            true,
 					},
 
-					"min": schema.Int64Attribute{
+					"min": schema.Int32Attribute{
 						Description:         passwordLengthMinDescription.Description,
 						MarkdownDescription: passwordLengthMinDescription.MarkdownDescription,
 						Computed:            true,
@@ -219,12 +219,12 @@ func (r *PasswordPolicyDataSource) Schema(ctx context.Context, req datasource.Sc
 				Computed:    true,
 
 				Attributes: map[string]schema.Attribute{
-					"duration_seconds": schema.Int64Attribute{
+					"duration_seconds": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the length of time before a password is automatically moved out of the lock out state. The value must be a positive, non-zero integer.").Description,
 						Computed:    true,
 					},
 
-					"failure_count": schema.Int64Attribute{
+					"failure_count": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of tries before a password is placed in the lockout state. The value must be a positive, non-zero integer.").Description,
 						Computed:    true,
 					},
@@ -237,25 +237,25 @@ func (r *PasswordPolicyDataSource) Schema(ctx context.Context, req datasource.Sc
 				Computed:            true,
 
 				Attributes: map[string]schema.Attribute{
-					"alphabetical_uppercase": schema.Int64Attribute{
+					"alphabetical_uppercase": schema.Int32Attribute{
 						Description:         minCharactersAlphabeticalUppercaseDescription.Description,
 						MarkdownDescription: minCharactersAlphabeticalUppercaseDescription.MarkdownDescription,
 						Computed:            true,
 					},
 
-					"alphabetical_lowercase": schema.Int64Attribute{
+					"alphabetical_lowercase": schema.Int32Attribute{
 						Description:         minCharactersAlphabeticalLowercaseDescription.Description,
 						MarkdownDescription: minCharactersAlphabeticalLowercaseDescription.MarkdownDescription,
 						Computed:            true,
 					},
 
-					"numeric": schema.Int64Attribute{
+					"numeric": schema.Int32Attribute{
 						Description:         minCharactersNumericDescription.Description,
 						MarkdownDescription: minCharactersNumericDescription.MarkdownDescription,
 						Computed:            true,
 					},
 
-					"special_characters": schema.Int64Attribute{
+					"special_characters": schema.Int32Attribute{
 						Description:         minCharactersSpecialCharactersDescription.Description,
 						MarkdownDescription: minCharactersSpecialCharactersDescription.MarkdownDescription,
 						Computed:            true,
@@ -263,28 +263,28 @@ func (r *PasswordPolicyDataSource) Schema(ctx context.Context, req datasource.Sc
 				},
 			},
 
-			"password_age_max": schema.Int64Attribute{
+			"password_age_max": schema.Int32Attribute{
 				Description:         passwordAgeMaxDescription.Description,
 				MarkdownDescription: passwordAgeMaxDescription.MarkdownDescription,
 				Computed:            true,
 			},
 
-			"password_age_min": schema.Int64Attribute{
+			"password_age_min": schema.Int32Attribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the minimum number of days a password must be used before changing. The value must be a positive, non-zero integer. This property is not enforced when not present.").Description,
 				Computed:    true,
 			},
 
-			"max_repeated_characters": schema.Int64Attribute{
+			"max_repeated_characters": schema.Int32Attribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the maximum number of repeated characters allowed. This property is not enforced when not present.").Description,
 				Computed:    true,
 			},
 
-			"min_complexity": schema.Int64Attribute{
+			"min_complexity": schema.Int32Attribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the minimum complexity of the password based on the concept of password haystacks. The value is the number of days required to exhaust the entire search space during a brute force attack. This property is not enforced when not present.").Description,
 				Computed:    true,
 			},
 
-			"min_unique_characters": schema.Int64Attribute{
+			"min_unique_characters": schema.Int32Attribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the minimum number of unique characters required. This property is not enforced when not present.").Description,
 				Computed:    true,
 			},
@@ -295,7 +295,7 @@ func (r *PasswordPolicyDataSource) Schema(ctx context.Context, req datasource.Sc
 				Computed:            true,
 			},
 
-			"population_count": schema.Int64Attribute{
+			"population_count": schema.Int32Attribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of populations associated with the password policy.").Description,
 				Computed:    true,
 			},

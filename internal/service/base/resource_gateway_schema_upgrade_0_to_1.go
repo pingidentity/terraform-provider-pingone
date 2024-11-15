@@ -28,7 +28,7 @@ type gatewayResourceModelV0 struct {
 	ConnectionSecurity                    types.String `tfsdk:"connection_security"`
 	KerberosServiceAccountPassword        types.String `tfsdk:"kerberos_service_account_password"`
 	KerberosServiceAccountUpn             types.String `tfsdk:"kerberos_service_account_upn"`
-	KerberosRetailPreviousCredentialsMins types.Int64  `tfsdk:"kerberos_retain_previous_credentials_mins"`
+	KerberosRetailPreviousCredentialsMins types.Int32  `tfsdk:"kerberos_retain_previous_credentials_mins"`
 	Servers                               types.Set    `tfsdk:"servers"`
 	ValidateTLSCertificates               types.Bool   `tfsdk:"validate_tls_certificates"`
 	Vendor                                types.String `tfsdk:"vendor"`
@@ -109,7 +109,7 @@ func (r *GatewayResource) UpgradeState(ctx context.Context) map[int64]resource.S
 						Optional: true,
 					},
 
-					"kerberos_retain_previous_credentials_mins": schema.Int64Attribute{
+					"kerberos_retain_previous_credentials_mins": schema.Int32Attribute{
 						Optional: true,
 					},
 

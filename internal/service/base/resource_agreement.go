@@ -30,7 +30,7 @@ type AgreementResourceModel struct {
 	Name                types.String                 `tfsdk:"name"`
 	Enabled             types.Bool                   `tfsdk:"enabled"`
 	Description         types.String                 `tfsdk:"description"`
-	ReconsentPeriodDays types.Float64                `tfsdk:"reconsent_period_days"`
+	ReconsentPeriodDays types.Float32                `tfsdk:"reconsent_period_days"`
 }
 
 // Framework interfaces
@@ -87,7 +87,7 @@ func (r *AgreementResource) Schema(ctx context.Context, req resource.SchemaReque
 				Computed:    true,
 			},
 
-			"reconsent_period_days": schema.Float64Attribute{
+			"reconsent_period_days": schema.Float32Attribute{
 				Description: "A number that specifies the number of days until a user consent to this agreement expires, and users must then be prompted for reconsent.",
 				Optional:    true,
 			},
@@ -333,7 +333,7 @@ func (p *AgreementResourceModel) expand() *management.Agreement {
 	}
 
 	if !p.ReconsentPeriodDays.IsNull() && !p.ReconsentPeriodDays.IsUnknown() {
-		data.SetReconsentPeriodDays(float32(p.ReconsentPeriodDays.ValueFloat64()))
+		data.SetReconsentPeriodDays(p.ReconsentPeriodDays.ValueFloat32())
 	}
 
 	return data

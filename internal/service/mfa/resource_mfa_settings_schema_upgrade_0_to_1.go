@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
@@ -53,11 +53,11 @@ func (r *MFASettingsResource) UpgradeState(ctx context.Context) map[int64]resour
 					"pairing": schema.ListNestedBlock{
 						NestedObject: schema.NestedBlockObject{
 							Attributes: map[string]schema.Attribute{
-								"max_allowed_devices": schema.Int64Attribute{
+								"max_allowed_devices": schema.Int32Attribute{
 									Optional: true,
 									Computed: true,
 
-									Default: int64default.StaticInt64(pairingMaxAllowedDevicesDescription),
+									Default: int32default.StaticInt32(pairingMaxAllowedDevicesDescription),
 								},
 
 								"pairing_key_format": schema.StringAttribute{
@@ -70,11 +70,11 @@ func (r *MFASettingsResource) UpgradeState(ctx context.Context) map[int64]resour
 					"lockout": schema.ListNestedBlock{
 						NestedObject: schema.NestedBlockObject{
 							Attributes: map[string]schema.Attribute{
-								"failure_count": schema.Int64Attribute{
+								"failure_count": schema.Int32Attribute{
 									Required: true,
 								},
 
-								"duration_seconds": schema.Int64Attribute{
+								"duration_seconds": schema.Int32Attribute{
 									Optional: true,
 								},
 							},

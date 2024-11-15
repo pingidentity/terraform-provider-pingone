@@ -271,12 +271,12 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						MarkdownDescription: oidcOptionsDeviceCustomVerificationUriDescription.MarkdownDescription,
 						Computed:            true,
 					},
-					"device_timeout": schema.Int64Attribute{
+					"device_timeout": schema.Int32Attribute{
 						Description:         oidcOptionsDeviceTimeoutDescription.Description,
 						MarkdownDescription: oidcOptionsDeviceTimeoutDescription.MarkdownDescription,
 						Computed:            true,
 					},
-					"device_polling_interval": schema.Int64Attribute{
+					"device_polling_interval": schema.Int32Attribute{
 						Description:         oidcOptionsDevicePollingIntervalDescription.Description,
 						MarkdownDescription: oidcOptionsDevicePollingIntervalDescription.MarkdownDescription,
 						Computed:            true,
@@ -317,7 +317,7 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies whether pushed authorization requests (PAR) are required.").Description,
 						Computed:    true,
 					},
-					"par_timeout": schema.Int64Attribute{
+					"par_timeout": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the pushed authorization request (PAR) timeout in seconds.").Description,
 						Computed:    true,
 					},
@@ -342,15 +342,15 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						ElementType:         types.StringType,
 						Computed:            true,
 					},
-					"refresh_token_duration": schema.Int64Attribute{
+					"refresh_token_duration": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the lifetime in seconds of the refresh token.").Description,
 						Computed:    true,
 					},
-					"refresh_token_rolling_duration": schema.Int64Attribute{
+					"refresh_token_rolling_duration": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of seconds a refresh token can be exchanged before re-authentication is required.").Description,
 						Computed:    true,
 					},
-					"refresh_token_rolling_grace_period_duration": schema.Int64Attribute{
+					"refresh_token_rolling_grace_period_duration": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("The number of seconds that a refresh token may be reused after having been exchanged for a new set of tokens.").Description,
 						Computed:    true,
 					},
@@ -401,7 +401,7 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("The package name associated with the application, for push notifications in native apps.").Description,
 								Computed:    true,
 							},
-							"passcode_refresh_seconds": schema.Int64Attribute{
+							"passcode_refresh_seconds": schema.Int32Attribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("The amount of time a passcode should be displayed before being replaced with a new passcode.").Description,
 								Computed:    true,
 							},
@@ -428,7 +428,7 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 										Computed:    true,
 
 										Attributes: map[string]schema.Attribute{
-											"amount": schema.Int64Attribute{
+											"amount": schema.Int32Attribute{
 												Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of minutes or hours that specify the duration between successful integrity detection calls.").Description,
 												Computed:    true,
 											},
@@ -490,7 +490,7 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						ElementType: types.StringType,
 						Computed:    true,
 					},
-					"assertion_duration": schema.Int64Attribute{
+					"assertion_duration": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the assertion validity duration in seconds.").Description,
 						Computed:    true,
 					},
@@ -543,7 +543,7 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the endpoint URL to submit the logout response.").Description,
 						Computed:    true,
 					},
-					"slo_window": schema.Int64Attribute{
+					"slo_window": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request.").Description,
 						Computed:    true,
 					},

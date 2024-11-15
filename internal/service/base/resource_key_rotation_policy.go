@@ -8,13 +8,13 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
@@ -36,13 +36,13 @@ type keyRotationPolicyResourceModel struct {
 	Algorithm          types.String                 `tfsdk:"algorithm"`
 	CurrentKeyId       pingonetypes.ResourceIDValue `tfsdk:"current_key_id"`
 	SubjectDn          types.String                 `tfsdk:"subject_dn"`
-	KeyLength          types.Int64                  `tfsdk:"key_length"`
+	KeyLength          types.Int32                  `tfsdk:"key_length"`
 	NextKeyId          pingonetypes.ResourceIDValue `tfsdk:"next_key_id"`
 	RotatedAt          timetypes.RFC3339            `tfsdk:"rotated_at"`
-	RotationPeriod     types.Int64                  `tfsdk:"rotation_period"`
+	RotationPeriod     types.Int32                  `tfsdk:"rotation_period"`
 	SignatureAlgorithm types.String                 `tfsdk:"signature_algorithm"`
 	UsageType          types.String                 `tfsdk:"usage_type"`
-	ValidityPeriod     types.Int64                  `tfsdk:"validity_period"`
+	ValidityPeriod     types.Int32                  `tfsdk:"validity_period"`
 }
 
 // Framework interfaces
@@ -69,7 +69,7 @@ func (r *KeyRotationPolicyResource) Schema(ctx context.Context, req resource.Sch
 	const rotationPeriodMinimum = 30
 	const rotationPeriodDefault = 90
 	const validityPeriodDefault = 365
-	var allowedKeyLengths = []int64{2048, 3072, 4096, 7680}
+	var allowedKeyLengths = []int32{2048, 3072, 4096, 7680}
 
 	algorithmDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The algorithm this key rotation policy applies to generated key rotation policy keys.",
@@ -81,7 +81,7 @@ func (r *KeyRotationPolicyResource) Schema(ctx context.Context, req resource.Sch
 
 	keyLengthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The number of bytes of a cryptographic key this key rotation policy will apply to generated key rotation policy keys.",
-	).AllowedValues(utils.Int64SliceToAnySlice(allowedKeyLengths)...)
+	).AllowedValues(utils.Int32SliceToAnySlice(allowedKeyLengths)...)
 
 	rotationPeriodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The number of days between key rotations.  The minimum value allowed is `30` days, while the maximum value allowed is 1 day less than the value set in the `validity_period` parameter.",
@@ -147,13 +147,13 @@ func (r *KeyRotationPolicyResource) Schema(ctx context.Context, req resource.Sch
 				},
 			},
 
-			"key_length": schema.Int64Attribute{
+			"key_length": schema.Int32Attribute{
 				Description:         keyLengthDescription.Description,
 				MarkdownDescription: keyLengthDescription.MarkdownDescription,
 				Required:            true,
 
-				Validators: []validator.Int64{
-					int64validator.OneOf(
+				Validators: []validator.Int32{
+					int32validator.OneOf(
 						allowedKeyLengths...,
 					),
 				},
@@ -166,16 +166,16 @@ func (r *KeyRotationPolicyResource) Schema(ctx context.Context, req resource.Sch
 				CustomType: timetypes.RFC3339Type{},
 			},
 
-			"rotation_period": schema.Int64Attribute{
+			"rotation_period": schema.Int32Attribute{
 				Description:         rotationPeriodDescription.Description,
 				MarkdownDescription: rotationPeriodDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
 
-				Default: int64default.StaticInt64(rotationPeriodDefault),
+				Default: int32default.StaticInt32(rotationPeriodDefault),
 
-				Validators: []validator.Int64{
-					int64validator.AtLeast(rotationPeriodMinimum),
+				Validators: []validator.Int32{
+					int32validator.AtLeast(rotationPeriodMinimum),
 					// todo: The maximum value is 1 day less than the `validityPeriod` value
 				},
 			},
@@ -200,13 +200,13 @@ func (r *KeyRotationPolicyResource) Schema(ctx context.Context, req resource.Sch
 				},
 			},
 
-			"validity_period": schema.Int64Attribute{
+			"validity_period": schema.Int32Attribute{
 				Description:         validityPeriodDescription.Description,
 				MarkdownDescription: validityPeriodDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
 
-				Default: int64default.StaticInt64(validityPeriodDefault),
+				Default: int32default.StaticInt32(validityPeriodDefault),
 			},
 
 			"current_key_id": schema.StringAttribute{
@@ -491,18 +491,18 @@ func (p *keyRotationPolicyResourceModel) expand() *management.KeyRotationPolicy 
 	data := management.NewKeyRotationPolicy(
 		management.EnumKeyRotationPolicyAlgorithm(p.Algorithm.ValueString()),
 		p.SubjectDn.ValueString(),
-		int32(p.KeyLength.ValueInt64()),
+		p.KeyLength.ValueInt32(),
 		p.Name.ValueString(),
 		management.EnumKeyRotationPolicySigAlgorithm(p.SignatureAlgorithm.ValueString()),
 		management.EnumKeyRotationPolicyUsageType(p.UsageType.ValueString()),
 	)
 
 	if !p.RotationPeriod.IsNull() && !p.RotationPeriod.IsUnknown() {
-		data.SetRotationPeriod(int32(p.RotationPeriod.ValueInt64()))
+		data.SetRotationPeriod(p.RotationPeriod.ValueInt32())
 	}
 
 	if !p.ValidityPeriod.IsNull() && !p.ValidityPeriod.IsUnknown() {
-		data.SetValidityPeriod(int32(p.ValidityPeriod.ValueInt64()))
+		data.SetValidityPeriod(p.ValidityPeriod.ValueInt32())
 	}
 
 	return data

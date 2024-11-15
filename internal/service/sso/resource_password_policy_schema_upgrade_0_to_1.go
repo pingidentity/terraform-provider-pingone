@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
@@ -27,30 +27,30 @@ type passwordPolicyResourceModelV0 struct {
 	AccountLockout               types.List                   `tfsdk:"account_lockout"`
 	MinCharacters                types.List                   `tfsdk:"min_characters"`
 	PasswordAge                  types.List                   `tfsdk:"password_age"`
-	MaxRepeatedCharacters        types.Int64                  `tfsdk:"max_repeated_characters"`
-	MinComplexity                types.Int64                  `tfsdk:"min_complexity"`
-	MinUniqueCharacters          types.Int64                  `tfsdk:"min_unique_characters"`
+	MaxRepeatedCharacters        types.Int32                  `tfsdk:"max_repeated_characters"`
+	MinComplexity                types.Int32                  `tfsdk:"min_complexity"`
+	MinUniqueCharacters          types.Int32                  `tfsdk:"min_unique_characters"`
 	NotSimilarToCurrent          types.Bool                   `tfsdk:"not_similar_to_current"`
-	PopulationCount              types.Int64                  `tfsdk:"population_count"`
+	PopulationCount              types.Int32                  `tfsdk:"population_count"`
 }
 
 type passwordPolicyPasswordHistoryResourceModelV0 struct {
-	PriorPasswordCount types.Int64 `tfsdk:"prior_password_count"`
-	RetentionDays      types.Int64 `tfsdk:"retention_days"`
+	PriorPasswordCount types.Int32 `tfsdk:"prior_password_count"`
+	RetentionDays      types.Int32 `tfsdk:"retention_days"`
 }
 
 type passwordPolicyPasswordLengthResourceModelV0 passwordPolicyLengthResourceModelV1
 
 type passwordPolicyAccountLockoutResourceModelV0 struct {
-	DurationSeconds types.Int64 `tfsdk:"duration_seconds"`
-	FailCount       types.Int64 `tfsdk:"fail_count"`
+	DurationSeconds types.Int32 `tfsdk:"duration_seconds"`
+	FailCount       types.Int32 `tfsdk:"fail_count"`
 }
 
 type passwordPolicyMinCharactersResourceModelV0 passwordPolicyMinCharactersResourceModelV1
 
 type passwordPolicyPasswordAgeResourceModelV0 struct {
-	Max types.Int64 `tfsdk:"max"`
-	Min types.Int64 `tfsdk:"min"`
+	Max types.Int32 `tfsdk:"max"`
+	Min types.Int32 `tfsdk:"min"`
 }
 
 func (r *PasswordPolicyResource) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
@@ -105,15 +105,15 @@ func (r *PasswordPolicyResource) UpgradeState(ctx context.Context) map[int64]res
 						Default: booldefault.StaticBool(false),
 					},
 
-					"max_repeated_characters": schema.Int64Attribute{
+					"max_repeated_characters": schema.Int32Attribute{
 						Optional: true,
 					},
 
-					"min_complexity": schema.Int64Attribute{
+					"min_complexity": schema.Int32Attribute{
 						Optional: true,
 					},
 
-					"min_unique_characters": schema.Int64Attribute{
+					"min_unique_characters": schema.Int32Attribute{
 						Optional: true,
 					},
 
@@ -124,7 +124,7 @@ func (r *PasswordPolicyResource) UpgradeState(ctx context.Context) map[int64]res
 						Default: booldefault.StaticBool(false),
 					},
 
-					"population_count": schema.Int64Attribute{
+					"population_count": schema.Int32Attribute{
 						Computed: true,
 					},
 				},
@@ -133,11 +133,11 @@ func (r *PasswordPolicyResource) UpgradeState(ctx context.Context) map[int64]res
 					"password_history": schema.ListNestedBlock{
 						NestedObject: schema.NestedBlockObject{
 							Attributes: map[string]schema.Attribute{
-								"prior_password_count": schema.Int64Attribute{
+								"prior_password_count": schema.Int32Attribute{
 									Optional: true,
 								},
 
-								"retention_days": schema.Int64Attribute{
+								"retention_days": schema.Int32Attribute{
 									Optional: true,
 								},
 							},
@@ -147,18 +147,18 @@ func (r *PasswordPolicyResource) UpgradeState(ctx context.Context) map[int64]res
 					"password_length": schema.ListNestedBlock{
 						NestedObject: schema.NestedBlockObject{
 							Attributes: map[string]schema.Attribute{
-								"max": schema.Int64Attribute{
+								"max": schema.Int32Attribute{
 									Optional: true,
 									Computed: true,
 
-									Default: int64default.StaticInt64(passwordLengthMaxDefault),
+									Default: int32default.StaticInt32(passwordLengthMaxDefault),
 								},
 
-								"min": schema.Int64Attribute{
+								"min": schema.Int32Attribute{
 									Optional: true,
 									Computed: true,
 
-									Default: int64default.StaticInt64(passwordLengthMinDefault),
+									Default: int32default.StaticInt32(passwordLengthMinDefault),
 								},
 							},
 						},
@@ -167,11 +167,11 @@ func (r *PasswordPolicyResource) UpgradeState(ctx context.Context) map[int64]res
 					"account_lockout": schema.ListNestedBlock{
 						NestedObject: schema.NestedBlockObject{
 							Attributes: map[string]schema.Attribute{
-								"duration_seconds": schema.Int64Attribute{
+								"duration_seconds": schema.Int32Attribute{
 									Optional: true,
 								},
 
-								"fail_count": schema.Int64Attribute{
+								"fail_count": schema.Int32Attribute{
 									Optional: true,
 								},
 							},
@@ -181,19 +181,19 @@ func (r *PasswordPolicyResource) UpgradeState(ctx context.Context) map[int64]res
 					"min_characters": schema.ListNestedBlock{
 						NestedObject: schema.NestedBlockObject{
 							Attributes: map[string]schema.Attribute{
-								"alphabetical_uppercase": schema.Int64Attribute{
+								"alphabetical_uppercase": schema.Int32Attribute{
 									Optional: true,
 								},
 
-								"alphabetical_lowercase": schema.Int64Attribute{
+								"alphabetical_lowercase": schema.Int32Attribute{
 									Optional: true,
 								},
 
-								"numeric": schema.Int64Attribute{
+								"numeric": schema.Int32Attribute{
 									Optional: true,
 								},
 
-								"special_characters": schema.Int64Attribute{
+								"special_characters": schema.Int32Attribute{
 									Optional: true,
 								},
 							},
@@ -203,11 +203,11 @@ func (r *PasswordPolicyResource) UpgradeState(ctx context.Context) map[int64]res
 					"password_age": schema.ListNestedBlock{
 						NestedObject: schema.NestedBlockObject{
 							Attributes: map[string]schema.Attribute{
-								"max": schema.Int64Attribute{
+								"max": schema.Int32Attribute{
 									Optional: true,
 								},
 
-								"min": schema.Int64Attribute{
+								"min": schema.Int32Attribute{
 									Optional: true,
 								},
 							},
@@ -408,25 +408,25 @@ func (p *passwordPolicyResourceModelV0) schemaUpgradeMinCharactersV0toV1(ctx con
 	}
 }
 
-func (p *passwordPolicyResourceModelV0) schemaUpgradePasswordAgeMaxV0toV1(ctx context.Context) (types.Int64, diag.Diagnostics) {
+func (p *passwordPolicyResourceModelV0) schemaUpgradePasswordAgeMaxV0toV1(ctx context.Context) (types.Int32, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	planAttribute := p.PasswordAge
 
 	if planAttribute.IsNull() {
-		return types.Int64Null(), diags
+		return types.Int32Null(), diags
 	} else if planAttribute.IsUnknown() {
-		return types.Int64Unknown(), diags
+		return types.Int32Unknown(), diags
 	} else {
 		var priorStateData []passwordPolicyPasswordAgeResourceModelV0
 		d := planAttribute.ElementsAs(ctx, &priorStateData, false)
 		diags.Append(d...)
 		if diags.HasError() {
-			return types.Int64Null(), diags
+			return types.Int32Null(), diags
 		}
 
 		if len(priorStateData) == 0 {
-			return types.Int64Null(), diags
+			return types.Int32Null(), diags
 		}
 
 		returnVar := priorStateData[0].Max
@@ -435,25 +435,25 @@ func (p *passwordPolicyResourceModelV0) schemaUpgradePasswordAgeMaxV0toV1(ctx co
 	}
 }
 
-func (p *passwordPolicyResourceModelV0) schemaUpgradePasswordAgeMinV0toV1(ctx context.Context) (types.Int64, diag.Diagnostics) {
+func (p *passwordPolicyResourceModelV0) schemaUpgradePasswordAgeMinV0toV1(ctx context.Context) (types.Int32, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	planAttribute := p.PasswordAge
 
 	if planAttribute.IsNull() {
-		return types.Int64Null(), diags
+		return types.Int32Null(), diags
 	} else if planAttribute.IsUnknown() {
-		return types.Int64Unknown(), diags
+		return types.Int32Unknown(), diags
 	} else {
 		var priorStateData []passwordPolicyPasswordAgeResourceModelV0
 		d := planAttribute.ElementsAs(ctx, &priorStateData, false)
 		diags.Append(d...)
 		if diags.HasError() {
-			return types.Int64Null(), diags
+			return types.Int32Null(), diags
 		}
 
 		if len(priorStateData) == 0 {
-			return types.Int64Null(), diags
+			return types.Int32Null(), diags
 		}
 
 		returnVar := priorStateData[0].Min

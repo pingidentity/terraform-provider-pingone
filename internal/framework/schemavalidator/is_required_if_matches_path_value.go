@@ -16,7 +16,9 @@ import (
 
 var (
 	_ validator.Bool    = IsRequiredIfMatchesPathValueValidator{}
+	_ validator.Float32 = IsRequiredIfMatchesPathValueValidator{}
 	_ validator.Float64 = IsRequiredIfMatchesPathValueValidator{}
+	_ validator.Int32   = IsRequiredIfMatchesPathValueValidator{}
 	_ validator.Int64   = IsRequiredIfMatchesPathValueValidator{}
 	_ validator.List    = IsRequiredIfMatchesPathValueValidator{}
 	_ validator.Map     = IsRequiredIfMatchesPathValueValidator{}
@@ -122,7 +124,35 @@ func (validator IsRequiredIfMatchesPathValueValidator) ValidateBool(ctx context.
 	resp.Diagnostics.Append(validateResp.Diagnostics...)
 }
 
+func (validator IsRequiredIfMatchesPathValueValidator) ValidateFloat32(ctx context.Context, req validator.Float32Request, resp *validator.Float32Response) {
+	validateReq := IsRequiredIfMatchesPathValueValidatorRequest{
+		Config:         req.Config,
+		ConfigValue:    req.ConfigValue,
+		Path:           req.Path,
+		PathExpression: req.PathExpression,
+	}
+	validateResp := &IsRequiredIfMatchesPathValueValidatorResponse{}
+
+	validator.Validate(ctx, validateReq, validateResp)
+
+	resp.Diagnostics.Append(validateResp.Diagnostics...)
+}
+
 func (validator IsRequiredIfMatchesPathValueValidator) ValidateFloat64(ctx context.Context, req validator.Float64Request, resp *validator.Float64Response) {
+	validateReq := IsRequiredIfMatchesPathValueValidatorRequest{
+		Config:         req.Config,
+		ConfigValue:    req.ConfigValue,
+		Path:           req.Path,
+		PathExpression: req.PathExpression,
+	}
+	validateResp := &IsRequiredIfMatchesPathValueValidatorResponse{}
+
+	validator.Validate(ctx, validateReq, validateResp)
+
+	resp.Diagnostics.Append(validateResp.Diagnostics...)
+}
+
+func (validator IsRequiredIfMatchesPathValueValidator) ValidateInt32(ctx context.Context, req validator.Int32Request, resp *validator.Int32Response) {
 	validateReq := IsRequiredIfMatchesPathValueValidatorRequest{
 		Config:         req.Config,
 		ConfigValue:    req.ConfigValue,
