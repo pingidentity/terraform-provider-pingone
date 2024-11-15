@@ -17,6 +17,7 @@ ENHANCEMENTS:
 * `data-source/pingone_application`: Add `session_not_on_or_after_duration` field to SAML applications. ([#934](https://github.com/pingidentity/terraform-provider-pingone/issues/934))
 * `resource/pingone_application`: Add `session_not_on_or_after_duration` field to SAML applications. ([#934](https://github.com/pingidentity/terraform-provider-pingone/issues/934))
 * `resource/pingone_mfa_device_policy`: Added `[email|sms|voice].otp.otp_length` field to allow admins to specify the length of the OTP displayed to users for SMS, Voice or Email delivery methods. ([#935](https://github.com/pingidentity/terraform-provider-pingone/issues/935))
+* `resource/pingone_mfa_device_policy`: Added the `totp.uri_parameters` field to allow custom key:value pairs for authenticators that support `otpauth` URI parameters. ([#936](https://github.com/pingidentity/terraform-provider-pingone/issues/936))
 
 BUG FIXES:
 
