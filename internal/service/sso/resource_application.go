@@ -140,12 +140,13 @@ type applicationSAMLOptionsResourceModelV1 struct {
 	AssertionDuration           types.Int64  `tfsdk:"assertion_duration"`
 	AssertionSignedEnabled      types.Bool   `tfsdk:"assertion_signed_enabled"`
 	CorsSettings                types.Object `tfsdk:"cors_settings"`
+	DefaultTargetUrl            types.String `tfsdk:"default_target_url"`
 	EnableRequestedAuthnContext types.Bool   `tfsdk:"enable_requested_authn_context"`
 	HomePageUrl                 types.String `tfsdk:"home_page_url"`
 	IdpSigningKey               types.Object `tfsdk:"idp_signing_key"`
-	DefaultTargetUrl            types.String `tfsdk:"default_target_url"`
 	NameIdFormat                types.String `tfsdk:"nameid_format"`
 	ResponseIsSigned            types.Bool   `tfsdk:"response_is_signed"`
+	SessionNotOnOrAfterDuration types.Int32  `tfsdk:"session_not_on_or_after_duration"`
 	SloBinding                  types.String `tfsdk:"slo_binding"`
 	SloEndpoint                 types.String `tfsdk:"slo_endpoint"`
 	SloResponseEndpoint         types.String `tfsdk:"slo_response_endpoint"`
@@ -247,24 +248,25 @@ var (
 	}
 
 	applicationSamlOptionsTFObjectTypes = map[string]attr.Type{
-		"acs_urls":                       types.SetType{ElemType: types.StringType},
-		"assertion_duration":             types.Int64Type,
-		"assertion_signed_enabled":       types.BoolType,
-		"cors_settings":                  types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
-		"enable_requested_authn_context": types.BoolType,
-		"home_page_url":                  types.StringType,
-		"idp_signing_key":                types.ObjectType{AttrTypes: applicationSamlOptionsIdpSigningKeyTFObjectTypes},
-		"default_target_url":             types.StringType,
-		"nameid_format":                  types.StringType,
-		"response_is_signed":             types.BoolType,
-		"slo_binding":                    types.StringType,
-		"slo_endpoint":                   types.StringType,
-		"slo_response_endpoint":          types.StringType,
-		"slo_window":                     types.Int64Type,
-		"sp_encryption":                  types.ObjectType{AttrTypes: applicationSamlOptionsSpEncryptionTFObjectTypes},
-		"sp_entity_id":                   types.StringType,
-		"sp_verification":                types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes},
-		"type":                           types.StringType,
+		"acs_urls":                         types.SetType{ElemType: types.StringType},
+		"assertion_duration":               types.Int64Type,
+		"assertion_signed_enabled":         types.BoolType,
+		"cors_settings":                    types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
+		"enable_requested_authn_context":   types.BoolType,
+		"home_page_url":                    types.StringType,
+		"idp_signing_key":                  types.ObjectType{AttrTypes: applicationSamlOptionsIdpSigningKeyTFObjectTypes},
+		"default_target_url":               types.StringType,
+		"nameid_format":                    types.StringType,
+		"response_is_signed":               types.BoolType,
+		"session_not_on_or_after_duration": types.Int32Type,
+		"slo_binding":                      types.StringType,
+		"slo_endpoint":                     types.StringType,
+		"slo_response_endpoint":            types.StringType,
+		"slo_window":                       types.Int64Type,
+		"sp_encryption":                    types.ObjectType{AttrTypes: applicationSamlOptionsSpEncryptionTFObjectTypes},
+		"sp_entity_id":                     types.StringType,
+		"sp_verification":                  types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes},
+		"type":                             types.StringType,
 	}
 
 	applicationSamlOptionsIdpSigningKeyTFObjectTypes = map[string]attr.Type{
@@ -599,6 +601,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	samlOptionsResponseIsSignedDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the SAML assertion response itself should be signed.",
 	).DefaultValue(false)
+
+	samlOptionsSessionNotOnOrAfterDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies a value for if the SAML application requires a different `SessionNotOnOrAfter` attribute value within the `AuthnStatement` element than the `NotOnOrAfter` value set by the `assertion_duration` property.",
+	)
 
 	samlOptionsSloBindingDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the binding protocol to be used for the logout response.",
@@ -1445,6 +1451,12 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Computed:            true,
 
 						Default: booldefault.StaticBool(false),
+					},
+
+					"session_not_on_or_after_duration": schema.Int32Attribute{
+						Description:         samlOptionsSessionNotOnOrAfterDurationDescription.Description,
+						MarkdownDescription: samlOptionsSessionNotOnOrAfterDurationDescription.MarkdownDescription,
+						Optional:            true,
 					},
 
 					"slo_binding": schema.StringAttribute{
@@ -2675,6 +2687,10 @@ func (p *applicationResourceModelV1) expandApplicationSAML(ctx context.Context) 
 
 		if !plan.ResponseIsSigned.IsNull() && !plan.ResponseIsSigned.IsUnknown() {
 			data.SetResponseSigned(plan.ResponseIsSigned.ValueBool())
+		}
+
+		if !plan.SessionNotOnOrAfterDuration.IsNull() && !plan.SessionNotOnOrAfterDuration.IsUnknown() {
+			data.SetSessionNotOnOrAfterDuration(plan.SessionNotOnOrAfterDuration.ValueInt32())
 		}
 
 		if !plan.SloBinding.IsNull() && !plan.SloBinding.IsUnknown() {
