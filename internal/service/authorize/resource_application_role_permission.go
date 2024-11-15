@@ -207,37 +207,42 @@ func (r *ApplicationRolePermissionResource) Read(ctx context.Context, req resour
 	}
 
 	// Run the API call
-	var responseArray *authorize.EntityArray
+	var response *authorize.ApplicationRolePermission
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.ApplicationRolePermissionsApi.ReadApplicationRolePermissions(ctx, data.EnvironmentId.ValueString(), data.ApplicationRoleId.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			pagedIterator := r.Client.AuthorizeAPIClient.ApplicationRolePermissionsApi.ReadApplicationRolePermissions(ctx, data.EnvironmentId.ValueString(), data.ApplicationRoleId.ValueString()).Execute()
+
+			var initialHttpResponse *http.Response
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if pageCursor.EntityArray.Embedded != nil && pageCursor.EntityArray.Embedded.Permissions != nil {
+					for _, permission := range pageCursor.EntityArray.Embedded.Permissions {
+						if v := permission.ApplicationRolePermission; v != nil && v.GetId() == data.ApplicationResourcePermissionId.ValueString() {
+							return v, pageCursor.HTTPResponse, nil
+						}
+					}
+				}
+			}
+
+			return nil, initialHttpResponse, nil
 		},
 		"ReadApplicationRolePermissions",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-		&responseArray,
+		&response,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
-	}
-
-	// Remove from state if resource is not found
-	if responseArray == nil {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-
-	var response *authorize.ApplicationRolePermission
-	if responseArray.Embedded != nil && responseArray.Embedded.Permissions != nil {
-		for _, permission := range responseArray.Embedded.Permissions {
-			if v := permission.ApplicationRolePermission; v != nil && v.GetId() == data.ApplicationResourcePermissionId.ValueString() {
-				response = v
-				break
-			}
-		}
 	}
 
 	// Remove from state if resource is not found

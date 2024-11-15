@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
@@ -103,28 +102,50 @@ func (r *ApplicationFlowPolicyAssignmentsDataSource) Read(ctx context.Context, r
 		return
 	}
 
-	var entityArray *management.EntityArray
+	var flowPolicyAssignmentIDs []string
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.ManagementAPIClient.ApplicationFlowPolicyAssignmentsApi.ReadAllFlowPolicyAssignments(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString()).Execute()
+			pagedIterator := r.Client.ManagementAPIClient.ApplicationFlowPolicyAssignmentsApi.ReadAllFlowPolicyAssignments(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString()).Execute()
+
+			var initialHttpResponse *http.Response
+
+			foundIDs := make([]string, 0)
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if pageCursor.EntityArray.Embedded != nil && pageCursor.EntityArray.Embedded.FlowPolicyAssignments != nil {
+					for _, flowPolicyAssignment := range pageCursor.EntityArray.Embedded.GetFlowPolicyAssignments() {
+						foundIDs = append(foundIDs, flowPolicyAssignment.GetId())
+					}
+				}
+			}
+
+			return foundIDs, initialHttpResponse, nil
 		},
 		"ReadAllFlowPolicyAssignments",
 		framework.DefaultCustomError,
 		nil,
-		&entityArray,
+		&flowPolicyAssignmentIDs,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(entityArray.Embedded.GetFlowPolicyAssignments())...)
+	resp.Diagnostics.Append(data.toState(flowPolicyAssignmentIDs)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (p *ApplicationFlowPolicyAssignmentsDataSourceModel) toState(apiObject []management.FlowPolicyAssignment) diag.Diagnostics {
+func (p *ApplicationFlowPolicyAssignmentsDataSourceModel) toState(apiObject []string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -136,12 +157,7 @@ func (p *ApplicationFlowPolicyAssignmentsDataSourceModel) toState(apiObject []ma
 		return diags
 	}
 
-	list := make([]string, 0)
-	for _, item := range apiObject {
-		list = append(list, item.GetId())
-	}
-
-	p.Ids = framework.PingOneResourceIDListToTF(list)
+	p.Ids = framework.PingOneResourceIDListToTF(apiObject)
 
 	return diags
 }

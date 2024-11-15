@@ -670,44 +670,53 @@ func (p *ApplicationAttributeMappingResourceModel) expand(ctx context.Context, a
 
 	if overrideExisting {
 
-		var response *management.EntityArray
 		diags.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := apiClient.ApplicationAttributeMappingApi.ReadAllApplicationAttributeMappings(ctx, p.EnvironmentId.ValueString(), p.ApplicationId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, p.EnvironmentId.ValueString(), fO, fR, fErr)
+				pagedIterator := apiClient.ApplicationAttributeMappingApi.ReadAllApplicationAttributeMappings(ctx, p.EnvironmentId.ValueString(), p.ApplicationId.ValueString()).Execute()
+
+				var initialHttpResponse *http.Response
+
+				for pageCursor, err := range pagedIterator {
+					if err != nil {
+						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, p.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					}
+
+					if initialHttpResponse == nil {
+						initialHttpResponse = pageCursor.HTTPResponse
+					}
+
+					if attributes, ok := pageCursor.EntityArray.Embedded.GetAttributesOk(); ok {
+
+						for _, attribute := range attributes {
+
+							if strings.EqualFold(attribute.ApplicationAttributeMapping.GetName(), p.Name.ValueString()) {
+								return attribute.ApplicationAttributeMapping, pageCursor.HTTPResponse, nil
+							}
+						}
+
+					}
+				}
+
+				return nil, initialHttpResponse, nil
 			},
 			"ReadAllApplicationAttributeMappings",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&response,
+			&data,
 		)...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		if attributes, ok := response.Embedded.GetAttributesOk(); ok {
+		if data == nil {
+			diags.AddError(
+				"Core attribute not found",
+				fmt.Sprintf("The configured attribute name (\"%s\") is identified as a core attribute, but the attribute cannot be found in the platform.  Please raise this issue with the provider maintainers.", p.Name.ValueString()),
+			)
 
-			found := false
-			for _, attribute := range attributes {
-
-				if strings.EqualFold(attribute.ApplicationAttributeMapping.GetName(), p.Name.ValueString()) {
-					data = attribute.ApplicationAttributeMapping
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				diags.AddError(
-					"Core attribute not found",
-					fmt.Sprintf("The configured attribute name (\"%s\") is identified as a core attribute, but the attribute cannot be found in the platform.  Please raise this issue with the provider maintainers.", p.Name.ValueString()),
-				)
-
-				return nil, diags
-			}
-
+			return nil, diags
 		}
 
 		data.SetValue(p.Value.ValueString())

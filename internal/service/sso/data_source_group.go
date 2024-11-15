@@ -173,7 +173,7 @@ func (r *GroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	var group management.Group
+	var group *management.Group
 	var scimFilter string
 
 	if !data.Name.IsNull() {
@@ -201,28 +201,49 @@ func (r *GroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	}
 
 	// Run the API call
-	var entityArray *management.EntityArray
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.GroupsApi.ReadAllGroups(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			pagedIterator := r.Client.ManagementAPIClient.GroupsApi.ReadAllGroups(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
+
+			var initialHttpResponse *http.Response
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if groups, ok := pageCursor.EntityArray.Embedded.GetGroupsOk(); ok {
+					for _, g := range groups {
+
+						if !data.Name.IsNull() && g.GetName() == data.Name.ValueString() {
+							return &g, pageCursor.HTTPResponse, nil
+						}
+
+						if !data.GroupId.IsNull() && g.GetId() == data.GroupId.ValueString() {
+							return &g, pageCursor.HTTPResponse, nil
+						}
+					}
+				}
+			}
+
+			return nil, initialHttpResponse, nil
 		},
 		"ReadAllGroups",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-		&entityArray,
+		&group,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if groups, ok := entityArray.Embedded.GetGroupsOk(); ok && len(groups) > 0 && groups[0].Id != nil {
-
-		group = groups[0]
-
-	} else {
+	if group == nil {
 		resp.Diagnostics.AddError(
 			"Group not found",
 			fmt.Sprintf("The group with the specified group_id or name cannot be found in environment %s.", data.EnvironmentId.String()),
@@ -231,7 +252,7 @@ func (r *GroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&group)...)
+	resp.Diagnostics.Append(data.toState(group)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

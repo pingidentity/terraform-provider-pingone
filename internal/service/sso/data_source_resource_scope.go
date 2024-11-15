@@ -379,31 +379,58 @@ func fetchResourceScopesFromIDOrNameSlice(ctx context.Context, apiClient *manage
 		errorFunction = framework.CustomErrorResourceNotFoundWarning
 	}
 
-	var entityArray *management.EntityArray
+	var resourceScopesMap map[string]management.ResourceScope
 	diags.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.ResourceScopesApi.ReadAllResourceScopes(ctx, environmentID, resourceID).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
+			pagedIterator := apiClient.ResourceScopesApi.ReadAllResourceScopes(ctx, environmentID, resourceID).Execute()
+
+			var initialHttpResponse *http.Response
+
+			foundResourceScopesMap := make(map[string]management.ResourceScope)
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if resourceScopes, ok := pageCursor.EntityArray.Embedded.GetScopesOk(); ok {
+
+					for _, resourceScope := range resourceScopes {
+						if byName {
+							foundResourceScopesMap[strings.ToLower(resourceScope.GetName())] = resourceScope
+						} else {
+							foundResourceScopesMap[strings.ToLower(resourceScope.GetId())] = resourceScope
+						}
+					}
+
+				}
+			}
+
+			return foundResourceScopesMap, initialHttpResponse, nil
 		},
 		"ReadAllResourceScopes",
 		errorFunction,
 		sdk.DefaultCreateReadRetryable,
-		&entityArray,
+		&resourceScopesMap,
 	)...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
-	if entityArray == nil {
+	if resourceScopesMap == nil {
 		if warnIfNotFound {
 			diags.AddWarning(
 				"Cannot find resource scopes",
 				fmt.Sprintf("The resource scopes for environment %s cannot be found", environmentID),
 			)
 		} else {
-			diags.AddWarning(
+			diags.AddError(
 				"Cannot find resource scopes",
 				fmt.Sprintf("The resource scopes for environment %s cannot be found", environmentID),
 			)
@@ -413,31 +440,19 @@ func fetchResourceScopesFromIDOrNameSlice(ctx context.Context, apiClient *manage
 
 	var foundResourceScopes []management.ResourceScope
 
-	if resourceScopes, ok := entityArray.Embedded.GetScopesOk(); ok {
-		resourceScopesMap := make(map[string]management.ResourceScope)
-
-		for _, resourceScope := range resourceScopes {
-			if byName {
-				resourceScopesMap[strings.ToLower(resourceScope.GetName())] = resourceScope
-			} else {
-				resourceScopesMap[strings.ToLower(resourceScope.GetId())] = resourceScope
-			}
+	for _, resourceScopeInputItem := range resourceScopeInputList {
+		if v, ok := resourceScopesMap[strings.ToLower(resourceScopeInputItem)]; ok {
+			foundResourceScopes = append(foundResourceScopes, v)
+		} else {
+			diags.AddError(
+				"Cannot find resource scope",
+				fmt.Sprintf("The resource scope %s for resource %s in environment %s cannot be found", resourceScopeInputItem, resourceID, environmentID),
+			)
 		}
+	}
 
-		for _, resourceScopeInputItem := range resourceScopeInputList {
-			if v, ok := resourceScopesMap[strings.ToLower(resourceScopeInputItem)]; ok {
-				foundResourceScopes = append(foundResourceScopes, v)
-			} else {
-				diags.AddError(
-					"Cannot find resource scope",
-					fmt.Sprintf("The resource scope %s for resource %s in environment %s cannot be found", resourceScopeInputItem, resourceID, environmentID),
-				)
-			}
-		}
-
-		if diags.HasError() {
-			return nil, diags
-		}
+	if diags.HasError() {
+		return nil, diags
 	}
 
 	return foundResourceScopes, diags

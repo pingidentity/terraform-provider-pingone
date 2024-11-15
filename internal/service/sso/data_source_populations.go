@@ -14,7 +14,6 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
-	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 // Types
@@ -122,13 +121,11 @@ func (r *PopulationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	var filterFunction sdk.SDKInterfaceFunc
+	var filterFunction func() management.EntityArrayPagedIterator
 
 	if !data.ScimFilter.IsNull() {
 
-		filterFunction = func() (any, *http.Response, error) {
-			return r.Client.ManagementAPIClient.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute()
-		}
+		filterFunction = r.Client.ManagementAPIClient.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute
 
 	} else if !data.DataFilters.IsNull() {
 
@@ -160,9 +157,7 @@ func (r *PopulationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 			"scimFilter": scimFilter,
 		})
 
-		filterFunction = func() (any, *http.Response, error) {
-			return r.Client.ManagementAPIClient.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
-		}
+		filterFunction = r.Client.ManagementAPIClient.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute
 
 	} else {
 		resp.Diagnostics.AddError(
@@ -172,29 +167,53 @@ func (r *PopulationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	var entityArray *management.EntityArray
+	var populationIDs []string
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		filterFunction,
+		func() (any, *http.Response, error) {
+			pagedIterator := filterFunction()
+
+			var initialHttpResponse *http.Response
+
+			foundIDs := make([]string, 0)
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if pageCursor.EntityArray.Embedded != nil && pageCursor.EntityArray.Embedded.Populations != nil {
+					for _, flowPolicy := range pageCursor.EntityArray.Embedded.GetPopulations() {
+						foundIDs = append(foundIDs, flowPolicy.GetId())
+					}
+				}
+			}
+
+			return foundIDs, initialHttpResponse, nil
+		},
 		"ReadAllPopulations",
 		framework.DefaultCustomError,
 		nil,
-		&entityArray,
+		&populationIDs,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(data.EnvironmentId.ValueString(), entityArray.Embedded.GetPopulations())...)
+	resp.Diagnostics.Append(data.toState(data.EnvironmentId.ValueString(), populationIDs)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (p *PopulationsDataSourceModel) toState(environmentID string, populations []management.Population) diag.Diagnostics {
+func (p *PopulationsDataSourceModel) toState(environmentID string, populationIDs []string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if populations == nil || environmentID == "" {
+	if populationIDs == nil || environmentID == "" {
 		diags.AddError(
 			"Data object missing",
 			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
@@ -203,15 +222,10 @@ func (p *PopulationsDataSourceModel) toState(environmentID string, populations [
 		return diags
 	}
 
-	list := make([]string, 0)
-	for _, item := range populations {
-		list = append(list, item.GetId())
-	}
-
 	var d diag.Diagnostics
 
 	p.Id = framework.PingOneResourceIDToTF(environmentID)
-	p.Ids, d = framework.StringSliceToTF(list)
+	p.Ids, d = framework.StringSliceToTF(populationIDs)
 	diags.Append(d...)
 
 	return diags

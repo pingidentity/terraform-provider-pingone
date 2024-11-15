@@ -625,7 +625,7 @@ func (r *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-	var user management.User
+	var user *management.User
 	var scimFilter string
 
 	if !data.Username.IsNull() {
@@ -660,42 +660,54 @@ func (r *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-	var response *management.EntityArray
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.UsersApi.ReadAllUsers(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			pagedIterator := r.Client.ManagementAPIClient.UsersApi.ReadAllUsers(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
+
+			var initialHttpResponse *http.Response
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if users, ok := pageCursor.EntityArray.Embedded.GetUsersOk(); ok {
+					for _, u := range users {
+
+						if !data.Username.IsNull() && u.GetUsername() == data.Username.ValueString() {
+							return &u, pageCursor.HTTPResponse, nil
+						}
+
+						if !data.UserId.IsNull() && u.GetId() == data.UserId.ValueString() {
+							return &u, pageCursor.HTTPResponse, nil
+						}
+
+						if !data.Email.IsNull() && u.GetEmail() == data.Email.ValueString() {
+							return &u, pageCursor.HTTPResponse, nil
+						}
+					}
+
+				}
+			}
+
+			return nil, initialHttpResponse, nil
 		},
 		"ReadAllUsers",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-		&response,
+		&user,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	var responseEnabled *management.UserEnabled
-	if users, ok := response.Embedded.GetUsersOk(); ok && len(users) > 0 && users[0].Id != nil {
-
-		user = users[0]
-
-		resp.Diagnostics.Append(framework.ParseResponse(
-			ctx,
-
-			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ManagementAPIClient.EnableUsersApi.ReadUserEnabled(ctx, data.EnvironmentId.ValueString(), user.GetId()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
-			},
-			"ReadUserEnabled",
-			framework.DefaultCustomError,
-			sdk.DefaultCreateReadRetryable,
-			&responseEnabled,
-		)...)
-
-	} else {
+	if user == nil {
 		resp.Diagnostics.AddError(
 			"Cannot find user",
 			"Cannot find the requested user from the provided values. Please check the user_id, username or email parameters.",
@@ -703,8 +715,23 @@ func (r *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
+	var responseEnabled *management.UserEnabled
+
+	resp.Diagnostics.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			fO, fR, fErr := r.Client.ManagementAPIClient.EnableUsersApi.ReadUserEnabled(ctx, data.EnvironmentId.ValueString(), user.GetId()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+		},
+		"ReadUserEnabled",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+		&responseEnabled,
+	)...)
+
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&user, responseEnabled)...)
+	resp.Diagnostics.Append(data.toState(user, responseEnabled)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

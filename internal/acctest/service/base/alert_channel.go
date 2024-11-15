@@ -22,6 +22,7 @@ func AlertChannel_CheckDestroy(s *terraform.State) error {
 
 	apiClient := p1Client.API.ManagementAPIClient
 
+mainloop:
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "pingone_alert_channel" {
 			continue
@@ -36,25 +37,30 @@ func AlertChannel_CheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		listResponse, r, err := apiClient.AlertingApi.ReadAllAlertChannels(ctx, rs.Primary.Attributes["environment_id"]).Execute()
+		pagedIterator := apiClient.AlertingApi.ReadAllAlertChannels(ctx, rs.Primary.Attributes["environment_id"]).Execute()
 
-		shouldContinue, err = acctest.CheckForResourceDestroy(r, err)
-		if err != nil {
-			return err
-		}
-
-		if shouldContinue {
-			continue
-		}
-
-		// Find the resource in the list
 		found := false
-		if embedded, ok := listResponse.GetEmbeddedOk(); ok {
-			if alertChannels, ok := embedded.GetAlertChannelsOk(); ok {
-				for _, alertChannel := range alertChannels {
-					if alertChannel.GetId() == rs.Primary.ID {
-						found = true
-						break
+
+	pagedIteratorLoop:
+		for pageCursor, err := range pagedIterator {
+			shouldContinue, err = acctest.CheckForResourceDestroy(pageCursor.HTTPResponse, err)
+			if err != nil {
+				return err
+			}
+
+			// Environment not found
+			if shouldContinue {
+				continue mainloop
+			}
+
+			// Find the resource in the list
+			if embedded, ok := pageCursor.EntityArray.GetEmbeddedOk(); ok {
+				if alertChannels, ok := embedded.GetAlertChannelsOk(); ok {
+					for _, alertChannel := range alertChannels {
+						if alertChannel.GetId() == rs.Primary.ID {
+							found = true
+							break pagedIteratorLoop
+						}
 					}
 				}
 			}

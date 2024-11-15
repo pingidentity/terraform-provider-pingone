@@ -607,31 +607,40 @@ func (p *ApplicationResourceGrantResourceModel) getApplication(ctx context.Conte
 func (p *ApplicationResourceGrantResourceModel) getResourceGrant(ctx context.Context, apiClient *management.APIClient, resourceID string) (*management.ApplicationResourceGrant, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var applicationGrants *management.EntityArray
+	var applicationGrant *management.ApplicationResourceGrant
 	diags.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.ApplicationResourceGrantsApi.ReadAllApplicationGrants(ctx, p.EnvironmentId.ValueString(), p.ApplicationId.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, p.EnvironmentId.ValueString(), fO, fR, fErr)
+			pagedIterator := apiClient.ApplicationResourceGrantsApi.ReadAllApplicationGrants(ctx, p.EnvironmentId.ValueString(), p.ApplicationId.ValueString()).Execute()
+
+			var initialHttpResponse *http.Response
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, p.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				for _, grant := range pageCursor.EntityArray.Embedded.GetGrants() {
+					if grant.Resource.GetId() == resourceID {
+						return &grant, pageCursor.HTTPResponse, nil
+					}
+				}
+			}
+
+			return nil, initialHttpResponse, nil
 		},
 		"ReadAllApplicationGrants",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-		&applicationGrants,
+		&applicationGrant,
 	)...)
 	if diags.HasError() {
 		return nil, diags
-	}
-
-	var applicationGrant *management.ApplicationResourceGrant
-
-	for _, grant := range applicationGrants.Embedded.GetGrants() {
-		if grant.Resource.GetId() == resourceID {
-			grant := grant // fix for exportloopref linting error
-			applicationGrant = &grant
-			break
-		}
 	}
 
 	return applicationGrant, diags

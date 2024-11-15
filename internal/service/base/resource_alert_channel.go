@@ -252,52 +252,54 @@ func (r *AlertChannelResource) Read(ctx context.Context, req resource.ReadReques
 	}
 
 	// Run the API call
-	var listResponse *management.EntityArray
+	var response *management.AlertChannel
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.AlertingApi.ReadAllAlertChannels(ctx, data.EnvironmentId.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			pagedIterator := r.Client.ManagementAPIClient.AlertingApi.ReadAllAlertChannels(ctx, data.EnvironmentId.ValueString()).Execute()
+
+			var initialHttpResponse *http.Response
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if embedded, ok := pageCursor.EntityArray.GetEmbeddedOk(); ok {
+					if alertChannels, ok := embedded.GetAlertChannelsOk(); ok {
+						for _, alertChannel := range alertChannels {
+							if alertChannel.GetId() == data.Id.ValueString() {
+								return &alertChannel, pageCursor.HTTPResponse, nil
+							}
+						}
+					}
+				}
+			}
+
+			return nil, initialHttpResponse, nil
 		},
 		"ReadAllAlertChannels",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-		&listResponse,
+		&response,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Remove from state if resource is not found
-	if listResponse == nil {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-
-	// Find the resource in the list
-	var response management.AlertChannel
-	found := false
-	if embedded, ok := listResponse.GetEmbeddedOk(); ok {
-		if alertChannels, ok := embedded.GetAlertChannelsOk(); ok {
-			for _, alertChannel := range alertChannels {
-				if alertChannel.GetId() == data.Id.ValueString() {
-					response = alertChannel
-					found = true
-					break
-				}
-			}
-		}
-	}
-
-	// Remove from state if resource is not found
-	if !found {
+	if response == nil {
 		resp.State.RemoveResource(ctx)
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&response)...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

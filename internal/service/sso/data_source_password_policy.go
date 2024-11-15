@@ -345,12 +345,11 @@ func (r *PasswordPolicyDataSource) Read(ctx context.Context, req datasource.Read
 		return
 	}
 
-	var policyInstance management.PasswordPolicy
+	var policyInstance *management.PasswordPolicy
 
 	// Gateway API does not support SCIM filtering
 	if !data.PasswordPolicyId.IsNull() {
 		// Run the API call
-		var response *management.PasswordPolicy
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
@@ -361,53 +360,61 @@ func (r *PasswordPolicyDataSource) Read(ctx context.Context, req datasource.Read
 			"ReadOnePasswordPolicy",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&response,
+			&policyInstance,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		policyInstance = *response
-
 	} else if !data.Name.IsNull() {
 		// Run the API call
-		var entityArray *management.EntityArray
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ManagementAPIClient.PasswordPoliciesApi.ReadAllPasswordPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				pagedIterator := r.Client.ManagementAPIClient.PasswordPoliciesApi.ReadAllPasswordPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
+
+				var initialHttpResponse *http.Response
+
+				for pageCursor, err := range pagedIterator {
+					if err != nil {
+						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					}
+
+					if initialHttpResponse == nil {
+						initialHttpResponse = pageCursor.HTTPResponse
+					}
+
+					if passwordPolicies, ok := pageCursor.EntityArray.Embedded.GetPasswordPoliciesOk(); ok {
+
+						for _, passwordPolicyObject := range passwordPolicies {
+							if passwordPolicyObject.GetId() != "" && passwordPolicyObject.GetName() == data.Name.ValueString() {
+								return &passwordPolicyObject, pageCursor.HTTPResponse, nil
+							}
+						}
+
+					}
+				}
+
+				return nil, initialHttpResponse, nil
 			},
 			"ReadAllPasswordPolicies",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&entityArray,
+			&policyInstance,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		if passwordPolicies, ok := entityArray.Embedded.GetPasswordPoliciesOk(); ok {
-			found := false
-
-			for _, passwordPolicyObject := range passwordPolicies {
-				if passwordPolicyObject.GetId() != "" && passwordPolicyObject.GetName() == data.Name.ValueString() {
-					policyInstance = passwordPolicyObject
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				resp.Diagnostics.AddError(
-					"Cannot find the password policy from name",
-					fmt.Sprintf("The password policy name %s for environment %s cannot be found", data.Name.String(), data.EnvironmentId.String()),
-				)
-				return
-			}
-
+		if policyInstance == nil {
+			resp.Diagnostics.AddError(
+				"Cannot find the password policy from name",
+				fmt.Sprintf("The password policy name %s for environment %s cannot be found", data.Name.String(), data.EnvironmentId.String()),
+			)
+			return
 		}
+
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",
@@ -417,7 +424,7 @@ func (r *PasswordPolicyDataSource) Read(ctx context.Context, req datasource.Read
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&policyInstance)...)
+	resp.Diagnostics.Append(data.toState(policyInstance)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

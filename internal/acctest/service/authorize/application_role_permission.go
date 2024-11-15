@@ -22,6 +22,7 @@ func ApplicationRolePermission_CheckDestroy(s *terraform.State) error {
 
 	apiClient := p1Client.API.AuthorizeAPIClient
 
+mainloop:
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "pingone_authorize_application_role_permission" {
 			continue
@@ -36,30 +37,34 @@ func ApplicationRolePermission_CheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		responseArray, r, err := apiClient.ApplicationRolePermissionsApi.ReadApplicationRolePermissions(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_role_id"]).Execute()
+		pagedIterator := apiClient.ApplicationRolePermissionsApi.ReadApplicationRolePermissions(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["application_role_id"]).Execute()
 
-		shouldContinue, err = acctest.CheckForResourceDestroy(r, err)
-		if err != nil {
-			return err
-		}
+		found := false
 
-		if shouldContinue {
-			continue
-		}
+	pagedIteratorLoop:
+		for pageCursor, err := range pagedIterator {
+			shouldContinue, err = acctest.CheckForResourceDestroy(pageCursor.HTTPResponse, err)
+			if err != nil {
+				return err
+			}
 
-		var response *authorize.ApplicationRolePermission
-		if responseArray.Embedded != nil && responseArray.Embedded.Permissions != nil {
-			for _, permission := range responseArray.Embedded.Permissions {
-				if v := permission.ApplicationRolePermission; v != nil && v.GetId() == rs.Primary.ID {
-					response = v
-					break
+			// Environment not found
+			if shouldContinue {
+				continue mainloop
+			}
+
+			if pageCursor.EntityArray.Embedded != nil && pageCursor.EntityArray.Embedded.Permissions != nil {
+				for _, permission := range pageCursor.EntityArray.Embedded.Permissions {
+					if v := permission.ApplicationRolePermission; v != nil && v.GetId() == rs.Primary.ID {
+						found = true
+						break pagedIteratorLoop
+					}
 				}
 			}
+
 		}
 
-		shouldContinue = response == nil
-
-		if shouldContinue {
+		if !found {
 			continue
 		}
 

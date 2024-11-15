@@ -153,13 +153,11 @@ func (r *UsersDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	var filterFunction sdk.SDKInterfaceFunc
+	var filterFunction func() management.EntityArrayPagedIterator
 
 	if !data.ScimFilter.IsNull() {
 
-		filterFunction = func() (any, *http.Response, error) {
-			return r.Client.ManagementAPIClient.UsersApi.ReadAllUsers(ctx, data.EnvironmentId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute()
-		}
+		filterFunction = r.Client.ManagementAPIClient.UsersApi.ReadAllUsers(ctx, data.EnvironmentId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute
 
 	} else if !data.DataFilters.IsNull() {
 
@@ -195,9 +193,7 @@ func (r *UsersDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 			"scimFilter": scimFilter,
 		})
 
-		filterFunction = func() (any, *http.Response, error) {
-			return r.Client.ManagementAPIClient.UsersApi.ReadAllUsers(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
-		}
+		filterFunction = r.Client.ManagementAPIClient.UsersApi.ReadAllUsers(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute
 
 	} else {
 		resp.Diagnostics.AddError(
@@ -207,40 +203,59 @@ func (r *UsersDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	var entityArray *management.EntityArray
+	var userIDs []string
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		filterFunction,
+		func() (any, *http.Response, error) {
+			pagedIterator := filterFunction()
+
+			var initialHttpResponse *http.Response
+
+			foundIDs := make([]string, 0)
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if pageCursor.EntityArray.Embedded != nil && pageCursor.EntityArray.Embedded.Users != nil {
+					for _, item := range pageCursor.EntityArray.Embedded.GetUsers() {
+						foundIDs = append(foundIDs, item.GetId())
+					}
+				}
+			}
+
+			return foundIDs, initialHttpResponse, nil
+		},
 		"ReadAllUsers",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-		&entityArray,
+		&userIDs,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(data.EnvironmentId.ValueString(), entityArray.Embedded.GetUsers())...)
+	resp.Diagnostics.Append(data.toState(data.EnvironmentId.ValueString(), userIDs)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (p *UsersDataSourceModel) toState(environmentID string, users []management.User) diag.Diagnostics {
+func (p *UsersDataSourceModel) toState(environmentID string, userIDs []string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if users == nil || environmentID == "" {
+	if userIDs == nil || environmentID == "" {
 		diags.AddError(
 			"Data object missing",
 			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
 		)
 
 		return diags
-	}
-
-	list := make([]string, 0)
-	for _, item := range users {
-		list = append(list, item.GetId())
 	}
 
 	var d diag.Diagnostics
@@ -250,7 +265,7 @@ func (p *UsersDataSourceModel) toState(environmentID string, users []management.
 	}
 
 	p.EnvironmentId = framework.PingOneResourceIDToTF(environmentID)
-	p.Ids, d = framework.StringSliceToTF(list)
+	p.Ids, d = framework.StringSliceToTF(userIDs)
 	diags.Append(d...)
 
 	return diags

@@ -153,11 +153,10 @@ func (r *DigitalWalletApplicationDataSource) Read(ctx context.Context, req datas
 		return
 	}
 
-	var digitalWalletApp credentials.DigitalWalletApplication
+	var digitalWalletApp *credentials.DigitalWalletApplication
 
 	if !data.DigitalWalletId.IsNull() {
 		// Run the API call
-		var response *credentials.DigitalWalletApplication
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
@@ -168,96 +167,111 @@ func (r *DigitalWalletApplicationDataSource) Read(ctx context.Context, req datas
 			"ReadOneDigitalWalletApplication",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&response,
+			&digitalWalletApp,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
-
-		digitalWalletApp = *response
 
 	} else if !data.ApplicationId.IsNull() {
 
 		// Run the API call
-		var entityArray *credentials.EntityArray
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.CredentialsAPIClient.DigitalWalletAppsApi.ReadAllDigitalWalletApps(ctx, data.EnvironmentId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				pagedIterator := r.Client.CredentialsAPIClient.DigitalWalletAppsApi.ReadAllDigitalWalletApps(ctx, data.EnvironmentId.ValueString()).Execute()
+
+				var initialHttpResponse *http.Response
+
+				for pageCursor, err := range pagedIterator {
+					if err != nil {
+						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					}
+
+					if initialHttpResponse == nil {
+						initialHttpResponse = pageCursor.HTTPResponse
+					}
+
+					if digitalWalletApps, ok := pageCursor.EntityArray.Embedded.GetDigitalWalletApplicationsOk(); ok {
+						for _, digitalWalletAppItem := range digitalWalletApps {
+
+							if *digitalWalletAppItem.GetApplication().Id == data.ApplicationId.ValueString() {
+								return &digitalWalletAppItem, pageCursor.HTTPResponse, nil
+							}
+						}
+
+					}
+				}
+
+				return nil, initialHttpResponse, nil
 			},
 			"ReadAllDigitalWalletApplication",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&entityArray,
+			&digitalWalletApp,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		if digitalWalletApps, ok := entityArray.Embedded.GetDigitalWalletApplicationsOk(); ok {
-
-			found := false
-			for _, digitalWalletAppItem := range digitalWalletApps {
-
-				if *digitalWalletAppItem.GetApplication().Id == data.ApplicationId.ValueString() {
-					digitalWalletApp = digitalWalletAppItem
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				resp.Diagnostics.AddError(
-					"Cannot find digital wallet application from application_id",
-					fmt.Sprintf("The application %s for environment %s cannot be found", data.ApplicationId.String(), data.EnvironmentId.String()),
-				)
-				return
-			}
-
+		if digitalWalletApp == nil {
+			resp.Diagnostics.AddError(
+				"Cannot find digital wallet application from application_id",
+				fmt.Sprintf("The application %s for environment %s cannot be found", data.ApplicationId.String(), data.EnvironmentId.String()),
+			)
+			return
 		}
 
 	} else if !data.Name.IsNull() {
 
 		// Run the API call
-		var entityArray *credentials.EntityArray
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.CredentialsAPIClient.DigitalWalletAppsApi.ReadAllDigitalWalletApps(ctx, data.EnvironmentId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				pagedIterator := r.Client.CredentialsAPIClient.DigitalWalletAppsApi.ReadAllDigitalWalletApps(ctx, data.EnvironmentId.ValueString()).Execute()
+
+				var initialHttpResponse *http.Response
+
+				for pageCursor, err := range pagedIterator {
+					if err != nil {
+						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					}
+
+					if initialHttpResponse == nil {
+						initialHttpResponse = pageCursor.HTTPResponse
+					}
+
+					if digitalWalletApps, ok := pageCursor.EntityArray.Embedded.GetDigitalWalletApplicationsOk(); ok {
+
+						for _, digitalWalletAppItem := range digitalWalletApps {
+
+							if digitalWalletAppItem.GetName() == data.Name.ValueString() {
+								return &digitalWalletAppItem, pageCursor.HTTPResponse, nil
+							}
+						}
+
+					}
+				}
+
+				return nil, initialHttpResponse, nil
 			},
 			"ReadAllDigitalWalletApplication",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&entityArray,
+			&digitalWalletApp,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		if digitalWalletApps, ok := entityArray.Embedded.GetDigitalWalletApplicationsOk(); ok {
-
-			found := false
-			for _, digitalWalletAppItem := range digitalWalletApps {
-
-				if digitalWalletAppItem.GetName() == data.Name.ValueString() {
-					digitalWalletApp = digitalWalletAppItem
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				resp.Diagnostics.AddError(
-					"Cannot find digital wallet application from name",
-					fmt.Sprintf("The name %s for environment %s cannot be found", data.Name.String(), data.EnvironmentId.String()),
-				)
-				return
-			}
-
+		if digitalWalletApp == nil {
+			resp.Diagnostics.AddError(
+				"Cannot find digital wallet application from name",
+				fmt.Sprintf("The name %s for environment %s cannot be found", data.Name.String(), data.EnvironmentId.String()),
+			)
+			return
 		}
 
 	} else {
@@ -269,7 +283,7 @@ func (r *DigitalWalletApplicationDataSource) Read(ctx context.Context, req datas
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&digitalWalletApp)...)
+	resp.Diagnostics.Append(data.toState(digitalWalletApp)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

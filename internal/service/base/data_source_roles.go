@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -100,31 +99,53 @@ func (r *RolesDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	}
 
 	// Run the API call
-	var entityArray *management.EntityArray
+	var roleIDs []string
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.ManagementAPIClient.RolesApi.ReadAllRoles(ctx).Execute()
+			pagedIterator := r.Client.ManagementAPIClient.RolesApi.ReadAllRoles(ctx).Execute()
+
+			roleIDs := make([]string, 0)
+
+			var initialHttpResponse *http.Response
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return nil, pageCursor.HTTPResponse, err
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if pageCursor.EntityArray.Embedded != nil && pageCursor.EntityArray.Embedded.Roles != nil {
+					for _, item := range pageCursor.EntityArray.Embedded.GetRoles() {
+						roleIDs = append(roleIDs, item.Role.GetId())
+					}
+				}
+			}
+
+			return roleIDs, initialHttpResponse, nil
 		},
 		"ReadAllRoles",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-		&entityArray,
+		&roleIDs,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(entityArray.Embedded.GetRoles())...)
+	resp.Diagnostics.Append(data.toState(roleIDs)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (p *RolesDataSourceModel) toState(v []management.EntityArrayEmbeddedRolesInner) diag.Diagnostics {
+func (p *RolesDataSourceModel) toState(roleList []string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if v == nil {
+	if roleList == nil {
 		diags.AddError(
 			"Data object missing",
 			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
@@ -133,18 +154,13 @@ func (p *RolesDataSourceModel) toState(v []management.EntityArrayEmbeddedRolesIn
 		return diags
 	}
 
-	list := make([]string, 0)
-	for _, item := range v {
-		list = append(list, item.Role.GetId())
-	}
-
 	var d diag.Diagnostics
 
 	if p.Id.IsNull() {
 		p.Id = framework.PingOneResourceIDToTF(uuid.New().String())
 	}
 
-	p.Ids, d = framework.StringSliceToTF(list)
+	p.Ids, d = framework.StringSliceToTF(roleList)
 	diags.Append(d...)
 
 	return diags

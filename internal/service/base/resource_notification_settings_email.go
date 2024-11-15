@@ -241,7 +241,7 @@ func (r *NotificationSettingsEmailResource) Create(ctx context.Context, req reso
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(state.toState(response.NotificationsSettingsEmailDeliverySettingsSMTP)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -286,7 +286,7 @@ func (r *NotificationSettingsEmailResource) Read(ctx context.Context, req resour
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response)...)
+	resp.Diagnostics.Append(data.toState(response.NotificationsSettingsEmailDeliverySettingsSMTP)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -335,7 +335,7 @@ func (r *NotificationSettingsEmailResource) Update(ctx context.Context, req reso
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(state.toState(response.NotificationsSettingsEmailDeliverySettingsSMTP)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -399,7 +399,7 @@ func (r *NotificationSettingsEmailResource) ImportState(ctx context.Context, req
 func (p *notificationSettingsEmailResourceModelV1) expand(ctx context.Context) (*management.NotificationsSettingsEmailDeliverySettings, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data := management.NewNotificationsSettingsEmailDeliverySettings()
+	data := management.NewNotificationsSettingsEmailDeliverySettingsSMTP()
 
 	if !p.Host.IsNull() && !p.Host.IsUnknown() {
 		data.SetHost(p.Host.ValueString())
@@ -425,7 +425,7 @@ func (p *notificationSettingsEmailResourceModelV1) expand(ctx context.Context) (
 		})
 		diags.Append(d...)
 
-		from := management.NewNotificationsSettingsEmailDeliverySettingsFrom(plan.EmailAddress.ValueString())
+		from := management.NewNotificationsSettingsEmailDeliverySettingsSMTPAllOfFrom(plan.EmailAddress.ValueString())
 
 		if !plan.Name.IsNull() && !plan.Name.IsUnknown() {
 			from.SetName(plan.Name.ValueString())
@@ -442,7 +442,7 @@ func (p *notificationSettingsEmailResourceModelV1) expand(ctx context.Context) (
 		})
 		diags.Append(d...)
 
-		replyTo := management.NewNotificationsSettingsEmailDeliverySettingsReplyTo()
+		replyTo := management.NewNotificationsSettingsEmailDeliverySettingsSMTPAllOfReplyTo()
 
 		if !plan.EmailAddress.IsNull() && !plan.EmailAddress.IsUnknown() {
 			replyTo.SetAddress(plan.EmailAddress.ValueString())
@@ -455,10 +455,12 @@ func (p *notificationSettingsEmailResourceModelV1) expand(ctx context.Context) (
 		data.SetReplyTo(*replyTo)
 	}
 
-	return data, diags
+	return &management.NotificationsSettingsEmailDeliverySettings{
+		NotificationsSettingsEmailDeliverySettingsSMTP: data,
+	}, diags
 }
 
-func (p *notificationSettingsEmailResourceModelV1) toState(apiObject *management.NotificationsSettingsEmailDeliverySettings) diag.Diagnostics {
+func (p *notificationSettingsEmailResourceModelV1) toState(apiObject *management.NotificationsSettingsEmailDeliverySettingsSMTP) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -498,7 +500,7 @@ func toStateEmailSource(emailSource interface{}, ok bool) (types.Object, diag.Di
 	var emailSourceMap map[string]attr.Value
 
 	switch t := emailSource.(type) {
-	case *management.NotificationsSettingsEmailDeliverySettingsFrom:
+	case *management.NotificationsSettingsEmailDeliverySettingsSMTPAllOfFrom:
 		if t.GetAddress() == "" {
 			return types.ObjectNull(emailSourceTFObjectTypes), diags
 		}
@@ -509,7 +511,7 @@ func toStateEmailSource(emailSource interface{}, ok bool) (types.Object, diag.Di
 
 		emailSourceMap["name"] = framework.StringOkToTF(t.GetNameOk())
 
-	case *management.NotificationsSettingsEmailDeliverySettingsReplyTo:
+	case *management.NotificationsSettingsEmailDeliverySettingsSMTPAllOfReplyTo:
 		if t.GetAddress() == "" {
 			return types.ObjectNull(emailSourceTFObjectTypes), diags
 		}

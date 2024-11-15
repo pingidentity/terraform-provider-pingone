@@ -173,54 +173,59 @@ func (r *AgreementDataSource) Read(ctx context.Context, req datasource.ReadReque
 		return
 	}
 
-	var agreement management.Agreement
+	var agreement *management.Agreement
 
 	if !data.Name.IsNull() {
 
 		// Run the API call
-		var entityArray *management.EntityArray
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ManagementAPIClient.AgreementsResourcesApi.ReadAllAgreements(ctx, data.EnvironmentId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				pagedIterator := r.Client.ManagementAPIClient.AgreementsResourcesApi.ReadAllAgreements(ctx, data.EnvironmentId.ValueString()).Execute()
+				var initialHttpResponse *http.Response
+
+				for pageCursor, err := range pagedIterator {
+					if err != nil {
+						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					}
+
+					if initialHttpResponse == nil {
+						initialHttpResponse = pageCursor.HTTPResponse
+					}
+
+					if agreements, ok := pageCursor.EntityArray.Embedded.GetAgreementsOk(); ok {
+
+						for _, agreementItem := range agreements {
+							if agreementItem.GetName() == data.Name.ValueString() {
+								return &agreementItem, pageCursor.HTTPResponse, nil
+							}
+						}
+					}
+				}
+
+				return nil, initialHttpResponse, nil
 			},
 			"ReadAllAgreements",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&entityArray,
+			&agreement,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		if agreements, ok := entityArray.Embedded.GetAgreementsOk(); ok {
-
-			found := false
-			for _, agreementItem := range agreements {
-
-				if agreementItem.GetName() == data.Name.ValueString() {
-					agreement = agreementItem
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				resp.Diagnostics.AddError(
-					"Cannot find agreement from name",
-					fmt.Sprintf("The agreement %s for environment %s cannot be found", data.Name.String(), data.EnvironmentId.String()),
-				)
-				return
-			}
-
+		if agreement == nil {
+			resp.Diagnostics.AddError(
+				"Cannot find agreement from name",
+				fmt.Sprintf("The agreement %s for environment %s cannot be found", data.Name.String(), data.EnvironmentId.String()),
+			)
+			return
 		}
 
 	} else if !data.AgreementId.IsNull() {
 
 		// Run the API call
-		var response *management.Agreement
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
@@ -231,13 +236,12 @@ func (r *AgreementDataSource) Read(ctx context.Context, req datasource.ReadReque
 			"ReadOneAgreement",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&response,
+			&agreement,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		agreement = *response
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",
@@ -247,7 +251,7 @@ func (r *AgreementDataSource) Read(ctx context.Context, req datasource.ReadReque
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&agreement)...)
+	resp.Diagnostics.Append(data.toState(agreement)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

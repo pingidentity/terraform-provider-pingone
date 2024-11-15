@@ -255,55 +255,63 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	var environment management.Environment
+	var environment *management.Environment
 
 	if !data.Name.IsNull() {
 
 		scimFilter := fmt.Sprintf("name sw \"%s\"", data.Name.ValueString())
 
 		// Run the API call
-		var entityArray *management.EntityArray
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.ManagementAPIClient.EnvironmentsApi.ReadAllEnvironments(ctx).Filter(scimFilter).Execute()
+				pagedIterator := r.Client.ManagementAPIClient.EnvironmentsApi.ReadAllEnvironments(ctx).Filter(scimFilter).Execute()
+
+				var initialHttpResponse *http.Response
+
+				for pageCursor, err := range pagedIterator {
+					if err != nil {
+						return nil, pageCursor.HTTPResponse, err
+					}
+
+					if initialHttpResponse == nil {
+						initialHttpResponse = pageCursor.HTTPResponse
+					}
+
+					if environments, ok := pageCursor.EntityArray.Embedded.GetEnvironmentsOk(); ok {
+						for _, environmentItem := range environments {
+
+							if environmentItem.GetName() == data.Name.ValueString() {
+								return &environmentItem, pageCursor.HTTPResponse, nil
+							}
+						}
+
+					}
+				}
+
+				return nil, initialHttpResponse, nil
 			},
 			"ReadAllEnvironments",
 			framework.DefaultCustomError,
 			retryEnvironmentDefault,
-			&entityArray,
+			&environment,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		if environments, ok := entityArray.Embedded.GetEnvironmentsOk(); ok {
-
-			found := false
-			for _, environmentItem := range environments {
-
-				if environmentItem.GetName() == data.Name.ValueString() {
-					environment = environmentItem
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				resp.Diagnostics.AddError(
-					"Cannot find environment from name",
-					fmt.Sprintf("The environment %s cannot be found", data.Name.String()),
-				)
-				return
-			}
-
+		if environment == nil {
+			resp.Diagnostics.AddError(
+				"Cannot find environment from name",
+				fmt.Sprintf("The environment %s cannot be found", data.Name.String()),
+			)
+			return
 		}
 
 	} else if !data.EnvironmentId.IsNull() {
 
 		// Run the API call
-		var response *management.Environment
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
@@ -314,13 +322,12 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 			"ReadOneEnvironment",
 			framework.DefaultCustomError,
 			retryEnvironmentDefault,
-			&response,
+			&environment,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		environment = *response
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",
@@ -348,7 +355,7 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&environment, billOfMaterialsResponse)...)
+	resp.Diagnostics.Append(data.toState(environment, billOfMaterialsResponse)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

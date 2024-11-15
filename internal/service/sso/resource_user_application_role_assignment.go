@@ -25,7 +25,6 @@ type UserApplicationRoleAssignmentResourceModel struct {
 	UserId            pingonetypes.ResourceIDValue `tfsdk:"user_id"`
 	ApplicationRoleId pingonetypes.ResourceIDValue `tfsdk:"application_role_id"`
 	Name              types.String                 `tfsdk:"name"`
-	// Description       types.String                 `tfsdk:"description"`
 }
 
 // Framework interfaces
@@ -69,11 +68,6 @@ func (r *UserApplicationRoleAssignmentResource) Schema(ctx context.Context, req 
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that represents the name of the application role assigned to the user.").Description,
 				Computed:    true,
 			},
-
-			// "description": schema.StringAttribute{
-			// 	Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that represents the description of the application role assigned to the user.").Description,
-			// 	Computed:    true,
-			// },
 		},
 	}
 }
@@ -166,35 +160,40 @@ func (r *UserApplicationRoleAssignmentResource) Read(ctx context.Context, req re
 	}
 
 	// Run the API call
-	var response *management.EntityArray
+	var roleAssignmentObj *management.UserApplicationRoleAssignment
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.UserApplicationRoleAssignmentsApi.ReadUserApplicationRoleAssignments(ctx, data.EnvironmentId.ValueString(), data.UserId.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			pagedIterator := r.Client.ManagementAPIClient.UserApplicationRoleAssignmentsApi.ReadUserApplicationRoleAssignments(ctx, data.EnvironmentId.ValueString(), data.UserId.ValueString()).Execute()
+
+			var initialHttpResponse *http.Response
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				for _, roleAssignment := range pageCursor.EntityArray.Embedded.GetRoles() {
+					if v, ok := roleAssignment.UserApplicationRoleAssignment.GetIdOk(); ok && v != nil && *v == data.ApplicationRoleId.ValueString() {
+						return roleAssignment.UserApplicationRoleAssignment, pageCursor.HTTPResponse, nil
+					}
+				}
+			}
+
+			return nil, initialHttpResponse, nil
 		},
 		"ReadUserApplicationRoleAssignments",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-		&response,
+		&roleAssignmentObj,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
-	}
-
-	// Remove from state if resource is not found
-	if response == nil {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-
-	var roleAssignmentObj *management.UserApplicationRoleAssignment
-
-	for _, roleAssignment := range response.Embedded.GetRoles() {
-		if v, ok := roleAssignment.UserApplicationRoleAssignment.GetIdOk(); ok && v != nil && *v == data.ApplicationRoleId.ValueString() {
-			roleAssignmentObj = roleAssignment.UserApplicationRoleAssignment
-		}
 	}
 
 	// Remove from state if resource is not found
@@ -303,7 +302,6 @@ func (p *UserApplicationRoleAssignmentResourceModel) toState(apiObject *manageme
 
 	p.ApplicationRoleId = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
-	// p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 
 	return diags
 }

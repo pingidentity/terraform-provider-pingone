@@ -702,60 +702,69 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	} else if !data.Name.IsNull() {
 		// Run the API call
-		var entityArray *management.EntityArray
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationsApi.ReadAllApplications(ctx, data.EnvironmentId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				pagedIterator := r.Client.ManagementAPIClient.ApplicationsApi.ReadAllApplications(ctx, data.EnvironmentId.ValueString()).Execute()
+
+				var initialHttpResponse *http.Response
+
+				for pageCursor, err := range pagedIterator {
+					if err != nil {
+						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					}
+
+					if initialHttpResponse == nil {
+						initialHttpResponse = pageCursor.HTTPResponse
+					}
+
+					if applications, ok := pageCursor.EntityArray.Embedded.GetApplicationsOk(); ok {
+
+						var applicationObj management.ReadOneApplication200Response
+						for _, applicationObj = range applications {
+							applicationInstance := applicationObj.GetActualInstance()
+
+							applicationName := ""
+
+							switch v := applicationInstance.(type) {
+							case *management.ApplicationExternalLink:
+								applicationName = v.GetName()
+
+							case *management.ApplicationOIDC:
+								applicationName = v.GetName()
+
+							case *management.ApplicationSAML:
+								applicationName = v.GetName()
+							}
+
+							if applicationName == data.Name.ValueString() {
+								return &applicationObj, pageCursor.HTTPResponse, nil
+							}
+						}
+					}
+				}
+
+				return nil, initialHttpResponse, nil
 			},
 			"ReadAllApplications",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&entityArray,
+			&application,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		if applications, ok := entityArray.Embedded.GetApplicationsOk(); ok {
-			found := false
-
-			var applicationObj management.ReadOneApplication200Response
-			for _, applicationObj = range applications {
-				applicationInstance := applicationObj.GetActualInstance()
-
-				applicationName := ""
-
-				switch v := applicationInstance.(type) {
-				case *management.ApplicationExternalLink:
-					applicationName = v.GetName()
-
-				case *management.ApplicationOIDC:
-					applicationName = v.GetName()
-
-				case *management.ApplicationSAML:
-					applicationName = v.GetName()
-				}
-
-				if applicationName == data.Name.ValueString() {
-					application = &applicationObj
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				resp.Diagnostics.AddError(
-					"Cannot find the application from name or application is not the correct type",
-					fmt.Sprintf("The application name %s for environment %s cannot be found, and only %s, %s or %s application types are retrievable", data.Name.String(), data.EnvironmentId.String(),
-						string(management.ENUMAPPLICATIONPROTOCOL_OPENID_CONNECT), string(management.ENUMAPPLICATIONPROTOCOL_SAML), string(management.ENUMAPPLICATIONPROTOCOL_EXTERNAL_LINK)),
-				)
-				return
-			}
-
+		if application == nil {
+			resp.Diagnostics.AddError(
+				"Cannot find the application from name or application is not the correct type",
+				fmt.Sprintf("The application name %s for environment %s cannot be found, and only %s, %s or %s application types are retrievable", data.Name.String(), data.EnvironmentId.String(),
+					string(management.ENUMAPPLICATIONPROTOCOL_OPENID_CONNECT), string(management.ENUMAPPLICATIONPROTOCOL_SAML), string(management.ENUMAPPLICATIONPROTOCOL_EXTERNAL_LINK)),
+			)
+			return
 		}
+
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",

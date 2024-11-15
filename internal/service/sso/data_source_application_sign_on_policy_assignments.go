@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
@@ -103,28 +102,50 @@ func (r *ApplicationSignOnPolicyAssignmentsDataSource) Read(ctx context.Context,
 		return
 	}
 
-	var entityArray *management.EntityArray
+	var sopAssignmentIDs []string
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			return r.Client.ManagementAPIClient.ApplicationSignOnPolicyAssignmentsApi.ReadAllSignOnPolicyAssignments(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString()).Execute()
+			pagedIterator := r.Client.ManagementAPIClient.ApplicationSignOnPolicyAssignmentsApi.ReadAllSignOnPolicyAssignments(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString()).Execute()
+
+			var initialHttpResponse *http.Response
+
+			foundIDs := make([]string, 0)
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if pageCursor.EntityArray.Embedded != nil && pageCursor.EntityArray.Embedded.SignOnPolicyAssignments != nil {
+					for _, sopAssignment := range pageCursor.EntityArray.Embedded.GetSignOnPolicyAssignments() {
+						foundIDs = append(foundIDs, sopAssignment.GetId())
+					}
+				}
+			}
+
+			return foundIDs, initialHttpResponse, nil
 		},
 		"ReadAllSignOnPolicyAssignments",
 		framework.DefaultCustomError,
 		nil,
-		&entityArray,
+		&sopAssignmentIDs,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(entityArray.Embedded.GetSignOnPolicyAssignments())...)
+	resp.Diagnostics.Append(data.toState(sopAssignmentIDs)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (p *ApplicationSignOnPolicyAssignmentsDataSourceModel) toState(apiObject []management.SignOnPolicyAssignment) diag.Diagnostics {
+func (p *ApplicationSignOnPolicyAssignmentsDataSourceModel) toState(apiObject []string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -136,14 +157,9 @@ func (p *ApplicationSignOnPolicyAssignmentsDataSourceModel) toState(apiObject []
 		return diags
 	}
 
-	list := make([]string, 0)
-	for _, item := range apiObject {
-		list = append(list, item.GetId())
-	}
-
 	var d diag.Diagnostics
 
-	p.Ids, d = framework.StringSliceToTF(list)
+	p.Ids, d = framework.StringSliceToTF(apiObject)
 	diags.Append(d...)
 
 	return diags

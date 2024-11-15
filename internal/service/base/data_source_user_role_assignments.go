@@ -174,31 +174,49 @@ func (r *UserRoleAssignmentsDataSource) Read(ctx context.Context, req datasource
 	}
 
 	// Run the API call
-	var entityArray *management.EntityArray
+	var roleAssignments []management.RoleAssignment
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.UserRoleAssignmentsApi.ReadUserRoleAssignments(ctx, data.EnvironmentId.ValueString(), data.UserId.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			pagedIterator := r.Client.ManagementAPIClient.UserRoleAssignmentsApi.ReadUserRoleAssignments(ctx, data.EnvironmentId.ValueString(), data.UserId.ValueString()).Execute()
+
+			roleAssignments := make([]management.RoleAssignment, 0)
+
+			var initialHttpResponse *http.Response
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if pageCursor.EntityArray.Embedded != nil && pageCursor.EntityArray.Embedded.RoleAssignments != nil {
+					roleAssignments = append(roleAssignments, pageCursor.EntityArray.Embedded.GetRoleAssignments()...)
+				}
+
+			}
+
+			return roleAssignments, initialHttpResponse, nil
 		},
 		"ReadUserRoleAssignments",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-		&entityArray,
+		&roleAssignments,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	embedded := entityArray.GetEmbedded()
-
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&embedded)...)
+	resp.Diagnostics.Append(data.toState(roleAssignments)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (p *UserRoleAssignmentsDataSourceModel) toState(apiObject *management.EntityArrayEmbedded) diag.Diagnostics {
+func (p *UserRoleAssignmentsDataSourceModel) toState(apiObject []management.RoleAssignment) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -215,18 +233,18 @@ func (p *UserRoleAssignmentsDataSourceModel) toState(apiObject *management.Entit
 	}
 
 	var d diag.Diagnostics
-	p.RoleAssignments, d = toStateRoleAssignments(apiObject.GetRoleAssignmentsOk())
+	p.RoleAssignments, d = toStateRoleAssignments(apiObject)
 	diags = append(diags, d...)
 
 	return diags
 }
 
-func toStateRoleAssignments(apiObject []management.RoleAssignment, ok bool) (types.Set, diag.Diagnostics) {
+func toStateRoleAssignments(apiObject []management.RoleAssignment) (types.Set, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	tfObjType := types.ObjectType{AttrTypes: roleAssignmentsUserRoleAssignmentTFObjectTypes}
 
-	if !ok || apiObject == nil {
+	if apiObject == nil {
 		return types.SetNull(tfObjType), diags
 	}
 

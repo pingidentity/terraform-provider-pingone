@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
@@ -101,29 +100,57 @@ func (r *PhoneDeliverySettingsListDataSource) Read(ctx context.Context, req data
 		return
 	}
 
-	var entityArray *management.EntityArray
+	var response []string
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.PhoneDeliverySettingsApi.ReadAllPhoneDeliverySettings(ctx, data.EnvironmentId.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			pagedIterator := r.Client.ManagementAPIClient.PhoneDeliverySettingsApi.ReadAllPhoneDeliverySettings(ctx, data.EnvironmentId.ValueString()).Execute()
+
+			phoneDeliverySettingsIds := make([]string, 0)
+
+			var initialHttpResponse *http.Response
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if pageCursor.EntityArray.Embedded != nil && pageCursor.EntityArray.Embedded.PhoneDeliverySettings != nil {
+					for _, item := range pageCursor.EntityArray.Embedded.GetPhoneDeliverySettings() {
+						if v := item.NotificationsSettingsPhoneDeliverySettingsCustom; v != nil {
+							phoneDeliverySettingsIds = append(phoneDeliverySettingsIds, v.GetId())
+						}
+
+						if v := item.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse; v != nil {
+							phoneDeliverySettingsIds = append(phoneDeliverySettingsIds, v.GetId())
+						}
+					}
+				}
+
+			}
+
+			return phoneDeliverySettingsIds, initialHttpResponse, nil
 		},
 		"ReadAllPhoneDeliverySettings",
 		framework.DefaultCustomError,
 		nil,
-		&entityArray,
+		&response,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(entityArray.Embedded.GetPhoneDeliverySettings())...)
+	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (p *PhoneDeliverySettingsListDataSourceModel) toState(apiObject []management.NotificationsSettingsPhoneDeliverySettings) diag.Diagnostics {
+func (p *PhoneDeliverySettingsListDataSourceModel) toState(apiObject []string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -135,22 +162,11 @@ func (p *PhoneDeliverySettingsListDataSourceModel) toState(apiObject []managemen
 		return diags
 	}
 
-	list := make([]string, 0)
-	for _, item := range apiObject {
-		if v := item.NotificationsSettingsPhoneDeliverySettingsCustom; v != nil {
-			list = append(list, v.GetId())
-		}
-
-		if v := item.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse; v != nil {
-			list = append(list, v.GetId())
-		}
-	}
-
 	var d diag.Diagnostics
 
 	p.Id = p.EnvironmentId
 
-	p.Ids, d = framework.StringSliceToTF(list)
+	p.Ids, d = framework.StringSliceToTF(apiObject)
 	diags.Append(d...)
 
 	return diags
