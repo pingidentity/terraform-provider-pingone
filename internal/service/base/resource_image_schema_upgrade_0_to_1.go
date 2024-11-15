@@ -42,10 +42,10 @@ func (r *ImageResource) UpgradeState(ctx context.Context) map[int64]resource.Sta
 					"uploaded_image": schema.ListNestedBlock{
 						NestedObject: schema.NestedBlockObject{
 							Attributes: map[string]schema.Attribute{
-								"width": schema.Int64Attribute{
+								"width": schema.Int32Attribute{
 									Computed: true,
 								},
-								"height": schema.Int64Attribute{
+								"height": schema.Int32Attribute{
 									Computed: true,
 								},
 								"type": schema.StringAttribute{

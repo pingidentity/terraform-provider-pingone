@@ -227,7 +227,7 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 						Computed:            true,
 					},
 
-					"retain_previous_credentials_mins": schema.Int64Attribute{
+					"retain_previous_credentials_mins": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of minutes for which the previous credentials are persisted.").Description,
 						Computed:    true,
 					},
@@ -367,7 +367,7 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 						Computed:    true,
 					},
 
-					"port": schema.Int64Attribute{
+					"port": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the port number of the NPS.").Description,
 						Computed:    true,
 					},

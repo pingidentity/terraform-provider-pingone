@@ -16,7 +16,9 @@ import (
 
 var (
 	_ validator.Bool    = ConflictsIfMatchesPathValueValidator{}
+	_ validator.Float32 = ConflictsIfMatchesPathValueValidator{}
 	_ validator.Float64 = ConflictsIfMatchesPathValueValidator{}
+	_ validator.Int32   = ConflictsIfMatchesPathValueValidator{}
 	_ validator.Int64   = ConflictsIfMatchesPathValueValidator{}
 	_ validator.List    = ConflictsIfMatchesPathValueValidator{}
 	_ validator.Map     = ConflictsIfMatchesPathValueValidator{}
@@ -128,7 +130,35 @@ func (validator ConflictsIfMatchesPathValueValidator) ValidateBool(ctx context.C
 	resp.Diagnostics.Append(validateResp.Diagnostics...)
 }
 
+func (validator ConflictsIfMatchesPathValueValidator) ValidateFloat32(ctx context.Context, req validator.Float32Request, resp *validator.Float32Response) {
+	validateReq := ConflictsIfMatchesPathValueValidatorRequest{
+		Config:         req.Config,
+		ConfigValue:    req.ConfigValue,
+		Path:           req.Path,
+		PathExpression: req.PathExpression,
+	}
+	validateResp := &ConflictsIfMatchesPathValueValidatorResponse{}
+
+	validator.Validate(ctx, validateReq, validateResp)
+
+	resp.Diagnostics.Append(validateResp.Diagnostics...)
+}
+
 func (validator ConflictsIfMatchesPathValueValidator) ValidateFloat64(ctx context.Context, req validator.Float64Request, resp *validator.Float64Response) {
+	validateReq := ConflictsIfMatchesPathValueValidatorRequest{
+		Config:         req.Config,
+		ConfigValue:    req.ConfigValue,
+		Path:           req.Path,
+		PathExpression: req.PathExpression,
+	}
+	validateResp := &ConflictsIfMatchesPathValueValidatorResponse{}
+
+	validator.Validate(ctx, validateReq, validateResp)
+
+	resp.Diagnostics.Append(validateResp.Diagnostics...)
+}
+
+func (validator ConflictsIfMatchesPathValueValidator) ValidateInt32(ctx context.Context, req validator.Int32Request, resp *validator.Int32Response) {
 	validateReq := ConflictsIfMatchesPathValueValidatorRequest{
 		Config:         req.Config,
 		ConfigValue:    req.ConfigValue,

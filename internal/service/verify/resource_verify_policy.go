@@ -7,7 +7,7 @@ import (
 	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -28,7 +28,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
-	int64validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int64validator"
+	int32validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int32validator"
 	customstringvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -61,7 +61,7 @@ type governmentIdModel struct {
 	FailExpiredId  types.Bool   `tfsdk:"fail_expired_id"`
 	ProviderAuto   types.String `tfsdk:"provider_auto"`
 	ProviderManual types.String `tfsdk:"provider_manual"`
-	RetryAttempts  types.Int64  `tfsdk:"retry_attempts"`
+	RetryAttempts  types.Int32  `tfsdk:"retry_attempts"`
 }
 
 type facialComparisonModel struct {
@@ -72,11 +72,11 @@ type facialComparisonModel struct {
 type livenessnModel struct {
 	Verify        types.String `tfsdk:"verify"`
 	Threshold     types.String `tfsdk:"threshold"`
-	RetryAttempts types.Int64  `tfsdk:"retry_attempts"`
+	RetryAttempts types.Int32  `tfsdk:"retry_attempts"`
 }
 
 type genericTimeoutModel struct {
-	Duration types.Int64  `tfsdk:"duration"`
+	Duration types.Int32  `tfsdk:"duration"`
 	TimeUnit types.String `tfsdk:"time_unit"`
 }
 
@@ -94,11 +94,11 @@ type otpConfigurationModel struct {
 }
 
 type otpAttemptsModel struct {
-	Count types.Int64 `tfsdk:"count"`
+	Count types.Int32 `tfsdk:"count"`
 }
 
 type otpDeliveriesModel struct {
-	Count    types.Int64  `tfsdk:"count"`
+	Count    types.Int32  `tfsdk:"count"`
 	Cooldown types.Object `tfsdk:"cooldown"`
 }
 
@@ -127,7 +127,7 @@ type voiceModel struct {
 }
 
 type textDependentModel struct {
-	Samples  types.Int64  `tfsdk:"samples"`
+	Samples  types.Int32  `tfsdk:"samples"`
 	PhraseId types.String `tfsdk:"voice_phrase_id"`
 }
 
@@ -139,7 +139,7 @@ type referenceDataModel struct {
 
 var (
 	genericTimeoutServiceTFObjectTypes = map[string]attr.Type{
-		"duration":  types.Int64Type,
+		"duration":  types.Int32Type,
 		"time_unit": types.StringType,
 	}
 
@@ -149,7 +149,7 @@ var (
 		"fail_expired_id": types.BoolType,
 		"provider_auto":   types.StringType,
 		"provider_manual": types.StringType,
-		"retry_attempts":  types.Int64Type,
+		"retry_attempts":  types.Int32Type,
 	}
 
 	facialComparisonServiceTFObjectTypes = map[string]attr.Type{
@@ -160,7 +160,7 @@ var (
 	livenessServiceTFObjectTypes = map[string]attr.Type{
 		"verify":         types.StringType,
 		"threshold":      types.StringType,
-		"retry_attempts": types.Int64Type,
+		"retry_attempts": types.Int32Type,
 	}
 
 	deviceServiceTFObjectTypes = map[string]attr.Type{
@@ -177,11 +177,11 @@ var (
 	}
 
 	otpAttemptsServiceTFObjectTypes = map[string]attr.Type{
-		"count": types.Int64Type,
+		"count": types.Int32Type,
 	}
 
 	otpDeliveriesServiceTFObjectTypes = map[string]attr.Type{
-		"count":    types.Int64Type,
+		"count":    types.Int32Type,
 		"cooldown": types.ObjectType{AttrTypes: genericTimeoutServiceTFObjectTypes},
 	}
 
@@ -210,7 +210,7 @@ var (
 	}
 
 	textDependentServiceTFObjectTypes = map[string]attr.Type{
-		"samples":         types.Int64Type,
+		"samples":         types.Int32Type,
 		"voice_phrase_id": types.StringType,
 	}
 
@@ -499,7 +499,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 						"fail_expired_id": types.BoolValue(defaultBoolFalse),
 						"provider_auto":   types.StringValue(string(defaultProviderAuto)),
 						"provider_manual": types.StringValue(string(defaultProviderManual)),
-						"retry_attempts":  types.Int64Null(),
+						"retry_attempts":  types.Int32Null(),
 					},
 				)),
 
@@ -555,12 +555,12 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 							stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumProviderManualEnumValues)...),
 						},
 					},
-					"retry_attempts": schema.Int64Attribute{
+					"retry_attempts": schema.Int32Attribute{
 						Description:         retryAttemptsDescription.Description,
 						MarkdownDescription: retryAttemptsDescription.MarkdownDescription,
 						Optional:            true,
-						Validators: []validator.Int64{
-							int64validator.Between(attrMinRetryAttempts, attrMaxRetryAttempts),
+						Validators: []validator.Int32{
+							int32validator.Between(attrMinRetryAttempts, attrMaxRetryAttempts),
 						},
 					},
 				},
@@ -613,7 +613,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 					map[string]attr.Value{
 						"verify":         types.StringValue(string(defaultVerify)),
 						"threshold":      types.StringValue(string(defaultThreshold)),
-						"retry_attempts": types.Int64Null(),
+						"retry_attempts": types.Int32Null(),
 					},
 				)),
 
@@ -634,12 +634,12 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 							stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumThresholdEnumValues)...),
 						},
 					},
-					"retry_attempts": schema.Int64Attribute{
+					"retry_attempts": schema.Int32Attribute{
 						Description:         retryAttemptsDescription.Description,
 						MarkdownDescription: retryAttemptsDescription.MarkdownDescription,
 						Optional:            true,
-						Validators: []validator.Int64{
-							int64validator.Between(attrMinRetryAttempts, attrMaxRetryAttempts),
+						Validators: []validator.Int32{
+							int32validator.Between(attrMinRetryAttempts, attrMaxRetryAttempts),
 						},
 					},
 				},
@@ -654,13 +654,13 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
 					o := map[string]attr.Value{
-						"count": types.Int64Value(defaultOTPAttemptsCount),
+						"count": types.Int32Value(defaultOTPAttemptsCount),
 					}
 					attemptsObjValue, d := types.ObjectValue(otpAttemptsServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"duration":  types.Int64Value(defaultOTPEmailDuration),
+						"duration":  types.Int32Value(defaultOTPEmailDuration),
 						"time_unit": types.StringValue(string(defaultOTPEmailTimeUnit)),
 					}
 					lifetimeObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
@@ -674,14 +674,14 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"duration":  types.Int64Value(defaultOTPCooldownDuration),
+						"duration":  types.Int32Value(defaultOTPCooldownDuration),
 						"time_unit": types.StringValue(string(defaultOTPCooldownTimeUnit)),
 					}
 					cooldownObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"count":    types.Int64Value(defaultOTPDeliveryCount),
+						"count":    types.Int32Value(defaultOTPDeliveryCount),
 						"cooldown": cooldownObjValue,
 					}
 					deliveriesObjValue, d := types.ObjectValue(otpDeliveriesServiceTFObjectTypes, o)
@@ -722,7 +722,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 								Description: "OTP attempts configuration.",
 								Required:    true,
 								Attributes: map[string]schema.Attribute{
-									"count": schema.Int64Attribute{
+									"count": schema.Int32Attribute{
 										Description: "Allowed maximum number of OTP failures.",
 										Required:    true,
 									},
@@ -732,7 +732,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 								Description: "OTP delivery configuration.",
 								Required:    true,
 								Attributes: map[string]schema.Attribute{
-									"count": schema.Int64Attribute{
+									"count": schema.Int32Attribute{
 										Description: "Allowed maximum number of OTP deliveries.",
 										Required:    true,
 									},
@@ -740,23 +740,23 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 										Description: "Cooldown (waiting period between OTP attempts) configuration.",
 										Required:    true,
 										Attributes: map[string]schema.Attribute{
-											"duration": schema.Int64Attribute{
+											"duration": schema.Int32Attribute{
 												Description:         otpDeliveriesCooldownDurationDescription.Description,
 												MarkdownDescription: otpDeliveriesCooldownDurationDescription.MarkdownDescription,
 												Required:            true,
-												Validators: []validator.Int64{
-													int64validator.Any(
-														int64validator.All(
-															int64validator.Between(attrMinDuration, attrMaxDurationMinutes),
-															int64validatorinternal.RegexMatchesPathValue(
+												Validators: []validator.Int32{
+													int32validator.Any(
+														int32validator.All(
+															int32validator.Between(attrMinDuration, attrMaxDurationMinutes),
+															int32validatorinternal.RegexMatchesPathValue(
 																regexp.MustCompile(`MINUTES`),
 																fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", attrMinDuration, attrMaxDurationMinutes),
 																path.MatchRelative().AtParent().AtName("time_unit"),
 															),
 														),
-														int64validator.All(
-															int64validator.Between(attrMinDuration, attrMaxDurationSeconds),
-															int64validatorinternal.RegexMatchesPathValue(
+														int32validator.All(
+															int32validator.Between(attrMinDuration, attrMaxDurationSeconds),
+															int32validatorinternal.RegexMatchesPathValue(
 																regexp.MustCompile(`SECONDS`),
 																fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", attrMinDuration, attrMaxDurationSeconds),
 																path.MatchRelative().AtParent().AtName("time_unit"),
@@ -781,23 +781,23 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 								Description: "The length of time for which the OTP is valid.",
 								Required:    true,
 								Attributes: map[string]schema.Attribute{
-									"duration": schema.Int64Attribute{
+									"duration": schema.Int32Attribute{
 										Description:         otpLifeTimeEmailDurationDescription.Description,
 										MarkdownDescription: otpLifeTimeEmailDurationDescription.MarkdownDescription,
 										Required:            true,
-										Validators: []validator.Int64{
-											int64validator.Any(
-												int64validator.All(
-													int64validator.Between(attrMinLifetimeDurationMinutes, attrMaxLifetimeDurationMinutes),
-													int64validatorinternal.RegexMatchesPathValue(
+										Validators: []validator.Int32{
+											int32validator.Any(
+												int32validator.All(
+													int32validator.Between(attrMinLifetimeDurationMinutes, attrMaxLifetimeDurationMinutes),
+													int32validatorinternal.RegexMatchesPathValue(
 														regexp.MustCompile(`MINUTES`),
 														fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", attrMinLifetimeDurationMinutes, attrMaxLifetimeDurationMinutes),
 														path.MatchRelative().AtParent().AtName("time_unit"),
 													),
 												),
-												int64validator.All(
-													int64validator.Between(attrMinLifetimeDurationSeconds, attrMaxLifetimeDurationSeconds),
-													int64validatorinternal.RegexMatchesPathValue(
+												int32validator.All(
+													int32validator.Between(attrMinLifetimeDurationSeconds, attrMaxLifetimeDurationSeconds),
+													int32validatorinternal.RegexMatchesPathValue(
 														regexp.MustCompile(`SECONDS`),
 														fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", attrMinLifetimeDurationSeconds, attrMaxLifetimeDurationSeconds),
 														path.MatchRelative().AtParent().AtName("time_unit"),
@@ -867,13 +867,13 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
 					o := map[string]attr.Value{
-						"count": types.Int64Value(defaultOTPAttemptsCount),
+						"count": types.Int32Value(defaultOTPAttemptsCount),
 					}
 					attemptsObjValue, d := types.ObjectValue(otpAttemptsServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"duration":  types.Int64Value(defaultOTPPhoneDuration),
+						"duration":  types.Int32Value(defaultOTPPhoneDuration),
 						"time_unit": types.StringValue(string(defaultOTPPhoneTimeUnit)),
 					}
 					lifetimeObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
@@ -887,14 +887,14 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"duration":  types.Int64Value(defaultOTPCooldownDuration),
+						"duration":  types.Int32Value(defaultOTPCooldownDuration),
 						"time_unit": types.StringValue(string(defaultOTPCooldownTimeUnit)),
 					}
 					cooldownObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
 					resp.Diagnostics.Append(d...)
 
 					o = map[string]attr.Value{
-						"count":    types.Int64Value(defaultOTPDeliveryCount),
+						"count":    types.Int32Value(defaultOTPDeliveryCount),
 						"cooldown": cooldownObjValue,
 					}
 					deliveriesObjValue, d := types.ObjectValue(otpDeliveriesServiceTFObjectTypes, o)
@@ -935,7 +935,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 								Description: "OTP attempts configuration.",
 								Required:    true,
 								Attributes: map[string]schema.Attribute{
-									"count": schema.Int64Attribute{
+									"count": schema.Int32Attribute{
 										Description: "Allowed maximum number of OTP failures.",
 										Required:    true,
 									},
@@ -945,7 +945,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 								Description: "OTP delivery configuration.",
 								Required:    true,
 								Attributes: map[string]schema.Attribute{
-									"count": schema.Int64Attribute{
+									"count": schema.Int32Attribute{
 										Description: "Allowed maximum number of OTP deliveries.",
 										Required:    true,
 									},
@@ -953,23 +953,23 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 										Description: "Cooldown (waiting period between OTP attempts) configuration.",
 										Required:    true,
 										Attributes: map[string]schema.Attribute{
-											"duration": schema.Int64Attribute{
+											"duration": schema.Int32Attribute{
 												Description:         otpDeliveriesCooldownDurationDescription.Description,
 												MarkdownDescription: otpDeliveriesCooldownDurationDescription.MarkdownDescription,
 												Required:            true,
-												Validators: []validator.Int64{
-													int64validator.Any(
-														int64validator.All(
-															int64validator.Between(attrMinDuration, attrMaxDurationMinutes),
-															int64validatorinternal.RegexMatchesPathValue(
+												Validators: []validator.Int32{
+													int32validator.Any(
+														int32validator.All(
+															int32validator.Between(attrMinDuration, attrMaxDurationMinutes),
+															int32validatorinternal.RegexMatchesPathValue(
 																regexp.MustCompile(`MINUTES`),
 																fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", attrMinDuration, attrMaxDurationMinutes),
 																path.MatchRelative().AtParent().AtName("time_unit"),
 															),
 														),
-														int64validator.All(
-															int64validator.Between(attrMinDuration, attrMaxDurationSeconds),
-															int64validatorinternal.RegexMatchesPathValue(
+														int32validator.All(
+															int32validator.Between(attrMinDuration, attrMaxDurationSeconds),
+															int32validatorinternal.RegexMatchesPathValue(
 																regexp.MustCompile(`SECONDS`),
 																fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", attrMinDuration, attrMaxDurationSeconds),
 																path.MatchRelative().AtParent().AtName("time_unit"),
@@ -994,23 +994,23 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 								Description: "The length of time for which the OTP is valid.",
 								Required:    true,
 								Attributes: map[string]schema.Attribute{
-									"duration": schema.Int64Attribute{
+									"duration": schema.Int32Attribute{
 										Description:         otpLifeTimePhoneDurationDescription.Description,
 										MarkdownDescription: otpLifeTimePhoneDurationDescription.MarkdownDescription,
 										Required:            true,
-										Validators: []validator.Int64{
-											int64validator.Any(
-												int64validator.All(
-													int64validator.Between(attrMinLifetimeDurationMinutes, attrMaxLifetimeDurationMinutes),
-													int64validatorinternal.RegexMatchesPathValue(
+										Validators: []validator.Int32{
+											int32validator.Any(
+												int32validator.All(
+													int32validator.Between(attrMinLifetimeDurationMinutes, attrMaxLifetimeDurationMinutes),
+													int32validatorinternal.RegexMatchesPathValue(
 														regexp.MustCompile(`MINUTES`),
 														fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", attrMinLifetimeDurationMinutes, attrMaxLifetimeDurationMinutes),
 														path.MatchRelative().AtParent().AtName("time_unit"),
 													),
 												),
-												int64validator.All(
-													int64validator.Between(attrMinLifetimeDurationSeconds, attrMaxLifetimeDurationSeconds),
-													int64validatorinternal.RegexMatchesPathValue(
+												int32validator.All(
+													int32validator.Between(attrMinLifetimeDurationSeconds, attrMaxLifetimeDurationSeconds),
+													int32validatorinternal.RegexMatchesPathValue(
 														regexp.MustCompile(`SECONDS`),
 														fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", attrMinLifetimeDurationSeconds, attrMaxLifetimeDurationSeconds),
 														path.MatchRelative().AtParent().AtName("time_unit"),
@@ -1117,23 +1117,23 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 						Optional:    true,
 
 						Attributes: map[string]schema.Attribute{
-							"duration": schema.Int64Attribute{
+							"duration": schema.Int32Attribute{
 								Description:         transactionTimeoutDurationDescription.Description,
 								MarkdownDescription: transactionTimeoutDurationDescription.MarkdownDescription,
 								Required:            true,
-								Validators: []validator.Int64{
-									int64validator.Any(
-										int64validator.All(
-											int64validator.Between(attrMinDuration, attrMaxDurationMinutes),
-											int64validatorinternal.RegexMatchesPathValue(
+								Validators: []validator.Int32{
+									int32validator.Any(
+										int32validator.All(
+											int32validator.Between(attrMinDuration, attrMaxDurationMinutes),
+											int32validatorinternal.RegexMatchesPathValue(
 												regexp.MustCompile(`MINUTES`),
 												fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", attrMinDuration, attrMaxDurationMinutes),
 												path.MatchRelative().AtParent().AtName("time_unit"),
 											),
 										),
-										int64validator.All(
-											int64validator.Between(attrMinDuration, attrMaxDurationSeconds),
-											int64validatorinternal.RegexMatchesPathValue(
+										int32validator.All(
+											int32validator.Between(attrMinDuration, attrMaxDurationSeconds),
+											int32validatorinternal.RegexMatchesPathValue(
 												regexp.MustCompile(`SECONDS`),
 												fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", attrMinDuration, attrMaxDurationSeconds),
 												path.MatchRelative().AtParent().AtName("time_unit"),
@@ -1161,26 +1161,26 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 								Description: "Object for data collection timeout.",
 								Required:    true,
 								Attributes: map[string]schema.Attribute{
-									"duration": schema.Int64Attribute{
+									"duration": schema.Int32Attribute{
 										Description:         dataCollectionDurationDescription.Description,
 										MarkdownDescription: dataCollectionDurationDescription.MarkdownDescription,
 										Required:            true,
-										Validators: []validator.Int64{
-											int64validatorinternal.IsLessThanEqualToPathValue(
+										Validators: []validator.Int32{
+											int32validatorinternal.IsLessThanEqualToPathValue(
 												path.MatchRoot("transaction").AtName("timeout").AtName("duration"),
 											),
-											int64validator.Any(
-												int64validator.All(
-													int64validator.Between(attrMinDuration, attrMaxDurationMinutes),
-													int64validatorinternal.RegexMatchesPathValue(
+											int32validator.Any(
+												int32validator.All(
+													int32validator.Between(attrMinDuration, attrMaxDurationMinutes),
+													int32validatorinternal.RegexMatchesPathValue(
 														regexp.MustCompile(`MINUTES`),
 														fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", attrMinDuration, attrMaxDurationMinutes),
 														path.MatchRelative().AtParent().AtName("time_unit"),
 													),
 												),
-												int64validator.All(
-													int64validator.Between(attrMinDuration, attrMaxDurationSeconds),
-													int64validatorinternal.RegexMatchesPathValue(
+												int32validator.All(
+													int32validator.Between(attrMinDuration, attrMaxDurationSeconds),
+													int32validatorinternal.RegexMatchesPathValue(
 														regexp.MustCompile(`SECONDS`),
 														fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", attrMinDuration, attrMaxDurationSeconds),
 														path.MatchRelative().AtParent().AtName("time_unit"),
@@ -1217,7 +1217,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
 					o := map[string]attr.Value{
-						"samples":         types.Int64Value(defaultVoiceSamples),
+						"samples":         types.Int32Value(defaultVoiceSamples),
 						"voice_phrase_id": types.StringValue(defaultVoicePhraseId),
 					}
 					textDependentObjValue, d := types.ObjectValue(textDependentServiceTFObjectTypes, o)
@@ -1282,18 +1282,18 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 						Default: objectdefault.StaticValue(types.ObjectValueMust(
 							textDependentServiceTFObjectTypes,
 							map[string]attr.Value{
-								"samples":         types.Int64Value(defaultVoiceSamples),
+								"samples":         types.Int32Value(defaultVoiceSamples),
 								"voice_phrase_id": types.StringValue(defaultVoicePhraseId),
 							},
 						)),
 
 						Attributes: map[string]schema.Attribute{
-							"samples": schema.Int64Attribute{
+							"samples": schema.Int32Attribute{
 								Description:         voiceTexttDependentSamplesDescription.Description,
 								MarkdownDescription: voiceTexttDependentSamplesDescription.MarkdownDescription,
 								Required:            true,
-								Validators: []validator.Int64{
-									int64validator.Between(attrMinVoiceSamples, attrMaxVoiceSamples),
+								Validators: []validator.Int32{
+									int32validator.Between(attrMinVoiceSamples, attrMaxVoiceSamples),
 								},
 							},
 							"voice_phrase_id": schema.StringAttribute{
@@ -1832,7 +1832,7 @@ func (p *governmentIdModel) expandgovernmentIdModel() (*verify.GovernmentIdConfi
 
 	retryAttempts := verify.NewObjectRetryWithDefaults()
 	if !p.RetryAttempts.IsNull() && !p.RetryAttempts.IsUnknown() {
-		retryAttempts.SetAttempts(int32(p.RetryAttempts.ValueInt64()))
+		retryAttempts.SetAttempts(p.RetryAttempts.ValueInt32())
 		verifyGovernmentId.SetRetry(*retryAttempts)
 	}
 
@@ -1882,7 +1882,7 @@ func (p *livenessnModel) expandLivenessModel() (*verify.LivenessConfiguration, d
 
 	retryAttempts := verify.NewObjectRetryWithDefaults()
 	if !p.RetryAttempts.IsNull() && !p.RetryAttempts.IsUnknown() {
-		retryAttempts.SetAttempts(int32(p.RetryAttempts.ValueInt64()))
+		retryAttempts.SetAttempts(p.RetryAttempts.ValueInt32())
 		verifyLiveness.SetRetry(*retryAttempts)
 	}
 
@@ -1932,7 +1932,7 @@ func (p *transactionModel) expandTransactionModel(ctx context.Context) (*verify.
 		}
 
 		if !genericTimeout.Duration.IsNull() && !genericTimeout.Duration.IsUnknown() {
-			dataCollectionTimeout.SetDuration(int32(genericTimeout.Duration.ValueInt64()))
+			dataCollectionTimeout.SetDuration(genericTimeout.Duration.ValueInt32())
 		}
 
 		transactionDataCollection := verify.NewTransactionConfigurationDataCollection(*dataCollectionTimeout)
@@ -1952,7 +1952,7 @@ func (p *transactionModel) expandTransactionModel(ctx context.Context) (*verify.
 
 		transactionTimeout := verify.NewTransactionConfigurationTimeoutWithDefaults()
 		transactionTimeout.SetTimeUnit(verify.EnumTimeUnit(genericTimeout.TimeUnit.ValueString()))
-		transactionTimeout.SetDuration(int32(genericTimeout.Duration.ValueInt64()))
+		transactionTimeout.SetDuration(genericTimeout.Duration.ValueInt32())
 
 		transactionSettings.SetTimeout(*transactionTimeout)
 	}
@@ -2005,7 +2005,7 @@ func (p *deviceModel) expandDevice(ctx context.Context) (*verify.OTPDeviceConfig
 		}
 		otpAttempts := verify.NewOTPDeviceConfigurationOtpAttemptsWithDefaults()
 		if !attempts.Count.IsNull() && !attempts.Count.IsUnknown() {
-			otpAttempts.SetCount(int32(attempts.Count.ValueInt64()))
+			otpAttempts.SetCount(attempts.Count.ValueInt32())
 		}
 		otpSettings.SetAttempts(*otpAttempts)
 
@@ -2021,7 +2021,7 @@ func (p *deviceModel) expandDevice(ctx context.Context) (*verify.OTPDeviceConfig
 		}
 		otpDeliveries := verify.NewOTPDeviceConfigurationOtpDeliveriesWithDefaults()
 		if !deliveries.Count.IsNull() && !deliveries.Count.IsUnknown() {
-			otpDeliveries.SetCount(int32(deliveries.Count.ValueInt64()))
+			otpDeliveries.SetCount(deliveries.Count.ValueInt32())
 		}
 
 		if !deliveries.Cooldown.IsNull() && !deliveries.Cooldown.IsUnknown() {
@@ -2037,7 +2037,7 @@ func (p *deviceModel) expandDevice(ctx context.Context) (*verify.OTPDeviceConfig
 
 			deliveriesCooldown := verify.NewOTPDeviceConfigurationOtpDeliveriesCooldownWithDefaults()
 			if !cooldown.Duration.IsNull() && !cooldown.Duration.IsUnknown() {
-				deliveriesCooldown.SetDuration(int32(cooldown.Duration.ValueInt64()))
+				deliveriesCooldown.SetDuration(cooldown.Duration.ValueInt32())
 			}
 			if !cooldown.TimeUnit.IsNull() && !cooldown.TimeUnit.IsUnknown() {
 				deliveriesCooldown.SetTimeUnit(verify.EnumTimeUnit(cooldown.TimeUnit.ValueString()))
@@ -2063,7 +2063,7 @@ func (p *deviceModel) expandDevice(ctx context.Context) (*verify.OTPDeviceConfig
 		}
 
 		if !genericTimeout.Duration.IsNull() && !genericTimeout.Duration.IsUnknown() {
-			otpLifeTime.SetDuration(int32(genericTimeout.Duration.ValueInt64()))
+			otpLifeTime.SetDuration(genericTimeout.Duration.ValueInt32())
 		}
 		otpSettings.SetLifeTime(*otpLifeTime)
 
@@ -2142,7 +2142,7 @@ func (p *voiceModel) expandVoiceModel(ctx context.Context) (*verify.VoiceConfigu
 		}
 
 		if !textDependent.Samples.IsNull() && !textDependent.Samples.IsUnknown() {
-			textDependentObject.SetSamples(int32(textDependent.Samples.ValueInt64()))
+			textDependentObject.SetSamples(textDependent.Samples.ValueInt32())
 		}
 		voiceSettings.SetTextDependent(*textDependentObject)
 	}
@@ -2236,7 +2236,7 @@ func (p *verifyPolicyResourceModel) toStateGovernmentId(apiObject *verify.Govern
 		return types.ObjectNull(governmentIdServiceTFObjectTypes), diags
 	}
 
-	retryAttempts := types.Int64Null()
+	retryAttempts := types.Int32Null()
 	if v, ok := apiObject.GetRetryOk(); ok {
 		if t, ok := v.GetAttemptsOk(); ok {
 			retryAttempts = framework.Int32ToTF(*t)
@@ -2286,7 +2286,7 @@ func (p *verifyPolicyResourceModel) toStateLiveness(apiObject *verify.LivenessCo
 		return types.ObjectNull(livenessServiceTFObjectTypes), diags
 	}
 
-	retryAttempts := types.Int64Null()
+	retryAttempts := types.Int32Null()
 	if v, ok := apiObject.GetRetryOk(); ok {
 		if t, ok := v.GetAttemptsOk(); ok {
 			retryAttempts = framework.Int32ToTF(*t)

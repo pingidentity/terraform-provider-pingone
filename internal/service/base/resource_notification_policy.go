@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -46,9 +46,9 @@ type NotificationPolicyResourceModel struct {
 type NotificationPolicyQuotaResourceModel struct {
 	Type            types.String `tfsdk:"type"`
 	DeliveryMethods types.Set    `tfsdk:"delivery_methods"`
-	Total           types.Int64  `tfsdk:"total"`
-	Used            types.Int64  `tfsdk:"used"`
-	Unused          types.Int64  `tfsdk:"unused"`
+	Total           types.Int32  `tfsdk:"total"`
+	Used            types.Int32  `tfsdk:"used"`
+	Unused          types.Int32  `tfsdk:"unused"`
 }
 
 type NotificationPolicyCountryLimitResourceModel struct {
@@ -63,9 +63,9 @@ var (
 		"delivery_methods": types.SetType{
 			ElemType: types.StringType,
 		},
-		"total":  types.Int64Type,
-		"used":   types.Int64Type,
-		"unused": types.Int64Type,
+		"total":  types.Int32Type,
+		"used":   types.Int32Type,
+		"unused": types.Int32Type,
 	}
 
 	countryLimitTFObjectTypes = map[string]attr.Type{
@@ -297,33 +297,33 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 							},
 						},
 
-						"total": schema.Int64Attribute{
+						"total": schema.Int32Attribute{
 							Description:         quotaTotalDescription.Description,
 							MarkdownDescription: quotaTotalDescription.MarkdownDescription,
 							Optional:            true,
-							Validators: []validator.Int64{
-								int64validator.ConflictsWith(path.MatchRelative().AtParent().AtName("used")),
-								int64validator.ConflictsWith(path.MatchRelative().AtParent().AtName("unused")),
+							Validators: []validator.Int32{
+								int32validator.ConflictsWith(path.MatchRelative().AtParent().AtName("used")),
+								int32validator.ConflictsWith(path.MatchRelative().AtParent().AtName("unused")),
 							},
 						},
 
-						"used": schema.Int64Attribute{
+						"used": schema.Int32Attribute{
 							Description:         quotaUsedDescription.Description,
 							MarkdownDescription: quotaUsedDescription.MarkdownDescription,
 							Optional:            true,
-							Validators: []validator.Int64{
-								int64validator.ConflictsWith(path.MatchRelative().AtParent().AtName("total")),
-								int64validator.AlsoRequires(path.MatchRelative().AtParent().AtName("unused")),
+							Validators: []validator.Int32{
+								int32validator.ConflictsWith(path.MatchRelative().AtParent().AtName("total")),
+								int32validator.AlsoRequires(path.MatchRelative().AtParent().AtName("unused")),
 							},
 						},
 
-						"unused": schema.Int64Attribute{
+						"unused": schema.Int32Attribute{
 							Description:         quotaUnusedDescription.Description,
 							MarkdownDescription: quotaUnusedDescription.MarkdownDescription,
 							Optional:            true,
-							Validators: []validator.Int64{
-								int64validator.ConflictsWith(path.MatchRelative().AtParent().AtName("total")),
-								int64validator.AlsoRequires(path.MatchRelative().AtParent().AtName("used")),
+							Validators: []validator.Int32{
+								int32validator.ConflictsWith(path.MatchRelative().AtParent().AtName("total")),
+								int32validator.AlsoRequires(path.MatchRelative().AtParent().AtName("used")),
 							},
 						},
 					},
@@ -648,15 +648,15 @@ func (p *NotificationPolicyResourceModel) expand(ctx context.Context) (*manageme
 		)
 
 		if !v.Total.IsNull() && !v.Total.IsUnknown() {
-			quota.SetTotal(int32(v.Total.ValueInt64()))
+			quota.SetTotal(v.Total.ValueInt32())
 		}
 
 		if !v.Used.IsNull() && !v.Used.IsUnknown() {
-			quota.SetClaimed(int32(v.Used.ValueInt64()))
+			quota.SetClaimed(v.Used.ValueInt32())
 		}
 
 		if !v.Unused.IsNull() && !v.Unused.IsUnknown() {
-			quota.SetUnclaimed(int32(v.Unused.ValueInt64()))
+			quota.SetUnclaimed(v.Unused.ValueInt32())
 		}
 
 		if management.EnumNotificationsPolicyQuotaItemType(v.Type.ValueString()) == management.ENUMNOTIFICATIONSPOLICYQUOTAITEMTYPE_USER &&

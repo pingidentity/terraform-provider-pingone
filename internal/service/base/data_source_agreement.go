@@ -29,9 +29,9 @@ type AgreementDataSourceModel struct {
 	Name                  types.String                 `tfsdk:"name"`
 	Enabled               types.Bool                   `tfsdk:"enabled"`
 	Description           types.String                 `tfsdk:"description"`
-	ReconsentPeriodDays   types.Float64                `tfsdk:"reconsent_period_days"`
-	TotalUserConsents     types.Int64                  `tfsdk:"total_user_consent_count"`
-	ExpiredUserConsents   types.Int64                  `tfsdk:"expired_user_consent_count"`
+	ReconsentPeriodDays   types.Float32                `tfsdk:"reconsent_period_days"`
+	TotalUserConsents     types.Int32                  `tfsdk:"total_user_consent_count"`
+	ExpiredUserConsents   types.Int32                  `tfsdk:"expired_user_consent_count"`
 	ConsentCountsUpdateAt timetypes.RFC3339            `tfsdk:"consent_counts_updated_at"`
 }
 
@@ -104,18 +104,18 @@ func (r *AgreementDataSource) Schema(ctx context.Context, req datasource.SchemaR
 				Computed:    true,
 			},
 
-			"reconsent_period_days": schema.Float64Attribute{
+			"reconsent_period_days": schema.Float32Attribute{
 				Description: "A number that specifies the number of days until a consent to this agreement expires.",
 				Computed:    true,
 			},
 
-			"total_user_consent_count": schema.Int64Attribute{
+			"total_user_consent_count": schema.Int32Attribute{
 				Description:         totalUserCountDescription.Description,
 				MarkdownDescription: totalUserCountDescription.MarkdownDescription,
 				Computed:            true,
 			},
 
-			"expired_user_consent_count": schema.Int64Attribute{
+			"expired_user_consent_count": schema.Int32Attribute{
 				Description:         expiredUserCountDescription.Description,
 				MarkdownDescription: expiredUserCountDescription.MarkdownDescription,
 				Computed:            true,

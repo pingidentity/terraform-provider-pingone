@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -15,7 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
@@ -77,7 +77,7 @@ type MFADevicePolicyOtpResourceModel struct {
 
 type MFADevicePolicyFailureResourceModel struct {
 	CoolDown types.Object `tfsdk:"cool_down"`
-	Count    types.Int64  `tfsdk:"count"`
+	Count    types.Int32  `tfsdk:"count"`
 }
 
 type MFADevicePolicyCooldownResourceModel MFADevicePolicyTimePeriodResourceModel
@@ -85,7 +85,7 @@ type MFADevicePolicyPushTimeoutResourceModel MFADevicePolicyTimePeriodResourceMo
 type MFADevicePolicyLockDurationResourceModel MFADevicePolicyTimePeriodResourceModel
 type MFADevicePolicyPairingKeyLifetimeResourceModel MFADevicePolicyTimePeriodResourceModel
 type MFADevicePolicyTimePeriodResourceModel struct {
-	Duration types.Int64  `tfsdk:"duration"`
+	Duration types.Int32  `tfsdk:"duration"`
 	TimeUnit types.String `tfsdk:"time_unit"`
 }
 
@@ -131,7 +131,7 @@ type MFADevicePolicyEnabledResourceModel struct {
 }
 
 type MFADevicePolicyPushLimitResourceModel struct {
-	Count        types.Int64  `tfsdk:"count"`
+	Count        types.Int32  `tfsdk:"count"`
 	LockDuration types.Object `tfsdk:"lock_duration"`
 	TimePeriod   types.Object `tfsdk:"time_period"`
 }
@@ -155,11 +155,11 @@ var (
 
 	MFADevicePolicyFailureTFObjectTypes = map[string]attr.Type{
 		"cool_down": types.ObjectType{AttrTypes: MFADevicePolicyTimePeriodTFObjectTypes},
-		"count":     types.Int64Type,
+		"count":     types.Int32Type,
 	}
 
 	MFADevicePolicyTimePeriodTFObjectTypes = map[string]attr.Type{
-		"duration":  types.Int64Type,
+		"duration":  types.Int32Type,
 		"time_unit": types.StringType,
 	}
 
@@ -200,7 +200,7 @@ var (
 	}
 
 	MFADevicePolicyMobileApplicationPushLimitTFObjectTypes = map[string]attr.Type{
-		"count":         types.Int64Type,
+		"count":         types.Int32Type,
 		"lock_duration": types.ObjectType{AttrTypes: MFADevicePolicyTimePeriodTFObjectTypes},
 		"time_period":   types.ObjectType{AttrTypes: MFADevicePolicyTimePeriodTFObjectTypes},
 	}
@@ -210,7 +210,7 @@ var (
 	}
 
 	MFADevicePolicyMobileOtpFailureTFObjectTypes = map[string]attr.Type{
-		"count":     types.Int64Type,
+		"count":     types.Int32Type,
 		"cool_down": types.ObjectType{AttrTypes: MFADevicePolicyTimePeriodTFObjectTypes},
 	}
 
@@ -226,7 +226,7 @@ var (
 	}
 
 	MFADevicePolicyTotpOtpFailureTFObjectTypes = map[string]attr.Type{
-		"count":     types.Int64Type,
+		"count":     types.Int32Type,
 		"cool_down": types.ObjectType{AttrTypes: MFADevicePolicyTimePeriodTFObjectTypes},
 	}
 
@@ -516,7 +516,7 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 									Optional:    true,
 
 									Attributes: map[string]schema.Attribute{
-										"duration": schema.Int64Attribute{
+										"duration": schema.Int32Attribute{
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the amount of time an issued pairing key can be used until it expires. Minimum is 1 minute and maximum is 48 hours. If this parameter is not provided, the duration is set to 10 minutes.").Description,
 											Required:    true,
 										},
@@ -553,18 +553,18 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 									Default: objectdefault.StaticValue(types.ObjectValueMust(
 										MFADevicePolicyMobileApplicationPushLimitTFObjectTypes,
 										map[string]attr.Value{
-											"count": types.Int64Value(mobileApplicationsPushLimitCountDefault),
+											"count": types.Int32Value(mobileApplicationsPushLimitCountDefault),
 											"lock_duration": types.ObjectValueMust(
 												MFADevicePolicyTimePeriodTFObjectTypes,
 												map[string]attr.Value{
-													"duration":  types.Int64Value(mobileApplicationsPushLimitLockDurationDurationDefault),
+													"duration":  types.Int32Value(mobileApplicationsPushLimitLockDurationDurationDefault),
 													"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
 												},
 											),
 											"time_period": types.ObjectValueMust(
 												MFADevicePolicyTimePeriodTFObjectTypes,
 												map[string]attr.Value{
-													"duration":  types.Int64Value(mobileApplicationsPushLimitTimePeriodDurationDefault),
+													"duration":  types.Int32Value(mobileApplicationsPushLimitTimePeriodDurationDefault),
 													"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
 												},
 											),
@@ -572,15 +572,15 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 									)),
 
 									Attributes: map[string]schema.Attribute{
-										"count": schema.Int64Attribute{
+										"count": schema.Int32Attribute{
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of consecutive push notifications that can be ignored or rejected by a user within a defined period before push notifications are blocked for the application. The minimum value is `1` and the maximum value is `50`. If this parameter is not provided, the default value is `5`.").Description,
 											Optional:    true,
 											Computed:    true,
 
-											Default: int64default.StaticInt64(mobileApplicationsPushLimitCountDefault),
+											Default: int32default.StaticInt32(mobileApplicationsPushLimitCountDefault),
 
-											Validators: []validator.Int64{
-												int64validator.Between(mobileApplicationsPushLimitCountMin, mobileApplicationsPushLimitCountMax),
+											Validators: []validator.Int32{
+												int32validator.Between(mobileApplicationsPushLimitCountMin, mobileApplicationsPushLimitCountMax),
 											},
 										},
 
@@ -589,7 +589,7 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 											Optional:    true,
 
 											Attributes: map[string]schema.Attribute{
-												"duration": schema.Int64Attribute{
+												"duration": schema.Int32Attribute{
 													Description:         mobileApplicationsPushLimitLockDurationDurationDescription.Description,
 													MarkdownDescription: mobileApplicationsPushLimitLockDurationDurationDescription.MarkdownDescription,
 													Required:            true,
@@ -612,7 +612,7 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 											Optional:    true,
 
 											Attributes: map[string]schema.Attribute{
-												"duration": schema.Int64Attribute{
+												"duration": schema.Int32Attribute{
 													Description:         mobileApplicationsPushLimitTimePeriodDurationDescription.Description,
 													MarkdownDescription: mobileApplicationsPushLimitTimePeriodDurationDescription.MarkdownDescription,
 													Required:            true,
@@ -637,7 +637,7 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 									Optional:    true,
 
 									Attributes: map[string]schema.Attribute{
-										"duration": schema.Int64Attribute{
+										"duration": schema.Int32Attribute{
 											Description:         mobileApplicationsPushTimeoutDurationDescription.Description,
 											MarkdownDescription: mobileApplicationsPushTimeoutDurationDescription.MarkdownDescription,
 											Required:            true,
@@ -672,11 +672,11 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 								"failure": types.ObjectValueMust(
 									MFADevicePolicyMobileOtpFailureTFObjectTypes,
 									map[string]attr.Value{
-										"count": types.Int64Value(mobileOtpFailureCountDefault),
+										"count": types.Int32Value(mobileOtpFailureCountDefault),
 										"cool_down": types.ObjectValueMust(
 											MFADevicePolicyTimePeriodTFObjectTypes,
 											map[string]attr.Value{
-												"duration":  types.Int64Value(mobileApplicationsOtpFailureCoolDownDurationDefault),
+												"duration":  types.Int32Value(mobileApplicationsOtpFailureCoolDownDurationDefault),
 												"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
 											},
 										),
@@ -691,16 +691,16 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 								Required:    true,
 
 								Attributes: map[string]schema.Attribute{
-									"count": schema.Int64Attribute{
+									"count": schema.Int32Attribute{
 										Description:         mobileOtpFailureCountDescription.Description,
 										MarkdownDescription: mobileOtpFailureCountDescription.MarkdownDescription,
 										Optional:            true,
 										Computed:            true,
 
-										Default: int64default.StaticInt64(mobileOtpFailureCountDefault),
+										Default: int32default.StaticInt32(mobileOtpFailureCountDefault),
 
-										Validators: []validator.Int64{
-											int64validator.Between(mobileOtpFailureCountMin, mobileOtpFailureCountMax),
+										Validators: []validator.Int32{
+											int32validator.Between(mobileOtpFailureCountMin, mobileOtpFailureCountMax),
 										},
 									},
 
@@ -709,7 +709,7 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 										Required:    true,
 
 										Attributes: map[string]schema.Attribute{
-											"duration": schema.Int64Attribute{
+											"duration": schema.Int32Attribute{
 												Description:         mobileOtpFailureCoolDownDurationDescription.Description,
 												MarkdownDescription: mobileOtpFailureCoolDownDurationDescription.MarkdownDescription,
 												Required:            true,
@@ -769,11 +769,11 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 								"failure": types.ObjectValueMust(
 									MFADevicePolicyTotpOtpFailureTFObjectTypes,
 									map[string]attr.Value{
-										"count": types.Int64Value(totpOtpFailureCountDefault),
+										"count": types.Int32Value(totpOtpFailureCountDefault),
 										"cool_down": types.ObjectValueMust(
 											MFADevicePolicyTimePeriodTFObjectTypes,
 											map[string]attr.Value{
-												"duration":  types.Int64Value(totpOtpFailureCoolDownDurationDefault),
+												"duration":  types.Int32Value(totpOtpFailureCoolDownDurationDefault),
 												"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
 											},
 										),
@@ -793,7 +793,7 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 										Optional:    true,
 
 										Attributes: map[string]schema.Attribute{
-											"duration": schema.Int64Attribute{
+											"duration": schema.Int32Attribute{
 												Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.").Description,
 												Required:    true,
 											},
@@ -810,7 +810,7 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 										},
 									},
 
-									"count": schema.Int64Attribute{
+									"count": schema.Int32Attribute{
 										Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.").Description,
 										Required:    true,
 									},
@@ -912,11 +912,11 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 						"failure": types.ObjectValueMust(
 							MFADevicePolicyFailureTFObjectTypes,
 							map[string]attr.Value{
-								"count": types.Int64Value(otpFailureCountDefault),
+								"count": types.Int32Value(otpFailureCountDefault),
 								"cool_down": types.ObjectValueMust(
 									MFADevicePolicyTimePeriodTFObjectTypes,
 									map[string]attr.Value{
-										"duration":  types.Int64Value(otpFailureCoolDownDurationDefault),
+										"duration":  types.Int32Value(otpFailureCoolDownDurationDefault),
 										"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
 									},
 								),
@@ -925,7 +925,7 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 						"lifetime": types.ObjectValueMust(
 							MFADevicePolicyTimePeriodTFObjectTypes,
 							map[string]attr.Value{
-								"duration":  types.Int64Value(otpLifetimeDurationDefault),
+								"duration":  types.Int32Value(otpLifetimeDurationDefault),
 								"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
 							},
 						),
@@ -943,7 +943,7 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 								Required:    true,
 
 								Attributes: map[string]schema.Attribute{
-									"duration": schema.Int64Attribute{
+									"duration": schema.Int32Attribute{
 										Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.").Description,
 										Required:    true,
 									},
@@ -960,7 +960,7 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 								},
 							},
 
-							"count": schema.Int64Attribute{
+							"count": schema.Int32Attribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.").Description,
 								Required:    true,
 							},
@@ -972,7 +972,7 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 						Optional:    true,
 
 						Attributes: map[string]schema.Attribute{
-							"duration": schema.Int64Attribute{
+							"duration": schema.Int32Attribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the duration (number of time units) that the passcode is valid before it expires.").Description,
 								Required:    true,
 							},
@@ -1474,7 +1474,7 @@ func (p *MFADevicePolicyOfflineDeviceOtpResourceModel) expand(ctx context.Contex
 	}
 
 	lifetime := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpLifeTime(
-		int32(lifetimePlan.Duration.ValueInt64()),
+		lifetimePlan.Duration.ValueInt32(),
 		mfa.EnumTimeUnit(lifetimePlan.TimeUnit.ValueString()),
 	)
 
@@ -1499,9 +1499,9 @@ func (p *MFADevicePolicyOfflineDeviceOtpResourceModel) expand(ctx context.Contex
 	}
 
 	failure := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure(
-		int32(failurePlan.Count.ValueInt64()),
+		failurePlan.Count.ValueInt32(),
 		*mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown(
-			int32(failureCooldownPlan.Duration.ValueInt64()),
+			failureCooldownPlan.Duration.ValueInt32(),
 			mfa.EnumTimeUnit(failureCooldownPlan.TimeUnit.ValueString()),
 		),
 	)
@@ -1599,9 +1599,9 @@ func (p *MFADevicePolicyFailureResourceModel) expand(ctx context.Context) (*mfa.
 	}
 
 	data := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure(
-		int32(p.Count.ValueInt64()),
+		p.Count.ValueInt32(),
 		*mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown(
-			int32(cooldownPlan.Duration.ValueInt64()),
+			cooldownPlan.Duration.ValueInt32(),
 			mfa.EnumTimeUnit(cooldownPlan.TimeUnit.ValueString()),
 		),
 	)
@@ -1719,7 +1719,7 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 
 		data.SetPairingKeyLifetime(
 			*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPairingKeyLifetime(
-				int32(plan.Duration.ValueInt64()),
+				plan.Duration.ValueInt32(),
 				mfa.EnumTimeUnitPairingKeyLifetime(plan.TimeUnit.ValueString()),
 			),
 		)
@@ -1776,7 +1776,7 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 
 		data.SetPushTimeout(
 			*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushTimeout(
-				int32(plan.Duration.ValueInt64()),
+				plan.Duration.ValueInt32(),
 				mfa.EnumTimeUnitPushTimeout(plan.TimeUnit.ValueString()),
 			),
 		)
@@ -1791,7 +1791,7 @@ func (p *MFADevicePolicyPushLimitResourceModel) expand(ctx context.Context) (*mf
 	data := mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushLimit()
 
 	if !p.Count.IsNull() && !p.Count.IsUnknown() {
-		data.SetCount(int32(p.Count.ValueInt64()))
+		data.SetCount(p.Count.ValueInt32())
 	}
 
 	if !p.LockDuration.IsNull() && !p.LockDuration.IsUnknown() {
@@ -1806,7 +1806,7 @@ func (p *MFADevicePolicyPushLimitResourceModel) expand(ctx context.Context) (*mf
 
 		data.SetLockDuration(
 			*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushLimitLockDuration(
-				int32(plan.Duration.ValueInt64()),
+				plan.Duration.ValueInt32(),
 				mfa.EnumTimeUnit(plan.TimeUnit.ValueString()),
 			),
 		)
@@ -1824,7 +1824,7 @@ func (p *MFADevicePolicyPushLimitResourceModel) expand(ctx context.Context) (*mf
 
 		data.SetTimePeriod(
 			*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushLimitTimePeriod(
-				int32(plan.Duration.ValueInt64()),
+				plan.Duration.ValueInt32(),
 				mfa.EnumTimeUnit(plan.TimeUnit.ValueString()),
 			),
 		)
