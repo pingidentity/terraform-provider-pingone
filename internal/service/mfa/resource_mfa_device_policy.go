@@ -2112,7 +2112,7 @@ func toStateMfaDevicePolicyOfflineDeviceOtpFailure(apiObject *mfa.DeviceAuthenti
 
 	o := map[string]attr.Value{
 		"cool_down": coolDown,
-		"count":     framework.Int32OkToInt64TF(apiObject.GetCountOk()),
+		"count":     framework.Int32OkToTF(apiObject.GetCountOk()),
 	}
 
 	objValue, d := types.ObjectValue(MFADevicePolicyFailureTFObjectTypes, o)
@@ -2129,7 +2129,7 @@ func toStateMfaDevicePolicyOfflineDeviceOtpFailureCoolDown(apiObject *mfa.Device
 	}
 
 	o := map[string]attr.Value{
-		"duration":  framework.Int32OkToInt64TF(apiObject.GetDurationOk()),
+		"duration":  framework.Int32OkToTF(apiObject.GetDurationOk()),
 		"time_unit": framework.EnumOkToTF(apiObject.GetTimeUnitOk()),
 	}
 
@@ -2147,7 +2147,7 @@ func toStateMfaDevicePolicyOfflineDeviceOtpLifeTime(apiObject *mfa.DeviceAuthent
 	}
 
 	o := map[string]attr.Value{
-		"duration":  framework.Int32OkToInt64TF(apiObject.GetDurationOk()),
+		"duration":  framework.Int32OkToTF(apiObject.GetDurationOk()),
 		"time_unit": framework.EnumOkToTF(apiObject.GetTimeUnitOk()),
 	}
 
@@ -2368,7 +2368,7 @@ func toStateMfaDevicePolicyMobileApplicationsPushLimit(apiObject *mfa.DeviceAuth
 	}
 
 	o := map[string]attr.Value{
-		"count":         framework.Int32OkToInt64TF(apiObject.GetCountOk()),
+		"count":         framework.Int32OkToTF(apiObject.GetCountOk()),
 		"lock_duration": lockDuration,
 		"time_period":   timePeriod,
 	}
@@ -2387,7 +2387,7 @@ func toStateMfaDevicePolicyMobileApplicationsPushLimitLockDuration(apiObject *mf
 	}
 
 	o := map[string]attr.Value{
-		"duration":  framework.Int32OkToInt64TF(apiObject.GetDurationOk()),
+		"duration":  framework.Int32OkToTF(apiObject.GetDurationOk()),
 		"time_unit": framework.EnumOkToTF(apiObject.GetTimeUnitOk()),
 	}
 
@@ -2405,7 +2405,7 @@ func toStateMfaDevicePolicyMobileApplicationsPushLimitTimePeriod(apiObject *mfa.
 	}
 
 	o := map[string]attr.Value{
-		"duration":  framework.Int32OkToInt64TF(apiObject.GetDurationOk()),
+		"duration":  framework.Int32OkToTF(apiObject.GetDurationOk()),
 		"time_unit": framework.EnumOkToTF(apiObject.GetTimeUnitOk()),
 	}
 
@@ -2423,7 +2423,7 @@ func toStateMfaDevicePolicyMobileApplicationsPairingKeyLifetime(apiObject *mfa.D
 	}
 
 	o := map[string]attr.Value{
-		"duration":  framework.Int32OkToInt64TF(apiObject.GetDurationOk()),
+		"duration":  framework.Int32OkToTF(apiObject.GetDurationOk()),
 		"time_unit": framework.EnumOkToTF(apiObject.GetTimeUnitOk()),
 	}
 
@@ -2441,7 +2441,7 @@ func toStateMfaDevicePolicyMobileApplicationsPushTimeout(apiObject *mfa.DeviceAu
 	}
 
 	o := map[string]attr.Value{
-		"duration":  framework.Int32OkToInt64TF(apiObject.GetDurationOk()),
+		"duration":  framework.Int32OkToTF(apiObject.GetDurationOk()),
 		"time_unit": framework.EnumOkToTF(apiObject.GetTimeUnitOk()),
 	}
 
@@ -2488,7 +2488,7 @@ func toStateMfaDevicePolicyMobileOtpFailure(apiObject *mfa.DeviceAuthenticationP
 	}
 
 	o := map[string]attr.Value{
-		"count":     framework.Int32OkToInt64TF(apiObject.GetCountOk()),
+		"count":     framework.Int32OkToTF(apiObject.GetCountOk()),
 		"cool_down": coolDown,
 	}
 
@@ -2506,7 +2506,7 @@ func toStateMfaDevicePolicyMobileOtpFailureCooldown(apiObject *mfa.DeviceAuthent
 	}
 
 	o := map[string]attr.Value{
-		"duration":  framework.Int32OkToInt64TF(apiObject.GetDurationOk()),
+		"duration":  framework.Int32OkToTF(apiObject.GetDurationOk()),
 		"time_unit": framework.EnumOkToTF(apiObject.GetTimeUnitOk()),
 	}
 
@@ -2580,7 +2580,7 @@ func toStateMfaDevicePolicyTotpOtpFailure(apiObject *mfa.DeviceAuthenticationPol
 	}
 
 	o := map[string]attr.Value{
-		"count":     framework.Int32OkToInt64TF(apiObject.GetCountOk()),
+		"count":     framework.Int32OkToTF(apiObject.GetCountOk()),
 		"cool_down": coolDown,
 	}
 
@@ -2598,7 +2598,7 @@ func toStateMfaDevicePolicyTotpOtpFailureCooldown(apiObject *mfa.DeviceAuthentic
 	}
 
 	o := map[string]attr.Value{
-		"duration":  framework.Int32OkToInt64TF(apiObject.GetDurationOk()),
+		"duration":  framework.Int32OkToTF(apiObject.GetDurationOk()),
 		"time_unit": framework.EnumOkToTF(apiObject.GetTimeUnitOk()),
 	}
 

@@ -585,8 +585,8 @@ func toStateLockout(apiObject *mfa.MFASettingsLockout, ok bool) (types.Object, d
 	}
 
 	o := map[string]attr.Value{
-		"failure_count":    framework.Int32OkToInt64TF(apiObject.GetFailureCountOk()),
-		"duration_seconds": framework.Int32OkToInt64TF(apiObject.GetDurationSecondsOk()),
+		"failure_count":    framework.Int32OkToTF(apiObject.GetFailureCountOk()),
+		"duration_seconds": framework.Int32OkToTF(apiObject.GetDurationSecondsOk()),
 	}
 
 	objValue, d := types.ObjectValue(MFASettingsLockoutTFObjectTypes, o)
@@ -603,7 +603,7 @@ func toStatePairing(apiObject *mfa.MFASettingsPairing, ok bool) (types.Object, d
 	}
 
 	o := map[string]attr.Value{
-		"max_allowed_devices": framework.Int32OkToInt64TF(apiObject.GetMaxAllowedDevicesOk()),
+		"max_allowed_devices": framework.Int32OkToTF(apiObject.GetMaxAllowedDevicesOk()),
 		"pairing_key_format":  framework.EnumOkToTF(apiObject.GetPairingKeyFormatOk()),
 	}
 

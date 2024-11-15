@@ -954,7 +954,7 @@ func (p *keyResourceModel) toState(apiObject *management.Certificate) diag.Diagn
 	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())
 	p.ExpiresAt = framework.TimeOkToTF(apiObject.GetExpiresAtOk())
 	p.IssuerDn = framework.StringOkToTF(apiObject.GetIssuerDNOk())
-	p.KeyLength = framework.Int32OkToInt64TF(apiObject.GetKeyLengthOk())
+	p.KeyLength = framework.Int32OkToTF(apiObject.GetKeyLengthOk())
 
 	if v, ok := apiObject.GetSerialNumberOk(); ok {
 		p.SerialNumber = framework.StringToTF(v.String())
@@ -967,7 +967,7 @@ func (p *keyResourceModel) toState(apiObject *management.Certificate) diag.Diagn
 	p.Status = framework.EnumOkToTF(apiObject.GetStatusOk())
 	p.SubjectDn = framework.StringOkToTF(apiObject.GetSubjectDNOk())
 	p.UsageType = framework.EnumOkToTF(apiObject.GetUsageTypeOk())
-	p.ValidityPeriod = framework.Int32OkToInt64TF(apiObject.GetValidityPeriodOk())
+	p.ValidityPeriod = framework.Int32OkToTF(apiObject.GetValidityPeriodOk())
 	p.CustomCrl = framework.StringOkToTF(apiObject.GetCustomCRLOk())
 
 	return diags

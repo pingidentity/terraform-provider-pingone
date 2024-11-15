@@ -408,8 +408,8 @@ func toStateImageTarget(v *management.ImageTargets, ok bool) (types.Object, diag
 	}
 
 	objMap := map[string]attr.Value{
-		"width":  framework.Int32OkToInt64TF(original.GetWidthOk()),
-		"height": framework.Int32OkToInt64TF(original.GetHeightOk()),
+		"width":  framework.Int32OkToTF(original.GetWidthOk()),
+		"height": framework.Int32OkToTF(original.GetHeightOk()),
 		"type":   framework.EnumOkToTF(original.GetTypeOk()),
 		"href":   framework.StringOkToTF(original.GetHrefOk()),
 	}

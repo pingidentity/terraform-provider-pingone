@@ -770,7 +770,7 @@ func (p *licenseDataSourceModel) toState(apiObject *management.License) diag.Dia
 	p.BeginsAt = framework.TimeOkToTF(apiObject.GetBeginsAtOk())
 	p.ExpiresAt = framework.TimeOkToTF(apiObject.GetExpiresAtOk())
 	p.TerminatesAt = framework.TimeOkToTF(apiObject.GetTerminatesAtOk())
-	p.AssignedEnvironmentsCount = framework.Int32OkToInt64TF(apiObject.GetAssignedEnvironmentsCountOk())
+	p.AssignedEnvironmentsCount = framework.Int32OkToTF(apiObject.GetAssignedEnvironmentsCountOk())
 
 	p.AdvancedServices, d = licenseAdvancedServicesOkToTF(apiObject.GetAdvancedServicesOk())
 	diags.Append(d...)
@@ -889,7 +889,7 @@ func licenseEnvironmentsOkToTF(apiObject *management.LicenseEnvironments, ok boo
 		"allow_custom_domain": framework.BoolOkToTF(apiObject.GetAllowCustomDomainOk()),
 		"allow_custom_schema": framework.BoolOkToTF(apiObject.GetAllowCustomSchemaOk()),
 		"allow_production":    framework.BoolOkToTF(apiObject.GetAllowProductionOk()),
-		"max":                 framework.Int32OkToInt64TF(apiObject.GetMaxOk()),
+		"max":                 framework.Int32OkToTF(apiObject.GetMaxOk()),
 		"regions":             framework.EnumSetOkToTF(apiObject.GetRegionsOk()),
 	})
 	diags.Append(d...)
@@ -1005,10 +1005,10 @@ func licenseUsersOkToTF(apiObject *management.LicenseUsers, ok bool) (basetypes.
 		"allow_verification_flow":                 framework.BoolOkToTF(apiObject.GetAllowVerificationFlowOk()),
 		"allow_update_self":                       framework.BoolOkToTF(apiObject.GetAllowUpdateSelfOk()),
 		"entitled_to_support":                     framework.BoolOkToTF(apiObject.GetEntitledToSupportOk()),
-		"max":                                     framework.Int32OkToInt64TF(apiObject.GetMaxOk()),
-		"max_hard_limit":                          framework.Int32OkToInt64TF(apiObject.GetHardLimitMaxOk()),
-		"annual_active_included":                  framework.Int32OkToInt64TF(apiObject.GetAnnualActiveIncludedOk()),
-		"monthly_active_included":                 framework.Int32OkToInt64TF(apiObject.GetMonthlyActiveIncludedOk()),
+		"max":                                     framework.Int32OkToTF(apiObject.GetMaxOk()),
+		"max_hard_limit":                          framework.Int32OkToTF(apiObject.GetHardLimitMaxOk()),
+		"annual_active_included":                  framework.Int32OkToTF(apiObject.GetAnnualActiveIncludedOk()),
+		"monthly_active_included":                 framework.Int32OkToTF(apiObject.GetMonthlyActiveIncludedOk()),
 	})
 	diags.Append(d...)
 

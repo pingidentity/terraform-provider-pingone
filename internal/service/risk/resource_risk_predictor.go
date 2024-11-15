@@ -3078,7 +3078,7 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 		}
 
 		o := map[string]attr.Value{
-			"weight": framework.Int32OkToInt64TF(v.GetWeightOk()),
+			"weight": framework.Int32OkToTF(v.GetWeightOk()),
 			"result": defaultResultObj,
 		}
 
@@ -3312,8 +3312,8 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorCustom(apiObject *risk.
 				setBetweenRanges = true
 
 				levelObj := map[string]attr.Value{
-					"min_value": framework.Float32OkToFloat64TF(v1.Between.GetMinScoreOk()),
-					"max_value": framework.Float32OkToFloat64TF(v1.Between.GetMaxScoreOk()),
+					"min_value": framework.Float32OkToTF(v1.Between.GetMinScoreOk()),
+					"max_value": framework.Float32OkToTF(v1.Between.GetMaxScoreOk()),
 				}
 				levelObjValue, d := types.ObjectValue(predictorCustomMapHMLBetweenRangesTFObjectTypes, levelObj)
 				diags.Append(d...)
@@ -3405,8 +3405,8 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorCustom(apiObject *risk.
 				setBetweenRanges = true
 
 				levelObj := map[string]attr.Value{
-					"min_value": framework.Float32OkToFloat64TF(v1.Between.GetMinScoreOk()),
-					"max_value": framework.Float32OkToFloat64TF(v1.Between.GetMaxScoreOk()),
+					"min_value": framework.Float32OkToTF(v1.Between.GetMinScoreOk()),
+					"max_value": framework.Float32OkToTF(v1.Between.GetMaxScoreOk()),
 				}
 				levelObjValue, d := types.ObjectValue(predictorCustomMapHMLBetweenRangesTFObjectTypes, levelObj)
 				diags.Append(d...)
@@ -3498,8 +3498,8 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorCustom(apiObject *risk.
 				setBetweenRanges = true
 
 				levelObj := map[string]attr.Value{
-					"min_value": framework.Float32OkToFloat64TF(v1.Between.GetMinScoreOk()),
-					"max_value": framework.Float32OkToFloat64TF(v1.Between.GetMaxScoreOk()),
+					"min_value": framework.Float32OkToTF(v1.Between.GetMinScoreOk()),
+					"max_value": framework.Float32OkToTF(v1.Between.GetMaxScoreOk()),
 				}
 				levelObjValue, d := types.ObjectValue(predictorCustomMapHMLBetweenRangesTFObjectTypes, levelObj)
 				diags.Append(d...)
@@ -3695,7 +3695,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorUserLocationAnomaly(api
 		var d diag.Diagnostics
 
 		o := map[string]attr.Value{
-			"distance": framework.Int32OkToInt64TF(v.GetDistanceOk()),
+			"distance": framework.Int32OkToTF(v.GetDistanceOk()),
 			"unit":     framework.EnumOkToTF(v.GetUnitOk()),
 		}
 
@@ -3707,7 +3707,7 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorUserLocationAnomaly(api
 
 	objValue, d := types.ObjectValue(predictorUserLocationAnomalyTFObjectTypes, map[string]attr.Value{
 		"radius": predictionRadiusObject,
-		"days":   framework.Int32OkToInt64TF(apiObject.GetDaysOk()),
+		"days":   framework.Int32OkToTF(apiObject.GetDaysOk()),
 	})
 	diags.Append(d...)
 
@@ -3729,8 +3729,8 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorVelocity(apiObject *ris
 
 		o := map[string]attr.Value{
 			"unit":       framework.EnumOkToTF(v.GetUnitOk()),
-			"quantity":   framework.Int32OkToInt64TF(v.GetQuantityOk()),
-			"min_sample": framework.Int32OkToInt64TF(v.GetMinSampleOk()),
+			"quantity":   framework.Int32OkToTF(v.GetQuantityOk()),
+			"min_sample": framework.Int32OkToTF(v.GetMinSampleOk()),
 		}
 
 		objValue, d := types.ObjectValue(predictorVelocityEveryTFObjectTypes, o)
@@ -3747,8 +3747,8 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorVelocity(apiObject *ris
 
 		o := map[string]attr.Value{
 			"strategy": framework.EnumOkToTF(v.GetStrategyOk()),
-			"high":     framework.Float32OkToFloat64TF(v.GetHighOk()),
-			"medium":   framework.Float32OkToFloat64TF(v.GetMediumOk()),
+			"high":     framework.Float32OkToTF(v.GetHighOk()),
+			"medium":   framework.Float32OkToTF(v.GetMediumOk()),
 		}
 
 		objValue, d := types.ObjectValue(predictorVelocityFallbackTFObjectTypes, o)
@@ -3765,8 +3765,8 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorVelocity(apiObject *ris
 
 		o := map[string]attr.Value{
 			"unit":       framework.EnumOkToTF(v.GetUnitOk()),
-			"quantity":   framework.Int32OkToInt64TF(v.GetQuantityOk()),
-			"min_sample": framework.Int32OkToInt64TF(v.GetMinSampleOk()),
+			"quantity":   framework.Int32OkToTF(v.GetQuantityOk()),
+			"min_sample": framework.Int32OkToTF(v.GetMinSampleOk()),
 		}
 
 		objValue, d := types.ObjectValue(predictorVelocitySlidingWindowTFObjectTypes, o)
@@ -3783,8 +3783,8 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorVelocity(apiObject *ris
 
 		o := map[string]attr.Value{
 			"type":   framework.EnumOkToTF(v.GetTypeOk()),
-			"medium": framework.Float32OkToFloat64TF(v.GetMediumOk()),
-			"high":   framework.Float32OkToFloat64TF(v.GetHighOk()),
+			"medium": framework.Float32OkToTF(v.GetMediumOk()),
+			"high":   framework.Float32OkToTF(v.GetHighOk()),
 		}
 
 		objValue, d := types.ObjectValue(predictorVelocityUseTFObjectTypes, o)

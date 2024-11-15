@@ -1951,7 +1951,7 @@ func identityProviderSAMLToTF(idpApiObject *management.IdentityProviderSAML) (ty
 		"slo_binding":                   framework.EnumOkToTF(idpApiObject.GetSloBindingOk()),
 		"slo_endpoint":                  framework.StringOkToTF(idpApiObject.GetSloEndpointOk()),
 		"slo_response_endpoint":         framework.StringOkToTF(idpApiObject.GetSloResponseEndpointOk()),
-		"slo_window":                    framework.Int32OkToInt64TF(idpApiObject.GetSloWindowOk()),
+		"slo_window":                    framework.Int32OkToTF(idpApiObject.GetSloWindowOk()),
 	}
 
 	returnVar, d := types.ObjectValue(identityProviderSAMLTFObjectTypes, attributesMap)

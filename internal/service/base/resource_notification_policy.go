@@ -761,9 +761,9 @@ func toStateQuota(quotas []management.NotificationsPolicyQuotasInner) (types.Set
 		quota := map[string]attr.Value{
 			"type":             framework.EnumOkToTF(v.GetTypeOk()),
 			"delivery_methods": framework.EnumSetOkToTF(v.GetDeliveryMethodsOk()),
-			"total":            framework.Int32OkToInt64TF(v.GetTotalOk()),
-			"used":             framework.Int32OkToInt64TF(v.GetClaimedOk()),
-			"unused":           framework.Int32OkToInt64TF(v.GetUnclaimedOk()),
+			"total":            framework.Int32OkToTF(v.GetTotalOk()),
+			"used":             framework.Int32OkToTF(v.GetClaimedOk()),
+			"unused":           framework.Int32OkToTF(v.GetUnclaimedOk()),
 		}
 
 		flattenedObj, d := types.ObjectValue(quotaTFObjectTypes, quota)
