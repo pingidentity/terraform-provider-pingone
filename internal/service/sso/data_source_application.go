@@ -133,6 +133,10 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 		"A boolean that specifies whether `requestedAuthnContext` is taken into account in policy decision-making.",
 	)
 
+	samlOptionsSessionNotOnOrAfterDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies a value for if the SAML application requires a different `SessionNotOnOrAfter` attribute value within the `AuthnStatement` element than the `NotOnOrAfter` value set by the `assertion_duration` property.",
+	)
+
 	samlSpEncryptionAlgorithmDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The algorithm to use when encrypting assertions.",
 	).AllowedValuesEnum(management.AllowedEnumCertificateKeyEncryptionAlgorithmEnumValues)
@@ -530,6 +534,11 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 					"response_is_signed": schema.BoolAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the SAML assertion response itself should be signed.").Description,
 						Computed:    true,
+					},
+					"session_not_on_or_after_duration": schema.Int32Attribute{
+						Description:         samlOptionsSessionNotOnOrAfterDurationDescription.Description,
+						MarkdownDescription: samlOptionsSessionNotOnOrAfterDurationDescription.MarkdownDescription,
+						Computed:            true,
 					},
 					"slo_binding": schema.StringAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the binding protocol to be used for the logout response.").Description,

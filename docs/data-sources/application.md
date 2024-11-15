@@ -189,6 +189,7 @@ Read-Only:
 - `idp_signing_key` (Attributes) SAML application assertion/response signing key settings. (see [below for nested schema](#nestedatt--saml_options--idp_signing_key))
 - `nameid_format` (String) A string that specifies the format of the Subject NameID attibute in the SAML assertion.
 - `response_is_signed` (Boolean) A boolean that specifies whether the SAML assertion response itself should be signed.
+- `session_not_on_or_after_duration` (Number) An integer that specifies a value for if the SAML application requires a different `SessionNotOnOrAfter` attribute value within the `AuthnStatement` element than the `NotOnOrAfter` value set by the `assertion_duration` property.
 - `slo_binding` (String) A string that specifies the binding protocol to be used for the logout response.
 - `slo_endpoint` (String) A string that specifies the logout endpoint URL.
 - `slo_response_endpoint` (String) A string that specifies the endpoint URL to submit the logout response.
