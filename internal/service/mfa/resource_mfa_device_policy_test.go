@@ -1082,6 +1082,10 @@ func TestAccMFADevicePolicy_Totp_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.duration", "125"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.time_unit", "SECONDS"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.prompt_for_nickname_on_pairing", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.uri_parameters.%", "3"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.uri_parameters.param1", "value 1"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.uri_parameters.param2", "value 2"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.uri_parameters.param3", "value 3"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
@@ -1136,6 +1140,7 @@ func TestAccMFADevicePolicy_Totp_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.duration", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.time_unit", "MINUTES"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "totp.prompt_for_nickname_on_pairing"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "totp.uri_parameters"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
 				),
@@ -1174,6 +1179,10 @@ func TestAccMFADevicePolicy_Totp_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.duration", "125"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.time_unit", "SECONDS"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.prompt_for_nickname_on_pairing", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.uri_parameters.%", "3"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.uri_parameters.param1", "value 1"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.uri_parameters.param2", "value 2"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.uri_parameters.param3", "value 3"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
@@ -1191,6 +1200,7 @@ func TestAccMFADevicePolicy_Totp_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.duration", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.time_unit", "MINUTES"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "totp.prompt_for_nickname_on_pairing"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "totp.uri_parameters"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
 				),
@@ -1208,6 +1218,10 @@ func TestAccMFADevicePolicy_Totp_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.duration", "125"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.time_unit", "SECONDS"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.prompt_for_nickname_on_pairing", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.uri_parameters.%", "3"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.uri_parameters.param1", "value 1"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.uri_parameters.param2", "value 2"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.uri_parameters.param3", "value 3"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
@@ -2773,6 +2787,12 @@ resource "pingone_mfa_device_policy" "%[2]s" {
     pairing_disabled = true
 
     prompt_for_nickname_on_pairing = true
+
+    uri_parameters = {
+      "param1" = "value 1"
+      "param3" = "value 3"
+      "param2" = "value 2"
+    }
 
     otp = {
       failure = {
