@@ -15,7 +15,7 @@ type notificationSettingsEmailResourceModelV0 struct {
 	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
 	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	Host          types.String                 `tfsdk:"host"`
-	Port          types.Int64                  `tfsdk:"port"`
+	Port          types.Int32                  `tfsdk:"port"`
 	Protocol      types.String                 `tfsdk:"protocol"`
 	Username      types.String                 `tfsdk:"username"`
 	Password      types.String                 `tfsdk:"password"`
@@ -41,7 +41,7 @@ func (r *NotificationSettingsEmailResource) UpgradeState(ctx context.Context) ma
 						Required: true,
 					},
 
-					"port": schema.Int64Attribute{
+					"port": schema.Int32Attribute{
 						Required: true,
 					},
 

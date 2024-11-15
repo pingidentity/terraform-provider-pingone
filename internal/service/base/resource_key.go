@@ -11,14 +11,14 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -45,14 +45,14 @@ type keyResourceModel struct {
 	Default            types.Bool                   `tfsdk:"default"`
 	ExpiresAt          timetypes.RFC3339            `tfsdk:"expires_at"`
 	IssuerDn           types.String                 `tfsdk:"issuer_dn"`
-	KeyLength          types.Int64                  `tfsdk:"key_length"`
+	KeyLength          types.Int32                  `tfsdk:"key_length"`
 	SerialNumber       types.String                 `tfsdk:"serial_number"`
 	SignatureAlgorithm types.String                 `tfsdk:"signature_algorithm"`
 	StartsAt           timetypes.RFC3339            `tfsdk:"starts_at"`
 	Status             types.String                 `tfsdk:"status"`
 	SubjectDn          types.String                 `tfsdk:"subject_dn"`
 	UsageType          types.String                 `tfsdk:"usage_type"`
-	ValidityPeriod     types.Int64                  `tfsdk:"validity_period"`
+	ValidityPeriod     types.Int32                  `tfsdk:"validity_period"`
 	CustomCrl          types.String                 `tfsdk:"custom_crl"`
 	PKCS12FileBase64   types.String                 `tfsdk:"pkcs12_file_base64"`
 	PKCS12FilePassword types.String                 `tfsdk:"pkcs12_file_password"`
@@ -67,8 +67,8 @@ var (
 )
 
 var (
-	allowedKeyLengthsRSA = []int64{2048, 3072, 4096, 7680}
-	allowedKeyLengthsEC  = []int64{224, 256, 384, 521}
+	allowedKeyLengthsRSA = []int32{2048, 3072, 4096, 7680}
+	allowedKeyLengthsEC  = []int32{224, 256, 384, 521}
 )
 
 // New Object
@@ -249,30 +249,30 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				},
 			},
 
-			"key_length": schema.Int64Attribute{
+			"key_length": schema.Int32Attribute{
 				Description:         keyLengthDescription.Description,
 				MarkdownDescription: keyLengthDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
 
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.RequiresReplace(),
+				PlanModifiers: []planmodifier.Int32{
+					int32planmodifier.RequiresReplace(),
 				},
 
-				Validators: []validator.Int64{
-					int64validator.Any(
-						int64validator.OneOf(
+				Validators: []validator.Int32{
+					int32validator.Any(
+						int32validator.OneOf(
 							allowedKeyLengthsRSA...,
 						),
-						int64validator.OneOf(
+						int32validator.OneOf(
 							allowedKeyLengthsEC...,
 						),
 					),
-					int64validator.ConflictsWith(
+					int32validator.ConflictsWith(
 						path.MatchRelative().AtParent().AtName("pkcs12_file_base64"),
 						path.MatchRelative().AtParent().AtName("pkcs12_file_password"),
 					),
-					int64validator.AlsoRequires(
+					int32validator.AlsoRequires(
 						path.MatchRelative().AtParent().AtName("name"),
 						path.MatchRelative().AtParent().AtName("algorithm"),
 						path.MatchRelative().AtParent().AtName("key_length"),
@@ -387,23 +387,23 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				},
 			},
 
-			"validity_period": schema.Int64Attribute{
+			"validity_period": schema.Int32Attribute{
 				Description:         validityPeriodDescription.Description,
 				MarkdownDescription: validityPeriodDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
 
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.RequiresReplace(),
+				PlanModifiers: []planmodifier.Int32{
+					int32planmodifier.RequiresReplace(),
 				},
 
-				Validators: []validator.Int64{
-					int64validator.AtLeast(attrMinLength),
-					int64validator.ConflictsWith(
+				Validators: []validator.Int32{
+					int32validator.AtLeast(attrMinLength),
+					int32validator.ConflictsWith(
 						path.MatchRelative().AtParent().AtName("pkcs12_file_base64"),
 						path.MatchRelative().AtParent().AtName("pkcs12_file_password"),
 					),
-					int64validator.AlsoRequires(
+					int32validator.AlsoRequires(
 						path.MatchRelative().AtParent().AtName("name"),
 						path.MatchRelative().AtParent().AtName("algorithm"),
 						path.MatchRelative().AtParent().AtName("key_length"),
@@ -800,12 +800,12 @@ func (p *keyResourceModel) expand() *management.Certificate {
 
 	data := management.NewCertificate(
 		management.EnumCertificateKeyAlgorithm(p.Algorithm.ValueString()),
-		int32(p.KeyLength.ValueInt64()),
+		p.KeyLength.ValueInt32(),
 		p.Name.ValueString(),
 		management.EnumCertificateKeySignagureAlgorithm(p.SignatureAlgorithm.ValueString()),
 		p.SubjectDn.ValueString(),
 		usageType,
-		int32(p.ValidityPeriod.ValueInt64()),
+		p.ValidityPeriod.ValueInt32(),
 	)
 
 	if !p.CustomCrl.IsNull() && !p.CustomCrl.IsUnknown() {
@@ -884,7 +884,7 @@ func (p *keyResourceModel) validate(allowUnknowns bool) diag.Diagnostics {
 		if !p.Algorithm.IsNull() && !p.Algorithm.IsUnknown() && !p.KeyLength.IsNull() && !p.KeyLength.IsUnknown() {
 			var validKeyLengths string
 			keyLengthValidationError := false
-			if p.Algorithm.Equal(types.StringValue(string(management.ENUMCERTIFICATEKEYALGORITHM_RSA))) && !slices.Contains(allowedKeyLengthsRSA, p.KeyLength.ValueInt64()) {
+			if p.Algorithm.Equal(types.StringValue(string(management.ENUMCERTIFICATEKEYALGORITHM_RSA))) && !slices.Contains(allowedKeyLengthsRSA, p.KeyLength.ValueInt32()) {
 
 				keyLengthStrs := make([]string, len(allowedKeyLengthsRSA))
 				for i, v := range allowedKeyLengthsRSA {
@@ -895,7 +895,7 @@ func (p *keyResourceModel) validate(allowUnknowns bool) diag.Diagnostics {
 				validKeyLengths = strings.Join(keyLengthStrs, "`, `")
 			}
 
-			if p.Algorithm.Equal(types.StringValue(string(management.ENUMCERTIFICATEKEYALGORITHM_EC))) && !slices.Contains(allowedKeyLengthsEC, p.KeyLength.ValueInt64()) {
+			if p.Algorithm.Equal(types.StringValue(string(management.ENUMCERTIFICATEKEYALGORITHM_EC))) && !slices.Contains(allowedKeyLengthsEC, p.KeyLength.ValueInt32()) {
 
 				keyLengthStrs := make([]string, len(allowedKeyLengthsEC))
 				for i, v := range allowedKeyLengthsEC {

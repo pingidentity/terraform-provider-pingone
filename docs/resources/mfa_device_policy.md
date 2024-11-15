@@ -225,6 +225,7 @@ Optional:
 
 - `failure` (Attributes) A single object that allows configuration of email OTP failure settings. (see [below for nested schema](#nestedatt--email--otp--failure))
 - `lifetime` (Attributes) A single object that allows configuration of email OTP lifetime settings. (see [below for nested schema](#nestedatt--email--otp--lifetime))
+- `otp_length` (Number) An integer that specifies the length of the OTP that is shown to users.  Minimum length is `6` digits and maximum is `10` digits.  Defaults to `6`.
 
 <a id="nestedatt--email--otp--failure"></a>
 ### Nested Schema for `email.otp.failure`
@@ -235,7 +236,7 @@ Required:
 - `count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.
 
 <a id="nestedatt--email--otp--failure--cool_down"></a>
-### Nested Schema for `email.otp.failure.count`
+### Nested Schema for `email.otp.failure.cool_down`
 
 Required:
 
@@ -338,7 +339,7 @@ Optional:
 - `time_period` (Attributes) A single object that specifies push limit time period settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--push_limit--time_period))
 
 <a id="nestedatt--mobile--applications--push_limit--lock_duration"></a>
-### Nested Schema for `mobile.applications.push_limit.time_period`
+### Nested Schema for `mobile.applications.push_limit.lock_duration`
 
 Required:
 
@@ -388,7 +389,7 @@ Optional:
 - `count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. The minimum value is `1`, maximum is `7`, and the default is `3`.
 
 <a id="nestedatt--mobile--otp--failure--cool_down"></a>
-### Nested Schema for `mobile.otp.failure.count`
+### Nested Schema for `mobile.otp.failure.cool_down`
 
 Required:
 
@@ -419,6 +420,7 @@ Optional:
 
 - `failure` (Attributes) A single object that allows configuration of SMS OTP failure settings. (see [below for nested schema](#nestedatt--sms--otp--failure))
 - `lifetime` (Attributes) A single object that allows configuration of SMS OTP lifetime settings. (see [below for nested schema](#nestedatt--sms--otp--lifetime))
+- `otp_length` (Number) An integer that specifies the length of the OTP that is shown to users.  Minimum length is `6` digits and maximum is `10` digits.  Defaults to `6`.
 
 <a id="nestedatt--sms--otp--failure"></a>
 ### Nested Schema for `sms.otp.failure`
@@ -429,7 +431,7 @@ Required:
 - `count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.
 
 <a id="nestedatt--sms--otp--failure--cool_down"></a>
-### Nested Schema for `sms.otp.failure.count`
+### Nested Schema for `sms.otp.failure.cool_down`
 
 Required:
 
@@ -461,6 +463,7 @@ Optional:
 - `otp` (Attributes) A single object that allows configuration of TOTP OTP settings. (see [below for nested schema](#nestedatt--totp--otp))
 - `pairing_disabled` (Boolean) A boolean that, when set to `true`, prevents users from pairing new devices with the TOTP method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.  Defaults to `false`.
 - `prompt_for_nickname_on_pairing` (Boolean) A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.
+- `uri_parameters` (Map of String) A map of string key:value pairs that specifies `otpauth` URI parameters. For example, if you provide a value for the `issuer` parameter, then authenticators that support that parameter will display the text you specify together with the OTP (in addition to the username). This can help users recognize which application the OTP is for. If you intend on using the same MFA policy for multiple applications, choose a name that reflects the group of applications.
 
 <a id="nestedatt--totp--otp"></a>
 ### Nested Schema for `totp.otp`
@@ -512,6 +515,7 @@ Optional:
 
 - `failure` (Attributes) A single object that allows configuration of voice OTP failure settings. (see [below for nested schema](#nestedatt--voice--otp--failure))
 - `lifetime` (Attributes) A single object that allows configuration of voice OTP lifetime settings. (see [below for nested schema](#nestedatt--voice--otp--lifetime))
+- `otp_length` (Number) An integer that specifies the length of the OTP that is shown to users.  Minimum length is `6` digits and maximum is `10` digits.  Defaults to `6`.
 
 <a id="nestedatt--voice--otp--failure"></a>
 ### Nested Schema for `voice.otp.failure`
@@ -522,7 +526,7 @@ Required:
 - `count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.
 
 <a id="nestedatt--voice--otp--failure--cool_down"></a>
-### Nested Schema for `voice.otp.failure.count`
+### Nested Schema for `voice.otp.failure.cool_down`
 
 Required:
 

@@ -227,10 +227,6 @@ func StringOkToTF(v *string, ok bool) basetypes.StringValue {
 	}
 }
 
-func Int32ToInt64TF(i int32) basetypes.Int64Value {
-	return types.Int64Value(int64(i))
-}
-
 func Int32ToTF(i int32) basetypes.Int32Value {
 	return types.Int32Value(i)
 }
@@ -255,14 +251,6 @@ func EnumOkToTF(v interface{}, ok bool) basetypes.StringValue {
 	}
 }
 
-func Int32OkToInt64TF(i *int32, ok bool) basetypes.Int64Value {
-	if !ok || i == nil {
-		return types.Int64Null()
-	} else {
-		return types.Int64Value(int64(*i))
-	}
-}
-
 func Int32OkToTF(i *int32, ok bool) basetypes.Int32Value {
 	if !ok || i == nil {
 		return types.Int32Null()
@@ -276,14 +264,6 @@ func Int64OkToTF(i *int64, ok bool) basetypes.Int64Value {
 		return types.Int64Null()
 	} else {
 		return types.Int64Value(*i)
-	}
-}
-
-func Float32OkToFloat64TF(i *float32, ok bool) basetypes.Float64Value {
-	if !ok || i == nil {
-		return types.Float64Null()
-	} else {
-		return types.Float64Value(float64(*i))
 	}
 }
 

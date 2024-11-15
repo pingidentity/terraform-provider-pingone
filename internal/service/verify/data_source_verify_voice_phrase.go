@@ -160,12 +160,11 @@ func (r *VoicePhraseDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	var voicePhrase verify.VoicePhrase
+	var voicePhrase *verify.VoicePhrase
 
 	if !data.VoicePhraseId.IsNull() {
 
 		// Run the API call
-		var response *verify.VoicePhrase
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
@@ -176,52 +175,59 @@ func (r *VoicePhraseDataSource) Read(ctx context.Context, req datasource.ReadReq
 			"ReadOneVoicePhrase",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&response,
+			&voicePhrase,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		voicePhrase = *response
-
 	} else if !data.DisplayName.IsNull() {
 		// Run the API call
-		var entityArray *verify.EntityArray
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.VerifyAPIClient.VoicePhrasesApi.ReadAllVoicePhrases(ctx, data.EnvironmentId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				pagedIterator := r.Client.VerifyAPIClient.VoicePhrasesApi.ReadAllVoicePhrases(ctx, data.EnvironmentId.ValueString()).Execute()
+
+				var initialHttpResponse *http.Response
+
+				for pageCursor, err := range pagedIterator {
+					if err != nil {
+						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					}
+
+					if initialHttpResponse == nil {
+						initialHttpResponse = pageCursor.HTTPResponse
+					}
+
+					if voicePhrases, ok := pageCursor.EntityArray.Embedded.GetVoicePhrasesOk(); ok {
+
+						for _, voicePhraseItem := range voicePhrases {
+
+							if voicePhraseItem.GetDisplayName() == data.DisplayName.ValueString() {
+								return &voicePhraseItem, pageCursor.HTTPResponse, nil
+							}
+						}
+					}
+				}
+
+				return nil, initialHttpResponse, nil
 			},
 			"ReadAllVoicePhrases",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&entityArray,
+			&voicePhrase,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		if voicePhrases, ok := entityArray.Embedded.GetVoicePhrasesOk(); ok {
-
-			found := false
-			for _, voicePhraseItem := range voicePhrases {
-
-				if voicePhraseItem.GetDisplayName() == data.DisplayName.ValueString() {
-					voicePhrase = voicePhraseItem
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				resp.Diagnostics.AddError(
-					"Cannot find voice phrase from display name",
-					fmt.Sprintf("The voice phrase display name %s for environment %s cannot be found", data.DisplayName.String(), data.EnvironmentId.String()),
-				)
-				return
-			}
+		if voicePhrase == nil {
+			resp.Diagnostics.AddError(
+				"Cannot find voice phrase from display name",
+				fmt.Sprintf("The voice phrase display name %s for environment %s cannot be found", data.DisplayName.String(), data.EnvironmentId.String()),
+			)
+			return
 		}
 	} else {
 		resp.Diagnostics.AddError(
@@ -232,7 +238,7 @@ func (r *VoicePhraseDataSource) Read(ctx context.Context, req datasource.ReadReq
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&voicePhrase)...)
+	resp.Diagnostics.Append(data.toState(voicePhrase)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

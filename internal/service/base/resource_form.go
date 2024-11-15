@@ -8,7 +8,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -17,7 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -42,7 +42,7 @@ type formResourceModel struct {
 	Name              types.String                 `tfsdk:"name"`
 	Description       types.String                 `tfsdk:"description"`
 	Category          types.String                 `tfsdk:"category"`
-	Cols              types.Int64                  `tfsdk:"cols"`
+	Cols              types.Int32                  `tfsdk:"cols"`
 	Components        types.Object                 `tfsdk:"components"`
 	FieldTypes        types.Set                    `tfsdk:"field_types"`
 	MarkOptional      types.Bool                   `tfsdk:"mark_optional"`
@@ -82,9 +82,9 @@ type formComponentsFieldResourceModel struct {
 }
 
 type formComponentsFieldPositionResourceModel struct {
-	Col   types.Int64 `tfsdk:"col"`
-	Row   types.Int64 `tfsdk:"row"`
-	Width types.Int64 `tfsdk:"width"`
+	Col   types.Int32 `tfsdk:"col"`
+	Row   types.Int32 `tfsdk:"row"`
+	Width types.Int32 `tfsdk:"width"`
 }
 
 type formComponentsFieldElementOptionsResourceModel struct {
@@ -112,18 +112,18 @@ type formComponentsFieldStylesResourceModel struct {
 	BackgroundColor types.String `tfsdk:"background_color"`
 	BorderColor     types.String `tfsdk:"border_color"`
 	Enabled         types.Bool   `tfsdk:"enabled"`
-	Height          types.Int64  `tfsdk:"height"`
+	Height          types.Int32  `tfsdk:"height"`
 	Padding         types.Object `tfsdk:"padding"`
 	TextColor       types.String `tfsdk:"text_color"`
-	Width           types.Int64  `tfsdk:"width"`
+	Width           types.Int32  `tfsdk:"width"`
 	WidthUnit       types.String `tfsdk:"width_unit"`
 }
 
 type formComponentsFieldButtonStylesPaddingResourceModel struct {
-	Bottom types.Int64 `tfsdk:"bottom"`
-	Left   types.Int64 `tfsdk:"left"`
-	Right  types.Int64 `tfsdk:"right"`
-	Top    types.Int64 `tfsdk:"top"`
+	Bottom types.Int32 `tfsdk:"bottom"`
+	Left   types.Int32 `tfsdk:"left"`
+	Right  types.Int32 `tfsdk:"right"`
+	Top    types.Int32 `tfsdk:"top"`
 }
 
 type formComponentsFieldsSchemaDef struct {
@@ -169,9 +169,9 @@ var (
 
 	// Form Components Fields Position
 	formComponentsFieldsPositionTFObjectTypes = map[string]attr.Type{
-		"col":   types.Int64Type,
-		"row":   types.Int64Type,
-		"width": types.Int64Type,
+		"col":   types.Int32Type,
+		"row":   types.Int32Type,
+		"width": types.Int32Type,
 	}
 
 	// Form Components Fields Field Element Option
@@ -193,18 +193,18 @@ var (
 		"background_color": types.StringType,
 		"border_color":     types.StringType,
 		"enabled":          types.BoolType,
-		"height":           types.Int64Type,
+		"height":           types.Int32Type,
 		"padding":          types.ObjectType{AttrTypes: formComponentsFieldsFieldStylesPaddingTFObjectTypes},
 		"text_color":       types.StringType,
-		"width":            types.Int64Type,
+		"width":            types.Int32Type,
 		"width_unit":       types.StringType,
 	}
 
 	formComponentsFieldsFieldStylesPaddingTFObjectTypes = map[string]attr.Type{
-		"bottom": types.Int64Type,
-		"left":   types.Int64Type,
-		"right":  types.Int64Type,
-		"top":    types.Int64Type,
+		"bottom": types.Int32Type,
+		"left":   types.Int32Type,
+		"right":  types.Int32Type,
+		"top":    types.Int32Type,
 	}
 
 	formComponentsFieldsSchemaDefMap = map[management.EnumFormFieldType]formComponentsFieldsSchemaDef{
@@ -754,17 +754,17 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Default: stringdefault.StaticString(string(management.ENUMFORMCATEGORY_CUSTOM)),
 			},
 
-			"cols": schema.Int64Attribute{
+			"cols": schema.Int32Attribute{
 				Description:         colsDescription.Description,
 				MarkdownDescription: colsDescription.MarkdownDescription,
 				Required:            true,
 
-				Validators: []validator.Int64{
-					int64validator.Between(colsMinValue, colsMaxValue),
+				Validators: []validator.Int32{
+					int32validator.Between(colsMinValue, colsMaxValue),
 				},
 
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.RequiresReplace(),
+				PlanModifiers: []planmodifier.Int32{
+					int32planmodifier.RequiresReplace(),
 				},
 			},
 
@@ -787,27 +787,27 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Required:            true,
 
 									Attributes: map[string]schema.Attribute{
-										"col": schema.Int64Attribute{
+										"col": schema.Int32Attribute{
 											Description:         componentsFieldsPositionColDescription.Description,
 											MarkdownDescription: componentsFieldsPositionColDescription.MarkdownDescription,
 											Required:            true,
 
-											Validators: []validator.Int64{
-												int64validator.AtLeast(colMinValue),
+											Validators: []validator.Int32{
+												int32validator.AtLeast(colMinValue),
 											},
 										},
 
-										"row": schema.Int64Attribute{
+										"row": schema.Int32Attribute{
 											Description:         componentsFieldsPositionRowDescription.Description,
 											MarkdownDescription: componentsFieldsPositionRowDescription.MarkdownDescription,
 											Required:            true,
 
-											Validators: []validator.Int64{
-												int64validator.AtMost(rowMaxValue),
+											Validators: []validator.Int32{
+												int32validator.AtMost(rowMaxValue),
 											},
 										},
 
-										"width": schema.Int64Attribute{
+										"width": schema.Int32Attribute{
 											Description:         componentsFieldsPositionWidthDescription.Description,
 											MarkdownDescription: componentsFieldsPositionWidthDescription.MarkdownDescription,
 											Optional:            true,
@@ -1036,7 +1036,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 											},
 										},
 
-										"height": schema.Int64Attribute{
+										"height": schema.Int32Attribute{
 											Description:         componentsFieldsStylesHeightDescription.Description,
 											MarkdownDescription: componentsFieldsStylesHeightDescription.MarkdownDescription,
 											Optional:            true,
@@ -1048,25 +1048,25 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 											Optional:            true,
 
 											Attributes: map[string]schema.Attribute{
-												"top": schema.Int64Attribute{
+												"top": schema.Int32Attribute{
 													Description:         componentsFieldsStylesPaddingTopDescription.Description,
 													MarkdownDescription: componentsFieldsStylesPaddingTopDescription.MarkdownDescription,
 													Optional:            true,
 												},
 
-												"right": schema.Int64Attribute{
+												"right": schema.Int32Attribute{
 													Description:         componentsFieldsStylesPaddingRightDescription.Description,
 													MarkdownDescription: componentsFieldsStylesPaddingRightDescription.MarkdownDescription,
 													Optional:            true,
 												},
 
-												"bottom": schema.Int64Attribute{
+												"bottom": schema.Int32Attribute{
 													Description:         componentsFieldsStylesPaddingBottomDescription.Description,
 													MarkdownDescription: componentsFieldsStylesPaddingBottomDescription.MarkdownDescription,
 													Optional:            true,
 												},
 
-												"left": schema.Int64Attribute{
+												"left": schema.Int32Attribute{
 													Description:         componentsFieldsStylesPaddingLeftDescription.Description,
 													MarkdownDescription: componentsFieldsStylesPaddingLeftDescription.MarkdownDescription,
 													Optional:            true,
@@ -1080,7 +1080,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 											Optional:            true,
 										},
 
-										"width": schema.Int64Attribute{
+										"width": schema.Int32Attribute{
 											Description:         componentsFieldsStylesWidthDescription.Description,
 											MarkdownDescription: componentsFieldsStylesWidthDescription.MarkdownDescription,
 											Optional:            true,
@@ -1695,7 +1695,7 @@ func (p *formResourceModel) validate(ctx context.Context, allowUnknowns bool) di
 								diags.AddAttributeError(
 									path.Root("components").AtName("fields"),
 									"Invalid DaVinci form configuration",
-									fmt.Sprintf("The combination of `col` and `row` must be unique between form fields.  The position `col`: `%d`, `row`: `%d` is duplicated.", positionPlan.Col.ValueInt64(), positionPlan.Row.ValueInt64()),
+									fmt.Sprintf("The combination of `col` and `row` must be unique between form fields.  The position `col`: `%d`, `row`: `%d` is duplicated.", positionPlan.Col.ValueInt32(), positionPlan.Row.ValueInt32()),
 								)
 							}
 						}
@@ -1837,7 +1837,7 @@ func (p *formResourceModel) expand(ctx context.Context) (*management.Form, diag.
 	}
 
 	if !p.Cols.IsNull() && !p.Cols.IsUnknown() {
-		data.SetCols(int32(p.Cols.ValueInt64()))
+		data.SetCols(p.Cols.ValueInt32())
 	}
 
 	if !p.FieldTypes.IsNull() && !p.FieldTypes.IsUnknown() {
@@ -1933,12 +1933,12 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 func (p *formComponentsFieldPositionResourceModel) expand() *management.FormFieldCommonPosition {
 
 	data := management.NewFormFieldCommonPosition(
-		int32(p.Row.ValueInt64()),
-		int32(p.Col.ValueInt64()),
+		p.Row.ValueInt32(),
+		p.Col.ValueInt32(),
 	)
 
 	if !p.Width.IsNull() && !p.Width.IsUnknown() {
-		data.SetWidth(int32(p.Width.ValueInt64()))
+		data.SetWidth(p.Width.ValueInt32())
 	}
 
 	return data
@@ -2498,7 +2498,7 @@ func (p *formComponentsFieldStylesResourceModel) expand(ctx context.Context, sty
 		}
 
 		if !p.Height.IsNull() && !p.Height.IsUnknown() {
-			data.SetHeight(int32(p.Height.ValueInt64()))
+			data.SetHeight(p.Height.ValueInt32())
 		}
 
 		if !p.Padding.IsNull() && !p.Padding.IsUnknown() {
@@ -2514,19 +2514,19 @@ func (p *formComponentsFieldStylesResourceModel) expand(ctx context.Context, sty
 			padding := management.NewFormStylesPadding()
 
 			if !plan.Bottom.IsNull() && !plan.Bottom.IsUnknown() {
-				padding.SetBottom(int32(plan.Bottom.ValueInt64()))
+				padding.SetBottom(plan.Bottom.ValueInt32())
 			}
 
 			if !plan.Left.IsNull() && !plan.Left.IsUnknown() {
-				padding.SetLeft(int32(plan.Left.ValueInt64()))
+				padding.SetLeft(plan.Left.ValueInt32())
 			}
 
 			if !plan.Right.IsNull() && !plan.Right.IsUnknown() {
-				padding.SetRight(int32(plan.Right.ValueInt64()))
+				padding.SetRight(plan.Right.ValueInt32())
 			}
 
 			if !plan.Top.IsNull() && !plan.Top.IsUnknown() {
-				padding.SetTop(int32(plan.Top.ValueInt64()))
+				padding.SetTop(plan.Top.ValueInt32())
 			}
 
 			data.SetPadding(*padding)
@@ -2537,7 +2537,7 @@ func (p *formComponentsFieldStylesResourceModel) expand(ctx context.Context, sty
 		}
 
 		if !p.Width.IsNull() && !p.Width.IsUnknown() {
-			data.SetWidth(int32(p.Width.ValueInt64()))
+			data.SetWidth(p.Width.ValueInt32())
 		}
 
 		if !p.WidthUnit.IsNull() && !p.WidthUnit.IsUnknown() {
@@ -2571,19 +2571,19 @@ func (p *formComponentsFieldStylesResourceModel) expand(ctx context.Context, sty
 			padding := management.NewFormStylesPadding()
 
 			if !plan.Bottom.IsNull() && !plan.Bottom.IsUnknown() {
-				padding.SetBottom(int32(plan.Bottom.ValueInt64()))
+				padding.SetBottom(plan.Bottom.ValueInt32())
 			}
 
 			if !plan.Left.IsNull() && !plan.Left.IsUnknown() {
-				padding.SetLeft(int32(plan.Left.ValueInt64()))
+				padding.SetLeft(plan.Left.ValueInt32())
 			}
 
 			if !plan.Right.IsNull() && !plan.Right.IsUnknown() {
-				padding.SetRight(int32(plan.Right.ValueInt64()))
+				padding.SetRight(plan.Right.ValueInt32())
 			}
 
 			if !plan.Top.IsNull() && !plan.Top.IsUnknown() {
-				padding.SetTop(int32(plan.Top.ValueInt64()))
+				padding.SetTop(plan.Top.ValueInt32())
 			}
 
 			data.SetPadding(*padding)
@@ -3176,10 +3176,10 @@ func formComponentsFieldsFlowLinkStylesOkToTF(apiObject *management.FormFlowLink
 		"background_color": types.StringNull(),
 		"border_color":     types.StringNull(),
 		"enabled":          framework.BoolOkToTF(apiObject.GetEnabledOk()),
-		"height":           types.Int64Null(),
+		"height":           types.Int32Null(),
 		"padding":          padding,
 		"text_color":       framework.StringOkToTF(apiObject.GetTextColorOk()),
-		"width":            types.Int64Null(),
+		"width":            types.Int32Null(),
 		"width_unit":       types.StringNull(),
 	})
 	diags.Append(d...)

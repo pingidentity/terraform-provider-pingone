@@ -1,3 +1,39 @@
+## 1.2.0 (Unreleased)
+
+NOTES:
+
+* Corrected broken documentation bookmark references. ([#931](https://github.com/pingidentity/terraform-provider-pingone/issues/931))
+* Upgraded go version to 1.23 to align with the go [release policy](https://go.dev/doc/devel/release#policy). ([#931](https://github.com/pingidentity/terraform-provider-pingone/issues/931))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` 0.6.0 => 0.7.0 ([#932](https://github.com/pingidentity/terraform-provider-pingone/issues/932))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` 0.9.0 => 0.10.0 ([#932](https://github.com/pingidentity/terraform-provider-pingone/issues/932))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.43.0 => 0.44.0 ([#932](https://github.com/pingidentity/terraform-provider-pingone/issues/932))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` 0.20.0 => 0.21.0 ([#932](https://github.com/pingidentity/terraform-provider-pingone/issues/932))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` 0.16.0 => 0.17.0 ([#932](https://github.com/pingidentity/terraform-provider-pingone/issues/932))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/verify` 0.7.0 => 0.8.0 ([#932](https://github.com/pingidentity/terraform-provider-pingone/issues/932))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.3 => 0.12.4 ([#932](https://github.com/pingidentity/terraform-provider-pingone/issues/932))
+
+ENHANCEMENTS:
+
+* `data-source/pingone_application`: Add `session_not_on_or_after_duration` field to SAML applications. ([#934](https://github.com/pingidentity/terraform-provider-pingone/issues/934))
+* `resource/pingone_application`: Add `session_not_on_or_after_duration` field to SAML applications. ([#934](https://github.com/pingidentity/terraform-provider-pingone/issues/934))
+* `resource/pingone_mfa_device_policy`: Added `[email|sms|voice].otp.otp_length` field to allow admins to specify the length of the OTP displayed to users for SMS, Voice or Email delivery methods. ([#935](https://github.com/pingidentity/terraform-provider-pingone/issues/935))
+* `resource/pingone_mfa_device_policy`: Added the `totp.uri_parameters` field to allow custom key:value pairs for authenticators that support `otpauth` URI parameters. ([#936](https://github.com/pingidentity/terraform-provider-pingone/issues/936))
+
+BUG FIXES:
+
+* Fixed potential "Cannot find .." errors in multiple resources and data sources when many configuration items of the same type exist in an environment (fix paged results). ([#932](https://github.com/pingidentity/terraform-provider-pingone/issues/932))
+* Fixed potential missing results in data sources that return multiple configuration items (fix paged results). ([#932](https://github.com/pingidentity/terraform-provider-pingone/issues/932))
+
+## 1.1.1 (28 August 2024)
+
+NOTES:
+
+* `resource/pingone_environment`: Align example HCL with best practice on creating blank/empty DaVinci service environments. ([#907](https://github.com/pingidentity/terraform-provider-pingone/issues/907))
+* `resource/pingone_population_default`: Suppress warning on creation where the default population for an environment cannot be found. ([#906](https://github.com/pingidentity/terraform-provider-pingone/issues/906))
+* bump `github.com/hashicorp/terraform-plugin-framework-timetypes` 0.4.0 => 0.5.0 ([#908](https://github.com/pingidentity/terraform-provider-pingone/issues/908))
+* bump `github.com/hashicorp/terraform-plugin-framework` 1.10.0 => 1.11.0 ([#908](https://github.com/pingidentity/terraform-provider-pingone/issues/908))
+* bump `github.com/hashicorp/terraform-plugin-testing` 1.9.0 => 1.10.0 ([#908](https://github.com/pingidentity/terraform-provider-pingone/issues/908))
+
 ## 1.1.0 (05 August 2024)
 
 NOTES:

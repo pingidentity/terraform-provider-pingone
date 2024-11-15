@@ -59,7 +59,34 @@ func FetchTaggedEnvironmentsByPrefix(ctx context.Context, apiClient *management.
 	resp, diags := sdk.ParseResponse(
 		ctx,
 		func() (any, *http.Response, error) {
-			return apiClient.EnvironmentsApi.ReadAllEnvironments(ctx).Filter(filter).Execute()
+			pagedIterator := apiClient.EnvironmentsApi.ReadAllEnvironments(ctx).Filter(filter).Execute()
+
+			returnEnvironments := make([]management.Environment, 0)
+
+			var initialHttpResponse *http.Response
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return nil, pageCursor.HTTPResponse, err
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if environments, ok := pageCursor.EntityArray.Embedded.GetEnvironmentsOk(); ok {
+
+					for _, environment := range environments {
+						if environment.GetName() == "Administrators" {
+							return nil, nil, fmt.Errorf("Unsafe filter, Administrators environment present: %s", filter)
+						}
+					}
+
+					returnEnvironments = append(returnEnvironments, environments...)
+				}
+			}
+
+			return returnEnvironments, initialHttpResponse, nil
 		},
 		"ReadAllEnvironments",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -88,20 +115,9 @@ func FetchTaggedEnvironmentsByPrefix(ctx context.Context, apiClient *management.
 		return nil, fmt.Errorf("Error getting environments for sweep")
 	}
 
-	respList := resp.(*management.EntityArray)
+	respList := resp.([]management.Environment)
 
-	if environments, ok := respList.Embedded.GetEnvironmentsOk(); ok {
-
-		for _, environment := range environments {
-			if environment.GetName() == "Administrators" {
-				return nil, fmt.Errorf("Unsafe filter, Administrators environment present: %s", filter)
-			}
-		}
-		return environments, nil
-	} else {
-		return make([]management.Environment, 0), nil
-	}
-
+	return respList, nil
 }
 
 func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient, region management.EnvironmentRegion, index string) error {
@@ -117,11 +133,15 @@ func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient,
 
 	productBOMItems := make([]management.BillOfMaterialsProductsInner, 0)
 
+	daVinciService := management.NewBillOfMaterialsProductsInner(management.ENUMPRODUCTTYPE_ONE_DAVINCI)
+	daVinciService.SetTags([]management.EnumBillOfMaterialsProductTags{management.ENUMBILLOFMATERIALSPRODUCTTAGS_DAVINCI_MINIMAL})
+
+	productBOMItems = append(productBOMItems, *management.NewBillOfMaterialsProductsInner(management.ENUMPRODUCTTYPE_ONE_AUTHORIZE))
 	productBOMItems = append(productBOMItems, *management.NewBillOfMaterialsProductsInner(management.ENUMPRODUCTTYPE_ONE_BASE))
+	productBOMItems = append(productBOMItems, *management.NewBillOfMaterialsProductsInner(management.ENUMPRODUCTTYPE_ONE_CREDENTIALS))
+	productBOMItems = append(productBOMItems, *daVinciService)
 	productBOMItems = append(productBOMItems, *management.NewBillOfMaterialsProductsInner(management.ENUMPRODUCTTYPE_ONE_MFA))
 	productBOMItems = append(productBOMItems, *management.NewBillOfMaterialsProductsInner(management.ENUMPRODUCTTYPE_ONE_RISK))
-	productBOMItems = append(productBOMItems, *management.NewBillOfMaterialsProductsInner(management.ENUMPRODUCTTYPE_ONE_AUTHORIZE))
-	productBOMItems = append(productBOMItems, *management.NewBillOfMaterialsProductsInner(management.ENUMPRODUCTTYPE_ONE_CREDENTIALS))
 	productBOMItems = append(productBOMItems, *management.NewBillOfMaterialsProductsInner(management.ENUMPRODUCTTYPE_ONE_VERIFY))
 
 	environment.SetBillOfMaterials(*management.NewBillOfMaterials(productBOMItems))

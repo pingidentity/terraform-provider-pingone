@@ -70,7 +70,7 @@ type identityProviderSAMLResourceModelV0 struct {
 	SloBinding                    types.String                 `tfsdk:"slo_binding"`
 	SloEndpoint                   types.String                 `tfsdk:"slo_endpoint"`
 	SloResponseEndpoint           types.String                 `tfsdk:"slo_response_endpoint"`
-	SloWindow                     types.Int64                  `tfsdk:"slo_window"`
+	SloWindow                     types.Int32                  `tfsdk:"slo_window"`
 }
 
 func (r *IdentityProviderResource) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
@@ -408,7 +408,7 @@ func (r *IdentityProviderResource) UpgradeState(ctx context.Context) map[int64]r
 									Optional: true,
 								},
 
-								"slo_window": schema.Int64Attribute{
+								"slo_window": schema.Int32Attribute{
 									Optional: true,
 								},
 							},

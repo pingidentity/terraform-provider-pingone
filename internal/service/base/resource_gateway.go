@@ -68,7 +68,7 @@ type gatewayResourceModelV1 struct {
 type gatewayKerberosResourceModelV1 struct {
 	ServiceAccountPassword        types.String `tfsdk:"service_account_password"`
 	ServiceAccountUPN             types.String `tfsdk:"service_account_upn"`
-	RetainPreviousCredentialsMins types.Int64  `tfsdk:"retain_previous_credentials_mins"`
+	RetainPreviousCredentialsMins types.Int32  `tfsdk:"retain_previous_credentials_mins"`
 }
 
 type gatewayUserTypeResourceModelV1 struct {
@@ -99,12 +99,12 @@ type gatewayRadiusClientsResourceModelV1 struct {
 
 type gatewayRadiusNetworkPolicyServerResourceModelV1 struct {
 	IP   types.String `tfsdk:"ip"`
-	Port types.Int64  `tfsdk:"port"`
+	Port types.Int32  `tfsdk:"port"`
 }
 
 var (
 	gatewayKerberosTFObjectTypes = map[string]attr.Type{
-		"retain_previous_credentials_mins": types.Int64Type,
+		"retain_previous_credentials_mins": types.Int32Type,
 		"service_account_password":         types.StringType,
 		"service_account_upn":              types.StringType,
 	}
@@ -141,7 +141,7 @@ var (
 
 	gatewayRadiusNetworkPolicyServerTFObjectTypes = map[string]attr.Type{
 		"ip":   types.StringType,
-		"port": types.Int64Type,
+		"port": types.Int32Type,
 	}
 )
 
@@ -445,7 +445,7 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 						Required:            true,
 					},
 
-					"retain_previous_credentials_mins": schema.Int64Attribute{
+					"retain_previous_credentials_mins": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of minutes for which the previous credentials are persisted.").Description,
 						Optional:    true,
 					},
@@ -811,7 +811,7 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 						},
 					},
 
-					"port": schema.Int64Attribute{
+					"port": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the port number of the NPS.").Description,
 						Required:    true,
 					},
@@ -1154,7 +1154,7 @@ func (p *gatewayResourceModelV1) expand(ctx context.Context) (*management.Create
 			}
 
 			if !kerberosPlan.RetainPreviousCredentialsMins.IsNull() && !kerberosPlan.RetainPreviousCredentialsMins.IsUnknown() {
-				kerberos.SetMinutesToRetainPreviousCredentials(int32(kerberosPlan.RetainPreviousCredentialsMins.ValueInt64()))
+				kerberos.SetMinutesToRetainPreviousCredentials(kerberosPlan.RetainPreviousCredentialsMins.ValueInt32())
 			}
 
 			gateway.SetKerberos(*kerberos)
@@ -1235,7 +1235,7 @@ func (p *gatewayResourceModelV1) expand(ctx context.Context) (*management.Create
 
 			radiusNPS := management.NewGatewayTypeRADIUSAllOfNetworkPolicyServer(
 				radiusNPSPlan.IP.ValueString(),
-				int32(radiusNPSPlan.Port.ValueInt64()),
+				radiusNPSPlan.Port.ValueInt32(),
 			)
 
 			gateway.SetNetworkPolicyServer(*radiusNPS)

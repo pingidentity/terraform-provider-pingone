@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -28,7 +28,7 @@ type ApplicationFlowPolicyAssignmentResourceModel struct {
 	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	ApplicationId pingonetypes.ResourceIDValue `tfsdk:"application_id"`
 	FlowPolicyId  davincitypes.ResourceIDValue `tfsdk:"flow_policy_id"`
-	Priority      types.Int64                  `tfsdk:"priority"`
+	Priority      types.Int32                  `tfsdk:"priority"`
 }
 
 // Framework interfaces
@@ -72,11 +72,11 @@ func (r *ApplicationFlowPolicyAssignmentResource) Schema(ctx context.Context, re
 				CustomType: davincitypes.ResourceIDType{},
 			},
 
-			"priority": schema.Int64Attribute{
+			"priority": schema.Int32Attribute{
 				Description: "The order in which the policy referenced by this assignment is evaluated during an authentication flow relative to other policies. An assignment with a lower priority will be evaluated first.",
 				Required:    true,
-				Validators: []validator.Int64{
-					int64validator.AtLeast(1),
+				Validators: []validator.Int32{
+					int32validator.AtLeast(1),
 				},
 			},
 		},
@@ -319,7 +319,7 @@ func (r *ApplicationFlowPolicyAssignmentResource) ImportState(ctx context.Contex
 func (p *ApplicationFlowPolicyAssignmentResourceModel) expand() *management.FlowPolicyAssignment {
 
 	flowPolicy := management.NewFlowPolicyAssignmentFlowPolicy(p.FlowPolicyId.ValueString())
-	data := management.NewFlowPolicyAssignment(*flowPolicy, int32(p.Priority.ValueInt64()))
+	data := management.NewFlowPolicyAssignment(*flowPolicy, p.Priority.ValueInt32())
 
 	return data
 }

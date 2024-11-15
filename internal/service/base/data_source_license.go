@@ -33,7 +33,7 @@ type licenseDataSourceModel struct {
 	BeginsAt                  timetypes.RFC3339            `tfsdk:"begins_at"`
 	ExpiresAt                 timetypes.RFC3339            `tfsdk:"expires_at"`
 	TerminatesAt              timetypes.RFC3339            `tfsdk:"terminates_at"`
-	AssignedEnvironmentsCount types.Int64                  `tfsdk:"assigned_environments_count"`
+	AssignedEnvironmentsCount types.Int32                  `tfsdk:"assigned_environments_count"`
 	AdvancedServices          types.Object                 `tfsdk:"advanced_services"`
 	Authorize                 types.Object                 `tfsdk:"authorize"`
 	Credentials               types.Object                 `tfsdk:"credentials"`
@@ -72,7 +72,7 @@ var (
 		"allow_custom_domain": types.BoolType,
 		"allow_custom_schema": types.BoolType,
 		"allow_production":    types.BoolType,
-		"max":                 types.Int64Type,
+		"max":                 types.Int32Type,
 		"regions":             types.SetType{ElemType: types.StringType},
 	}
 
@@ -122,10 +122,10 @@ var (
 		"allow_verification_flow":                 types.BoolType,
 		"allow_update_self":                       types.BoolType,
 		"entitled_to_support":                     types.BoolType,
-		"max":                                     types.Int64Type,
-		"max_hard_limit":                          types.Int64Type,
-		"annual_active_included":                  types.Int64Type,
-		"monthly_active_included":                 types.Int64Type,
+		"max":                                     types.Int32Type,
+		"max_hard_limit":                          types.Int32Type,
+		"annual_active_included":                  types.Int32Type,
+		"monthly_active_included":                 types.Int32Type,
 	}
 
 	licenseVerifyTFObjectTypes = map[string]attr.Type{
@@ -309,7 +309,7 @@ func (r *LicenseDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				CustomType: timetypes.RFC3339Type{},
 			},
 
-			"assigned_environments_count": schema.Int64Attribute{
+			"assigned_environments_count": schema.Int32Attribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the total number of environments associated with this license.").Description,
 				Computed:    true,
 			},
@@ -402,7 +402,7 @@ func (r *LicenseDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 						Computed:    true,
 					},
 
-					"max": schema.Int64Attribute{
+					"max": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the maximum number of environments allowed.").Description,
 						Computed:    true,
 					},
@@ -619,22 +619,22 @@ func (r *LicenseDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 						Computed:    true,
 					},
 
-					"max": schema.Int64Attribute{
+					"max": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the maximum number of users allowed per environment.").Description,
 						Computed:    true,
 					},
 
-					"max_hard_limit": schema.Int64Attribute{
+					"max_hard_limit": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the maximum number of users (hard limit) allowed per environment.").Description,
 						Computed:    true,
 					},
 
-					"annual_active_included": schema.Int64Attribute{
+					"annual_active_included": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies a soft limit on the number of active identities across all environments on the license per year. This property is not visible if a value is not provided at the time the license is created.").Description,
 						Computed:    true,
 					},
 
-					"monthly_active_included": schema.Int64Attribute{
+					"monthly_active_included": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies a soft limit on the number of active identities across all environments on the license per month. This property is not visible if a value is not provided at the time the license is created.").Description,
 						Computed:    true,
 					},

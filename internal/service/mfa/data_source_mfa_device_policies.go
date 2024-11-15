@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
@@ -103,10 +102,32 @@ func (r *MFADevicePoliciesDataSource) Read(ctx context.Context, req datasource.R
 	}
 
 	filterFunction := func() (any, *http.Response, error) {
-		return r.Client.MFAAPIClient.DeviceAuthenticationPolicyApi.ReadDeviceAuthenticationPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
+		pagedIterator := r.Client.MFAAPIClient.DeviceAuthenticationPolicyApi.ReadDeviceAuthenticationPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
+
+		devicePolicyIDs := make([]string, 0)
+
+		var initialHttpResponse *http.Response
+
+		for pageCursor, err := range pagedIterator {
+			if err != nil {
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+			}
+
+			if initialHttpResponse == nil {
+				initialHttpResponse = pageCursor.HTTPResponse
+			}
+
+			if pageCursor.EntityArray.Embedded != nil && pageCursor.EntityArray.Embedded.DeviceAuthenticationPolicies != nil {
+				for _, policy := range pageCursor.EntityArray.Embedded.GetDeviceAuthenticationPolicies() {
+					devicePolicyIDs = append(devicePolicyIDs, policy.GetId())
+				}
+			}
+		}
+
+		return devicePolicyIDs, initialHttpResponse, nil
 	}
 
-	var entityArray *mfa.EntityArray
+	var devicePolicyIDs []string
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
@@ -114,18 +135,18 @@ func (r *MFADevicePoliciesDataSource) Read(ctx context.Context, req datasource.R
 		"ReadDeviceAuthenticationPolicies",
 		framework.DefaultCustomError,
 		nil,
-		&entityArray,
+		&devicePolicyIDs,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(entityArray.Embedded.GetDeviceAuthenticationPolicies())...)
+	resp.Diagnostics.Append(data.toState(devicePolicyIDs)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (p *MFADevicePoliciesDataSourceModel) toState(apiObject []mfa.DeviceAuthenticationPolicy) diag.Diagnostics {
+func (p *MFADevicePoliciesDataSourceModel) toState(apiObject []string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -137,11 +158,6 @@ func (p *MFADevicePoliciesDataSourceModel) toState(apiObject []mfa.DeviceAuthent
 		return diags
 	}
 
-	list := make([]string, 0)
-	for _, item := range apiObject {
-		list = append(list, item.GetId())
-	}
-
 	var d diag.Diagnostics
 
 	if p.Id.IsNull() {
@@ -150,7 +166,7 @@ func (p *MFADevicePoliciesDataSourceModel) toState(apiObject []mfa.DeviceAuthent
 
 	p.EnvironmentId = framework.PingOneResourceIDToTF(p.EnvironmentId.ValueString())
 
-	p.Ids, d = framework.StringSliceToTF(list)
+	p.Ids, d = framework.StringSliceToTF(apiObject)
 	diags.Append(d...)
 
 	return diags

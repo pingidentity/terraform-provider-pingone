@@ -27,7 +27,7 @@ type ResourceDataSourceModel struct {
 	Description                    types.String                 `tfsdk:"description"`
 	Type                           types.String                 `tfsdk:"type"`
 	Audience                       types.String                 `tfsdk:"audience"`
-	AccessTokenValiditySeconds     types.Int64                  `tfsdk:"access_token_validity_seconds"`
+	AccessTokenValiditySeconds     types.Int32                  `tfsdk:"access_token_validity_seconds"`
 	ApplicationPermissionsSettings types.Object                 `tfsdk:"application_permissions_settings"`
 	IntrospectEndpointAuthMethod   types.String                 `tfsdk:"introspect_endpoint_auth_method"`
 }
@@ -128,7 +128,7 @@ func (r *ResourceDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 				Computed:            true,
 			},
 
-			"access_token_validity_seconds": schema.Int64Attribute{
+			"access_token_validity_seconds": schema.Int32Attribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of seconds that the access token is valid.").Description,
 				Computed:    true,
 			},

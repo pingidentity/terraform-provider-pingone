@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -53,12 +53,12 @@ type CredentialTypeResourceModel struct {
 
 type MetadataModel struct {
 	BackgroundImage  types.String `tfsdk:"background_image"`
-	BgOpacityPercent types.Int64  `tfsdk:"bg_opacity_percent"`
+	BgOpacityPercent types.Int32  `tfsdk:"bg_opacity_percent"`
 	CardColor        types.String `tfsdk:"card_color"`
-	Columns          types.Int64  `tfsdk:"columns"`
+	Columns          types.Int32  `tfsdk:"columns"`
 	Description      types.String `tfsdk:"description"`
 	TextColor        types.String `tfsdk:"text_color"`
-	Version          types.Int64  `tfsdk:"version"`
+	Version          types.Int32  `tfsdk:"version"`
 	LogoImage        types.String `tfsdk:"logo_image"`
 	Name             types.String `tfsdk:"name"`
 	Fields           types.List   `tfsdk:"fields"`
@@ -78,12 +78,12 @@ type FieldsModel struct {
 var (
 	metadataServiceTFObjectTypes = map[string]attr.Type{
 		"background_image":   types.StringType,
-		"bg_opacity_percent": types.Int64Type,
+		"bg_opacity_percent": types.Int32Type,
 		"card_color":         types.StringType,
-		"columns":            types.Int64Type,
+		"columns":            types.Int32Type,
 		"description":        types.StringType,
 		"text_color":         types.StringType,
-		"version":            types.Int64Type,
+		"version":            types.Int32Type,
 		"logo_image":         types.StringType,
 		"name":               types.StringType,
 		"fields":             types.ListType{ElemType: types.ObjectType{AttrTypes: innerFieldsServiceTFObjectTypes}},
@@ -287,11 +287,11 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 						},
 					},
 
-					"bg_opacity_percent": schema.Int64Attribute{
+					"bg_opacity_percent": schema.Int32Attribute{
 						Description: "A numnber indicating the percent opacity of the background image in the credential. High percentage opacity may make text on the credential difficult to read.",
 						Optional:    true,
-						Validators: []validator.Int64{
-							int64validator.Between(attrMinPercent, attrMaxPercent),
+						Validators: []validator.Int32{
+							int32validator.Between(attrMinPercent, attrMaxPercent),
 						},
 					},
 
@@ -315,11 +315,11 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 						},
 					},
 
-					"columns": schema.Int64Attribute{
+					"columns": schema.Int32Attribute{
 						Description: "Indicates a number (between 1-3) of columns to display visible fields on the credential.",
 						Optional:    true,
-						Validators: []validator.Int64{
-							int64validator.Between(attrMinColumns, attrMaxColumns),
+						Validators: []validator.Int32{
+							int32validator.Between(attrMinColumns, attrMaxColumns),
 						},
 					},
 
@@ -378,7 +378,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 							),
 						},
 					},
-					"version": schema.Int64Attribute{
+					"version": schema.Int32Attribute{
 						Description: "Number version of this credential.",
 						Computed:    true,
 					},
@@ -846,7 +846,7 @@ func (p *MetadataModel) expandMetaDataModel(ctx context.Context) (*credentials.C
 	}
 
 	if !p.BgOpacityPercent.IsNull() && !p.BgOpacityPercent.IsUnknown() {
-		cardMetadata.SetBgOpacityPercent(int32(p.BgOpacityPercent.ValueInt64()))
+		cardMetadata.SetBgOpacityPercent(p.BgOpacityPercent.ValueInt32())
 	}
 
 	if !p.CardColor.IsNull() && !p.CardColor.IsUnknown() {
@@ -854,7 +854,7 @@ func (p *MetadataModel) expandMetaDataModel(ctx context.Context) (*credentials.C
 	}
 
 	if !p.Columns.IsNull() && !p.Columns.IsUnknown() {
-		cardMetadata.SetColumns(int32(p.Columns.ValueInt64()))
+		cardMetadata.SetColumns(p.Columns.ValueInt32())
 	}
 
 	if !p.Description.IsNull() && !p.Description.IsUnknown() {
@@ -870,7 +870,7 @@ func (p *MetadataModel) expandMetaDataModel(ctx context.Context) (*credentials.C
 	}
 
 	if !p.Version.IsNull() && !p.Version.IsUnknown() {
-		cardMetadata.SetVersion(int32(p.Version.ValueInt64()))
+		cardMetadata.SetVersion(p.Version.ValueInt32())
 	}
 
 	// expand fields

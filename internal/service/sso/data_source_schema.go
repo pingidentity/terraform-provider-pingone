@@ -198,47 +198,56 @@ func (p *SchemaDataSourceModel) toState(apiObject *management.Schema) diag.Diagn
 func fetchSchemaFromName(ctx context.Context, apiClient *management.APIClient, environmentId string, schemaName string) (*management.Schema, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var schema management.Schema
+	var schema *management.Schema
 
 	// Run the API call
-	var entityArray *management.EntityArray
 	diags.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.SchemasApi.ReadAllSchemas(ctx, environmentId).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, fO, fR, fErr)
+			pagedIterator := apiClient.SchemasApi.ReadAllSchemas(ctx, environmentId).Execute()
+
+			var initialHttpResponse *http.Response
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if schemas, ok := pageCursor.EntityArray.Embedded.GetSchemasOk(); ok {
+
+					for _, schemaItem := range schemas {
+
+						if schemaItem.GetName() == schemaName {
+							return &schemaItem, pageCursor.HTTPResponse, nil
+						}
+					}
+
+				}
+			}
+
+			return nil, initialHttpResponse, nil
 		},
 		"ReadAllSchemas",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-		&entityArray,
+		&schema,
 	)...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
-	if schemas, ok := entityArray.Embedded.GetSchemasOk(); ok {
-
-		found := false
-		for _, schemaItem := range schemas {
-
-			if schemaItem.GetName() == schemaName {
-				schema = schemaItem
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			diags.AddError(
-				"Cannot find schema from name",
-				fmt.Sprintf("The schema %s for environment %s cannot be found", schemaName, environmentId),
-			)
-			return nil, diags
-		}
-
+	if schema == nil {
+		diags.AddError(
+			"Cannot find schema from name",
+			fmt.Sprintf("The schema %s for environment %s cannot be found", schemaName, environmentId),
+		)
+		return nil, diags
 	}
 
-	return &schema, diags
+	return schema, diags
 }

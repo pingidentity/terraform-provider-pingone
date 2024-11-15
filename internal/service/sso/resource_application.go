@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -18,7 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -73,8 +73,8 @@ type applicationOIDCOptionsResourceModelV1 struct {
 	CorsSettings                                  types.Object `tfsdk:"cors_settings"`
 	DevicePathId                                  types.String `tfsdk:"device_path_id"`
 	DeviceCustomVerificationUri                   types.String `tfsdk:"device_custom_verification_uri"`
-	DeviceTimeout                                 types.Int64  `tfsdk:"device_timeout"`
-	DevicePollingInterval                         types.Int64  `tfsdk:"device_polling_interval"`
+	DeviceTimeout                                 types.Int32  `tfsdk:"device_timeout"`
+	DevicePollingInterval                         types.Int32  `tfsdk:"device_polling_interval"`
 	GrantTypes                                    types.Set    `tfsdk:"grant_types"`
 	HomePageUrl                                   types.String `tfsdk:"home_page_url"`
 	InitiateLoginUri                              types.String `tfsdk:"initiate_login_uri"`
@@ -82,13 +82,13 @@ type applicationOIDCOptionsResourceModelV1 struct {
 	JwksUrl                                       types.String `tfsdk:"jwks_url"`
 	MobileApp                                     types.Object `tfsdk:"mobile_app"`
 	ParRequirement                                types.String `tfsdk:"par_requirement"`
-	ParTimeout                                    types.Int64  `tfsdk:"par_timeout"`
+	ParTimeout                                    types.Int32  `tfsdk:"par_timeout"`
 	PKCEEnforcement                               types.String `tfsdk:"pkce_enforcement"`
 	PostLogoutRedirectUris                        types.Set    `tfsdk:"post_logout_redirect_uris"`
 	RedirectUris                                  types.Set    `tfsdk:"redirect_uris"`
-	RefreshTokenDuration                          types.Int64  `tfsdk:"refresh_token_duration"`
-	RefreshTokenRollingDuration                   types.Int64  `tfsdk:"refresh_token_rolling_duration"`
-	RefreshTokenRollingGracePeriodDuration        types.Int64  `tfsdk:"refresh_token_rolling_grace_period_duration"`
+	RefreshTokenDuration                          types.Int32  `tfsdk:"refresh_token_duration"`
+	RefreshTokenRollingDuration                   types.Int32  `tfsdk:"refresh_token_rolling_duration"`
+	RefreshTokenRollingGracePeriodDuration        types.Int32  `tfsdk:"refresh_token_rolling_grace_period_duration"`
 	RequireSignedRequestObject                    types.Bool   `tfsdk:"require_signed_request_object"`
 	ResponseTypes                                 types.Set    `tfsdk:"response_types"`
 	SupportUnsignedRequestObject                  types.Bool   `tfsdk:"support_unsigned_request_object"`
@@ -112,7 +112,7 @@ type applicationOIDCMobileAppResourceModelV1 struct {
 	HuaweiPackageName      types.String `tfsdk:"huawei_package_name"`
 	IntegrityDetection     types.Object `tfsdk:"integrity_detection"`
 	PackageName            types.String `tfsdk:"package_name"`
-	PasscodeRefreshSeconds types.Int64  `tfsdk:"passcode_refresh_seconds"`
+	PasscodeRefreshSeconds types.Int32  `tfsdk:"passcode_refresh_seconds"`
 	UniversalAppLink       types.String `tfsdk:"universal_app_link"`
 }
 
@@ -124,7 +124,7 @@ type applicationOIDCMobileAppIntegrityDetectionResourceModelV1 struct {
 }
 
 type applicationOIDCMobileAppIntegrityDetectionCacheDurationResourceModelV1 struct {
-	Amount types.Int64  `tfsdk:"amount"`
+	Amount types.Int32  `tfsdk:"amount"`
 	Units  types.String `tfsdk:"units"`
 }
 
@@ -137,19 +137,20 @@ type applicationOIDCMobileAppIntegrityDetectionGooglePlayResourceModelV1 struct 
 
 type applicationSAMLOptionsResourceModelV1 struct {
 	AcsUrls                     types.Set    `tfsdk:"acs_urls"`
-	AssertionDuration           types.Int64  `tfsdk:"assertion_duration"`
+	AssertionDuration           types.Int32  `tfsdk:"assertion_duration"`
 	AssertionSignedEnabled      types.Bool   `tfsdk:"assertion_signed_enabled"`
 	CorsSettings                types.Object `tfsdk:"cors_settings"`
+	DefaultTargetUrl            types.String `tfsdk:"default_target_url"`
 	EnableRequestedAuthnContext types.Bool   `tfsdk:"enable_requested_authn_context"`
 	HomePageUrl                 types.String `tfsdk:"home_page_url"`
 	IdpSigningKey               types.Object `tfsdk:"idp_signing_key"`
-	DefaultTargetUrl            types.String `tfsdk:"default_target_url"`
 	NameIdFormat                types.String `tfsdk:"nameid_format"`
 	ResponseIsSigned            types.Bool   `tfsdk:"response_is_signed"`
+	SessionNotOnOrAfterDuration types.Int32  `tfsdk:"session_not_on_or_after_duration"`
 	SloBinding                  types.String `tfsdk:"slo_binding"`
 	SloEndpoint                 types.String `tfsdk:"slo_endpoint"`
 	SloResponseEndpoint         types.String `tfsdk:"slo_response_endpoint"`
-	SloWindow                   types.Int64  `tfsdk:"slo_window"`
+	SloWindow                   types.Int32  `tfsdk:"slo_window"`
 	SpEncryption                types.Object `tfsdk:"sp_encryption"`
 	SpEntityId                  types.String `tfsdk:"sp_entity_id"`
 	SpVerification              types.Object `tfsdk:"sp_verification"`
@@ -189,8 +190,8 @@ var (
 		"cors_settings":                                      types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
 		"device_path_id":                                     types.StringType,
 		"device_custom_verification_uri":                     types.StringType,
-		"device_timeout":                                     types.Int64Type,
-		"device_polling_interval":                            types.Int64Type,
+		"device_timeout":                                     types.Int32Type,
+		"device_polling_interval":                            types.Int32Type,
 		"grant_types":                                        types.SetType{ElemType: types.StringType},
 		"home_page_url":                                      types.StringType,
 		"initiate_login_uri":                                 types.StringType,
@@ -198,13 +199,13 @@ var (
 		"jwks":                                               types.StringType,
 		"mobile_app":                                         types.ObjectType{AttrTypes: applicationOidcMobileAppTFObjectTypes},
 		"par_requirement":                                    types.StringType,
-		"par_timeout":                                        types.Int64Type,
+		"par_timeout":                                        types.Int32Type,
 		"pkce_enforcement":                                   types.StringType,
 		"post_logout_redirect_uris":                          types.SetType{ElemType: types.StringType},
 		"redirect_uris":                                      types.SetType{ElemType: types.StringType},
-		"refresh_token_duration":                             types.Int64Type,
-		"refresh_token_rolling_duration":                     types.Int64Type,
-		"refresh_token_rolling_grace_period_duration":        types.Int64Type,
+		"refresh_token_duration":                             types.Int32Type,
+		"refresh_token_rolling_duration":                     types.Int32Type,
+		"refresh_token_rolling_grace_period_duration":        types.Int32Type,
 		"require_signed_request_object":                      types.BoolType,
 		"response_types":                                     types.SetType{ElemType: types.StringType},
 		"support_unsigned_request_object":                    types.BoolType,
@@ -219,7 +220,7 @@ var (
 		"huawei_package_name":      types.StringType,
 		"integrity_detection":      types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionTFObjectTypes},
 		"package_name":             types.StringType,
-		"passcode_refresh_seconds": types.Int64Type,
+		"passcode_refresh_seconds": types.Int32Type,
 		"universal_app_link":       types.StringType,
 	}
 
@@ -231,7 +232,7 @@ var (
 	}
 
 	applicationOidcMobileAppIntegrityDetectionCacheDurationTFObjectTypes = map[string]attr.Type{
-		"amount": types.Int64Type,
+		"amount": types.Int32Type,
 		"units":  types.StringType,
 	}
 
@@ -247,24 +248,25 @@ var (
 	}
 
 	applicationSamlOptionsTFObjectTypes = map[string]attr.Type{
-		"acs_urls":                       types.SetType{ElemType: types.StringType},
-		"assertion_duration":             types.Int64Type,
-		"assertion_signed_enabled":       types.BoolType,
-		"cors_settings":                  types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
-		"enable_requested_authn_context": types.BoolType,
-		"home_page_url":                  types.StringType,
-		"idp_signing_key":                types.ObjectType{AttrTypes: applicationSamlOptionsIdpSigningKeyTFObjectTypes},
-		"default_target_url":             types.StringType,
-		"nameid_format":                  types.StringType,
-		"response_is_signed":             types.BoolType,
-		"slo_binding":                    types.StringType,
-		"slo_endpoint":                   types.StringType,
-		"slo_response_endpoint":          types.StringType,
-		"slo_window":                     types.Int64Type,
-		"sp_encryption":                  types.ObjectType{AttrTypes: applicationSamlOptionsSpEncryptionTFObjectTypes},
-		"sp_entity_id":                   types.StringType,
-		"sp_verification":                types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes},
-		"type":                           types.StringType,
+		"acs_urls":                         types.SetType{ElemType: types.StringType},
+		"assertion_duration":               types.Int32Type,
+		"assertion_signed_enabled":         types.BoolType,
+		"cors_settings":                    types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
+		"enable_requested_authn_context":   types.BoolType,
+		"home_page_url":                    types.StringType,
+		"idp_signing_key":                  types.ObjectType{AttrTypes: applicationSamlOptionsIdpSigningKeyTFObjectTypes},
+		"default_target_url":               types.StringType,
+		"nameid_format":                    types.StringType,
+		"response_is_signed":               types.BoolType,
+		"session_not_on_or_after_duration": types.Int32Type,
+		"slo_binding":                      types.StringType,
+		"slo_endpoint":                     types.StringType,
+		"slo_response_endpoint":            types.StringType,
+		"slo_window":                       types.Int32Type,
+		"sp_encryption":                    types.ObjectType{AttrTypes: applicationSamlOptionsSpEncryptionTFObjectTypes},
+		"sp_entity_id":                     types.StringType,
+		"sp_verification":                  types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes},
+		"type":                             types.StringType,
 	}
 
 	applicationSamlOptionsIdpSigningKeyTFObjectTypes = map[string]attr.Type{
@@ -600,6 +602,11 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 		"A boolean that specifies whether the SAML assertion response itself should be signed.",
 	).DefaultValue(false)
 
+	const samlOptionsSessionNotOnOrAfterDurationMin = 60
+	samlOptionsSessionNotOnOrAfterDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies a value for if the SAML application requires a different `SessionNotOnOrAfter` attribute value within the `AuthnStatement` element than the `NotOnOrAfter` value set by the `assertion_duration` property.",
+	)
+
 	samlOptionsSloBindingDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the binding protocol to be used for the logout response.",
 	).AllowedValuesEnum(management.AllowedEnumApplicationSAMLSloBindingEnumValues).AppendMarkdownString(
@@ -860,29 +867,29 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Optional:            true,
 					},
 
-					"device_timeout": schema.Int64Attribute{
+					"device_timeout": schema.Int32Attribute{
 						Description:         oidcOptionsDeviceTimeoutDescription.Description,
 						MarkdownDescription: oidcOptionsDeviceTimeoutDescription.MarkdownDescription,
 						Optional:            true,
 						Computed:            true,
 
-						Default: int64default.StaticInt64(oidcOptionsDeviceTimeoutDefault),
+						Default: int32default.StaticInt32(oidcOptionsDeviceTimeoutDefault),
 
-						Validators: []validator.Int64{
-							int64validator.Between(oidcOptionsDeviceTimeoutMin, oidcOptionsDeviceTimeoutMax),
+						Validators: []validator.Int32{
+							int32validator.Between(oidcOptionsDeviceTimeoutMin, oidcOptionsDeviceTimeoutMax),
 						},
 					},
 
-					"device_polling_interval": schema.Int64Attribute{
+					"device_polling_interval": schema.Int32Attribute{
 						Description:         oidcOptionsDevicePollingIntervalDescription.Description,
 						MarkdownDescription: oidcOptionsDevicePollingIntervalDescription.MarkdownDescription,
 						Optional:            true,
 						Computed:            true,
 
-						Default: int64default.StaticInt64(oidcOptionsDevicePollingIntervalDefault),
+						Default: int32default.StaticInt32(oidcOptionsDevicePollingIntervalDefault),
 
-						Validators: []validator.Int64{
-							int64validator.Between(oidcOptionsDevicePollingIntervalMin, oidcOptionsDevicePollingIntervalMax),
+						Validators: []validator.Int32{
+							int32validator.Between(oidcOptionsDevicePollingIntervalMin, oidcOptionsDevicePollingIntervalMax),
 						},
 					},
 
@@ -984,16 +991,16 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						},
 					},
 
-					"par_timeout": schema.Int64Attribute{
+					"par_timeout": schema.Int32Attribute{
 						Description:         oidcOptionsParTimeoutDescription.Description,
 						MarkdownDescription: oidcOptionsParTimeoutDescription.MarkdownDescription,
 						Optional:            true,
 						Computed:            true,
 
-						Default: int64default.StaticInt64(oidcOptionsParTimeoutDefault),
+						Default: int32default.StaticInt32(oidcOptionsParTimeoutDefault),
 
-						Validators: []validator.Int64{
-							int64validator.Between(oidcOptionsParTimeoutMin, oidcOptionsParTimeoutMax),
+						Validators: []validator.Int32{
+							int32validator.Between(oidcOptionsParTimeoutMin, oidcOptionsParTimeoutMax),
 						},
 					},
 
@@ -1047,39 +1054,39 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						},
 					},
 
-					"refresh_token_duration": schema.Int64Attribute{
+					"refresh_token_duration": schema.Int32Attribute{
 						Description:         oidcOptionsRefreshTokenDurationDescription.Description,
 						MarkdownDescription: oidcOptionsRefreshTokenDurationDescription.MarkdownDescription,
 						Optional:            true,
 						Computed:            true,
 
-						Default: int64default.StaticInt64(oidcOptionsRefreshTokenDurationDefault),
+						Default: int32default.StaticInt32(oidcOptionsRefreshTokenDurationDefault),
 
-						Validators: []validator.Int64{
-							int64validator.Between(oidcOptionsRefreshTokenDurationMin, oidcOptionsRefreshTokenDurationMax),
+						Validators: []validator.Int32{
+							int32validator.Between(oidcOptionsRefreshTokenDurationMin, oidcOptionsRefreshTokenDurationMax),
 						},
 					},
 
-					"refresh_token_rolling_duration": schema.Int64Attribute{
+					"refresh_token_rolling_duration": schema.Int32Attribute{
 						Description:         oidcOptionsRefreshTokenRollingDurationDescription.Description,
 						MarkdownDescription: oidcOptionsRefreshTokenRollingDurationDescription.MarkdownDescription,
 						Optional:            true,
 						Computed:            true,
 
-						Default: int64default.StaticInt64(oidcOptionsRefreshTokenRollingDurationDefault),
+						Default: int32default.StaticInt32(oidcOptionsRefreshTokenRollingDurationDefault),
 
-						Validators: []validator.Int64{
-							int64validator.Between(oidcOptionsRefreshTokenRollingDurationMin, oidcOptionsRefreshTokenRollingDurationMax),
+						Validators: []validator.Int32{
+							int32validator.Between(oidcOptionsRefreshTokenRollingDurationMin, oidcOptionsRefreshTokenRollingDurationMax),
 						},
 					},
 
-					"refresh_token_rolling_grace_period_duration": schema.Int64Attribute{
+					"refresh_token_rolling_grace_period_duration": schema.Int32Attribute{
 						Description:         oidcOptionsRefreshTokenRollingGracePeriodDurationDescription.Description,
 						MarkdownDescription: oidcOptionsRefreshTokenRollingGracePeriodDurationDescription.MarkdownDescription,
 						Optional:            true,
 
-						Validators: []validator.Int64{
-							int64validator.Between(oidcOptionsRefreshTokenRollingGracePeriodDurationMin, oidcOptionsRefreshTokenRollingGracePeriodDurationMax),
+						Validators: []validator.Int32{
+							int32validator.Between(oidcOptionsRefreshTokenRollingGracePeriodDurationMin, oidcOptionsRefreshTokenRollingGracePeriodDurationMax),
 						},
 					},
 
@@ -1206,16 +1213,16 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 								},
 							},
 
-							"passcode_refresh_seconds": schema.Int64Attribute{
+							"passcode_refresh_seconds": schema.Int32Attribute{
 								Description:         oidcOptionsMobileAppPasscodeRefreshSecondsDescription.Description,
 								MarkdownDescription: oidcOptionsMobileAppPasscodeRefreshSecondsDescription.MarkdownDescription,
 								Optional:            true,
 								Computed:            true,
 
-								Default: int64default.StaticInt64(oidcOptionsMobileAppPasscodeRefreshSecondsDefault),
+								Default: int32default.StaticInt32(oidcOptionsMobileAppPasscodeRefreshSecondsDefault),
 
-								Validators: []validator.Int64{
-									int64validator.Between(oidcOptionsMobileAppPasscodeRefreshSecondsMin, oidcOptionsMobileAppPasscodeRefreshSecondsMax),
+								Validators: []validator.Int32{
+									int32validator.Between(oidcOptionsMobileAppPasscodeRefreshSecondsMin, oidcOptionsMobileAppPasscodeRefreshSecondsMax),
 								},
 							},
 
@@ -1265,7 +1272,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 										Optional:            true,
 
 										Attributes: map[string]schema.Attribute{
-											"amount": schema.Int64Attribute{
+											"amount": schema.Int32Attribute{
 												Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of minutes or hours that specify the duration between successful integrity detection calls.").Description,
 												Required:    true,
 											},
@@ -1407,7 +1414,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						ElementType: types.StringType,
 					},
 
-					"assertion_duration": schema.Int64Attribute{
+					"assertion_duration": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the assertion validity duration in seconds.").Description,
 						Required:    true,
 					},
@@ -1447,6 +1454,16 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Default: booldefault.StaticBool(false),
 					},
 
+					"session_not_on_or_after_duration": schema.Int32Attribute{
+						Description:         samlOptionsSessionNotOnOrAfterDurationDescription.Description,
+						MarkdownDescription: samlOptionsSessionNotOnOrAfterDurationDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.Int32{
+							int32validator.AtLeast(samlOptionsSessionNotOnOrAfterDurationMin),
+						},
+					},
+
 					"slo_binding": schema.StringAttribute{
 						Description:         samlOptionsSloBindingDescription.Description,
 						MarkdownDescription: samlOptionsSloBindingDescription.MarkdownDescription,
@@ -1479,13 +1496,13 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						},
 					},
 
-					"slo_window": schema.Int64Attribute{
+					"slo_window": schema.Int32Attribute{
 						Description:         samlOptionsSloWindowDescription.Description,
 						MarkdownDescription: samlOptionsSloWindowDescription.MarkdownDescription,
 						Optional:            true,
 
-						Validators: []validator.Int64{
-							int64validator.Between(samlOptionsSloWindowMin, samlOptionsSloWindowMax),
+						Validators: []validator.Int32{
+							int32validator.Between(samlOptionsSloWindowMin, samlOptionsSloWindowMax),
 						},
 					},
 
@@ -2208,11 +2225,11 @@ func (p *applicationResourceModelV1) expandApplicationOIDC(ctx context.Context) 
 		}
 
 		if !plan.DeviceTimeout.IsNull() && !plan.DeviceTimeout.IsUnknown() {
-			data.SetDeviceTimeout(int32(plan.DeviceTimeout.ValueInt64()))
+			data.SetDeviceTimeout(plan.DeviceTimeout.ValueInt32())
 		}
 
 		if !plan.DevicePollingInterval.IsNull() && !plan.DevicePollingInterval.IsUnknown() {
-			data.SetDevicePollingInterval(int32(plan.DevicePollingInterval.ValueInt64()))
+			data.SetDevicePollingInterval(plan.DevicePollingInterval.ValueInt32())
 		}
 
 		if !plan.InitiateLoginUri.IsNull() && !plan.InitiateLoginUri.IsUnknown() {
@@ -2258,7 +2275,7 @@ func (p *applicationResourceModelV1) expandApplicationOIDC(ctx context.Context) 
 		}
 
 		if !plan.ParTimeout.IsNull() && !plan.ParTimeout.IsUnknown() {
-			data.SetParTimeout(int32(plan.ParTimeout.ValueInt64()))
+			data.SetParTimeout(plan.ParTimeout.ValueInt32())
 		}
 
 		if !plan.PKCEEnforcement.IsNull() && !plan.PKCEEnforcement.IsUnknown() {
@@ -2303,15 +2320,15 @@ func (p *applicationResourceModelV1) expandApplicationOIDC(ctx context.Context) 
 		}
 
 		if !plan.RefreshTokenDuration.IsNull() && !plan.RefreshTokenDuration.IsUnknown() {
-			data.SetRefreshTokenDuration(int32(plan.RefreshTokenDuration.ValueInt64()))
+			data.SetRefreshTokenDuration(plan.RefreshTokenDuration.ValueInt32())
 		}
 
 		if !plan.RefreshTokenRollingDuration.IsNull() && !plan.RefreshTokenRollingDuration.IsUnknown() {
-			data.SetRefreshTokenRollingDuration(int32(plan.RefreshTokenRollingDuration.ValueInt64()))
+			data.SetRefreshTokenRollingDuration(plan.RefreshTokenRollingDuration.ValueInt32())
 		}
 
 		if !plan.RefreshTokenRollingGracePeriodDuration.IsNull() && !plan.RefreshTokenRollingGracePeriodDuration.IsUnknown() {
-			data.SetRefreshTokenRollingGracePeriodDuration(int32(plan.RefreshTokenRollingGracePeriodDuration.ValueInt64()))
+			data.SetRefreshTokenRollingGracePeriodDuration(plan.RefreshTokenRollingGracePeriodDuration.ValueInt32())
 		}
 
 		if !plan.AdditionalRefreshTokenReplayProtectionEnabled.IsNull() && !plan.AdditionalRefreshTokenReplayProtectionEnabled.IsUnknown() {
@@ -2442,7 +2459,7 @@ func (p *applicationOIDCMobileAppResourceModelV1) expand(ctx context.Context) (*
 
 	if !p.PasscodeRefreshSeconds.IsNull() && !p.PasscodeRefreshSeconds.IsUnknown() {
 		data.SetPasscodeRefreshDuration(*management.NewApplicationOIDCAllOfMobilePasscodeRefreshDuration(
-			int32(p.PasscodeRefreshSeconds.ValueInt64()),
+			p.PasscodeRefreshSeconds.ValueInt32(),
 			management.ENUMPASSCODEREFRESHTIMEUNIT_SECONDS,
 		))
 	}
@@ -2551,7 +2568,7 @@ func (p *applicationOIDCMobileAppIntegrityDetectionResourceModelV1) expand(ctx c
 		cacheDuration := management.NewApplicationOIDCAllOfMobileIntegrityDetectionCacheDuration()
 
 		if !cacheDurationPlan.Amount.IsNull() && !cacheDurationPlan.Amount.IsUnknown() {
-			cacheDuration.SetAmount(int32(cacheDurationPlan.Amount.ValueInt64()))
+			cacheDuration.SetAmount(cacheDurationPlan.Amount.ValueInt32())
 		}
 
 		if !cacheDurationPlan.Units.IsNull() && !cacheDurationPlan.Units.IsUnknown() {
@@ -2599,7 +2616,7 @@ func (p *applicationResourceModelV1) expandApplicationSAML(ctx context.Context) 
 			management.ENUMAPPLICATIONPROTOCOL_SAML,
 			management.EnumApplicationType(plan.Type.ValueString()),
 			acsUrls,
-			int32(plan.AssertionDuration.ValueInt64()),
+			plan.AssertionDuration.ValueInt32(),
 			plan.SpEntityId.ValueString(),
 		)
 
@@ -2677,6 +2694,10 @@ func (p *applicationResourceModelV1) expandApplicationSAML(ctx context.Context) 
 			data.SetResponseSigned(plan.ResponseIsSigned.ValueBool())
 		}
 
+		if !plan.SessionNotOnOrAfterDuration.IsNull() && !plan.SessionNotOnOrAfterDuration.IsUnknown() {
+			data.SetSessionNotOnOrAfterDuration(plan.SessionNotOnOrAfterDuration.ValueInt32())
+		}
+
 		if !plan.SloBinding.IsNull() && !plan.SloBinding.IsUnknown() {
 			data.SetSloBinding(management.EnumApplicationSAMLSloBinding(plan.SloBinding.ValueString()))
 		}
@@ -2690,7 +2711,7 @@ func (p *applicationResourceModelV1) expandApplicationSAML(ctx context.Context) 
 		}
 
 		if !plan.SloWindow.IsNull() && !plan.SloWindow.IsUnknown() {
-			data.SetSloWindow(int32(plan.SloWindow.ValueInt64()))
+			data.SetSloWindow(plan.SloWindow.ValueInt32())
 		}
 
 		if !plan.SpEncryption.IsNull() && !plan.SpEncryption.IsUnknown() {

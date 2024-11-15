@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -41,58 +41,58 @@ type passwordPolicyResourceModelV1 struct {
 	Length                        types.Object                 `tfsdk:"length"`
 	Lockout                       types.Object                 `tfsdk:"lockout"`
 	MinCharacters                 types.Object                 `tfsdk:"min_characters"`
-	PasswordAgeMax                types.Int64                  `tfsdk:"password_age_max"`
-	PasswordAgeMin                types.Int64                  `tfsdk:"password_age_min"`
-	MaxRepeatedCharacters         types.Int64                  `tfsdk:"max_repeated_characters"`
-	MinComplexity                 types.Int64                  `tfsdk:"min_complexity"`
-	MinUniqueCharacters           types.Int64                  `tfsdk:"min_unique_characters"`
+	PasswordAgeMax                types.Int32                  `tfsdk:"password_age_max"`
+	PasswordAgeMin                types.Int32                  `tfsdk:"password_age_min"`
+	MaxRepeatedCharacters         types.Int32                  `tfsdk:"max_repeated_characters"`
+	MinComplexity                 types.Int32                  `tfsdk:"min_complexity"`
+	MinUniqueCharacters           types.Int32                  `tfsdk:"min_unique_characters"`
 	NotSimilarToCurrent           types.Bool                   `tfsdk:"not_similar_to_current"`
-	PopulationCount               types.Int64                  `tfsdk:"population_count"`
+	PopulationCount               types.Int32                  `tfsdk:"population_count"`
 }
 
 type passwordPolicyHistoryResourceModelV1 struct {
-	Count         types.Int64 `tfsdk:"count"`
-	RetentionDays types.Int64 `tfsdk:"retention_days"`
+	Count         types.Int32 `tfsdk:"count"`
+	RetentionDays types.Int32 `tfsdk:"retention_days"`
 }
 
 type passwordPolicyLengthResourceModelV1 struct {
-	Max types.Int64 `tfsdk:"max"`
-	Min types.Int64 `tfsdk:"min"`
+	Max types.Int32 `tfsdk:"max"`
+	Min types.Int32 `tfsdk:"min"`
 }
 
 type passwordPolicyLockoutResourceModelV1 struct {
-	DurationSeconds types.Int64 `tfsdk:"duration_seconds"`
-	FailureCount    types.Int64 `tfsdk:"failure_count"`
+	DurationSeconds types.Int32 `tfsdk:"duration_seconds"`
+	FailureCount    types.Int32 `tfsdk:"failure_count"`
 }
 
 type passwordPolicyMinCharactersResourceModelV1 struct {
-	AlphabeticalUppercase types.Int64 `tfsdk:"alphabetical_uppercase"`
-	AlphabeticalLowercase types.Int64 `tfsdk:"alphabetical_lowercase"`
-	Numeric               types.Int64 `tfsdk:"numeric"`
-	SpecialCharacters     types.Int64 `tfsdk:"special_characters"`
+	AlphabeticalUppercase types.Int32 `tfsdk:"alphabetical_uppercase"`
+	AlphabeticalLowercase types.Int32 `tfsdk:"alphabetical_lowercase"`
+	Numeric               types.Int32 `tfsdk:"numeric"`
+	SpecialCharacters     types.Int32 `tfsdk:"special_characters"`
 }
 
 var (
 	passwordPolicyHistoryTFObjectTypes = map[string]attr.Type{
-		"count":          types.Int64Type,
-		"retention_days": types.Int64Type,
+		"count":          types.Int32Type,
+		"retention_days": types.Int32Type,
 	}
 
 	passwordPolicyLengthTFObjectTypes = map[string]attr.Type{
-		"max": types.Int64Type,
-		"min": types.Int64Type,
+		"max": types.Int32Type,
+		"min": types.Int32Type,
 	}
 
 	passwordPolicyLockoutTFObjectTypes = map[string]attr.Type{
-		"duration_seconds": types.Int64Type,
-		"failure_count":    types.Int64Type,
+		"duration_seconds": types.Int32Type,
+		"failure_count":    types.Int32Type,
 	}
 
 	passwordPolicyMinCharactersTFObjectTypes = map[string]attr.Type{
-		"alphabetical_uppercase": types.Int64Type,
-		"alphabetical_lowercase": types.Int64Type,
-		"numeric":                types.Int64Type,
-		"special_characters":     types.Int64Type,
+		"alphabetical_uppercase": types.Int32Type,
+		"alphabetical_lowercase": types.Int32Type,
+		"numeric":                types.Int32Type,
+		"special_characters":     types.Int32Type,
 	}
 )
 
@@ -245,21 +245,21 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 				Optional:    true,
 
 				Attributes: map[string]schema.Attribute{
-					"count": schema.Int64Attribute{
+					"count": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of prior passwords to keep for prevention of password re-use. The value must be a positive, non-zero integer.").Description,
 						Required:    true,
 
-						Validators: []validator.Int64{
-							int64validator.AtLeast(attrMinLength),
+						Validators: []validator.Int32{
+							int32validator.AtLeast(attrMinLength),
 						},
 					},
 
-					"retention_days": schema.Int64Attribute{
+					"retention_days": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the length of time to keep recent passwords for prevention of password re-use. The value must be a positive, non-zero integer.").Description,
 						Required:    true,
 
-						Validators: []validator.Int64{
-							int64validator.AtLeast(attrMinLength),
+						Validators: []validator.Int32{
+							int32validator.AtLeast(attrMinLength),
 						},
 					},
 				},
@@ -270,26 +270,26 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 				Optional:    true,
 
 				Attributes: map[string]schema.Attribute{
-					"max": schema.Int64Attribute{
+					"max": schema.Int32Attribute{
 						Description:         passwordLengthMaxDescription.Description,
 						MarkdownDescription: passwordLengthMaxDescription.MarkdownDescription,
 						Optional:            true,
 						Computed:            true,
 
-						Default: int64default.StaticInt64(passwordLengthMax),
+						Default: int32default.StaticInt32(passwordLengthMax),
 
-						Validators: []validator.Int64{
-							int64validator.Between(passwordLengthMax, passwordLengthMax),
+						Validators: []validator.Int32{
+							int32validator.Between(passwordLengthMax, passwordLengthMax),
 						},
 					},
 
-					"min": schema.Int64Attribute{
+					"min": schema.Int32Attribute{
 						Description:         passwordLengthMinDescription.Description,
 						MarkdownDescription: passwordLengthMinDescription.MarkdownDescription,
 						Required:            true,
 
-						Validators: []validator.Int64{
-							int64validator.Between(passwordLengthMinMin, passwordLengthMinMax),
+						Validators: []validator.Int32{
+							int32validator.Between(passwordLengthMinMin, passwordLengthMinMax),
 						},
 					},
 				},
@@ -300,21 +300,21 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 				Optional:    true,
 
 				Attributes: map[string]schema.Attribute{
-					"duration_seconds": schema.Int64Attribute{
+					"duration_seconds": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the length of time before a password is automatically moved out of the lock out state. The value must be a positive, non-zero integer.").Description,
 						Required:    true,
 
-						Validators: []validator.Int64{
-							int64validator.AtLeast(attrMinLength),
+						Validators: []validator.Int32{
+							int32validator.AtLeast(attrMinLength),
 						},
 					},
 
-					"failure_count": schema.Int64Attribute{
+					"failure_count": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of tries before a password is placed in the lockout state. The value must be a positive, non-zero integer.").Description,
 						Required:    true,
 
-						Validators: []validator.Int64{
-							int64validator.AtLeast(attrMinLength),
+						Validators: []validator.Int32{
+							int32validator.AtLeast(attrMinLength),
 						},
 					},
 				},
@@ -326,106 +326,106 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 				Optional:            true,
 
 				Attributes: map[string]schema.Attribute{
-					"alphabetical_uppercase": schema.Int64Attribute{
+					"alphabetical_uppercase": schema.Int32Attribute{
 						Description:         minCharactersAlphabeticalUppercaseDescription.Description,
 						MarkdownDescription: minCharactersAlphabeticalUppercaseDescription.MarkdownDescription,
 						Optional:            true,
 						Computed:            true,
 
-						Default: int64default.StaticInt64(minCharactersFixedValue),
+						Default: int32default.StaticInt32(minCharactersFixedValue),
 
-						Validators: []validator.Int64{
-							int64validator.Between(minCharactersFixedValue, minCharactersFixedValue),
+						Validators: []validator.Int32{
+							int32validator.Between(minCharactersFixedValue, minCharactersFixedValue),
 						},
 					},
 
-					"alphabetical_lowercase": schema.Int64Attribute{
+					"alphabetical_lowercase": schema.Int32Attribute{
 						Description:         minCharactersAlphabeticalLowercaseDescription.Description,
 						MarkdownDescription: minCharactersAlphabeticalLowercaseDescription.MarkdownDescription,
 						Optional:            true,
 						Computed:            true,
 
-						Default: int64default.StaticInt64(minCharactersFixedValue),
+						Default: int32default.StaticInt32(minCharactersFixedValue),
 
-						Validators: []validator.Int64{
-							int64validator.Between(minCharactersFixedValue, minCharactersFixedValue),
+						Validators: []validator.Int32{
+							int32validator.Between(minCharactersFixedValue, minCharactersFixedValue),
 						},
 					},
 
-					"numeric": schema.Int64Attribute{
+					"numeric": schema.Int32Attribute{
 						Description:         minCharactersNumericDescription.Description,
 						MarkdownDescription: minCharactersNumericDescription.MarkdownDescription,
 						Optional:            true,
 						Computed:            true,
 
-						Default: int64default.StaticInt64(minCharactersFixedValue),
+						Default: int32default.StaticInt32(minCharactersFixedValue),
 
-						Validators: []validator.Int64{
-							int64validator.Between(minCharactersFixedValue, minCharactersFixedValue),
+						Validators: []validator.Int32{
+							int32validator.Between(minCharactersFixedValue, minCharactersFixedValue),
 						},
 					},
 
-					"special_characters": schema.Int64Attribute{
+					"special_characters": schema.Int32Attribute{
 						Description:         minCharactersSpecialCharactersDescription.Description,
 						MarkdownDescription: minCharactersSpecialCharactersDescription.MarkdownDescription,
 						Optional:            true,
 						Computed:            true,
 
-						Default: int64default.StaticInt64(minCharactersFixedValue),
+						Default: int32default.StaticInt32(minCharactersFixedValue),
 
-						Validators: []validator.Int64{
-							int64validator.Between(minCharactersFixedValue, minCharactersFixedValue),
+						Validators: []validator.Int32{
+							int32validator.Between(minCharactersFixedValue, minCharactersFixedValue),
 						},
 					},
 				},
 			},
 
-			"password_age_max": schema.Int64Attribute{
+			"password_age_max": schema.Int32Attribute{
 				Description:         passwordAgeMaxDescription.Description,
 				MarkdownDescription: passwordAgeMaxDescription.MarkdownDescription,
 				Optional:            true,
 
-				Validators: []validator.Int64{
-					int64validator.AtLeast(attrMinLength),
+				Validators: []validator.Int32{
+					int32validator.AtLeast(attrMinLength),
 				},
 			},
 
-			"password_age_min": schema.Int64Attribute{
+			"password_age_min": schema.Int32Attribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the minimum number of days a password must be used before changing. The value must be a positive, non-zero integer. This property is not enforced when not present.").Description,
 				Optional:    true,
 
-				Validators: []validator.Int64{
-					int64validator.AtLeast(attrMinLength),
+				Validators: []validator.Int32{
+					int32validator.AtLeast(attrMinLength),
 				},
 			},
 
-			"max_repeated_characters": schema.Int64Attribute{
+			"max_repeated_characters": schema.Int32Attribute{
 				Description:         maxRepeatedCharactersDescription.Description,
 				MarkdownDescription: maxRepeatedCharactersDescription.MarkdownDescription,
 				Optional:            true,
 
-				Validators: []validator.Int64{
-					int64validator.Between(maxRepeatedCharactersFixedValue, maxRepeatedCharactersFixedValue),
+				Validators: []validator.Int32{
+					int32validator.Between(maxRepeatedCharactersFixedValue, maxRepeatedCharactersFixedValue),
 				},
 			},
 
-			"min_complexity": schema.Int64Attribute{
+			"min_complexity": schema.Int32Attribute{
 				Description:         minComplexityDescription.Description,
 				MarkdownDescription: minComplexityDescription.MarkdownDescription,
 				Optional:            true,
 
-				Validators: []validator.Int64{
-					int64validator.Between(minComplexityFixedValue, minComplexityFixedValue),
+				Validators: []validator.Int32{
+					int32validator.Between(minComplexityFixedValue, minComplexityFixedValue),
 				},
 			},
 
-			"min_unique_characters": schema.Int64Attribute{
+			"min_unique_characters": schema.Int32Attribute{
 				Description:         minUniqueCharactersDescription.Description,
 				MarkdownDescription: minUniqueCharactersDescription.MarkdownDescription,
 				Optional:            true,
 
-				Validators: []validator.Int64{
-					int64validator.Between(minUniqueCharactersFixedValue, minUniqueCharactersFixedValue),
+				Validators: []validator.Int32{
+					int32validator.Between(minUniqueCharactersFixedValue, minUniqueCharactersFixedValue),
 				},
 			},
 
@@ -438,7 +438,7 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 				Default: booldefault.StaticBool(false),
 			},
 
-			"population_count": schema.Int64Attribute{
+			"population_count": schema.Int32Attribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of populations associated with the password policy.").Description,
 				Computed:    true,
 			},
@@ -738,11 +738,11 @@ func (p *passwordPolicyResourceModelV1) expand(ctx context.Context) (*management
 		history := management.NewPasswordPolicyHistory()
 
 		if !plan.Count.IsNull() && !plan.Count.IsUnknown() {
-			history.SetCount(int32(plan.Count.ValueInt64()))
+			history.SetCount(plan.Count.ValueInt32())
 		}
 
 		if !plan.RetentionDays.IsNull() && !plan.RetentionDays.IsUnknown() {
-			history.SetRetentionDays(int32(plan.RetentionDays.ValueInt64()))
+			history.SetRetentionDays(plan.RetentionDays.ValueInt32())
 		}
 
 		data.SetHistory(*history)
@@ -761,11 +761,11 @@ func (p *passwordPolicyResourceModelV1) expand(ctx context.Context) (*management
 		length := management.NewPasswordPolicyLength()
 
 		if !plan.Max.IsNull() && !plan.Max.IsUnknown() {
-			length.SetMax(int32(plan.Max.ValueInt64()))
+			length.SetMax(plan.Max.ValueInt32())
 		}
 
 		if !plan.Min.IsNull() && !plan.Min.IsUnknown() {
-			length.SetMin(int32(plan.Min.ValueInt64()))
+			length.SetMin(plan.Min.ValueInt32())
 		}
 
 		data.SetLength(*length)
@@ -784,11 +784,11 @@ func (p *passwordPolicyResourceModelV1) expand(ctx context.Context) (*management
 		lockout := management.NewPasswordPolicyLockout()
 
 		if !plan.DurationSeconds.IsNull() && !plan.DurationSeconds.IsUnknown() {
-			lockout.SetDurationSeconds(int32(plan.DurationSeconds.ValueInt64()))
+			lockout.SetDurationSeconds(plan.DurationSeconds.ValueInt32())
 		}
 
 		if !plan.FailureCount.IsNull() && !plan.FailureCount.IsUnknown() {
-			lockout.SetFailureCount(int32(plan.FailureCount.ValueInt64()))
+			lockout.SetFailureCount(plan.FailureCount.ValueInt32())
 		}
 
 		data.SetLockout(*lockout)
@@ -807,46 +807,46 @@ func (p *passwordPolicyResourceModelV1) expand(ctx context.Context) (*management
 		minCharacters := management.NewPasswordPolicyMinCharacters()
 
 		if !plan.AlphabeticalUppercase.IsNull() && !plan.AlphabeticalUppercase.IsUnknown() {
-			minCharacters.SetABCDEFGHIJKLMNOPQRSTUVWXYZ(int32(plan.AlphabeticalUppercase.ValueInt64()))
+			minCharacters.SetABCDEFGHIJKLMNOPQRSTUVWXYZ(plan.AlphabeticalUppercase.ValueInt32())
 		}
 
 		if !plan.AlphabeticalLowercase.IsNull() && !plan.AlphabeticalLowercase.IsUnknown() {
-			minCharacters.SetAbcdefghijklmnopqrstuvwxyz(int32(plan.AlphabeticalLowercase.ValueInt64()))
+			minCharacters.SetAbcdefghijklmnopqrstuvwxyz(plan.AlphabeticalLowercase.ValueInt32())
 		}
 
 		if !plan.Numeric.IsNull() && !plan.Numeric.IsUnknown() {
-			minCharacters.SetVar0123456789(int32(plan.Numeric.ValueInt64()))
+			minCharacters.SetVar0123456789(plan.Numeric.ValueInt32())
 		}
 
 		if !plan.SpecialCharacters.IsNull() && !plan.SpecialCharacters.IsUnknown() {
-			minCharacters.SetSpecialChar(int32(plan.SpecialCharacters.ValueInt64()))
+			minCharacters.SetSpecialChar(plan.SpecialCharacters.ValueInt32())
 		}
 
 		data.SetMinCharacters(*minCharacters)
 	}
 
 	if !p.PasswordAgeMax.IsNull() && !p.PasswordAgeMax.IsUnknown() {
-		data.SetMaxAgeDays(int32(p.PasswordAgeMax.ValueInt64()))
+		data.SetMaxAgeDays(p.PasswordAgeMax.ValueInt32())
 	}
 
 	if !p.PasswordAgeMin.IsNull() && !p.PasswordAgeMin.IsUnknown() {
-		data.SetMinAgeDays(int32(p.PasswordAgeMin.ValueInt64()))
+		data.SetMinAgeDays(p.PasswordAgeMin.ValueInt32())
 	}
 
 	if !p.MaxRepeatedCharacters.IsNull() && !p.MaxRepeatedCharacters.IsUnknown() {
-		data.SetMaxRepeatedCharacters(int32(p.MaxRepeatedCharacters.ValueInt64()))
+		data.SetMaxRepeatedCharacters(p.MaxRepeatedCharacters.ValueInt32())
 	}
 
 	if !p.MinComplexity.IsNull() && !p.MinComplexity.IsUnknown() {
-		data.SetMinComplexity(int32(p.MinComplexity.ValueInt64()))
+		data.SetMinComplexity(p.MinComplexity.ValueInt32())
 	}
 
 	if !p.MinUniqueCharacters.IsNull() && !p.MinUniqueCharacters.IsUnknown() {
-		data.SetMinUniqueCharacters(int32(p.MinUniqueCharacters.ValueInt64()))
+		data.SetMinUniqueCharacters(p.MinUniqueCharacters.ValueInt32())
 	}
 
 	if !p.MinUniqueCharacters.IsNull() && !p.MinUniqueCharacters.IsUnknown() {
-		data.SetMinUniqueCharacters(int32(p.MinUniqueCharacters.ValueInt64()))
+		data.SetMinUniqueCharacters(p.MinUniqueCharacters.ValueInt32())
 	}
 
 	return data, diags

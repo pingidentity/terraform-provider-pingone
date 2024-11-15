@@ -1,0 +1,11 @@
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-framework` 1.10.0 => 1.11.0
+```
+
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-testing` 1.9.0 => 1.10.0
+```
+
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-framework-timetypes` 0.4.0 => 0.5.0
+```

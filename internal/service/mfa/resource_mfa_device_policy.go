@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -15,7 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
@@ -57,7 +57,14 @@ type MFADevicePolicyAuthenticationResourceModel struct {
 type MFADevicePolicySmsResourceModel MFADevicePolicyOfflineDeviceResourceModel
 type MFADevicePolicyVoiceResourceModel MFADevicePolicyOfflineDeviceResourceModel
 type MFADevicePolicyEmailResourceModel MFADevicePolicyOfflineDeviceResourceModel
-type MFADevicePolicyTotpResourceModel MFADevicePolicyOfflineDeviceResourceModel
+
+type MFADevicePolicyTotpResourceModel struct {
+	Enabled                    types.Bool   `tfsdk:"enabled"`
+	Otp                        types.Object `tfsdk:"otp"`
+	PairingDisabled            types.Bool   `tfsdk:"pairing_disabled"`
+	PromptForNicknameOnPairing types.Bool   `tfsdk:"prompt_for_nickname_on_pairing"`
+	UriParameters              types.Map    `tfsdk:"uri_parameters"`
+}
 
 type MFADevicePolicyOfflineDeviceResourceModel struct {
 	Enabled                    types.Bool   `tfsdk:"enabled"`
@@ -67,8 +74,9 @@ type MFADevicePolicyOfflineDeviceResourceModel struct {
 }
 
 type MFADevicePolicyOfflineDeviceOtpResourceModel struct {
-	Failure  types.Object `tfsdk:"failure"`
-	Lifetime types.Object `tfsdk:"lifetime"`
+	Failure   types.Object `tfsdk:"failure"`
+	Lifetime  types.Object `tfsdk:"lifetime"`
+	OtpLength types.Int32  `tfsdk:"otp_length"`
 }
 
 type MFADevicePolicyOtpResourceModel struct {
@@ -77,7 +85,7 @@ type MFADevicePolicyOtpResourceModel struct {
 
 type MFADevicePolicyFailureResourceModel struct {
 	CoolDown types.Object `tfsdk:"cool_down"`
-	Count    types.Int64  `tfsdk:"count"`
+	Count    types.Int32  `tfsdk:"count"`
 }
 
 type MFADevicePolicyCooldownResourceModel MFADevicePolicyTimePeriodResourceModel
@@ -85,7 +93,7 @@ type MFADevicePolicyPushTimeoutResourceModel MFADevicePolicyTimePeriodResourceMo
 type MFADevicePolicyLockDurationResourceModel MFADevicePolicyTimePeriodResourceModel
 type MFADevicePolicyPairingKeyLifetimeResourceModel MFADevicePolicyTimePeriodResourceModel
 type MFADevicePolicyTimePeriodResourceModel struct {
-	Duration types.Int64  `tfsdk:"duration"`
+	Duration types.Int32  `tfsdk:"duration"`
 	TimeUnit types.String `tfsdk:"time_unit"`
 }
 
@@ -131,7 +139,7 @@ type MFADevicePolicyEnabledResourceModel struct {
 }
 
 type MFADevicePolicyPushLimitResourceModel struct {
-	Count        types.Int64  `tfsdk:"count"`
+	Count        types.Int32  `tfsdk:"count"`
 	LockDuration types.Object `tfsdk:"lock_duration"`
 	TimePeriod   types.Object `tfsdk:"time_period"`
 }
@@ -149,17 +157,18 @@ var (
 	}
 
 	MFADevicePolicyOfflineDeviceOtpTFObjectTypes = map[string]attr.Type{
-		"failure":  types.ObjectType{AttrTypes: MFADevicePolicyFailureTFObjectTypes},
-		"lifetime": types.ObjectType{AttrTypes: MFADevicePolicyTimePeriodTFObjectTypes},
+		"failure":    types.ObjectType{AttrTypes: MFADevicePolicyFailureTFObjectTypes},
+		"lifetime":   types.ObjectType{AttrTypes: MFADevicePolicyTimePeriodTFObjectTypes},
+		"otp_length": types.Int32Type,
 	}
 
 	MFADevicePolicyFailureTFObjectTypes = map[string]attr.Type{
 		"cool_down": types.ObjectType{AttrTypes: MFADevicePolicyTimePeriodTFObjectTypes},
-		"count":     types.Int64Type,
+		"count":     types.Int32Type,
 	}
 
 	MFADevicePolicyTimePeriodTFObjectTypes = map[string]attr.Type{
-		"duration":  types.Int64Type,
+		"duration":  types.Int32Type,
 		"time_unit": types.StringType,
 	}
 
@@ -200,7 +209,7 @@ var (
 	}
 
 	MFADevicePolicyMobileApplicationPushLimitTFObjectTypes = map[string]attr.Type{
-		"count":         types.Int64Type,
+		"count":         types.Int32Type,
 		"lock_duration": types.ObjectType{AttrTypes: MFADevicePolicyTimePeriodTFObjectTypes},
 		"time_period":   types.ObjectType{AttrTypes: MFADevicePolicyTimePeriodTFObjectTypes},
 	}
@@ -210,7 +219,7 @@ var (
 	}
 
 	MFADevicePolicyMobileOtpFailureTFObjectTypes = map[string]attr.Type{
-		"count":     types.Int64Type,
+		"count":     types.Int32Type,
 		"cool_down": types.ObjectType{AttrTypes: MFADevicePolicyTimePeriodTFObjectTypes},
 	}
 
@@ -219,6 +228,7 @@ var (
 		"otp":                            types.ObjectType{AttrTypes: MFADevicePolicyTotpOtpTFObjectTypes},
 		"pairing_disabled":               types.BoolType,
 		"prompt_for_nickname_on_pairing": types.BoolType,
+		"uri_parameters":                 types.MapType{ElemType: types.StringType},
 	}
 
 	MFADevicePolicyTotpOtpTFObjectTypes = map[string]attr.Type{
@@ -226,7 +236,7 @@ var (
 	}
 
 	MFADevicePolicyTotpOtpFailureTFObjectTypes = map[string]attr.Type{
-		"count":     types.Int64Type,
+		"count":     types.Int32Type,
 		"cool_down": types.ObjectType{AttrTypes: MFADevicePolicyTimePeriodTFObjectTypes},
 	}
 
@@ -346,6 +356,10 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 	totpPairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, prevents users from pairing new devices with the TOTP method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.",
 	).DefaultValue(false)
+
+	totpUriParametersDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A map of string key:value pairs that specifies `otpauth` URI parameters. For example, if you provide a value for the `issuer` parameter, then authenticators that support that parameter will display the text you specify together with the OTP (in addition to the username). This can help users recognize which application the OTP is for. If you intend on using the same MFA policy for multiple applications, choose a name that reflects the group of applications.",
+	)
 
 	fido2PairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, prevents users from pairing new devices with the FIDO2 method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.",
@@ -516,7 +530,7 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 									Optional:    true,
 
 									Attributes: map[string]schema.Attribute{
-										"duration": schema.Int64Attribute{
+										"duration": schema.Int32Attribute{
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the amount of time an issued pairing key can be used until it expires. Minimum is 1 minute and maximum is 48 hours. If this parameter is not provided, the duration is set to 10 minutes.").Description,
 											Required:    true,
 										},
@@ -553,18 +567,18 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 									Default: objectdefault.StaticValue(types.ObjectValueMust(
 										MFADevicePolicyMobileApplicationPushLimitTFObjectTypes,
 										map[string]attr.Value{
-											"count": types.Int64Value(mobileApplicationsPushLimitCountDefault),
+											"count": types.Int32Value(mobileApplicationsPushLimitCountDefault),
 											"lock_duration": types.ObjectValueMust(
 												MFADevicePolicyTimePeriodTFObjectTypes,
 												map[string]attr.Value{
-													"duration":  types.Int64Value(mobileApplicationsPushLimitLockDurationDurationDefault),
+													"duration":  types.Int32Value(mobileApplicationsPushLimitLockDurationDurationDefault),
 													"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
 												},
 											),
 											"time_period": types.ObjectValueMust(
 												MFADevicePolicyTimePeriodTFObjectTypes,
 												map[string]attr.Value{
-													"duration":  types.Int64Value(mobileApplicationsPushLimitTimePeriodDurationDefault),
+													"duration":  types.Int32Value(mobileApplicationsPushLimitTimePeriodDurationDefault),
 													"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
 												},
 											),
@@ -572,15 +586,15 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 									)),
 
 									Attributes: map[string]schema.Attribute{
-										"count": schema.Int64Attribute{
+										"count": schema.Int32Attribute{
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of consecutive push notifications that can be ignored or rejected by a user within a defined period before push notifications are blocked for the application. The minimum value is `1` and the maximum value is `50`. If this parameter is not provided, the default value is `5`.").Description,
 											Optional:    true,
 											Computed:    true,
 
-											Default: int64default.StaticInt64(mobileApplicationsPushLimitCountDefault),
+											Default: int32default.StaticInt32(mobileApplicationsPushLimitCountDefault),
 
-											Validators: []validator.Int64{
-												int64validator.Between(mobileApplicationsPushLimitCountMin, mobileApplicationsPushLimitCountMax),
+											Validators: []validator.Int32{
+												int32validator.Between(mobileApplicationsPushLimitCountMin, mobileApplicationsPushLimitCountMax),
 											},
 										},
 
@@ -589,7 +603,7 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 											Optional:    true,
 
 											Attributes: map[string]schema.Attribute{
-												"duration": schema.Int64Attribute{
+												"duration": schema.Int32Attribute{
 													Description:         mobileApplicationsPushLimitLockDurationDurationDescription.Description,
 													MarkdownDescription: mobileApplicationsPushLimitLockDurationDurationDescription.MarkdownDescription,
 													Required:            true,
@@ -612,7 +626,7 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 											Optional:    true,
 
 											Attributes: map[string]schema.Attribute{
-												"duration": schema.Int64Attribute{
+												"duration": schema.Int32Attribute{
 													Description:         mobileApplicationsPushLimitTimePeriodDurationDescription.Description,
 													MarkdownDescription: mobileApplicationsPushLimitTimePeriodDurationDescription.MarkdownDescription,
 													Required:            true,
@@ -637,7 +651,7 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 									Optional:    true,
 
 									Attributes: map[string]schema.Attribute{
-										"duration": schema.Int64Attribute{
+										"duration": schema.Int32Attribute{
 											Description:         mobileApplicationsPushTimeoutDurationDescription.Description,
 											MarkdownDescription: mobileApplicationsPushTimeoutDurationDescription.MarkdownDescription,
 											Required:            true,
@@ -672,11 +686,11 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 								"failure": types.ObjectValueMust(
 									MFADevicePolicyMobileOtpFailureTFObjectTypes,
 									map[string]attr.Value{
-										"count": types.Int64Value(mobileOtpFailureCountDefault),
+										"count": types.Int32Value(mobileOtpFailureCountDefault),
 										"cool_down": types.ObjectValueMust(
 											MFADevicePolicyTimePeriodTFObjectTypes,
 											map[string]attr.Value{
-												"duration":  types.Int64Value(mobileApplicationsOtpFailureCoolDownDurationDefault),
+												"duration":  types.Int32Value(mobileApplicationsOtpFailureCoolDownDurationDefault),
 												"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
 											},
 										),
@@ -691,16 +705,16 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 								Required:    true,
 
 								Attributes: map[string]schema.Attribute{
-									"count": schema.Int64Attribute{
+									"count": schema.Int32Attribute{
 										Description:         mobileOtpFailureCountDescription.Description,
 										MarkdownDescription: mobileOtpFailureCountDescription.MarkdownDescription,
 										Optional:            true,
 										Computed:            true,
 
-										Default: int64default.StaticInt64(mobileOtpFailureCountDefault),
+										Default: int32default.StaticInt32(mobileOtpFailureCountDefault),
 
-										Validators: []validator.Int64{
-											int64validator.Between(mobileOtpFailureCountMin, mobileOtpFailureCountMax),
+										Validators: []validator.Int32{
+											int32validator.Between(mobileOtpFailureCountMin, mobileOtpFailureCountMax),
 										},
 									},
 
@@ -709,7 +723,7 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 										Required:    true,
 
 										Attributes: map[string]schema.Attribute{
-											"duration": schema.Int64Attribute{
+											"duration": schema.Int32Attribute{
 												Description:         mobileOtpFailureCoolDownDurationDescription.Description,
 												MarkdownDescription: mobileOtpFailureCoolDownDurationDescription.MarkdownDescription,
 												Required:            true,
@@ -769,11 +783,11 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 								"failure": types.ObjectValueMust(
 									MFADevicePolicyTotpOtpFailureTFObjectTypes,
 									map[string]attr.Value{
-										"count": types.Int64Value(totpOtpFailureCountDefault),
+										"count": types.Int32Value(totpOtpFailureCountDefault),
 										"cool_down": types.ObjectValueMust(
 											MFADevicePolicyTimePeriodTFObjectTypes,
 											map[string]attr.Value{
-												"duration":  types.Int64Value(totpOtpFailureCoolDownDurationDefault),
+												"duration":  types.Int32Value(totpOtpFailureCoolDownDurationDefault),
 												"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
 											},
 										),
@@ -793,7 +807,7 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 										Optional:    true,
 
 										Attributes: map[string]schema.Attribute{
-											"duration": schema.Int64Attribute{
+											"duration": schema.Int32Attribute{
 												Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.").Description,
 												Required:    true,
 											},
@@ -810,7 +824,7 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 										},
 									},
 
-									"count": schema.Int64Attribute{
+									"count": schema.Int32Attribute{
 										Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.").Description,
 										Required:    true,
 									},
@@ -823,6 +837,14 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 						Description:         promptForNicknameOnPairingDescription.Description,
 						MarkdownDescription: promptForNicknameOnPairingDescription.MarkdownDescription,
 						Optional:            true,
+					},
+
+					"uri_parameters": schema.MapAttribute{
+						Description:         totpUriParametersDescription.Description,
+						MarkdownDescription: totpUriParametersDescription.MarkdownDescription,
+						Optional:            true,
+
+						ElementType: types.StringType,
 					},
 				},
 			},
@@ -869,6 +891,10 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 	const otpFailureCountDefault = 3
 	const otpFailureCoolDownDurationDefault = 0
 	const otpLifetimeDurationDefault = 30
+	const otpOtpLengthDefault = 6
+
+	const otpOtpLengthMin = 6
+	const otpOtpLengthMax = 10
 
 	pairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A boolean that, when set to `true`, prevents users from pairing new devices with the %s method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.", descriptionMethod),
@@ -877,6 +903,10 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 	otpCoolDownDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of time unit for `duration`.",
 	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitEnumValues)
+
+	otpOtpLengthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that specifies the length of the OTP that is shown to users.  Minimum length is `%d` digits and maximum is `%d` digits.", otpOtpLengthMin, otpOtpLengthMax),
+	).DefaultValue(otpOtpLengthDefault)
 
 	promptForNicknameOnPairingDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.",
@@ -912,11 +942,11 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 						"failure": types.ObjectValueMust(
 							MFADevicePolicyFailureTFObjectTypes,
 							map[string]attr.Value{
-								"count": types.Int64Value(otpFailureCountDefault),
+								"count": types.Int32Value(otpFailureCountDefault),
 								"cool_down": types.ObjectValueMust(
 									MFADevicePolicyTimePeriodTFObjectTypes,
 									map[string]attr.Value{
-										"duration":  types.Int64Value(otpFailureCoolDownDurationDefault),
+										"duration":  types.Int32Value(otpFailureCoolDownDurationDefault),
 										"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
 									},
 								),
@@ -925,10 +955,11 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 						"lifetime": types.ObjectValueMust(
 							MFADevicePolicyTimePeriodTFObjectTypes,
 							map[string]attr.Value{
-								"duration":  types.Int64Value(otpLifetimeDurationDefault),
+								"duration":  types.Int32Value(otpLifetimeDurationDefault),
 								"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
 							},
 						),
+						"otp_length": types.Int32Value(otpOtpLengthDefault),
 					},
 				)),
 
@@ -943,7 +974,7 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 								Required:    true,
 
 								Attributes: map[string]schema.Attribute{
-									"duration": schema.Int64Attribute{
+									"duration": schema.Int32Attribute{
 										Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.").Description,
 										Required:    true,
 									},
@@ -960,7 +991,7 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 								},
 							},
 
-							"count": schema.Int64Attribute{
+							"count": schema.Int32Attribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.").Description,
 								Required:    true,
 							},
@@ -972,7 +1003,7 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 						Optional:    true,
 
 						Attributes: map[string]schema.Attribute{
-							"duration": schema.Int64Attribute{
+							"duration": schema.Int32Attribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the duration (number of time units) that the passcode is valid before it expires.").Description,
 								Required:    true,
 							},
@@ -986,6 +1017,19 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 									stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitEnumValues)...),
 								},
 							},
+						},
+					},
+
+					"otp_length": schema.Int32Attribute{
+						Description:         otpOtpLengthDescription.Description,
+						MarkdownDescription: otpOtpLengthDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: int32default.StaticInt32(otpOtpLengthDefault),
+
+						Validators: []validator.Int32{
+							int32validator.Between(otpOtpLengthMin, otpOtpLengthMax),
 						},
 					},
 				},
@@ -1474,7 +1518,7 @@ func (p *MFADevicePolicyOfflineDeviceOtpResourceModel) expand(ctx context.Contex
 	}
 
 	lifetime := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpLifeTime(
-		int32(lifetimePlan.Duration.ValueInt64()),
+		lifetimePlan.Duration.ValueInt32(),
 		mfa.EnumTimeUnit(lifetimePlan.TimeUnit.ValueString()),
 	)
 
@@ -1499,9 +1543,9 @@ func (p *MFADevicePolicyOfflineDeviceOtpResourceModel) expand(ctx context.Contex
 	}
 
 	failure := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure(
-		int32(failurePlan.Count.ValueInt64()),
+		failurePlan.Count.ValueInt32(),
 		*mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown(
-			int32(failureCooldownPlan.Duration.ValueInt64()),
+			failureCooldownPlan.Duration.ValueInt32(),
 			mfa.EnumTimeUnit(failureCooldownPlan.TimeUnit.ValueString()),
 		),
 	)
@@ -1510,6 +1554,10 @@ func (p *MFADevicePolicyOfflineDeviceOtpResourceModel) expand(ctx context.Contex
 		*lifetime,
 		*failure,
 	)
+
+	if !p.OtpLength.IsNull() && !p.OtpLength.IsUnknown() {
+		data.SetOtpLength(p.OtpLength.ValueInt32())
+	}
 
 	return data, diags
 }
@@ -1599,9 +1647,9 @@ func (p *MFADevicePolicyFailureResourceModel) expand(ctx context.Context) (*mfa.
 	}
 
 	data := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure(
-		int32(p.Count.ValueInt64()),
+		p.Count.ValueInt32(),
 		*mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown(
-			int32(cooldownPlan.Duration.ValueInt64()),
+			cooldownPlan.Duration.ValueInt32(),
 			mfa.EnumTimeUnit(cooldownPlan.TimeUnit.ValueString()),
 		),
 	)
@@ -1719,7 +1767,7 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 
 		data.SetPairingKeyLifetime(
 			*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPairingKeyLifetime(
-				int32(plan.Duration.ValueInt64()),
+				plan.Duration.ValueInt32(),
 				mfa.EnumTimeUnitPairingKeyLifetime(plan.TimeUnit.ValueString()),
 			),
 		)
@@ -1776,7 +1824,7 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 
 		data.SetPushTimeout(
 			*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushTimeout(
-				int32(plan.Duration.ValueInt64()),
+				plan.Duration.ValueInt32(),
 				mfa.EnumTimeUnitPushTimeout(plan.TimeUnit.ValueString()),
 			),
 		)
@@ -1791,7 +1839,7 @@ func (p *MFADevicePolicyPushLimitResourceModel) expand(ctx context.Context) (*mf
 	data := mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushLimit()
 
 	if !p.Count.IsNull() && !p.Count.IsUnknown() {
-		data.SetCount(int32(p.Count.ValueInt64()))
+		data.SetCount(p.Count.ValueInt32())
 	}
 
 	if !p.LockDuration.IsNull() && !p.LockDuration.IsUnknown() {
@@ -1806,7 +1854,7 @@ func (p *MFADevicePolicyPushLimitResourceModel) expand(ctx context.Context) (*mf
 
 		data.SetLockDuration(
 			*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushLimitLockDuration(
-				int32(plan.Duration.ValueInt64()),
+				plan.Duration.ValueInt32(),
 				mfa.EnumTimeUnit(plan.TimeUnit.ValueString()),
 			),
 		)
@@ -1824,7 +1872,7 @@ func (p *MFADevicePolicyPushLimitResourceModel) expand(ctx context.Context) (*mf
 
 		data.SetTimePeriod(
 			*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushLimitTimePeriod(
-				int32(plan.Duration.ValueInt64()),
+				plan.Duration.ValueInt32(),
 				mfa.EnumTimeUnit(plan.TimeUnit.ValueString()),
 			),
 		)
@@ -1876,8 +1924,20 @@ func (p *MFADevicePolicyTotpResourceModel) expand(ctx context.Context) (*mfa.Dev
 		data.SetPairingDisabled(p.PairingDisabled.ValueBool())
 	}
 
+	// Prompt for Nickname on Pairing
 	if !p.PromptForNicknameOnPairing.IsNull() && !p.PromptForNicknameOnPairing.IsUnknown() {
 		data.SetPromptForNicknameOnPairing(p.PromptForNicknameOnPairing.ValueBool())
+	}
+
+	// Uri Parameters
+	if !p.UriParameters.IsNull() && !p.UriParameters.IsUnknown() {
+		var uriParametersPlan map[string]string
+		diags.Append(p.UriParameters.ElementsAs(ctx, &uriParametersPlan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetUriParameters(uriParametersPlan)
 	}
 
 	return data, diags
@@ -2026,8 +2086,9 @@ func toStateMfaDevicePolicyOfflineDeviceOtp(apiObject *mfa.DeviceAuthenticationP
 	}
 
 	o := map[string]attr.Value{
-		"failure":  failure,
-		"lifetime": lifetime,
+		"failure":    failure,
+		"lifetime":   lifetime,
+		"otp_length": framework.Int32OkToTF(apiObject.GetOtpLengthOk()),
 	}
 
 	objValue, d := types.ObjectValue(MFADevicePolicyOfflineDeviceOtpTFObjectTypes, o)
@@ -2473,6 +2534,7 @@ func toStateMfaDevicePolicyTotp(apiObject *mfa.DeviceAuthenticationPolicyTotp, o
 		"otp":                            otp,
 		"pairing_disabled":               framework.BoolOkToTF(apiObject.GetPairingDisabledOk()),
 		"prompt_for_nickname_on_pairing": framework.BoolOkToTF(apiObject.GetPromptForNicknameOnPairingOk()),
+		"uri_parameters":                 framework.StringMapOkToTF(apiObject.GetUriParametersOk()),
 	}
 
 	objValue, d := types.ObjectValue(MFADevicePolicyTotpTFObjectTypes, o)

@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
@@ -39,7 +39,7 @@ type ResourceResourceModel struct {
 	Description                    types.String                 `tfsdk:"description"`
 	Type                           types.String                 `tfsdk:"type"`
 	Audience                       types.String                 `tfsdk:"audience"`
-	AccessTokenValiditySeconds     types.Int64                  `tfsdk:"access_token_validity_seconds"`
+	AccessTokenValiditySeconds     types.Int32                  `tfsdk:"access_token_validity_seconds"`
 	ApplicationPermissionsSettings types.Object                 `tfsdk:"application_permissions_settings"`
 	IntrospectEndpointAuthMethod   types.String                 `tfsdk:"introspect_endpoint_auth_method"`
 }
@@ -153,16 +153,16 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 				},
 			},
 
-			"access_token_validity_seconds": schema.Int64Attribute{
+			"access_token_validity_seconds": schema.Int32Attribute{
 				Description:         accessTokenValiditySecondsDescription.Description,
 				MarkdownDescription: accessTokenValiditySecondsDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
 
-				Default: int64default.StaticInt64(accessTokenValiditySecondsDefault),
+				Default: int32default.StaticInt32(accessTokenValiditySecondsDefault),
 
-				Validators: []validator.Int64{
-					int64validator.Between(accessTokenValiditySecondsMin, accessTokenValiditySecondsMax),
+				Validators: []validator.Int32{
+					int32validator.Between(accessTokenValiditySecondsMin, accessTokenValiditySecondsMax),
 				},
 			},
 
@@ -479,7 +479,7 @@ func (p *ResourceResourceModel) expand(ctx context.Context) (*management.Resourc
 	}
 
 	if !p.AccessTokenValiditySeconds.IsNull() && !p.AccessTokenValiditySeconds.IsUnknown() {
-		data.SetAccessTokenValiditySeconds(int32(p.AccessTokenValiditySeconds.ValueInt64()))
+		data.SetAccessTokenValiditySeconds(p.AccessTokenValiditySeconds.ValueInt32())
 	}
 
 	if !p.IntrospectEndpointAuthMethod.IsNull() && !p.IntrospectEndpointAuthMethod.IsUnknown() {

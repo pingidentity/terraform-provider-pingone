@@ -14,7 +14,6 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
-	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 // Types
@@ -122,19 +121,15 @@ func (r *LicensesDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	var filterFunction sdk.SDKInterfaceFunc
+	var filterFunction management.ApiReadAllLicensesRequest
 
 	if !data.ScimFilter.IsNull() {
 
-		filterFunction = func() (any, *http.Response, error) {
-			return r.Client.ManagementAPIClient.LicensesApi.ReadAllLicenses(ctx, data.OrganizationId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute()
-		}
+		filterFunction = r.Client.ManagementAPIClient.LicensesApi.ReadAllLicenses(ctx, data.OrganizationId.ValueString()).Filter(data.ScimFilter.ValueString())
 
 	} else if !data.DataFilters.IsNull() {
 
-		filterFunction = func() (any, *http.Response, error) {
-			return r.Client.ManagementAPIClient.LicensesApi.ReadAllLicenses(ctx, data.OrganizationId.ValueString()).Execute()
-		}
+		filterFunction = r.Client.ManagementAPIClient.LicensesApi.ReadAllLicenses(ctx, data.OrganizationId.ValueString())
 
 	} else {
 		resp.Diagnostics.AddError(
@@ -144,21 +139,41 @@ func (r *LicensesDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	var entityArray *management.EntityArray
+	var licenses []management.License
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		filterFunction,
+		func() (any, *http.Response, error) {
+			pagedIterator := filterFunction.Execute()
+
+			licenses := make([]management.License, 0)
+
+			var initialHttpResponse *http.Response
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return nil, pageCursor.HTTPResponse, err
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				licenses = append(licenses, pageCursor.EntityArray.Embedded.GetLicenses()...)
+
+			}
+
+			return licenses, initialHttpResponse, nil
+		},
 		"ReadAllLicenses",
 		framework.DefaultCustomError,
 		nil,
-		&entityArray,
+		&licenses,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	licenses := entityArray.Embedded.GetLicenses()
 	if !data.DataFilters.IsNull() {
 		var dataFilterPlan []framework.DataFilterModel
 		resp.Diagnostics.Append(data.DataFilters.ElementsAs(ctx, &dataFilterPlan, false)...)
@@ -167,7 +182,7 @@ func (r *LicensesDataSource) Read(ctx context.Context, req datasource.ReadReques
 		}
 
 		var d diag.Diagnostics
-		licenses, d = filterResults(ctx, dataFilterPlan, entityArray.Embedded.GetLicenses())
+		licenses, d = filterResults(ctx, dataFilterPlan, licenses)
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return

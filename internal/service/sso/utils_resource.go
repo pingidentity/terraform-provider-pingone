@@ -138,24 +138,43 @@ func fetchResources(ctx context.Context, apiClient *management.APIClient, enviro
 	}
 
 	// Run the API call
-	var entityArray *management.EntityArray
+	var resources []management.EntityArrayEmbeddedResourcesInner
 	diags.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.ResourcesApi.ReadAllResources(ctx, environmentId).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, fO, fR, fErr)
+			pagedIterator := apiClient.ResourcesApi.ReadAllResources(ctx, environmentId).Execute()
+
+			var initialHttpResponse *http.Response
+
+			foundResources := make([]management.EntityArrayEmbeddedResourcesInner, 0)
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if pageCursor.EntityArray.Embedded != nil && pageCursor.EntityArray.Embedded.Resources != nil {
+					foundResources = append(foundResources, pageCursor.EntityArray.Embedded.GetResources()...)
+				}
+			}
+
+			return foundResources, initialHttpResponse, nil
 		},
 		"ReadAllResources",
 		errorFunction,
 		sdk.DefaultCreateReadRetryable,
-		&entityArray,
+		&resources,
 	)...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
-	if entityArray == nil {
+	if resources == nil {
 		if warnIfNotFound {
 			diags.AddWarning(
 				"Environment cannot be found",
@@ -170,9 +189,5 @@ func fetchResources(ctx context.Context, apiClient *management.APIClient, enviro
 		return nil, diags
 	}
 
-	if resources, ok := entityArray.Embedded.GetResourcesOk(); ok {
-		return resources, diags
-	}
-
-	return nil, diags
+	return resources, diags
 }

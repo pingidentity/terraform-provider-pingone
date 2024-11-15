@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
@@ -35,7 +35,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/risk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
-	int64validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int64validator"
+	int32validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int32validator"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -70,25 +70,25 @@ type riskPolicyResourcePolicyModel struct {
 }
 
 type riskPolicyResourcePolicyThresholdScoreBetweenModel struct {
-	MinScore types.Int64 `tfsdk:"min_score"`
-	MaxScore types.Int64 `tfsdk:"max_score"`
+	MinScore types.Int32 `tfsdk:"min_score"`
+	MaxScore types.Int32 `tfsdk:"max_score"`
 }
 
 type riskPolicyResourcePolicyWeightsPredictorModel struct {
 	CompactName             types.String `tfsdk:"compact_name"`
 	PredictorReferenceValue types.String `tfsdk:"predictor_reference_value"`
-	Weight                  types.Int64  `tfsdk:"weight"`
+	Weight                  types.Int32  `tfsdk:"weight"`
 }
 
 type riskPolicyResourcePolicyScoresPredictorModel struct {
 	CompactName             types.String `tfsdk:"compact_name"`
 	PredictorReferenceValue types.String `tfsdk:"predictor_reference_value"`
-	Score                   types.Int64  `tfsdk:"score"`
+	Score                   types.Int32  `tfsdk:"score"`
 }
 
 type riskPolicyResourcePolicyOverrideModel struct {
 	Name      types.String `tfsdk:"name"`
-	Priority  types.Int64  `tfsdk:"priority"`
+	Priority  types.Int32  `tfsdk:"priority"`
 	Result    types.Object `tfsdk:"result"`
 	Condition types.Object `tfsdk:"condition"`
 }
@@ -110,8 +110,8 @@ type riskPolicyResourcePolicyOverrideConditionModel struct {
 
 var (
 	policyThresholdsTFObjectTypes = map[string]attr.Type{
-		"min_score": types.Int64Type,
-		"max_score": types.Int64Type,
+		"min_score": types.Int32Type,
+		"max_score": types.Int32Type,
 	}
 
 	// Weights
@@ -130,7 +130,7 @@ var (
 	policyWeightsPredictorTFObjectTypes = map[string]attr.Type{
 		"compact_name":              types.StringType,
 		"predictor_reference_value": types.StringType,
-		"weight":                    types.Int64Type,
+		"weight":                    types.Int32Type,
 	}
 
 	// Scores
@@ -149,12 +149,12 @@ var (
 	policyScoresPredictorTFObjectTypes = map[string]attr.Type{
 		"compact_name":              types.StringType,
 		"predictor_reference_value": types.StringType,
-		"score":                     types.Int64Type,
+		"score":                     types.Int32Type,
 	}
 
 	overridesTFObjectTypes = map[string]attr.Type{
 		"name":     types.StringType,
-		"priority": types.Int64Type,
+		"priority": types.Int32Type,
 		"result": types.ObjectType{
 			AttrTypes: overridesResultTFObjectTypes,
 		},
@@ -368,8 +368,8 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 						framework.SchemaAttributeDescriptionFromMarkdown(
 							"An object that specifies the lower and upper bound threshold score values that define the medium risk outcome as a result of the policy evaluation.",
 						),
-						[]validator.Int64{
-							int64validatorinternal.IsLessThanPathValue(
+						[]validator.Int32{
+							int32validatorinternal.IsLessThanPathValue(
 								path.MatchRoot("policy_weights").AtName("policy_threshold_high").AtName("min_score"),
 							),
 						},
@@ -380,8 +380,8 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 						framework.SchemaAttributeDescriptionFromMarkdown(
 							"An object that specifies the lower and upper bound threshold score values that define the high risk outcome as a result of the policy evaluation.",
 						),
-						[]validator.Int64{
-							int64validatorinternal.IsGreaterThanPathValue(
+						[]validator.Int32{
+							int32validatorinternal.IsGreaterThanPathValue(
 								path.MatchRoot("policy_weights").AtName("policy_threshold_medium").AtName("min_score"),
 							),
 						},
@@ -405,13 +405,13 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 									Computed:    true,
 								},
 
-								"weight": schema.Int64Attribute{
+								"weight": schema.Int32Attribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the weight to apply to the predictor when calculating the overall risk score.").Description,
 									Required:    true,
 
-									Validators: []validator.Int64{
-										int64validator.AtLeast(weightMinimumDefault),
-										int64validator.AtMost(weightMaximumDefault),
+									Validators: []validator.Int32{
+										int32validator.AtLeast(weightMinimumDefault),
+										int32validator.AtMost(weightMaximumDefault),
 									},
 								},
 							},
@@ -442,8 +442,8 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 						framework.SchemaAttributeDescriptionFromMarkdown(
 							"An object that specifies the lower and upper bound threshold values that define the medium risk outcome as a result of the policy evaluation.",
 						),
-						[]validator.Int64{
-							int64validatorinternal.IsLessThanPathValue(
+						[]validator.Int32{
+							int32validatorinternal.IsLessThanPathValue(
 								path.MatchRoot("policy_scores").AtName("policy_threshold_high").AtName("min_score"),
 							),
 						},
@@ -454,8 +454,8 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 						framework.SchemaAttributeDescriptionFromMarkdown(
 							"An object that specifies the lower and upper bound threshold values that define the high risk outcome as a result of the policy evaluation.",
 						),
-						[]validator.Int64{
-							int64validatorinternal.IsGreaterThanPathValue(
+						[]validator.Int32{
+							int32validatorinternal.IsGreaterThanPathValue(
 								path.MatchRoot("policy_scores").AtName("policy_threshold_medium").AtName("min_score"),
 							),
 						},
@@ -479,13 +479,13 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 									Computed:    true,
 								},
 
-								"score": schema.Int64Attribute{
+								"score": schema.Int32Attribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the score to apply to the High risk / true outcome of the predictor, to apply to the overall risk calculation.").Description,
 									Required:    true,
 
-									Validators: []validator.Int64{
-										int64validator.AtLeast(scoreMinimumDefault),
-										int64validator.AtMost(scoreMaximumDefault),
+									Validators: []validator.Int32{
+										int32validator.AtLeast(scoreMinimumDefault),
+										int32validator.AtMost(scoreMaximumDefault),
 									},
 								},
 							},
@@ -519,7 +519,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 							Computed:    true,
 						},
 
-						"priority": schema.Int64Attribute{
+						"priority": schema.Int32Attribute{
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that indicates the order in which the override is applied during risk policy evaluation.  The lower the value, the higher the priority.  The priority is determined by the order in which the overrides are defined in HCL.").Description,
 							Computed:    true,
 						},
@@ -649,9 +649,9 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 	}
 }
 
-func riskPolicyThresholdSchema(useScores bool, policyThresholdsDescription framework.SchemaAttributeDescription, validators []validator.Int64) schema.SingleNestedAttribute {
+func riskPolicyThresholdSchema(useScores bool, policyThresholdsDescription framework.SchemaAttributeDescription, validators []validator.Int32) schema.SingleNestedAttribute {
 
-	validators = append(validators, int64validator.AtLeast(1))
+	validators = append(validators, int32validator.AtLeast(1))
 
 	policyThresholdScoresMediumScoreDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that specifies the minimum score to use as the lower bound value of the policy threshold.",
@@ -664,13 +664,13 @@ func riskPolicyThresholdSchema(useScores bool, policyThresholdsDescription frame
 	if !useScores {
 		maxAllowedValue := 100
 		denominator := 10
-		validators = append(validators, int64validator.AtMost(int64(maxAllowedValue)))
-		validators = append(validators, int64validatorinternal.IsDivisibleBy(int64(denominator)))
+		validators = append(validators, int32validator.AtMost(int32(maxAllowedValue)))
+		validators = append(validators, int32validatorinternal.IsDivisibleBy(int32(denominator)))
 
 		policyThresholdScoresMediumScoreDescription = policyThresholdScoresMediumScoreDescription.AppendMarkdownString(fmt.Sprintf("For weights policies, the score values should be 10x the desired risk value in the console. For example, a risk score of `5` in the console should be entered as `50`.  The provided score must be exactly divisible by 10.  Maximum value allowed is `%d`", maxAllowedValue))
 	} else {
 		maxAllowedValue := 1000
-		validators = append(validators, int64validator.AtMost(int64(maxAllowedValue)))
+		validators = append(validators, int32validator.AtMost(int32(maxAllowedValue)))
 		policyThresholdScoresMediumScoreDescription = policyThresholdScoresMediumScoreDescription.AppendMarkdownString(fmt.Sprintf("Maximum value allowed is `%d`", maxAllowedValue))
 	}
 
@@ -680,7 +680,7 @@ func riskPolicyThresholdSchema(useScores bool, policyThresholdsDescription frame
 		Required:            true,
 
 		Attributes: map[string]schema.Attribute{
-			"min_score": schema.Int64Attribute{
+			"min_score": schema.Int32Attribute{
 				Description:         policyThresholdScoresMediumScoreDescription.Description,
 				MarkdownDescription: policyThresholdScoresMediumScoreDescription.MarkdownDescription,
 				Required:            true,
@@ -688,7 +688,7 @@ func riskPolicyThresholdSchema(useScores bool, policyThresholdsDescription frame
 				Validators: validators,
 			},
 
-			"max_score": schema.Int64Attribute{
+			"max_score": schema.Int32Attribute{
 				Description:         policyThresholdScoresHighScoreDescription.Description,
 				MarkdownDescription: policyThresholdScoresHighScoreDescription.MarkdownDescription,
 				Computed:            true,
@@ -837,14 +837,14 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 	}
 
 	// Set the min-max threshold scores/weights
-	var policyThresholdHighMinValue *int64
+	var policyThresholdHighMinValue *int32
 	resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root(rootPath).AtName("policy_threshold_high").AtName("min_score"), &policyThresholdHighMinValue)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	resp.Plan.SetAttribute(ctx, path.Root(rootPath).AtName("policy_threshold_medium").AtName("max_score"), types.Int64Value(*policyThresholdHighMinValue))
-	resp.Plan.SetAttribute(ctx, path.Root(rootPath).AtName("policy_threshold_high").AtName("max_score"), types.Int64Value(int64(maxScore)))
+	resp.Plan.SetAttribute(ctx, path.Root(rootPath).AtName("policy_threshold_medium").AtName("max_score"), types.Int32Value(*policyThresholdHighMinValue))
+	resp.Plan.SetAttribute(ctx, path.Root(rootPath).AtName("policy_threshold_high").AtName("max_score"), types.Int32Value(int32(maxScore)))
 
 	// Set the predictors
 	plannedPredictors, d := types.SetValue(types.ObjectType{AttrTypes: predictorAttrType}, flattenedPolicyList)
@@ -920,7 +920,7 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 
 			overrideMap := map[string]attr.Value{
 				"name":      types.StringValue(overrideName),
-				"priority":  types.Int64Value(int64(priorityCount)),
+				"priority":  types.Int32Value(int32(priorityCount)),
 				"result":    overridePlan.Result,
 				"condition": conditionObj,
 			}
@@ -1427,7 +1427,7 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 				*result,
 			)
 
-			op.SetPriority(int32(overridePlan.Priority.ValueInt64()))
+			op.SetPriority(overridePlan.Priority.ValueInt32())
 
 			riskPolicies = append(riskPolicies, op)
 		}
@@ -1520,8 +1520,8 @@ func (p *riskPolicyResourcePolicyModel) expand(ctx context.Context, useScores bo
 
 		mediumPolicyCondition.SetBetween(
 			*risk.NewRiskPolicyConditionBetween(
-				int32(plan.MinScore.ValueInt64()),
-				int32(plan.MaxScore.ValueInt64()),
+				plan.MinScore.ValueInt32(),
+				plan.MaxScore.ValueInt32(),
 			),
 		)
 	}
@@ -1540,8 +1540,8 @@ func (p *riskPolicyResourcePolicyModel) expand(ctx context.Context, useScores bo
 
 		highPolicyCondition.SetBetween(
 			*risk.NewRiskPolicyConditionBetween(
-				int32(plan.MinScore.ValueInt64()),
-				int32(plan.MaxScore.ValueInt64()),
+				plan.MinScore.ValueInt32(),
+				plan.MaxScore.ValueInt32(),
 			),
 		)
 	}
@@ -1561,7 +1561,7 @@ func (p *riskPolicyResourcePolicyModel) expand(ctx context.Context, useScores bo
 					aggregatedScores,
 					*risk.NewRiskPolicyConditionAggregatedScoresInner(
 						predictor.PredictorReferenceValue.ValueString(),
-						int32(predictor.Score.ValueInt64()),
+						predictor.Score.ValueInt32(),
 					),
 				)
 
@@ -1585,7 +1585,7 @@ func (p *riskPolicyResourcePolicyModel) expand(ctx context.Context, useScores bo
 					aggregatedWeights,
 					*risk.NewRiskPolicyConditionAggregatedWeightsInner(
 						predictor.PredictorReferenceValue.ValueString(),
-						int32(predictor.Weight.ValueInt64()),
+						predictor.Weight.ValueInt32(),
 					),
 				)
 

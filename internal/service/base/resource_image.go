@@ -36,16 +36,16 @@ type imageResourceModelV1 struct {
 }
 
 type imageUploadedImageResourceModelV1 struct {
-	Width  types.Int64  `tfsdk:"width"`
-	Height types.Int64  `tfsdk:"height"`
+	Width  types.Int32  `tfsdk:"width"`
+	Height types.Int32  `tfsdk:"height"`
 	Type   types.String `tfsdk:"type"`
 	Href   types.String `tfsdk:"href"`
 }
 
 var (
 	imageUploadedImageTFObjectTypes = map[string]attr.Type{
-		"width":  types.Int64Type,
-		"height": types.Int64Type,
+		"width":  types.Int32Type,
+		"height": types.Int32Type,
 		"type":   types.StringType,
 		"href":   types.StringType,
 	}
@@ -111,12 +111,12 @@ func (r *ImageResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				Computed:    true,
 
 				Attributes: map[string]schema.Attribute{
-					"width": schema.Int64Attribute{
+					"width": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("The width of the image (in pixels).").Description,
 						Computed:    true,
 					},
 
-					"height": schema.Int64Attribute{
+					"height": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("The height of the image (in pixels).").Description,
 						Computed:    true,
 					},

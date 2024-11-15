@@ -188,43 +188,53 @@ func (r *RoleDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	if !data.Name.IsNull() {
 
 		// Run the API call
-		var entityArray *management.EntityArray
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				return r.Client.ManagementAPIClient.RolesApi.ReadAllRoles(ctx).Execute()
+				pagedIterator := r.Client.ManagementAPIClient.RolesApi.ReadAllRoles(ctx).Execute()
+
+				var initialHttpResponse *http.Response
+
+				for pageCursor, err := range pagedIterator {
+					if err != nil {
+						return nil, pageCursor.HTTPResponse, err
+					}
+
+					if initialHttpResponse == nil {
+						initialHttpResponse = pageCursor.HTTPResponse
+					}
+
+					if roles, ok := pageCursor.EntityArray.Embedded.GetRolesOk(); ok {
+
+						for _, roleItem := range roles {
+
+							if string(roleItem.Role.GetName()) == data.Name.ValueString() {
+								return roleItem.Role, pageCursor.HTTPResponse, nil
+							}
+						}
+					}
+				}
+
+				return nil, initialHttpResponse, nil
 			},
 			"ReadAllRoles",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&entityArray,
+			&role,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		if roles, ok := entityArray.Embedded.GetRolesOk(); ok {
-
-			found := false
-			for _, roleItem := range roles {
-
-				if string(roleItem.Role.GetName()) == data.Name.ValueString() {
-					role = roleItem.Role
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				resp.Diagnostics.AddError(
-					"Cannot find role from name",
-					fmt.Sprintf("The role %s cannot be found in the tenant", data.Name.String()),
-				)
-				return
-			}
-
+		if role == nil {
+			resp.Diagnostics.AddError(
+				"Cannot find role from name",
+				fmt.Sprintf("The role %s cannot be found in the tenant", data.Name.String()),
+			)
+			return
 		}
+
 	} else if !data.RoleId.IsNull() {
 
 		// Run the API call

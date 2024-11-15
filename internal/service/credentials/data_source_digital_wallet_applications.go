@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -103,33 +102,54 @@ func (r *DigitalWalletApplicationsDataSource) Read(ctx context.Context, req data
 	}
 
 	// Run the API call
-	var entityArray *credentials.EntityArray
+	var digitalWalletApplicationIDs []string
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.CredentialsAPIClient.DigitalWalletAppsApi.ReadAllDigitalWalletApps(ctx, data.EnvironmentId.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			pagedIterator := r.Client.CredentialsAPIClient.DigitalWalletAppsApi.ReadAllDigitalWalletApps(ctx, data.EnvironmentId.ValueString()).Execute()
+
+			digitalWalletApplicationIDs = make([]string, 0)
+
+			var initialHttpResponse *http.Response
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if pageCursor.EntityArray.Embedded != nil && pageCursor.EntityArray.Embedded.DigitalWalletApplications != nil {
+					for _, digitalWalletApp := range pageCursor.EntityArray.Embedded.GetDigitalWalletApplications() {
+						digitalWalletApplicationIDs = append(digitalWalletApplicationIDs, digitalWalletApp.GetId())
+					}
+				}
+			}
+
+			return digitalWalletApplicationIDs, initialHttpResponse, nil
 		},
 		"ReadAllDigitalWalletApplications",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-		&entityArray,
+		&digitalWalletApplicationIDs,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(data.EnvironmentId.ValueString(), entityArray.Embedded.GetDigitalWalletApplications())...)
+	resp.Diagnostics.Append(data.toState(data.EnvironmentId.ValueString(), digitalWalletApplicationIDs)...) //entityArray.Embedded.GetDigitalWalletApplications())...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 
 }
 
-func (p *DigitalWalletApplicationsDataSourceModel) toState(environmentID string, digitalWalletApplications []credentials.DigitalWalletApplication) diag.Diagnostics {
+func (p *DigitalWalletApplicationsDataSourceModel) toState(environmentID string, digitalWalletApplicationIDs []string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if digitalWalletApplications == nil || environmentID == "" {
+	if digitalWalletApplicationIDs == nil || environmentID == "" {
 		diags.AddError(
 			"Data object missing",
 			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
@@ -138,15 +158,10 @@ func (p *DigitalWalletApplicationsDataSourceModel) toState(environmentID string,
 		return diags
 	}
 
-	list := make([]string, 0)
-	for _, item := range digitalWalletApplications {
-		list = append(list, item.GetId())
-	}
-
 	var d diag.Diagnostics
 
 	p.Id = framework.PingOneResourceIDToTF(environmentID)
-	p.Ids, d = framework.StringSliceToTF(list)
+	p.Ids, d = framework.StringSliceToTF(digitalWalletApplicationIDs)
 	diags.Append(d...)
 
 	return diags

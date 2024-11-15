@@ -19,9 +19,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float32planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
@@ -109,8 +109,8 @@ type predictorCustomMapHML struct {
 }
 
 type predictorCustomMapHMLBetweenRanges struct {
-	MinScore types.Float64 `tfsdk:"min_value"`
-	MaxScore types.Float64 `tfsdk:"max_value"`
+	MinScore types.Float32 `tfsdk:"min_value"`
+	MaxScore types.Float32 `tfsdk:"max_value"`
 }
 
 type predictorCustomMapHMLList struct {
@@ -126,11 +126,11 @@ type predictorDevice struct {
 // User Location Anomaly
 type predictorUserLocationAnomaly struct {
 	Radius types.Object `tfsdk:"radius"`
-	Days   types.Int64  `tfsdk:"days"`
+	Days   types.Int32  `tfsdk:"days"`
 }
 
 type predictorUserLocationAnomalyRadius struct {
-	Distance types.Int64  `tfsdk:"distance"`
+	Distance types.Int32  `tfsdk:"distance"`
 	Unit     types.String `tfsdk:"unit"`
 }
 
@@ -156,31 +156,31 @@ type predictorVelocity struct {
 
 type predictorVelocityEvery struct {
 	Unit      types.String `tfsdk:"unit"`
-	Quantity  types.Int64  `tfsdk:"quantity"`
-	MinSample types.Int64  `tfsdk:"min_sample"`
+	Quantity  types.Int32  `tfsdk:"quantity"`
+	MinSample types.Int32  `tfsdk:"min_sample"`
 }
 
 type predictorVelocityFallback struct {
 	Strategy types.String  `tfsdk:"strategy"`
-	High     types.Float64 `tfsdk:"high"`
-	Medium   types.Float64 `tfsdk:"medium"`
+	High     types.Float32 `tfsdk:"high"`
+	Medium   types.Float32 `tfsdk:"medium"`
 }
 
 type predictorVelocitySlidingWindow struct {
 	Unit      types.String `tfsdk:"unit"`
-	Quantity  types.Int64  `tfsdk:"quantity"`
-	MinSample types.Int64  `tfsdk:"min_sample"`
+	Quantity  types.Int32  `tfsdk:"quantity"`
+	MinSample types.Int32  `tfsdk:"min_sample"`
 }
 
 type predictorVelocityUse struct {
 	UseType types.String  `tfsdk:"type"`
-	Medium  types.Float64 `tfsdk:"medium"`
-	High    types.Float64 `tfsdk:"high"`
+	Medium  types.Float32 `tfsdk:"medium"`
+	High    types.Float32 `tfsdk:"high"`
 }
 
 // Default
 type predictorDefault struct {
-	Weight types.Int64  `tfsdk:"weight"`
+	Weight types.Int32  `tfsdk:"weight"`
 	Result types.Object `tfsdk:"result"`
 }
 
@@ -192,7 +192,7 @@ type predictorDefaultResult struct {
 var (
 	// Default
 	defaultTFObjectTypes = map[string]attr.Type{
-		"weight": types.Int64Type,
+		"weight": types.Int32Type,
 		"result": types.ObjectType{
 			AttrTypes: defaultResultTFObjectTypes,
 		},
@@ -260,8 +260,8 @@ var (
 	}
 
 	predictorCustomMapHMLBetweenRangesTFObjectTypes = map[string]attr.Type{
-		"min_value": types.Float64Type,
-		"max_value": types.Float64Type,
+		"min_value": types.Float32Type,
+		"max_value": types.Float32Type,
 	}
 
 	predictorCustomMapHMLListTFObjectTypes = map[string]attr.Type{
@@ -279,11 +279,11 @@ var (
 		"radius": types.ObjectType{
 			AttrTypes: predictorUserLocationAnomalyRadiusTFObjectTypes,
 		},
-		"days": types.Int64Type,
+		"days": types.Int32Type,
 	}
 
 	predictorUserLocationAnomalyRadiusTFObjectTypes = map[string]attr.Type{
-		"distance": types.Int64Type,
+		"distance": types.Int32Type,
 		"unit":     types.StringType,
 	}
 
@@ -319,26 +319,26 @@ var (
 
 	predictorVelocityEveryTFObjectTypes = map[string]attr.Type{
 		"unit":       types.StringType,
-		"quantity":   types.Int64Type,
-		"min_sample": types.Int64Type,
+		"quantity":   types.Int32Type,
+		"min_sample": types.Int32Type,
 	}
 
 	predictorVelocityFallbackTFObjectTypes = map[string]attr.Type{
 		"strategy": types.StringType,
-		"high":     types.Float64Type,
-		"medium":   types.Float64Type,
+		"high":     types.Float32Type,
+		"medium":   types.Float32Type,
 	}
 
 	predictorVelocitySlidingWindowTFObjectTypes = map[string]attr.Type{
 		"unit":       types.StringType,
-		"quantity":   types.Int64Type,
-		"min_sample": types.Int64Type,
+		"quantity":   types.Int32Type,
+		"min_sample": types.Int32Type,
 	}
 
 	predictorVelocityUseTFObjectTypes = map[string]attr.Type{
 		"type":   types.StringType,
-		"medium": types.Float64Type,
-		"high":   types.Float64Type,
+		"medium": types.Float32Type,
+		"high":   types.Float32Type,
 	}
 )
 
@@ -585,13 +585,13 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				Computed:    true,
 
 				Attributes: map[string]schema.Attribute{
-					"weight": schema.Int64Attribute{
+					"weight": schema.Int32Attribute{
 						Description:         defaultWeightDescription.Description,
 						MarkdownDescription: defaultWeightDescription.MarkdownDescription,
 						Optional:            true,
 						Computed:            true,
 
-						Default: int64default.StaticInt64(defaultWeightValue),
+						Default: int32default.StaticInt32(defaultWeightValue),
 					},
 
 					"result": schema.SingleNestedAttribute{
@@ -944,7 +944,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						Optional:    true,
 
 						Attributes: map[string]schema.Attribute{
-							"distance": schema.Int64Attribute{
+							"distance": schema.Int32Attribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the distance to apply to the predictor evaluation.").Description,
 								Required:    true,
 							},
@@ -964,12 +964,12 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						},
 					},
 
-					"days": schema.Int64Attribute{
+					"days": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of days to apply to the predictor evaluation.").Description,
 						Computed:    true,
 
-						PlanModifiers: []planmodifier.Int64{
-							int64planmodifier.UseStateForUnknown(),
+						PlanModifiers: []planmodifier.Int32{
+							int32planmodifier.UseStateForUnknown(),
 						},
 					},
 				},
@@ -1081,21 +1081,21 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 								},
 							},
 
-							"medium": schema.Float64Attribute{
+							"medium": schema.Float32Attribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("A floating point value that specifies a medium risk threshold for the velocity algorithm.").Description,
 								Computed:    true,
 
-								PlanModifiers: []planmodifier.Float64{
-									float64planmodifier.UseStateForUnknown(),
+								PlanModifiers: []planmodifier.Float32{
+									float32planmodifier.UseStateForUnknown(),
 								},
 							},
 
-							"high": schema.Float64Attribute{
+							"high": schema.Float32Attribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("A floating point value that specifies a high risk threshold for the velocity algorithm.").Description,
 								Computed:    true,
 
-								PlanModifiers: []planmodifier.Float64{
-									float64planmodifier.UseStateForUnknown(),
+								PlanModifiers: []planmodifier.Float32{
+									float32planmodifier.UseStateForUnknown(),
 								},
 							},
 						},
@@ -1120,21 +1120,21 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 								},
 							},
 
-							"high": schema.Float64Attribute{
+							"high": schema.Float32Attribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("A floating point value that specifies a high risk threshold for the fallback strategy.").Description,
 								Computed:    true,
 
-								PlanModifiers: []planmodifier.Float64{
-									float64planmodifier.UseStateForUnknown(),
+								PlanModifiers: []planmodifier.Float32{
+									float32planmodifier.UseStateForUnknown(),
 								},
 							},
 
-							"medium": schema.Float64Attribute{
+							"medium": schema.Float32Attribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("A floating point value that specifies a medium risk threshold for the fallback strategy.").Description,
 								Computed:    true,
 
-								PlanModifiers: []planmodifier.Float64{
-									float64planmodifier.UseStateForUnknown(),
+								PlanModifiers: []planmodifier.Float32{
+									float32planmodifier.UseStateForUnknown(),
 								},
 							},
 						},
@@ -1159,21 +1159,21 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 								},
 							},
 
-							"quantity": schema.Int64Attribute{
+							"quantity": schema.Int32Attribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that denotes the quantity of unit intervals to use for the velocity algorithm.").Description,
 								Computed:    true,
 
-								PlanModifiers: []planmodifier.Int64{
-									int64planmodifier.UseStateForUnknown(),
+								PlanModifiers: []planmodifier.Int32{
+									int32planmodifier.UseStateForUnknown(),
 								},
 							},
 
-							"min_sample": schema.Int64Attribute{
+							"min_sample": schema.Int32Attribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that denotes the minimum sample of data to use for the velocity algorithm.").Description,
 								Computed:    true,
 
-								PlanModifiers: []planmodifier.Int64{
-									int64planmodifier.UseStateForUnknown(),
+								PlanModifiers: []planmodifier.Int32{
+									int32planmodifier.UseStateForUnknown(),
 								},
 							},
 						},
@@ -1198,21 +1198,21 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 								},
 							},
 
-							"quantity": schema.Int64Attribute{
+							"quantity": schema.Int32Attribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that denotes the quantity of unit intervals to use for the velocity algorithm.").Description,
 								Computed:    true,
 
-								PlanModifiers: []planmodifier.Int64{
-									int64planmodifier.UseStateForUnknown(),
+								PlanModifiers: []planmodifier.Int32{
+									int32planmodifier.UseStateForUnknown(),
 								},
 							},
 
-							"min_sample": schema.Int64Attribute{
+							"min_sample": schema.Int32Attribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that denotes the minimum sample of data to use for the velocity algorithm.").Description,
 								Computed:    true,
 
-								PlanModifiers: []planmodifier.Int64{
-									int64planmodifier.UseStateForUnknown(),
+								PlanModifiers: []planmodifier.Int32{
+									int32planmodifier.UseStateForUnknown(),
 								},
 							},
 						},
@@ -1298,13 +1298,13 @@ func customMapBetweenRangesBoundSchema(riskResult string) schema.SingleNestedAtt
 		Optional:    true,
 
 		Attributes: map[string]schema.Attribute{
-			"min_value": schema.Float64Attribute{
+			"min_value": schema.Float32Attribute{
 				Description:         predictorCustomMapBetweenRangesMinValueDescription.Description,
 				MarkdownDescription: predictorCustomMapBetweenRangesMinValueDescription.MarkdownDescription,
 				Required:            true,
 			},
 
-			"max_value": schema.Float64Attribute{
+			"max_value": schema.Float32Attribute{
 				Description:         predictorCustomMapBetweenRangesMinValueDescription.Description,
 				MarkdownDescription: predictorCustomMapBetweenRangesMinValueDescription.MarkdownDescription,
 				Required:            true,
@@ -1712,89 +1712,99 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 	var riskPredictorCommonData *risk.RiskPredictorCommon
 
 	// Check if this is attempting to overwrite an existing predictor.  We'll only allows overwriting where deletable = false
-	var response *risk.EntityArray
 	diags.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.RiskAdvancedPredictorsApi.ReadAllRiskPredictors(ctx, p.EnvironmentId.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, managementApiClient, p.EnvironmentId.ValueString(), fO, fR, fErr)
+			pagedIterator := apiClient.RiskAdvancedPredictorsApi.ReadAllRiskPredictors(ctx, p.EnvironmentId.ValueString()).Execute()
+
+			var initialHttpResponse *http.Response
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, managementApiClient, p.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if predictors, ok := pageCursor.EntityArray.Embedded.GetRiskPredictorsOk(); ok {
+
+					for _, predictor := range predictors {
+						predictorObject := predictor.GetActualInstance()
+
+						var predictorId string
+						var predictorCompactName string
+						var predictorDeletable bool
+
+						switch t := predictorObject.(type) {
+						case *risk.RiskPredictorAdversaryInTheMiddle:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
+						case *risk.RiskPredictorAnonymousNetwork:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
+						case *risk.RiskPredictorBotDetection:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
+						case *risk.RiskPredictorComposite:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
+						case *risk.RiskPredictorCustom:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
+						case *risk.RiskPredictorDevice:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
+						case *risk.RiskPredictorEmailReputation:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
+						case *risk.RiskPredictorGeovelocity:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
+						case *risk.RiskPredictorIPReputation:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
+						case *risk.RiskPredictorUserLocationAnomaly:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
+						case *risk.RiskPredictorUserRiskBehavior:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
+						case *risk.RiskPredictorVelocity:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
+						}
+
+						if strings.EqualFold(predictorCompactName, p.CompactName.ValueString()) && !predictorDeletable {
+							return &predictorId, pageCursor.HTTPResponse, nil
+						}
+					}
+				}
+			}
+
+			return nil, initialHttpResponse, nil
 		},
 		"ReadAllRiskPredictors",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-		&response,
+		&overwriteRiskPredictorId,
 	)...)
 	if diags.HasError() {
 		return nil, nil, diags
-	}
-
-	if predictors, ok := response.Embedded.GetRiskPredictorsOk(); ok {
-
-		for _, predictor := range predictors {
-			predictorObject := predictor.GetActualInstance()
-
-			var predictorId string
-			var predictorCompactName string
-			var predictorDeletable bool
-
-			switch t := predictorObject.(type) {
-			case *risk.RiskPredictorAdversaryInTheMiddle:
-				predictorId = t.GetId()
-				predictorCompactName = t.GetCompactName()
-				predictorDeletable = t.GetDeletable()
-			case *risk.RiskPredictorAnonymousNetwork:
-				predictorId = t.GetId()
-				predictorCompactName = t.GetCompactName()
-				predictorDeletable = t.GetDeletable()
-			case *risk.RiskPredictorBotDetection:
-				predictorId = t.GetId()
-				predictorCompactName = t.GetCompactName()
-				predictorDeletable = t.GetDeletable()
-			case *risk.RiskPredictorComposite:
-				predictorId = t.GetId()
-				predictorCompactName = t.GetCompactName()
-				predictorDeletable = t.GetDeletable()
-			case *risk.RiskPredictorCustom:
-				predictorId = t.GetId()
-				predictorCompactName = t.GetCompactName()
-				predictorDeletable = t.GetDeletable()
-			case *risk.RiskPredictorDevice:
-				predictorId = t.GetId()
-				predictorCompactName = t.GetCompactName()
-				predictorDeletable = t.GetDeletable()
-			case *risk.RiskPredictorEmailReputation:
-				predictorId = t.GetId()
-				predictorCompactName = t.GetCompactName()
-				predictorDeletable = t.GetDeletable()
-			case *risk.RiskPredictorGeovelocity:
-				predictorId = t.GetId()
-				predictorCompactName = t.GetCompactName()
-				predictorDeletable = t.GetDeletable()
-			case *risk.RiskPredictorIPReputation:
-				predictorId = t.GetId()
-				predictorCompactName = t.GetCompactName()
-				predictorDeletable = t.GetDeletable()
-			case *risk.RiskPredictorUserLocationAnomaly:
-				predictorId = t.GetId()
-				predictorCompactName = t.GetCompactName()
-				predictorDeletable = t.GetDeletable()
-			case *risk.RiskPredictorUserRiskBehavior:
-				predictorId = t.GetId()
-				predictorCompactName = t.GetCompactName()
-				predictorDeletable = t.GetDeletable()
-			case *risk.RiskPredictorVelocity:
-				predictorId = t.GetId()
-				predictorCompactName = t.GetCompactName()
-				predictorDeletable = t.GetDeletable()
-			}
-
-			if strings.EqualFold(predictorCompactName, p.CompactName.ValueString()) && !predictorDeletable {
-				overwriteRiskPredictorId = &predictorId
-
-				break
-			}
-		}
 	}
 
 	riskPredictorCommonData = risk.NewRiskPredictorCommon(p.Name.ValueString(), p.CompactName.ValueString(), risk.EnumPredictorType(p.Type.ValueString()))
@@ -1814,7 +1824,7 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 			return nil, nil, diags
 		}
 
-		dataDefault := risk.NewRiskPredictorCommonDefault(int32(defaultPlan.Weight.ValueInt64()))
+		dataDefault := risk.NewRiskPredictorCommonDefault(defaultPlan.Weight.ValueInt32())
 
 		if !defaultPlan.Result.IsNull() && !defaultPlan.Result.IsUnknown() {
 			var defaultResultPlan predictorDefaultResult
@@ -2112,8 +2122,8 @@ func (p *riskPredictorResourceModel) expandPredictorCustom(ctx context.Context, 
 			v := risk.NewRiskPredictorCustomItemBetween(
 				contains,
 				*risk.NewRiskPredictorCustomItemBetweenBetween(
-					float32(highHmlPlan.MinScore.ValueFloat64()),
-					float32(highHmlPlan.MaxScore.ValueFloat64()),
+					highHmlPlan.MinScore.ValueFloat32(),
+					highHmlPlan.MaxScore.ValueFloat32(),
 				),
 			)
 
@@ -2136,8 +2146,8 @@ func (p *riskPredictorResourceModel) expandPredictorCustom(ctx context.Context, 
 			v := risk.NewRiskPredictorCustomItemBetween(
 				contains,
 				*risk.NewRiskPredictorCustomItemBetweenBetween(
-					float32(mediumHmlPlan.MinScore.ValueFloat64()),
-					float32(mediumHmlPlan.MaxScore.ValueFloat64()),
+					mediumHmlPlan.MinScore.ValueFloat32(),
+					mediumHmlPlan.MaxScore.ValueFloat32(),
 				),
 			)
 
@@ -2160,8 +2170,8 @@ func (p *riskPredictorResourceModel) expandPredictorCustom(ctx context.Context, 
 			v := risk.NewRiskPredictorCustomItemBetween(
 				contains,
 				*risk.NewRiskPredictorCustomItemBetweenBetween(
-					float32(lowHmlPlan.MinScore.ValueFloat64()),
-					float32(lowHmlPlan.MaxScore.ValueFloat64()),
+					lowHmlPlan.MinScore.ValueFloat32(),
+					lowHmlPlan.MaxScore.ValueFloat32(),
 				),
 			)
 
@@ -2600,7 +2610,7 @@ func (p *riskPredictorResourceModel) expandPredictorUserLocationAnomaly(ctx cont
 			radiusPlanUnit = risk.EnumDistanceUnit(radiusPlan.Unit.ValueString())
 		}
 
-		radius := risk.NewRiskPredictorUserLocationAnomalyAllOfRadius(int32(radiusPlan.Distance.ValueInt64()), radiusPlanUnit)
+		radius := risk.NewRiskPredictorUserLocationAnomalyAllOfRadius(radiusPlan.Distance.ValueInt32(), radiusPlanUnit)
 
 		data.SetRadius(*radius)
 	}
@@ -2722,11 +2732,11 @@ func (p *riskPredictorResourceModel) expandPredictorVelocity(ctx context.Context
 		}
 
 		if !plan.Quantity.IsNull() && !plan.Quantity.IsUnknown() {
-			every.SetQuantity(int32(plan.Quantity.ValueInt64()))
+			every.SetQuantity(plan.Quantity.ValueInt32())
 		}
 
 		if !plan.MinSample.IsNull() && !plan.MinSample.IsUnknown() {
-			every.SetMinSample(int32(plan.MinSample.ValueInt64()))
+			every.SetMinSample(plan.MinSample.ValueInt32())
 		}
 
 		data.SetEvery(*every)
@@ -2759,11 +2769,11 @@ func (p *riskPredictorResourceModel) expandPredictorVelocity(ctx context.Context
 		}
 
 		if !plan.High.IsNull() && !plan.High.IsUnknown() {
-			fallback.SetHigh(float32(plan.High.ValueFloat64()))
+			fallback.SetHigh(plan.High.ValueFloat32())
 		}
 
 		if !plan.Medium.IsNull() && !plan.Medium.IsUnknown() {
-			fallback.SetMedium(float32(plan.Medium.ValueFloat64()))
+			fallback.SetMedium(plan.Medium.ValueFloat32())
 		}
 
 		data.SetFallback(*fallback)
@@ -2814,11 +2824,11 @@ func (p *riskPredictorResourceModel) expandPredictorVelocity(ctx context.Context
 		}
 
 		if !plan.Quantity.IsNull() && !plan.Quantity.IsUnknown() {
-			slidingWindow.SetQuantity(int32(plan.Quantity.ValueInt64()))
+			slidingWindow.SetQuantity(plan.Quantity.ValueInt32())
 		}
 
 		if !plan.MinSample.IsNull() && !plan.MinSample.IsUnknown() {
-			slidingWindow.SetMinSample(int32(plan.MinSample.ValueInt64()))
+			slidingWindow.SetMinSample(plan.MinSample.ValueInt32())
 		}
 
 		data.SetSlidingWindow(*slidingWindow)
@@ -2851,11 +2861,11 @@ func (p *riskPredictorResourceModel) expandPredictorVelocity(ctx context.Context
 		}
 
 		if !plan.Medium.IsNull() && !plan.Medium.IsUnknown() {
-			use.SetMedium(float32(plan.Medium.ValueFloat64()))
+			use.SetMedium(plan.Medium.ValueFloat32())
 		}
 
 		if !plan.High.IsNull() && !plan.High.IsUnknown() {
-			use.SetHigh(float32(plan.High.ValueFloat64()))
+			use.SetHigh(plan.High.ValueFloat32())
 		}
 
 		data.SetUse(*use)

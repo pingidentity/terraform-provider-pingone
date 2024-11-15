@@ -141,14 +141,11 @@ func datasourcePingOneResourceAttributeRead(ctx context.Context, d *schema.Resou
 func fetchResourceAttributeFromName(ctx context.Context, apiClient *management.APIClient, environmentID, resourceID, resourceAttributeName string) (*management.ResourceAttribute, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var resp *management.ResourceAttribute
-
-	respList, diags := sdk.ParseResponse(
+	response, diags := sdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.ResourceAttributesApi.ReadAllResourceAttributes(ctx, environmentID, resourceID).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
+			return fetchResourceAttributeFromNameSDKFunc(ctx, apiClient, environmentID, resourceID, resourceAttributeName)
 		},
 		"ReadAllResourceAttributes",
 		sdk.DefaultCustomError,
@@ -158,76 +155,83 @@ func fetchResourceAttributeFromName(ctx context.Context, apiClient *management.A
 		return nil, diags
 	}
 
-	if resourceAttributes, ok := respList.(*management.EntityArray).Embedded.GetAttributesOk(); ok {
+	if response == nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Cannot find resource attribute %s", resourceAttributeName),
+		})
 
-		found := false
-		for _, resourceAttribute := range resourceAttributes {
-
-			if resourceAttribute.ResourceAttribute.GetName() == resourceAttributeName {
-				resp = resourceAttribute.ResourceAttribute
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Cannot find resource attribute %s", resourceAttributeName),
-			})
-
-			return nil, diags
-		}
-
+		return nil, diags
 	}
 
-	return resp, diags
+	returnVar, ok := response.(*management.ResourceAttribute)
+	if !ok {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Unexpected response type when fetching resource attribute from name",
+		})
+		return nil, diags
+	}
+
+	return returnVar, diags
 }
 
 func fetchResourceAttributeFromName_Framework(ctx context.Context, apiClient *management.APIClient, environmentID, resourceID, resourceAttributeName string) (*management.ResourceAttribute, frameworkdiag.Diagnostics) {
 	var diags frameworkdiag.Diagnostics
 
-	var resp *management.ResourceAttribute
-
-	var respList *management.EntityArray
+	var returnVar *management.ResourceAttribute
 	diags.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.ResourceAttributesApi.ReadAllResourceAttributes(ctx, environmentID, resourceID).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
+			return fetchResourceAttributeFromNameSDKFunc(ctx, apiClient, environmentID, resourceID, resourceAttributeName)
 		},
 		"ReadAllResourceAttributes",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-		&respList,
+		&returnVar,
 	)...)
 	if diags.HasError() {
 		return nil, diags
 	}
 
-	if resourceAttributes, ok := respList.Embedded.GetAttributesOk(); ok {
+	if returnVar == nil {
+		diags.AddError(
+			fmt.Sprintf("Cannot find resource attribute %s", resourceAttributeName),
+			"The resource attribute cannot be found by the provided name.",
+		)
 
-		found := false
-		for _, resourceAttribute := range resourceAttributes {
-
-			if resourceAttribute.ResourceAttribute.GetName() == resourceAttributeName {
-				resp = resourceAttribute.ResourceAttribute
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			diags.AddError(
-				fmt.Sprintf("Cannot find resource attribute %s", resourceAttributeName),
-				"The resource attribute cannot be found by the provided name.",
-			)
-
-			return nil, diags
-		}
-
+		return nil, diags
 	}
 
-	return resp, diags
+	return returnVar, diags
+}
+
+func fetchResourceAttributeFromNameSDKFunc(ctx context.Context, apiClient *management.APIClient, environmentID, resourceID, resourceAttributeName string) (any, *http.Response, error) {
+	pagedIterator := apiClient.ResourceAttributesApi.ReadAllResourceAttributes(ctx, environmentID, resourceID).Execute()
+
+	var initialHttpResponse *http.Response
+
+	for pageCursor, err := range pagedIterator {
+		if err != nil {
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, nil, pageCursor.HTTPResponse, err)
+		}
+
+		if initialHttpResponse == nil {
+			initialHttpResponse = pageCursor.HTTPResponse
+		}
+
+		if resourceAttributes, ok := pageCursor.EntityArray.Embedded.GetAttributesOk(); ok {
+
+			for _, resourceAttribute := range resourceAttributes {
+
+				if resourceAttribute.ResourceAttribute.GetName() == resourceAttributeName {
+					return resourceAttribute.ResourceAttribute, pageCursor.HTTPResponse, nil
+				}
+			}
+
+		}
+	}
+
+	return nil, initialHttpResponse, nil
 }

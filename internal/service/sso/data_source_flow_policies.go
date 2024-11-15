@@ -15,7 +15,6 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/davincitypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
-	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 // Types
@@ -124,13 +123,11 @@ func (r *FlowPoliciesDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
-	var filterFunction sdk.SDKInterfaceFunc
+	var filterFunction func() management.EntityArrayPagedIterator
 
 	if !data.ScimFilter.IsNull() {
 
-		filterFunction = func() (any, *http.Response, error) {
-			return r.Client.ManagementAPIClient.FlowPoliciesApi.ReadAllFlowPolicies(ctx, data.EnvironmentId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute()
-		}
+		filterFunction = r.Client.ManagementAPIClient.FlowPoliciesApi.ReadAllFlowPolicies(ctx, data.EnvironmentId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute
 
 	} else if !data.DataFilters.IsNull() {
 
@@ -162,9 +159,7 @@ func (r *FlowPoliciesDataSource) Read(ctx context.Context, req datasource.ReadRe
 			"scimFilter": scimFilter,
 		})
 
-		filterFunction = func() (any, *http.Response, error) {
-			return r.Client.ManagementAPIClient.FlowPoliciesApi.ReadAllFlowPolicies(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
-		}
+		filterFunction = r.Client.ManagementAPIClient.FlowPoliciesApi.ReadAllFlowPolicies(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute
 
 	} else {
 		resp.Diagnostics.AddError(
@@ -174,29 +169,53 @@ func (r *FlowPoliciesDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
-	var entityArray *management.EntityArray
+	var flowPolicyIDs []string
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		filterFunction,
+		func() (any, *http.Response, error) {
+			pagedIterator := filterFunction()
+
+			var initialHttpResponse *http.Response
+
+			foundIDs := make([]string, 0)
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if pageCursor.EntityArray.Embedded != nil && pageCursor.EntityArray.Embedded.FlowPolicies != nil {
+					for _, flowPolicy := range pageCursor.EntityArray.Embedded.GetFlowPolicies() {
+						foundIDs = append(foundIDs, flowPolicy.GetId())
+					}
+				}
+			}
+
+			return foundIDs, initialHttpResponse, nil
+		},
 		"ReadAllFlowPolicies",
 		framework.DefaultCustomError,
 		nil,
-		&entityArray,
+		&flowPolicyIDs,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(data.EnvironmentId.ValueString(), entityArray.Embedded.GetFlowPolicies())...)
+	resp.Diagnostics.Append(data.toState(data.EnvironmentId.ValueString(), flowPolicyIDs)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (p *FlowPoliciesDataSourceModel) toState(environmentID string, flowPolicies []management.FlowPolicy) diag.Diagnostics {
+func (p *FlowPoliciesDataSourceModel) toState(environmentID string, flowPolicyIDs []string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if flowPolicies == nil || environmentID == "" {
+	if flowPolicyIDs == nil || environmentID == "" {
 		diags.AddError(
 			"Data object missing",
 			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
@@ -205,15 +224,10 @@ func (p *FlowPoliciesDataSourceModel) toState(environmentID string, flowPolicies
 		return diags
 	}
 
-	list := make([]string, 0)
-	for _, item := range flowPolicies {
-		list = append(list, item.GetId())
-	}
-
 	var d diag.Diagnostics
 
 	p.Id = framework.PingOneResourceIDToTF(environmentID)
-	p.Ids = framework.DaVinciResourceIDListToTF(list)
+	p.Ids = framework.DaVinciResourceIDListToTF(flowPolicyIDs)
 	diags.Append(d...)
 
 	return diags

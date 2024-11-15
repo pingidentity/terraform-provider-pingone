@@ -433,49 +433,52 @@ func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *managemen
 		Refresh: func() (interface{}, string, error) {
 
 			// Run the API call
-			var entityArray *management.EntityArray
+			var defaultPopulation *management.Population
 			diags.Append(framework.ParseResponse(
 				ctx,
 
 				func() (any, *http.Response, error) {
-					fO, fR, fErr := apiClient.PopulationsApi.ReadAllPopulations(ctx, environmentID).Execute()
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
+					pagedIterator := apiClient.PopulationsApi.ReadAllPopulations(ctx, environmentID).Execute()
+
+					var initialHttpResponse *http.Response
+
+					for pageCursor, err := range pagedIterator {
+						if err != nil {
+							return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, nil, pageCursor.HTTPResponse, err)
+						}
+
+						if initialHttpResponse == nil {
+							initialHttpResponse = pageCursor.HTTPResponse
+						}
+
+						if populations, ok := pageCursor.EntityArray.Embedded.GetPopulationsOk(); ok {
+
+							for _, populationItem := range populations {
+
+								if populationItem.GetDefault() {
+									return &populationItem, pageCursor.HTTPResponse, nil
+								}
+							}
+						}
+					}
+
+					return nil, initialHttpResponse, nil
 				},
 				"ReadAllPopulations-FetchDefaultPopulation",
 				errorFunction,
 				sdk.DefaultCreateReadRetryable,
-				&entityArray,
+				&defaultPopulation,
 			)...)
 			if diags.HasError() {
 				return nil, "err", fmt.Errorf("Error reading populations")
 			}
 
-			if entityArray == nil {
-				return nil, "err", fmt.Errorf("Environment not found")
-			}
-
-			found := false
-
-			var population management.Population
-
-			if populations, ok := entityArray.Embedded.GetPopulationsOk(); ok {
-
-				for _, populationItem := range populations {
-
-					if populationItem.GetDefault() {
-						population = populationItem
-						found = true
-						break
-					}
-				}
-			}
-
 			tflog.Debug(ctx, "Find default population attempt", map[string]interface{}{
-				"population": population,
-				"result":     strings.ToLower(strconv.FormatBool(found)),
+				"population": defaultPopulation,
+				"result":     strings.ToLower(strconv.FormatBool(defaultPopulation != nil)),
 			})
 
-			return population, strings.ToLower(strconv.FormatBool(found)), nil
+			return defaultPopulation, strings.ToLower(strconv.FormatBool(defaultPopulation != nil)), nil
 		},
 		Timeout:                   timeout,
 		Delay:                     1 * time.Second,
@@ -485,16 +488,15 @@ func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *managemen
 	population, err := stateConf.WaitForStateContext(ctx)
 
 	if err != nil {
-		diags.AddWarning(
-			"Cannot find default population",
-			fmt.Sprintf("The default population for environment %s cannot be found: %s", environmentID, err),
-		)
+		tflog.Warn(ctx, "Cannot find default population for the environment", map[string]interface{}{
+			"environment": environmentID,
+			"err":         err,
+		})
 
 		return nil, diags
 	}
 
-	returnVar := population.(management.Population)
+	returnVar := population.(*management.Population)
 
-	return &returnVar, diags
-
+	return returnVar, diags
 }

@@ -210,7 +210,7 @@ func (r *BrandingThemeDefaultResource) Delete(ctx context.Context, req resource.
 		return
 	}
 
-	bootstrapDefaultThemeId, d := r.fetchBootstapDefaultThemeId(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString())
+	bootstrapDefaultThemeId, d := r.fetchBootstapDefaultThemeId(ctx, data.EnvironmentId.ValueString())
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -294,7 +294,7 @@ func (r *BrandingThemeDefaultResource) ImportState(ctx context.Context, req reso
 		return
 	}
 
-	defaultThemeId, d := r.fetchDefaultThemeId(ctx, r.Client.ManagementAPIClient, attributes["environment_id"])
+	defaultThemeId, d := r.fetchDefaultThemeId(ctx, attributes["environment_id"])
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -313,24 +313,52 @@ func (r *BrandingThemeDefaultResource) ImportState(ctx context.Context, req reso
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), defaultThemeId)...)
 }
 
-func (r *BrandingThemeDefaultResource) fetchBootstapDefaultThemeId(ctx context.Context, apiClient *management.APIClient, environmentID string) (*string, diag.Diagnostics) {
-	return r.fetchThemeId(ctx, apiClient, environmentID, true)
+func (r *BrandingThemeDefaultResource) fetchBootstapDefaultThemeId(ctx context.Context, environmentID string) (*string, diag.Diagnostics) {
+	return r.fetchThemeId(ctx, environmentID, true)
 }
 
-func (r *BrandingThemeDefaultResource) fetchDefaultThemeId(ctx context.Context, apiClient *management.APIClient, environmentID string) (*string, diag.Diagnostics) {
-	return r.fetchThemeId(ctx, apiClient, environmentID, false)
+func (r *BrandingThemeDefaultResource) fetchDefaultThemeId(ctx context.Context, environmentID string) (*string, diag.Diagnostics) {
+	return r.fetchThemeId(ctx, environmentID, false)
 }
 
-func (r *BrandingThemeDefaultResource) fetchThemeId(ctx context.Context, apiClient *management.APIClient, environmentID string, bootstrapDefault bool) (*string, diag.Diagnostics) {
+func (r *BrandingThemeDefaultResource) fetchThemeId(ctx context.Context, environmentID string, bootstrapDefault bool) (*string, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var response *management.EntityArray
+	var response *string
 	diags.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.BrandingThemesApi.ReadBrandingThemes(ctx, environmentID).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
+			pagedIterator := r.Client.ManagementAPIClient.BrandingThemesApi.ReadBrandingThemes(ctx, environmentID).Execute()
+
+			var initialHttpResponse *http.Response
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentID, nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if brandingThemes, ok := pageCursor.EntityArray.Embedded.GetThemesOk(); ok {
+
+					for _, brandingTheme := range brandingThemes {
+						if bootstrapDefault && *brandingTheme.GetConfiguration().Name == "Ping Default" {
+							defaultThemeId := brandingTheme.GetId()
+							return &defaultThemeId, pageCursor.HTTPResponse, nil
+						}
+
+						if !bootstrapDefault && brandingTheme.GetDefault() {
+							defaultThemeId := brandingTheme.GetId()
+							return &defaultThemeId, pageCursor.HTTPResponse, nil
+						}
+					}
+				}
+			}
+
+			return nil, initialHttpResponse, nil
 		},
 		"ReadBrandingThemes",
 		framework.DefaultCustomError,
@@ -341,22 +369,7 @@ func (r *BrandingThemeDefaultResource) fetchThemeId(ctx context.Context, apiClie
 		return nil, diags
 	}
 
-	if brandingThemes, ok := response.Embedded.GetThemesOk(); ok {
-
-		for _, brandingTheme := range brandingThemes {
-			if bootstrapDefault && *brandingTheme.GetConfiguration().Name == "Ping Default" {
-				defaultThemeId := brandingTheme.GetId()
-				return &defaultThemeId, diags
-			}
-
-			if !bootstrapDefault && brandingTheme.GetDefault() {
-				defaultThemeId := brandingTheme.GetId()
-				return &defaultThemeId, diags
-			}
-		}
-	}
-
-	return nil, diags
+	return response, diags
 }
 
 func (p *brandingThemeDefaultResourceModel) expand() *management.BrandingThemeDefault {

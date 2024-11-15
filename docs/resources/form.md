@@ -271,7 +271,7 @@ Optional:
 - `width_unit` (String) A string that specifies the unit to apply to the `width` parameter.  Options are `PERCENT`, `PIXELS`.
 
 <a id="nestedatt--components--fields--styles--padding"></a>
-### Nested Schema for `components.fields.styles.width_unit`
+### Nested Schema for `components.fields.styles.padding`
 
 Optional:
 

@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_application`: Add `session_not_on_or_after_duration` field to SAML applications.
+```
+
+```release-note:enhancement
+`data-source/pingone_application`: Add `session_not_on_or_after_duration` field to SAML applications.
+```

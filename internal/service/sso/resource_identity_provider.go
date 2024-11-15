@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -123,7 +123,7 @@ type identityProviderSAMLResourceModelV1 struct {
 	SloBinding                  types.String `tfsdk:"slo_binding"`
 	SloEndpoint                 types.String `tfsdk:"slo_endpoint"`
 	SloResponseEndpoint         types.String `tfsdk:"slo_response_endpoint"`
-	SloWindow                   types.Int64  `tfsdk:"slo_window"`
+	SloWindow                   types.Int32  `tfsdk:"slo_window"`
 }
 
 type identityProviderSAMLResourceIdPVerificationModelV1 struct {
@@ -192,7 +192,7 @@ var (
 		"slo_binding":                   types.StringType,
 		"slo_endpoint":                  types.StringType,
 		"slo_response_endpoint":         types.StringType,
-		"slo_window":                    types.Int64Type,
+		"slo_window":                    types.Int32Type,
 	}
 
 	identityProviderSAMLIdPVerificationTFObjectTypes = map[string]attr.Type{
@@ -835,13 +835,13 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 						},
 					},
 
-					"slo_window": schema.Int64Attribute{
+					"slo_window": schema.Int32Attribute{
 						Description:         samlSLOWindowDescription.Description,
 						MarkdownDescription: samlSLOWindowDescription.MarkdownDescription,
 						Optional:            true,
 
-						Validators: []validator.Int64{
-							int64validator.Between(samlSloWindowMin, samlSloWindowMax),
+						Validators: []validator.Int32{
+							int32validator.Between(samlSloWindowMin, samlSloWindowMax),
 						},
 					},
 				},
@@ -1654,7 +1654,7 @@ func (p *identityProviderResourceModelV1) expand(ctx context.Context) (*manageme
 		}
 
 		if !plan.SloWindow.IsNull() && !plan.SloWindow.IsUnknown() {
-			idpData.SetSloWindow(int32(plan.SloWindow.ValueInt64()))
+			idpData.SetSloWindow(plan.SloWindow.ValueInt32())
 		}
 
 		data.IdentityProviderSAML = &idpData

@@ -14,7 +14,6 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
-	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 // Types
@@ -125,13 +124,11 @@ func (r *GroupsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
-	var filterFunction sdk.SDKInterfaceFunc
+	var filterFunction func() management.EntityArrayPagedIterator
 
 	if !data.ScimFilter.IsNull() {
 
-		filterFunction = func() (any, *http.Response, error) {
-			return r.Client.ManagementAPIClient.GroupsApi.ReadAllGroups(ctx, data.EnvironmentId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute()
-		}
+		filterFunction = r.Client.ManagementAPIClient.GroupsApi.ReadAllGroups(ctx, data.EnvironmentId.ValueString()).Filter(data.ScimFilter.ValueString()).Execute
 
 	} else if !data.DataFilters.IsNull() {
 
@@ -163,9 +160,7 @@ func (r *GroupsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 			"scimFilter": scimFilter,
 		})
 
-		filterFunction = func() (any, *http.Response, error) {
-			return r.Client.ManagementAPIClient.GroupsApi.ReadAllGroups(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
-		}
+		filterFunction = r.Client.ManagementAPIClient.GroupsApi.ReadAllGroups(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute
 
 	} else {
 		resp.Diagnostics.AddError(
@@ -175,29 +170,53 @@ func (r *GroupsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
-	var entityArray *management.EntityArray
+	var groupIDs []string
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
-		filterFunction,
+		func() (any, *http.Response, error) {
+			pagedIterator := filterFunction()
+
+			var initialHttpResponse *http.Response
+
+			foundIDs := make([]string, 0)
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if pageCursor.EntityArray.Embedded != nil && pageCursor.EntityArray.Embedded.Groups != nil {
+					for _, item := range pageCursor.EntityArray.Embedded.GetGroups() {
+						foundIDs = append(foundIDs, item.GetId())
+					}
+				}
+			}
+
+			return foundIDs, initialHttpResponse, nil
+		},
 		"ReadAllGroups",
 		framework.DefaultCustomError,
 		nil,
-		&entityArray,
+		&groupIDs,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(data.EnvironmentId.ValueString(), entityArray.Embedded.GetGroups())...)
+	resp.Diagnostics.Append(data.toState(data.EnvironmentId.ValueString(), groupIDs)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (p *GroupsDataSourceModel) toState(environmentID string, groups []management.Group) diag.Diagnostics {
+func (p *GroupsDataSourceModel) toState(environmentID string, groupIDs []string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if groups == nil || environmentID == "" {
+	if groupIDs == nil || environmentID == "" {
 		diags.AddError(
 			"Data object missing",
 			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
@@ -206,15 +225,10 @@ func (p *GroupsDataSourceModel) toState(environmentID string, groups []managemen
 		return diags
 	}
 
-	list := make([]string, 0)
-	for _, item := range groups {
-		list = append(list, item.GetId())
-	}
-
 	var d diag.Diagnostics
 
 	p.Id = framework.PingOneResourceIDToTF(environmentID)
-	p.Ids, d = framework.StringSliceToTF(list)
+	p.Ids, d = framework.StringSliceToTF(groupIDs)
 	diags.Append(d...)
 
 	return diags

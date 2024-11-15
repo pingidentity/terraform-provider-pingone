@@ -796,59 +796,69 @@ func FetchApplicationsByTypeWithTimeout(ctx context.Context, apiClient *manageme
 		Refresh: func() (interface{}, string, error) {
 
 			// Run the API call
-			var entityArray *management.EntityArray
+			var applicationResponse []management.ReadOneApplication200Response
 			diags.Append(framework.ParseResponse(
 				ctx,
 
 				func() (any, *http.Response, error) {
-					fO, fR, fErr := apiClient.ApplicationsApi.ReadAllApplications(ctx, environmentID).Execute()
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
+					pagedIterator := apiClient.ApplicationsApi.ReadAllApplications(ctx, environmentID).Execute()
+
+					var foundApplications []management.ReadOneApplication200Response
+
+					var initialHttpResponse *http.Response
+
+					for pageCursor, err := range pagedIterator {
+						if err != nil {
+							return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, nil, pageCursor.HTTPResponse, err)
+						}
+
+						if initialHttpResponse == nil {
+							initialHttpResponse = pageCursor.HTTPResponse
+						}
+
+						if applications, ok := pageCursor.EntityArray.Embedded.GetApplicationsOk(); ok {
+
+							for _, applicationItem := range applications {
+
+								data, err := json.Marshal(applicationItem)
+								if err != nil {
+									return nil, pageCursor.HTTPResponse, fmt.Errorf("Error marshalling application: %s", err)
+								}
+
+								var common management.Application
+								if err := json.Unmarshal(data, &common); err != nil {
+									return nil, pageCursor.HTTPResponse, fmt.Errorf("Error unmarshalling application: %s", err)
+								}
+
+								if common.GetType() == applicationType {
+									foundApplications = append(foundApplications, applicationItem)
+								}
+							}
+						}
+					}
+
+					return foundApplications, initialHttpResponse, nil
 				},
 				"ReadAllApplications",
 				framework.DefaultCustomError,
 				sdk.DefaultCreateReadRetryable,
-				&entityArray,
+				&applicationResponse,
 			)...)
 			if diags.HasError() {
 				return nil, "err", fmt.Errorf("Error reading applications")
 			}
 
-			found := false
-
-			var applicationResponse []management.ReadOneApplication200Response
-
-			if applications, ok := entityArray.Embedded.GetApplicationsOk(); ok {
-
-				for _, applicationItem := range applications {
-
-					data, err := json.Marshal(applicationItem)
-					if err != nil {
-						return nil, "err", fmt.Errorf("Error marshalling application: %s", err)
-					}
-
-					var common management.Application
-					if err := json.Unmarshal(data, &common); err != nil {
-						return nil, "err", fmt.Errorf("Error unmarshalling application: %s", err)
-					}
-
-					if common.GetType() == applicationType {
-						applicationResponse = append(applicationResponse, applicationItem)
-						found = true
-					}
-				}
-			}
-
-			if !found && expectAtLeastOneResult {
-				return nil, "false", nil
-			}
-
 			tflog.Debug(ctx, "Find applications by type attempt", map[string]interface{}{
 				"applicationResponse":      applicationResponse,
 				"len(applicationResponse)": len(applicationResponse),
-				"result":                   strings.ToLower(strconv.FormatBool(found)),
+				"result":                   strings.ToLower(strconv.FormatBool(len(applicationResponse) > 0)),
 			})
 
-			return applicationResponse, strings.ToLower(strconv.FormatBool(found)), nil
+			if len(applicationResponse) == 0 && expectAtLeastOneResult {
+				return nil, "false", nil
+			}
+
+			return applicationResponse, strings.ToLower(strconv.FormatBool(len(applicationResponse) > 0)), nil
 		},
 		Timeout:                   timeout,
 		Delay:                     1 * time.Second,

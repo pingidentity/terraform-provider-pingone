@@ -133,6 +133,10 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 		"A boolean that specifies whether `requestedAuthnContext` is taken into account in policy decision-making.",
 	)
 
+	samlOptionsSessionNotOnOrAfterDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies a value for if the SAML application requires a different `SessionNotOnOrAfter` attribute value within the `AuthnStatement` element than the `NotOnOrAfter` value set by the `assertion_duration` property.",
+	)
+
 	samlSpEncryptionAlgorithmDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The algorithm to use when encrypting assertions.",
 	).AllowedValuesEnum(management.AllowedEnumCertificateKeyEncryptionAlgorithmEnumValues)
@@ -271,12 +275,12 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						MarkdownDescription: oidcOptionsDeviceCustomVerificationUriDescription.MarkdownDescription,
 						Computed:            true,
 					},
-					"device_timeout": schema.Int64Attribute{
+					"device_timeout": schema.Int32Attribute{
 						Description:         oidcOptionsDeviceTimeoutDescription.Description,
 						MarkdownDescription: oidcOptionsDeviceTimeoutDescription.MarkdownDescription,
 						Computed:            true,
 					},
-					"device_polling_interval": schema.Int64Attribute{
+					"device_polling_interval": schema.Int32Attribute{
 						Description:         oidcOptionsDevicePollingIntervalDescription.Description,
 						MarkdownDescription: oidcOptionsDevicePollingIntervalDescription.MarkdownDescription,
 						Computed:            true,
@@ -317,7 +321,7 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies whether pushed authorization requests (PAR) are required.").Description,
 						Computed:    true,
 					},
-					"par_timeout": schema.Int64Attribute{
+					"par_timeout": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the pushed authorization request (PAR) timeout in seconds.").Description,
 						Computed:    true,
 					},
@@ -342,15 +346,15 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						ElementType:         types.StringType,
 						Computed:            true,
 					},
-					"refresh_token_duration": schema.Int64Attribute{
+					"refresh_token_duration": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the lifetime in seconds of the refresh token.").Description,
 						Computed:    true,
 					},
-					"refresh_token_rolling_duration": schema.Int64Attribute{
+					"refresh_token_rolling_duration": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of seconds a refresh token can be exchanged before re-authentication is required.").Description,
 						Computed:    true,
 					},
-					"refresh_token_rolling_grace_period_duration": schema.Int64Attribute{
+					"refresh_token_rolling_grace_period_duration": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("The number of seconds that a refresh token may be reused after having been exchanged for a new set of tokens.").Description,
 						Computed:    true,
 					},
@@ -401,7 +405,7 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("The package name associated with the application, for push notifications in native apps.").Description,
 								Computed:    true,
 							},
-							"passcode_refresh_seconds": schema.Int64Attribute{
+							"passcode_refresh_seconds": schema.Int32Attribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("The amount of time a passcode should be displayed before being replaced with a new passcode.").Description,
 								Computed:    true,
 							},
@@ -428,7 +432,7 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 										Computed:    true,
 
 										Attributes: map[string]schema.Attribute{
-											"amount": schema.Int64Attribute{
+											"amount": schema.Int32Attribute{
 												Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of minutes or hours that specify the duration between successful integrity detection calls.").Description,
 												Computed:    true,
 											},
@@ -490,7 +494,7 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						ElementType: types.StringType,
 						Computed:    true,
 					},
-					"assertion_duration": schema.Int64Attribute{
+					"assertion_duration": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the assertion validity duration in seconds.").Description,
 						Computed:    true,
 					},
@@ -531,6 +535,11 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the SAML assertion response itself should be signed.").Description,
 						Computed:    true,
 					},
+					"session_not_on_or_after_duration": schema.Int32Attribute{
+						Description:         samlOptionsSessionNotOnOrAfterDurationDescription.Description,
+						MarkdownDescription: samlOptionsSessionNotOnOrAfterDurationDescription.MarkdownDescription,
+						Computed:            true,
+					},
 					"slo_binding": schema.StringAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the binding protocol to be used for the logout response.").Description,
 						Computed:    true,
@@ -543,7 +552,7 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the endpoint URL to submit the logout response.").Description,
 						Computed:    true,
 					},
-					"slo_window": schema.Int64Attribute{
+					"slo_window": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request.").Description,
 						Computed:    true,
 					},
@@ -702,60 +711,69 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	} else if !data.Name.IsNull() {
 		// Run the API call
-		var entityArray *management.EntityArray
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationsApi.ReadAllApplications(ctx, data.EnvironmentId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				pagedIterator := r.Client.ManagementAPIClient.ApplicationsApi.ReadAllApplications(ctx, data.EnvironmentId.ValueString()).Execute()
+
+				var initialHttpResponse *http.Response
+
+				for pageCursor, err := range pagedIterator {
+					if err != nil {
+						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					}
+
+					if initialHttpResponse == nil {
+						initialHttpResponse = pageCursor.HTTPResponse
+					}
+
+					if applications, ok := pageCursor.EntityArray.Embedded.GetApplicationsOk(); ok {
+
+						var applicationObj management.ReadOneApplication200Response
+						for _, applicationObj = range applications {
+							applicationInstance := applicationObj.GetActualInstance()
+
+							applicationName := ""
+
+							switch v := applicationInstance.(type) {
+							case *management.ApplicationExternalLink:
+								applicationName = v.GetName()
+
+							case *management.ApplicationOIDC:
+								applicationName = v.GetName()
+
+							case *management.ApplicationSAML:
+								applicationName = v.GetName()
+							}
+
+							if applicationName == data.Name.ValueString() {
+								return &applicationObj, pageCursor.HTTPResponse, nil
+							}
+						}
+					}
+				}
+
+				return nil, initialHttpResponse, nil
 			},
 			"ReadAllApplications",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&entityArray,
+			&application,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		if applications, ok := entityArray.Embedded.GetApplicationsOk(); ok {
-			found := false
-
-			var applicationObj management.ReadOneApplication200Response
-			for _, applicationObj = range applications {
-				applicationInstance := applicationObj.GetActualInstance()
-
-				applicationName := ""
-
-				switch v := applicationInstance.(type) {
-				case *management.ApplicationExternalLink:
-					applicationName = v.GetName()
-
-				case *management.ApplicationOIDC:
-					applicationName = v.GetName()
-
-				case *management.ApplicationSAML:
-					applicationName = v.GetName()
-				}
-
-				if applicationName == data.Name.ValueString() {
-					application = &applicationObj
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				resp.Diagnostics.AddError(
-					"Cannot find the application from name or application is not the correct type",
-					fmt.Sprintf("The application name %s for environment %s cannot be found, and only %s, %s or %s application types are retrievable", data.Name.String(), data.EnvironmentId.String(),
-						string(management.ENUMAPPLICATIONPROTOCOL_OPENID_CONNECT), string(management.ENUMAPPLICATIONPROTOCOL_SAML), string(management.ENUMAPPLICATIONPROTOCOL_EXTERNAL_LINK)),
-				)
-				return
-			}
-
+		if application == nil {
+			resp.Diagnostics.AddError(
+				"Cannot find the application from name or application is not the correct type",
+				fmt.Sprintf("The application name %s for environment %s cannot be found, and only %s, %s or %s application types are retrievable", data.Name.String(), data.EnvironmentId.String(),
+					string(management.ENUMAPPLICATIONPROTOCOL_OPENID_CONNECT), string(management.ENUMAPPLICATIONPROTOCOL_SAML), string(management.ENUMAPPLICATIONPROTOCOL_EXTERNAL_LINK)),
+			)
+			return
 		}
+
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",

@@ -45,7 +45,7 @@ type verifyPolicyDataSourceModel struct {
 
 var (
 	genericTimeoutDataSourceServiceTFObjectTypes = map[string]attr.Type{
-		"duration":  types.Int64Type,
+		"duration":  types.Int32Type,
 		"time_unit": types.StringType,
 	}
 
@@ -55,7 +55,7 @@ var (
 		"fail_expired_id": types.BoolType,
 		"provider_auto":   types.StringType,
 		"provider_manual": types.StringType,
-		"retry_attempts":  types.Int64Type,
+		"retry_attempts":  types.Int32Type,
 	}
 
 	facialComparisonDataSourceServiceTFObjectTypes = map[string]attr.Type{
@@ -66,7 +66,7 @@ var (
 	livenessDataSourceServiceTFObjectTypes = map[string]attr.Type{
 		"verify":         types.StringType,
 		"threshold":      types.StringType,
-		"retry_attempts": types.Int64Type,
+		"retry_attempts": types.Int32Type,
 	}
 
 	deviceDataSourceServiceTFObjectTypes = map[string]attr.Type{
@@ -83,11 +83,11 @@ var (
 	}
 
 	otpAttemptsDataSourceServiceTFObjectTypes = map[string]attr.Type{
-		"count": types.Int64Type,
+		"count": types.Int32Type,
 	}
 
 	otpDeliveriesDataSourceServiceTFObjectTypes = map[string]attr.Type{
-		"count":    types.Int64Type,
+		"count":    types.Int32Type,
 		"cooldown": types.ObjectType{AttrTypes: genericTimeoutDataSourceServiceTFObjectTypes},
 	}
 
@@ -116,7 +116,7 @@ var (
 	}
 
 	textDependentDataSourceServiceTFObjectTypes = map[string]attr.Type{
-		"samples":         types.Int64Type,
+		"samples":         types.Int32Type,
 		"voice_phrase_id": pingonetypes.ResourceIDType{},
 	}
 
@@ -418,7 +418,7 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 						MarkdownDescription: providerManualDescription.MarkdownDescription,
 						Computed:            true,
 					},
-					"retry_attempts": schema.Int64Attribute{
+					"retry_attempts": schema.Int32Attribute{
 						Description:         retryAttemptsDescription.Description,
 						MarkdownDescription: retryAttemptsDescription.MarkdownDescription,
 						Computed:            true,
@@ -459,7 +459,7 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 						MarkdownDescription: livenessThresholdDescription.MarkdownDescription,
 						Computed:            true,
 					},
-					"retry_attempts": schema.Int64Attribute{
+					"retry_attempts": schema.Int32Attribute{
 						Description:         retryAttemptsDescription.Description,
 						MarkdownDescription: retryAttemptsDescription.MarkdownDescription,
 						Computed:            true,
@@ -484,7 +484,7 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 								Description: "OTP attempts configuration.",
 								Computed:    true,
 								Attributes: map[string]schema.Attribute{
-									"count": schema.Int64Attribute{
+									"count": schema.Int32Attribute{
 										Description: "Allowed maximum number of OTP failures.",
 										Computed:    true,
 									},
@@ -494,7 +494,7 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 								Description: "OTP delivery configuration.",
 								Computed:    true,
 								Attributes: map[string]schema.Attribute{
-									"count": schema.Int64Attribute{
+									"count": schema.Int32Attribute{
 										Description: "Allowed maximum number of OTP deliveries.",
 										Computed:    true,
 									},
@@ -502,7 +502,7 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 										Description: "Cooldown (waiting period between OTP attempts) configuration.",
 										Computed:    true,
 										Attributes: map[string]schema.Attribute{
-											"duration": schema.Int64Attribute{
+											"duration": schema.Int32Attribute{
 												Description:         otpDeliveriesCooldownDurationDescription.Description,
 												MarkdownDescription: otpDeliveriesCooldownDurationDescription.MarkdownDescription,
 												Computed:            true,
@@ -520,7 +520,7 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 								Description: "The length of time for which the OTP is valid.",
 								Computed:    true,
 								Attributes: map[string]schema.Attribute{
-									"duration": schema.Int64Attribute{
+									"duration": schema.Int32Attribute{
 										Description:         otpLifeTimeEmailDurationDescription.Description,
 										MarkdownDescription: otpLifeTimeEmailDurationDescription.MarkdownDescription,
 										Computed:            true,
@@ -575,7 +575,7 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 								Description: "OTP attempts configuration.",
 								Computed:    true,
 								Attributes: map[string]schema.Attribute{
-									"count": schema.Int64Attribute{
+									"count": schema.Int32Attribute{
 										Description: "Allowed maximum number of OTP failures.",
 										Computed:    true,
 									},
@@ -585,7 +585,7 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 								Description: "OTP delivery configuration.",
 								Computed:    true,
 								Attributes: map[string]schema.Attribute{
-									"count": schema.Int64Attribute{
+									"count": schema.Int32Attribute{
 										Description: "Allowed maximum number of OTP deliveries.",
 										Computed:    true,
 									},
@@ -593,7 +593,7 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 										Description: "Cooldown (waiting period between OTP attempts) configuration.",
 										Computed:    true,
 										Attributes: map[string]schema.Attribute{
-											"duration": schema.Int64Attribute{
+											"duration": schema.Int32Attribute{
 												Description:         otpDeliveriesCooldownDurationDescription.Description,
 												MarkdownDescription: otpDeliveriesCooldownDurationDescription.MarkdownDescription,
 												Computed:            true,
@@ -611,7 +611,7 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 								Description: "The length of time for which the OTP is valid.",
 								Computed:    true,
 								Attributes: map[string]schema.Attribute{
-									"duration": schema.Int64Attribute{
+									"duration": schema.Int32Attribute{
 										Description:         otpLifeTimePhoneDurationDescription.Description,
 										MarkdownDescription: otpLifeTimePhoneDurationDescription.MarkdownDescription,
 										Computed:            true,
@@ -659,7 +659,7 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 						Computed:    true,
 
 						Attributes: map[string]schema.Attribute{
-							"duration": schema.Int64Attribute{
+							"duration": schema.Int32Attribute{
 								Description:         transactionTimeoutDurationDescription.Description,
 								MarkdownDescription: transactionTimeoutDurationDescription.MarkdownDescription,
 								Computed:            true,
@@ -679,7 +679,7 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 								Description: "Object for data collection timeout.",
 								Computed:    true,
 								Attributes: map[string]schema.Attribute{
-									"duration": schema.Int64Attribute{
+									"duration": schema.Int32Attribute{
 										Description:         dataCollectionDurationDescription.Description,
 										MarkdownDescription: dataCollectionDurationDescription.MarkdownDescription,
 										Computed:            true,
@@ -731,7 +731,7 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 						Computed:    true,
 
 						Attributes: map[string]schema.Attribute{
-							"samples": schema.Int64Attribute{
+							"samples": schema.Int32Attribute{
 								Description:         voiceTexttDependentSamplesDescription.Description,
 								MarkdownDescription: voiceTexttDependentSamplesDescription.MarkdownDescription,
 								Computed:            true,
@@ -827,11 +827,10 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
-	var verifyPolicy verify.VerifyPolicy
+	var verifyPolicy *verify.VerifyPolicy
 
 	if !data.VerifyPolicyId.IsNull() {
 		// Run the API call
-		var response *verify.VerifyPolicy
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
@@ -842,93 +841,109 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 			"ReadOneVerifyPolicy",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&response,
+			&verifyPolicy,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
-
-		verifyPolicy = *response
 
 	} else if !data.Name.IsNull() {
 		// Run the API call
-		var entityArray *verify.EntityArray
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.VerifyAPIClient.VerifyPoliciesApi.ReadAllVerifyPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				pagedIterator := r.Client.VerifyAPIClient.VerifyPoliciesApi.ReadAllVerifyPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
+
+				var initialHttpResponse *http.Response
+
+				for pageCursor, err := range pagedIterator {
+					if err != nil {
+						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					}
+
+					if initialHttpResponse == nil {
+						initialHttpResponse = pageCursor.HTTPResponse
+					}
+
+					if verifyPolicies, ok := pageCursor.EntityArray.Embedded.GetVerifyPoliciesOk(); ok {
+
+						for _, verifyPolicyItem := range verifyPolicies {
+
+							if verifyPolicyItem.GetName() == data.Name.ValueString() {
+								return &verifyPolicyItem, pageCursor.HTTPResponse, nil
+							}
+						}
+					}
+				}
+
+				return nil, initialHttpResponse, nil
 			},
 			"ReadAllVerifyPolicies",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&entityArray,
+			&verifyPolicy,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		if verifyPolicies, ok := entityArray.Embedded.GetVerifyPoliciesOk(); ok {
-
-			found := false
-			for _, verifyPolicyItem := range verifyPolicies {
-
-				if verifyPolicyItem.GetName() == data.Name.ValueString() {
-					verifyPolicy = verifyPolicyItem
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				resp.Diagnostics.AddError(
-					"Cannot find verify policy from name",
-					fmt.Sprintf("The verify policy name %s for environment %s cannot be found", data.Name.String(), data.EnvironmentId.String()),
-				)
-				return
-			}
-
+		if verifyPolicy == nil {
+			resp.Diagnostics.AddError(
+				"Cannot find verify policy from name",
+				fmt.Sprintf("The verify policy name %s for environment %s cannot be found", data.Name.String(), data.EnvironmentId.String()),
+			)
+			return
 		}
+
 	} else if data.Default.ValueBool() {
 		// Run the API call
-		var entityArray *verify.EntityArray
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.VerifyAPIClient.VerifyPoliciesApi.ReadAllVerifyPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				pagedIterator := r.Client.VerifyAPIClient.VerifyPoliciesApi.ReadAllVerifyPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
+
+				var initialHttpResponse *http.Response
+
+				for pageCursor, err := range pagedIterator {
+					if err != nil {
+						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					}
+
+					if initialHttpResponse == nil {
+						initialHttpResponse = pageCursor.HTTPResponse
+					}
+
+					if verifyPolicies, ok := pageCursor.EntityArray.Embedded.GetVerifyPoliciesOk(); ok {
+
+						for _, verifyPolicyItem := range verifyPolicies {
+
+							if verifyPolicyItem.GetDefault() {
+								return &verifyPolicyItem, pageCursor.HTTPResponse, nil
+							}
+						}
+
+					}
+				}
+
+				return nil, initialHttpResponse, nil
 			},
 			"ReadAllVerifyPolicies",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
-			&entityArray,
+			&verifyPolicy,
 		)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		if verifyPolicies, ok := entityArray.Embedded.GetVerifyPoliciesOk(); ok {
-
-			found := false
-			for _, verifyPolicyItem := range verifyPolicies {
-
-				if verifyPolicyItem.GetDefault() {
-					verifyPolicy = verifyPolicyItem
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				resp.Diagnostics.AddError(
-					"Cannot find default verify policy",
-					fmt.Sprintf("The default verify policy for environment %s cannot be found", data.EnvironmentId.String()),
-				)
-				return
-			}
-
+		if verifyPolicy == nil {
+			resp.Diagnostics.AddError(
+				"Cannot find default verify policy",
+				fmt.Sprintf("The default verify policy for environment %s cannot be found", data.EnvironmentId.String()),
+			)
+			return
 		}
 
 	} else {
@@ -940,7 +955,7 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&verifyPolicy)...)
+	resp.Diagnostics.Append(data.toState(verifyPolicy)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -997,7 +1012,7 @@ func (p *verifyPolicyDataSourceModel) toStateGovernmentId(apiObject *verify.Gove
 		return types.ObjectNull(governmentIdDataSourceServiceTFObjectTypes), diags
 	}
 
-	retryAttempts := types.Int64Null()
+	retryAttempts := types.Int32Null()
 	if v, ok := apiObject.GetRetryOk(); ok {
 		if t, ok := v.GetAttemptsOk(); ok {
 			retryAttempts = framework.Int32ToInt64TF(*t)
@@ -1047,7 +1062,7 @@ func (p *verifyPolicyDataSourceModel) toStateLiveness(apiObject *verify.Liveness
 		return types.ObjectNull(livenessDataSourceServiceTFObjectTypes), diags
 	}
 
-	retryAttempts := types.Int64Null()
+	retryAttempts := types.Int32Null()
 	if v, ok := apiObject.GetRetryOk(); ok {
 		if t, ok := v.GetAttemptsOk(); ok {
 			retryAttempts = framework.Int32ToInt64TF(*t)

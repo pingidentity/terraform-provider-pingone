@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -116,32 +115,53 @@ func (r *VoicePhraseContentsDataSource) Read(ctx context.Context, req datasource
 	}
 
 	// Run the API call
-	var entityArray *verify.EntityArray
+	var voicePhraseContentsIDs []string
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.VerifyAPIClient.VoicePhraseContentsApi.ReadAllVoicePhraseContents(ctx, data.EnvironmentId.ValueString(), data.VoicePhraseId.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			pagedIterator := r.Client.VerifyAPIClient.VoicePhraseContentsApi.ReadAllVoicePhraseContents(ctx, data.EnvironmentId.ValueString(), data.VoicePhraseId.ValueString()).Execute()
+
+			var initialHttpResponse *http.Response
+
+			foundIDs := make([]string, 0)
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if pageCursor.EntityArray.Embedded != nil && pageCursor.EntityArray.Embedded.Contents != nil {
+					for _, item := range pageCursor.EntityArray.Embedded.GetContents() {
+						foundIDs = append(foundIDs, item.GetId())
+					}
+				}
+			}
+
+			return foundIDs, initialHttpResponse, nil
 		},
 		"ReadAllVoicePhraseContents",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-		&entityArray,
+		&voicePhraseContentsIDs,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(data.EnvironmentId.ValueString(), data.VoicePhraseId.ValueString(), entityArray.Embedded.GetContents())...)
+	resp.Diagnostics.Append(data.toState(data.EnvironmentId.ValueString(), data.VoicePhraseId.ValueString(), voicePhraseContentsIDs)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (p *voicePhraseContentsDataSourceModel) toState(environmentID string, voicePhraseID string, voicePhraseContents []verify.VoicePhraseContents) diag.Diagnostics {
+func (p *voicePhraseContentsDataSourceModel) toState(environmentID string, voicePhraseID string, voicePhraseContentsIDs []string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if voicePhraseContents == nil {
+	if voicePhraseContentsIDs == nil {
 		diags.AddError(
 			"Data object missing",
 			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
@@ -150,16 +170,11 @@ func (p *voicePhraseContentsDataSourceModel) toState(environmentID string, voice
 		return diags
 	}
 
-	list := make([]string, 0)
-	for _, item := range voicePhraseContents {
-		list = append(list, item.GetId())
-	}
-
 	var d diag.Diagnostics
 
 	p.Id = framework.PingOneResourceIDToTF(environmentID)
 	p.VoicePhraseId = framework.PingOneResourceIDToTF(voicePhraseID)
-	p.Ids, d = framework.StringSliceToTF(list)
+	p.Ids, d = framework.StringSliceToTF(voicePhraseContentsIDs)
 	diags.Append(d...)
 
 	return diags

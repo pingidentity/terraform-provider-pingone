@@ -157,7 +157,7 @@ func (r *PopulationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
-	var population management.Population
+	var population *management.Population
 	var scimFilter string
 
 	if !data.Name.IsNull() {
@@ -185,28 +185,49 @@ func (r *PopulationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	}
 
 	// Run the API call
-	var entityArray *management.EntityArray
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			pagedIterator := r.Client.ManagementAPIClient.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute()
+
+			var initialHttpResponse *http.Response
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if populations, ok := pageCursor.EntityArray.Embedded.GetPopulationsOk(); ok {
+					for _, p := range populations {
+
+						if !data.Name.IsNull() && p.GetName() == data.Name.ValueString() {
+							return &p, pageCursor.HTTPResponse, nil
+						}
+
+						if !data.PopulationId.IsNull() && p.GetId() == data.PopulationId.ValueString() {
+							return &p, pageCursor.HTTPResponse, nil
+						}
+					}
+				}
+			}
+
+			return nil, initialHttpResponse, nil
 		},
 		"ReadAllPopulations",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-		&entityArray,
+		&population,
 	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if populations, ok := entityArray.Embedded.GetPopulationsOk(); ok && len(populations) > 0 && populations[0].Id != nil {
-
-		population = populations[0]
-
-	} else {
+	if population == nil {
 		resp.Diagnostics.AddError(
 			"Population not found",
 			fmt.Sprintf("The population with the specified population_id or name cannot be found in environment %s.", data.EnvironmentId.String()),
@@ -215,7 +236,7 @@ func (r *PopulationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(&population)...)
+	resp.Diagnostics.Append(data.toState(population)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
