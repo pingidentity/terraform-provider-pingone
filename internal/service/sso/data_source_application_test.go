@@ -680,6 +680,7 @@ resource "pingone_application" "%[3]s" {
     enable_requested_authn_context = true
     nameid_format                  = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
     response_is_signed             = true
+    session_not_on_or_after_duration             = 64
     slo_binding                    = "HTTP_REDIRECT"
     slo_endpoint                   = "https://www.pingidentity.com/sloendpoint"
     slo_response_endpoint          = "https://www.pingidentity.com/sloresponseendpoint"
