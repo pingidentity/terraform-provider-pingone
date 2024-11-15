@@ -4,6 +4,18 @@ NOTES:
 
 * Corrected broken documentation bookmark references. ([#931](https://github.com/pingidentity/terraform-provider-pingone/issues/931))
 * Upgraded go version to 1.23 to align with the go [release policy](https://go.dev/doc/devel/release#policy). ([#931](https://github.com/pingidentity/terraform-provider-pingone/issues/931))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` 0.6.0 => 0.7.0 ([#932](https://github.com/pingidentity/terraform-provider-pingone/issues/932))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` 0.9.0 => 0.10.0 ([#932](https://github.com/pingidentity/terraform-provider-pingone/issues/932))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.43.0 => 0.44.0 ([#932](https://github.com/pingidentity/terraform-provider-pingone/issues/932))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` 0.20.0 => 0.21.0 ([#932](https://github.com/pingidentity/terraform-provider-pingone/issues/932))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` 0.16.0 => 0.17.0 ([#932](https://github.com/pingidentity/terraform-provider-pingone/issues/932))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/verify` 0.7.0 => 0.8.0 ([#932](https://github.com/pingidentity/terraform-provider-pingone/issues/932))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.3 => 0.12.4 ([#932](https://github.com/pingidentity/terraform-provider-pingone/issues/932))
+
+BUG FIXES:
+
+* Fixed potential "Cannot find .." errors in multiple resources and data sources when many configuration items of the same type exist in an environment (fix paged results). ([#932](https://github.com/pingidentity/terraform-provider-pingone/issues/932))
+* Fixed potential missing results in data sources that return multiple configuration items (fix paged results). ([#932](https://github.com/pingidentity/terraform-provider-pingone/issues/932))
 
 ## 1.1.1 (28 August 2024)
 
