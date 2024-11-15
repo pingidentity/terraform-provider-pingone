@@ -17,7 +17,9 @@ import (
 
 var (
 	_ validator.Bool    = IsRequiredIfRegexMatchesPathValueValidator{}
+	_ validator.Float32 = IsRequiredIfRegexMatchesPathValueValidator{}
 	_ validator.Float64 = IsRequiredIfRegexMatchesPathValueValidator{}
+	_ validator.Int32   = IsRequiredIfRegexMatchesPathValueValidator{}
 	_ validator.Int64   = IsRequiredIfRegexMatchesPathValueValidator{}
 	_ validator.List    = IsRequiredIfRegexMatchesPathValueValidator{}
 	_ validator.Map     = IsRequiredIfRegexMatchesPathValueValidator{}
@@ -127,7 +129,35 @@ func (validator IsRequiredIfRegexMatchesPathValueValidator) ValidateBool(ctx con
 	resp.Diagnostics.Append(validateResp.Diagnostics...)
 }
 
+func (validator IsRequiredIfRegexMatchesPathValueValidator) ValidateFloat32(ctx context.Context, req validator.Float32Request, resp *validator.Float32Response) {
+	validateReq := IsRequiredIfRegexMatchesPathValueValidatorRequest{
+		Config:         req.Config,
+		ConfigValue:    req.ConfigValue,
+		Path:           req.Path,
+		PathExpression: req.PathExpression,
+	}
+	validateResp := &IsRequiredIfRegexMatchesPathValueValidatorResponse{}
+
+	validator.Validate(ctx, validateReq, validateResp)
+
+	resp.Diagnostics.Append(validateResp.Diagnostics...)
+}
+
 func (validator IsRequiredIfRegexMatchesPathValueValidator) ValidateFloat64(ctx context.Context, req validator.Float64Request, resp *validator.Float64Response) {
+	validateReq := IsRequiredIfRegexMatchesPathValueValidatorRequest{
+		Config:         req.Config,
+		ConfigValue:    req.ConfigValue,
+		Path:           req.Path,
+		PathExpression: req.PathExpression,
+	}
+	validateResp := &IsRequiredIfRegexMatchesPathValueValidatorResponse{}
+
+	validator.Validate(ctx, validateReq, validateResp)
+
+	resp.Diagnostics.Append(validateResp.Diagnostics...)
+}
+
+func (validator IsRequiredIfRegexMatchesPathValueValidator) ValidateInt32(ctx context.Context, req validator.Int32Request, resp *validator.Int32Response) {
 	validateReq := IsRequiredIfRegexMatchesPathValueValidatorRequest{
 		Config:         req.Config,
 		ConfigValue:    req.ConfigValue,

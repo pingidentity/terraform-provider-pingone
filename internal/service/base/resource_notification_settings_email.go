@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -29,7 +29,7 @@ type notificationSettingsEmailResourceModelV1 struct {
 	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
 	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	Host          types.String                 `tfsdk:"host"`
-	Port          types.Int64                  `tfsdk:"port"`
+	Port          types.Int32                  `tfsdk:"port"`
 	Protocol      types.String                 `tfsdk:"protocol"`
 	Username      types.String                 `tfsdk:"username"`
 	Password      types.String                 `tfsdk:"password"`
@@ -98,12 +98,12 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 				},
 			},
 
-			"port": schema.Int64Attribute{
+			"port": schema.Int32Attribute{
 				MarkdownDescription: portDescription.MarkdownDescription,
 				Description:         portDescription.Description,
 				Required:            true,
-				Validators: []validator.Int64{
-					int64validator.AtLeast(attrMinLength),
+				Validators: []validator.Int32{
+					int32validator.AtLeast(attrMinLength),
 				},
 			},
 
@@ -406,7 +406,7 @@ func (p *notificationSettingsEmailResourceModelV1) expand(ctx context.Context) (
 	}
 
 	if !p.Port.IsNull() && !p.Port.IsUnknown() {
-		data.SetPort(int32(p.Port.ValueInt64()))
+		data.SetPort(p.Port.ValueInt32())
 	}
 
 	if !p.Username.IsNull() && !p.Username.IsUnknown() {

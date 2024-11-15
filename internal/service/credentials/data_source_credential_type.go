@@ -38,12 +38,12 @@ type CredentialTypeDataSourceModel struct {
 
 type MetadataDataSourceModel struct {
 	BackgroundImage  types.String `tfsdk:"background_image"`
-	BgOpacityPercent types.Int64  `tfsdk:"bg_opacity_percent"`
+	BgOpacityPercent types.Int32  `tfsdk:"bg_opacity_percent"`
 	CardColor        types.String `tfsdk:"card_color"`
-	Columns          types.Int64  `tfsdk:"columns"`
+	Columns          types.Int32  `tfsdk:"columns"`
 	Description      types.String `tfsdk:"description"`
 	TextColor        types.String `tfsdk:"text_color"`
-	Version          types.Int64  `tfsdk:"version"`
+	Version          types.Int32  `tfsdk:"version"`
 	LogoImage        types.String `tfsdk:"logo_image"`
 	Name             types.String `tfsdk:"name"`
 	Fields           types.List   `tfsdk:"fields"`
@@ -63,12 +63,12 @@ type FieldsDataSourceModel struct {
 var (
 	metadataDataSourceServiceTFObjectTypes = map[string]attr.Type{
 		"background_image":   types.StringType,
-		"bg_opacity_percent": types.Int64Type,
+		"bg_opacity_percent": types.Int32Type,
 		"card_color":         types.StringType,
-		"columns":            types.Int64Type,
+		"columns":            types.Int32Type,
 		"description":        types.StringType,
 		"text_color":         types.StringType,
-		"version":            types.Int64Type,
+		"version":            types.Int32Type,
 		"logo_image":         types.StringType,
 		"name":               types.StringType,
 		"fields":             types.ListType{ElemType: types.ObjectType{AttrTypes: innerFieldsDataSourceServiceTFObjectTypes}},
@@ -165,7 +165,7 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 						Computed:    true,
 					},
 
-					"bg_opacity_percent": schema.Int64Attribute{
+					"bg_opacity_percent": schema.Int32Attribute{
 						Description: "Percent opacity of the background image in the credential.",
 						Computed:    true,
 					},
@@ -175,7 +175,7 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 						Computed:    true,
 					},
 
-					"columns": schema.Int64Attribute{
+					"columns": schema.Int32Attribute{
 						Description: "Number of columns to organize the fields displayed on the credential.",
 						Computed:    true,
 					},
@@ -199,7 +199,7 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 						Description: "Color of the text to show on the credential.",
 						Computed:    true},
 
-					"version": schema.Int64Attribute{
+					"version": schema.Int32Attribute{
 						Description: "Version of this credential.",
 						Computed:    true,
 					},

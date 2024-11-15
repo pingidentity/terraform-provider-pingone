@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
@@ -50,13 +50,13 @@ type applicationOIDCOptionsResourceModelV0 struct {
 	JwksUrl                                       types.String                 `tfsdk:"jwks_url"`
 	MobileApp                                     types.List                   `tfsdk:"mobile_app"`
 	ParRequirement                                types.String                 `tfsdk:"par_requirement"`
-	ParTimeout                                    types.Int64                  `tfsdk:"par_timeout"`
+	ParTimeout                                    types.Int32                  `tfsdk:"par_timeout"`
 	PKCEEnforcement                               types.String                 `tfsdk:"pkce_enforcement"`
 	PostLogoutRedirectUris                        types.Set                    `tfsdk:"post_logout_redirect_uris"`
 	RedirectUris                                  types.Set                    `tfsdk:"redirect_uris"`
-	RefreshTokenDuration                          types.Int64                  `tfsdk:"refresh_token_duration"`
-	RefreshTokenRollingDuration                   types.Int64                  `tfsdk:"refresh_token_rolling_duration"`
-	RefreshTokenRollingGracePeriodDuration        types.Int64                  `tfsdk:"refresh_token_rolling_grace_period_duration"`
+	RefreshTokenDuration                          types.Int32                  `tfsdk:"refresh_token_duration"`
+	RefreshTokenRollingDuration                   types.Int32                  `tfsdk:"refresh_token_rolling_duration"`
+	RefreshTokenRollingGracePeriodDuration        types.Int32                  `tfsdk:"refresh_token_rolling_grace_period_duration"`
 	RequireSignedRequestObject                    types.Bool                   `tfsdk:"require_signed_request_object"`
 	ResponseTypes                                 types.Set                    `tfsdk:"response_types"`
 	SupportUnsignedRequestObject                  types.Bool                   `tfsdk:"support_unsigned_request_object"`
@@ -79,7 +79,7 @@ type applicationOIDCMobileAppResourceModelV0 struct {
 	HuaweiPackageName      types.String `tfsdk:"huawei_package_name"`
 	IntegrityDetection     types.List   `tfsdk:"integrity_detection"`
 	PackageName            types.String `tfsdk:"package_name"`
-	PasscodeRefreshSeconds types.Int64  `tfsdk:"passcode_refresh_seconds"`
+	PasscodeRefreshSeconds types.Int32  `tfsdk:"passcode_refresh_seconds"`
 	UniversalAppLink       types.String `tfsdk:"universal_app_link"`
 }
 
@@ -101,7 +101,7 @@ type applicationOIDCMobileAppIntegrityDetectionGooglePlayResourceModelV0 struct 
 
 type applicationSAMLOptionsResourceModelV0 struct {
 	AcsUrls                      types.Set    `tfsdk:"acs_urls"`
-	AssertionDuration            types.Int64  `tfsdk:"assertion_duration"`
+	AssertionDuration            types.Int32  `tfsdk:"assertion_duration"`
 	AssertionSignedEnabled       types.Bool   `tfsdk:"assertion_signed_enabled"`
 	CorsSettings                 types.List   `tfsdk:"cors_settings"`
 	EnableRequestedAuthnContext  types.Bool   `tfsdk:"enable_requested_authn_context"`
@@ -114,7 +114,7 @@ type applicationSAMLOptionsResourceModelV0 struct {
 	SloBinding                   types.String `tfsdk:"slo_binding"`
 	SloEndpoint                  types.String `tfsdk:"slo_endpoint"`
 	SloResponseEndpoint          types.String `tfsdk:"slo_response_endpoint"`
-	SloWindow                    types.Int64  `tfsdk:"slo_window"`
+	SloWindow                    types.Int32  `tfsdk:"slo_window"`
 	SpEncryption                 types.List   `tfsdk:"sp_encryption"`
 	SpEntityId                   types.String `tfsdk:"sp_entity_id"`
 	SpVerificationCertificateIds types.Set    `tfsdk:"sp_verification_certificate_ids"`
@@ -281,11 +281,11 @@ func (r *ApplicationResource) UpgradeState(ctx context.Context) map[int64]resour
 									Default: stringdefault.StaticString(string(management.ENUMAPPLICATIONOIDCPARREQUIREMENT_OPTIONAL)),
 								},
 
-								"par_timeout": schema.Int64Attribute{
+								"par_timeout": schema.Int32Attribute{
 									Optional: true,
 									Computed: true,
 
-									Default: int64default.StaticInt64(oidcOptionsParTimeoutDefault),
+									Default: int32default.StaticInt32(oidcOptionsParTimeoutDefault),
 								},
 
 								"pkce_enforcement": schema.StringAttribute{
@@ -314,21 +314,21 @@ func (r *ApplicationResource) UpgradeState(ctx context.Context) map[int64]resour
 									ElementType: types.StringType,
 								},
 
-								"refresh_token_duration": schema.Int64Attribute{
+								"refresh_token_duration": schema.Int32Attribute{
 									Optional: true,
 									Computed: true,
 
-									Default: int64default.StaticInt64(oidcOptionsRefreshTokenDurationDefault),
+									Default: int32default.StaticInt32(oidcOptionsRefreshTokenDurationDefault),
 								},
 
-								"refresh_token_rolling_duration": schema.Int64Attribute{
+								"refresh_token_rolling_duration": schema.Int32Attribute{
 									Optional: true,
 									Computed: true,
 
-									Default: int64default.StaticInt64(oidcOptionsRefreshTokenRollingDurationDefault),
+									Default: int32default.StaticInt32(oidcOptionsRefreshTokenRollingDurationDefault),
 								},
 
-								"refresh_token_rolling_grace_period_duration": schema.Int64Attribute{
+								"refresh_token_rolling_grace_period_duration": schema.Int32Attribute{
 									Optional: true,
 								},
 
@@ -409,11 +409,11 @@ func (r *ApplicationResource) UpgradeState(ctx context.Context) map[int64]resour
 												Optional: true,
 											},
 
-											"passcode_refresh_seconds": schema.Int64Attribute{
+											"passcode_refresh_seconds": schema.Int32Attribute{
 												Optional: true,
 												Computed: true,
 
-												Default: int64default.StaticInt64(oidcOptionsMobileAppPasscodeRefreshSecondsDefault),
+												Default: int32default.StaticInt32(oidcOptionsMobileAppPasscodeRefreshSecondsDefault),
 											},
 
 											"universal_app_link": schema.StringAttribute{
@@ -443,7 +443,7 @@ func (r *ApplicationResource) UpgradeState(ctx context.Context) map[int64]resour
 														"cache_duration": schema.ListNestedBlock{
 															NestedObject: schema.NestedBlockObject{
 																Attributes: map[string]schema.Attribute{
-																	"amount": schema.Int64Attribute{
+																	"amount": schema.Int32Attribute{
 																		Required: true,
 																	},
 
@@ -511,7 +511,7 @@ func (r *ApplicationResource) UpgradeState(ctx context.Context) map[int64]resour
 									ElementType: types.StringType,
 								},
 
-								"assertion_duration": schema.Int64Attribute{
+								"assertion_duration": schema.Int32Attribute{
 									Required: true,
 								},
 
@@ -561,7 +561,7 @@ func (r *ApplicationResource) UpgradeState(ctx context.Context) map[int64]resour
 									Optional: true,
 								},
 
-								"slo_window": schema.Int64Attribute{
+								"slo_window": schema.Int32Attribute{
 									Optional: true,
 								},
 
@@ -822,8 +822,8 @@ func (p *applicationResourceModelV0) schemaUpgradeOIDCOptionsV0toV1(ctx context.
 			CorsSettings:                                  corsSettings,
 			DevicePathId:                                  types.StringNull(),
 			DeviceCustomVerificationUri:                   types.StringNull(),
-			DeviceTimeout:                                 types.Int64Value(deviceTimeoutDefault),
-			DevicePollingInterval:                         types.Int64Value(devicePollingIntervalDefault),
+			DeviceTimeout:                                 types.Int32Value(deviceTimeoutDefault),
+			DevicePollingInterval:                         types.Int32Value(devicePollingIntervalDefault),
 			GrantTypes:                                    priorStateData[0].GrantTypes,
 			HomePageUrl:                                   priorStateData[0].HomePageUrl,
 			InitiateLoginUri:                              priorStateData[0].InitiateLoginUri,

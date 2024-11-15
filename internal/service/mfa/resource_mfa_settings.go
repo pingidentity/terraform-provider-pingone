@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -37,12 +37,12 @@ type mFASettingsResourceModelV1 struct {
 }
 
 type mFASettingsLockoutResourceModelV1 struct {
-	FailureCount    types.Int64 `tfsdk:"failure_count"`
-	DurationSeconds types.Int64 `tfsdk:"duration_seconds"`
+	FailureCount    types.Int32 `tfsdk:"failure_count"`
+	DurationSeconds types.Int32 `tfsdk:"duration_seconds"`
 }
 
 type mFASettingsPairingResourceModelV1 struct {
-	MaxAllowedDevices types.Int64  `tfsdk:"max_allowed_devices"`
+	MaxAllowedDevices types.Int32  `tfsdk:"max_allowed_devices"`
 	PairingKeyFormat  types.String `tfsdk:"pairing_key_format"`
 }
 
@@ -56,12 +56,12 @@ type mFASettingsUsersResourceModelV1 struct {
 
 var (
 	MFASettingsLockoutTFObjectTypes = map[string]attr.Type{
-		"failure_count":    types.Int64Type,
-		"duration_seconds": types.Int64Type,
+		"failure_count":    types.Int32Type,
+		"duration_seconds": types.Int32Type,
 	}
 
 	MFASettingsPairingTFObjectTypes = map[string]attr.Type{
-		"max_allowed_devices": types.Int64Type,
+		"max_allowed_devices": types.Int32Type,
 		"pairing_key_format":  types.StringType,
 	}
 
@@ -135,21 +135,21 @@ func (r *MFASettingsResource) Schema(ctx context.Context, req resource.SchemaReq
 				Optional:    true,
 
 				Attributes: map[string]schema.Attribute{
-					"failure_count": schema.Int64Attribute{
+					"failure_count": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the maximum number of incorrect authentication attempts before the account is locked.").Description,
 						Required:    true,
 
-						Validators: []validator.Int64{
-							int64validator.AtLeast(0),
+						Validators: []validator.Int32{
+							int32validator.AtLeast(0),
 						},
 					},
 
-					"duration_seconds": schema.Int64Attribute{
+					"duration_seconds": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the number of seconds to keep the account in a locked state").Description,
 						Optional:    true,
 
-						Validators: []validator.Int64{
-							int64validator.AtLeast(0),
+						Validators: []validator.Int32{
+							int32validator.AtLeast(0),
 						},
 					},
 				},
@@ -160,16 +160,16 @@ func (r *MFASettingsResource) Schema(ctx context.Context, req resource.SchemaReq
 				Required:    true,
 
 				Attributes: map[string]schema.Attribute{
-					"max_allowed_devices": schema.Int64Attribute{
+					"max_allowed_devices": schema.Int32Attribute{
 						Description:         pairingMaxAllowedDevicesDescription.Description,
 						MarkdownDescription: pairingMaxAllowedDevicesDescription.MarkdownDescription,
 						Optional:            true,
 						Computed:            true,
 
-						Default: int64default.StaticInt64(maxAllowedDevicesDefault),
+						Default: int32default.StaticInt32(maxAllowedDevicesDefault),
 
-						Validators: []validator.Int64{
-							int64validator.Between(maxAllowedDevicesMin, maxAllowedDevicesMax),
+						Validators: []validator.Int32{
+							int32validator.Between(maxAllowedDevicesMin, maxAllowedDevicesMax),
 						},
 					},
 
@@ -476,7 +476,7 @@ func (p *mFASettingsResourceModelV1) expand(ctx context.Context) (*mfa.MFASettin
 		return nil, diags
 	}
 	pairing := mfa.NewMFASettingsPairing(
-		int32(pairingPlan.MaxAllowedDevices.ValueInt64()),
+		pairingPlan.MaxAllowedDevices.ValueInt32(),
 		mfa.EnumMFASettingsPairingKeyFormat(pairingPlan.PairingKeyFormat.ValueString()),
 	)
 
@@ -496,11 +496,11 @@ func (p *mFASettingsResourceModelV1) expand(ctx context.Context) (*mfa.MFASettin
 			return nil, diags
 		}
 		lockout := mfa.NewMFASettingsLockout(
-			int32(lockoutPlan.FailureCount.ValueInt64()),
+			lockoutPlan.FailureCount.ValueInt32(),
 		)
 
 		if !lockoutPlan.DurationSeconds.IsNull() && !lockoutPlan.DurationSeconds.IsUnknown() {
-			lockout.SetDurationSeconds(int32(lockoutPlan.DurationSeconds.ValueInt64()))
+			lockout.SetDurationSeconds(lockoutPlan.DurationSeconds.ValueInt32())
 		}
 
 		data.SetLockout(*lockout)
