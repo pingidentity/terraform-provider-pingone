@@ -36,6 +36,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/risk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	boolvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	objectplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectplanmodifier"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
@@ -119,8 +120,9 @@ type predictorCustomMapHMLList struct {
 
 // New device
 type predictorDevice struct {
-	ActivationAt timetypes.RFC3339 `tfsdk:"activation_at"`
-	Detect       types.String      `tfsdk:"detect"`
+	ActivationAt                   timetypes.RFC3339 `tfsdk:"activation_at"`
+	Detect                         types.String      `tfsdk:"detect"`
+	ShouldValidatePayloadSignature types.Bool        `tfsdk:"should_validate_payload_signature"`
 }
 
 // User Location Anomaly
@@ -270,8 +272,9 @@ var (
 
 	// Device
 	predictorDeviceTFObjectTypes = map[string]attr.Type{
-		"activation_at": timetypes.RFC3339Type{},
-		"detect":        types.StringType,
+		"activation_at":                     timetypes.RFC3339Type{},
+		"detect":                            types.StringType,
+		"should_validate_payload_signature": types.BoolType,
 	}
 
 	// User Location Anomaly
@@ -466,6 +469,10 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 
 	predictorDeviceActivationAtDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A string that represents a date on which the learning process for the device predictor should be restarted.  Can only be configured where the `detect` parameter is `%s`. This can be used in conjunction with the fallback setting (`default.result.level`) to force strong authentication when moving the predictor to production. The date should be in an RFC3339 format. Note that activation date uses UTC time.", string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE)),
+	)
+
+	predictorDeviceShouldValidatePayloadSignatureDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Relevant only for Suspicious Device predictors. A boolean that, if set to `true`, then any risk policies that include this predictor will require that the Signals SDK payload be provided as a signed JWT whose signature will be verified before proceeding with risk evaluation. You instruct the Signals SDK to provide the payload as a signed JWT by using the `universalDeviceIdentification` flag during initialization of the SDK, or by selecting the relevant setting for the `skrisk` component in DaVinci flows.",
 	)
 
 	// User location Predictor
@@ -874,6 +881,19 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						Validators: []validator.String{
 							stringvalidatorinternal.ConflictsIfMatchesPathValue(
 								types.StringValue(string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_SUSPICIOUS_DEVICE)),
+								path.MatchRelative().AtParent().AtName("detect"),
+							),
+						},
+					},
+
+					"should_validate_payload_signature": schema.BoolAttribute{
+						Description:         predictorDeviceShouldValidatePayloadSignatureDescription.Description,
+						MarkdownDescription: predictorDeviceShouldValidatePayloadSignatureDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.Bool{
+							boolvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE)),
 								path.MatchRelative().AtParent().AtName("detect"),
 							),
 						},
@@ -2474,6 +2494,10 @@ func (p *riskPredictorResourceModel) expandPredictorDevice(ctx context.Context, 
 		data.SetActivationAt(t)
 	}
 
+	if !predictorPlan.ShouldValidatePayloadSignature.IsNull() && !predictorPlan.ShouldValidatePayloadSignature.IsUnknown() {
+		data.SetShouldValidatePayloadSignature(predictorPlan.ShouldValidatePayloadSignature.ValueBool())
+	}
+
 	return &data, diags
 }
 
@@ -3601,8 +3625,9 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorDevice(apiObject *risk.
 	}
 
 	objValue, d := types.ObjectValue(predictorDeviceTFObjectTypes, map[string]attr.Value{
-		"activation_at": framework.TimeOkToTF(apiObject.GetActivationAtOk()),
-		"detect":        framework.EnumOkToTF(apiObject.GetDetectOk()),
+		"activation_at":                     framework.TimeOkToTF(apiObject.GetActivationAtOk()),
+		"detect":                            framework.EnumOkToTF(apiObject.GetDetectOk()),
+		"should_validate_payload_signature": framework.BoolOkToTF(apiObject.GetShouldValidatePayloadSignatureOk()),
 	})
 	diags.Append(d...)
 

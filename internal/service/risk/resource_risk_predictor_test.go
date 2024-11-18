@@ -1274,6 +1274,7 @@ func TestAccRiskPredictor_NewDevice(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_device.detect", "NEW_DEVICE"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_device.activation_at", activationAt),
+		resource.TestCheckNoResourceAttr(resourceFullName, "predictor_device.should_validate_payload_signature"),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
@@ -1282,6 +1283,7 @@ func TestAccRiskPredictor_NewDevice(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "default.result.level"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_device.detect", "NEW_DEVICE"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "predictor_device.activation_at"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "predictor_device.should_validate_payload_signature"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -1364,6 +1366,7 @@ func TestAccRiskPredictor_NewDevice_OverwriteUndeletable(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_device.detect", "NEW_DEVICE"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_device.activation_at", activationAt),
+		resource.TestCheckNoResourceAttr(resourceFullName, "predictor_device.should_validate_payload_signature"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -1548,6 +1551,7 @@ func TestAccRiskPredictor_SuspiciousDevice(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_device.detect", "SUSPICIOUS_DEVICE"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "predictor_device.activation_at"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_device.should_validate_payload_signature", "true"),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
@@ -1556,6 +1560,7 @@ func TestAccRiskPredictor_SuspiciousDevice(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "default.result.level"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_device.detect", "SUSPICIOUS_DEVICE"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "predictor_device.activation_at"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "predictor_device.should_validate_payload_signature"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -3132,7 +3137,8 @@ resource "pingone_risk_predictor" "%[2]s" {
   }
 
   predictor_device = {
-    detect = "SUSPICIOUS_DEVICE"
+    detect                            = "SUSPICIOUS_DEVICE"
+    should_validate_payload_signature = true
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
