@@ -1,0 +1,3 @@
+```release-note:enhancement
+`resource/pingone_risk_predictor`: Added the `predictor_bot_detection.include_repeated_events_without_sdk` field to choose whether to expand the range of bot activity that PingOne Protect can detect.
+```

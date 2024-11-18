@@ -1,9 +1,14 @@
-## 1.2.0 (Unreleased)
+## 1.2.0 (18 November 2024)
 
 NOTES:
 
 * Corrected broken documentation bookmark references. ([#931](https://github.com/pingidentity/terraform-provider-pingone/issues/931))
 * Upgraded go version to 1.23 to align with the go [release policy](https://go.dev/doc/devel/release#policy). ([#931](https://github.com/pingidentity/terraform-provider-pingone/issues/931))
+* bump `github.com/hashicorp/terraform-plugin-framework-jsontypes` 0.1.0 => 0.2.0 ([#937](https://github.com/pingidentity/terraform-provider-pingone/issues/937))
+* bump `github.com/hashicorp/terraform-plugin-framework-validators` 0.13.0 => 0.15.0 ([#937](https://github.com/pingidentity/terraform-provider-pingone/issues/937))
+* bump `github.com/hashicorp/terraform-plugin-framework` 1.11.0 => 1.13.0 ([#937](https://github.com/pingidentity/terraform-provider-pingone/issues/937))
+* bump `github.com/hashicorp/terraform-plugin-go` 0.23.0 => 0.25.0 ([#937](https://github.com/pingidentity/terraform-provider-pingone/issues/937))
+* bump `github.com/hashicorp/terraform-plugin-mux` 0.16.0 => 0.17.0 ([#937](https://github.com/pingidentity/terraform-provider-pingone/issues/937))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` 0.6.0 => 0.7.0 ([#932](https://github.com/pingidentity/terraform-provider-pingone/issues/932))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` 0.9.0 => 0.10.0 ([#932](https://github.com/pingidentity/terraform-provider-pingone/issues/932))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.43.0 => 0.44.0 ([#932](https://github.com/pingidentity/terraform-provider-pingone/issues/932))
@@ -18,6 +23,8 @@ ENHANCEMENTS:
 * `resource/pingone_application`: Add `session_not_on_or_after_duration` field to SAML applications. ([#934](https://github.com/pingidentity/terraform-provider-pingone/issues/934))
 * `resource/pingone_mfa_device_policy`: Added `[email|sms|voice].otp.otp_length` field to allow admins to specify the length of the OTP displayed to users for SMS, Voice or Email delivery methods. ([#935](https://github.com/pingidentity/terraform-provider-pingone/issues/935))
 * `resource/pingone_mfa_device_policy`: Added the `totp.uri_parameters` field to allow custom key:value pairs for authenticators that support `otpauth` URI parameters. ([#936](https://github.com/pingidentity/terraform-provider-pingone/issues/936))
+* `resource/pingone_risk_predictor`: Added the `predictor_bot_detection.include_repeated_events_without_sdk` field to choose whether to expand the range of bot activity that PingOne Protect can detect. ([#939](https://github.com/pingidentity/terraform-provider-pingone/issues/939))
+* `resource/pingone_risk_predictor`: Added the `predictor_device.should_validate_payload_signature` field to enforce requirement that the Signals SDK payload be provided as a signed JWT for suspicious device predictors. ([#938](https://github.com/pingidentity/terraform-provider-pingone/issues/938))
 
 BUG FIXES:
 

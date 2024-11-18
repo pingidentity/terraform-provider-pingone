@@ -1,0 +1,3 @@
+```release-note:enhancement
+`resource/pingone_risk_predictor`: Added the `predictor_device.should_validate_payload_signature` field to enforce requirement that the Signals SDK payload be provided as a signed JWT for suspicious device predictors.
+```

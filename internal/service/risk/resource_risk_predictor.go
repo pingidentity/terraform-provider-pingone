@@ -36,6 +36,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/risk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	boolvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	objectplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectplanmodifier"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
@@ -82,6 +83,11 @@ type predictorGenericAllowedDomain struct {
 	AllowedDomainList types.Set `tfsdk:"allowed_domain_list"`
 }
 
+// Bot Detection
+type predictorBotDetection struct {
+	IncludeRepeatedEventsWithoutSDK types.Bool `tfsdk:"include_repeated_events_without_sdk"`
+}
+
 // Composite
 type predictorComposite struct {
 	Composition types.Object `tfsdk:"composition"`
@@ -119,8 +125,9 @@ type predictorCustomMapHMLList struct {
 
 // New device
 type predictorDevice struct {
-	ActivationAt timetypes.RFC3339 `tfsdk:"activation_at"`
-	Detect       types.String      `tfsdk:"detect"`
+	ActivationAt                   timetypes.RFC3339 `tfsdk:"activation_at"`
+	Detect                         types.String      `tfsdk:"detect"`
+	ShouldValidatePayloadSignature types.Bool        `tfsdk:"should_validate_payload_signature"`
 }
 
 // User Location Anomaly
@@ -213,6 +220,11 @@ var (
 		"allowed_domain_list": types.SetType{ElemType: types.StringType},
 	}
 
+	// Bot Detection
+	predictorBotDetectionTFObjectTypes = map[string]attr.Type{
+		"include_repeated_events_without_sdk": types.BoolType,
+	}
+
 	// Composite
 	predictorCompositeTFObjectTypes = map[string]attr.Type{
 		"composition": types.ObjectType{
@@ -270,8 +282,9 @@ var (
 
 	// Device
 	predictorDeviceTFObjectTypes = map[string]attr.Type{
-		"activation_at": timetypes.RFC3339Type{},
-		"detect":        types.StringType,
+		"activation_at":                     timetypes.RFC3339Type{},
+		"detect":                            types.StringType,
+		"should_validate_payload_signature": types.BoolType,
 	}
 
 	// User Location Anomaly
@@ -466,6 +479,10 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 
 	predictorDeviceActivationAtDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A string that represents a date on which the learning process for the device predictor should be restarted.  Can only be configured where the `detect` parameter is `%s`. This can be used in conjunction with the fallback setting (`default.result.level`) to force strong authentication when moving the predictor to production. The date should be in an RFC3339 format. Note that activation date uses UTC time.", string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE)),
+	)
+
+	predictorDeviceShouldValidatePayloadSignatureDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Relevant only for Suspicious Device predictors. A boolean that, if set to `true`, then any risk policies that include this predictor will require that the Signals SDK payload be provided as a signed JWT whose signature will be verified before proceeding with risk evaluation. You instruct the Signals SDK to provide the payload as a signed JWT by using the `universalDeviceIdentification` flag during initialization of the SDK, or by selecting the relevant setting for the `skrisk` component in DaVinci flows.",
 	)
 
 	// User location Predictor
@@ -694,7 +711,12 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				MarkdownDescription: predictorBotDetectionDescription.MarkdownDescription,
 				Optional:            true,
 
-				Attributes: map[string]schema.Attribute{},
+				Attributes: map[string]schema.Attribute{
+					"include_repeated_events_without_sdk": schema.BoolAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether to expand the range of bot activity that PingOne Protect can detect.").Description,
+						Optional:    true,
+					},
+				},
 
 				Validators: predictorObjectValidators,
 
@@ -874,6 +896,19 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						Validators: []validator.String{
 							stringvalidatorinternal.ConflictsIfMatchesPathValue(
 								types.StringValue(string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_SUSPICIOUS_DEVICE)),
+								path.MatchRelative().AtParent().AtName("detect"),
+							),
+						},
+					},
+
+					"should_validate_payload_signature": schema.BoolAttribute{
+						Description:         predictorDeviceShouldValidatePayloadSignatureDescription.Description,
+						MarkdownDescription: predictorDeviceShouldValidatePayloadSignatureDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.Bool{
+							boolvalidatorinternal.ConflictsIfMatchesPathValue(
+								types.StringValue(string(risk.ENUMPREDICTORNEWDEVICEDETECTTYPE_NEW_DEVICE)),
 								path.MatchRelative().AtParent().AtName("detect"),
 							),
 						},
@@ -1856,7 +1891,7 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 	}
 
 	if !p.PredictorBotDetection.IsNull() && !p.PredictorBotDetection.IsUnknown() {
-		riskPredictor.RiskPredictorBotDetection = p.expandPredictorBotDetection(riskPredictorCommonData)
+		riskPredictor.RiskPredictorBotDetection, d = p.expandPredictorBotDetection(ctx, riskPredictorCommonData)
 	}
 
 	if !p.PredictorComposite.IsNull() && !p.PredictorComposite.IsUnknown() {
@@ -1985,7 +2020,9 @@ func (p *riskPredictorResourceModel) expandPredictorAnonymousNetwork(ctx context
 	return &data, diags
 }
 
-func (p *riskPredictorResourceModel) expandPredictorBotDetection(riskPredictorCommon *risk.RiskPredictorCommon) *risk.RiskPredictorBotDetection {
+func (p *riskPredictorResourceModel) expandPredictorBotDetection(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorBotDetection, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
 	data := risk.RiskPredictorBotDetection{
 		Name:        riskPredictorCommon.Name,
 		CompactName: riskPredictorCommon.CompactName,
@@ -1994,7 +2031,21 @@ func (p *riskPredictorResourceModel) expandPredictorBotDetection(riskPredictorCo
 		Default:     riskPredictorCommon.Default,
 	}
 
-	return &data
+	var predictorPlan predictorBotDetection
+	d := p.PredictorBotDetection.As(ctx, &predictorPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	if !predictorPlan.IncludeRepeatedEventsWithoutSDK.IsNull() && !predictorPlan.IncludeRepeatedEventsWithoutSDK.IsUnknown() {
+		data.SetIncludeRepeatedEventsWithoutSdk(predictorPlan.IncludeRepeatedEventsWithoutSDK.ValueBool())
+	}
+
+	return &data, diags
 }
 
 func (p *riskPredictorResourceModel) expandPredictorComposite(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorComposite, diag.Diagnostics) {
@@ -2472,6 +2523,10 @@ func (p *riskPredictorResourceModel) expandPredictorDevice(ctx context.Context, 
 		}
 
 		data.SetActivationAt(t)
+	}
+
+	if !predictorPlan.ShouldValidatePayloadSignature.IsNull() && !predictorPlan.ShouldValidatePayloadSignature.IsUnknown() {
+		data.SetShouldValidatePayloadSignature(predictorPlan.ShouldValidatePayloadSignature.ValueBool())
 	}
 
 	return &data, diags
@@ -3189,10 +3244,12 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorBotDetection(apiObject 
 	var diags diag.Diagnostics
 
 	if apiObject == nil || apiObject.GetId() == "" {
-		return types.ObjectNull(map[string]attr.Type{}), diags
+		return types.ObjectNull(predictorBotDetectionTFObjectTypes), diags
 	}
 
-	objValue, d := types.ObjectValue(map[string]attr.Type{}, map[string]attr.Value{})
+	objValue, d := types.ObjectValue(predictorBotDetectionTFObjectTypes, map[string]attr.Value{
+		"include_repeated_events_without_sdk": framework.BoolOkToTF(apiObject.GetIncludeRepeatedEventsWithoutSdkOk()),
+	})
 	diags.Append(d...)
 
 	return objValue, diags
@@ -3601,8 +3658,9 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorDevice(apiObject *risk.
 	}
 
 	objValue, d := types.ObjectValue(predictorDeviceTFObjectTypes, map[string]attr.Value{
-		"activation_at": framework.TimeOkToTF(apiObject.GetActivationAtOk()),
-		"detect":        framework.EnumOkToTF(apiObject.GetDetectOk()),
+		"activation_at":                     framework.TimeOkToTF(apiObject.GetActivationAtOk()),
+		"detect":                            framework.EnumOkToTF(apiObject.GetDetectOk()),
+		"should_validate_payload_signature": framework.BoolOkToTF(apiObject.GetShouldValidatePayloadSignatureOk()),
 	})
 	diags.Append(d...)
 
