@@ -23,6 +23,7 @@ ENHANCEMENTS:
 * `resource/pingone_application`: Add `session_not_on_or_after_duration` field to SAML applications. ([#934](https://github.com/pingidentity/terraform-provider-pingone/issues/934))
 * `resource/pingone_mfa_device_policy`: Added `[email|sms|voice].otp.otp_length` field to allow admins to specify the length of the OTP displayed to users for SMS, Voice or Email delivery methods. ([#935](https://github.com/pingidentity/terraform-provider-pingone/issues/935))
 * `resource/pingone_mfa_device_policy`: Added the `totp.uri_parameters` field to allow custom key:value pairs for authenticators that support `otpauth` URI parameters. ([#936](https://github.com/pingidentity/terraform-provider-pingone/issues/936))
+* `resource/pingone_risk_predictor`: Added the `predictor_bot_detection.include_repeated_events_without_sdk` field to choose whether to expand the range of bot activity that PingOne Protect can detect. ([#939](https://github.com/pingidentity/terraform-provider-pingone/issues/939))
 * `resource/pingone_risk_predictor`: Added the `predictor_device.should_validate_payload_signature` field to enforce requirement that the Signals SDK payload be provided as a signed JWT for suspicious device predictors. ([#938](https://github.com/pingidentity/terraform-provider-pingone/issues/938))
 
 BUG FIXES:
