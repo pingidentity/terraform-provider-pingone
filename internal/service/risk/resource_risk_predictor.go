@@ -83,6 +83,11 @@ type predictorGenericAllowedDomain struct {
 	AllowedDomainList types.Set `tfsdk:"allowed_domain_list"`
 }
 
+// Bot Detection
+type predictorBotDetection struct {
+	IncludeRepeatedEventsWithoutSDK types.Bool `tfsdk:"include_repeated_events_without_sdk"`
+}
+
 // Composite
 type predictorComposite struct {
 	Composition types.Object `tfsdk:"composition"`
@@ -213,6 +218,11 @@ var (
 	// Adversary in the middle
 	predictorGenericAllowedDomainTFObjectTypes = map[string]attr.Type{
 		"allowed_domain_list": types.SetType{ElemType: types.StringType},
+	}
+
+	// Bot Detection
+	predictorBotDetectionTFObjectTypes = map[string]attr.Type{
+		"include_repeated_events_without_sdk": types.BoolType,
 	}
 
 	// Composite
@@ -701,7 +711,12 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				MarkdownDescription: predictorBotDetectionDescription.MarkdownDescription,
 				Optional:            true,
 
-				Attributes: map[string]schema.Attribute{},
+				Attributes: map[string]schema.Attribute{
+					"include_repeated_events_without_sdk": schema.BoolAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether to expand the range of bot activity that PingOne Protect can detect.").Description,
+						Optional:    true,
+					},
+				},
 
 				Validators: predictorObjectValidators,
 
@@ -1876,7 +1891,7 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 	}
 
 	if !p.PredictorBotDetection.IsNull() && !p.PredictorBotDetection.IsUnknown() {
-		riskPredictor.RiskPredictorBotDetection = p.expandPredictorBotDetection(riskPredictorCommonData)
+		riskPredictor.RiskPredictorBotDetection, d = p.expandPredictorBotDetection(ctx, riskPredictorCommonData)
 	}
 
 	if !p.PredictorComposite.IsNull() && !p.PredictorComposite.IsUnknown() {
@@ -2005,7 +2020,9 @@ func (p *riskPredictorResourceModel) expandPredictorAnonymousNetwork(ctx context
 	return &data, diags
 }
 
-func (p *riskPredictorResourceModel) expandPredictorBotDetection(riskPredictorCommon *risk.RiskPredictorCommon) *risk.RiskPredictorBotDetection {
+func (p *riskPredictorResourceModel) expandPredictorBotDetection(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorBotDetection, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
 	data := risk.RiskPredictorBotDetection{
 		Name:        riskPredictorCommon.Name,
 		CompactName: riskPredictorCommon.CompactName,
@@ -2014,7 +2031,21 @@ func (p *riskPredictorResourceModel) expandPredictorBotDetection(riskPredictorCo
 		Default:     riskPredictorCommon.Default,
 	}
 
-	return &data
+	var predictorPlan predictorBotDetection
+	d := p.PredictorBotDetection.As(ctx, &predictorPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	if !predictorPlan.IncludeRepeatedEventsWithoutSDK.IsNull() && !predictorPlan.IncludeRepeatedEventsWithoutSDK.IsUnknown() {
+		data.SetIncludeRepeatedEventsWithoutSdk(predictorPlan.IncludeRepeatedEventsWithoutSDK.ValueBool())
+	}
+
+	return &data, diags
 }
 
 func (p *riskPredictorResourceModel) expandPredictorComposite(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorComposite, diag.Diagnostics) {
@@ -3213,10 +3244,12 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorBotDetection(apiObject 
 	var diags diag.Diagnostics
 
 	if apiObject == nil || apiObject.GetId() == "" {
-		return types.ObjectNull(map[string]attr.Type{}), diags
+		return types.ObjectNull(predictorBotDetectionTFObjectTypes), diags
 	}
 
-	objValue, d := types.ObjectValue(map[string]attr.Type{}, map[string]attr.Value{})
+	objValue, d := types.ObjectValue(predictorBotDetectionTFObjectTypes, map[string]attr.Value{
+		"include_repeated_events_without_sdk": framework.BoolOkToTF(apiObject.GetIncludeRepeatedEventsWithoutSdkOk()),
+	})
 	diags.Append(d...)
 
 	return objValue, diags

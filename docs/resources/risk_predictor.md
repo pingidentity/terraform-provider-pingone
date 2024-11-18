@@ -495,6 +495,10 @@ Optional:
 <a id="nestedatt--predictor_bot_detection"></a>
 ### Nested Schema for `predictor_bot_detection`
 
+Optional:
+
+- `include_repeated_events_without_sdk` (Boolean) A boolean that specifies whether to expand the range of bot activity that PingOne Protect can detect.
+
 
 <a id="nestedatt--predictor_composite"></a>
 ### Nested Schema for `predictor_composite`
