@@ -647,6 +647,7 @@ Optional:
 
 - `activation_at` (String) A string that represents a date on which the learning process for the device predictor should be restarted.  Can only be configured where the `detect` parameter is `NEW_DEVICE`. This can be used in conjunction with the fallback setting (`default.result.level`) to force strong authentication when moving the predictor to production. The date should be in an RFC3339 format. Note that activation date uses UTC time.
 - `detect` (String) A string that represents the type of device detection to use.  Options are `NEW_DEVICE` (to configure a model based on new devices), `SUSPICIOUS_DEVICE` (to configure a model based on detection of suspicious devices).  Defaults to `NEW_DEVICE`.
+- `should_validate_payload_signature` (Boolean) Relevant only for Suspicious Device predictors. A boolean that, if set to `true`, then any risk policies that include this predictor will require that the Signals SDK payload be provided as a signed JWT whose signature will be verified before proceeding with risk evaluation. You instruct the Signals SDK to provide the payload as a signed JWT by using the `universalDeviceIdentification` flag during initialization of the SDK, or by selecting the relevant setting for the `skrisk` component in DaVinci flows.
 
 
 <a id="nestedatt--predictor_email_reputation"></a>
