@@ -4,6 +4,11 @@ NOTES:
 
 * Corrected broken documentation bookmark references. ([#931](https://github.com/pingidentity/terraform-provider-pingone/issues/931))
 * Upgraded go version to 1.23 to align with the go [release policy](https://go.dev/doc/devel/release#policy). ([#931](https://github.com/pingidentity/terraform-provider-pingone/issues/931))
+* bump `github.com/hashicorp/terraform-plugin-framework-jsontypes` 0.1.0 => 0.2.0 ([#937](https://github.com/pingidentity/terraform-provider-pingone/issues/937))
+* bump `github.com/hashicorp/terraform-plugin-framework-validators` 0.13.0 => 0.15.0 ([#937](https://github.com/pingidentity/terraform-provider-pingone/issues/937))
+* bump `github.com/hashicorp/terraform-plugin-framework` 1.11.0 => 1.13.0 ([#937](https://github.com/pingidentity/terraform-provider-pingone/issues/937))
+* bump `github.com/hashicorp/terraform-plugin-go` 0.23.0 => 0.25.0 ([#937](https://github.com/pingidentity/terraform-provider-pingone/issues/937))
+* bump `github.com/hashicorp/terraform-plugin-mux` 0.16.0 => 0.17.0 ([#937](https://github.com/pingidentity/terraform-provider-pingone/issues/937))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` 0.6.0 => 0.7.0 ([#932](https://github.com/pingidentity/terraform-provider-pingone/issues/932))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` 0.9.0 => 0.10.0 ([#932](https://github.com/pingidentity/terraform-provider-pingone/issues/932))
 * bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.43.0 => 0.44.0 ([#932](https://github.com/pingidentity/terraform-provider-pingone/issues/932))
