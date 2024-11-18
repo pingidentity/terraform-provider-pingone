@@ -567,14 +567,14 @@ func TestAccRiskPredictor_Bot_Detection(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "type", "BOT"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
 		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_bot_detection.#", "0"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_bot_detection.include_repeated_events_without_sdk", "true"),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "type", "BOT"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "default.result.level"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_bot_detection.#", "0"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "predictor_bot_detection.include_repeated_events_without_sdk"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -652,7 +652,7 @@ func TestAccRiskPredictor_Bot_Detection_OverwriteUndeletable(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "type", "BOT"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "false"),
 		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_bot_detection.#", "0"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_bot_detection.include_repeated_events_without_sdk", "true"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -2494,7 +2494,9 @@ resource "pingone_risk_predictor" "%[2]s" {
     }
   }
 
-  predictor_bot_detection = {}
+  predictor_bot_detection = {
+    include_repeated_events_without_sdk = true
+  }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -2529,7 +2531,9 @@ resource "pingone_risk_predictor" "%[2]s" {
     }
   }
 
-  predictor_bot_detection = {}
+  predictor_bot_detection = {
+    include_repeated_events_without_sdk = true
+  }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
 }
