@@ -1,0 +1,19 @@
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-framework` 1.11.0 => 1.13.0
+```
+
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-framework-jsontypes` 0.1.0 => 0.2.0
+```
+
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-framework-validators` 0.13.0 => 0.15.0
+```
+
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-go` 0.23.0 => 0.25.0
+```
+
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-mux` 0.16.0 => 0.17.0
+```
