@@ -246,6 +246,13 @@ var (
 		"pairing_disabled":               types.BoolType,
 		"prompt_for_nickname_on_pairing": types.BoolType,
 	}
+
+	MFADevicePolicyFido2TFDefaultObjectValue, _ = types.ObjectValue(MFADevicePolicyFido2TFObjectTypes, map[string]attr.Value{
+		"enabled":                        types.BoolValue(false),
+		"fido2_policy_id":                types.StringNull(),
+		"pairing_disabled":               types.BoolNull(),
+		"prompt_for_nickname_on_pairing": types.BoolNull(),
+	})
 )
 
 // Framework interfaces
@@ -852,7 +859,8 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 			"fido2": schema.SingleNestedAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of FIDO2 device authentication policy settings.").Description,
 				Optional:    true,
-
+				Computed:    true,
+				Default:     objectdefault.StaticValue(MFADevicePolicyFido2TFDefaultObjectValue),
 				Attributes: map[string]schema.Attribute{
 					"enabled": schema.BoolAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the FIDO2 method is enabled or disabled in the policy.").Description,
