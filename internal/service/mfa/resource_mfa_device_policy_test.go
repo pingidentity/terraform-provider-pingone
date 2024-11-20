@@ -1308,7 +1308,7 @@ func TestAccMFADevicePolicy_FIDO2_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "fido2.pairing_disabled", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "fido2.pairing_disabled"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "fido2.fido2_policy_id"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "fido2.prompt_for_nickname_on_pairing"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
@@ -1359,7 +1359,7 @@ func TestAccMFADevicePolicy_FIDO2_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "fido2.pairing_disabled", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "fido2.pairing_disabled"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "fido2.fido2_policy_id"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "fido2.prompt_for_nickname_on_pairing"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
@@ -1643,36 +1643,6 @@ resource "pingone_mfa_device_policy" "%[3]s" {
     enabled = true
   }
 
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
-}
-
-func testAccMFADevicePolicyConfigNoFido_NewEnv(environmentName, licenseID, resourceName, name string) string {
-	return fmt.Sprintf(`
-		%[1]s
-
-resource "pingone_mfa_device_policy" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  name           = "%[4]s"
-
-  sms = {
-    enabled = true
-  }
-
-  voice = {
-    enabled = true
-  }
-
-  email = {
-    enabled = true
-  }
-
-  mobile = {
-    enabled = true
-  }
-
-  totp = {
-    enabled = true
-  }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
