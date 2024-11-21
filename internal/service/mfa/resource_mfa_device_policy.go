@@ -871,6 +871,9 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 						Description:         fido2PairingDisabledDescription.Description,
 						MarkdownDescription: fido2PairingDisabledDescription.MarkdownDescription,
 						Optional:            true,
+						Computed:            true,
+
+						Default: booldefault.StaticBool(false),
 					},
 
 					"fido2_policy_id": schema.StringAttribute{
