@@ -1,0 +1,1 @@
+terraform import pingone_authorize_policy_management_policy.example <environment_id>/<authorization_policy_id>

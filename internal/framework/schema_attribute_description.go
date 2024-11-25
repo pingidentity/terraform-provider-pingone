@@ -140,6 +140,24 @@ func (r SchemaAttributeDescription) AppendStringValue(pretext string, value stri
 	return r.AppendMarkdownString(fmt.Sprintf("%s `%s`.", pretext, value))
 }
 
+func (r SchemaAttributeDescription) Append(description SchemaAttributeDescription) SchemaAttributeDescription {
+
+	description = description.Clean(true)
+	r = r.Clean(true)
+
+	if r.Description != "" {
+		r.Description = fmt.Sprintf("%s.  ", r.Description)
+	}
+	r.Description = fmt.Sprintf("%s%s", r.Description, description.Description)
+
+	if r.MarkdownDescription != "" {
+		r.MarkdownDescription = fmt.Sprintf("%s.  ", r.MarkdownDescription)
+	}
+	r.MarkdownDescription = fmt.Sprintf("%s%s", r.MarkdownDescription, description.MarkdownDescription)
+
+	return r
+}
+
 func (r SchemaAttributeDescription) AppendMarkdownString(text string) SchemaAttributeDescription {
 	text = strings.TrimSpace(text)
 

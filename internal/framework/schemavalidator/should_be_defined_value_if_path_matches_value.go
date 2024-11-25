@@ -16,7 +16,9 @@ import (
 
 var (
 	_ validator.Bool    = ShouldBeDefinedValueIfPathMatchesValueValidator{}
+	_ validator.Float32 = ShouldBeDefinedValueIfPathMatchesValueValidator{}
 	_ validator.Float64 = ShouldBeDefinedValueIfPathMatchesValueValidator{}
+	_ validator.Int32   = ShouldBeDefinedValueIfPathMatchesValueValidator{}
 	_ validator.Int64   = ShouldBeDefinedValueIfPathMatchesValueValidator{}
 	_ validator.List    = ShouldBeDefinedValueIfPathMatchesValueValidator{}
 	_ validator.Map     = ShouldBeDefinedValueIfPathMatchesValueValidator{}
@@ -128,7 +130,35 @@ func (validator ShouldBeDefinedValueIfPathMatchesValueValidator) ValidateBool(ct
 	resp.Diagnostics.Append(validateResp.Diagnostics...)
 }
 
+func (validator ShouldBeDefinedValueIfPathMatchesValueValidator) ValidateFloat32(ctx context.Context, req validator.Float32Request, resp *validator.Float32Response) {
+	validateReq := ShouldBeDefinedValueIfPathMatchesValueValidatorRequest{
+		Config:         req.Config,
+		ConfigValue:    req.ConfigValue,
+		Path:           req.Path,
+		PathExpression: req.PathExpression,
+	}
+	validateResp := &ShouldBeDefinedValueIfPathMatchesValueValidatorResponse{}
+
+	validator.Validate(ctx, validateReq, validateResp)
+
+	resp.Diagnostics.Append(validateResp.Diagnostics...)
+}
+
 func (validator ShouldBeDefinedValueIfPathMatchesValueValidator) ValidateFloat64(ctx context.Context, req validator.Float64Request, resp *validator.Float64Response) {
+	validateReq := ShouldBeDefinedValueIfPathMatchesValueValidatorRequest{
+		Config:         req.Config,
+		ConfigValue:    req.ConfigValue,
+		Path:           req.Path,
+		PathExpression: req.PathExpression,
+	}
+	validateResp := &ShouldBeDefinedValueIfPathMatchesValueValidatorResponse{}
+
+	validator.Validate(ctx, validateReq, validateResp)
+
+	resp.Diagnostics.Append(validateResp.Diagnostics...)
+}
+
+func (validator ShouldBeDefinedValueIfPathMatchesValueValidator) ValidateInt32(ctx context.Context, req validator.Int32Request, resp *validator.Int32Response) {
 	validateReq := ShouldBeDefinedValueIfPathMatchesValueValidatorRequest{
 		Config:         req.Config,
 		ConfigValue:    req.ConfigValue,
