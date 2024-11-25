@@ -1,5 +1,9 @@
 ## 1.3.0 (Unreleased)
 
+BUG FIXES:
+
+* `resource/pingone_mfa_device_policy`: Fixed "unexpected new value: .fido2: was null, but now cty.ObjectVal" when `fido2` is applied, then removed from resource configuration. ([#940](https://github.com/pingidentity/terraform-provider-pingone/issues/940))
+
 ## 1.2.0 (18 November 2024)
 
 NOTES:
