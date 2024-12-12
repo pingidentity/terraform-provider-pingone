@@ -6,7 +6,7 @@ require (
 	github.com/bflad/tfproviderlint v0.30.0
 	github.com/golangci/golangci-lint v1.62.2
 	github.com/hashicorp/go-changelog v0.0.0-20230630083008-522d403eacf1
-	github.com/hashicorp/terraform-plugin-docs v0.20.0
+	github.com/hashicorp/terraform-plugin-docs v0.20.1
 	github.com/katbyte/terrafmt v0.5.4
 	github.com/pavius/impi v0.0.3
 	github.com/terraform-linters/tflint v0.54.0
