@@ -1,5 +1,9 @@
 ## 1.2.1 (Unreleased)
 
+NOTES:
+
+* bump `github.com/hashicorp/terraform-plugin-sdk/v2` 2.34.0 => 2.35.0 ([#942](https://github.com/pingidentity/terraform-provider-pingone/issues/942))
+
 BUG FIXES:
 
 * `resource/pingone_mfa_device_policy`: Fixed "unexpected new value: .fido2: was null, but now cty.ObjectVal" when `fido2` is applied, then removed from resource configuration. ([#940](https://github.com/pingidentity/terraform-provider-pingone/issues/940))
