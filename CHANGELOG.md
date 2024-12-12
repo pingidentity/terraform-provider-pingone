@@ -3,6 +3,8 @@
 NOTES:
 
 * bump `github.com/hashicorp/terraform-plugin-sdk/v2` 2.34.0 => 2.35.0 ([#942](https://github.com/pingidentity/terraform-provider-pingone/issues/942))
+* bump `github.com/hashicorp/terraform-plugin-testing` 1.10.0 => 1.11.0 ([#943](https://github.com/pingidentity/terraform-provider-pingone/issues/943))
+* bump `golang.org/x/crypto` 0.26.0 => 0.31.0 ([#946](https://github.com/pingidentity/terraform-provider-pingone/issues/946))
 
 BUG FIXES:
 
