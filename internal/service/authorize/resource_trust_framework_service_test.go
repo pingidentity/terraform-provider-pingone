@@ -502,17 +502,22 @@ func TestAccTrustFrameworkService_Service_Connector(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "service_settings.code", "P1_RISK"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.content_type"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.headers"),
-		resource.TestCheckResourceAttr(resourceFullName, "service_settings.input_mappings.#", "0"),
-		// resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
-		// 	"property": "??",
-		// 	"type":     "INPUT",
-		// 	"value":    "input1",
-		// }),
-		// resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
-		// 	"property": "??",
-		// 	"type":     "INPUT",
-		// 	"value":    "input2",
-		// }),
+		resource.TestCheckResourceAttr(resourceFullName, "service_settings.input_mappings.#", "3"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
+			"property": "ipAddress",
+			"type":     "INPUT",
+			"value":    "192.168.0.1",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
+			"property": "userType",
+			"type":     "INPUT",
+			"value":    "person",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
+			"property": "userId",
+			"type":     "INPUT",
+			"value":    "test1",
+		}),
 		resource.TestCheckResourceAttr(resourceFullName, "service_settings.maximum_concurrent_requests", "6"),
 		resource.TestCheckResourceAttr(resourceFullName, "service_settings.maximum_requests_per_second", "10"),
 		resource.TestCheckResourceAttr(resourceFullName, "service_settings.schema_version", "1"),
@@ -695,26 +700,51 @@ func TestAccTrustFrameworkService_Service_Change(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.#", "3"), // processors tested in processors_test
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.authentication"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.body"),
-		resource.TestCheckResourceAttr(resourceFullName, "service_settings.capability", "CAPABILITY1"),
+		resource.TestCheckResourceAttr(resourceFullName, "service_settings.capability", "createRiskEvaluation"),
 		resource.TestCheckResourceAttr(resourceFullName, "service_settings.channel", "AUTHORIZE"),
 		resource.TestCheckResourceAttr(resourceFullName, "service_settings.code", "P1_RISK"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.content_type"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "service_settings.headers"),
-		resource.TestCheckResourceAttr(resourceFullName, "service_settings.input_mappings.#", "3"),
-		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
-			"property": "??",
-			"type":     "INPUT",
-			"value":    "input1",
-		}),
+		resource.TestCheckResourceAttr(resourceFullName, "service_settings.input_mappings.#", "8"),
 		resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]*regexp.Regexp{
-			"property":  regexp.MustCompile(`^??$`),
-			"type":      regexp.MustCompile(`^ATTRIBUTE$`),
-			"value_ref": verify.P1ResourceIDRegexpFullString,
+			"property":     regexp.MustCompile(`^userId$`),
+			"type":         regexp.MustCompile(`^ATTRIBUTE$`),
+			"value_ref.id": verify.P1ResourceIDRegexpFullString,
 		}),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
-			"property": "??",
+			"property": "userType",
 			"type":     "INPUT",
-			"value":    "input2",
+			"value":    "test2",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
+			"property": "ipAddress",
+			"type":     "INPUT",
+			"value":    "test3",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
+			"property": "applicationId",
+			"type":     "INPUT",
+			"value":    "test4",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
+			"property": "applicationName",
+			"type":     "INPUT",
+			"value":    "test5",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
+			"property": "sessionId",
+			"type":     "INPUT",
+			"value":    "test6",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
+			"property": "browserData",
+			"type":     "INPUT",
+			"value":    "test7",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "service_settings.input_mappings.*", map[string]string{
+			"property": "riskPolicySetId",
+			"type":     "INPUT",
+			"value":    "test8",
 		}),
 		resource.TestCheckResourceAttr(resourceFullName, "service_settings.maximum_concurrent_requests", "6"),
 		resource.TestCheckResourceAttr(resourceFullName, "service_settings.maximum_requests_per_second", "10"),
@@ -1539,7 +1569,26 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
     channel    = "AUTHORIZE"
     code       = "P1_RISK"
 
-    input_mappings = []
+    input_mappings = [
+      {
+        property = "ipAddress"
+        type     = "INPUT"
+
+        value = "192.168.0.1"
+      },
+      {
+        property = "userType"
+        type     = "INPUT"
+
+        value = "person"
+      },
+      {
+        property = "userId"
+        type     = "INPUT"
+
+        value = "test1"
+      },
+    ]
 
     maximum_concurrent_requests = 6
     maximum_requests_per_second = 10
@@ -1556,6 +1605,22 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
 func testAccTrustFrameworkServiceConfig_Service_None_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-user" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "Test application service"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "JSON"
+  }
+}
 
 resource "pingone_authorize_trust_framework_service" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id

@@ -250,7 +250,7 @@ Optional:
 - `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--right))
 
 <a id="nestedatt--resolvers--condition--condition--condition"></a>
-### Nested Schema for `resolvers.condition.condition.right`
+### Nested Schema for `resolvers.condition.condition.condition`
 
 Required:
 
@@ -259,63 +259,14 @@ Required:
 Optional:
 
 - `comparator` (String) A string that specifies the comparison operator used to evaluate the authorization condition.  This field is required when `type` is `COMPARISON`.  Options are `CONTAINS`, `ENDS_WITH`, `EQUALS`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL`, `HAS_PERMISSION`, `IN_CIDR_BLOCK`, `IS_IN`, `IS_MEMBER_OF`, `IS_NOT_IN`, `IS_NOT_MEMBER_OF`, `LESSER_THAN`, `LESSER_THAN_OR_EQUAL`, `MATCHES`, `NOT_CONTAINS`, `NOT_ENDS_WITH`, `NOT_EQUALS`, `NOT_IN_CIDR_BLOCK`, `NOT_MATCHES`, `NOT_STARTS_WITH`, `REGULAR_EXPRESSION`, `STARTS_WITH`.
-- `condition` (Attributes) An object that specifies configuration settings for a single authorization condition to evaluate.  This field is required when `type` is `NOT`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--right--condition))
-- `conditions` (Attributes Set) A set of objects that specifies configuration settings for multiple authorization conditions to evaluate.  This field is required when `type` is `AND` or `OR`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--right--conditions))
-- `left` (Attributes) An object that specifies configuration settings that apply to the left side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--right--left))
-- `reference` (Attributes) An object that specifies configuration settings for the authorization condition reference to evaluate.  This field is required when `type` is `REFERENCE`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--right--reference))
-- `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--right--right))
+- `condition` (Attributes) An object that specifies configuration settings for a single authorization condition to evaluate.  This field is required when `type` is `NOT`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--condition--condition))
+- `conditions` (Attributes Set) A set of objects that specifies configuration settings for multiple authorization conditions to evaluate.  This field is required when `type` is `AND` or `OR`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--condition--conditions))
+- `left` (Attributes) An object that specifies configuration settings that apply to the left side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--condition--left))
+- `reference` (Attributes) An object that specifies configuration settings for the authorization condition reference to evaluate.  This field is required when `type` is `REFERENCE`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--condition--reference))
+- `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--condition--right))
 
-<a id="nestedatt--resolvers--condition--condition--right--condition"></a>
-### Nested Schema for `resolvers.condition.condition.right.condition`
-
-Required:
-
-- `type` (String) A string that specifies the authorization condition type.  Options are `COMPARISON`, `EMPTY`, `REFERENCE`.
-
-Optional:
-
-- `comparator` (String) A string that specifies the comparison operator used to evaluate the authorization condition.  This field is required when `type` is `COMPARISON`.  Options are `CONTAINS`, `ENDS_WITH`, `EQUALS`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL`, `HAS_PERMISSION`, `IN_CIDR_BLOCK`, `IS_IN`, `IS_MEMBER_OF`, `IS_NOT_IN`, `IS_NOT_MEMBER_OF`, `LESSER_THAN`, `LESSER_THAN_OR_EQUAL`, `MATCHES`, `NOT_CONTAINS`, `NOT_ENDS_WITH`, `NOT_EQUALS`, `NOT_IN_CIDR_BLOCK`, `NOT_MATCHES`, `NOT_STARTS_WITH`, `REGULAR_EXPRESSION`, `STARTS_WITH`.
-- `left` (Attributes) An object that specifies configuration settings that apply to the left side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--right--condition--left))
-- `reference` (Attributes) An object that specifies configuration settings for the authorization condition reference to evaluate.  This field is required when `type` is `REFERENCE`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--right--condition--reference))
-- `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--right--condition--right))
-
-<a id="nestedatt--resolvers--condition--condition--right--condition--left"></a>
-### Nested Schema for `resolvers.condition.condition.right.condition.right`
-
-Required:
-
-- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`, `CONSTANT`.
-
-Optional:
-
-- `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
-- `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
-
-
-<a id="nestedatt--resolvers--condition--condition--right--condition--reference"></a>
-### Nested Schema for `resolvers.condition.condition.right.condition.right`
-
-Required:
-
-- `id` (String) A string that specifies the ID of the authorization condition reference in the trust framework.  Must be a valid PingOne resource ID.
-
-
-<a id="nestedatt--resolvers--condition--condition--right--condition--right"></a>
-### Nested Schema for `resolvers.condition.condition.right.condition.right`
-
-Required:
-
-- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`, `CONSTANT`.
-
-Optional:
-
-- `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
-- `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
-
-
-
-<a id="nestedatt--resolvers--condition--condition--right--conditions"></a>
-### Nested Schema for `resolvers.condition.condition.right.conditions`
+<a id="nestedatt--resolvers--condition--condition--condition--condition"></a>
+### Nested Schema for `resolvers.condition.condition.condition.condition`
 
 Required:
 
@@ -324,33 +275,32 @@ Required:
 Optional:
 
 - `comparator` (String) A string that specifies the comparison operator used to evaluate the authorization condition.  This field is required when `type` is `COMPARISON`.  Options are `CONTAINS`, `ENDS_WITH`, `EQUALS`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL`, `HAS_PERMISSION`, `IN_CIDR_BLOCK`, `IS_IN`, `IS_MEMBER_OF`, `IS_NOT_IN`, `IS_NOT_MEMBER_OF`, `LESSER_THAN`, `LESSER_THAN_OR_EQUAL`, `MATCHES`, `NOT_CONTAINS`, `NOT_ENDS_WITH`, `NOT_EQUALS`, `NOT_IN_CIDR_BLOCK`, `NOT_MATCHES`, `NOT_STARTS_WITH`, `REGULAR_EXPRESSION`, `STARTS_WITH`.
-- `left` (Attributes) An object that specifies configuration settings that apply to the left side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--right--conditions--left))
-- `reference` (Attributes) An object that specifies configuration settings for the authorization condition reference to evaluate.  This field is required when `type` is `REFERENCE`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--right--conditions--reference))
-- `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--right--conditions--right))
+- `left` (Attributes) An object that specifies configuration settings that apply to the left side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--condition--condition--left))
+- `reference` (Attributes) An object that specifies configuration settings for the authorization condition reference to evaluate.  This field is required when `type` is `REFERENCE`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--condition--condition--reference))
+- `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--condition--condition--right))
 
-<a id="nestedatt--resolvers--condition--condition--right--conditions--left"></a>
-### Nested Schema for `resolvers.condition.condition.right.conditions.right`
+<a id="nestedatt--resolvers--condition--condition--condition--condition--left"></a>
+### Nested Schema for `resolvers.condition.condition.condition.condition.left`
 
 Required:
 
-- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`, `CONSTANT`.
+- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`.
 
 Optional:
 
 - `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
-- `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
 
 
-<a id="nestedatt--resolvers--condition--condition--right--conditions--reference"></a>
-### Nested Schema for `resolvers.condition.condition.right.conditions.right`
+<a id="nestedatt--resolvers--condition--condition--condition--condition--reference"></a>
+### Nested Schema for `resolvers.condition.condition.condition.condition.reference`
 
 Required:
 
 - `id` (String) A string that specifies the ID of the authorization condition reference in the trust framework.  Must be a valid PingOne resource ID.
 
 
-<a id="nestedatt--resolvers--condition--condition--right--conditions--right"></a>
-### Nested Schema for `resolvers.condition.condition.right.conditions.right`
+<a id="nestedatt--resolvers--condition--condition--condition--condition--right"></a>
+### Nested Schema for `resolvers.condition.condition.condition.condition.right`
 
 Required:
 
@@ -363,29 +313,76 @@ Optional:
 
 
 
-<a id="nestedatt--resolvers--condition--condition--right--left"></a>
-### Nested Schema for `resolvers.condition.condition.right.left`
+<a id="nestedatt--resolvers--condition--condition--condition--conditions"></a>
+### Nested Schema for `resolvers.condition.condition.condition.conditions`
 
 Required:
 
-- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`, `CONSTANT`.
+- `type` (String) A string that specifies the authorization condition type.  Options are `COMPARISON`, `EMPTY`, `REFERENCE`.
+
+Optional:
+
+- `comparator` (String) A string that specifies the comparison operator used to evaluate the authorization condition.  This field is required when `type` is `COMPARISON`.  Options are `CONTAINS`, `ENDS_WITH`, `EQUALS`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL`, `HAS_PERMISSION`, `IN_CIDR_BLOCK`, `IS_IN`, `IS_MEMBER_OF`, `IS_NOT_IN`, `IS_NOT_MEMBER_OF`, `LESSER_THAN`, `LESSER_THAN_OR_EQUAL`, `MATCHES`, `NOT_CONTAINS`, `NOT_ENDS_WITH`, `NOT_EQUALS`, `NOT_IN_CIDR_BLOCK`, `NOT_MATCHES`, `NOT_STARTS_WITH`, `REGULAR_EXPRESSION`, `STARTS_WITH`.
+- `left` (Attributes) An object that specifies configuration settings that apply to the left side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--condition--conditions--left))
+- `reference` (Attributes) An object that specifies configuration settings for the authorization condition reference to evaluate.  This field is required when `type` is `REFERENCE`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--condition--conditions--reference))
+- `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--condition--conditions--right))
+
+<a id="nestedatt--resolvers--condition--condition--condition--conditions--left"></a>
+### Nested Schema for `resolvers.condition.condition.condition.conditions.left`
+
+Required:
+
+- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`.
 
 Optional:
 
 - `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
-- `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
 
 
-<a id="nestedatt--resolvers--condition--condition--right--reference"></a>
-### Nested Schema for `resolvers.condition.condition.right.reference`
+<a id="nestedatt--resolvers--condition--condition--condition--conditions--reference"></a>
+### Nested Schema for `resolvers.condition.condition.condition.conditions.reference`
 
 Required:
 
 - `id` (String) A string that specifies the ID of the authorization condition reference in the trust framework.  Must be a valid PingOne resource ID.
 
 
-<a id="nestedatt--resolvers--condition--condition--right--right"></a>
-### Nested Schema for `resolvers.condition.condition.right.right`
+<a id="nestedatt--resolvers--condition--condition--condition--conditions--right"></a>
+### Nested Schema for `resolvers.condition.condition.condition.conditions.right`
+
+Required:
+
+- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`, `CONSTANT`.
+
+Optional:
+
+- `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
+- `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
+
+
+
+<a id="nestedatt--resolvers--condition--condition--condition--left"></a>
+### Nested Schema for `resolvers.condition.condition.condition.left`
+
+Required:
+
+- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`.
+
+Optional:
+
+- `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
+
+
+<a id="nestedatt--resolvers--condition--condition--condition--reference"></a>
+### Nested Schema for `resolvers.condition.condition.condition.reference`
+
+Required:
+
+- `id` (String) A string that specifies the ID of the authorization condition reference in the trust framework.  Must be a valid PingOne resource ID.
+
+
+<a id="nestedatt--resolvers--condition--condition--condition--right"></a>
+### Nested Schema for `resolvers.condition.condition.condition.right`
 
 Required:
 
@@ -399,7 +396,7 @@ Optional:
 
 
 <a id="nestedatt--resolvers--condition--condition--conditions"></a>
-### Nested Schema for `resolvers.condition.condition.right`
+### Nested Schema for `resolvers.condition.condition.conditions`
 
 Required:
 
@@ -408,63 +405,14 @@ Required:
 Optional:
 
 - `comparator` (String) A string that specifies the comparison operator used to evaluate the authorization condition.  This field is required when `type` is `COMPARISON`.  Options are `CONTAINS`, `ENDS_WITH`, `EQUALS`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL`, `HAS_PERMISSION`, `IN_CIDR_BLOCK`, `IS_IN`, `IS_MEMBER_OF`, `IS_NOT_IN`, `IS_NOT_MEMBER_OF`, `LESSER_THAN`, `LESSER_THAN_OR_EQUAL`, `MATCHES`, `NOT_CONTAINS`, `NOT_ENDS_WITH`, `NOT_EQUALS`, `NOT_IN_CIDR_BLOCK`, `NOT_MATCHES`, `NOT_STARTS_WITH`, `REGULAR_EXPRESSION`, `STARTS_WITH`.
-- `condition` (Attributes) An object that specifies configuration settings for a single authorization condition to evaluate.  This field is required when `type` is `NOT`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--right--condition))
-- `conditions` (Attributes Set) A set of objects that specifies configuration settings for multiple authorization conditions to evaluate.  This field is required when `type` is `AND` or `OR`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--right--conditions))
-- `left` (Attributes) An object that specifies configuration settings that apply to the left side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--right--left))
-- `reference` (Attributes) An object that specifies configuration settings for the authorization condition reference to evaluate.  This field is required when `type` is `REFERENCE`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--right--reference))
-- `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--right--right))
+- `condition` (Attributes) An object that specifies configuration settings for a single authorization condition to evaluate.  This field is required when `type` is `NOT`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--conditions--condition))
+- `conditions` (Attributes Set) A set of objects that specifies configuration settings for multiple authorization conditions to evaluate.  This field is required when `type` is `AND` or `OR`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--conditions--conditions))
+- `left` (Attributes) An object that specifies configuration settings that apply to the left side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--conditions--left))
+- `reference` (Attributes) An object that specifies configuration settings for the authorization condition reference to evaluate.  This field is required when `type` is `REFERENCE`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--conditions--reference))
+- `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--conditions--right))
 
-<a id="nestedatt--resolvers--condition--condition--right--condition"></a>
-### Nested Schema for `resolvers.condition.condition.right.condition`
-
-Required:
-
-- `type` (String) A string that specifies the authorization condition type.  Options are `COMPARISON`, `EMPTY`, `REFERENCE`.
-
-Optional:
-
-- `comparator` (String) A string that specifies the comparison operator used to evaluate the authorization condition.  This field is required when `type` is `COMPARISON`.  Options are `CONTAINS`, `ENDS_WITH`, `EQUALS`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL`, `HAS_PERMISSION`, `IN_CIDR_BLOCK`, `IS_IN`, `IS_MEMBER_OF`, `IS_NOT_IN`, `IS_NOT_MEMBER_OF`, `LESSER_THAN`, `LESSER_THAN_OR_EQUAL`, `MATCHES`, `NOT_CONTAINS`, `NOT_ENDS_WITH`, `NOT_EQUALS`, `NOT_IN_CIDR_BLOCK`, `NOT_MATCHES`, `NOT_STARTS_WITH`, `REGULAR_EXPRESSION`, `STARTS_WITH`.
-- `left` (Attributes) An object that specifies configuration settings that apply to the left side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--right--condition--left))
-- `reference` (Attributes) An object that specifies configuration settings for the authorization condition reference to evaluate.  This field is required when `type` is `REFERENCE`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--right--condition--reference))
-- `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--right--condition--right))
-
-<a id="nestedatt--resolvers--condition--condition--right--condition--left"></a>
-### Nested Schema for `resolvers.condition.condition.right.condition.right`
-
-Required:
-
-- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`, `CONSTANT`.
-
-Optional:
-
-- `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
-- `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
-
-
-<a id="nestedatt--resolvers--condition--condition--right--condition--reference"></a>
-### Nested Schema for `resolvers.condition.condition.right.condition.right`
-
-Required:
-
-- `id` (String) A string that specifies the ID of the authorization condition reference in the trust framework.  Must be a valid PingOne resource ID.
-
-
-<a id="nestedatt--resolvers--condition--condition--right--condition--right"></a>
-### Nested Schema for `resolvers.condition.condition.right.condition.right`
-
-Required:
-
-- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`, `CONSTANT`.
-
-Optional:
-
-- `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
-- `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
-
-
-
-<a id="nestedatt--resolvers--condition--condition--right--conditions"></a>
-### Nested Schema for `resolvers.condition.condition.right.conditions`
+<a id="nestedatt--resolvers--condition--condition--conditions--condition"></a>
+### Nested Schema for `resolvers.condition.condition.conditions.condition`
 
 Required:
 
@@ -473,33 +421,32 @@ Required:
 Optional:
 
 - `comparator` (String) A string that specifies the comparison operator used to evaluate the authorization condition.  This field is required when `type` is `COMPARISON`.  Options are `CONTAINS`, `ENDS_WITH`, `EQUALS`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL`, `HAS_PERMISSION`, `IN_CIDR_BLOCK`, `IS_IN`, `IS_MEMBER_OF`, `IS_NOT_IN`, `IS_NOT_MEMBER_OF`, `LESSER_THAN`, `LESSER_THAN_OR_EQUAL`, `MATCHES`, `NOT_CONTAINS`, `NOT_ENDS_WITH`, `NOT_EQUALS`, `NOT_IN_CIDR_BLOCK`, `NOT_MATCHES`, `NOT_STARTS_WITH`, `REGULAR_EXPRESSION`, `STARTS_WITH`.
-- `left` (Attributes) An object that specifies configuration settings that apply to the left side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--right--conditions--left))
-- `reference` (Attributes) An object that specifies configuration settings for the authorization condition reference to evaluate.  This field is required when `type` is `REFERENCE`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--right--conditions--reference))
-- `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--right--conditions--right))
+- `left` (Attributes) An object that specifies configuration settings that apply to the left side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--conditions--condition--left))
+- `reference` (Attributes) An object that specifies configuration settings for the authorization condition reference to evaluate.  This field is required when `type` is `REFERENCE`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--conditions--condition--reference))
+- `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--conditions--condition--right))
 
-<a id="nestedatt--resolvers--condition--condition--right--conditions--left"></a>
-### Nested Schema for `resolvers.condition.condition.right.conditions.right`
+<a id="nestedatt--resolvers--condition--condition--conditions--condition--left"></a>
+### Nested Schema for `resolvers.condition.condition.conditions.condition.left`
 
 Required:
 
-- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`, `CONSTANT`.
+- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`.
 
 Optional:
 
 - `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
-- `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
 
 
-<a id="nestedatt--resolvers--condition--condition--right--conditions--reference"></a>
-### Nested Schema for `resolvers.condition.condition.right.conditions.right`
+<a id="nestedatt--resolvers--condition--condition--conditions--condition--reference"></a>
+### Nested Schema for `resolvers.condition.condition.conditions.condition.reference`
 
 Required:
 
 - `id` (String) A string that specifies the ID of the authorization condition reference in the trust framework.  Must be a valid PingOne resource ID.
 
 
-<a id="nestedatt--resolvers--condition--condition--right--conditions--right"></a>
-### Nested Schema for `resolvers.condition.condition.right.conditions.right`
+<a id="nestedatt--resolvers--condition--condition--conditions--condition--right"></a>
+### Nested Schema for `resolvers.condition.condition.conditions.condition.right`
 
 Required:
 
@@ -512,29 +459,76 @@ Optional:
 
 
 
-<a id="nestedatt--resolvers--condition--condition--right--left"></a>
-### Nested Schema for `resolvers.condition.condition.right.left`
+<a id="nestedatt--resolvers--condition--condition--conditions--conditions"></a>
+### Nested Schema for `resolvers.condition.condition.conditions.conditions`
 
 Required:
 
-- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`, `CONSTANT`.
+- `type` (String) A string that specifies the authorization condition type.  Options are `COMPARISON`, `EMPTY`, `REFERENCE`.
+
+Optional:
+
+- `comparator` (String) A string that specifies the comparison operator used to evaluate the authorization condition.  This field is required when `type` is `COMPARISON`.  Options are `CONTAINS`, `ENDS_WITH`, `EQUALS`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL`, `HAS_PERMISSION`, `IN_CIDR_BLOCK`, `IS_IN`, `IS_MEMBER_OF`, `IS_NOT_IN`, `IS_NOT_MEMBER_OF`, `LESSER_THAN`, `LESSER_THAN_OR_EQUAL`, `MATCHES`, `NOT_CONTAINS`, `NOT_ENDS_WITH`, `NOT_EQUALS`, `NOT_IN_CIDR_BLOCK`, `NOT_MATCHES`, `NOT_STARTS_WITH`, `REGULAR_EXPRESSION`, `STARTS_WITH`.
+- `left` (Attributes) An object that specifies configuration settings that apply to the left side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--conditions--conditions--left))
+- `reference` (Attributes) An object that specifies configuration settings for the authorization condition reference to evaluate.  This field is required when `type` is `REFERENCE`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--conditions--conditions--reference))
+- `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--condition--conditions--conditions--right))
+
+<a id="nestedatt--resolvers--condition--condition--conditions--conditions--left"></a>
+### Nested Schema for `resolvers.condition.condition.conditions.conditions.left`
+
+Required:
+
+- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`.
 
 Optional:
 
 - `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
-- `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
 
 
-<a id="nestedatt--resolvers--condition--condition--right--reference"></a>
-### Nested Schema for `resolvers.condition.condition.right.reference`
+<a id="nestedatt--resolvers--condition--condition--conditions--conditions--reference"></a>
+### Nested Schema for `resolvers.condition.condition.conditions.conditions.reference`
 
 Required:
 
 - `id` (String) A string that specifies the ID of the authorization condition reference in the trust framework.  Must be a valid PingOne resource ID.
 
 
-<a id="nestedatt--resolvers--condition--condition--right--right"></a>
-### Nested Schema for `resolvers.condition.condition.right.right`
+<a id="nestedatt--resolvers--condition--condition--conditions--conditions--right"></a>
+### Nested Schema for `resolvers.condition.condition.conditions.conditions.right`
+
+Required:
+
+- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`, `CONSTANT`.
+
+Optional:
+
+- `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
+- `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
+
+
+
+<a id="nestedatt--resolvers--condition--condition--conditions--left"></a>
+### Nested Schema for `resolvers.condition.condition.conditions.left`
+
+Required:
+
+- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`.
+
+Optional:
+
+- `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
+
+
+<a id="nestedatt--resolvers--condition--condition--conditions--reference"></a>
+### Nested Schema for `resolvers.condition.condition.conditions.reference`
+
+Required:
+
+- `id` (String) A string that specifies the ID of the authorization condition reference in the trust framework.  Must be a valid PingOne resource ID.
+
+
+<a id="nestedatt--resolvers--condition--condition--conditions--right"></a>
+### Nested Schema for `resolvers.condition.condition.conditions.right`
 
 Required:
 
@@ -548,20 +542,19 @@ Optional:
 
 
 <a id="nestedatt--resolvers--condition--condition--left"></a>
-### Nested Schema for `resolvers.condition.condition.right`
+### Nested Schema for `resolvers.condition.condition.left`
 
 Required:
 
-- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`, `CONSTANT`.
+- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`.
 
 Optional:
 
 - `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
-- `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
 
 
 <a id="nestedatt--resolvers--condition--condition--reference"></a>
-### Nested Schema for `resolvers.condition.condition.right`
+### Nested Schema for `resolvers.condition.condition.reference`
 
 Required:
 
@@ -599,7 +592,7 @@ Optional:
 - `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--right))
 
 <a id="nestedatt--resolvers--condition--conditions--condition"></a>
-### Nested Schema for `resolvers.condition.conditions.right`
+### Nested Schema for `resolvers.condition.conditions.condition`
 
 Required:
 
@@ -608,63 +601,14 @@ Required:
 Optional:
 
 - `comparator` (String) A string that specifies the comparison operator used to evaluate the authorization condition.  This field is required when `type` is `COMPARISON`.  Options are `CONTAINS`, `ENDS_WITH`, `EQUALS`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL`, `HAS_PERMISSION`, `IN_CIDR_BLOCK`, `IS_IN`, `IS_MEMBER_OF`, `IS_NOT_IN`, `IS_NOT_MEMBER_OF`, `LESSER_THAN`, `LESSER_THAN_OR_EQUAL`, `MATCHES`, `NOT_CONTAINS`, `NOT_ENDS_WITH`, `NOT_EQUALS`, `NOT_IN_CIDR_BLOCK`, `NOT_MATCHES`, `NOT_STARTS_WITH`, `REGULAR_EXPRESSION`, `STARTS_WITH`.
-- `condition` (Attributes) An object that specifies configuration settings for a single authorization condition to evaluate.  This field is required when `type` is `NOT`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--right--condition))
-- `conditions` (Attributes Set) A set of objects that specifies configuration settings for multiple authorization conditions to evaluate.  This field is required when `type` is `AND` or `OR`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--right--conditions))
-- `left` (Attributes) An object that specifies configuration settings that apply to the left side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--right--left))
-- `reference` (Attributes) An object that specifies configuration settings for the authorization condition reference to evaluate.  This field is required when `type` is `REFERENCE`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--right--reference))
-- `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--right--right))
+- `condition` (Attributes) An object that specifies configuration settings for a single authorization condition to evaluate.  This field is required when `type` is `NOT`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--condition--condition))
+- `conditions` (Attributes Set) A set of objects that specifies configuration settings for multiple authorization conditions to evaluate.  This field is required when `type` is `AND` or `OR`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--condition--conditions))
+- `left` (Attributes) An object that specifies configuration settings that apply to the left side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--condition--left))
+- `reference` (Attributes) An object that specifies configuration settings for the authorization condition reference to evaluate.  This field is required when `type` is `REFERENCE`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--condition--reference))
+- `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--condition--right))
 
-<a id="nestedatt--resolvers--condition--conditions--right--condition"></a>
-### Nested Schema for `resolvers.condition.conditions.right.condition`
-
-Required:
-
-- `type` (String) A string that specifies the authorization condition type.  Options are `COMPARISON`, `EMPTY`, `REFERENCE`.
-
-Optional:
-
-- `comparator` (String) A string that specifies the comparison operator used to evaluate the authorization condition.  This field is required when `type` is `COMPARISON`.  Options are `CONTAINS`, `ENDS_WITH`, `EQUALS`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL`, `HAS_PERMISSION`, `IN_CIDR_BLOCK`, `IS_IN`, `IS_MEMBER_OF`, `IS_NOT_IN`, `IS_NOT_MEMBER_OF`, `LESSER_THAN`, `LESSER_THAN_OR_EQUAL`, `MATCHES`, `NOT_CONTAINS`, `NOT_ENDS_WITH`, `NOT_EQUALS`, `NOT_IN_CIDR_BLOCK`, `NOT_MATCHES`, `NOT_STARTS_WITH`, `REGULAR_EXPRESSION`, `STARTS_WITH`.
-- `left` (Attributes) An object that specifies configuration settings that apply to the left side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--right--condition--left))
-- `reference` (Attributes) An object that specifies configuration settings for the authorization condition reference to evaluate.  This field is required when `type` is `REFERENCE`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--right--condition--reference))
-- `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--right--condition--right))
-
-<a id="nestedatt--resolvers--condition--conditions--right--condition--left"></a>
-### Nested Schema for `resolvers.condition.conditions.right.condition.right`
-
-Required:
-
-- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`, `CONSTANT`.
-
-Optional:
-
-- `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
-- `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
-
-
-<a id="nestedatt--resolvers--condition--conditions--right--condition--reference"></a>
-### Nested Schema for `resolvers.condition.conditions.right.condition.right`
-
-Required:
-
-- `id` (String) A string that specifies the ID of the authorization condition reference in the trust framework.  Must be a valid PingOne resource ID.
-
-
-<a id="nestedatt--resolvers--condition--conditions--right--condition--right"></a>
-### Nested Schema for `resolvers.condition.conditions.right.condition.right`
-
-Required:
-
-- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`, `CONSTANT`.
-
-Optional:
-
-- `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
-- `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
-
-
-
-<a id="nestedatt--resolvers--condition--conditions--right--conditions"></a>
-### Nested Schema for `resolvers.condition.conditions.right.conditions`
+<a id="nestedatt--resolvers--condition--conditions--condition--condition"></a>
+### Nested Schema for `resolvers.condition.conditions.condition.condition`
 
 Required:
 
@@ -673,33 +617,32 @@ Required:
 Optional:
 
 - `comparator` (String) A string that specifies the comparison operator used to evaluate the authorization condition.  This field is required when `type` is `COMPARISON`.  Options are `CONTAINS`, `ENDS_WITH`, `EQUALS`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL`, `HAS_PERMISSION`, `IN_CIDR_BLOCK`, `IS_IN`, `IS_MEMBER_OF`, `IS_NOT_IN`, `IS_NOT_MEMBER_OF`, `LESSER_THAN`, `LESSER_THAN_OR_EQUAL`, `MATCHES`, `NOT_CONTAINS`, `NOT_ENDS_WITH`, `NOT_EQUALS`, `NOT_IN_CIDR_BLOCK`, `NOT_MATCHES`, `NOT_STARTS_WITH`, `REGULAR_EXPRESSION`, `STARTS_WITH`.
-- `left` (Attributes) An object that specifies configuration settings that apply to the left side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--right--conditions--left))
-- `reference` (Attributes) An object that specifies configuration settings for the authorization condition reference to evaluate.  This field is required when `type` is `REFERENCE`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--right--conditions--reference))
-- `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--right--conditions--right))
+- `left` (Attributes) An object that specifies configuration settings that apply to the left side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--condition--condition--left))
+- `reference` (Attributes) An object that specifies configuration settings for the authorization condition reference to evaluate.  This field is required when `type` is `REFERENCE`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--condition--condition--reference))
+- `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--condition--condition--right))
 
-<a id="nestedatt--resolvers--condition--conditions--right--conditions--left"></a>
-### Nested Schema for `resolvers.condition.conditions.right.conditions.right`
+<a id="nestedatt--resolvers--condition--conditions--condition--condition--left"></a>
+### Nested Schema for `resolvers.condition.conditions.condition.condition.left`
 
 Required:
 
-- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`, `CONSTANT`.
+- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`.
 
 Optional:
 
 - `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
-- `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
 
 
-<a id="nestedatt--resolvers--condition--conditions--right--conditions--reference"></a>
-### Nested Schema for `resolvers.condition.conditions.right.conditions.right`
+<a id="nestedatt--resolvers--condition--conditions--condition--condition--reference"></a>
+### Nested Schema for `resolvers.condition.conditions.condition.condition.reference`
 
 Required:
 
 - `id` (String) A string that specifies the ID of the authorization condition reference in the trust framework.  Must be a valid PingOne resource ID.
 
 
-<a id="nestedatt--resolvers--condition--conditions--right--conditions--right"></a>
-### Nested Schema for `resolvers.condition.conditions.right.conditions.right`
+<a id="nestedatt--resolvers--condition--conditions--condition--condition--right"></a>
+### Nested Schema for `resolvers.condition.conditions.condition.condition.right`
 
 Required:
 
@@ -712,29 +655,76 @@ Optional:
 
 
 
-<a id="nestedatt--resolvers--condition--conditions--right--left"></a>
-### Nested Schema for `resolvers.condition.conditions.right.left`
+<a id="nestedatt--resolvers--condition--conditions--condition--conditions"></a>
+### Nested Schema for `resolvers.condition.conditions.condition.conditions`
 
 Required:
 
-- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`, `CONSTANT`.
+- `type` (String) A string that specifies the authorization condition type.  Options are `COMPARISON`, `EMPTY`, `REFERENCE`.
+
+Optional:
+
+- `comparator` (String) A string that specifies the comparison operator used to evaluate the authorization condition.  This field is required when `type` is `COMPARISON`.  Options are `CONTAINS`, `ENDS_WITH`, `EQUALS`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL`, `HAS_PERMISSION`, `IN_CIDR_BLOCK`, `IS_IN`, `IS_MEMBER_OF`, `IS_NOT_IN`, `IS_NOT_MEMBER_OF`, `LESSER_THAN`, `LESSER_THAN_OR_EQUAL`, `MATCHES`, `NOT_CONTAINS`, `NOT_ENDS_WITH`, `NOT_EQUALS`, `NOT_IN_CIDR_BLOCK`, `NOT_MATCHES`, `NOT_STARTS_WITH`, `REGULAR_EXPRESSION`, `STARTS_WITH`.
+- `left` (Attributes) An object that specifies configuration settings that apply to the left side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--condition--conditions--left))
+- `reference` (Attributes) An object that specifies configuration settings for the authorization condition reference to evaluate.  This field is required when `type` is `REFERENCE`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--condition--conditions--reference))
+- `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--condition--conditions--right))
+
+<a id="nestedatt--resolvers--condition--conditions--condition--conditions--left"></a>
+### Nested Schema for `resolvers.condition.conditions.condition.conditions.left`
+
+Required:
+
+- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`.
 
 Optional:
 
 - `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
-- `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
 
 
-<a id="nestedatt--resolvers--condition--conditions--right--reference"></a>
-### Nested Schema for `resolvers.condition.conditions.right.reference`
+<a id="nestedatt--resolvers--condition--conditions--condition--conditions--reference"></a>
+### Nested Schema for `resolvers.condition.conditions.condition.conditions.reference`
 
 Required:
 
 - `id` (String) A string that specifies the ID of the authorization condition reference in the trust framework.  Must be a valid PingOne resource ID.
 
 
-<a id="nestedatt--resolvers--condition--conditions--right--right"></a>
-### Nested Schema for `resolvers.condition.conditions.right.right`
+<a id="nestedatt--resolvers--condition--conditions--condition--conditions--right"></a>
+### Nested Schema for `resolvers.condition.conditions.condition.conditions.right`
+
+Required:
+
+- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`, `CONSTANT`.
+
+Optional:
+
+- `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
+- `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
+
+
+
+<a id="nestedatt--resolvers--condition--conditions--condition--left"></a>
+### Nested Schema for `resolvers.condition.conditions.condition.left`
+
+Required:
+
+- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`.
+
+Optional:
+
+- `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
+
+
+<a id="nestedatt--resolvers--condition--conditions--condition--reference"></a>
+### Nested Schema for `resolvers.condition.conditions.condition.reference`
+
+Required:
+
+- `id` (String) A string that specifies the ID of the authorization condition reference in the trust framework.  Must be a valid PingOne resource ID.
+
+
+<a id="nestedatt--resolvers--condition--conditions--condition--right"></a>
+### Nested Schema for `resolvers.condition.conditions.condition.right`
 
 Required:
 
@@ -748,7 +738,7 @@ Optional:
 
 
 <a id="nestedatt--resolvers--condition--conditions--conditions"></a>
-### Nested Schema for `resolvers.condition.conditions.right`
+### Nested Schema for `resolvers.condition.conditions.conditions`
 
 Required:
 
@@ -757,63 +747,14 @@ Required:
 Optional:
 
 - `comparator` (String) A string that specifies the comparison operator used to evaluate the authorization condition.  This field is required when `type` is `COMPARISON`.  Options are `CONTAINS`, `ENDS_WITH`, `EQUALS`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL`, `HAS_PERMISSION`, `IN_CIDR_BLOCK`, `IS_IN`, `IS_MEMBER_OF`, `IS_NOT_IN`, `IS_NOT_MEMBER_OF`, `LESSER_THAN`, `LESSER_THAN_OR_EQUAL`, `MATCHES`, `NOT_CONTAINS`, `NOT_ENDS_WITH`, `NOT_EQUALS`, `NOT_IN_CIDR_BLOCK`, `NOT_MATCHES`, `NOT_STARTS_WITH`, `REGULAR_EXPRESSION`, `STARTS_WITH`.
-- `condition` (Attributes) An object that specifies configuration settings for a single authorization condition to evaluate.  This field is required when `type` is `NOT`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--right--condition))
-- `conditions` (Attributes Set) A set of objects that specifies configuration settings for multiple authorization conditions to evaluate.  This field is required when `type` is `AND` or `OR`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--right--conditions))
-- `left` (Attributes) An object that specifies configuration settings that apply to the left side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--right--left))
-- `reference` (Attributes) An object that specifies configuration settings for the authorization condition reference to evaluate.  This field is required when `type` is `REFERENCE`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--right--reference))
-- `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--right--right))
+- `condition` (Attributes) An object that specifies configuration settings for a single authorization condition to evaluate.  This field is required when `type` is `NOT`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--conditions--condition))
+- `conditions` (Attributes Set) A set of objects that specifies configuration settings for multiple authorization conditions to evaluate.  This field is required when `type` is `AND` or `OR`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--conditions--conditions))
+- `left` (Attributes) An object that specifies configuration settings that apply to the left side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--conditions--left))
+- `reference` (Attributes) An object that specifies configuration settings for the authorization condition reference to evaluate.  This field is required when `type` is `REFERENCE`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--conditions--reference))
+- `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--conditions--right))
 
-<a id="nestedatt--resolvers--condition--conditions--right--condition"></a>
-### Nested Schema for `resolvers.condition.conditions.right.condition`
-
-Required:
-
-- `type` (String) A string that specifies the authorization condition type.  Options are `COMPARISON`, `EMPTY`, `REFERENCE`.
-
-Optional:
-
-- `comparator` (String) A string that specifies the comparison operator used to evaluate the authorization condition.  This field is required when `type` is `COMPARISON`.  Options are `CONTAINS`, `ENDS_WITH`, `EQUALS`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL`, `HAS_PERMISSION`, `IN_CIDR_BLOCK`, `IS_IN`, `IS_MEMBER_OF`, `IS_NOT_IN`, `IS_NOT_MEMBER_OF`, `LESSER_THAN`, `LESSER_THAN_OR_EQUAL`, `MATCHES`, `NOT_CONTAINS`, `NOT_ENDS_WITH`, `NOT_EQUALS`, `NOT_IN_CIDR_BLOCK`, `NOT_MATCHES`, `NOT_STARTS_WITH`, `REGULAR_EXPRESSION`, `STARTS_WITH`.
-- `left` (Attributes) An object that specifies configuration settings that apply to the left side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--right--condition--left))
-- `reference` (Attributes) An object that specifies configuration settings for the authorization condition reference to evaluate.  This field is required when `type` is `REFERENCE`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--right--condition--reference))
-- `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--right--condition--right))
-
-<a id="nestedatt--resolvers--condition--conditions--right--condition--left"></a>
-### Nested Schema for `resolvers.condition.conditions.right.condition.right`
-
-Required:
-
-- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`, `CONSTANT`.
-
-Optional:
-
-- `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
-- `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
-
-
-<a id="nestedatt--resolvers--condition--conditions--right--condition--reference"></a>
-### Nested Schema for `resolvers.condition.conditions.right.condition.right`
-
-Required:
-
-- `id` (String) A string that specifies the ID of the authorization condition reference in the trust framework.  Must be a valid PingOne resource ID.
-
-
-<a id="nestedatt--resolvers--condition--conditions--right--condition--right"></a>
-### Nested Schema for `resolvers.condition.conditions.right.condition.right`
-
-Required:
-
-- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`, `CONSTANT`.
-
-Optional:
-
-- `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
-- `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
-
-
-
-<a id="nestedatt--resolvers--condition--conditions--right--conditions"></a>
-### Nested Schema for `resolvers.condition.conditions.right.conditions`
+<a id="nestedatt--resolvers--condition--conditions--conditions--condition"></a>
+### Nested Schema for `resolvers.condition.conditions.conditions.condition`
 
 Required:
 
@@ -822,33 +763,32 @@ Required:
 Optional:
 
 - `comparator` (String) A string that specifies the comparison operator used to evaluate the authorization condition.  This field is required when `type` is `COMPARISON`.  Options are `CONTAINS`, `ENDS_WITH`, `EQUALS`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL`, `HAS_PERMISSION`, `IN_CIDR_BLOCK`, `IS_IN`, `IS_MEMBER_OF`, `IS_NOT_IN`, `IS_NOT_MEMBER_OF`, `LESSER_THAN`, `LESSER_THAN_OR_EQUAL`, `MATCHES`, `NOT_CONTAINS`, `NOT_ENDS_WITH`, `NOT_EQUALS`, `NOT_IN_CIDR_BLOCK`, `NOT_MATCHES`, `NOT_STARTS_WITH`, `REGULAR_EXPRESSION`, `STARTS_WITH`.
-- `left` (Attributes) An object that specifies configuration settings that apply to the left side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--right--conditions--left))
-- `reference` (Attributes) An object that specifies configuration settings for the authorization condition reference to evaluate.  This field is required when `type` is `REFERENCE`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--right--conditions--reference))
-- `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--right--conditions--right))
+- `left` (Attributes) An object that specifies configuration settings that apply to the left side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--conditions--condition--left))
+- `reference` (Attributes) An object that specifies configuration settings for the authorization condition reference to evaluate.  This field is required when `type` is `REFERENCE`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--conditions--condition--reference))
+- `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--conditions--condition--right))
 
-<a id="nestedatt--resolvers--condition--conditions--right--conditions--left"></a>
-### Nested Schema for `resolvers.condition.conditions.right.conditions.right`
+<a id="nestedatt--resolvers--condition--conditions--conditions--condition--left"></a>
+### Nested Schema for `resolvers.condition.conditions.conditions.condition.left`
 
 Required:
 
-- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`, `CONSTANT`.
+- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`.
 
 Optional:
 
 - `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
-- `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
 
 
-<a id="nestedatt--resolvers--condition--conditions--right--conditions--reference"></a>
-### Nested Schema for `resolvers.condition.conditions.right.conditions.right`
+<a id="nestedatt--resolvers--condition--conditions--conditions--condition--reference"></a>
+### Nested Schema for `resolvers.condition.conditions.conditions.condition.reference`
 
 Required:
 
 - `id` (String) A string that specifies the ID of the authorization condition reference in the trust framework.  Must be a valid PingOne resource ID.
 
 
-<a id="nestedatt--resolvers--condition--conditions--right--conditions--right"></a>
-### Nested Schema for `resolvers.condition.conditions.right.conditions.right`
+<a id="nestedatt--resolvers--condition--conditions--conditions--condition--right"></a>
+### Nested Schema for `resolvers.condition.conditions.conditions.condition.right`
 
 Required:
 
@@ -861,29 +801,76 @@ Optional:
 
 
 
-<a id="nestedatt--resolvers--condition--conditions--right--left"></a>
-### Nested Schema for `resolvers.condition.conditions.right.left`
+<a id="nestedatt--resolvers--condition--conditions--conditions--conditions"></a>
+### Nested Schema for `resolvers.condition.conditions.conditions.conditions`
 
 Required:
 
-- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`, `CONSTANT`.
+- `type` (String) A string that specifies the authorization condition type.  Options are `COMPARISON`, `EMPTY`, `REFERENCE`.
+
+Optional:
+
+- `comparator` (String) A string that specifies the comparison operator used to evaluate the authorization condition.  This field is required when `type` is `COMPARISON`.  Options are `CONTAINS`, `ENDS_WITH`, `EQUALS`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL`, `HAS_PERMISSION`, `IN_CIDR_BLOCK`, `IS_IN`, `IS_MEMBER_OF`, `IS_NOT_IN`, `IS_NOT_MEMBER_OF`, `LESSER_THAN`, `LESSER_THAN_OR_EQUAL`, `MATCHES`, `NOT_CONTAINS`, `NOT_ENDS_WITH`, `NOT_EQUALS`, `NOT_IN_CIDR_BLOCK`, `NOT_MATCHES`, `NOT_STARTS_WITH`, `REGULAR_EXPRESSION`, `STARTS_WITH`.
+- `left` (Attributes) An object that specifies configuration settings that apply to the left side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--conditions--conditions--left))
+- `reference` (Attributes) An object that specifies configuration settings for the authorization condition reference to evaluate.  This field is required when `type` is `REFERENCE`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--conditions--conditions--reference))
+- `right` (Attributes) An object that specifies configuration settings that apply to the right side of the authorization condition statement.  This field is required when `type` is `COMPARISON`. (see [below for nested schema](#nestedatt--resolvers--condition--conditions--conditions--conditions--right))
+
+<a id="nestedatt--resolvers--condition--conditions--conditions--conditions--left"></a>
+### Nested Schema for `resolvers.condition.conditions.conditions.conditions.left`
+
+Required:
+
+- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`.
 
 Optional:
 
 - `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
-- `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
 
 
-<a id="nestedatt--resolvers--condition--conditions--right--reference"></a>
-### Nested Schema for `resolvers.condition.conditions.right.reference`
+<a id="nestedatt--resolvers--condition--conditions--conditions--conditions--reference"></a>
+### Nested Schema for `resolvers.condition.conditions.conditions.conditions.reference`
 
 Required:
 
 - `id` (String) A string that specifies the ID of the authorization condition reference in the trust framework.  Must be a valid PingOne resource ID.
 
 
-<a id="nestedatt--resolvers--condition--conditions--right--right"></a>
-### Nested Schema for `resolvers.condition.conditions.right.right`
+<a id="nestedatt--resolvers--condition--conditions--conditions--conditions--right"></a>
+### Nested Schema for `resolvers.condition.conditions.conditions.conditions.right`
+
+Required:
+
+- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`, `CONSTANT`.
+
+Optional:
+
+- `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
+- `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
+
+
+
+<a id="nestedatt--resolvers--condition--conditions--conditions--left"></a>
+### Nested Schema for `resolvers.condition.conditions.conditions.left`
+
+Required:
+
+- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`.
+
+Optional:
+
+- `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
+
+
+<a id="nestedatt--resolvers--condition--conditions--conditions--reference"></a>
+### Nested Schema for `resolvers.condition.conditions.conditions.reference`
+
+Required:
+
+- `id` (String) A string that specifies the ID of the authorization condition reference in the trust framework.  Must be a valid PingOne resource ID.
+
+
+<a id="nestedatt--resolvers--condition--conditions--conditions--right"></a>
+### Nested Schema for `resolvers.condition.conditions.conditions.right`
 
 Required:
 
@@ -897,20 +884,19 @@ Optional:
 
 
 <a id="nestedatt--resolvers--condition--conditions--left"></a>
-### Nested Schema for `resolvers.condition.conditions.right`
+### Nested Schema for `resolvers.condition.conditions.left`
 
 Required:
 
-- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`, `CONSTANT`.
+- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`.
 
 Optional:
 
 - `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
-- `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
 
 
 <a id="nestedatt--resolvers--condition--conditions--reference"></a>
-### Nested Schema for `resolvers.condition.conditions.right`
+### Nested Schema for `resolvers.condition.conditions.reference`
 
 Required:
 
@@ -936,12 +922,11 @@ Optional:
 
 Required:
 
-- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`, `CONSTANT`.
+- `type` (String) A string that specifies the authorization condition comparand type.  Options are `ATTRIBUTE`.
 
 Optional:
 
 - `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
-- `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
 
 
 <a id="nestedatt--resolvers--condition--reference"></a>
@@ -998,7 +983,7 @@ Optional:
 - `value_type` (Attributes) An object that specifies the output type of the value.  This field is required when `type` is `JSON_PATH`, `SPEL` or `XPATH`. (see [below for nested schema](#nestedatt--resolvers--processor--predicate--value_type))
 
 <a id="nestedatt--resolvers--processor--predicate--processor_ref"></a>
-### Nested Schema for `resolvers.processor.predicate.value_type`
+### Nested Schema for `resolvers.processor.predicate.processor_ref`
 
 Required:
 
@@ -1029,7 +1014,7 @@ Optional:
 - `value_type` (Attributes) An object that specifies the output type of the value.  This field is required when `type` is `JSON_PATH`, `SPEL` or `XPATH`. (see [below for nested schema](#nestedatt--resolvers--processor--processor--value_type))
 
 <a id="nestedatt--resolvers--processor--processor--processor_ref"></a>
-### Nested Schema for `resolvers.processor.processor.value_type`
+### Nested Schema for `resolvers.processor.processor.processor_ref`
 
 Required:
 
@@ -1068,7 +1053,7 @@ Optional:
 - `value_type` (Attributes) An object that specifies the output type of the value.  This field is required when `type` is `JSON_PATH`, `SPEL` or `XPATH`. (see [below for nested schema](#nestedatt--resolvers--processor--processors--value_type))
 
 <a id="nestedatt--resolvers--processor--processors--processor_ref"></a>
-### Nested Schema for `resolvers.processor.processors.value_type`
+### Nested Schema for `resolvers.processor.processors.processor_ref`
 
 Required:
 

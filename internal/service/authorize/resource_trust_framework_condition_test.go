@@ -211,22 +211,22 @@ func TestAccTrustFrameworkCondition_ConditionType_And(t *testing.T) {
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]string{
 			"type": "EMPTY",
 		}),
-		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]string{
-			"type":        "COMPARISON",
-			"comparator":  "EQUALS",
-			"left.type":   "CONSTANT",
-			"left.value":  "test",
-			"right.type":  "CONSTANT",
-			"right.value": "test1",
+		resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]*regexp.Regexp{
+			"type":        regexp.MustCompile("^COMPARISON$"),
+			"comparator":  regexp.MustCompile("^EQUALS$"),
+			"left.type":   regexp.MustCompile("^ATTRIBUTE$"),
+			"left.id":     verify.P1ResourceIDRegexpFullString,
+			"right.type":  regexp.MustCompile("^CONSTANT$"),
+			"right.value": regexp.MustCompile("^test1$"),
 		}),
-		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]string{
-			"type":                  "NOT",
-			"condition.type":        "COMPARISON",
-			"condition.comparator":  "EQUALS",
-			"condition.left.type":   "CONSTANT",
-			"condition.left.value":  "test2",
-			"condition.right.type":  "CONSTANT",
-			"condition.right.value": "test3",
+		resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]*regexp.Regexp{
+			"type":                  regexp.MustCompile("^NOT$"),
+			"condition.type":        regexp.MustCompile("^COMPARISON$"),
+			"condition.comparator":  regexp.MustCompile("^EQUALS$"),
+			"condition.left.type":   regexp.MustCompile("^ATTRIBUTE$"),
+			"condition.left.id":     verify.P1ResourceIDRegexpFullString,
+			"condition.right.type":  regexp.MustCompile("^CONSTANT$"),
+			"condition.right.value": regexp.MustCompile("^test3$"),
 		}),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.left"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.reference"),
@@ -241,14 +241,14 @@ func TestAccTrustFrameworkCondition_ConditionType_And(t *testing.T) {
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]string{
 			"type": "EMPTY",
 		}),
-		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]string{
-			"type":                  "NOT",
-			"condition.type":        "COMPARISON",
-			"condition.comparator":  "EQUALS",
-			"condition.left.type":   "CONSTANT",
-			"condition.left.value":  "test1",
-			"condition.right.type":  "CONSTANT",
-			"condition.right.value": "test1",
+		resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]*regexp.Regexp{
+			"type":                  regexp.MustCompile("^NOT$"),
+			"condition.type":        regexp.MustCompile("^COMPARISON$"),
+			"condition.comparator":  regexp.MustCompile("^EQUALS$"),
+			"condition.left.type":   regexp.MustCompile("^ATTRIBUTE$"),
+			"condition.left.id":     verify.P1ResourceIDRegexpFullString,
+			"condition.right.type":  regexp.MustCompile("^CONSTANT$"),
+			"condition.right.value": regexp.MustCompile("^test1$"),
 		}),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.left"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.reference"),
@@ -311,8 +311,8 @@ func TestAccTrustFrameworkCondition_ConditionType_Comparison(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "condition.comparator", "CONTAINS"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.condition"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.conditions"),
-		resource.TestCheckResourceAttr(resourceFullName, "condition.left.type", "CONSTANT"),
-		resource.TestCheckResourceAttr(resourceFullName, "condition.left.value", "test2"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.left.type", "ATTRIBUTE"),
+		resource.TestMatchResourceAttr(resourceFullName, "condition.left.id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.reference"),
 		resource.TestCheckResourceAttr(resourceFullName, "condition.right.type", "CONSTANT"),
 		resource.TestCheckResourceAttr(resourceFullName, "condition.right.value", "test3"),
@@ -323,8 +323,8 @@ func TestAccTrustFrameworkCondition_ConditionType_Comparison(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "condition.comparator", "EQUALS"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.condition"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.conditions"),
-		resource.TestCheckResourceAttr(resourceFullName, "condition.left.type", "CONSTANT"),
-		resource.TestCheckResourceAttr(resourceFullName, "condition.left.value", "test3"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.left.type", "ATTRIBUTE"),
+		resource.TestMatchResourceAttr(resourceFullName, "condition.left.id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.reference"),
 		resource.TestCheckResourceAttr(resourceFullName, "condition.right.type", "ATTRIBUTE"),
 		resource.TestMatchResourceAttr(resourceFullName, "condition.right.id", verify.P1ResourceIDRegexpFullString),
@@ -448,8 +448,8 @@ func TestAccTrustFrameworkCondition_ConditionType_Not(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.comparator"),
 		resource.TestCheckResourceAttr(resourceFullName, "condition.condition.type", "COMPARISON"),
 		resource.TestCheckResourceAttr(resourceFullName, "condition.condition.comparator", "EQUALS"),
-		resource.TestCheckResourceAttr(resourceFullName, "condition.condition.left.type", "CONSTANT"),
-		resource.TestCheckResourceAttr(resourceFullName, "condition.condition.left.value", "test3"),
+		resource.TestCheckResourceAttr(resourceFullName, "condition.condition.left.type", "ATTRIBUTE"),
+		resource.TestMatchResourceAttr(resourceFullName, "condition.condition.left.id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "condition.condition.right.type", "CONSTANT"),
 		resource.TestCheckResourceAttr(resourceFullName, "condition.condition.right.value", "test4"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.conditions"),
@@ -516,22 +516,22 @@ func TestAccTrustFrameworkCondition_ConditionType_Or(t *testing.T) {
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]string{
 			"type": "EMPTY",
 		}),
-		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]string{
-			"type":        "COMPARISON",
-			"comparator":  "EQUALS",
-			"left.type":   "CONSTANT",
-			"left.value":  "test",
-			"right.type":  "CONSTANT",
-			"right.value": "test1",
+		resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]*regexp.Regexp{
+			"type":        regexp.MustCompile("^COMPARISON$"),
+			"comparator":  regexp.MustCompile("^EQUALS$"),
+			"left.type":   regexp.MustCompile("^ATTRIBUTE$"),
+			"left.id":     verify.P1ResourceIDRegexpFullString,
+			"right.type":  regexp.MustCompile("^CONSTANT$"),
+			"right.value": regexp.MustCompile("^test1$"),
 		}),
-		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]string{
-			"type":                  "NOT",
-			"condition.type":        "COMPARISON",
-			"condition.comparator":  "EQUALS",
-			"condition.left.type":   "CONSTANT",
-			"condition.left.value":  "test2",
-			"condition.right.type":  "CONSTANT",
-			"condition.right.value": "test3",
+		resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]*regexp.Regexp{
+			"type":                  regexp.MustCompile("^NOT$"),
+			"condition.type":        regexp.MustCompile("^COMPARISON$"),
+			"condition.comparator":  regexp.MustCompile("^EQUALS$"),
+			"condition.left.type":   regexp.MustCompile("^ATTRIBUTE$"),
+			"condition.left.id":     verify.P1ResourceIDRegexpFullString,
+			"condition.right.type":  regexp.MustCompile("^CONSTANT$"),
+			"condition.right.value": regexp.MustCompile("^test3$"),
 		}),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.left"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.reference"),
@@ -546,14 +546,14 @@ func TestAccTrustFrameworkCondition_ConditionType_Or(t *testing.T) {
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]string{
 			"type": "EMPTY",
 		}),
-		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]string{
-			"type":                  "NOT",
-			"condition.type":        "COMPARISON",
-			"condition.comparator":  "EQUALS",
-			"condition.left.type":   "CONSTANT",
-			"condition.left.value":  "test1",
-			"condition.right.type":  "CONSTANT",
-			"condition.right.value": "test1",
+		resource.TestMatchTypeSetElemNestedAttrs(resourceFullName, "condition.conditions.*", map[string]*regexp.Regexp{
+			"type":                  regexp.MustCompile("^NOT$"),
+			"condition.type":        regexp.MustCompile("^COMPARISON$"),
+			"condition.comparator":  regexp.MustCompile("^EQUALS$"),
+			"condition.left.type":   regexp.MustCompile("^ATTRIBUTE$"),
+			"condition.left.id":     verify.P1ResourceIDRegexpFullString,
+			"condition.right.type":  regexp.MustCompile("^CONSTANT$"),
+			"condition.right.value": regexp.MustCompile("^test1$"),
 		}),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.left"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition.reference"),
@@ -835,6 +835,22 @@ func testAccTrustFrameworkConditionConfig_Condition_And1(resourceName, name stri
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
 resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
@@ -852,8 +868,8 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
         comparator = "EQUALS"
 
         left = {
-          type  = "CONSTANT"
-          value = "test"
+          type = "ATTRIBUTE"
+          id   = pingone_authorize_trust_framework_attribute.%[2]s.id
         }
 
         right = {
@@ -869,8 +885,8 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
           comparator = "EQUALS"
 
           left = {
-            type  = "CONSTANT"
-            value = "test2"
+            type = "ATTRIBUTE"
+            id   = pingone_authorize_trust_framework_attribute.%[2]s.id
           }
 
           right = {
@@ -887,6 +903,22 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
 func testAccTrustFrameworkConditionConfig_Condition_And2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
 
 resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -908,8 +940,8 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
           comparator = "EQUALS"
 
           left = {
-            type  = "CONSTANT"
-            value = "test1"
+            type = "ATTRIBUTE"
+            id   = pingone_authorize_trust_framework_attribute.%[2]s.id
           }
 
           right = {
@@ -957,8 +989,8 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
     comparator = "CONTAINS"
 
     left = {
-      type  = "CONSTANT"
-      value = "test2"
+      type = "ATTRIBUTE"
+      id   = pingone_authorize_trust_framework_attribute.%[2]s.id
     }
 
     right = {
@@ -1003,8 +1035,8 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
     comparator = "EQUALS"
 
     left = {
-      type  = "CONSTANT"
-      value = "test3"
+      type = "ATTRIBUTE"
+      id   = pingone_authorize_trust_framework_attribute.%[2]s.id
     }
 
     right = {
@@ -1034,6 +1066,26 @@ func testAccTrustFrameworkConditionConfig_Condition_Not1(resourceName, name stri
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "Test application role"
+
+  resolvers = [
+    {
+      type = "CONSTANT"
+      value_type = {
+        type = "STRING"
+      }
+      value = "test"
+    }
+  ]
+
+  value_type = {
+    type = "JSON"
+  }
+}
+
 resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
@@ -1053,6 +1105,26 @@ func testAccTrustFrameworkConditionConfig_Condition_Not2(resourceName, name stri
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "Test application role"
+
+  resolvers = [
+    {
+      type = "CONSTANT"
+      value_type = {
+        type = "STRING"
+      }
+      value = "test"
+    }
+  ]
+
+  value_type = {
+    type = "JSON"
+  }
+}
+
 resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
@@ -1066,8 +1138,8 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
       comparator = "EQUALS"
 
       left = {
-        type  = "CONSTANT"
-        value = "test3"
+        type = "ATTRIBUTE"
+        id   = pingone_authorize_trust_framework_attribute.%[2]s.id
       }
 
       right = {
@@ -1082,6 +1154,22 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
 func testAccTrustFrameworkConditionConfig_Condition_Or1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
 
 resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -1100,8 +1188,8 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
         comparator = "EQUALS"
 
         left = {
-          type  = "CONSTANT"
-          value = "test"
+          type = "ATTRIBUTE"
+          id   = pingone_authorize_trust_framework_attribute.%[2]s.id
         }
 
         right = {
@@ -1117,8 +1205,8 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
           comparator = "EQUALS"
 
           left = {
-            type  = "CONSTANT"
-            value = "test2"
+            type = "ATTRIBUTE"
+            id   = pingone_authorize_trust_framework_attribute.%[2]s.id
           }
 
           right = {
@@ -1135,6 +1223,22 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
 func testAccTrustFrameworkConditionConfig_Condition_Or2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
 
 resource "pingone_authorize_trust_framework_condition" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -1156,8 +1260,8 @@ resource "pingone_authorize_trust_framework_condition" "%[2]s" {
           comparator = "EQUALS"
 
           left = {
-            type  = "CONSTANT"
-            value = "test1"
+            type = "ATTRIBUTE"
+            id   = pingone_authorize_trust_framework_attribute.%[2]s.id
           }
 
           right = {

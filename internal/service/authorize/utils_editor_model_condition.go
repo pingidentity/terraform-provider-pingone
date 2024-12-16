@@ -112,7 +112,7 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 				),
 			},
 
-			Attributes: dataConditionComparandObjectSchemaAttributes(),
+			Attributes: dataConditionComparandObjectLeftSchemaAttributes(),
 		}
 
 		attributes["right"] = schema.SingleNestedAttribute{
@@ -127,7 +127,7 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 				),
 			},
 
-			Attributes: dataConditionComparandObjectSchemaAttributes(),
+			Attributes: dataConditionComparandObjectRightSchemaAttributes(),
 		}
 	}
 
@@ -232,8 +232,8 @@ func initializeEditorDataConditionTFObjectTypes(iteration int32) map[string]attr
 
 	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON) {
 		attrMap["comparator"] = types.StringType
-		attrMap["left"] = types.ObjectType{AttrTypes: editorDataConditionComparandTFObjectTypes}
-		attrMap["right"] = types.ObjectType{AttrTypes: editorDataConditionComparandTFObjectTypes}
+		attrMap["left"] = types.ObjectType{AttrTypes: editorDataConditionComparandLeftTFObjectTypes}
+		attrMap["right"] = types.ObjectType{AttrTypes: editorDataConditionComparandRightTFObjectTypes}
 	}
 
 	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_AND) ||
@@ -457,9 +457,9 @@ func (p *editorDataConditionLeafResourceModel) expandComparisonCondition(ctx con
 func expandComparisonCondition(ctx context.Context, leftComparand, rightComparand basetypes.ObjectValue, comparator basetypes.StringValue) (*authorize.AuthorizeEditorDataConditionsComparisonConditionDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	left, d := expandEditorDataConditionComparand(ctx, leftComparand)
+	left, d := expandEditorDataConditionLeftComparand(ctx, leftComparand)
 	diags.Append(d...)
-	right, d := expandEditorDataConditionComparand(ctx, rightComparand)
+	right, d := expandEditorDataConditionRightComparand(ctx, rightComparand)
 	diags.Append(d...)
 
 	if diags.HasError() {
@@ -606,11 +606,11 @@ func editorDataConditionOkToTFIteration(ctx context.Context, iteration int32, ap
 	case *authorize.AuthorizeEditorDataConditionsComparisonConditionDTO:
 
 		leftResp, ok := t.GetLeftOk()
-		left, d := editorDataConditionComparandOkToTF(ctx, leftResp, ok)
+		left, d := editorDataConditionComparandLeftOkToTF(ctx, leftResp, ok)
 		diags.Append(d...)
 
 		rightResp, ok := t.GetRightOk()
-		right, d := editorDataConditionComparandOkToTF(ctx, rightResp, ok)
+		right, d := editorDataConditionComparandRightOkToTF(ctx, rightResp, ok)
 		diags.Append(d...)
 
 		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
@@ -681,8 +681,8 @@ func editorDataConditionConvertEmptyValuesToTFNulls(attributeMap map[string]attr
 
 	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON) {
 		nullMap["comparator"] = types.StringNull()
-		nullMap["left"] = types.ObjectNull(editorDataConditionComparandTFObjectTypes)
-		nullMap["right"] = types.ObjectNull(editorDataConditionComparandTFObjectTypes)
+		nullMap["left"] = types.ObjectNull(editorDataConditionComparandLeftTFObjectTypes)
+		nullMap["right"] = types.ObjectNull(editorDataConditionComparandRightTFObjectTypes)
 	}
 
 	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_AND) ||

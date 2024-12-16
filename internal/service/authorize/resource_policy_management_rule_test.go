@@ -264,6 +264,22 @@ func testAccPolicyManagementRuleConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-current-user-id"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
 resource "pingone_authorize_policy_management_rule" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
@@ -292,8 +308,8 @@ resource "pingone_authorize_policy_management_rule" "%[2]s" {
           comparator = "EQUALS"
 
           left = {
-            type  = "CONSTANT"
-            value = "test1"
+            type = "ATTRIBUTE"
+            id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
           }
 
           right = {
@@ -323,8 +339,8 @@ resource "pingone_authorize_policy_management_rule" "%[2]s" {
             comparator = "EQUALS"
 
             left = {
-              type  = "CONSTANT"
-              value = "test1"
+              type = "ATTRIBUTE"
+              id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
             }
 
             right = {
@@ -342,6 +358,22 @@ resource "pingone_authorize_policy_management_rule" "%[2]s" {
 func testAccPolicyManagementRuleConfig_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-current-user-id"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
 
 resource "pingone_authorize_policy_management_rule" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id

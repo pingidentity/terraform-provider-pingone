@@ -236,18 +236,18 @@ func TestAccTrustFrameworkProcessor_ProcessorType_Chain(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.processor_ref"),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.#", "3"),
-		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.0.name", fmt.Sprintf("%s Test chain processor 1", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.0.name", fmt.Sprintf("%s Test chain processor 2", name)),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.0.type", "JSON_PATH"),
-		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.0.expression", "$.data.item1"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.0.expression", "$.data.item2"),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.0.value_type.type", "STRING"),
-		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.1.name", fmt.Sprintf("%s Test chain processor 3", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.1.name", fmt.Sprintf("%s Test chain processor 1", name)),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.1.type", "JSON_PATH"),
-		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.1.expression", "$.data.item3"),
-		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.1.value_type.type", "BOOLEAN"),
-		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.2.name", fmt.Sprintf("%s Test chain processor 2", name)),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.1.expression", "$.data.item1"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.1.value_type.type", "STRING"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.2.name", fmt.Sprintf("%s Test chain processor 3", name)),
 		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.2.type", "JSON_PATH"),
-		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.2.expression", "$.data.item2"),
-		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.2.value_type.type", "STRING"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.2.expression", "$.data.item3"),
+		resource.TestCheckResourceAttr(resourceFullName, "processor.processors.2.value_type.type", "BOOLEAN"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "processor.value_type"),
 	)
 
@@ -1004,6 +1004,15 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s" {
 
     processors = [
       {
+        name = "%[3]s Test chain processor 2"
+        type = "JSON_PATH"
+
+        expression = "$.data.item2"
+        value_type = {
+          type = "STRING"
+        }
+      },
+      {
         name = "%[3]s Test chain processor 1"
         type = "JSON_PATH"
 
@@ -1019,15 +1028,6 @@ resource "pingone_authorize_trust_framework_processor" "%[2]s" {
         expression = "$.data.item3"
         value_type = {
           type = "BOOLEAN"
-        }
-      },
-      {
-        name = "%[3]s Test chain processor 2"
-        type = "JSON_PATH"
-
-        expression = "$.data.item2"
-        value_type = {
-          type = "STRING"
         }
       },
     ],

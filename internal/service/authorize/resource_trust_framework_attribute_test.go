@@ -1237,6 +1237,22 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-resolver" {
   }
 }
 
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-current-user-id"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
@@ -1300,8 +1316,8 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
             comparator = "EQUALS"
 
             left = {
-              type  = "CONSTANT"
-              value = "test"
+              type = "ATTRIBUTE"
+              id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
             }
 
             right = {
@@ -1317,8 +1333,8 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
               comparator = "EQUALS"
 
               left = {
-                type  = "CONSTANT"
-                value = "test2"
+                type = "ATTRIBUTE"
+                id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
               }
 
               right = {
@@ -1379,8 +1395,8 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
         comparator = "EQUALS"
 
         left = {
-          type  = "CONSTANT"
-          value = "test"
+          type = "ATTRIBUTE"
+          id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
         }
 
         right = {
@@ -1409,8 +1425,8 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
         comparator = "EQUALS"
 
         left = {
-          type  = "CONSTANT"
-          value = "test"
+          type = "ATTRIBUTE"
+          id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
         }
 
         right = {
@@ -1451,6 +1467,22 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-resolver" {
   }
 }
 
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-current-user-id"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
@@ -1477,8 +1509,8 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
         comparator = "EQUALS"
 
         left = {
-          type  = "CONSTANT"
-          value = "test"
+          type = "ATTRIBUTE"
+          id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
         }
 
         right = {
@@ -1517,8 +1549,8 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
             comparator = "EQUALS"
 
             left = {
-              type  = "CONSTANT"
-              value = "test"
+              type = "ATTRIBUTE"
+              id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
             }
 
             right = {
@@ -1534,8 +1566,8 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
               comparator = "EQUALS"
 
               left = {
-                type  = "CONSTANT"
-                value = "test2"
+                type = "ATTRIBUTE"
+                id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
               }
 
               right = {
@@ -1596,8 +1628,8 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
         comparator = "EQUALS"
 
         left = {
-          type  = "CONSTANT"
-          value = "test"
+          type = "ATTRIBUTE"
+          id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
         }
 
         right = {
@@ -1638,6 +1670,22 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-resolver" {
   }
 }
 
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-current-user-id"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
@@ -1664,8 +1712,8 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
             comparator = "EQUALS"
 
             left = {
-              type  = "CONSTANT"
-              value = "test"
+              type = "ATTRIBUTE"
+              id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
             }
 
             right = {
@@ -1681,8 +1729,8 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
               comparator = "EQUALS"
 
               left = {
-                type  = "CONSTANT"
-                value = "test2"
+                type = "ATTRIBUTE"
+                id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
               }
 
               right = {
@@ -1726,6 +1774,22 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-resolver" {
   }
 }
 
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-current-user-id"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
@@ -1749,6 +1813,22 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
 func testAccTrustFrameworkAttributeConfig_Resolver_Constant_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 %[1]s
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-current-user-id"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
 
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -1777,8 +1857,8 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
             comparator = "EQUALS"
 
             left = {
-              type  = "CONSTANT"
-              value = "test"
+              type = "ATTRIBUTE"
+              id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
             }
 
             right = {
@@ -1794,8 +1874,8 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
               comparator = "EQUALS"
 
               left = {
-                type  = "CONSTANT"
-                value = "test2"
+                type = "ATTRIBUTE"
+                id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
               }
 
               right = {
@@ -1829,6 +1909,22 @@ func testAccTrustFrameworkAttributeConfig_Resolver_Constant_Min(resourceName, na
 	return fmt.Sprintf(`
 %[1]s
 
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-current-user-id"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
@@ -1854,6 +1950,22 @@ func testAccTrustFrameworkAttributeConfig_Resolver_CurrentRepetitionValue_Full(r
 	return fmt.Sprintf(`
 %[1]s
 
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-current-user-id"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
@@ -1877,8 +1989,8 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
             comparator = "EQUALS"
 
             left = {
-              type  = "CONSTANT"
-              value = "test"
+              type = "ATTRIBUTE"
+              id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
             }
 
             right = {
@@ -1894,8 +2006,8 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
               comparator = "EQUALS"
 
               left = {
-                type  = "CONSTANT"
-                value = "test2"
+                type = "ATTRIBUTE"
+                id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
               }
 
               right = {
@@ -1929,6 +2041,22 @@ func testAccTrustFrameworkAttributeConfig_Resolver_CurrentRepetitionValue_Min(re
 	return fmt.Sprintf(`
 %[1]s
 
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-current-user-id"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
@@ -1949,6 +2077,22 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
 func testAccTrustFrameworkAttributeConfig_Resolver_CurrentUserId_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 %[1]s
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-current-user-id"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
 
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -1973,8 +2117,8 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
             comparator = "EQUALS"
 
             left = {
-              type  = "CONSTANT"
-              value = "test"
+              type = "ATTRIBUTE"
+              id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
             }
 
             right = {
@@ -1990,8 +2134,8 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
               comparator = "EQUALS"
 
               left = {
-                type  = "CONSTANT"
-                value = "test2"
+                type = "ATTRIBUTE"
+                id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
               }
 
               right = {
@@ -2025,6 +2169,22 @@ func testAccTrustFrameworkAttributeConfig_Resolver_CurrentUserId_Min(resourceNam
 	return fmt.Sprintf(`
 %[1]s
 
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-current-user-id"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
@@ -2045,6 +2205,22 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
 func testAccTrustFrameworkAttributeConfig_Resolver_Request_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 %[1]s
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-current-user-id"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
 
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -2069,8 +2245,8 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
             comparator = "EQUALS"
 
             left = {
-              type  = "CONSTANT"
-              value = "test"
+              type = "ATTRIBUTE"
+              id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
             }
 
             right = {
@@ -2086,8 +2262,8 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
               comparator = "EQUALS"
 
               left = {
-                type  = "CONSTANT"
-                value = "test2"
+                type = "ATTRIBUTE"
+                id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
               }
 
               right = {
@@ -2121,6 +2297,22 @@ func testAccTrustFrameworkAttributeConfig_Resolver_Request_Min(resourceName, nam
 	return fmt.Sprintf(`
 %[1]s
 
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-current-user-id"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
@@ -2141,6 +2333,22 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
 func testAccTrustFrameworkAttributeConfig_Resolver_Service_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 %[1]s
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-current-user-id"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
 
 resource "pingone_authorize_trust_framework_service" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -2176,8 +2384,8 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
             comparator = "EQUALS"
 
             left = {
-              type  = "CONSTANT"
-              value = "test"
+              type = "ATTRIBUTE"
+              id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
             }
 
             right = {
@@ -2193,8 +2401,8 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
               comparator = "EQUALS"
 
               left = {
-                type  = "CONSTANT"
-                value = "test2"
+                type = "ATTRIBUTE"
+                id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
               }
 
               right = {
@@ -2236,6 +2444,22 @@ resource "pingone_authorize_trust_framework_service" "%[2]s" {
   service_type = "NONE"
 }
 
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-current-user-id"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
@@ -2259,6 +2483,22 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
 func testAccTrustFrameworkAttributeConfig_Resolver_System_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 %[1]s
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-current-user-id"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
 
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -2284,8 +2524,8 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
             comparator = "EQUALS"
 
             left = {
-              type  = "CONSTANT"
-              value = "test"
+              type = "ATTRIBUTE"
+              id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
             }
 
             right = {
@@ -2301,8 +2541,8 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
               comparator = "EQUALS"
 
               left = {
-                type  = "CONSTANT"
-                value = "test2"
+                type = "ATTRIBUTE"
+                id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
               }
 
               right = {
@@ -2336,6 +2576,22 @@ func testAccTrustFrameworkAttributeConfig_Resolver_System_Min(resourceName, name
 	return fmt.Sprintf(`
 %[1]s
 
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-current-user-id"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
+
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
@@ -2357,6 +2613,22 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
 func testAccTrustFrameworkAttributeConfig_Resolver_User_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 %[1]s
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-current-user-id"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
 
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-user" {
   environment_id = data.pingone_environment.general_test.id
@@ -2395,8 +2667,8 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
             comparator = "EQUALS"
 
             left = {
-              type  = "CONSTANT"
-              value = "test"
+              type = "ATTRIBUTE"
+              id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
             }
 
             right = {
@@ -2412,8 +2684,8 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
               comparator = "EQUALS"
 
               left = {
-                type  = "CONSTANT"
-                value = "test2"
+                type = "ATTRIBUTE"
+                id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
               }
 
               right = {
@@ -2446,6 +2718,22 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
 func testAccTrustFrameworkAttributeConfig_Resolver_User_Min(resourceName, name string) string {
 	return fmt.Sprintf(`
 %[1]s
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-current-user-id"
+  description    = "Test attribute"
+
+  resolvers = [
+    {
+      type = "CURRENT_USER_ID"
+    }
+  ]
+
+  value_type = {
+    type = "STRING"
+  }
+}
 
 resource "pingone_authorize_trust_framework_attribute" "%[2]s-user" {
   environment_id = data.pingone_environment.general_test.id

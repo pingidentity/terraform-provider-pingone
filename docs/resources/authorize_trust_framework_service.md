@@ -318,7 +318,7 @@ Optional:
 - `value` (String, Sensitive) A string that specifies a constant text value to use as the data value.  This field is required when `type` is `CONSTANT`.
 
 <a id="nestedatt--service_settings--headers--value--attribute"></a>
-### Nested Schema for `service_settings.headers.value.value`
+### Nested Schema for `service_settings.headers.value.attribute`
 
 Required:
 
