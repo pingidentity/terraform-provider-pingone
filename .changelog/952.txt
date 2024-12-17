@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_risk_predictor`: Support multiple root level conditions for composite predictors.
+```
+
+```release-note:note
+`resource/pingone_risk_predictor`: Deprecated the `predictor_composite.composition` field.  This field will be removed in the next major release. Use the `predictor_composite.compositions` field going forward.
+```
