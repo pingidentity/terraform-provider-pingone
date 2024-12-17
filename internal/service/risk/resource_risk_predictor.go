@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -90,7 +91,8 @@ type predictorBotDetection struct {
 
 // Composite
 type predictorComposite struct {
-	Composition types.Object `tfsdk:"composition"`
+	Composition  types.Object `tfsdk:"composition"`
+	Compositions types.List   `tfsdk:"compositions"`
 }
 
 type predictorComposition struct {
@@ -229,6 +231,11 @@ var (
 	predictorCompositeTFObjectTypes = map[string]attr.Type{
 		"composition": types.ObjectType{
 			AttrTypes: predictorCompositionTFObjectTypes,
+		},
+		"compositions": types.ListType{
+			ElemType: types.ObjectType{
+				AttrTypes: predictorCompositionTFObjectTypes,
+			},
 		},
 	}
 
@@ -424,6 +431,16 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 	predictorCompositeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single nested object that specifies options for the Composite predictor.",
 	).ExactlyOneOf(descriptionPredictorObjectPaths)
+
+	predictorCompositeCompositionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The `composition` attribute is deprecated. Use the `compositions` attribute instead. This field will be removed in the next major release. Contains the composition of risk factors you want to use, and the condition logic that determines when or whether a risk factor is applied.",
+	).ExactlyOneOf([]string{"composition", "compositions"})
+
+	const minCompositions = 1
+	const maxCompositions = 3
+	predictorCompositeCompositionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A list of compositions of risk factors you want to use, and the condition logic that determines when or whether a risk factor is applied.  The minimum number of compositions is %d and the maximum number of compositions is %d.", minCompositions, maxCompositions),
+	).ExactlyOneOf([]string{"composition", "compositions"})
 
 	predictorCompositeCompositionLevelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the risk level for the composite risk predictor.",
@@ -732,8 +749,17 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 
 				Attributes: map[string]schema.Attribute{
 					"composition": schema.SingleNestedAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("Contains the composition of risk factors you want to use, and the condition logic that determines when or whether a risk factor is applied.").Description,
-						Required:    true,
+						Description:         predictorCompositeCompositionDescription.Description,
+						MarkdownDescription: predictorCompositeCompositionDescription.MarkdownDescription,
+						Optional:            true,
+						DeprecationMessage:  "The `composition` attribute is deprecated. Use the `compositions` attribute instead. This field will be removed in the next major release.",
+
+						Validators: []validator.Object{
+							objectvalidator.ExactlyOneOf(
+								path.MatchRelative().AtParent().AtName("composition"),
+								path.MatchRelative().AtParent().AtName("compositions"),
+							),
+						},
 
 						Attributes: map[string]schema.Attribute{
 							"condition_json": schema.StringAttribute{
@@ -757,6 +783,49 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 
 								Validators: []validator.String{
 									stringvalidator.OneOf(utils.EnumSliceToStringSlice(risk.AllowedEnumRiskLevelEnumValues)...),
+								},
+							},
+						},
+					},
+
+					"compositions": schema.ListNestedAttribute{
+						Description:         predictorCompositeCompositionsDescription.Description,
+						MarkdownDescription: predictorCompositeCompositionsDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.List{
+							listvalidator.ExactlyOneOf(
+								path.MatchRelative().AtParent().AtName("composition"),
+								path.MatchRelative().AtParent().AtName("compositions"),
+							),
+							listvalidator.SizeAtLeast(minCompositions),
+							listvalidator.SizeAtMost(maxCompositions),
+						},
+
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"condition_json": schema.StringAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the condition logic for the composite risk predictor. The value must be a valid JSON string.").Description,
+									Required:    true,
+
+									CustomType: jsontypes.NormalizedType{},
+								},
+
+								"condition": schema.StringAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the condition logic for the composite risk predictor as applied to the service.").Description,
+									Computed:    true,
+
+									CustomType: jsontypes.NormalizedType{},
+								},
+
+								"level": schema.StringAttribute{
+									Description:         predictorCompositeCompositionLevelDescription.Description,
+									MarkdownDescription: predictorCompositeCompositionLevelDescription.MarkdownDescription,
+									Required:            true,
+
+									Validators: []validator.String{
+										stringvalidator.OneOf(utils.EnumSliceToStringSlice(risk.AllowedEnumRiskLevelEnumValues)...),
+									},
 								},
 							},
 						},
@@ -2080,38 +2149,67 @@ func (p *riskPredictorResourceModel) expandPredictorComposite(ctx context.Contex
 			return nil, diags
 		}
 
-		var level risk.EnumRiskLevel
-		if !plan.Level.IsNull() && !plan.Level.IsUnknown() {
-			level = risk.EnumRiskLevel(plan.Level.ValueString())
-		}
-
-		var condition risk.RiskPredictorCompositeConditionBase
-		if !plan.Condition.IsNull() && !plan.Condition.IsUnknown() {
-			err := json.Unmarshal([]byte(plan.Condition.ValueString()), &condition)
-			if err != nil {
-				tflog.Error(ctx, "Cannot parse the `condition` JSON", map[string]interface{}{
-					"err": err,
-				})
-				diags.AddError(
-					"Cannot parse the `condition` JSON",
-					"The JSON string passed to the `condition` parameter cannot be parsed as JSON.  Please check the policy is a valid JSON structure.",
-				)
-				return nil, diags
-			}
-
-		}
-
 		dataCompositons := make([]risk.RiskPredictorCompositeAllOfCompositionsInner, 0)
 
-		dataComposition := risk.NewRiskPredictorCompositeAllOfCompositionsInner(
-			condition,
-			level,
-		)
+		dataComposition, diags := plan.expandPredictorCompositeComposition(ctx)
+		if diags.HasError() {
+			return nil, diags
+		}
 
 		data.SetCompositions(append(dataCompositons, *dataComposition))
 	}
 
+	if !predictorPlan.Compositions.IsNull() && !predictorPlan.Compositions.IsUnknown() {
+		var plan []predictorComposition
+		d := predictorPlan.Compositions.ElementsAs(ctx, &plan, false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		dataCompositons := make([]risk.RiskPredictorCompositeAllOfCompositionsInner, 0)
+		for _, composition := range plan {
+			dataComposition, diags := composition.expandPredictorCompositeComposition(ctx)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			dataCompositons = append(dataCompositons, *dataComposition)
+		}
+		data.SetCompositions(dataCompositons)
+	}
+
 	return &data, diags
+}
+
+func (p *predictorComposition) expandPredictorCompositeComposition(ctx context.Context) (*risk.RiskPredictorCompositeAllOfCompositionsInner, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var level risk.EnumRiskLevel
+	if !p.Level.IsNull() && !p.Level.IsUnknown() {
+		level = risk.EnumRiskLevel(p.Level.ValueString())
+	}
+
+	var condition risk.RiskPredictorCompositeConditionBase
+	if !p.Condition.IsNull() && !p.Condition.IsUnknown() {
+		err := json.Unmarshal([]byte(p.Condition.ValueString()), &condition)
+		if err != nil {
+			tflog.Error(ctx, "Cannot parse the `condition` JSON", map[string]interface{}{
+				"err": err,
+			})
+			diags.AddError(
+				"Cannot parse the `condition` JSON",
+				"The JSON string passed to the `condition` parameter cannot be parsed as JSON.  Please check the policy is a valid JSON structure.",
+			)
+			return nil, diags
+		}
+
+	}
+
+	return risk.NewRiskPredictorCompositeAllOfCompositionsInner(
+		condition,
+		level,
+	), diags
 }
 
 func (p *riskPredictorResourceModel) expandPredictorCustom(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorCustom, diag.Diagnostics) {
