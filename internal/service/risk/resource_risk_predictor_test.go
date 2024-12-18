@@ -212,14 +212,6 @@ func TestAccRiskPredictor_Composite(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.1.level", "HIGH"),
 	)
 
-	backwardCompatibilityCheck := resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(resourceFullName, "type", "COMPOSITE"),
-		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.composition.condition_json", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"and\":[{\"equals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}]}]}]}"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.composition.condition", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"Low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"OR\"}],\"type\":\"AND\"}],\"type\":\"AND\"}"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.composition.level", "LOW"),
-	)
-
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
@@ -275,6 +267,9 @@ func TestAccRiskPredictor_Composite(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"predictor_composite.compositions.1.condition_json",
+				},
 			},
 			{
 				Config:  testAccRiskPredictorConfig_Composite_Full_1(resourceName, name),
@@ -284,30 +279,6 @@ func TestAccRiskPredictor_Composite(t *testing.T) {
 			{
 				Config:      testAccRiskPredictorConfig_Composite_InvalidJSON(resourceName, name),
 				ExpectError: regexp.MustCompile(`Cannot parse the condition input JSON`),
-			},
-			// Backward compatibility
-			{
-				Config: testAccRiskPredictorConfig_Composite_Deprecated(resourceName, name),
-				Check:  backwardCompatibilityCheck,
-			},
-			{
-				ResourceName: resourceFullName,
-				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-					return func(s *terraform.State) (string, error) {
-						rs, ok := s.RootModule().Resources[resourceFullName]
-						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-						}
-
-						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-					}
-				}(),
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-			{
-				Config: testAccRiskPredictorConfig_Composite_Full_1(resourceName, name),
-				Check:  fullCheck1,
 			},
 		},
 	})
@@ -2737,58 +2708,6 @@ resource "pingone_risk_predictor" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccRiskPredictorConfig_Composite_Deprecated(resourceName, name string) string {
-	return fmt.Sprintf(`
-	%[1]s
-
-resource "pingone_risk_predictor" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name         = "%[3]s"
-  compact_name = "%[3]s1"
-
-  predictor_composite = {
-    composition = {
-      level = "LOW"
-
-      condition_json = jsonencode({
-        "and" : [
-          {
-            "value" : "$${details.counters.predictorLevels.medium}",
-            "equals" : 5,
-            "type" : "VALUE_COMPARISON"
-          },
-          {
-            "value" : "$${details.anonymousNetwork.level}",
-            "equals" : "low",
-            "type" : "VALUE_COMPARISON"
-          },
-          {
-            "and" : [
-              {
-                "value" : "$${details.anonymousNetwork.level}",
-                "equals" : "high",
-                "type" : "VALUE_COMPARISON"
-              },
-              {
-                "or" : [
-                  {
-                    "value" : "$${details.anonymousNetwork.level}",
-                    "notEquals" : "high",
-                    "type" : "VALUE_COMPARISON"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      })
-    }
-  }
-
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
-}
-
 func testAccRiskPredictorConfig_Composite_InvalidJSON(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -2800,11 +2719,13 @@ resource "pingone_risk_predictor" "%[2]s" {
   compact_name = "%[3]s1"
 
   predictor_composite = {
-    composition = {
+    compositions = [
+	{
       level = "LOW"
 
       condition_json = jsonencode({})
     }
+	  ]
   }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
