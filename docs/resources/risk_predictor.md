@@ -505,23 +505,9 @@ Optional:
 <a id="nestedatt--predictor_composite"></a>
 ### Nested Schema for `predictor_composite`
 
-Optional:
-
-- `composition` (Attributes, Deprecated) The `composition` attribute is deprecated. Use the `compositions` attribute instead. This field will be removed in the next major release. Contains the composition of risk factors you want to use, and the condition logic that determines when or whether a risk factor is applied.  Exactly one of the following must be defined: `composition`, `compositions`. (see [below for nested schema](#nestedatt--predictor_composite--composition))
-- `compositions` (Attributes List) A list of compositions of risk factors you want to use, and the condition logic that determines when or whether a risk factor is applied.  The minimum number of compositions is 1 and the maximum number of compositions is 3.  Exactly one of the following must be defined: `composition`, `compositions`. (see [below for nested schema](#nestedatt--predictor_composite--compositions))
-
-<a id="nestedatt--predictor_composite--composition"></a>
-### Nested Schema for `predictor_composite.composition`
-
 Required:
 
-- `condition_json` (String) A string that specifies the condition logic for the composite risk predictor. The value must be a valid JSON string.
-- `level` (String) A string that specifies the risk level for the composite risk predictor.  Options are `HIGH`, `LOW`, `MEDIUM`.
-
-Read-Only:
-
-- `condition` (String) A string that specifies the condition logic for the composite risk predictor as applied to the service.
-
+- `compositions` (Attributes List) A list of compositions of risk factors you want to use, and the condition logic that determines when or whether a risk factor is applied.  The minimum number of compositions is 1 and the maximum number of compositions is 3. (see [below for nested schema](#nestedatt--predictor_composite--compositions))
 
 <a id="nestedatt--predictor_composite--compositions"></a>
 ### Nested Schema for `predictor_composite.compositions`
