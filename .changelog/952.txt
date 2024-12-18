@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_risk_predictor`: Support multiple root level conditions for composite predictors.
+```
+
+```release-note:breaking-change
+`resource/pingone_risk_predictor`: To ensure correct composite predictor and Terraform behaviours, the `predictor_composite.composition` field has been removed and replaced with `predictor_composite.compositions` field.
+```

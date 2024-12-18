@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -90,7 +91,7 @@ type predictorBotDetection struct {
 
 // Composite
 type predictorComposite struct {
-	Composition types.Object `tfsdk:"composition"`
+	Compositions types.List `tfsdk:"compositions"`
 }
 
 type predictorComposition struct {
@@ -227,8 +228,10 @@ var (
 
 	// Composite
 	predictorCompositeTFObjectTypes = map[string]attr.Type{
-		"composition": types.ObjectType{
-			AttrTypes: predictorCompositionTFObjectTypes,
+		"compositions": types.ListType{
+			ElemType: types.ObjectType{
+				AttrTypes: predictorCompositionTFObjectTypes,
+			},
 		},
 	}
 
@@ -424,6 +427,12 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 	predictorCompositeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single nested object that specifies options for the Composite predictor.",
 	).ExactlyOneOf(descriptionPredictorObjectPaths)
+
+	const minCompositions = 1
+	const maxCompositions = 3
+	predictorCompositeCompositionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A list of compositions of risk factors you want to use, and the condition logic that determines when or whether a risk factor is applied.  The minimum number of compositions is %d and the maximum number of compositions is %d.", minCompositions, maxCompositions),
+	)
 
 	predictorCompositeCompositionLevelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the risk level for the composite risk predictor.",
@@ -731,32 +740,40 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				Optional:            true,
 
 				Attributes: map[string]schema.Attribute{
-					"composition": schema.SingleNestedAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("Contains the composition of risk factors you want to use, and the condition logic that determines when or whether a risk factor is applied.").Description,
-						Required:    true,
+					"compositions": schema.ListNestedAttribute{
+						Description:         predictorCompositeCompositionsDescription.Description,
+						MarkdownDescription: predictorCompositeCompositionsDescription.MarkdownDescription,
+						Required:            true,
 
-						Attributes: map[string]schema.Attribute{
-							"condition_json": schema.StringAttribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the condition logic for the composite risk predictor. The value must be a valid JSON string.").Description,
-								Required:    true,
+						Validators: []validator.List{
+							listvalidator.SizeAtLeast(minCompositions),
+							listvalidator.SizeAtMost(maxCompositions),
+						},
 
-								CustomType: jsontypes.NormalizedType{},
-							},
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"condition_json": schema.StringAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the condition logic for the composite risk predictor. The value must be a valid JSON string.").Description,
+									Required:    true,
 
-							"condition": schema.StringAttribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the condition logic for the composite risk predictor as applied to the service.").Description,
-								Computed:    true,
+									CustomType: jsontypes.NormalizedType{},
+								},
 
-								CustomType: jsontypes.NormalizedType{},
-							},
+								"condition": schema.StringAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the condition logic for the composite risk predictor as applied to the service.").Description,
+									Computed:    true,
 
-							"level": schema.StringAttribute{
-								Description:         predictorCompositeCompositionLevelDescription.Description,
-								MarkdownDescription: predictorCompositeCompositionLevelDescription.MarkdownDescription,
-								Required:            true,
+									CustomType: jsontypes.NormalizedType{},
+								},
 
-								Validators: []validator.String{
-									stringvalidator.OneOf(utils.EnumSliceToStringSlice(risk.AllowedEnumRiskLevelEnumValues)...),
+								"level": schema.StringAttribute{
+									Description:         predictorCompositeCompositionLevelDescription.Description,
+									MarkdownDescription: predictorCompositeCompositionLevelDescription.MarkdownDescription,
+									Required:            true,
+
+									Validators: []validator.String{
+										stringvalidator.OneOf(utils.EnumSliceToStringSlice(risk.AllowedEnumRiskLevelEnumValues)...),
+									},
 								},
 							},
 						},
@@ -1413,32 +1430,51 @@ func (r *RiskPredictorResource) ModifyPlan(ctx context.Context, req resource.Mod
 		return
 	}
 
-	// Composite "condition_json"
-	var compositeConditionJSONValue *string
-	resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root("predictor_composite").AtName("composition").AtName("condition_json"), &compositeConditionJSONValue)...)
+	var compositions []predictorComposition
+	resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root("predictor_composite").AtName("compositions"), &compositions)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Do nothing if there is no value
-	if compositeConditionJSONValue == nil {
-		return
-	}
+	if len(compositions) > 0 {
 
-	// Check the structure of the composite condition
-	resp.Diagnostics.Append(riskservicehelpers.CheckCompositeConditionStructure(ctx, *compositeConditionJSONValue)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+		normalisedCompositions := make([]attr.Value, 0, len(compositions))
 
-	// Normalise the composite condition with what we expect the API will do
-	normalisedJSON, d := riskservicehelpers.NormaliseCompositeCondition(ctx, *compositeConditionJSONValue)
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+		for _, composition := range compositions {
+			// Check the structure of the composite condition
+			resp.Diagnostics.Append(riskservicehelpers.CheckCompositeConditionStructure(ctx, composition.ConditionJSON.ValueString())...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
 
-	resp.Plan.SetAttribute(ctx, path.Root("predictor_composite").AtName("composition").AtName("condition"), types.StringValue(*normalisedJSON))
+			// Normalise the composite condition with what we expect the API will do
+			normalisedJSON, d := riskservicehelpers.NormaliseCompositeCondition(ctx, composition.ConditionJSON.ValueString())
+			resp.Diagnostics.Append(d...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+
+			composition.Condition = jsontypes.NewNormalizedValue(*normalisedJSON)
+
+			objValue, d := types.ObjectValue(predictorCompositionTFObjectTypes, map[string]attr.Value{
+				"condition_json": composition.ConditionJSON,
+				"condition":      composition.Condition,
+				"level":          composition.Level,
+			})
+			resp.Diagnostics.Append(d...)
+			if !resp.Diagnostics.HasError() {
+				normalisedCompositions = append(normalisedCompositions, objValue)
+			}
+		}
+
+		resp.Plan.SetAttribute(ctx, path.Root("predictor_composite").AtName("compositions"), types.ListValueMust(
+			types.ObjectType{
+				AttrTypes: predictorCompositionTFObjectTypes,
+			},
+			normalisedCompositions,
+		))
+
+	}
 }
 
 func (r *RiskPredictorResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -2069,49 +2105,57 @@ func (p *riskPredictorResourceModel) expandPredictorComposite(ctx context.Contex
 		return nil, diags
 	}
 
-	if !predictorPlan.Composition.IsNull() && !predictorPlan.Composition.IsUnknown() {
-		var plan predictorComposition
-		d := predictorPlan.Composition.As(ctx, &plan, basetypes.ObjectAsOptions{
-			UnhandledNullAsEmpty:    false,
-			UnhandledUnknownAsEmpty: false,
-		})
+	if !predictorPlan.Compositions.IsNull() && !predictorPlan.Compositions.IsUnknown() {
+		var plan []predictorComposition
+		d := predictorPlan.Compositions.ElementsAs(ctx, &plan, false)
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		var level risk.EnumRiskLevel
-		if !plan.Level.IsNull() && !plan.Level.IsUnknown() {
-			level = risk.EnumRiskLevel(plan.Level.ValueString())
-		}
-
-		var condition risk.RiskPredictorCompositeConditionBase
-		if !plan.Condition.IsNull() && !plan.Condition.IsUnknown() {
-			err := json.Unmarshal([]byte(plan.Condition.ValueString()), &condition)
-			if err != nil {
-				tflog.Error(ctx, "Cannot parse the `condition` JSON", map[string]interface{}{
-					"err": err,
-				})
-				diags.AddError(
-					"Cannot parse the `condition` JSON",
-					"The JSON string passed to the `condition` parameter cannot be parsed as JSON.  Please check the policy is a valid JSON structure.",
-				)
+		dataCompositons := make([]risk.RiskPredictorCompositeAllOfCompositionsInner, 0)
+		for _, composition := range plan {
+			dataComposition, diags := composition.expandPredictorCompositeComposition(ctx)
+			if diags.HasError() {
 				return nil, diags
 			}
 
+			dataCompositons = append(dataCompositons, *dataComposition)
 		}
-
-		dataCompositons := make([]risk.RiskPredictorCompositeAllOfCompositionsInner, 0)
-
-		dataComposition := risk.NewRiskPredictorCompositeAllOfCompositionsInner(
-			condition,
-			level,
-		)
-
-		data.SetCompositions(append(dataCompositons, *dataComposition))
+		data.SetCompositions(dataCompositons)
 	}
 
 	return &data, diags
+}
+
+func (p *predictorComposition) expandPredictorCompositeComposition(ctx context.Context) (*risk.RiskPredictorCompositeAllOfCompositionsInner, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var level risk.EnumRiskLevel
+	if !p.Level.IsNull() && !p.Level.IsUnknown() {
+		level = risk.EnumRiskLevel(p.Level.ValueString())
+	}
+
+	var condition risk.RiskPredictorCompositeConditionBase
+	if !p.Condition.IsNull() && !p.Condition.IsUnknown() {
+		err := json.Unmarshal([]byte(p.Condition.ValueString()), &condition)
+		if err != nil {
+			tflog.Error(ctx, "Cannot parse the `condition` JSON", map[string]interface{}{
+				"err": err,
+			})
+			diags.AddError(
+				"Cannot parse the `condition` JSON",
+				"The JSON string passed to the `condition` parameter cannot be parsed as JSON.  Please check the policy is a valid JSON structure.",
+			)
+			return nil, diags
+		}
+
+	}
+
+	return risk.NewRiskPredictorCompositeAllOfCompositionsInner(
+		condition,
+		level,
+	), diags
 }
 
 func (p *riskPredictorResourceModel) expandPredictorCustom(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorCustom, diag.Diagnostics) {
@@ -3146,29 +3190,6 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 	p.Licensed = framework.BoolOkToTF(apiObjectCommon.GetLicensedOk())
 	p.Deletable = framework.BoolOkToTF(apiObjectCommon.GetDeletableOk())
 
-	// Save the direct-to-state fields
-	compositeConditionJSON := jsontypes.NewNormalizedNull()
-	if !p.PredictorComposite.IsNull() && !p.PredictorComposite.IsUnknown() {
-
-		var predictorPlan predictorComposite
-		d := p.PredictorComposite.As(ctx, &predictorPlan, basetypes.ObjectAsOptions{
-			UnhandledNullAsEmpty:    false,
-			UnhandledUnknownAsEmpty: false,
-		})
-		diags.Append(d...)
-
-		if !predictorPlan.Composition.IsNull() && !predictorPlan.Composition.IsUnknown() {
-			var plan predictorComposition
-			d := predictorPlan.Composition.As(ctx, &plan, basetypes.ObjectAsOptions{
-				UnhandledNullAsEmpty:    false,
-				UnhandledUnknownAsEmpty: false,
-			})
-			diags.Append(d...)
-
-			compositeConditionJSON = plan.ConditionJSON
-		}
-	}
-
 	// Set the predictor specific fields by object type
 	var d diag.Diagnostics
 	p.PredictorAdversaryInTheMiddle, d = p.toStateRiskPredictorAdversaryInTheMiddle(apiObject.RiskPredictorAdversaryInTheMiddle)
@@ -3180,7 +3201,7 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 	p.PredictorBotDetection, d = p.toStateRiskPredictorBotDetection(apiObject.RiskPredictorBotDetection)
 	diags.Append(d...)
 
-	p.PredictorComposite, d = p.toStateRiskPredictorComposite(apiObject.RiskPredictorComposite, compositeConditionJSON)
+	p.PredictorComposite, d = p.toStateRiskPredictorComposite(ctx, apiObject.RiskPredictorComposite)
 	diags.Append(d...)
 
 	p.PredictorCustomMap, d = p.toStateRiskPredictorCustom(apiObject.RiskPredictorCustom)
@@ -3255,23 +3276,70 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorBotDetection(apiObject 
 	return objValue, diags
 }
 
-func (p *riskPredictorResourceModel) toStateRiskPredictorComposite(apiObject *risk.RiskPredictorComposite, compositeConditionJSON jsontypes.Normalized) (basetypes.ObjectValue, diag.Diagnostics) {
+func (p *riskPredictorResourceModel) toStateRiskPredictorComposite(ctx context.Context, apiObject *risk.RiskPredictorComposite) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if apiObject == nil || apiObject.GetId() == "" {
 		return types.ObjectNull(predictorCompositeTFObjectTypes), diags
 	}
 
-	compositionObject := types.ObjectNull(predictorCompositionTFObjectTypes)
+	compositeObject := map[string]attr.Value{
+		"compositions": types.ListNull(types.ObjectType{AttrTypes: predictorCompositionTFObjectTypes}),
+	}
 
-	if v, ok := apiObject.GetCompositionsOk(); ok && len(v) > 0 {
+	// The JSON fields the admins define are direct-to-state (because the API changes the JSON structure on output), but if the resource is imported, we have to copy the API value to the JSON input fields
+	v, ok := apiObject.GetCompositionsOk()
+	compositions, d := p.riskPredictorCompositeConditionsOkToTF(ctx, v, ok)
+	diags.Append(d...)
+
+	compositeObject["compositions"] = compositions
+
+	objValue, d := types.ObjectValue(predictorCompositeTFObjectTypes, compositeObject)
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func (p *riskPredictorResourceModel) riskPredictorCompositeConditionsOkToTF(ctx context.Context, apiObject []risk.RiskPredictorCompositeAllOfCompositionsInner, ok bool) (basetypes.ListValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	tfObjType := types.ObjectType{AttrTypes: predictorCompositionTFObjectTypes}
+
+	if !ok || apiObject == nil {
+		return types.ListNull(tfObjType), diags
+	}
+
+	planJSONElements := make([]jsontypes.Normalized, 0)
+
+	if !p.PredictorComposite.IsNull() && !p.PredictorComposite.IsUnknown() {
+
+		var predictorPlan predictorComposite
+		d := p.PredictorComposite.As(ctx, &predictorPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+
+		if !predictorPlan.Compositions.IsNull() && !predictorPlan.Compositions.IsUnknown() {
+			var plan []predictorComposition
+			d := predictorPlan.Compositions.ElementsAs(ctx, &plan, false)
+			diags.Append(d...)
+
+			for _, planElement := range plan {
+				planJSONElements = append(planJSONElements, planElement.ConditionJSON)
+			}
+		}
+	}
+
+	objectAttrTypes := []attr.Value{}
+	for i, v := range apiObject {
 
 		o := map[string]attr.Value{
-			"level":          framework.EnumOkToTF(v[0].GetLevelOk()),
-			"condition_json": compositeConditionJSON,
+			"level":          framework.EnumOkToTF(v.GetLevelOk()),
+			"condition_json": types.StringNull(),
+			"condition":      types.StringNull(),
 		}
 
-		if v1, ok := v[0].GetConditionOk(); ok {
+		if v1, ok := v.GetConditionOk(); ok {
 			jsonString, err := json.Marshal(v1)
 			if err != nil {
 				diags.AddError(
@@ -3279,29 +3347,29 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorComposite(apiObject *ri
 					"The provider cannot convert the `composite` map object to JSON.  Please report this to the provider maintainers.",
 				)
 
-				return types.ObjectNull(predictorCompositeTFObjectTypes), diags
+				continue
 			}
 
-			o["condition"] = jsontypes.NewNormalizedValue(string(jsonString))
+			conditionNormalized := jsontypes.NewNormalizedValue(string(jsonString))
 
-			if compositeConditionJSON.IsNull() || compositeConditionJSON.IsUnknown() {
-				o["condition_json"] = o["condition"]
+			if i >= 0 && i < len(planJSONElements) {
+				o["condition_json"] = planJSONElements[i]
+			} else {
+				o["condition_json"] = conditionNormalized
 			}
+			o["condition"] = conditionNormalized
 		}
 
 		objValue, d := types.ObjectValue(predictorCompositionTFObjectTypes, o)
 		diags.Append(d...)
 
-		compositionObject = objValue
-
+		objectAttrTypes = append(objectAttrTypes, objValue)
 	}
 
-	objValue, d := types.ObjectValue(predictorCompositeTFObjectTypes, map[string]attr.Value{
-		"composition": compositionObject,
-	})
+	returnVar, d := types.ListValue(tfObjType, objectAttrTypes)
 	diags.Append(d...)
 
-	return objValue, diags
+	return returnVar, diags
 }
 
 func (p *riskPredictorResourceModel) toStateRiskPredictorCustom(apiObject *risk.RiskPredictorCustom) (basetypes.ObjectValue, diag.Diagnostics) {
