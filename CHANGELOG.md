@@ -4,9 +4,21 @@ BREAKING CHANGES:
 
 * `resource/pingone_risk_predictor`: To ensure correct composite predictor and Terraform behaviours, the `predictor_composite.composition` field has been removed and replaced with `predictor_composite.compositions` field. ([#952](https://github.com/pingidentity/terraform-provider-pingone/issues/952))
 
+NOTES:
+
+* bump `github.com/hashicorp/terraform-plugin-framework-validators` 0.15.0 => 0.16.0 ([#953](https://github.com/pingidentity/terraform-provider-pingone/issues/953))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.44.0 => 0.45.0 ([#953](https://github.com/pingidentity/terraform-provider-pingone/issues/953))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` 0.17.0 => 0.18.0 ([#953](https://github.com/pingidentity/terraform-provider-pingone/issues/953))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.4 => 0.12.5 ([#953](https://github.com/pingidentity/terraform-provider-pingone/issues/953))
+
 ENHANCEMENTS:
 
+* `resource/pingone_alert_channel`: Added support for the `SUSPICIOUS_TRAFFIC` alert type. ([#953](https://github.com/pingidentity/terraform-provider-pingone/issues/953))
 * `resource/pingone_risk_predictor`: Support multiple root level conditions for composite predictors. ([#952](https://github.com/pingidentity/terraform-provider-pingone/issues/952))
+
+BUG FIXES:
+
+* `resource/pingone_risk_predictor`: Fix "Error when calling ReadOneRiskPredictor: data failed to match schemas in oneOf(RiskPredictorCompositeCondition)" when using IP range and IP comparison composite predictors. ([#953](https://github.com/pingidentity/terraform-provider-pingone/issues/953))
 
 ## 1.2.1 (13 December 2024)
 
