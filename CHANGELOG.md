@@ -1,5 +1,13 @@
 ## 1.3.0 (Unreleased)
 
+BREAKING CHANGES:
+
+* `resource/pingone_risk_predictor`: To ensure correct composite predictor and Terraform behaviours, the `predictor_composite.composition` field has been removed and replaced with `predictor_composite.compositions` field. ([#952](https://github.com/pingidentity/terraform-provider-pingone/issues/952))
+
+ENHANCEMENTS:
+
+* `resource/pingone_risk_predictor`: Support multiple root level conditions for composite predictors. ([#952](https://github.com/pingidentity/terraform-provider-pingone/issues/952))
+
 ## 1.2.1 (13 December 2024)
 
 NOTES:
