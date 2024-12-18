@@ -2720,12 +2720,12 @@ resource "pingone_risk_predictor" "%[2]s" {
 
   predictor_composite = {
     compositions = [
-	{
-      level = "LOW"
+      {
+        level = "LOW"
 
-      condition_json = jsonencode({})
-    }
-	  ]
+        condition_json = jsonencode({})
+      }
+    ]
   }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
