@@ -49,13 +49,13 @@ resource "pingone_alert_channel" "my_awesome_alert_channel" {
 - `addresses` (Set of String) A set of strings that specifies the administrator email addresses to send the alerts to.
 - `channel_type` (String) A string that specifies the alert channel type. Currently, this must be `EMAIL`.  Options are `EMAIL`.
 - `environment_id` (String) The ID of the environment to manage an alert channel for.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
-- `include_alert_types` (Set of String) A set of strings that specifies the list of alert types that administrators will be emailed alerts for.  Options are `CERTIFICATE_EXPIRED`, `CERTIFICATE_EXPIRING`, `GATEWAY_VERSION_DEPRECATED`, `GATEWAY_VERSION_DEPRECATING`, `KEY_PAIR_EXPIRED`, `KEY_PAIR_EXPIRING`, `LICENSE_90_PERCENT_USER_SOFT_LIMIT`, `LICENSE_EXPIRED`, `LICENSE_EXPIRING`, `LICENSE_ROTATED`, `LICENSE_USER_HARD_LIMIT_EXCEEDED`, `LICENSE_USER_SOFT_LIMIT_EXCEEDED`, `RISK_CONFIGURATION`.
+- `include_alert_types` (Set of String) A set of strings that specifies the list of alert types that administrators will be emailed alerts for.  Options are `CERTIFICATE_EXPIRED`, `CERTIFICATE_EXPIRING`, `GATEWAY_VERSION_DEPRECATED`, `GATEWAY_VERSION_DEPRECATING`, `KEY_PAIR_EXPIRED`, `KEY_PAIR_EXPIRING`, `LICENSE_90_PERCENT_USER_SOFT_LIMIT`, `LICENSE_EXPIRED`, `LICENSE_EXPIRING`, `LICENSE_ROTATED`, `LICENSE_USER_HARD_LIMIT_EXCEEDED`, `LICENSE_USER_SOFT_LIMIT_EXCEEDED`, `RISK_CONFIGURATION`, `SUSPICIOUS_TRAFFIC`.
 - `include_severities` (Set of String) A set of strings that specifies the severity to filters alerts by.  Options are `ERROR`, `INFO`, `WARNING`.
 
 ### Optional
 
 - `alert_name` (String) A string that specifies the name to assign to the alert channel.
-- `exclude_alert_types` (Set of String) A set of strings that specifies the list of alert types that administrators will not be emailed alerts for. If left undefined, no alert types are excluded.  Options are `CERTIFICATE_EXPIRED`, `CERTIFICATE_EXPIRING`, `GATEWAY_VERSION_DEPRECATED`, `GATEWAY_VERSION_DEPRECATING`, `KEY_PAIR_EXPIRED`, `KEY_PAIR_EXPIRING`, `LICENSE_90_PERCENT_USER_SOFT_LIMIT`, `LICENSE_EXPIRED`, `LICENSE_EXPIRING`, `LICENSE_ROTATED`, `LICENSE_USER_HARD_LIMIT_EXCEEDED`, `LICENSE_USER_SOFT_LIMIT_EXCEEDED`, `RISK_CONFIGURATION`.
+- `exclude_alert_types` (Set of String) A set of strings that specifies the list of alert types that administrators will not be emailed alerts for. If left undefined, no alert types are excluded.  Options are `CERTIFICATE_EXPIRED`, `CERTIFICATE_EXPIRING`, `GATEWAY_VERSION_DEPRECATED`, `GATEWAY_VERSION_DEPRECATING`, `KEY_PAIR_EXPIRED`, `KEY_PAIR_EXPIRING`, `LICENSE_90_PERCENT_USER_SOFT_LIMIT`, `LICENSE_EXPIRED`, `LICENSE_EXPIRING`, `LICENSE_ROTATED`, `LICENSE_USER_HARD_LIMIT_EXCEEDED`, `LICENSE_USER_SOFT_LIMIT_EXCEEDED`, `RISK_CONFIGURATION`, `SUSPICIOUS_TRAFFIC`.
 
 ### Read-Only
 

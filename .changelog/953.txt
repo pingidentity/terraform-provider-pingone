@@ -1,0 +1,23 @@
+```release-note:bug
+`resource/pingone_risk_predictor`: Fix "Error when calling ReadOneRiskPredictor: data failed to match schemas in oneOf(RiskPredictorCompositeCondition)" when using IP range and IP comparison composite predictors.
+```
+
+```release-note:enhancement
+`resource/pingone_alert_channel`: Added support for the `SUSPICIOUS_TRAFFIC` alert type.
+```
+
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-framework-validators` 0.15.0 => 0.16.0
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.4 => 0.12.5
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.44.0 => 0.45.0
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/risk` 0.17.0 => 0.18.0
+```
