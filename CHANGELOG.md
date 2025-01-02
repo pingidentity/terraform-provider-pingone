@@ -1,3 +1,5 @@
+## 1.3.1 (Unreleased)
+
 ## 1.3.0 (19 December 2024)
 
 BREAKING CHANGES:
