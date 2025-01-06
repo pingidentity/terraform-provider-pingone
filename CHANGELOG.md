@@ -1,5 +1,9 @@
 ## 1.3.1 (Unreleased)
 
+NOTES:
+
+* bump `golang.org/x/net` 0.28.0 => 0.33.0 ([#954](https://github.com/pingidentity/terraform-provider-pingone/issues/954))
+
 ## 1.3.0 (19 December 2024)
 
 BREAKING CHANGES:
