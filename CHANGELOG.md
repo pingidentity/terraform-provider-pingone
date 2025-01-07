@@ -1,4 +1,4 @@
-## 1.3.1 (Unreleased)
+## 1.3.1 (7 January 2025)
 
 NOTES:
 
