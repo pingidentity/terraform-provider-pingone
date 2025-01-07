@@ -38,3 +38,7 @@ vendor
 terraform-provider-pingone
 assets
 env*.sh
+
+# Go workspace file
+go.work
+go.work.sum
