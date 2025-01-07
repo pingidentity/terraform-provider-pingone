@@ -17,7 +17,6 @@ fmtcheck:
 
 build:
 	go mod tidy
-	go work vendor
 	go build -v .
 
 install: build
