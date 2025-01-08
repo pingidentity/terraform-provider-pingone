@@ -298,7 +298,18 @@ resource "pingone_authorize_policy_management_rule" "%[2]s" {
 
     conditions = [
       {
-        type = "EMPTY"
+        type       = "COMPARISON"
+        comparator = "EQUALS"
+
+        left = {
+          type = "ATTRIBUTE"
+          id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
+        }
+
+        right = {
+          type  = "CONSTANT"
+          value = "test2"
+        }
       },
       {
         type = "NOT"
@@ -329,7 +340,18 @@ resource "pingone_authorize_policy_management_rule" "%[2]s" {
 
       conditions = [
         {
-          type = "EMPTY"
+          type       = "COMPARISON"
+          comparator = "EQUALS"
+
+          left = {
+            type = "ATTRIBUTE"
+            id   = pingone_authorize_trust_framework_attribute.%[2]s-current-user-id.id
+          }
+
+          right = {
+            type  = "CONSTANT"
+            value = "test2"
+          }
         },
         {
           type = "NOT"
