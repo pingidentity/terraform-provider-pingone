@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
@@ -21,6 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
@@ -29,7 +32,6 @@ import (
 	objectvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
-	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -935,7 +937,7 @@ func (r *TrustFrameworkServiceResource) Create(ctx context.Context, req resource
 		},
 		"CreateService",
 		framework.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
+		retryAuthorizeEditorCreateUpdate,
 		&response,
 	)...)
 	if resp.Diagnostics.HasError() {
@@ -979,7 +981,7 @@ func (r *TrustFrameworkServiceResource) Read(ctx context.Context, req resource.R
 		},
 		"GetService",
 		framework.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultCreateReadRetryable,
+		nil,
 		&response,
 	)...)
 	if resp.Diagnostics.HasError() {
@@ -1026,7 +1028,7 @@ func (r *TrustFrameworkServiceResource) Update(ctx context.Context, req resource
 		},
 		"GetService-Update",
 		framework.DefaultCustomError,
-		nil,
+		retryAuthorizeEditorCreateUpdate,
 		&getResponse,
 	)...)
 	if resp.Diagnostics.HasError() {
@@ -1117,20 +1119,54 @@ func (r *TrustFrameworkServiceResource) Delete(ctx context.Context, req resource
 		return
 	}
 
-	// Run the API call
-	resp.Diagnostics.Append(framework.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorServicesApi.DeleteService(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+	deleteStateConf := &retry.StateChangeConf{
+		Pending: []string{
+			"200",
 		},
-		"DeleteService",
-		framework.CustomErrorResourceNotFoundWarning,
-		nil,
-		nil,
-	)...)
-	if resp.Diagnostics.HasError() {
+		Target: []string{
+			"404",
+			"ERROR",
+		},
+		Refresh: func() (interface{}, string, error) {
+			// Run the API call
+			resp.Diagnostics.Append(framework.ParseResponse(
+				ctx,
+
+				func() (any, *http.Response, error) {
+					fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorServicesApi.DeleteService(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+				},
+				"DeleteService",
+				framework.CustomErrorResourceNotFoundWarning,
+				nil,
+				nil,
+			)...)
+			if resp.Diagnostics.HasError() {
+				return nil, "ERROR", fmt.Errorf("Error deleting authorize service (%s)", data.Id.ValueString())
+			}
+
+			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorServicesApi.GetService(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			getResp, r, err := framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+
+			if err != nil || r == nil {
+				return getResp, "ERROR", err
+			}
+
+			base := 10
+			return getResp, strconv.FormatInt(int64(r.StatusCode), base), nil
+		},
+		Timeout:                   20 * time.Minute,
+		Delay:                     1 * time.Second,
+		MinTimeout:                500 * time.Millisecond,
+		ContinuousTargetOccurence: 2,
+	}
+	_, err := deleteStateConf.WaitForStateContext(ctx)
+	if err != nil {
+		resp.Diagnostics.AddWarning(
+			"Authorize Service Delete Timeout",
+			fmt.Sprintf("Error waiting for authorize service (%s) to be deleted: %s", data.Id.ValueString(), err),
+		)
+
 		return
 	}
 }

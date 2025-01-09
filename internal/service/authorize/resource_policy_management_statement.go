@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -14,10 +16,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
-	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -222,7 +224,7 @@ func (r *PolicyManagementStatementResource) Create(ctx context.Context, req reso
 		},
 		"CreateStatement",
 		framework.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
+		retryAuthorizeEditorCreateUpdate,
 		&response,
 	)...)
 	if resp.Diagnostics.HasError() {
@@ -266,7 +268,7 @@ func (r *PolicyManagementStatementResource) Read(ctx context.Context, req resour
 		},
 		"GetStatement",
 		framework.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultCreateReadRetryable,
+		nil,
 		&response,
 	)...)
 	if resp.Diagnostics.HasError() {
@@ -313,7 +315,7 @@ func (r *PolicyManagementStatementResource) Update(ctx context.Context, req reso
 		},
 		"GetStatement-Update",
 		framework.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
+		retryAuthorizeEditorCreateUpdate,
 		&getResponse,
 	)...)
 	if resp.Diagnostics.HasError() {
@@ -373,20 +375,54 @@ func (r *PolicyManagementStatementResource) Delete(ctx context.Context, req reso
 		return
 	}
 
-	// Run the API call
-	resp.Diagnostics.Append(framework.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorStatementsApi.DeleteStatement(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+	deleteStateConf := &retry.StateChangeConf{
+		Pending: []string{
+			"200",
 		},
-		"DeleteStatement",
-		framework.CustomErrorResourceNotFoundWarning,
-		nil,
-		nil,
-	)...)
-	if resp.Diagnostics.HasError() {
+		Target: []string{
+			"404",
+			"ERROR",
+		},
+		Refresh: func() (interface{}, string, error) {
+			// Run the API call
+			resp.Diagnostics.Append(framework.ParseResponse(
+				ctx,
+
+				func() (any, *http.Response, error) {
+					fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorStatementsApi.DeleteStatement(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+				},
+				"DeleteStatement",
+				framework.CustomErrorResourceNotFoundWarning,
+				nil,
+				nil,
+			)...)
+			if resp.Diagnostics.HasError() {
+				return nil, "ERROR", fmt.Errorf("Error deleting authorize statement (%s)", data.Id.ValueString())
+			}
+
+			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorStatementsApi.GetStatement(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			getResp, r, err := framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+
+			if err != nil || r == nil {
+				return getResp, "ERROR", err
+			}
+
+			base := 10
+			return getResp, strconv.FormatInt(int64(r.StatusCode), base), nil
+		},
+		Timeout:                   20 * time.Minute,
+		Delay:                     1 * time.Second,
+		MinTimeout:                500 * time.Millisecond,
+		ContinuousTargetOccurence: 2,
+	}
+	_, err := deleteStateConf.WaitForStateContext(ctx)
+	if err != nil {
+		resp.Diagnostics.AddWarning(
+			"Authorize Statement Delete Timeout",
+			fmt.Sprintf("Error waiting for authorize statement (%s) to be deleted: %s", data.Id.ValueString(), err),
+		)
+
 		return
 	}
 }
