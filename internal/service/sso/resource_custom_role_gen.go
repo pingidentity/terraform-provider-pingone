@@ -107,7 +107,8 @@ func (r *customRoleResource) Schema(ctx context.Context, req resource.SchemaRequ
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{
-							Required: true,
+							Required:    true,
+							Description: "The ID of the role that can assign the current custom role.",
 						},
 					},
 				},
@@ -122,7 +123,7 @@ func (r *customRoleResource) Schema(ctx context.Context, req resource.SchemaRequ
 				},
 			},
 			"environment_id": framework.Attr_LinkID(
-				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create and manage the custom_role in."),
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create and manage the custom role in."),
 			),
 			"id": framework.Attr_ID(),
 			"name": schema.StringAttribute{
