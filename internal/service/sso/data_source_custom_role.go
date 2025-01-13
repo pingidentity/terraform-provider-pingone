@@ -299,7 +299,7 @@ func (r *customRoleDataSource) Read(ctx context.Context, req datasource.ReadRequ
 
 				return nil, initialHttpResponse, nil
 			},
-			"ReadAllApplications",
+			"ReadAllCustomAdminRoles",
 			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&response,
