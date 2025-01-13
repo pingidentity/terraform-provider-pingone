@@ -142,6 +142,7 @@ func TestAccCustomRole_Full(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					// After a refresh, can_assign should see the second custom role
+					resource.TestCheckResourceAttr(resourceFullName, "can_assign.#", "1"),
 					resource.TestMatchResourceAttr(resourceFullName, "can_assign.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "type", "CUSTOM"),
 				),
@@ -265,9 +266,9 @@ func testAccCustomRoleConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_custom_role" "dependent_role" {
+resource "pingone_custom_role" "%[2]s-dependent_role" {
 	environment_id     = data.pingone_environment.general_test.id
-	name               = "Dependent Role"
+	name               = "%[3]s Dependent Role"
 	applicable_to = [
 	  "ENVIRONMENT",
 	  "POPULATION" 

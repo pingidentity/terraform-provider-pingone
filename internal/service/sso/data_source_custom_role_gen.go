@@ -214,6 +214,8 @@ func (state *customRoleDataSourceModel) readClientResponse(response *management.
 	respDiags.Append(diags...)
 
 	state.Permissions = permissionsValue
+	// role_id
+	state.RoleId = framework.PingOneResourceIDToTF(response.GetId())
 	// type
 	if response.Type != nil {
 		state.Type = types.StringValue(string(*response.Type))
