@@ -252,12 +252,12 @@ resource "pingone_custom_role" "%[3]s" {
   can_be_assigned_by = [
     {
       id = "%[5]s"
-	} 
+    }
   ]
   permissions = [
     {
-        id = "permissions:read:userRoleAssignments"
-    } 
+      id = "permissions:read:userRoleAssignments"
+    }
   ]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, testAccCustomRole_CustomRolesAdminRoleID)
 }
@@ -267,51 +267,51 @@ func testAccCustomRoleConfig_Full(resourceName, name string) string {
 		%[1]s
 
 resource "pingone_custom_role" "%[2]s-dependent_role" {
-	environment_id     = data.pingone_environment.general_test.id
-	name               = "%[3]s Dependent Role"
-	applicable_to = [
-	  "ENVIRONMENT",
-	  "POPULATION" 
-	]
-	can_be_assigned_by = [
-	  {
-		id = pingone_custom_role.%[2]s.id
-	  }
-	]
-	description = "My custom dependent role"
-	permissions = [
-	  {
-		  id = "permissions:read:userRoleAssignments"
-	  },
-	  {
-		id = "permissions:read:groupRoleAssignments"
-	  },
-	]
-  }
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s Dependent Role"
+  applicable_to = [
+    "ENVIRONMENT",
+    "POPULATION"
+  ]
+  can_be_assigned_by = [
+    {
+      id = pingone_custom_role.%[2]s.id
+    }
+  ]
+  description = "My custom dependent role"
+  permissions = [
+    {
+      id = "permissions:read:userRoleAssignments"
+    },
+    {
+      id = "permissions:read:groupRoleAssignments"
+    },
+  ]
+}
 
 resource "pingone_custom_role" "%[2]s" {
-  environment_id     = data.pingone_environment.general_test.id
-  name               = "%[3]s"
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
   applicable_to = [
-	"ENVIRONMENT",
-	"POPULATION" 
+    "ENVIRONMENT",
+    "POPULATION"
   ]
   can_be_assigned_by = [
     {
       id = "%[4]s"
-	},
-	{
-	  id = "%[5]s"
-	}
+    },
+    {
+      id = "%[5]s"
+    }
   ]
   description = "My custom role"
   permissions = [
-	{
-	  id = "permissions:read:gatewayRoleAssignments"
-	},
-	{
-	  id = "permissions:update:userRoleAssignments"
-	}
+    {
+      id = "permissions:read:gatewayRoleAssignments"
+    },
+    {
+      id = "permissions:update:userRoleAssignments"
+    }
   ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, testAccCustomRole_CustomRolesAdminRoleID, testAccCustomRole_EnvironmentAdminRoleID)
 }
@@ -329,8 +329,8 @@ resource "pingone_custom_role" "%[2]s" {
   can_be_assigned_by = []
   permissions = [
     {
-        id = "permissions:read:userRoleAssignments"
-    } 
+      id = "permissions:read:userRoleAssignments"
+    }
   ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

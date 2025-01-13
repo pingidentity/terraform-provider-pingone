@@ -159,51 +159,51 @@ func TestAccCustomRoleDataSource_NotFound(t *testing.T) {
 func testAccCustomRoleDataSourceConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 resource "pingone_custom_role" "%[1]s-dependent-role" {
-	environment_id     = data.pingone_environment.general_test.id
-	name               = "%[2]s Datasource Dependent Role"
-	applicable_to = [
-	  "ENVIRONMENT",
-	  "POPULATION" 
-	]
-	can_be_assigned_by = [
-	  {
-		id = pingone_custom_role.%[1]s-parent.id
-	  }
-	]
-	description = "My custom dependent role for datasource test"
-	permissions = [
-	  {
-		  id = "permissions:read:userRoleAssignments"
-	  },
-	  {
-		id = "permissions:read:groupRoleAssignments"
-	  },
-	]
-  }
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[2]s Datasource Dependent Role"
+  applicable_to = [
+    "ENVIRONMENT",
+    "POPULATION"
+  ]
+  can_be_assigned_by = [
+    {
+      id = pingone_custom_role.%[1]s-parent.id
+    }
+  ]
+  description = "My custom dependent role for datasource test"
+  permissions = [
+    {
+      id = "permissions:read:userRoleAssignments"
+    },
+    {
+      id = "permissions:read:groupRoleAssignments"
+    },
+  ]
+}
 
 resource "pingone_custom_role" "%[1]s-parent" {
-  environment_id     = data.pingone_environment.general_test.id
-  name               = "%[2]s"
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[2]s"
   applicable_to = [
-	"ENVIRONMENT",
-	"POPULATION" 
+    "ENVIRONMENT",
+    "POPULATION"
   ]
   can_be_assigned_by = [
     {
       id = "%[3]s"
-	},
-	{
-	  id = "%[4]s"
-	}
+    },
+    {
+      id = "%[4]s"
+    }
   ]
   description = "My custom role for datasource test"
   permissions = [
-	{
-	  id = "permissions:read:gatewayRoleAssignments"
-	},
-	{
-	  id = "permissions:update:userRoleAssignments"
-	}
+    {
+      id = "permissions:read:gatewayRoleAssignments"
+    },
+    {
+      id = "permissions:update:userRoleAssignments"
+    }
   ]
 }
 	`, resourceName, name,
@@ -218,7 +218,7 @@ func testAccCustomRoleDataSourceConfig_ByNameFull(resourceName, name string) str
 
 data "pingone_custom_role" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  depends_on = [pingone_custom_role.%[2]s-dependent-role]
+  depends_on     = [pingone_custom_role.%[2]s-dependent-role]
 
   name = pingone_custom_role.%[2]s-parent.name
 }
@@ -233,7 +233,7 @@ func testAccCustomRoleDataSourceConfig_ByIDFull(resourceName, name string) strin
 
 data "pingone_custom_role" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  depends_on = [pingone_custom_role.%[2]s-dependent-role]
+  depends_on     = [pingone_custom_role.%[2]s-dependent-role]
 
   role_id = pingone_custom_role.%[2]s-parent.id
 }`, acctest.GenericSandboxEnvironment(), resourceName, testAccCustomRoleDataSourceConfig_Full(resourceName, name))

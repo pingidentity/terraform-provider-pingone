@@ -54,70 +54,70 @@ func testAccCustomRolesDataSourceConfig_GetAll(resourceName, name string) string
 	%[1]s
 
 resource "pingone_custom_role" "%[2]s-dependent-role" {
-	environment_id     = data.pingone_environment.general_test.id
-	name               = "%[3]s Datasource Dependent Role"
-	applicable_to = [
-	  "ENVIRONMENT",
-	  "POPULATION" 
-	]
-	can_be_assigned_by = [
-	  {
-		id = pingone_custom_role.%[2]s-parent.id
-	  }
-	]
-	description = "My custom dependent role for datasource test"
-	permissions = [
-	  {
-		  id = "permissions:read:userRoleAssignments"
-	  },
-	  {
-		id = "permissions:read:groupRoleAssignments"
-	  },
-	]
-  }
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s Datasource Dependent Role"
+  applicable_to = [
+    "ENVIRONMENT",
+    "POPULATION"
+  ]
+  can_be_assigned_by = [
+    {
+      id = pingone_custom_role.%[2]s-parent.id
+    }
+  ]
+  description = "My custom dependent role for datasource test"
+  permissions = [
+    {
+      id = "permissions:read:userRoleAssignments"
+    },
+    {
+      id = "permissions:read:groupRoleAssignments"
+    },
+  ]
+}
 
 resource "pingone_custom_role" "%[2]s-parent" {
-  environment_id     = data.pingone_environment.general_test.id
-  name               = "%[3]s"
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
   applicable_to = [
-	"ENVIRONMENT",
-	"POPULATION" 
+    "ENVIRONMENT",
+    "POPULATION"
   ]
   can_be_assigned_by = [
     {
       id = "%[4]s"
-	},
-	{
-	  id = "%[5]s"
-	}
+    },
+    {
+      id = "%[5]s"
+    }
   ]
   description = "My custom role for datasource test"
   permissions = [
-	{
-	  id = "permissions:read:gatewayRoleAssignments"
-	},
-	{
-	  id = "permissions:update:userRoleAssignments"
-	}
+    {
+      id = "permissions:read:gatewayRoleAssignments"
+    },
+    {
+      id = "permissions:update:userRoleAssignments"
+    }
   ]
 }
 
 resource "pingone_custom_role" "%[2]s-simple" {
-  environment_id     = data.pingone_environment.general_test.id
-  name               = "%[3]s simple"
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s simple"
   applicable_to = [
-	"ENVIRONMENT"
+    "ENVIRONMENT"
   ]
   can_be_assigned_by = [
     {
       id = "%[4]s"
-	}
+    }
   ]
   description = "My simple custom role for datasource test"
   permissions = [
-	{
-	  id = "permissions:update:userRoleAssignments"
-	}
+    {
+      id = "permissions:update:userRoleAssignments"
+    }
   ]
 }
 

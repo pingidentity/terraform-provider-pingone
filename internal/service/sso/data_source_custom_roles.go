@@ -42,7 +42,7 @@ func (r *CustomRolesDataSource) Metadata(ctx context.Context, req datasource.Met
 func (r *CustomRolesDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Datasource to retrieve multiple PingOne custom admin roles.",
+		Description: "Datasource to retrieve multiple PingOne custom administrator roles.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
