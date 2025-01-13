@@ -15,7 +15,7 @@ resource "pingone_custom_role" "my_custom_role" {
 
   can_be_assigned_by = [
     {
-	    # Default "Custom Roles Admin" administrator role id
+      # Default "Custom Roles Admin" administrator role id
       id = "6f770b08-793f-4393-b2aa-b1d1587a0324"
     }
   ]

@@ -34,8 +34,8 @@ data "pingone_custom_role" "example_by_id" {
 
 ### Optional
 
-- `name` (String) A string that specifies the name of the custom role to retrieve configuration for.
-- `role_id` (String) A string that specifies the ID of the role to retrieve configuration for.  Must be a valid PingOne resource ID.
+- `name` (String) A string that specifies the name of the custom role to retrieve configuration for. Exactly one of `name` or `role_id` must be defined.
+- `role_id` (String) A string that specifies the ID of the role to retrieve configuration for.  Must be a valid PingOne resource ID. Exactly one of `name` or `role_id` must be defined.
 
 ### Read-Only
 

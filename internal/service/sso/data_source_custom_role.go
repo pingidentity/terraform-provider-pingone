@@ -114,8 +114,9 @@ func (r *customRoleDataSource) Schema(ctx context.Context, req datasource.Schema
 			),
 			"id": framework.Attr_ID(),
 			"name": schema.StringAttribute{
-				Optional:    true,
-				Description: "A string that specifies the name of the custom role to retrieve configuration for.",
+				Optional:            true,
+				Description:         "A string that specifies the name of the custom role to retrieve configuration for. Exactly one of \"name\" or \"role_id\" must be defined.",
+				MarkdownDescription: "A string that specifies the name of the custom role to retrieve configuration for. Exactly one of `name` or `role_id` must be defined.",
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("role_id")),
 					stringvalidator.LengthAtLeast(1),
@@ -134,9 +135,10 @@ func (r *customRoleDataSource) Schema(ctx context.Context, req datasource.Schema
 				Description: "The set of permissions assigned to the role.",
 			},
 			"role_id": schema.StringAttribute{
-				CustomType:  pingonetypes.ResourceIDType{},
-				Optional:    true,
-				Description: "A string that specifies the ID of the role to retrieve configuration for.  Must be a valid PingOne resource ID.",
+				CustomType:          pingonetypes.ResourceIDType{},
+				Optional:            true,
+				Description:         "A string that specifies the ID of the role to retrieve configuration for.  Must be a valid PingOne resource ID. Exactly one of \"name\" or \"role_id\" must be defined.",
+				MarkdownDescription: "A string that specifies the ID of the role to retrieve configuration for.  Must be a valid PingOne resource ID. Exactly one of `name` or `role_id` must be defined.",
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
 				},

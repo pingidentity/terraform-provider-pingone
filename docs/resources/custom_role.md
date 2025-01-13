@@ -29,7 +29,7 @@ resource "pingone_custom_role" "my_custom_role" {
 
   can_be_assigned_by = [
     {
-	    # Default "Custom Roles Admin" administrator role id
+      # Default "Custom Roles Admin" administrator role id
       id = "6f770b08-793f-4393-b2aa-b1d1587a0324"
     }
   ]
@@ -51,11 +51,11 @@ resource "pingone_custom_role" "my_custom_role" {
 
 ### Required
 
-- `applicable_to` (Set of String) The scope types to which the role can be applied. Supported values are `ENVIRONMENT`, `ORGANIZATION`, and `POPULATION`.
+- `applicable_to` (Set of String) The scope types to which the role can be applied. Supported values are `ENVIRONMENT`, `ORGANIZATION`, and `POPULATION`. At least one value must be set.
 - `can_be_assigned_by` (Attributes Set) A relationship that determines whether a user assigned to one of this set of roles for a jurisdiction can assign the current custom role to another user for the same jurisdiction or sub-jurisdiction. (see [below for nested schema](#nestedatt--can_be_assigned_by))
 - `environment_id` (String) The ID of the environment to create and manage the custom role in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) The role name.
-- `permissions` (Attributes Set) The set of permissions assigned to the role. (see [below for nested schema](#nestedatt--permissions))
+- `permissions` (Attributes Set) The set of permissions assigned to the role. At least one permission must be set. (see [below for nested schema](#nestedatt--permissions))
 
 ### Optional
 
