@@ -717,6 +717,55 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 					"otp": schema.SingleNestedAttribute{
 						Description: "SMS/Voice/Email one-time password (OTP) configuration.",
 						Optional:    true,
+						Computed:    true,
+
+						Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
+							o := map[string]attr.Value{
+								"count": types.Int32Value(defaultOTPAttemptsCount),
+							}
+							attemptsObjValue, d := types.ObjectValue(otpAttemptsServiceTFObjectTypes, o)
+							resp.Diagnostics.Append(d...)
+
+							o = map[string]attr.Value{
+								"duration":  types.Int32Value(defaultOTPEmailDuration),
+								"time_unit": types.StringValue(string(defaultOTPEmailTimeUnit)),
+							}
+							lifetimeObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
+							resp.Diagnostics.Append(d...)
+
+							o = map[string]attr.Value{
+								"template_name": types.StringValue(defaultNotificationTemplate),
+								"variant_name":  types.StringNull(),
+							}
+							notificationObjValue, d := types.ObjectValue(otpNotificationServiceTFObjectTypes, o)
+							resp.Diagnostics.Append(d...)
+
+							o = map[string]attr.Value{
+								"duration":  types.Int32Value(defaultOTPCooldownDuration),
+								"time_unit": types.StringValue(string(defaultOTPCooldownTimeUnit)),
+							}
+							cooldownObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
+							resp.Diagnostics.Append(d...)
+
+							o = map[string]attr.Value{
+								"count":    types.Int32Value(defaultOTPDeliveryCount),
+								"cooldown": cooldownObjValue,
+							}
+							deliveriesObjValue, d := types.ObjectValue(otpDeliveriesServiceTFObjectTypes, o)
+							resp.Diagnostics.Append(d...)
+
+							o = map[string]attr.Value{
+								"attempts":     attemptsObjValue,
+								"lifetime":     lifetimeObjValue,
+								"deliveries":   deliveriesObjValue,
+								"notification": notificationObjValue,
+							}
+							otpObjValue, d := types.ObjectValue(otpServiceTFObjectTypes, o)
+							resp.Diagnostics.Append(d...)
+
+							return otpObjValue
+						}()),
+
 						Attributes: map[string]schema.Attribute{
 							"attempts": schema.SingleNestedAttribute{
 								Description: "OTP attempts configuration.",
@@ -930,6 +979,55 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 					"otp": schema.SingleNestedAttribute{
 						Description: "SMS/Voice/Email one-time password (OTP) configuration.",
 						Optional:    true,
+						Computed:    true,
+
+						Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
+							o := map[string]attr.Value{
+								"count": types.Int32Value(defaultOTPAttemptsCount),
+							}
+							attemptsObjValue, d := types.ObjectValue(otpAttemptsServiceTFObjectTypes, o)
+							resp.Diagnostics.Append(d...)
+
+							o = map[string]attr.Value{
+								"duration":  types.Int32Value(defaultOTPPhoneDuration),
+								"time_unit": types.StringValue(string(defaultOTPPhoneTimeUnit)),
+							}
+							lifetimeObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
+							resp.Diagnostics.Append(d...)
+
+							o = map[string]attr.Value{
+								"template_name": types.StringValue(defaultNotificationTemplate),
+								"variant_name":  types.StringNull(),
+							}
+							notificationObjValue, d := types.ObjectValue(otpNotificationServiceTFObjectTypes, o)
+							resp.Diagnostics.Append(d...)
+
+							o = map[string]attr.Value{
+								"duration":  types.Int32Value(defaultOTPCooldownDuration),
+								"time_unit": types.StringValue(string(defaultOTPCooldownTimeUnit)),
+							}
+							cooldownObjValue, d := types.ObjectValue(genericTimeoutServiceTFObjectTypes, o)
+							resp.Diagnostics.Append(d...)
+
+							o = map[string]attr.Value{
+								"count":    types.Int32Value(defaultOTPDeliveryCount),
+								"cooldown": cooldownObjValue,
+							}
+							deliveriesObjValue, d := types.ObjectValue(otpDeliveriesServiceTFObjectTypes, o)
+							resp.Diagnostics.Append(d...)
+
+							o = map[string]attr.Value{
+								"attempts":     attemptsObjValue,
+								"lifetime":     lifetimeObjValue,
+								"deliveries":   deliveriesObjValue,
+								"notification": notificationObjValue,
+							}
+							otpObjValue, d := types.ObjectValue(otpServiceTFObjectTypes, o)
+							resp.Diagnostics.Append(d...)
+
+							return otpObjValue
+						}()),
+
 						Attributes: map[string]schema.Attribute{
 							"attempts": schema.SingleNestedAttribute{
 								Description: "OTP attempts configuration.",
