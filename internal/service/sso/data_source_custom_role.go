@@ -136,7 +136,7 @@ func (r *customRoleDataSource) Schema(ctx context.Context, req datasource.Schema
 					},
 				},
 				Computed:    true,
-				Description: "The set of permissions assigned to the role.",
+				Description: "The set of permissions assigned to the role. For possible values, see the [list of available permissions](https://apidocs.pingidentity.com/pingone/platform/v1/api/#pingone-permissions-by-identifier).",
 			},
 			"role_id": schema.StringAttribute{
 				CustomType:          pingonetypes.ResourceIDType{},

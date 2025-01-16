@@ -155,7 +155,7 @@ func (r *customRoleResource) Schema(ctx context.Context, req resource.SchemaRequ
 					},
 				},
 				Required:    true,
-				Description: "The set of permissions assigned to the role. At least one permission must be set.",
+				Description: "The set of permissions assigned to the role. For possible values, see the [list of available permissions](https://apidocs.pingidentity.com/pingone/platform/v1/api/#pingone-permissions-by-identifier). At least one permission must be set.",
 				Validators: []validator.Set{
 					setvalidator.SizeAtLeast(1),
 				},
