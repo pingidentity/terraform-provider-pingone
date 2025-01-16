@@ -1,0 +1,3 @@
+```release-note:bug
+resource/pingone_verify_policy: Fixed the handling of otp default values in the email and phone property objects when verify set to DISABLED.
+```
