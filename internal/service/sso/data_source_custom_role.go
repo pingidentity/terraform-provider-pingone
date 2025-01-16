@@ -103,6 +103,7 @@ func (r *customRoleDataSource) Schema(ctx context.Context, req datasource.Schema
 						"id": schema.StringAttribute{
 							Computed:    true,
 							Description: "The ID of the role that can assign the current custom role.",
+							CustomType:  pingonetypes.ResourceIDType{},
 						},
 					},
 				},

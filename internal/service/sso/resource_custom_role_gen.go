@@ -118,6 +118,7 @@ func (r *customRoleResource) Schema(ctx context.Context, req resource.SchemaRequ
 						"id": schema.StringAttribute{
 							Required:    true,
 							Description: "The ID of the role that can assign the current custom role.",
+							CustomType:  pingonetypes.ResourceIDType{},
 						},
 					},
 				},
