@@ -86,7 +86,11 @@ func (r *customRoleDataSource) Schema(ctx context.Context, req datasource.Schema
 			"can_assign": schema.SetNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id": framework.Attr_ID(),
+						"id": schema.StringAttribute{
+							Computed:    true,
+							Description: "The ID of a role that can be assigned by an actor assigned the current custom role.",
+							CustomType:  pingonetypes.ResourceIDType{},
+						},
 					},
 				},
 				Computed:            true,
