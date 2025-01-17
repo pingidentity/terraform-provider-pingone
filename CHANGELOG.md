@@ -1,3 +1,9 @@
+## 1.3.2 (Unreleased)
+
+BUG FIXES:
+
+* `resource/pingone_verify_policy`: Fixed the handling of otp default values in the email and phone property objects when verify set to DISABLED. ([#967](https://github.com/pingidentity/terraform-provider-pingone/issues/967))
+
 ## 1.3.1 (7 January 2025)
 
 NOTES:
