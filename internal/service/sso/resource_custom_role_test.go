@@ -189,6 +189,69 @@ func TestAccCustomRole_Minimal(t *testing.T) {
 	})
 }
 
+func TestAccCustomRole_MinimalMaximal(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_custom_role.%s", resourceName)
+
+	name := resourceName
+
+	fullCheckNoCanAssign := resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "can_assign.#", "0"),
+		resource.TestCheckResourceAttr(resourceFullName, "type", "CUSTOM"),
+	)
+	fullCheckWithCanAssign := resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		// After a refresh, can_assign should see the second custom role
+		resource.TestCheckResourceAttr(resourceFullName, "can_assign.#", "1"),
+		resource.TestMatchResourceAttr(resourceFullName, "can_assign.0.id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "type", "CUSTOM"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.CustomRole_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			{
+				Config: testAccCustomRoleConfig_Full(resourceName, name),
+				Check:  fullCheckNoCanAssign,
+			},
+			{
+				RefreshState: true,
+				Check:        fullCheckWithCanAssign,
+			},
+			// Minimal
+			{
+				Config: testAccCustomRoleConfig_Minimal(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "can_assign.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "type", "CUSTOM"),
+				),
+			},
+			// Back to full
+			{
+				Config: testAccCustomRoleConfig_Full(resourceName, name),
+				Check:  fullCheckNoCanAssign,
+			},
+			{
+				RefreshState: true,
+				Check:        fullCheckWithCanAssign,
+			},
+		},
+	})
+}
+
 func TestAccCustomRole_BadParameters(t *testing.T) {
 	t.Parallel()
 

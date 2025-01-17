@@ -428,6 +428,24 @@ func (r *customRoleResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
+	// Run a read after update to ensure that the can_assign attribute is up to date
+	resp.Diagnostics.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			fO, fR, fErr := r.Client.ManagementAPIClient.CustomAdminRolesApi.ReadOneCustomAdminRole(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+		},
+		"ReadOneCustomAdminRole",
+		framework.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
+		&response,
+	)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Read response into the model
 	resp.Diagnostics.Append(data.readClientResponse(response)...)
 
