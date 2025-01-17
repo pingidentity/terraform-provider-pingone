@@ -10,13 +10,6 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-const (
-	// Default "Custom Roles Admin" administrator role id
-	testAccCustomRolesDataSource_CustomRolesAdminRoleID = "6f770b08-793f-4393-b2aa-b1d1587a0324"
-	// Default "Environment Admin" administrator role id
-	testAccCustomRolesDataSource_EnvironmentAdminRoleID = "29ddce68-cd7f-4b2a-b6fc-f7a19553b496"
-)
-
 func TestAccCustomRolesDataSource_GetAll(t *testing.T) {
 	t.Parallel()
 
@@ -53,6 +46,14 @@ func testAccCustomRolesDataSourceConfig_GetAll(resourceName, name string) string
 	return fmt.Sprintf(`
 	%[1]s
 
+  data "pingone_role" "%[2]s_environment_admin" {
+    name = "Environment Admin"
+  }
+  
+  data "pingone_role" "%[2]s_organization_admin" {
+    name = "Organization Admin"
+    }
+
 resource "pingone_custom_role" "%[2]s-dependent-role" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s Datasource Dependent Role"
@@ -85,10 +86,10 @@ resource "pingone_custom_role" "%[2]s-parent" {
   ]
   can_be_assigned_by = [
     {
-      id = "%[4]s"
+      id = data.pingone_role.%[2]s_environment_admin.id
     },
     {
-      id = "%[5]s"
+      id = data.pingone_role.%[2]s_organization_admin.id
     }
   ]
   description = "My custom role for datasource test"
@@ -110,7 +111,7 @@ resource "pingone_custom_role" "%[2]s-simple" {
   ]
   can_be_assigned_by = [
     {
-      id = "%[4]s"
+      id = data.pingone_role.%[2]s_environment_admin.id
     }
   ]
   description = "My simple custom role for datasource test"
@@ -130,6 +131,5 @@ data "pingone_custom_roles" "%[2]s" {
     pingone_custom_role.%[2]s-simple,
   ]
 }
-`, acctest.GenericSandboxEnvironment(), resourceName, name,
-		testAccCustomRolesDataSource_CustomRolesAdminRoleID, testAccCustomRolesDataSource_EnvironmentAdminRoleID)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

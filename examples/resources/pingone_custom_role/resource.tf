@@ -2,6 +2,10 @@ resource "pingone_environment" "my_environment" {
   # ...
 }
 
+data "pingone_role" "environment_admin" {
+  name = "Environment Admin"
+}
+
 resource "pingone_custom_role" "my_custom_role" {
   environment_id = pingone_environment.my_environment.id
 
@@ -15,8 +19,7 @@ resource "pingone_custom_role" "my_custom_role" {
 
   can_be_assigned_by = [
     {
-      # Default "Custom Roles Admin" administrator role id
-      id = "6f770b08-793f-4393-b2aa-b1d1587a0324"
+      id = pingone_role.environment_admin.id
     }
   ]
 

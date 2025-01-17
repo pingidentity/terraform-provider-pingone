@@ -195,7 +195,7 @@ func (model *customRoleResourceModel) buildClientStruct() (*management.CustomAdm
 	for _, canBeAssignedByElement := range model.CanBeAssignedBy.Elements() {
 		canBeAssignedByValue := management.CustomAdminRoleCanAssignInner{}
 		canBeAssignedByAttrs := canBeAssignedByElement.(types.Object).Attributes()
-		canBeAssignedByValue.Id = canBeAssignedByAttrs["id"].(types.String).ValueString()
+		canBeAssignedByValue.Id = canBeAssignedByAttrs["id"].(pingonetypes.ResourceIDValue).ValueString()
 		result.CanBeAssignedBy = append(result.CanBeAssignedBy, canBeAssignedByValue)
 	}
 

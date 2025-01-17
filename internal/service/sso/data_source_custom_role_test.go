@@ -11,13 +11,6 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-const (
-	// Default "Custom Roles Admin" administrator role id
-	testAccCustomRoleDataSource_CustomRolesAdminRoleID = "6f770b08-793f-4393-b2aa-b1d1587a0324"
-	// Default "Environment Admin" administrator role id
-	testAccCustomRoleDataSource_EnvironmentAdminRoleID = "29ddce68-cd7f-4b2a-b6fc-f7a19553b496"
-)
-
 func TestAccCustomRoleDataSource_ByNameFull(t *testing.T) {
 	t.Parallel()
 
@@ -44,16 +37,9 @@ func TestAccCustomRoleDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "applicable_to.*", "POPULATION"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "can_assign.#", "1"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "can_assign.0.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckTypeSetElemNestedAttrs(dataSourceFullName, "can_be_assigned_by.*",
-						map[string]string{
-							"id": testAccCustomRoleDataSource_CustomRolesAdminRoleID,
-						},
-					),
-					resource.TestCheckTypeSetElemNestedAttrs(dataSourceFullName, "can_be_assigned_by.*",
-						map[string]string{
-							"id": testAccCustomRoleDataSource_EnvironmentAdminRoleID,
-						},
-					),
+					resource.TestCheckResourceAttr(dataSourceFullName, "can_be_assigned_by.#", "2"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "can_be_assigned_by.0.id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "can_be_assigned_by.1.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "description", "My custom role for datasource test"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckTypeSetElemNestedAttrs(dataSourceFullName, "permissions.*",
@@ -100,16 +86,9 @@ func TestAccCustomRoleDataSource_ByIDFull(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "applicable_to.*", "POPULATION"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "can_assign.#", "1"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "can_assign.0.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckTypeSetElemNestedAttrs(dataSourceFullName, "can_be_assigned_by.*",
-						map[string]string{
-							"id": testAccCustomRoleDataSource_CustomRolesAdminRoleID,
-						},
-					),
-					resource.TestCheckTypeSetElemNestedAttrs(dataSourceFullName, "can_be_assigned_by.*",
-						map[string]string{
-							"id": testAccCustomRoleDataSource_EnvironmentAdminRoleID,
-						},
-					),
+					resource.TestCheckResourceAttr(dataSourceFullName, "can_be_assigned_by.#", "2"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "can_be_assigned_by.0.id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "can_be_assigned_by.1.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "description", "My custom role for datasource test"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", name),
@@ -158,6 +137,14 @@ func TestAccCustomRoleDataSource_NotFound(t *testing.T) {
 
 func testAccCustomRoleDataSourceConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
+data "pingone_role" "%[1]s_environment_admin" {
+  name = "Environment Admin"
+}
+
+data "pingone_role" "%[1]s_organization_admin" {
+	name = "Organization Admin"
+  }
+
 resource "pingone_custom_role" "%[1]s-dependent-role" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[2]s Datasource Dependent Role"
@@ -190,10 +177,10 @@ resource "pingone_custom_role" "%[1]s-parent" {
   ]
   can_be_assigned_by = [
     {
-      id = "%[3]s"
+      id = data.pingone_role.%[1]s_environment_admin.id
     },
     {
-      id = "%[4]s"
+      id = data.pingone_role.%[1]s_organization_admin.id
     }
   ]
   description = "My custom role for datasource test"
@@ -206,8 +193,7 @@ resource "pingone_custom_role" "%[1]s-parent" {
     }
   ]
 }
-	`, resourceName, name,
-		testAccCustomRoleDataSource_CustomRolesAdminRoleID, testAccCustomRoleDataSource_EnvironmentAdminRoleID)
+	`, resourceName, name)
 }
 
 func testAccCustomRoleDataSourceConfig_ByNameFull(resourceName, name string) string {

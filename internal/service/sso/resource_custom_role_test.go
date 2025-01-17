@@ -16,13 +16,6 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-const (
-	// Default "Custom Roles Admin" administrator role id
-	testAccCustomRole_CustomRolesAdminRoleID = "6f770b08-793f-4393-b2aa-b1d1587a0324"
-	// Default "Environment Admin" administrator role id
-	testAccCustomRole_EnvironmentAdminRoleID = "29ddce68-cd7f-4b2a-b6fc-f7a19553b496"
-)
-
 func TestAccCustomRole_RemovalDrift(t *testing.T) {
 	t.Parallel()
 
@@ -243,6 +236,10 @@ func testAccCustomRoleConfig_NewEnv(environmentName, licenseID, resourceName, na
 	return fmt.Sprintf(`
 		%[1]s
 
+  data "pingone_role" "%[3]s_environment_admin" {
+    name = "Environment Admin"
+  }
+
 resource "pingone_custom_role" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
@@ -251,7 +248,7 @@ resource "pingone_custom_role" "%[3]s" {
   ]
   can_be_assigned_by = [
     {
-      id = "%[5]s"
+      id = data.pingone_role.%[3]s_environment_admin.id
     }
   ]
   permissions = [
@@ -259,12 +256,20 @@ resource "pingone_custom_role" "%[3]s" {
       id = "permissions:read:userRoleAssignments"
     }
   ]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, testAccCustomRole_CustomRolesAdminRoleID)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccCustomRoleConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
+
+		data "pingone_role" "%[2]s_environment_admin" {
+			name = "Environment Admin"
+		  }
+		  
+		  data "pingone_role" "%[2]s_organization_admin" {
+			name = "Organization Admin"
+			}
 
 resource "pingone_custom_role" "%[2]s-dependent_role" {
   environment_id = data.pingone_environment.general_test.id
@@ -298,10 +303,10 @@ resource "pingone_custom_role" "%[2]s" {
   ]
   can_be_assigned_by = [
     {
-      id = "%[4]s"
+      id = data.pingone_role.%[2]s_environment_admin.id
     },
     {
-      id = "%[5]s"
+      id = data.pingone_role.%[2]s_organization_admin.id
     }
   ]
   description = "My custom role"
@@ -313,7 +318,7 @@ resource "pingone_custom_role" "%[2]s" {
       id = "permissions:update:userRoleAssignments"
     }
   ]
-}`, acctest.GenericSandboxEnvironment(), resourceName, name, testAccCustomRole_CustomRolesAdminRoleID, testAccCustomRole_EnvironmentAdminRoleID)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccCustomRoleConfig_Minimal(resourceName, name string) string {
