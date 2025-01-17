@@ -175,3 +175,20 @@ func Attr_DataSourceReturnIDsByElement(description SchemaAttributeDescription, e
 		ElementType:         elementType,
 	}
 }
+
+func Attr_DataSourceReturnIDsSet(description SchemaAttributeDescription) schema.SetAttribute {
+	return Attr_DataSourceReturnIDsByElementSet(description, pingonetypes.ResourceIDType{})
+}
+
+func Attr_DataSourceReturnIDsByElementSet(description SchemaAttributeDescription, elementType attr.Type) schema.SetAttribute {
+	if description.MarkdownDescription == "" {
+		description.MarkdownDescription = description.Description
+	}
+
+	return schema.SetAttribute{
+		Description:         description.Description,
+		MarkdownDescription: description.MarkdownDescription,
+		Computed:            true,
+		ElementType:         elementType,
+	}
+}

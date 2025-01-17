@@ -20,7 +20,7 @@ type CustomRolesDataSource serviceClientType
 type CustomRolesDataSourceModel struct {
 	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
-	Ids           types.List                   `tfsdk:"ids"`
+	Ids           types.Set                    `tfsdk:"ids"`
 }
 
 // Framework interfaces
@@ -51,7 +51,7 @@ func (r *CustomRolesDataSource) Schema(ctx context.Context, req datasource.Schem
 				"The ID of the environment to read custom roles from.",
 			)),
 
-			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescriptionFromMarkdown(
+			"ids": framework.Attr_DataSourceReturnIDsSet(framework.SchemaAttributeDescriptionFromMarkdown(
 				"The list of resulting IDs of custom roles that have been successfully retrieved.",
 			)),
 		},
@@ -165,7 +165,7 @@ func (p *CustomRolesDataSourceModel) toState(environmentID string, customRoleIDs
 	var d diag.Diagnostics
 
 	p.Id = framework.PingOneResourceIDToTF(environmentID)
-	p.Ids, d = framework.StringSliceToTF(customRoleIDs)
+	p.Ids, d = framework.StringSliceToTFSet(customRoleIDs)
 	diags.Append(d...)
 
 	return diags
