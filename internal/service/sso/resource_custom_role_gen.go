@@ -333,6 +333,10 @@ func (r *customRoleResource) Create(ctx context.Context, req resource.CreateRequ
 	// Read response into the model
 	resp.Diagnostics.Append(data.readClientResponse(response)...)
 
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -381,6 +385,10 @@ func (r *customRoleResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	// Read response into the model
 	resp.Diagnostics.Append(data.readClientResponse(response)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -448,6 +456,10 @@ func (r *customRoleResource) Update(ctx context.Context, req resource.UpdateRequ
 
 	// Read response into the model
 	resp.Diagnostics.Append(data.readClientResponse(response)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

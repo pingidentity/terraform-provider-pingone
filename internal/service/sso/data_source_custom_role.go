@@ -337,6 +337,10 @@ func (r *customRoleDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	// Read response into the model
 	resp.Diagnostics.Append(data.readClientResponse(response)...)
 
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

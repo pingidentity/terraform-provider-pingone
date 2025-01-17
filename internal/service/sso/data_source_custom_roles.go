@@ -147,6 +147,11 @@ func (r *CustomRolesDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(data.EnvironmentId.ValueString(), customRoleIDs)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
