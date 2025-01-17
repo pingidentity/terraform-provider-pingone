@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_custom_role Data Source - terraform-provider-pingone"
-subcategory: "SSO"
+subcategory: "Platform"
 description: |-
   Data source to retrieve a custom administrator role in an environment, by ID or name.
 ---
@@ -39,12 +39,12 @@ data "pingone_custom_role" "example_by_id" {
 
 ### Read-Only
 
-- `applicable_to` (Set of String) The scope types to which the role can be applied. Supported values are `ENVIRONMENT`, `ORGANIZATION`, and `POPULATION`.
+- `applicable_to` (Set of String) The scope types to which the role can be applied. Options are `ENVIRONMENT`, `ORGANIZATION`, `POPULATION`.
 - `can_assign` (Attributes Set) A relationship that specifies if an actor is assigned the current custom role for a jurisdiction, then the actor can assign any of this set of roles to another actor for the same jurisdiction or sub-jurisdiction. This capability is derived from the `can_be_assigned_by` property. (see [below for nested schema](#nestedatt--can_assign))
 - `can_be_assigned_by` (Attributes Set) A relationship that determines whether a user assigned to one of this set of roles for a jurisdiction can assign the current custom role to another user for the same jurisdiction or sub-jurisdiction. (see [below for nested schema](#nestedatt--can_be_assigned_by))
 - `description` (String) The description of the role.
 - `id` (String) The ID of this resource.
-- `permissions` (Attributes Set) The set of permissions assigned to the role. (see [below for nested schema](#nestedatt--permissions))
+- `permissions` (Attributes Set) The set of permissions assigned to the role. For possible values, see the [list of available permissions](https://apidocs.pingidentity.com/pingone/platform/v1/api/#pingone-permissions-by-identifier). (see [below for nested schema](#nestedatt--permissions))
 - `type` (String) A value that indicates whether the role is a built-in role or a custom role. Options are `PLATFORM` and `CUSTOM`. This will always be `CUSTOM` for custom roles.
 
 <a id="nestedatt--can_assign"></a>
@@ -52,7 +52,7 @@ data "pingone_custom_role" "example_by_id" {
 
 Read-Only:
 
-- `id` (String)
+- `id` (String) The ID of a role that can be assigned by an actor assigned the current custom role.
 
 
 <a id="nestedatt--can_be_assigned_by"></a>

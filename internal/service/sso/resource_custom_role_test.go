@@ -299,9 +299,9 @@ func testAccCustomRoleConfig_NewEnv(environmentName, licenseID, resourceName, na
 	return fmt.Sprintf(`
 		%[1]s
 
-  data "pingone_role" "%[3]s_environment_admin" {
-    name = "Environment Admin"
-  }
+data "pingone_role" "%[3]s_environment_admin" {
+  name = "Environment Admin"
+}
 
 resource "pingone_custom_role" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
@@ -326,13 +326,13 @@ func testAccCustomRoleConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-		data "pingone_role" "%[2]s_environment_admin" {
-			name = "Environment Admin"
-		  }
-		  
-		  data "pingone_role" "%[2]s_organization_admin" {
-			name = "Organization Admin"
-			}
+data "pingone_role" "%[2]s_environment_admin" {
+  name = "Environment Admin"
+}
+
+data "pingone_role" "%[2]s_organization_admin" {
+  name = "Organization Admin"
+}
 
 resource "pingone_custom_role" "%[2]s-dependent_role" {
   environment_id = data.pingone_environment.general_test.id

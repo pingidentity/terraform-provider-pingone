@@ -46,13 +46,13 @@ func testAccCustomRolesDataSourceConfig_GetAll(resourceName, name string) string
 	return fmt.Sprintf(`
 	%[1]s
 
-  data "pingone_role" "%[2]s_environment_admin" {
-    name = "Environment Admin"
-  }
-  
-  data "pingone_role" "%[2]s_organization_admin" {
-    name = "Organization Admin"
-    }
+data "pingone_role" "%[2]s_environment_admin" {
+  name = "Environment Admin"
+}
+
+data "pingone_role" "%[2]s_organization_admin" {
+  name = "Organization Admin"
+}
 
 resource "pingone_custom_role" "%[2]s-dependent-role" {
   environment_id = data.pingone_environment.general_test.id

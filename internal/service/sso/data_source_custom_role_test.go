@@ -142,8 +142,8 @@ data "pingone_role" "%[1]s_environment_admin" {
 }
 
 data "pingone_role" "%[1]s_organization_admin" {
-	name = "Organization Admin"
-  }
+  name = "Organization Admin"
+}
 
 resource "pingone_custom_role" "%[1]s-dependent-role" {
   environment_id = data.pingone_environment.general_test.id

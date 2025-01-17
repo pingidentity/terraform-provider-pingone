@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_custom_role Resource - terraform-provider-pingone"
-subcategory: "SSO"
+subcategory: "Platform"
 description: |-
   Resource to create and manage a custom administrator role in an environment.
 ---
@@ -16,6 +16,10 @@ resource "pingone_environment" "my_environment" {
   # ...
 }
 
+data "pingone_role" "environment_admin" {
+  name = "Environment Admin"
+}
+
 resource "pingone_custom_role" "my_custom_role" {
   environment_id = pingone_environment.my_environment.id
 
@@ -29,8 +33,7 @@ resource "pingone_custom_role" "my_custom_role" {
 
   can_be_assigned_by = [
     {
-      # Default "Custom Roles Admin" administrator role id
-      id = "6f770b08-793f-4393-b2aa-b1d1587a0324"
+      id = pingone_role.environment_admin.id
     }
   ]
 
@@ -51,11 +54,11 @@ resource "pingone_custom_role" "my_custom_role" {
 
 ### Required
 
-- `applicable_to` (Set of String) The scope types to which the role can be applied. Supported values are `ENVIRONMENT`, `ORGANIZATION`, and `POPULATION`. At least one value must be set.
+- `applicable_to` (Set of String) The scope types to which the role can be applied. Options are `ENVIRONMENT`, `ORGANIZATION`, `POPULATION`. At least one value must be set.
 - `can_be_assigned_by` (Attributes Set) A relationship that determines whether a user assigned to one of this set of roles for a jurisdiction can assign the current custom role to another user for the same jurisdiction or sub-jurisdiction. (see [below for nested schema](#nestedatt--can_be_assigned_by))
 - `environment_id` (String) The ID of the environment to create and manage the custom role in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) The role name.
-- `permissions` (Attributes Set) The set of permissions assigned to the role. At least one permission must be set. (see [below for nested schema](#nestedatt--permissions))
+- `permissions` (Attributes Set) The set of permissions assigned to the role. For possible values, see the [list of available permissions](https://apidocs.pingidentity.com/pingone/platform/v1/api/#pingone-permissions-by-identifier). At least one permission must be set. (see [below for nested schema](#nestedatt--permissions))
 
 ### Optional
 
@@ -88,7 +91,7 @@ Required:
 
 Read-Only:
 
-- `id` (String)
+- `id` (String) The ID of a role that can be assigned by an actor assigned the current custom role.
 
 ## Import
 

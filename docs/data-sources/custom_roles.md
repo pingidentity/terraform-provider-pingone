@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_custom_roles Data Source - terraform-provider-pingone"
-subcategory: "SSO"
+subcategory: "Platform"
 description: |-
   Datasource to retrieve multiple PingOne custom administrator roles.
 ---
@@ -27,4 +27,4 @@ data "pingone_custom_roles" "example" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `ids` (List of String) The list of resulting IDs of custom roles that have been successfully retrieved.
+- `ids` (Set of String) The list of resulting IDs of custom roles that have been successfully retrieved.
