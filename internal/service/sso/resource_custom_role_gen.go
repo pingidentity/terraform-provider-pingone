@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -19,6 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
@@ -437,21 +439,42 @@ func (r *customRoleResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	// Run a read after update to ensure that the can_assign attribute is up to date
-	resp.Diagnostics.Append(framework.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.CustomAdminRolesApi.ReadOneCustomAdminRole(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+	// Run a read after update to ensure that the can_assign attribute is up to date and does not change
+	stateConf := &retry.StateChangeConf{
+		Pending: []string{
+			"false",
 		},
-		"ReadOneCustomAdminRole",
-		framework.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultCreateReadRetryable,
-		&response,
-	)...)
+		Target: []string{
+			"true",
+			"err",
+		},
+		Refresh: func() (interface{}, string, error) {
+			resp.Diagnostics.Append(framework.ParseResponse(
+				ctx,
+				func() (any, *http.Response, error) {
+					fO, fR, fErr := r.Client.ManagementAPIClient.CustomAdminRolesApi.ReadOneCustomAdminRole(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				},
+				"ReadOneCustomAdminRole",
+				framework.CustomErrorResourceNotFoundWarning,
+				sdk.DefaultCreateReadRetryable,
+				&response,
+			)...)
+			if resp.Diagnostics.HasError() {
+				return response, "err", fmt.Errorf("Error reading custom role")
+			}
 
-	if resp.Diagnostics.HasError() {
+			// The expected value of can_assign depends on other resources, so just exit here after one read
+			return response, "true", nil
+		},
+		Timeout:                   15 * time.Second,
+		Delay:                     1 * time.Second,
+		MinTimeout:                1 * time.Second,
+		ContinuousTargetOccurence: 1,
+	}
+	_, err := stateConf.WaitForStateContext(ctx)
+	if err != nil {
+		// The resp.Diagnostics object will already have the error
 		return
 	}
 
