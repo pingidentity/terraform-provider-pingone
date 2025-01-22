@@ -162,7 +162,7 @@ func (r *PopulationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",
-			"Cannot find the requested population. population_id or name must be set.",
+			"Cannot filter the populations. scim_filter or data_filters must be set.",
 		)
 		return
 	}

@@ -391,6 +391,20 @@ func StringSliceToTF(v []string) (basetypes.ListValue, diag.Diagnostics) {
 	}
 }
 
+func StringSliceToTFSet(v []string) (basetypes.SetValue, diag.Diagnostics) {
+	if v == nil {
+		return types.SetNull(types.StringType), nil
+	} else {
+
+		set := make([]attr.Value, 0)
+		for _, item := range v {
+			set = append(set, StringToTF(item))
+		}
+
+		return types.SetValue(types.StringType, set)
+	}
+}
+
 func TFListToStringSlice(ctx context.Context, v types.List) []*string {
 	var sliceOut []*string
 
