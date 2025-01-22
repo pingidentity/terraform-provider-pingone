@@ -173,20 +173,21 @@ func (r *customRoleResource) Schema(ctx context.Context, req resource.SchemaRequ
 
 func (model *customRoleResourceModel) buildClientStruct() (*management.CustomAdminRole, diag.Diagnostics) {
 	result := &management.CustomAdminRole{}
-	var diags diag.Diagnostics
+	var respDiags diag.Diagnostics
 	// applicable_to
 	if !model.ApplicableTo.IsNull() {
 		result.ApplicableTo = []management.EnumCustomAdminRoleApplicableTo{}
 		for _, applicableToElement := range model.ApplicableTo.Elements() {
 			enumVal, err := management.NewEnumCustomAdminRoleApplicableToFromValue(applicableToElement.(types.String).ValueString())
 			if err != nil {
-				diags.AddAttributeError(
+				respDiags.AddAttributeError(
 					path.Root("applicable_to"),
 					"Provided value is not valid",
 					fmt.Sprintf("The applicable_to value provided %s is not valid: %s", applicableToElement.(types.String).ValueString(), err.Error()),
 				)
+			} else {
+				result.ApplicableTo = append(result.ApplicableTo, *enumVal)
 			}
-			result.ApplicableTo = append(result.ApplicableTo, *enumVal)
 		}
 	}
 
@@ -212,7 +213,7 @@ func (model *customRoleResourceModel) buildClientStruct() (*management.CustomAdm
 		result.Permissions = append(result.Permissions, permissionsValue)
 	}
 
-	return result, nil
+	return result, respDiags
 }
 
 func (state *customRoleResourceModel) readClientResponse(response *management.CustomAdminRole) diag.Diagnostics {
