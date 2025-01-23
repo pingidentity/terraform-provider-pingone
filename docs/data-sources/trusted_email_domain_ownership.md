@@ -29,8 +29,19 @@ data "pingone_trusted_email_domain_ownership" "email_domain_ownership" {
 
 ### Read-Only
 
+- `environment_dns_record` (Attributes) Contains a key-value pair for a text record that reflects the association of the domain with the specific PingOne environment. If you add this record to your DNS, any sender email address belonging to the domain is set to active status as soon as you create it, with no need for a verification email. In the initial call to check ownership status, `status` is returned with the value `VERIFICATION_REQUIRED`. If you add the record to your DNS, the next time you use the ownership endpoint to check ownership status, the value returned for `status` will be `ACTIVE`. (see [below for nested schema](#nestedatt--environment_dns_record))
 - `regions` (Attributes Set) The regions collection specifies the properties for the 4 AWS SES regions that are used for sending email for the environment. The regions are determined by the geography where this environment was provisioned (North America, Canada, Europe & Asia-Pacific). (see [below for nested schema](#nestedatt--regions))
 - `type` (String) A string that specifies the type of DNS record.
+
+<a id="nestedatt--environment_dns_record"></a>
+### Nested Schema for `environment_dns_record`
+
+Read-Only:
+
+- `key` (String) A string that specifies the record name to apply to the DNS provider.
+- `status` (String) The status of the email domain ownership.  Options are `ACTIVE`, `VERIFICATION_REQUIRED`.
+- `value` (String) A string that specifies the record value to apply to the DNS provider.
+
 
 <a id="nestedatt--regions"></a>
 ### Nested Schema for `regions`
