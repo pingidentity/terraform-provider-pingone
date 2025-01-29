@@ -1,0 +1,7 @@
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-mux` 0.17.0 => 0.18.0
+```
+
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-go` 0.25.0 => 0.26.0
+```
