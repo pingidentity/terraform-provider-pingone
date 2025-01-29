@@ -1,4 +1,21 @@
-## 1.3.2 (Unreleased)
+## 1.4.0 (29 January 2025)
+
+NOTES:
+
+* bump `github.com/hashicorp/terraform-plugin-framework-timeouts` 0.4.1 => 0.5.0 ([#968](https://github.com/pingidentity/terraform-provider-pingone/issues/968))
+* bump `github.com/hashicorp/terraform-plugin-go` 0.25.0 => 0.26.0 ([#971](https://github.com/pingidentity/terraform-provider-pingone/issues/971))
+* bump `github.com/hashicorp/terraform-plugin-mux` 0.17.0 => 0.18.0 ([#971](https://github.com/pingidentity/terraform-provider-pingone/issues/971))
+
+FEATURES:
+
+* **New Data Source:** `pingone_custom_role` ([#965](https://github.com/pingidentity/terraform-provider-pingone/issues/965))
+* **New Data Source:** `pingone_custom_roles` ([#965](https://github.com/pingidentity/terraform-provider-pingone/issues/965))
+* **New Resource:** `pingone_custom_role` ([#965](https://github.com/pingidentity/terraform-provider-pingone/issues/965))
+
+ENHANCEMENTS:
+
+* `data-source/role`: Added support for retrieving the `Advanced Identity Cloud Super Admin`,  `Advanced Identity Cloud Tenant Admin`, and `Custom Roles Admin` roles by name. ([#969](https://github.com/pingidentity/terraform-provider-pingone/issues/969))
+* `data-source/trust_email_domain_ownership`: Added support for the `environment_dns_record` field. ([#969](https://github.com/pingidentity/terraform-provider-pingone/issues/969))
 
 BUG FIXES:
 
