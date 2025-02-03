@@ -1,3 +1,5 @@
+// Copyright © 2025 Ping Identity Corporation
+
 package sso
 
 import "github.com/hashicorp/terraform-plugin-testing/terraform"
