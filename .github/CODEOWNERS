@@ -1,4 +1,5 @@
 * @patrickcping
+* @henryrecker-pingidentity
 /.github/ @pingidentity/cloud-solutions-cicd-terraform
 /contributing/ @pingidentity/cloud-solutions-cicd-terraform
 /docs/ @pingidentity/cloud-solutions-cicd-terraform
