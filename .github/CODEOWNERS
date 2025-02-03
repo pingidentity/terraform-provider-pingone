@@ -1,5 +1,8 @@
 * @patrickcping
-* @henryrecker-pingidentity
+*go.mod @henryrecker-pingidentity
+*go.sum @henryrecker-pingidentity
+*go.work @henryrecker-pingidentity
+*go.work.sum @henryrecker-pingidentity
 /.github/ @pingidentity/cloud-solutions-cicd-terraform
 /contributing/ @pingidentity/cloud-solutions-cicd-terraform
 /docs/ @pingidentity/cloud-solutions-cicd-terraform
