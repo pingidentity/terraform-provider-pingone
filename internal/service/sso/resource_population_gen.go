@@ -134,7 +134,7 @@ func (state *populationResourceModel) readClientResponse(response *management.Po
 	state.Id = idValue
 	// name
 	state.Name = types.StringValue(response.Name)
-	// password_policy
+	// password_policy_id
 	var passwordPolicyIdValue pingonetypes.ResourceIDValue
 	if response.PasswordPolicy == nil {
 		passwordPolicyIdValue = pingonetypes.NewResourceIDNull()
