@@ -24,79 +24,26 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-// Types
-type PopulationResource struct {
+var (
+	_ resource.Resource                = &populationResource{}
+	_ resource.ResourceWithConfigure   = &populationResource{}
+	_ resource.ResourceWithImportState = &populationResource{}
+)
+
+func NewPopulationResource() resource.Resource {
+	return &populationResource{}
+}
+
+type populationResource struct {
 	serviceClientType
 	options client.GlobalOptions
 }
 
-type PopulationResourceModel struct {
-	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
-	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	Name             types.String                 `tfsdk:"name"`
-	Description      types.String                 `tfsdk:"description"`
-	PasswordPolicyId pingonetypes.ResourceIDValue `tfsdk:"password_policy_id"`
-}
-
-// Framework interfaces
-var (
-	_ resource.Resource                = &PopulationResource{}
-	_ resource.ResourceWithConfigure   = &PopulationResource{}
-	_ resource.ResourceWithImportState = &PopulationResource{}
-)
-
-// New Object
-func NewPopulationResource() resource.Resource {
-	return &PopulationResource{}
-}
-
-// Metadata
-func (r *PopulationResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *populationResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_population"
 }
 
-// Schema.
-func (r *PopulationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-
-	const attrMinLength = 1
-
-	resp.Schema = schema.Schema{
-		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage a PingOne population in an environment.",
-
-		Attributes: map[string]schema.Attribute{
-			"id": framework.Attr_ID(),
-
-			"environment_id": framework.Attr_LinkID(
-				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create the population in."),
-			),
-
-			"name": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the name of the population.").Description,
-				Required:    true,
-
-				Validators: []validator.String{
-					stringvalidator.LengthAtLeast(attrMinLength),
-				},
-			},
-
-			"description": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a description to apply to the population.").Description,
-				Optional:    true,
-			},
-
-			"password_policy_id": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of a password policy to assign to the population.  Must be a valid PingOne resource ID.").Description,
-				Optional:    true,
-
-				CustomType: pingonetypes.ResourceIDType{},
-			},
-		},
-	}
-}
-
-func (r *PopulationResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
+func (r *populationResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -123,11 +70,82 @@ func (r *PopulationResource) Configure(ctx context.Context, req resource.Configu
 	if resourceConfig.Client.GlobalOptions != nil {
 		r.options = *resourceConfig.Client.GlobalOptions
 	}
-
 }
 
-func (r *PopulationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan, state PopulationResourceModel
+type populationResourceModel struct {
+	Description      types.String                 `tfsdk:"description"`
+	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
+	Name             types.String                 `tfsdk:"name"`
+	PasswordPolicyId pingonetypes.ResourceIDValue `tfsdk:"password_policy_id"`
+}
+
+func (r *populationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		Description: "Resource to create and manage a PingOne population in an environment.",
+		Attributes: map[string]schema.Attribute{
+			"description": schema.StringAttribute{
+				Optional:    true,
+				Description: "A string that specifies the description of the population.",
+			},
+			"environment_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create and manage the population in."),
+			),
+			"id": framework.Attr_ID(),
+			"name": schema.StringAttribute{
+				Required:    true,
+				Description: "A string that specifies the population name, which must be provided and must be unique within an environment.",
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(1),
+				},
+			},
+			"password_policy_id": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of a password policy to assign to the population.  Must be a valid PingOne resource ID.").Description,
+				Optional:    true,
+				CustomType:  pingonetypes.ResourceIDType{},
+			},
+		},
+	}
+}
+
+func (model *populationResourceModel) buildClientStruct() (*management.Population, diag.Diagnostics) {
+	result := &management.Population{}
+	// description
+	result.Description = model.Description.ValueStringPointer()
+	// name
+	result.Name = model.Name.ValueString()
+	// password_policy
+	if !model.PasswordPolicyId.IsNull() {
+		passwordPolicyValue := &management.PopulationPasswordPolicy{
+			Id: model.PasswordPolicyId.ValueString(),
+		}
+		result.PasswordPolicy = passwordPolicyValue
+	}
+
+	return result, nil
+}
+
+func (state *populationResourceModel) readClientResponse(response *management.Population) diag.Diagnostics {
+	// description
+	state.Description = types.StringPointerValue(response.Description)
+	// id
+	idValue := framework.PingOneResourceIDToTF(response.GetId())
+	state.Id = idValue
+	// name
+	state.Name = types.StringValue(response.Name)
+	// password_policy
+	var passwordPolicyIdValue pingonetypes.ResourceIDValue
+	if response.PasswordPolicy == nil {
+		passwordPolicyIdValue = pingonetypes.NewResourceIDNull()
+	} else {
+		passwordPolicyIdValue = framework.PingOneResourceIDToTF(response.PasswordPolicy.Id)
+	}
+	state.PasswordPolicyId = passwordPolicyIdValue
+	return nil
+}
+
+func (r *populationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data populationResourceModel
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -137,32 +155,50 @@ func (r *PopulationResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Build the model for the API
-	population := plan.expand()
-
-	// Run the API call
-	response, d := PingOnePopulationCreate(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), *population)
-
-	resp.Diagnostics.Append(d...)
+	// Create API call logic
+	clientData, diags := data.buildClientStruct()
+	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Create the state to save
-	state = plan
+	var responseData *management.Population
+	resp.Diagnostics.Append(framework.ParseResponse(
+		ctx,
 
-	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response)...)
-	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+		func() (any, *http.Response, error) {
+			fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.CreatePopulation(ctx, data.EnvironmentId.ValueString()).Population(*clientData).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+		},
+		"CreatePopulation",
+		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+		&responseData,
+	)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Read response into the model
+	resp.Diagnostics.Append(data.readClientResponse(responseData)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Save data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *PopulationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *PopulationResourceModel
+func (r *populationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data populationResourceModel
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -173,12 +209,13 @@ func (r *PopulationResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Run the API call
-	var response *management.Population
+	// Read API call logic
+	var responseData *management.Population
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
@@ -189,25 +226,32 @@ func (r *PopulationResource) Read(ctx context.Context, req resource.ReadRequest,
 		"ReadOnePopulation",
 		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
-		&response,
+		&responseData,
 	)...)
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Remove from state if resource is not found
-	if response == nil {
+	if responseData == nil {
 		resp.State.RemoveResource(ctx)
 		return
 	}
 
+	// Read response into the model
+	resp.Diagnostics.Append(data.readClientResponse(responseData)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *PopulationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan, state PopulationResourceModel
+func (r *populationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data populationResourceModel
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -217,42 +261,50 @@ func (r *PopulationResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 
 	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Build the model for the API
-	population := plan.expand()
+	// Update API call logic
+	clientData, diags := data.buildClientStruct()
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-	// Run the API call
-	var response *management.Population
+	var responseData *management.Population
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.UpdatePopulation(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Population(*population).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.UpdatePopulation(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Population(*clientData).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdatePopulation",
 		framework.DefaultCustomError,
 		nil,
-		&response,
+		&responseData,
 	)...)
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Create the state to save
-	state = plan
+	// Read response into the model
+	resp.Diagnostics.Append(data.readClientResponse(responseData)...)
 
-	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response)...)
-	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Save data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *PopulationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *PopulationResourceModel
+func (r *populationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data populationResourceModel
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -263,6 +315,7 @@ func (r *PopulationResource) Delete(ctx context.Context, req resource.DeleteRequ
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -281,7 +334,7 @@ func (r *PopulationResource) Delete(ctx context.Context, req resource.DeleteRequ
 		}
 	}
 
-	// Run the API call
+	// Delete API call logic
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
@@ -294,38 +347,9 @@ func (r *PopulationResource) Delete(ctx context.Context, req resource.DeleteRequ
 		nil,
 		nil,
 	)...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
 }
 
-func populationDeleteCustomErrorHandler(r *http.Response, p1Error *model.P1Error) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	if p1Error != nil {
-		// Env must contain at least one population
-		if details, ok := p1Error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
-			if code, ok := details[0].GetCodeOk(); ok && *code == "CONSTRAINT_VIOLATION" {
-				if message, ok := details[0].GetMessageOk(); ok {
-					m, err := regexp.MatchString(`must contain at least one population`, *message)
-					if err == nil && m {
-						diags.AddWarning(
-							"Constraint violation",
-							fmt.Sprintf("A constraint violation error was encountered: %s\n\nThe population has been removed from Terraform state, but has been left in place in the environment.", p1Error.GetMessage()),
-						)
-
-						return diags
-					}
-				}
-			}
-		}
-	}
-
-	return diags
-}
-
-func (r *PopulationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *populationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 
 	idComponents := []framework.ImportComponent{
 		{
@@ -359,50 +383,32 @@ func (r *PopulationResource) ImportState(ctx context.Context, req resource.Impor
 	}
 }
 
-func (p *PopulationResourceModel) expand() *management.Population {
-
-	data := management.NewPopulation(p.Name.ValueString())
-
-	if !p.Description.IsNull() && !p.Description.IsUnknown() {
-		data.SetDescription(p.Description.ValueString())
-	}
-
-	if !p.PasswordPolicyId.IsNull() && !p.PasswordPolicyId.IsUnknown() {
-		data.SetPasswordPolicy(
-			*management.NewPopulationPasswordPolicy(p.PasswordPolicyId.ValueString()),
-		)
-	}
-
-	return data
-}
-
-func (p *PopulationResourceModel) toState(apiObject *management.Population) diag.Diagnostics {
+func populationDeleteCustomErrorHandler(r *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if apiObject == nil {
-		diags.AddError(
-			"Data object missing",
-			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
-		)
+	if p1Error != nil {
+		// Env must contain at least one population
+		if details, ok := p1Error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+			if code, ok := details[0].GetCodeOk(); ok && *code == "CONSTRAINT_VIOLATION" {
+				if message, ok := details[0].GetMessageOk(); ok {
+					m, err := regexp.MatchString(`must contain at least one population`, *message)
+					if err == nil && m {
+						diags.AddWarning(
+							"Constraint violation",
+							fmt.Sprintf("A constraint violation error was encountered: %s\n\nThe population has been removed from Terraform state, but has been left in place in the environment.", p1Error.GetMessage()),
+						)
 
-		return diags
-	}
-
-	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.PingOneResourceIDOkToTF(apiObject.Environment.GetIdOk())
-	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
-	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
-
-	if v, ok := apiObject.GetPasswordPolicyOk(); ok {
-		p.PasswordPolicyId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
-	} else {
-		p.PasswordPolicyId = pingonetypes.NewResourceIDNull()
+						return diags
+					}
+				}
+			}
+		}
 	}
 
 	return diags
 }
 
-func (r *PopulationResource) hasUsersAssigned(ctx context.Context, environmentID, populationID string) (bool, diag.Diagnostics) {
+func (r *populationResource) hasUsersAssigned(ctx context.Context, environmentID, populationID string) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	users, d := r.readUsers(ctx, environmentID, populationID)
@@ -418,7 +424,7 @@ func (r *PopulationResource) hasUsersAssigned(ctx context.Context, environmentID
 	return false, diags
 }
 
-func (r *PopulationResource) readUsers(ctx context.Context, environmentID, populationID string) ([]management.User, diag.Diagnostics) {
+func (r *populationResource) readUsers(ctx context.Context, environmentID, populationID string) ([]management.User, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	m, err := regexp.MatchString(verify.P1ResourceIDRegexpFullString.String(), populationID)
@@ -485,7 +491,7 @@ func (r *PopulationResource) readUsers(ctx context.Context, environmentID, popul
 	return nil, diags
 }
 
-func (r *PopulationResource) checkEnvironmentControls(ctx context.Context, environmentID, populationID string) (bool, diag.Diagnostics) {
+func (r *populationResource) checkEnvironmentControls(ctx context.Context, environmentID, populationID string) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if r.options.Population.ContainsUsersForceDelete {
@@ -521,7 +527,7 @@ func (r *PopulationResource) checkEnvironmentControls(ctx context.Context, envir
 	return false, diags
 }
 
-func (r *PopulationResource) checkControlsAndDeletePopulationUsers(ctx context.Context, environmentID, populationID string) diag.Diagnostics {
+func (r *populationResource) checkControlsAndDeletePopulationUsers(ctx context.Context, environmentID, populationID string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	environmentControlsOk, d := r.checkEnvironmentControls(ctx, environmentID, populationID)
@@ -569,28 +575,4 @@ func (r *PopulationResource) checkControlsAndDeletePopulationUsers(ctx context.C
 	}
 
 	return diags
-}
-
-func PingOnePopulationCreate(ctx context.Context, apiClient *management.APIClient, environmentID string, population management.Population) (*management.Population, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	var returnVar *management.Population
-	diags.Append(framework.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			fO, fR, fErr := apiClient.PopulationsApi.CreatePopulation(ctx, environmentID).Population(population).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
-		},
-		"CreatePopulation",
-		framework.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
-		&returnVar,
-	)...)
-
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	return returnVar, diags
 }
