@@ -1,3 +1,5 @@
+// Copyright © 2025 Ping Identity Corporation
+
 // Influenced from github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier/*
 
 package stringplanmodifier

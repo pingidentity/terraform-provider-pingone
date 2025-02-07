@@ -1,3 +1,5 @@
+// Copyright © 2025 Ping Identity Corporation
+
 package utils
 
 import "github.com/hashicorp/terraform-plugin-framework/resource/schema"

@@ -1,3 +1,5 @@
+// Copyright © 2025 Ping Identity Corporation
+
 //go:build tools
 // +build tools
 
