@@ -1,3 +1,66 @@
+## 1.4.0 (29 January 2025)
+
+NOTES:
+
+* bump `github.com/hashicorp/terraform-plugin-framework-timeouts` 0.4.1 => 0.5.0 ([#968](https://github.com/pingidentity/terraform-provider-pingone/issues/968))
+* bump `github.com/hashicorp/terraform-plugin-go` 0.25.0 => 0.26.0 ([#971](https://github.com/pingidentity/terraform-provider-pingone/issues/971))
+* bump `github.com/hashicorp/terraform-plugin-mux` 0.17.0 => 0.18.0 ([#971](https://github.com/pingidentity/terraform-provider-pingone/issues/971))
+
+FEATURES:
+
+* **New Data Source:** `pingone_custom_role` ([#965](https://github.com/pingidentity/terraform-provider-pingone/issues/965))
+* **New Data Source:** `pingone_custom_roles` ([#965](https://github.com/pingidentity/terraform-provider-pingone/issues/965))
+* **New Resource:** `pingone_custom_role` ([#965](https://github.com/pingidentity/terraform-provider-pingone/issues/965))
+
+ENHANCEMENTS:
+
+* `data-source/role`: Added support for retrieving the `Advanced Identity Cloud Super Admin`,  `Advanced Identity Cloud Tenant Admin`, and `Custom Roles Admin` roles by name. ([#969](https://github.com/pingidentity/terraform-provider-pingone/issues/969))
+* `data-source/trust_email_domain_ownership`: Added support for the `environment_dns_record` field. ([#969](https://github.com/pingidentity/terraform-provider-pingone/issues/969))
+
+BUG FIXES:
+
+* `resource/pingone_verify_policy`: Fixed the handling of otp default values in the email and phone property objects when verify set to DISABLED. ([#967](https://github.com/pingidentity/terraform-provider-pingone/issues/967))
+
+## 1.3.1 (7 January 2025)
+
+NOTES:
+
+* bump `golang.org/x/net` 0.28.0 => 0.33.0 ([#954](https://github.com/pingidentity/terraform-provider-pingone/issues/954))
+
+## 1.3.0 (19 December 2024)
+
+BREAKING CHANGES:
+
+* `resource/pingone_risk_predictor`: To ensure correct composite predictor and Terraform behaviours, the `predictor_composite.composition` field has been removed and replaced with `predictor_composite.compositions` field. ([#952](https://github.com/pingidentity/terraform-provider-pingone/issues/952))
+
+NOTES:
+
+* bump `github.com/hashicorp/terraform-plugin-framework-validators` 0.15.0 => 0.16.0 ([#953](https://github.com/pingidentity/terraform-provider-pingone/issues/953))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.44.0 => 0.45.0 ([#953](https://github.com/pingidentity/terraform-provider-pingone/issues/953))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` 0.17.0 => 0.18.0 ([#953](https://github.com/pingidentity/terraform-provider-pingone/issues/953))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.4 => 0.12.5 ([#953](https://github.com/pingidentity/terraform-provider-pingone/issues/953))
+
+ENHANCEMENTS:
+
+* `resource/pingone_alert_channel`: Added support for the `SUSPICIOUS_TRAFFIC` alert type. ([#953](https://github.com/pingidentity/terraform-provider-pingone/issues/953))
+* `resource/pingone_risk_predictor`: Support multiple root level conditions for composite predictors. ([#952](https://github.com/pingidentity/terraform-provider-pingone/issues/952))
+
+BUG FIXES:
+
+* `resource/pingone_risk_predictor`: Fix "Error when calling ReadOneRiskPredictor: data failed to match schemas in oneOf(RiskPredictorCompositeCondition)" when using IP range and IP comparison composite predictors. ([#953](https://github.com/pingidentity/terraform-provider-pingone/issues/953))
+
+## 1.2.1 (13 December 2024)
+
+NOTES:
+
+* bump `github.com/hashicorp/terraform-plugin-sdk/v2` 2.34.0 => 2.35.0 ([#942](https://github.com/pingidentity/terraform-provider-pingone/issues/942))
+* bump `github.com/hashicorp/terraform-plugin-testing` 1.10.0 => 1.11.0 ([#943](https://github.com/pingidentity/terraform-provider-pingone/issues/943))
+* bump `golang.org/x/crypto` 0.26.0 => 0.31.0 ([#946](https://github.com/pingidentity/terraform-provider-pingone/issues/946))
+
+BUG FIXES:
+
+* `resource/pingone_mfa_device_policy`: Fixed "unexpected new value: .fido2: was null, but now cty.ObjectVal" when `fido2` is applied, then removed from resource configuration. ([#940](https://github.com/pingidentity/terraform-provider-pingone/issues/940))
+
 ## 1.2.0 (18 November 2024)
 
 NOTES:

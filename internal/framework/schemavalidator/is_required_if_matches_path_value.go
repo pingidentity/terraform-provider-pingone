@@ -1,3 +1,5 @@
+// Copyright © 2025 Ping Identity Corporation
+
 package schemavalidator
 
 // Influenced from github.com/hashicorp/terraform-plugin-framework-validators/internal/schemavalidator/*

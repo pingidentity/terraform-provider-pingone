@@ -1,3 +1,5 @@
+// Copyright © 2025 Ping Identity Corporation
+
 package mfa_test
 
 import (
@@ -1360,6 +1362,72 @@ func TestAccMFADevicePolicy_FIDO2_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.pairing_disabled", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "fido2.fido2_policy_id"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "fido2.prompt_for_nickname_on_pairing"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
+				),
+			},
+			{
+				Config: testAccMFADevicePolicyConfig_FullFIDO2(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.pairing_disabled", "true"),
+					resource.TestMatchResourceAttr(resourceFullName, "fido2.fido2_policy_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.prompt_for_nickname_on_pairing", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccMFADevicePolicy_FIDO2_Disabled(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMFADevicePolicyConfig_FullFIDO2(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.pairing_disabled", "true"),
+					resource.TestMatchResourceAttr(resourceFullName, "fido2.fido2_policy_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.prompt_for_nickname_on_pairing", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
+				),
+			},
+			{
+				Config: testAccMFADevicePolicyConfig_DisableFIDO2(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "fido2.pairing_disabled"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "fido2.fido2_policy_id"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "fido2.prompt_for_nickname_on_pairing"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
@@ -3000,6 +3068,73 @@ resource "pingone_mfa_device_policy" "%[2]s" {
     enabled = true
   }
 
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccMFADevicePolicyConfig_DisableFIDO2(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_mfa_fido2_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  attestation_requirements = "NONE"
+  authenticator_attachment = "PLATFORM"
+
+  backup_eligibility = {
+    allow                         = false
+    enforce_during_authentication = true
+  }
+
+  device_display_name = "fidoPolicy.deviceDisplayName02"
+
+  discoverable_credentials = "DISCOURAGED"
+
+  mds_authenticators_requirements = {
+    enforce_during_authentication = false
+    option                        = "NONE"
+  }
+
+  relying_party_id = "ping-devops.com"
+
+  user_display_name_attributes = {
+    attributes = [
+      {
+        name = "username"
+      }
+    ]
+  }
+
+  user_verification = {
+    enforce_during_authentication = false
+    option                        = "DISCOURAGED"
+  }
+}
+
+resource "pingone_mfa_device_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms = {
+    enabled = false
+  }
+
+  voice = {
+    enabled = false
+  }
+
+  email = {
+    enabled = false
+  }
+
+  mobile = {
+    enabled = false
+  }
+
+  totp = {
+    enabled = false
+  }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 

@@ -1,0 +1,11 @@
+```release-note:new-resource
+pingone_custom_role
+```
+
+```release-note:new-data-source
+pingone_custom_role
+```
+
+```release-note:new-data-source
+pingone_custom_roles
+```

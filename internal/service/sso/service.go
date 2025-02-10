@@ -1,3 +1,5 @@
+// Copyright © 2025 Ping Identity Corporation
+
 package sso
 
 import (
@@ -19,6 +21,7 @@ func Resources() []func() resource.Resource {
 		NewApplicationResourceResource,
 		NewApplicationRoleAssignmentResource,
 		NewApplicationSecretResource,
+		NewCustomRoleResource,
 		NewGroupNestingResource,
 		NewGroupResource,
 		NewGroupRoleAssignmentResource,
@@ -48,6 +51,8 @@ func DataSources() []func() datasource.DataSource {
 		NewApplicationFlowPolicyAssignmentsDataSource,
 		NewApplicationSecretDataSource,
 		NewApplicationSignOnPolicyAssignmentsDataSource,
+		NewCustomRoleDataSource,
+		NewCustomRolesDataSource,
 		NewFlowPoliciesDataSource,
 		NewFlowPolicyDataSource,
 		NewGroupDataSource,

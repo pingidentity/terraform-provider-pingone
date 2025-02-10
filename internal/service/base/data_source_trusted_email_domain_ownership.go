@@ -1,3 +1,5 @@
+// Copyright © 2025 Ping Identity Corporation
+
 package base
 
 import (
@@ -19,6 +21,7 @@ import (
 type TrustedEmailDomainOwnershipDataSource serviceClientType
 
 type TrustedEmailDomainOwnershipDataSourceModel struct {
+	EnvironmentDnsRecord types.Object                 `tfsdk:"environment_dns_record"`
 	EnvironmentId        pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	TrustedEmailDomainId pingonetypes.ResourceIDValue `tfsdk:"trusted_email_domain_id"`
 	Type                 types.String                 `tfsdk:"type"`
@@ -28,6 +31,11 @@ type TrustedEmailDomainOwnershipDataSourceModel struct {
 var (
 	trustedEmailDomainOwnershipRegionTFObjectTypes = map[string]attr.Type{
 		"name":   types.StringType,
+		"status": types.StringType,
+		"key":    types.StringType,
+		"value":  types.StringType,
+	}
+	trustedEmailDomainOwnershipEnvironmentDnsRecordTFObjectTypes = map[string]attr.Type{
 		"status": types.StringType,
 		"key":    types.StringType,
 		"value":  types.StringType,
@@ -102,6 +110,27 @@ func (r *TrustedEmailDomainOwnershipDataSource) Schema(ctx context.Context, req 
 							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the record value to apply to the DNS provider.").Description,
 							Computed:    true,
 						},
+					},
+				},
+			},
+
+			"environment_dns_record": schema.SingleNestedAttribute{
+				Description:         "Contains a key-value pair for a text record that reflects the association of the domain with the specific PingOne environment. If you add this record to your DNS, any sender email address belonging to the domain is set to active status as soon as you create it, with no need for a verification email. In the initial call to check ownership status, \"status\" is returned with the value \"VERIFICATION_REQUIRED\". If you add the record to your DNS, the next time you use the ownership endpoint to check ownership status, the value returned for \"status\" will be \"ACTIVE\".",
+				MarkdownDescription: "Contains a key-value pair for a text record that reflects the association of the domain with the specific PingOne environment. If you add this record to your DNS, any sender email address belonging to the domain is set to active status as soon as you create it, with no need for a verification email. In the initial call to check ownership status, `status` is returned with the value `VERIFICATION_REQUIRED`. If you add the record to your DNS, the next time you use the ownership endpoint to check ownership status, the value returned for `status` will be `ACTIVE`.",
+				Computed:            true,
+				Attributes: map[string]schema.Attribute{
+					"status": schema.StringAttribute{
+						Description:         regionStatusDescription.Description,
+						MarkdownDescription: regionStatusDescription.MarkdownDescription,
+						Computed:            true,
+					},
+					"key": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the record name to apply to the DNS provider.").Description,
+						Computed:    true,
+					},
+					"value": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the record value to apply to the DNS provider.").Description,
+						Computed:    true,
 					},
 				},
 			},
@@ -190,6 +219,23 @@ func (p *TrustedEmailDomainOwnershipDataSourceModel) toState(v *management.Email
 
 	p.Regions, d = toStateTrustedEmailDomainOwnershipRegionOkToTF(v.GetRegionsOk())
 	diags.Append(d...)
+
+	if v.EnvironmentDnsRecord == nil {
+		p.EnvironmentDnsRecord = types.ObjectNull(trustedEmailDomainOwnershipEnvironmentDnsRecordTFObjectTypes)
+	} else {
+		var status types.String
+		if v.EnvironmentDnsRecord.Status != nil {
+			status = types.StringValue(string(*v.EnvironmentDnsRecord.Status))
+		} else {
+			status = types.StringNull()
+		}
+		p.EnvironmentDnsRecord, d = types.ObjectValue(trustedEmailDomainOwnershipEnvironmentDnsRecordTFObjectTypes, map[string]attr.Value{
+			"status": status,
+			"key":    types.StringPointerValue(v.EnvironmentDnsRecord.Key),
+			"value":  types.StringPointerValue(v.EnvironmentDnsRecord.Value),
+		})
+		diags.Append(d...)
+	}
 
 	return diags
 }

@@ -1,0 +1,7 @@
+```release-note:enhancement
+`data-source/role`: Added support for retrieving the `Advanced Identity Cloud Super Admin`,  `Advanced Identity Cloud Tenant Admin`, and `Custom Roles Admin` roles by name.
+```
+
+```release-note:enhancement
+`data-source/trust_email_domain_ownership`: Added support for the `environment_dns_record` field.
+```

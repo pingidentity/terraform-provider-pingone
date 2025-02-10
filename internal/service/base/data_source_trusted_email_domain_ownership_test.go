@@ -1,3 +1,5 @@
+// Copyright © 2025 Ping Identity Corporation
+
 package base_test
 
 import (
@@ -40,6 +42,9 @@ func TestAccTrustedEmailDomainOwnershipDataSource_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "regions.0.status", "VERIFICATION_REQUIRED"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "regions.0.key", "_amazonses"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "regions.0.value", regexp.MustCompile(`^[a-zA-Z0-9-~_//+=]*$`)),
+					resource.TestCheckResourceAttr(dataSourceFullName, "environment_dns_record.status", "VERIFICATION_REQUIRED"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "environment_dns_record.key", "_pingoneemail"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_dns_record.value", regexp.MustCompile(`^[a-zA-Z0-9-~_//+=]*$`)),
 				),
 			},
 		},

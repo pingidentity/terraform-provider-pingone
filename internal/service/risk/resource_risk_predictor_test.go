@@ -1,3 +1,5 @@
+// Copyright © 2025 Ping Identity Corporation
+
 package risk_test
 
 import (
@@ -193,17 +195,23 @@ func TestAccRiskPredictor_Composite(t *testing.T) {
 	fullCheck1 := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "type", "COMPOSITE"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.composition.condition_json", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.composition.condition", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.composition.level", "HIGH"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.condition_json", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.condition", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.level", "HIGH"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.1.condition_json", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"and\":[{\"equals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}]}]}]}"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.1.condition", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"Low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"OR\"}],\"type\":\"AND\"}],\"type\":\"AND\"}"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.1.level", "LOW"),
 	)
 
 	fullCheck2 := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "type", "COMPOSITE"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.composition.condition_json", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"and\":[{\"equals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}]}]}]}"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.composition.condition", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"Low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"OR\"}],\"type\":\"AND\"}],\"type\":\"AND\"}"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.composition.level", "LOW"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.condition_json", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"and\":[{\"equals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}]}]}]}"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.condition", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"Low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"OR\"}],\"type\":\"AND\"}],\"type\":\"AND\"}"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.level", "LOW"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.1.condition_json", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.1.condition", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.1.level", "HIGH"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -261,6 +269,9 @@ func TestAccRiskPredictor_Composite(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"predictor_composite.compositions.1.condition_json",
+				},
 			},
 			{
 				Config:  testAccRiskPredictorConfig_Composite_Full_1(resourceName, name),
@@ -2550,32 +2561,70 @@ resource "pingone_risk_predictor" "%[2]s" {
   description  = "When my wife is upset, I let her colour in my black and white tattoos.  She just needs a shoulder to crayon.."
 
   predictor_composite = {
-    composition = {
-      level = "HIGH"
+    compositions = [
+      {
+        level = "HIGH"
 
-      condition_json = jsonencode({
-        "not" : {
-          "or" : [{
-            "equals" : 0,
-            "value" : "$${details.counters.predictorLevels.medium}",
-            "type" : "VALUE_COMPARISON"
-            }, {
-            "equals" : "High",
-            "value" : "$${details.geoVelocity.level}",
-            "type" : "VALUE_COMPARISON"
-            }, {
-            "and" : [{
-              "equals" : "High",
-              "value" : "$${details.anonymousNetwork.level}",
+        condition_json = jsonencode({
+          "not" : {
+            "or" : [{
+              "equals" : 0,
+              "value" : "$${details.counters.predictorLevels.medium}",
               "type" : "VALUE_COMPARISON"
+              }, {
+              "equals" : "High",
+              "value" : "$${details.geoVelocity.level}",
+              "type" : "VALUE_COMPARISON"
+              }, {
+              "and" : [{
+                "equals" : "High",
+                "value" : "$${details.anonymousNetwork.level}",
+                "type" : "VALUE_COMPARISON"
+              }],
+              "type" : "AND"
             }],
-            "type" : "AND"
-          }],
-          "type" : "OR"
-        },
-        "type" : "NOT"
-      })
-    }
+            "type" : "OR"
+          },
+          "type" : "NOT"
+        })
+      },
+      {
+        level = "LOW"
+
+        condition_json = jsonencode({
+          "and" : [
+            {
+              "value" : "$${details.counters.predictorLevels.medium}",
+              "equals" : 5,
+              "type" : "VALUE_COMPARISON"
+            },
+            {
+              "value" : "$${details.anonymousNetwork.level}",
+              "equals" : "low",
+              "type" : "VALUE_COMPARISON"
+            },
+            {
+              "and" : [
+                {
+                  "value" : "$${details.anonymousNetwork.level}",
+                  "equals" : "high",
+                  "type" : "VALUE_COMPARISON"
+                },
+                {
+                  "or" : [
+                    {
+                      "value" : "$${details.anonymousNetwork.level}",
+                      "notEquals" : "high",
+                      "type" : "VALUE_COMPARISON"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        })
+      }
+    ]
   }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -2592,42 +2641,70 @@ resource "pingone_risk_predictor" "%[2]s" {
   compact_name = "%[3]s1"
 
   predictor_composite = {
-    composition = {
-      level = "LOW"
+    compositions = [
+      {
+        level = "LOW"
 
-      condition_json = jsonencode({
-        "and" : [
-          {
-            "value" : "$${details.counters.predictorLevels.medium}",
-            "equals" : 5,
-            "type" : "VALUE_COMPARISON"
-          },
-          {
-            "value" : "$${details.anonymousNetwork.level}",
-            "equals" : "low",
-            "type" : "VALUE_COMPARISON"
-          },
-          {
-            "and" : [
-              {
+        condition_json = jsonencode({
+          "and" : [
+            {
+              "value" : "$${details.counters.predictorLevels.medium}",
+              "equals" : 5,
+              "type" : "VALUE_COMPARISON"
+            },
+            {
+              "value" : "$${details.anonymousNetwork.level}",
+              "equals" : "low",
+              "type" : "VALUE_COMPARISON"
+            },
+            {
+              "and" : [
+                {
+                  "value" : "$${details.anonymousNetwork.level}",
+                  "equals" : "high",
+                  "type" : "VALUE_COMPARISON"
+                },
+                {
+                  "or" : [
+                    {
+                      "value" : "$${details.anonymousNetwork.level}",
+                      "notEquals" : "high",
+                      "type" : "VALUE_COMPARISON"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        })
+      },
+      {
+        level = "HIGH"
+
+        condition_json = jsonencode({
+          "not" : {
+            "or" : [{
+              "equals" : 0,
+              "value" : "$${details.counters.predictorLevels.medium}",
+              "type" : "VALUE_COMPARISON"
+              }, {
+              "equals" : "High",
+              "value" : "$${details.geoVelocity.level}",
+              "type" : "VALUE_COMPARISON"
+              }, {
+              "and" : [{
+                "equals" : "High",
                 "value" : "$${details.anonymousNetwork.level}",
-                "equals" : "high",
                 "type" : "VALUE_COMPARISON"
-              },
-              {
-                "or" : [
-                  {
-                    "value" : "$${details.anonymousNetwork.level}",
-                    "notEquals" : "high",
-                    "type" : "VALUE_COMPARISON"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      })
-    }
+              }],
+              "type" : "AND"
+            }],
+            "type" : "OR"
+          },
+          "type" : "NOT"
+        })
+      },
+    ]
   }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -2644,11 +2721,13 @@ resource "pingone_risk_predictor" "%[2]s" {
   compact_name = "%[3]s1"
 
   predictor_composite = {
-    composition = {
-      level = "LOW"
+    compositions = [
+      {
+        level = "LOW"
 
-      condition_json = jsonencode({})
-    }
+        condition_json = jsonencode({})
+      }
+    ]
   }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)

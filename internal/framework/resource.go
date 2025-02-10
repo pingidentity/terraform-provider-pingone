@@ -1,3 +1,5 @@
+// Copyright © 2025 Ping Identity Corporation
+
 package framework
 
 import (
@@ -388,6 +390,20 @@ func StringSliceToTF(v []string) (basetypes.ListValue, diag.Diagnostics) {
 		}
 
 		return types.ListValue(types.StringType, list)
+	}
+}
+
+func StringSliceToTFSet(v []string) (basetypes.SetValue, diag.Diagnostics) {
+	if v == nil {
+		return types.SetNull(types.StringType), nil
+	} else {
+
+		set := make([]attr.Value, 0)
+		for _, item := range v {
+			set = append(set, StringToTF(item))
+		}
+
+		return types.SetValue(types.StringType, set)
 	}
 }
 

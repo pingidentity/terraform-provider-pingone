@@ -1,3 +1,5 @@
+// Copyright © 2025 Ping Identity Corporation
+
 package mfa
 
 import (
@@ -852,7 +854,15 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 			"fido2": schema.SingleNestedAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of FIDO2 device authentication policy settings.").Description,
 				Optional:    true,
-
+				Computed:    true,
+				Default: objectdefault.StaticValue(types.ObjectValueMust(MFADevicePolicyFido2TFObjectTypes,
+					map[string]attr.Value{
+						"enabled":                        types.BoolValue(false),
+						"fido2_policy_id":                framework.PingOneResourceIDToTF(""),
+						"pairing_disabled":               types.BoolNull(),
+						"prompt_for_nickname_on_pairing": types.BoolNull(),
+					}),
+				),
 				Attributes: map[string]schema.Attribute{
 					"enabled": schema.BoolAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the FIDO2 method is enabled or disabled in the policy.").Description,
@@ -871,8 +881,7 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 					"fido2_policy_id": schema.StringAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the resource UUID that represents the FIDO2 policy in PingOne. This property can be null / left undefined. When null, the environment's default FIDO2 Policy is used.  Must be a valid PingOne resource ID.").Description,
 						Optional:    true,
-
-						CustomType: pingonetypes.ResourceIDType{},
+						CustomType:  pingonetypes.ResourceIDType{},
 					},
 
 					"prompt_for_nickname_on_pairing": schema.BoolAttribute{

@@ -1,3 +1,5 @@
+// Copyright © 2025 Ping Identity Corporation
+
 package verify_test
 
 import (
@@ -327,6 +329,10 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 				Check:  minimalPolicy,
 			},
 			{
+				Config: testAccVerifyPolicy_MinimalDisabledDevice(resourceName, updatedName),
+				Check:  minimalPolicy,
+			},
+			{
 				Config: testAccVerifyPolicy_UpdateTimeUnits(resourceName, updatedName),
 				Check:  updateTimeUnitsPolicy,
 			},
@@ -595,6 +601,29 @@ resource "pingone_verify_policy" "%[2]s" {
 
   government_id = {
     verify = "REQUIRED"
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccVerifyPolicy_MinimalDisabledDevice(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+resource "pingone_verify_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "Description for %[3]s"
+
+  government_id = {
+    verify = "REQUIRED"
+  }
+
+  email = {
+    verify = "DISABLED"
+  }
+
+  phone = {
+    verify = "DISABLED"
   }
 
 

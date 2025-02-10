@@ -92,32 +92,34 @@ resource "pingone_risk_predictor" "my_awesome_composite_predictor" {
   compact_name   = "myAwesomeCompositePredictor"
 
   predictor_composite = {
-    composition = {
-      level = "HIGH"
+    compositions = [
+      {
+        level = "HIGH"
 
-      condition_json = jsonencode({
-        "not" : {
-          "or" : [{
-            "equals" : 0,
-            "value" : "$${details.counters.predictorLevels.medium}",
-            "type" : "VALUE_COMPARISON"
-            }, {
-            "equals" : "High",
-            "value" : "$${details.${pingone_risk_predictor.my_awesome_geovelocity_anomaly_predictor.compact_name}.level}",
-            "type" : "VALUE_COMPARISON"
-            }, {
-            "and" : [{
-              "equals" : "High",
-              "value" : "$${details.${pingone_risk_predictor.my_awesome_anonymous_network_predictor.compact_name}.level}",
+        condition_json = jsonencode({
+          "not" : {
+            "or" : [{
+              "equals" : 0,
+              "value" : "$${details.counters.predictorLevels.medium}",
               "type" : "VALUE_COMPARISON"
+              }, {
+              "equals" : "High",
+              "value" : "$${details.${pingone_risk_predictor.my_awesome_geovelocity_anomaly_predictor.compact_name}.level}",
+              "type" : "VALUE_COMPARISON"
+              }, {
+              "and" : [{
+                "equals" : "High",
+                "value" : "$${details.${pingone_risk_predictor.my_awesome_anonymous_network_predictor.compact_name}.level}",
+                "type" : "VALUE_COMPARISON"
+              }],
+              "type" : "AND"
             }],
-            "type" : "AND"
-          }],
-          "type" : "OR"
-        },
-        "type" : "NOT"
-      })
-    }
+            "type" : "OR"
+          },
+          "type" : "NOT"
+        })
+      }
+    ]
   }
 }
 ```
@@ -505,10 +507,10 @@ Optional:
 
 Required:
 
-- `composition` (Attributes) Contains the composition of risk factors you want to use, and the condition logic that determines when or whether a risk factor is applied. (see [below for nested schema](#nestedatt--predictor_composite--composition))
+- `compositions` (Attributes List) A list of compositions of risk factors you want to use, and the condition logic that determines when or whether a risk factor is applied.  The minimum number of compositions is 1 and the maximum number of compositions is 3. (see [below for nested schema](#nestedatt--predictor_composite--compositions))
 
-<a id="nestedatt--predictor_composite--composition"></a>
-### Nested Schema for `predictor_composite.composition`
+<a id="nestedatt--predictor_composite--compositions"></a>
+### Nested Schema for `predictor_composite.compositions`
 
 Required:
 
