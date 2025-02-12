@@ -41,9 +41,9 @@ type trustFrameworkAttributeResourceModel struct {
 	Processor        types.Object                 `tfsdk:"processor"`
 	RepetitionSource types.Object                 `tfsdk:"repetition_source"`
 	Resolvers        types.List                   `tfsdk:"resolvers"`
+	ValueSchema      types.String                 `tfsdk:"value_schema"`
 	ValueType        types.Object                 `tfsdk:"value_type"`
 	Version          types.String                 `tfsdk:"version"`
-	// ValueSchema types.String `tfsdk:"value_schema"`
 }
 
 type trustFrameworkAttributeResolversConditionResourceModel struct {
@@ -78,6 +78,10 @@ func (r *TrustFrameworkAttributeResource) Schema(ctx context.Context, req resour
 
 	managedEntityDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings for a system-assigned set of restrictions and metadata related to the resource.",
+	)
+
+	valueSchemaDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A string that specifies the JSON schema defition, where the output type is `%s`.", authorize.ENUMAUTHORIZEEDITORDATAVALUETYPEDTO_JSON),
 	)
 
 	resp.Schema = schema.Schema{
@@ -154,6 +158,12 @@ func (r *TrustFrameworkAttributeResource) Schema(ctx context.Context, req resour
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: dataResolverObjectSchemaAttributes(),
 				},
+			},
+
+			"value_schema": schema.StringAttribute{
+				Description:         valueSchemaDescription.Description,
+				MarkdownDescription: valueSchemaDescription.MarkdownDescription,
+				Optional:            true,
 			},
 
 			"value_type": schema.SingleNestedAttribute{
@@ -554,9 +564,9 @@ func (p *trustFrameworkAttributeResourceModel) expand(ctx context.Context, updat
 		data.SetResolvers(resolvers)
 	}
 
-	// if !p.ValueSchema.IsNull() && !p.ValueSchema.IsUnknown() {
-	// 	data.SetValueSchema(p.ValueSchema.ValueString())
-	// }
+	if !p.ValueSchema.IsNull() && !p.ValueSchema.IsUnknown() {
+		data.SetValueSchema(p.ValueSchema.ValueString())
+	}
 
 	if updateVersionId != nil {
 		data.SetVersion(*updateVersionId)
@@ -607,7 +617,7 @@ func (p *trustFrameworkAttributeResourceModel) toState(ctx context.Context, apiO
 	p.Resolvers, d = editorResolversOkToListTF(ctx, resolvers, ok)
 	diags.Append(d...)
 
-	// p.ValueSchema = framework.StringOkToTF(apiObject.GetValueSchemaOk())
+	p.ValueSchema = framework.StringOkToTF(apiObject.GetValueSchemaOk())
 
 	p.ValueType, d = editorValueTypeOkToTF(apiObject.GetValueTypeOk())
 	diags.Append(d...)

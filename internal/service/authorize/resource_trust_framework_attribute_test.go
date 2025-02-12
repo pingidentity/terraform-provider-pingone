@@ -126,7 +126,8 @@ func TestAccTrustFrameworkAttribute_Full(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "managed_entity"),
 		resource.TestMatchResourceAttr(resourceFullName, "repetition_source.id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "ATTRIBUTE"),
-		resource.TestCheckResourceAttr(resourceFullName, "value_type.type", "STRING"),
+		resource.TestCheckResourceAttr(resourceFullName, "value_schema", "{\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n  \"type \": \"object\"\n}\n"),
+		resource.TestCheckResourceAttr(resourceFullName, "value_type.type", "JSON"),
 		resource.TestMatchResourceAttr(resourceFullName, "version", verify.P1ResourceIDRegexpFullString),
 	)
 
@@ -1183,8 +1184,15 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   ]
 
   value_type = {
-    type = "STRING"
+    type = "JSON"
   }
+
+  value_schema = <<EOF
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type ": "object"
+}
+EOF
 }`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 

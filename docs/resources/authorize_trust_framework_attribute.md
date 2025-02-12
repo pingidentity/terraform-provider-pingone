@@ -40,6 +40,7 @@ resource "pingone_authorize_trust_framework_attribute" "my_awesome_attribute" {
 - `processor` (Attributes) An object that specifies configuration settings for the authorization attribute resource's processor. (see [below for nested schema](#nestedatt--processor))
 - `repetition_source` (Attributes) An object that specifies configuration settings for the attribute resource's repetition source. (see [below for nested schema](#nestedatt--repetition_source))
 - `resolvers` (Attributes List) A list of objects that specifies configuration settings for the authorization attribute's resolvers. (see [below for nested schema](#nestedatt--resolvers))
+- `value_schema` (String) A string that specifies the JSON schema defition, where the output type is `JSON`.
 
 ### Read-Only
 
