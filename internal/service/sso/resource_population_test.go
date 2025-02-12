@@ -133,7 +133,7 @@ func TestAccPopulation_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "Test description"),
 					resource.TestCheckResourceAttr(resourceFullName, "user_count", "0"),
-					resource.TestMatchResourceAttr(resourceFullName, "password_policy_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "password_policy.id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 			// Test importing the resource
@@ -181,8 +181,38 @@ func TestAccPopulation_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "user_count", "0"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "description"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "password_policy_id"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "password_policy.id"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccPopulation_PasswordPolicy(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.Population_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccPopulationConfig_PasswordPolicyNested(resourceName, name),
+			},
+			{
+				Config: testAccPopulationConfig_PasswordPolicyString(resourceName, name),
+			},
+			{
+				Config:      testAccPopulationConfig_PasswordPolicyConflict(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Combination`),
 			},
 		},
 	})
@@ -325,7 +355,9 @@ resource "pingone_population" "%[2]s" {
   environment_id     = data.pingone_environment.general_test.id
   name               = "%[3]s"
   description        = "Test description"
-  password_policy_id = pingone_password_policy.%[2]s.id
+  password_policy = {
+    id = pingone_password_policy.%[2]s.id
+  }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -336,6 +368,56 @@ func testAccPopulationConfig_Minimal(resourceName, name string) string {
 resource "pingone_population" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccPopulationConfig_PasswordPolicyNested(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+resource "pingone_password_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+}
+
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  password_policy = {
+    id = pingone_password_policy.%[2]s.id
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccPopulationConfig_PasswordPolicyString(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+resource "pingone_password_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+}
+
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  password_policy_id = pingone_password_policy.%[2]s.id
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccPopulationConfig_PasswordPolicyConflict(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+resource "pingone_password_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+}
+
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  password_policy = {
+    id = pingone_password_policy.%[2]s.id
+  }
+  password_policy_id = pingone_password_policy.%[2]s.id
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 

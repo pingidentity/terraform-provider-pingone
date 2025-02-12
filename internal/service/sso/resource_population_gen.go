@@ -8,10 +8,14 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/client"
@@ -75,6 +79,7 @@ type populationResourceModel struct {
 	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
 	Name             types.String                 `tfsdk:"name"`
 	PasswordPolicyId pingonetypes.ResourceIDValue `tfsdk:"password_policy_id"`
+	PasswordPolicy   types.Object                 `tfsdk:"password_policy"`
 	UserCount        types.Int32                  `tfsdk:"user_count"`
 }
 
@@ -94,10 +99,27 @@ func (r *populationResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Required:    true,
 				Description: "A string that specifies the population name, which must be provided and must be unique within an environment.",
 			},
-			"password_policy_id": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of a password policy to assign to the population.  Must be a valid PingOne resource ID.").Description,
+			"password_policy": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Required:    true,
+						Description: "The ID of the password policy that is used for this population. If absent, the environment's default is used.",
+					},
+				},
 				Optional:    true,
-				CustomType:  pingonetypes.ResourceIDType{},
+				Description: "The object reference to the password policy resource. This is an optional property.",
+				Validators: []validator.Object{
+					objectvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("password_policy_id")),
+				},
+			},
+			"password_policy_id": schema.StringAttribute{
+				Description:        framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of a password policy to assign to the population.  Must be a valid PingOne resource ID.").Description,
+				DeprecationMessage: "This attribute is deprecated and will be removed in a future release. Please use the `password_policy.id` attribute instead.",
+				Optional:           true,
+				CustomType:         pingonetypes.ResourceIDType{},
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("password_policy")),
+				},
 			},
 			"user_count": schema.Int32Attribute{
 				Computed:    true,
@@ -113,8 +135,14 @@ func (model *populationResourceModel) buildClientStruct() (*management.Populatio
 	result.Description = model.Description.ValueStringPointer()
 	// name
 	result.Name = model.Name.ValueString()
-	// password_policy_id
-	if !model.PasswordPolicyId.IsNull() {
+	// password_policy
+	if !model.PasswordPolicy.IsNull() {
+		passwordPolicyValue := &management.PopulationPasswordPolicy{}
+		passwordPolicyAttrs := model.PasswordPolicy.Attributes()
+		passwordPolicyValue.Id = passwordPolicyAttrs["id"].(types.String).ValueString()
+		result.PasswordPolicy = passwordPolicyValue
+	} else if !model.PasswordPolicyId.IsNull() {
+		// password_policy_id
 		result.PasswordPolicy = &management.PopulationPasswordPolicy{
 			Id: model.PasswordPolicyId.ValueString(),
 		}
@@ -124,7 +152,7 @@ func (model *populationResourceModel) buildClientStruct() (*management.Populatio
 }
 
 func (state *populationResourceModel) readClientResponse(response *management.Population) diag.Diagnostics {
-	var respDiags diag.Diagnostics
+	var respDiags, diags diag.Diagnostics
 	// description
 	state.Description = types.StringPointerValue(response.Description)
 	// id
@@ -133,13 +161,30 @@ func (state *populationResourceModel) readClientResponse(response *management.Po
 	// name
 	state.Name = types.StringValue(response.Name)
 	// password_policy_id
-	var passwordPolicyIdValue pingonetypes.ResourceIDValue
-	if response.PasswordPolicy == nil {
-		passwordPolicyIdValue = pingonetypes.NewResourceIDNull()
+	if !state.PasswordPolicyId.IsNull() {
+		var passwordPolicyIdValue pingonetypes.ResourceIDValue
+		if response.PasswordPolicy == nil {
+			passwordPolicyIdValue = pingonetypes.NewResourceIDNull()
+		} else {
+			passwordPolicyIdValue = framework.PingOneResourceIDToTF(response.PasswordPolicy.Id)
+		}
+		state.PasswordPolicyId = passwordPolicyIdValue
 	} else {
-		passwordPolicyIdValue = framework.PingOneResourceIDToTF(response.PasswordPolicy.Id)
+		// password_policy
+		passwordPolicyAttrTypes := map[string]attr.Type{
+			"id": types.StringType,
+		}
+		var passwordPolicyValue types.Object
+		if response.PasswordPolicy == nil {
+			passwordPolicyValue = types.ObjectNull(passwordPolicyAttrTypes)
+		} else {
+			passwordPolicyValue, diags = types.ObjectValue(passwordPolicyAttrTypes, map[string]attr.Value{
+				"id": types.StringValue(response.PasswordPolicy.Id),
+			})
+			respDiags.Append(diags...)
+		}
+		state.PasswordPolicy = passwordPolicyValue
 	}
-	state.PasswordPolicyId = passwordPolicyIdValue
 	// user_count
 	state.UserCount = types.Int32PointerValue(response.UserCount)
 	return respDiags
