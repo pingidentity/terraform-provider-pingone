@@ -135,7 +135,7 @@ func TestAccTrustFrameworkAttribute_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckResourceAttr(resourceFullName, "description", "Test attribute"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 		resource.TestCheckResourceAttr(resourceFullName, "full_name", name),
 		resource.TestCheckNoResourceAttr(resourceFullName, "parent"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "default_value"),
@@ -144,6 +144,7 @@ func TestAccTrustFrameworkAttribute_Full(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "managed_entity"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "repetition_source"),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "ATTRIBUTE"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "value_schema"),
 		resource.TestCheckResourceAttr(resourceFullName, "value_type.type", "STRING"),
 		resource.TestMatchResourceAttr(resourceFullName, "version", verify.P1ResourceIDRegexpFullString),
 	)
@@ -1223,7 +1224,6 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-repetition" {
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-  description    = "Test attribute"
 
   value_type = {
     type = "STRING"

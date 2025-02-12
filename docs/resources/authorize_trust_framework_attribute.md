@@ -28,7 +28,6 @@ resource "pingone_authorize_trust_framework_attribute" "my_awesome_attribute" {
 
 ### Required
 
-- `description` (String) A string that specifies a description to apply to the authorization attribute resource.
 - `environment_id` (String) The ID of the environment to configure the Authorize editor attribute in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) A string that specifies a user-friendly authorization attribute name.  The value must be unique.
 - `value_type` (Attributes) An object that specifies configuration settings for the output value type of the authorization attribute. (see [below for nested schema](#nestedatt--value_type))
@@ -36,6 +35,7 @@ resource "pingone_authorize_trust_framework_attribute" "my_awesome_attribute" {
 ### Optional
 
 - `default_value` (String) A string that specifies the value to use if no resolvers are defined or if an error occurred with the resolvers or processors.
+- `description` (String) A string that specifies a description to apply to the authorization attribute resource.
 - `parent` (Attributes) An object that specifies configuration settings for the attribute resource's parent. (see [below for nested schema](#nestedatt--parent))
 - `processor` (Attributes) An object that specifies configuration settings for the authorization attribute resource's processor. (see [below for nested schema](#nestedatt--processor))
 - `repetition_source` (Attributes) An object that specifies configuration settings for the attribute resource's repetition source. (see [below for nested schema](#nestedatt--repetition_source))

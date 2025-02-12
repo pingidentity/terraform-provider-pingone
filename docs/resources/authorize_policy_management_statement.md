@@ -32,13 +32,13 @@ resource "pingone_authorize_policy_management_statement" "my_awesome_policy_stat
 - `applies_to` (String) A string that specifies what result the statement applies to.  Options are `ANYTHING`, `DENY`, `INDETERMINATE`, `PERMIT`, `PERMIT_OR_DENY`.
 - `attributes` (Attributes Set) An set of objects that specify configuration settings for the authorization attributes to attach to the statement. (see [below for nested schema](#nestedatt--attributes))
 - `code` (String) A string that specifies the statement code.
-- `description` (String) A string that specifies a description to apply to the resource statement.
 - `environment_id` (String) The ID of the environment to configure the Authorize editor statement in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) A string that specifies a unique name for the authorization statement.
 - `payload` (String) A string that specifies the statement payload.
 
 ### Optional
 
+- `description` (String) A string that specifies a description to apply to the resource statement.
 - `obligatory` (Boolean) A boolean that specifies whether the statement must be fulfilled as a condition of authorizing the decision request.  Defaults to `false`.
 
 ### Read-Only

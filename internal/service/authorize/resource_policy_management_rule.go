@@ -93,7 +93,7 @@ func (r *PolicyManagementRuleResource) Schema(ctx context.Context, req resource.
 
 			"description": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a description to apply to the authorization rule.").Description,
-				Required:    true,
+				Optional:    true,
 			},
 
 			"enabled": schema.BoolAttribute{

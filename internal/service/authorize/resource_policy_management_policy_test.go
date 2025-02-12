@@ -132,7 +132,7 @@ func TestAccPolicyManagementPolicy_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckResourceAttr(resourceFullName, "description", "Test policy"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 		resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "statements"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "condition"),
@@ -383,7 +383,6 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
 resource "pingone_authorize_policy_management_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-  description    = "Test policy"
 
   combining_algorithm = {
     algorithm = "PERMIT_OVERRIDES"

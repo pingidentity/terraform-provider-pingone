@@ -97,7 +97,7 @@ func (r *PolicyManagementStatementResource) Schema(ctx context.Context, req reso
 
 			"description": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a description to apply to the resource statement.").Description,
-				Required:    true,
+				Optional:    true,
 			},
 
 			"code": schema.StringAttribute{

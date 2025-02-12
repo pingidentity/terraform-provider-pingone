@@ -38,13 +38,13 @@ resource "pingone_authorize_trust_framework_processor" "my_awesome_processor" {
 
 ### Required
 
-- `description` (String) A string that specifies a description to apply to the authorization processor.
 - `environment_id` (String) The ID of the environment to configure the Authorize editor processor in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) A string that specifies a user-friendly name to apply to the authorization processor.  The value must be unique.
 - `processor` (Attributes) An object that specifies configuration settings for the authorization processor. (see [below for nested schema](#nestedatt--processor))
 
 ### Optional
 
+- `description` (String) A string that specifies a description to apply to the authorization processor.
 - `parent` (Attributes) An object that specifies configuration settings for the processor resource's parent. (see [below for nested schema](#nestedatt--parent))
 
 ### Read-Only

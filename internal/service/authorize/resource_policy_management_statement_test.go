@@ -134,7 +134,7 @@ func TestAccPolicyManagementStatement_Full(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
-		resource.TestCheckResourceAttr(resourceFullName, "description", "Test statement"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 		resource.TestCheckResourceAttr(resourceFullName, "code", "my statement 1"),
 		resource.TestCheckResourceAttr(resourceFullName, "applies_to", "DENY"),
 		resource.TestCheckResourceAttr(resourceFullName, "applies_if", "PATH_MATCHES"),
@@ -450,7 +450,6 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-3" {
 resource "pingone_authorize_policy_management_statement" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
-  description    = "Test statement"
 
   code = "my statement 1"
 

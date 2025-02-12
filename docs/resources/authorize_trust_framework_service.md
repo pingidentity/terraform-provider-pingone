@@ -57,7 +57,6 @@ resource "pingone_authorize_trust_framework_service" "my_awesome_service" {
 
 ### Required
 
-- `description` (String) A string that specifies the authorization service resource's description.
 - `environment_id` (String) The ID of the environment to configure the Authorize editor service in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) A string that specifies a user-friendly service name.
 - `service_type` (String) A string that specifies the type of service.  Options are `CONNECTOR`, `HTTP`, `NONE`.
@@ -65,6 +64,7 @@ resource "pingone_authorize_trust_framework_service" "my_awesome_service" {
 ### Optional
 
 - `cache_settings` (Attributes) An object that specifies configuration settings for cache settings to apply to the service responses. (see [below for nested schema](#nestedatt--cache_settings))
+- `description` (String) A string that specifies the authorization service resource's description.
 - `parent` (Attributes) An object that specifies configuration settings for the service resource's parent. (see [below for nested schema](#nestedatt--parent))
 - `processor` (Attributes) An object that specifies configuration settings for the processor to transform the value returned from the resolver.  This field is optional when `service_type` is `CONNECTOR` or `HTTP`. (see [below for nested schema](#nestedatt--processor))
 - `service_settings` (Attributes) An object that specifies configuration settings for the service connection.  This field is required when `service_type` is `CONNECTOR` or `HTTP`. (see [below for nested schema](#nestedatt--service_settings))

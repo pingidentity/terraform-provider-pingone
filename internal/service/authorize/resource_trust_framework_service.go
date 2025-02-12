@@ -349,7 +349,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 			"description": schema.StringAttribute{ // DONE
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the authorization service resource's description.").Description,
-				Required:    true,
+				Optional:    true,
 			},
 
 			"parent": parentObjectSchema("service"),

@@ -68,12 +68,12 @@ resource "pingone_authorize_trust_framework_condition" "my_awesome_condition" {
 ### Required
 
 - `condition` (Attributes) An object that specifies configuration settings for the authorization condition. (see [below for nested schema](#nestedatt--condition))
-- `description` (String) A string that specifies a description to apply to the authorization condition.
 - `environment_id` (String) The ID of the environment to configure the Authorize editor condition in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) A string that specifies a user-friendly name to apply to the authorization condition.
 
 ### Optional
 
+- `description` (String) A string that specifies a description to apply to the authorization condition.
 - `parent` (Attributes) An object that specifies configuration settings for the condition resource's parent. (see [below for nested schema](#nestedatt--parent))
 
 ### Read-Only

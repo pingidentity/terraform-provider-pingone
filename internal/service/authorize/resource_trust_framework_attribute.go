@@ -102,7 +102,7 @@ func (r *TrustFrameworkAttributeResource) Schema(ctx context.Context, req resour
 
 			"description": schema.StringAttribute{ // DONE
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a description to apply to the authorization attribute resource.").Description,
-				Required:    true,
+				Optional:    true,
 			},
 
 			"full_name": schema.StringAttribute{ // DONE

@@ -28,7 +28,6 @@ resource "pingone_authorize_policy_management_rule" "my_awesome_policy_rule" {
 
 ### Required
 
-- `description` (String) A string that specifies a description to apply to the authorization rule.
 - `effect_settings` (Attributes) An object that specifies configuration settings that determine how child rules are combined to produce an outcome for the policy. (see [below for nested schema](#nestedatt--effect_settings))
 - `environment_id` (String) The ID of the environment to configure the Authorize editor rule in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) A string that specifies a user-friendly name for the authorization rule.  The value must be unique.
@@ -36,6 +35,7 @@ resource "pingone_authorize_policy_management_rule" "my_awesome_policy_rule" {
 ### Optional
 
 - `condition` (Attributes) An object that specifies configuration settings for conditions to apply to the authorization rule. (see [below for nested schema](#nestedatt--condition))
+- `description` (String) A string that specifies a description to apply to the authorization rule.
 - `enabled` (Boolean) A boolean that specifies whether the authorization rule is enabled and is evaluated.  Defaults to `true`.
 
 ### Read-Only

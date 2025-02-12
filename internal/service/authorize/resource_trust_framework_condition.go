@@ -101,7 +101,7 @@ func (r *TrustFrameworkConditionResource) Schema(ctx context.Context, req resour
 
 			"description": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a description to apply to the authorization condition.").Description,
-				Required:    true,
+				Optional:    true,
 			},
 
 			"parent": parentObjectSchema("condition"),
