@@ -301,6 +301,10 @@ func expandEditorDataProcessor(ctx context.Context, processor basetypes.ObjectVa
 func expandEditorDataProcessorIteration(ctx context.Context, processor basetypes.ObjectValue, iteration int32) (processorObject *authorize.AuthorizeEditorDataProcessorDTO, diags diag.Diagnostics) {
 	var d diag.Diagnostics
 
+	if processor.IsNull() {
+		return nil, diags
+	}
+
 	leaf := iteration >= processorNestedIterationMaxDepth
 
 	if leaf {

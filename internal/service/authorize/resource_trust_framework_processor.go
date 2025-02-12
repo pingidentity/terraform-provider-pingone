@@ -108,7 +108,7 @@ func (r *TrustFrameworkProcessorResource) Schema(ctx context.Context, req resour
 
 			"processor": schema.SingleNestedAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies configuration settings for the authorization processor.").Description,
-				Required:    true,
+				Optional:    true,
 
 				Attributes: dataProcessorObjectSchemaAttributes(),
 			},
@@ -423,17 +423,20 @@ func (r *TrustFrameworkProcessorResource) ImportState(ctx context.Context, req r
 func (p *trustFrameworkProcessorResourceModel) expand(ctx context.Context, updateVersionId *string) (*authorize.AuthorizeEditorDataDefinitionsProcessorDefinitionDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	processor, d := expandEditorDataProcessor(ctx, p.Processor)
-	diags.Append(d...)
-	if diags.HasError() {
-		return nil, diags
-	}
-
 	// Main object
 	data := authorize.NewAuthorizeEditorDataDefinitionsProcessorDefinitionDTO(
 		p.Name.ValueString(),
-		*processor,
 	)
+
+	if !p.Processor.IsNull() && !p.Processor.IsUnknown() {
+		processor, d := expandEditorDataProcessor(ctx, p.Processor)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetProcessor(*processor)
+	}
 
 	if !p.Description.IsNull() && !p.Description.IsUnknown() {
 		data.SetDescription(p.Description.ValueString())

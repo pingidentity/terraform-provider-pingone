@@ -132,7 +132,7 @@ func TestAccTrustFrameworkProcessor_Full(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 		resource.TestCheckResourceAttr(resourceFullName, "full_name", name),
 		resource.TestCheckNoResourceAttr(resourceFullName, "parent"),
-		resource.TestCheckResourceAttr(resourceFullName, "processor.name", fmt.Sprintf("%s Test processor", name)),
+		resource.TestCheckNoResourceAttr(resourceFullName, "processor"),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "PROCESSOR"),
 		resource.TestMatchResourceAttr(resourceFullName, "version", verify.P1ResourceIDRegexpFullString),
 	)
@@ -929,17 +929,6 @@ func testAccTrustFrameworkProcessorConfig_Minimal(resourceName, name string) str
 resource "pingone_authorize_trust_framework_processor" "%[2]s-parent" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s-parent"
-  description    = "Test processor"
-
-  processor = {
-    name = "%[3]s Test parent processor"
-    type = "JSON_PATH"
-
-    expression = "$.data.item.parent"
-    value_type = {
-      type = "STRING"
-    }
-  }
 }`, testAccTrustFrameworkProcessorConfig_Processor_Json_Path1(resourceName, name), resourceName, name)
 }
 

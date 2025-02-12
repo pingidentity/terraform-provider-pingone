@@ -2,14 +2,12 @@ package authorize
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 var (
@@ -57,24 +55,24 @@ var (
 		if p1error != nil {
 
 			// Permissions may not have propagated by this point
-			m, err := regexp.MatchString("^INVALID_DATA", p1error.GetCode())
-			if err == nil && m {
-				tflog.Warn(ctx, "Create/update request failed.. evaluating details..")
+			// m, err := regexp.MatchString("^INVALID_DATA", p1error.GetCode())
+			// if err == nil && m {
+			// 	tflog.Warn(ctx, "Create/update request failed.. evaluating details..")
 
-				if details, ok := p1error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
-					if message, ok := details[0].GetMessageOk(); ok {
-						m, err := regexp.MatchString(fmt.Sprintf("No definition with id %s exists", verify.P1ResourceIDRegexp.String()), *message)
-						if err == nil && m {
-							tflog.Warn(ctx, "Create/update request failed as entity with UUID not found.  Retrying...")
-							return true
-						}
-					}
-				}
-			}
-			if err != nil {
-				tflog.Warn(ctx, "Cannot match error string for retry")
-				return false
-			}
+			// 	if details, ok := p1error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+			// 		if message, ok := details[0].GetMessageOk(); ok {
+			// 			m, err := regexp.MatchString(fmt.Sprintf("No definition with id %s exists", verify.P1ResourceIDRegexp.String()), *message)
+			// 			if err == nil && m {
+			// 				tflog.Warn(ctx, "Create/update request failed as entity with UUID not found.  Retrying...")
+			// 				return true
+			// 			}
+			// 		}
+			// 	}
+			// }
+			// if err != nil {
+			// 	tflog.Warn(ctx, "Cannot match error string for retry")
+			// 	return false
+			// }
 
 		}
 
