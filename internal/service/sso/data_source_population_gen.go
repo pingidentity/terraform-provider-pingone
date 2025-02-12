@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -68,6 +69,7 @@ type populationDataSourceModel struct {
 	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
 	Name             types.String                 `tfsdk:"name"`
+	PasswordPolicy   types.Object                 `tfsdk:"password_policy"`
 	PasswordPolicyId pingonetypes.ResourceIDValue `tfsdk:"password_policy_id"`
 	PopulationId     pingonetypes.ResourceIDValue `tfsdk:"population_id"`
 	UserCount        types.Int32                  `tfsdk:"user_count"`
@@ -99,10 +101,23 @@ func (r *populationDataSource) Schema(ctx context.Context, req datasource.Schema
 					stringvalidator.LengthAtLeast(1),
 				},
 			},
-			"password_policy_id": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the password policy applied to the population.").Description,
+			"password_policy": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Computed:            true,
+						CustomType:          pingonetypes.ResourceIDType{},
+						Description:         "The ID of the password policy that is used for this population. If absent, the environment's default is used.",
+						MarkdownDescription: "The ID of the password policy that is used for this population. If absent, the environment's default is used.",
+					},
+				},
 				Computed:    true,
-				CustomType:  pingonetypes.ResourceIDType{},
+				Description: "The object reference to the password policy resource applied to the population.",
+			},
+			"password_policy_id": schema.StringAttribute{
+				Description:        framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the password policy applied to the population.").Description,
+				Computed:           true,
+				DeprecationMessage: "This attribute is deprecated and will be removed in a future release. Please use the `password_policy.id` attribute instead.",
+				CustomType:         pingonetypes.ResourceIDType{},
 			},
 			"population_id": schema.StringAttribute{
 				CustomType:          pingonetypes.ResourceIDType{},
@@ -123,7 +138,7 @@ func (r *populationDataSource) Schema(ctx context.Context, req datasource.Schema
 }
 
 func (state *populationDataSourceModel) readClientResponse(response *management.Population) diag.Diagnostics {
-	var respDiags diag.Diagnostics
+	var respDiags, diags diag.Diagnostics
 	// default
 	state.Default = types.BoolPointerValue(response.Default)
 	// description
@@ -142,6 +157,20 @@ func (state *populationDataSourceModel) readClientResponse(response *management.
 		passwordPolicyIdValue = framework.PingOneResourceIDToTF(response.PasswordPolicy.Id)
 	}
 	state.PasswordPolicyId = passwordPolicyIdValue
+	// password_policy
+	passwordPolicyAttrTypes := map[string]attr.Type{
+		"id": pingonetypes.ResourceIDType{},
+	}
+	var passwordPolicyValue types.Object
+	if response.PasswordPolicy == nil {
+		passwordPolicyValue = types.ObjectNull(passwordPolicyAttrTypes)
+	} else {
+		passwordPolicyValue, diags = types.ObjectValue(passwordPolicyAttrTypes, map[string]attr.Value{
+			"id": framework.PingOneResourceIDToTF(response.PasswordPolicy.Id),
+		})
+		respDiags.Append(diags...)
+	}
+	state.PasswordPolicy = passwordPolicyValue
 	// population_id
 	populationIdValue := framework.PingOneResourceIDToTF(response.GetId())
 	state.PopulationId = populationIdValue

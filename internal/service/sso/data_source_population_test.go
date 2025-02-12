@@ -41,6 +41,7 @@ func TestAccPopulationDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "user_count", "0"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "description", "Test description"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "password_policy_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "password_policy.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "default", "false"),
 				),
 			},
@@ -76,6 +77,7 @@ func TestAccPopulationDataSource_ByIDFull(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "user_count", "0"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "description", "Test description"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "password_policy_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "password_policy.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "default", "false"),
 				),
 			},
@@ -146,7 +148,9 @@ resource "pingone_population" "%[2]s-name" {
   environment_id     = data.pingone_environment.general_test.id
   name               = "%[3]s"
   description        = "Test description"
-  password_policy_id = pingone_password_policy.%[2]s.id
+  password_policy = {
+    id = pingone_password_policy.%[2]s.id
+  }
 }
 
 data "pingone_population" "%[2]s" {

@@ -103,7 +103,8 @@ func (r *populationResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
 						Required:    true,
-						Description: "The ID of the password policy that is used for this population. If absent, the environment's default is used.",
+						CustomType:  pingonetypes.ResourceIDType{},
+						Description: "The ID of the password policy that is used for this population. If absent, the environment's default is used. Must be a valid PingOne resource ID.",
 					},
 				},
 				Optional:    true,
@@ -139,7 +140,7 @@ func (model *populationResourceModel) buildClientStruct() (*management.Populatio
 	if !model.PasswordPolicy.IsNull() {
 		passwordPolicyValue := &management.PopulationPasswordPolicy{}
 		passwordPolicyAttrs := model.PasswordPolicy.Attributes()
-		passwordPolicyValue.Id = passwordPolicyAttrs["id"].(types.String).ValueString()
+		passwordPolicyValue.Id = passwordPolicyAttrs["id"].(pingonetypes.ResourceIDValue).ValueString()
 		result.PasswordPolicy = passwordPolicyValue
 	} else if !model.PasswordPolicyId.IsNull() {
 		// password_policy_id
@@ -172,14 +173,14 @@ func (state *populationResourceModel) readClientResponse(response *management.Po
 	} else {
 		// password_policy
 		passwordPolicyAttrTypes := map[string]attr.Type{
-			"id": types.StringType,
+			"id": pingonetypes.ResourceIDType{},
 		}
 		var passwordPolicyValue types.Object
 		if response.PasswordPolicy == nil {
 			passwordPolicyValue = types.ObjectNull(passwordPolicyAttrTypes)
 		} else {
 			passwordPolicyValue, diags = types.ObjectValue(passwordPolicyAttrTypes, map[string]attr.Value{
-				"id": types.StringValue(response.PasswordPolicy.Id),
+				"id": framework.PingOneResourceIDToTF(response.PasswordPolicy.Id),
 			})
 			respDiags.Append(diags...)
 		}
