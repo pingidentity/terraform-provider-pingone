@@ -70,6 +70,7 @@ type populationDataSourceModel struct {
 	Name             types.String                 `tfsdk:"name"`
 	PasswordPolicyId pingonetypes.ResourceIDValue `tfsdk:"password_policy_id"`
 	PopulationId     pingonetypes.ResourceIDValue `tfsdk:"population_id"`
+	UserCount        types.Int32                  `tfsdk:"user_count"`
 }
 
 func (r *populationDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
@@ -113,11 +114,16 @@ func (r *populationDataSource) Schema(ctx context.Context, req datasource.Schema
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
 				},
 			},
+			"user_count": schema.Int32Attribute{
+				Computed:    true,
+				Description: "The number of users that belong to the population",
+			},
 		},
 	}
 }
 
 func (state *populationDataSourceModel) readClientResponse(response *management.Population) diag.Diagnostics {
+	var respDiags diag.Diagnostics
 	// default
 	state.Default = types.BoolPointerValue(response.Default)
 	// description
@@ -139,7 +145,9 @@ func (state *populationDataSourceModel) readClientResponse(response *management.
 	// population_id
 	populationIdValue := framework.PingOneResourceIDToTF(response.GetId())
 	state.PopulationId = populationIdValue
-	return nil
+	// user_count
+	state.UserCount = types.Int32PointerValue(response.UserCount)
+	return respDiags
 }
 
 func (r *populationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -159,25 +167,22 @@ func (r *populationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
+	// Read API call logic
 	var responseData *management.Population
 	var scimFilter string
-
-	if !data.Name.IsNull() {
-
-		scimFilter = filter.BuildScimFilter(
-			append(make([]interface{}, 0), map[string]interface{}{
-				"name":   "name",
-				"values": []string{data.Name.ValueString()},
-			}), map[string]string{})
-
-	} else if !data.PopulationId.IsNull() {
-
+	// Build scim filter
+	if !data.PopulationId.IsNull() {
 		scimFilter = filter.BuildScimFilter(
 			append(make([]interface{}, 0), map[string]interface{}{
 				"name":   "id",
 				"values": []string{data.PopulationId.ValueString()},
 			}), map[string]string{})
-
+	} else if !data.Name.IsNull() {
+		scimFilter = filter.BuildScimFilter(
+			append(make([]interface{}, 0), map[string]interface{}{
+				"name":   "name",
+				"values": []string{data.Name.ValueString()},
+			}), map[string]string{})
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",
@@ -204,15 +209,14 @@ func (r *populationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 					initialHttpResponse = pageCursor.HTTPResponse
 				}
 
-				if populations, ok := pageCursor.EntityArray.Embedded.GetPopulationsOk(); ok {
-					for _, p := range populations {
+				if results, ok := pageCursor.EntityArray.Embedded.GetPopulationsOk(); ok {
 
-						if !data.Name.IsNull() && p.GetName() == data.Name.ValueString() {
-							return &p, pageCursor.HTTPResponse, nil
+					for _, resultObj := range results {
+						if !data.Name.IsNull() && resultObj.GetName() == data.Name.ValueString() {
+							return &resultObj, pageCursor.HTTPResponse, nil
 						}
-
-						if !data.PopulationId.IsNull() && p.GetId() == data.PopulationId.ValueString() {
-							return &p, pageCursor.HTTPResponse, nil
+						if !data.PopulationId.IsNull() && resultObj.GetId() == data.PopulationId.ValueString() {
+							return &resultObj, pageCursor.HTTPResponse, nil
 						}
 					}
 				}
@@ -232,7 +236,7 @@ func (r *populationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	if responseData == nil {
 		resp.Diagnostics.AddError(
 			"Population not found",
-			fmt.Sprintf("The population with the specified population_id or name cannot be found in environment %s.", data.EnvironmentId.String()),
+			fmt.Sprintf("The population for environment %s cannot be found", data.EnvironmentId.ValueString()),
 		)
 		return
 	}
