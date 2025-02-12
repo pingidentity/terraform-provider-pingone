@@ -501,17 +501,6 @@ func (p *trustFrameworkAttributeResourceModel) expand(ctx context.Context, updat
 		data.SetDescription(p.Description.ValueString())
 	}
 
-	// if !p.ManagedEntity.IsNull() && !p.ManagedEntity.IsUnknown() {
-
-	// 	managedEntity, d := expandEditorManagedEntity(ctx, p.ManagedEntity)
-	// 	diags.Append(d...)
-	// 	if diags.HasError() {
-	// 		return nil, diags
-	// 	}
-
-	// 	data.SetManagedEntity(*managedEntity)
-	// }
-
 	if !p.Parent.IsNull() && !p.Parent.IsUnknown() {
 		parent, d := expandEditorParent(ctx, p.Parent)
 		diags.Append(d...)

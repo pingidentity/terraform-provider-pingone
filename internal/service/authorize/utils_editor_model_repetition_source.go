@@ -28,6 +28,22 @@ func repetitionSourceObjectSchema(descriptionName string) schema.SingleNestedAtt
 	}
 }
 
+func dataSourceRepetitionSourceObjectSchema(descriptionName string) schema.SingleNestedAttribute {
+	return schema.SingleNestedAttribute{
+		Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An object that specifies configuration settings for the %s resource's repetition source.", descriptionName)).Description,
+		Computed:    true,
+
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A string that specifies the %s resource's repetition source ID.  Must be a valid PingOne resource ID.", descriptionName)).Description,
+				Computed:    true,
+
+				CustomType: pingonetypes.ResourceIDType{},
+			},
+		},
+	}
+}
+
 type editorRepetitionSourceResourceModel editorReferenceDataResourceModel
 
 func expandEditorRepetitionSource(ctx context.Context, repetitionSource basetypes.ObjectValue) (repetitionSourceObject *authorize.AuthorizeEditorDataReferenceObjectDTO, diags diag.Diagnostics) {

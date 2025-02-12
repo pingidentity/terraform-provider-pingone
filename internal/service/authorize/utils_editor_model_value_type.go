@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	dsschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -41,6 +42,30 @@ func valueTypeObjectSchemaAttributes(customValidators ...stringvalidatorinternal
 			Required:            true,
 
 			Validators: validators,
+		},
+	}
+
+	return
+}
+
+func dataSourceValueTypeObjectSchemaAttributes(customValidators ...stringvalidatorinternal.CustomStringValidatorModel) (attributes map[string]dsschema.Attribute) {
+
+	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the type of the value.",
+	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataValueTypeDTOEnumValues)
+
+	if len(customValidators) > 0 {
+		for _, customValidator := range customValidators {
+			typeDescription = typeDescription.Append(customValidator.Description)
+		}
+
+	}
+
+	attributes = map[string]dsschema.Attribute{
+		"type": schema.StringAttribute{
+			Description:         typeDescription.Description,
+			MarkdownDescription: typeDescription.MarkdownDescription,
+			Computed:            true,
 		},
 	}
 

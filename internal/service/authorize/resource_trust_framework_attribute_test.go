@@ -209,6 +209,53 @@ func TestAccTrustFrameworkAttribute_Full(t *testing.T) {
 	})
 }
 
+func TestAccTrustFrameworkAttribute_ManagedEntityParent(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_authorize_trust_framework_attribute.%s", resourceName)
+
+	name := resourceName
+
+	fullCheck := resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "parent.id", verify.P1ResourceIDRegexpFullString),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_AUTHORIZEPMTF)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             authorize.TrustFrameworkAttribute_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			{
+				Config: testAccTrustFrameworkAttributeConfig_ManagedEntityParent(resourceName, name),
+				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccTrustFrameworkAttribute_ComplexAttributes(t *testing.T) {
 	t.Parallel()
 
@@ -1224,6 +1271,29 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-repetition" {
 resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+
+  value_type = {
+    type = "STRING"
+  }
+}`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
+}
+
+func testAccTrustFrameworkAttributeConfig_ManagedEntityParent(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+data "pingone_authorize_trust_framework_attribute" "%[2]s-pingone-user" {
+  environment_id = data.pingone_environment.general_test.id
+  full_name      = "PingOne.User"
+}
+
+resource "pingone_authorize_trust_framework_attribute" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  parent = {
+    id = data.pingone_authorize_trust_framework_attribute.%[2]s-pingone-user.id
+  }
 
   value_type = {
     type = "STRING"

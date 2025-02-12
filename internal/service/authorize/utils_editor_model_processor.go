@@ -8,6 +8,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	dsschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -223,6 +224,136 @@ func dataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes m
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 			},
+
+			Attributes: referenceIdObjectSchemaAttributes(framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the authorization processor in the trust framework.")),
+		}
+	}
+
+	return attributes
+}
+
+func dataSourceDataProcessorObjectSchemaAttributes() (attributes map[string]dsschema.Attribute) {
+	const initialIteration = 1
+	return dataSourceDataProcessorObjectSchemaAttributesIteration(initialIteration)
+}
+func dataSourceDataProcessorObjectSchemaAttributesIteration(iteration int32) (attributes map[string]dsschema.Attribute) {
+
+	supportedTypes := authorize.AllowedEnumAuthorizeEditorDataProcessorDTOTypeEnumValues
+
+	if iteration >= processorNestedIterationMaxDepth {
+		supportedTypes = leafProcessorTypes
+	}
+
+	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the processor type.",
+	).AllowedValuesEnum(supportedTypes)
+
+	processorsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The list of processors to apply in the given order.",
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_CHAIN)))
+
+	predicateDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_COLLECTION_FILTER)))
+
+	processorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"",
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_COLLECTION_TRANSFORM)))
+
+	expressionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A string that specifies the expression to use. If the `type` is `%s`, the expression should be a valid JSON path expression, if the `type` is `%s`, the expression should be a valid SpEL expression and if the `type` is `%s`, the expression should be a valid XPath expression.", string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_JSON_PATH), string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_SPEL), string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_XPATH)),
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`, `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_JSON_PATH), string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_SPEL), string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_XPATH)))
+
+	valueTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An object that specifies the output type of the value.",
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`, `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_JSON_PATH), string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_SPEL), string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_XPATH)))
+
+	valueTypeValueCollectionFilterDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("Must be `%s` when the processor type (`processor.type`) is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAVALUETYPEDTO_BOOLEAN), string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_COLLECTION_FILTER)),
+	)
+
+	processorRefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An object that specifies configuration settings for the authorization processor to reference.",
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_REFERENCE)))
+
+	attributes = map[string]dsschema.Attribute{
+		"name": schema.StringAttribute{
+			Description: framework.SchemaAttributeDescriptionFromMarkdown("A user-friendly authorization processor name. The value must be unique.").Description,
+			Computed:    true,
+		},
+
+		"type": schema.StringAttribute{
+			Description:         typeDescription.Description,
+			MarkdownDescription: typeDescription.MarkdownDescription,
+			Computed:            true,
+		},
+	}
+
+	// type == "CHAIN"
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_CHAIN) {
+		attributes["processors"] = schema.ListNestedAttribute{
+			Description:         processorsDescription.Description,
+			MarkdownDescription: processorsDescription.MarkdownDescription,
+			Computed:            true,
+
+			NestedObject: schema.NestedAttributeObject{
+				Attributes: dataProcessorObjectSchemaAttributesIteration(iteration + 1),
+			},
+		}
+	}
+
+	// type == "COLLECTION_FILTER"
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_COLLECTION_FILTER) {
+		attributes["predicate"] = schema.SingleNestedAttribute{
+			Description:         predicateDescription.Description,
+			MarkdownDescription: predicateDescription.MarkdownDescription,
+			Computed:            true,
+
+			Attributes: dataProcessorObjectSchemaAttributesIteration(iteration + 1),
+		}
+	}
+
+	// type == "COLLECTION_TRANSFORM"
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_COLLECTION_TRANSFORM) {
+		attributes["processor"] = schema.SingleNestedAttribute{
+			Description:         processorDescription.Description,
+			MarkdownDescription: processorDescription.MarkdownDescription,
+			Computed:            true,
+
+			Attributes: dataProcessorObjectSchemaAttributesIteration(iteration + 1),
+		}
+	}
+
+	// type == "JSON_PATH", type == "SPEL", type == "XPATH"
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_JSON_PATH) ||
+		slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_SPEL) ||
+		slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_XPATH) {
+		attributes["expression"] = schema.StringAttribute{
+			Description:         expressionDescription.Description,
+			MarkdownDescription: expressionDescription.MarkdownDescription,
+			Computed:            true,
+		}
+
+		attributes["value_type"] = schema.SingleNestedAttribute{
+			Description:         valueTypeDescription.Description,
+			MarkdownDescription: valueTypeDescription.MarkdownDescription,
+			Computed:            true,
+
+			Attributes: valueTypeObjectSchemaAttributes(
+				// If processor type is collection filter, then the value type value must be `BOOLEAN`
+				stringvalidatorinternal.CustomStringValidatorModel{
+					Description: valueTypeValueCollectionFilterDescription,
+				},
+			),
+		}
+	}
+
+	// type == "REFERENCE"
+	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATAPROCESSORDTOTYPE_REFERENCE) {
+		attributes["processor_ref"] = schema.SingleNestedAttribute{
+			Description:         processorRefDescription.Description,
+			MarkdownDescription: processorRefDescription.MarkdownDescription,
+			Computed:            true,
 
 			Attributes: referenceIdObjectSchemaAttributes(framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the authorization processor in the trust framework.")),
 		}

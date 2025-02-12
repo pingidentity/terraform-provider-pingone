@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	dsschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -15,6 +16,76 @@ import (
 func managedEntityObjectSchemaAttributes() (attributes map[string]schema.Attribute) {
 
 	attributes = map[string]schema.Attribute{
+		"owner": schema.SingleNestedAttribute{
+			Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+			Computed:    true,
+
+			Attributes: map[string]schema.Attribute{
+				"service": schema.SingleNestedAttribute{
+					Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+					Computed:    true,
+
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+							Computed:    true,
+						},
+					},
+				},
+			},
+		},
+
+		"reference": schema.SingleNestedAttribute{
+			Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+			Computed:    true,
+
+			Attributes: map[string]schema.Attribute{
+				"id": schema.StringAttribute{
+					Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+					Computed:    true,
+				},
+
+				"type": schema.StringAttribute{
+					Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+					Computed:    true,
+				},
+
+				"name": schema.StringAttribute{
+					Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+					Computed:    true,
+				},
+
+				"ui_deep_link": schema.StringAttribute{
+					Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+					Computed:    true,
+				},
+			},
+		},
+
+		"restrictions": schema.SingleNestedAttribute{
+			Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+			Computed:    true,
+
+			Attributes: map[string]schema.Attribute{
+				"read_only": schema.BoolAttribute{
+					Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+					Computed:    true,
+				},
+
+				"disallow_children": schema.BoolAttribute{
+					Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+					Computed:    true,
+				},
+			},
+		},
+	}
+
+	return attributes
+}
+
+func dataSourceManagedEntityObjectSchemaAttributes() (attributes map[string]dsschema.Attribute) {
+
+	attributes = map[string]dsschema.Attribute{
 		"owner": schema.SingleNestedAttribute{
 			Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
 			Computed:    true,

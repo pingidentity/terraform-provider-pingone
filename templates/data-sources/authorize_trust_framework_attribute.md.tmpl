@@ -1,0 +1,18 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: "Authorize"
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+{{ if .HasExample -}}
+## Example Usage
+
+{{ tffile (printf "%s%s%s" "examples/data-sources/" .Name "/data-source.tf") }}
+{{- end }}
+
+{{ .SchemaMarkdown | trimspace }}

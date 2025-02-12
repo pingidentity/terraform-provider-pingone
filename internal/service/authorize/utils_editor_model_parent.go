@@ -20,6 +20,15 @@ func parentObjectSchema(descriptionName string) schema.SingleNestedAttribute {
 	}
 }
 
+func dataSourceParentObjectSchema(descriptionName string) schema.SingleNestedAttribute {
+	return schema.SingleNestedAttribute{
+		Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An object that specifies configuration settings for the %s resource's parent.", descriptionName)).Description,
+		Computed:    true,
+
+		Attributes: referenceIdObjectSchemaAttributes(framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the parent resource.")),
+	}
+}
+
 type editorParentResourceModel editorReferenceDataResourceModel
 
 func expandEditorParent(ctx context.Context, parent basetypes.ObjectValue) (parentObject *authorize.AuthorizeEditorDataReferenceObjectDTO, diags diag.Diagnostics) {

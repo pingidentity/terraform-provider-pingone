@@ -8,6 +8,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	dsschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -157,6 +158,102 @@ func dataResolverObjectSchemaAttributes() (attributes map[string]schema.Attribut
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 			},
+		},
+	}
+
+	return attributes
+}
+
+func dataSourceDataResolverObjectSchemaAttributes() (attributes map[string]dsschema.Attribute) {
+
+	resolversTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the resolver type.",
+	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataResolverDTOTypeEnumValues)
+
+	valueRefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A string that specifies configuration settings for the authorization attribute (if `type` is `%s`) or the authorization service (if `type` is `%s`) to use as the data value.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_ATTRIBUTE), string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SERVICE)),
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_ATTRIBUTE), string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SERVICE)))
+
+	valueTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An object that describes configuration settings for the output value type when using a constant value.",
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT)))
+
+	valueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A string that specifies a constant text value to use as the resulting data value.  If `type` is `%s`, the options are `%s`.  If `type` is `%s`, any value can be configured.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SYSTEM), strings.Join(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataAttributeResolversSystemResolverDTOValueEnumValues), "`, `"), string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT)),
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT), string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SYSTEM)))
+
+	queryDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An object that specifies configuration settings for the query to use to resolve the data value.",
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_USER)))
+
+	attributes = map[string]dsschema.Attribute{
+		"condition": schema.SingleNestedAttribute{
+			Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies configuration settings for an authorization condition to apply to the resolver.").Description,
+			Computed:    true,
+
+			Attributes: dataConditionObjectSchemaAttributes(),
+		},
+
+		"name": schema.StringAttribute{
+			Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a name to apply to the resolver.").Description,
+			Computed:    true,
+		},
+
+		"processor": schema.SingleNestedAttribute{
+			Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies configuration settings for a processor to apply to the resolver.").Description,
+			Computed:    true,
+
+			Attributes: dataProcessorObjectSchemaAttributes(),
+		},
+
+		"type": schema.StringAttribute{
+			Description:         resolversTypeDescription.Description,
+			MarkdownDescription: resolversTypeDescription.MarkdownDescription,
+			Computed:            true,
+		},
+
+		// type == ATTRIBUTE, type == SERVICE
+		"value_ref": schema.SingleNestedAttribute{
+			Description:         valueRefDescription.Description,
+			MarkdownDescription: valueRefDescription.MarkdownDescription,
+			Computed:            true,
+
+			Attributes: referenceIdObjectSchemaAttributes(framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A string that specifies the ID of the authorization attribute (if `type` is `%s`) or the authorization service (if `type` is `%s`) in the trust framework.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_ATTRIBUTE), string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SERVICE)))),
+		},
+
+		// type == CONSTANT
+		"value_type": schema.SingleNestedAttribute{
+			Description:         valueTypeDescription.Description,
+			MarkdownDescription: valueTypeDescription.MarkdownDescription,
+			Computed:            true,
+
+			Attributes: valueTypeObjectSchemaAttributes(),
+		},
+
+		// type == CURRENT_REPETITION_VALUE
+		// (same as base object)
+
+		// type == CURRENT_USER_ID
+		// (same as base object)
+
+		// type == REQUEST
+		// (same as base object)
+
+		// type == CONSTANT, type == SYSTEM
+		"value": schema.StringAttribute{
+			Description:         valueDescription.Description,
+			MarkdownDescription: valueDescription.MarkdownDescription,
+			Computed:            true,
+			Sensitive:           true,
+		},
+
+		// type == USER
+		"query": schema.SingleNestedAttribute{
+			Description:         queryDescription.Description,
+			MarkdownDescription: queryDescription.MarkdownDescription,
+			Computed:            true,
+
+			Attributes: dataResolverQueryObjectSchemaAttributes(),
 		},
 	}
 
