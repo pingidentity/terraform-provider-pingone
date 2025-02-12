@@ -145,9 +145,9 @@ resource "pingone_password_policy" "%[2]s" {
 }
 
 resource "pingone_population" "%[2]s-name" {
-  environment_id     = data.pingone_environment.general_test.id
-  name               = "%[3]s"
-  description        = "Test description"
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "Test description"
   password_policy = {
     id = pingone_password_policy.%[2]s.id
   }

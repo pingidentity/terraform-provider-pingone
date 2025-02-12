@@ -108,13 +108,13 @@ func (r *populationResource) Schema(ctx context.Context, req resource.SchemaRequ
 					},
 				},
 				Optional:    true,
-				Description: "The object reference to the password policy resource. This is an optional property.",
+				Description: "The object reference to the password policy resource. This is an optional property. Conflicts with `password_policy_id`.",
 				Validators: []validator.Object{
 					objectvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("password_policy_id")),
 				},
 			},
 			"password_policy_id": schema.StringAttribute{
-				Description:        framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of a password policy to assign to the population.  Must be a valid PingOne resource ID.").Description,
+				Description:        framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of a password policy to assign to the population.  Must be a valid PingOne resource ID. The `password_policy.id` attribute should be used instead of this attribute.").ConflictsWith([]string{"password_policy"}).Description,
 				DeprecationMessage: "This attribute is deprecated and will be removed in a future release. Please use the `password_policy.id` attribute instead.",
 				Optional:           true,
 				CustomType:         pingonetypes.ResourceIDType{},
