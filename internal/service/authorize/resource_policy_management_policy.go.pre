@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -21,6 +22,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -37,11 +39,33 @@ type policyManagementPolicyResourceModel struct {
 	// Statements         types.List                   `tfsdk:"statements"`
 	Condition          types.Object `tfsdk:"condition"`
 	CombiningAlgorithm types.Object `tfsdk:"combining_algorithm"`
-	Children           types.List   `tfsdk:"children"`
-	// RepetitionSettings types.Object `tfsdk:"repetition_settings"`
+	// Children           types.List   `tfsdk:"children"`
+	RepetitionSettings types.Object `tfsdk:"repetition_settings"`
 	// ManagedEntity      types.Object `tfsdk:"managed_entity"`
 	Version types.String `tfsdk:"version"`
 }
+
+type policyManagementPolicyCombiningAlgorithmResourceModel struct {
+	Algorithm types.String `tfsdk:"algorithm"`
+}
+
+// type policyManagementPolicyChildrenResourceModel struct{}
+
+type policyManagementPolicyRepetitionSettingsResourceModel struct {
+	Source   types.Object `tfsdk:"source"`
+	Decision types.String `tfsdk:"decision"`
+}
+
+var (
+	policyManagementPolicyCombiningAlgorithmTFObjectTypes = map[string]attr.Type{
+		"algorithm": types.StringType,
+	}
+
+	policyManagementPolicyRepetitionSettingsTFObjectTypes = map[string]attr.Type{
+		"source":   types.ObjectType{AttrTypes: editorReferenceObjectTFObjectTypes},
+		"decision": types.StringType,
+	}
+)
 
 // Framework interfaces
 var (
@@ -69,13 +93,17 @@ func (r *PolicyManagementPolicyResource) Schema(ctx context.Context, req resourc
 		"A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.",
 	).DefaultValue(true)
 
-	// repetitionSettingsDecisionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-	// 	"A string that specifies the decision filter.",
-	// ).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataPoliciesRepetitionSettingsDTODecisionEnumValues)
+	combiningAlgorithmAlgorithmDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the algorithm that determines how rules are combined to produce an authorization decision.",
+	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataPoliciesCombiningAlgorithmDTOAlgorithmEnumValues)
+
+	repetitionSettingsDecisionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the decision filter.",
+	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataPoliciesRepetitionSettingsDTODecisionEnumValues)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage the root authorization policy for the PingOne Authorize Policy Manager in a PingOne environment.",
+		Description: "Resource to create and manage an authorization policy for the PingOne Authorize Policy Manager in a PingOne environment.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -86,8 +114,7 @@ func (r *PolicyManagementPolicyResource) Schema(ctx context.Context, req resourc
 
 			"name": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a user-friendly name to apply to the authorization policy.  The value must be unique.").Description,
-				Optional:    true,
-				Computed:    true,
+				Required:    true,
 
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
@@ -102,7 +129,6 @@ func (r *PolicyManagementPolicyResource) Schema(ctx context.Context, req resourc
 			"description": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a description to apply to the policy.").Description,
 				Optional:    true,
-				Computed:    true,
 			},
 
 			"enabled": schema.BoolAttribute{
@@ -134,15 +160,49 @@ func (r *PolicyManagementPolicyResource) Schema(ctx context.Context, req resourc
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies configuration settings that determine how rules are combined to produce an authorization decision.").Description,
 				Required:    true,
 
-				Attributes: combiningAlgorithmObjectSchemaAttributes(),
+				Attributes: map[string]schema.Attribute{
+					"algorithm": schema.StringAttribute{
+						Description:         combiningAlgorithmAlgorithmDescription.Description,
+						MarkdownDescription: combiningAlgorithmAlgorithmDescription.MarkdownDescription,
+						Required:            true,
+
+						Validators: []validator.String{
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataPoliciesCombiningAlgorithmDTOAlgorithmEnumValues)...),
+						},
+					},
+				},
 			},
 
-			"children": schema.ListNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("An ordered list of objects that specifies child policies or policy sets.").Description,
+			// "children": schema.ListNestedAttribute{
+			// 	Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
+			// 	Optional:    true,
+
+			// 	NestedObject: schema.NestedAttributeObject{
+			// 		Attributes: map[string]schema.Attribute{},
+			// 	},
+			// },
+
+			"repetition_settings": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies configuration settings that appies the policy to each item of the specific attribute, filtered by decision.").Description,
 				Optional:    true,
 
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: dataPolicyObjectSchemaAttributes(),
+				Attributes: map[string]schema.Attribute{
+					"source": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies configuration settings for the source associated with the policy rule.").Description,
+						Required:    true,
+
+						Attributes: referenceIdObjectSchemaAttributes(framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the authorization policy repetition source in the policy manager.")),
+					},
+
+					"decision": schema.StringAttribute{
+						Description:         repetitionSettingsDecisionDescription.Description,
+						MarkdownDescription: repetitionSettingsDecisionDescription.MarkdownDescription,
+						Required:            true,
+
+						Validators: []validator.String{
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataPoliciesRepetitionSettingsDTODecisionEnumValues)...),
+						},
+					},
 				},
 			},
 
@@ -253,8 +313,6 @@ func (r *PolicyManagementPolicyResource) Read(ctx context.Context, req resource.
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	// TODO: Check if the root policy is being imported
 
 	// Run the API call
 	var response *authorize.AuthorizeEditorDataPoliciesReferenceablePolicyDTO
@@ -462,16 +520,7 @@ func (r *PolicyManagementPolicyResource) ImportState(ctx context.Context, req re
 func (p *policyManagementPolicyResourceModel) expandCreate(ctx context.Context) (*authorize.AuthorizeEditorDataPoliciesPolicyDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var plan *policyManagementPolicyCombiningAlgorithmResourceModel
-	diags.Append(p.CombiningAlgorithm.As(ctx, &plan, basetypes.ObjectAsOptions{
-		UnhandledNullAsEmpty:    false,
-		UnhandledUnknownAsEmpty: false,
-	})...)
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	combiningAlgorithm := plan.expand()
+	combiningAlgorithm := &authorize.AuthorizeEditorDataPoliciesCombiningAlgorithmDTO{}
 
 	data := authorize.NewAuthorizeEditorDataPoliciesPolicyDTO(
 		p.Name.ValueString(),
@@ -515,14 +564,53 @@ func (p *policyManagementPolicyResourceModel) expandCreate(ctx context.Context) 
 		data.SetCondition(*condition)
 	}
 
-	if !p.Children.IsNull() && !p.Children.IsUnknown() {
-		children, d := expandEditorDataPolicyChildren(ctx, p.Children)
+	if !p.CombiningAlgorithm.IsNull() && !p.CombiningAlgorithm.IsUnknown() {
+		var plan *policyManagementPolicyCombiningAlgorithmResourceModel
+		diags.Append(p.CombiningAlgorithm.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		combiningAlgorithm := plan.expand()
+
+		data.SetCombiningAlgorithm(*combiningAlgorithm)
+	}
+
+	// if !p.Children.IsNull() && !p.Children.IsUnknown() {
+	// 	var plan []policyManagementPolicyChildrenResourceModel
+	// 	diags.Append(p.Children.ElementsAs(ctx, &plan, false)...)
+	// 	if diags.HasError() {
+	// 		return nil, diags
+	// 	}
+
+	// 	children := make([]map[string]interface{}, 0)
+	// 	for _, planItem := range plan {
+	// 		children = append(children, planItem.expand())
+	// 	}
+
+	// 	data.SetChildren(children)
+	// }
+
+	if !p.RepetitionSettings.IsNull() && !p.RepetitionSettings.IsUnknown() {
+		var plan *policyManagementPolicyRepetitionSettingsResourceModel
+		diags.Append(p.RepetitionSettings.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		repetitionSettings, d := plan.expand(ctx)
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		data.SetChildren(children)
+		data.SetRepetitionSettings(*repetitionSettings)
 	}
 
 	// if !p.ManagedEntity.IsNull() && !p.ManagedEntity.IsUnknown() {
@@ -579,6 +667,39 @@ func (p *policyManagementPolicyResourceModel) expandUpdate(ctx context.Context, 
 // 	return nil
 // }
 
+func (p *policyManagementPolicyCombiningAlgorithmResourceModel) expand() *authorize.AuthorizeEditorDataPoliciesCombiningAlgorithmDTO {
+
+	data := authorize.NewAuthorizeEditorDataPoliciesCombiningAlgorithmDTO(
+		authorize.EnumAuthorizeEditorDataPoliciesCombiningAlgorithmDTOAlgorithm(p.Algorithm.ValueString()),
+	)
+
+	return data
+}
+
+// func (p *policyManagementPolicyChildrenResourceModel) expand() map[string]interface{} {
+
+// 	log.Panicf("Not implemented")
+
+// 	return nil
+// }
+
+func (p *policyManagementPolicyRepetitionSettingsResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataPoliciesRepetitionSettingsDTO, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	source, d := expandEditorReferenceData(ctx, p.Source)
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	data := authorize.NewAuthorizeEditorDataPoliciesRepetitionSettingsDTO(
+		*source,
+		authorize.EnumAuthorizeEditorDataPoliciesRepetitionSettingsDTODecision(p.Decision.ValueString()),
+	)
+
+	return data, diags
+}
+
 func (p *policyManagementPolicyResourceModel) toState(ctx context.Context, apiObject *authorize.AuthorizeEditorDataPoliciesReferenceablePolicyDTO) diag.Diagnostics {
 	var diags, d diag.Diagnostics
 
@@ -605,8 +726,8 @@ func (p *policyManagementPolicyResourceModel) toState(ctx context.Context, apiOb
 	p.CombiningAlgorithm, d = policyManagementPolicyCombiningAlgorithmOkToTF(apiObject.GetCombiningAlgorithmOk())
 	diags.Append(d...)
 
-	childrenPolicies, ok := apiObject.GetChildrenOk()
-	p.Children, d = editorDataPolicysOkToListTF(ctx, childrenPolicies, ok)
+	// p.Children = framework.ListOkToTF(apiObject.GetChildrenOk())
+	p.RepetitionSettings, d = policyManagementPolicyRepetitionSettingsOkToTF(apiObject.GetRepetitionSettingsOk())
 	diags.Append(d...)
 
 	// p.ManagedEntity, d = editorManagedEntityOkToTF(apiObject.GetManagedEntityOk())
@@ -615,4 +736,41 @@ func (p *policyManagementPolicyResourceModel) toState(ctx context.Context, apiOb
 	p.Version = framework.StringOkToTF(apiObject.GetVersionOk())
 
 	return diags
+}
+
+func policyManagementPolicyCombiningAlgorithmOkToTF(apiObject *authorize.AuthorizeEditorDataPoliciesCombiningAlgorithmDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(policyManagementPolicyCombiningAlgorithmTFObjectTypes), diags
+	}
+
+	objValue, d := types.ObjectValue(policyManagementPolicyCombiningAlgorithmTFObjectTypes, map[string]attr.Value{
+		"algorithm": framework.EnumOkToTF(apiObject.GetAlgorithmOk()),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func policyManagementPolicyRepetitionSettingsOkToTF(apiObject *authorize.AuthorizeEditorDataPoliciesRepetitionSettingsDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(policyManagementPolicyRepetitionSettingsTFObjectTypes), diags
+	}
+
+	source, d := editorDataReferenceObjectOkToTF(apiObject.GetSourceOk())
+	diags.Append(d...)
+	if diags.HasError() {
+		return types.ObjectNull(policyManagementPolicyRepetitionSettingsTFObjectTypes), diags
+	}
+
+	objValue, d := types.ObjectValue(policyManagementPolicyRepetitionSettingsTFObjectTypes, map[string]attr.Value{
+		"source":   source,
+		"decision": framework.EnumOkToTF(apiObject.GetDecisionOk()),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
 }
