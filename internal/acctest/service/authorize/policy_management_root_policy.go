@@ -11,7 +11,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
 
-func PolicyManagementPolicyRoot_CheckDestroy(s *terraform.State) error {
+func PolicyManagementRootPolicy_CheckDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
 	p1Client, err := acctest.TestClient(ctx)
@@ -23,7 +23,7 @@ func PolicyManagementPolicyRoot_CheckDestroy(s *terraform.State) error {
 	apiClient := p1Client.API.AuthorizeAPIClient
 
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "pingone_authorize_policy_management_policy_root" {
+		if rs.Type != "pingone_authorize_policy_management_root_policy" {
 			continue
 		}
 
@@ -53,7 +53,7 @@ func PolicyManagementPolicyRoot_CheckDestroy(s *terraform.State) error {
 	return nil
 }
 
-func PolicyManagementPolicyRoot_GetIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
+func PolicyManagementRootPolicy_GetIDs(resourceName string, environmentID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -73,7 +73,7 @@ func PolicyManagementPolicyRoot_GetIDs(resourceName string, environmentID, resou
 	}
 }
 
-func PolicyManagementPolicyRoot_RemovalDrift_PreConfig(ctx context.Context, apiClient *authorize.APIClient, t *testing.T, environmentID, policyManagementPolicyID string) {
+func PolicyManagementRootPolicy_RemovalDrift_PreConfig(ctx context.Context, apiClient *authorize.APIClient, t *testing.T, environmentID, policyManagementPolicyID string) {
 	if environmentID == "" || policyManagementPolicyID == "" {
 		t.Fatalf("One of environment ID or authorize editor policy ID cannot be determined. Environment ID: %s, Authorize Editor Policy ID: %s", environmentID, policyManagementPolicyID)
 	}

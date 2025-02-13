@@ -7,7 +7,7 @@ pingone_authorize_policy_management_policy
 ```
 
 ```release-note:new-resource
-pingone_authorize_policy_management_policy_root
+pingone_authorize_policy_management_root_policy
 ```
 
 ```release-note:new-resource

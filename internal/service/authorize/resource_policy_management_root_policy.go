@@ -24,9 +24,9 @@ import (
 )
 
 // Types
-type PolicyManagementPolicyRootResource serviceClientType
+type PolicyManagementRootPolicyResource serviceClientType
 
-type policyManagementPolicyRootResourceModel struct {
+type policyManagementRootPolicyResourceModel struct {
 	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
 	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	// Type          types.String                 `tfsdk:"type"`
@@ -44,22 +44,22 @@ type policyManagementPolicyRootResourceModel struct {
 
 // Framework interfaces
 var (
-	_ resource.Resource                = &PolicyManagementPolicyRootResource{}
-	_ resource.ResourceWithConfigure   = &PolicyManagementPolicyRootResource{}
-	_ resource.ResourceWithImportState = &PolicyManagementPolicyRootResource{}
+	_ resource.Resource                = &PolicyManagementRootPolicyResource{}
+	_ resource.ResourceWithConfigure   = &PolicyManagementRootPolicyResource{}
+	_ resource.ResourceWithImportState = &PolicyManagementRootPolicyResource{}
 )
 
 // New Object
-func NewPolicyManagementPolicyRootResource() resource.Resource {
-	return &PolicyManagementPolicyRootResource{}
+func NewPolicyManagementRootPolicyResource() resource.Resource {
+	return &PolicyManagementRootPolicyResource{}
 }
 
 // Metadata
-func (r *PolicyManagementPolicyRootResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_authorize_policy_management_policy_root"
+func (r *PolicyManagementRootPolicyResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_authorize_policy_management_root_policy"
 }
 
-func (r *PolicyManagementPolicyRootResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *PolicyManagementRootPolicyResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 
 	// schema descriptions and validation settings
 	const attrMinLength = 1
@@ -170,7 +170,7 @@ func (r *PolicyManagementPolicyRootResource) Schema(ctx context.Context, req res
 	}
 }
 
-func (r *PolicyManagementPolicyRootResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *PolicyManagementRootPolicyResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
 		return
@@ -196,8 +196,8 @@ func (r *PolicyManagementPolicyRootResource) Configure(ctx context.Context, req 
 	}
 }
 
-func (r *PolicyManagementPolicyRootResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan, state policyManagementPolicyRootResourceModel
+func (r *PolicyManagementRootPolicyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan, state policyManagementRootPolicyResourceModel
 
 	if r.Client == nil || r.Client.AuthorizeAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -221,13 +221,13 @@ func (r *PolicyManagementPolicyRootResource) Create(ctx context.Context, req res
 	version := getResponse.GetVersion()
 
 	// Build the model for the API
-	policyManagementPolicyRoot, d := plan.expandUpdate(ctx, version)
+	policyManagementRootPolicy, d := plan.expandUpdate(ctx, version)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	policyManagementPolicyRoot.SetId(getResponse.GetId())
+	policyManagementRootPolicy.SetId(getResponse.GetId())
 
 	// Run the API call
 	var response *authorize.AuthorizeEditorDataPoliciesReferenceablePolicyDTO
@@ -235,7 +235,7 @@ func (r *PolicyManagementPolicyRootResource) Create(ctx context.Context, req res
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorPoliciesApi.UpdatePolicy(ctx, plan.EnvironmentId.ValueString(), getResponse.GetId()).AuthorizeEditorDataPoliciesReferenceablePolicyDTO(*policyManagementPolicyRoot).Execute()
+			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorPoliciesApi.UpdatePolicy(ctx, plan.EnvironmentId.ValueString(), getResponse.GetId()).AuthorizeEditorDataPoliciesReferenceablePolicyDTO(*policyManagementRootPolicy).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdatePolicy-Create",
@@ -257,8 +257,8 @@ func (r *PolicyManagementPolicyRootResource) Create(ctx context.Context, req res
 	}
 }
 
-func (r *PolicyManagementPolicyRootResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *policyManagementPolicyRootResourceModel
+func (r *PolicyManagementRootPolicyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *policyManagementRootPolicyResourceModel
 
 	if r.Client == nil || r.Client.AuthorizeAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -292,8 +292,8 @@ func (r *PolicyManagementPolicyRootResource) Read(ctx context.Context, req resou
 	}
 }
 
-func (r *PolicyManagementPolicyRootResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan, state policyManagementPolicyRootResourceModel
+func (r *PolicyManagementRootPolicyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan, state policyManagementRootPolicyResourceModel
 
 	if r.Client == nil || r.Client.AuthorizeAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -317,13 +317,13 @@ func (r *PolicyManagementPolicyRootResource) Update(ctx context.Context, req res
 	version := getResponse.GetVersion()
 
 	// Build the model for the API
-	policyManagementPolicyRoot, d := plan.expandUpdate(ctx, version)
+	policyManagementRootPolicy, d := plan.expandUpdate(ctx, version)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	policyManagementPolicyRoot.SetId(getResponse.GetId())
+	policyManagementRootPolicy.SetId(getResponse.GetId())
 
 	// Run the API call
 	var response *authorize.AuthorizeEditorDataPoliciesReferenceablePolicyDTO
@@ -331,7 +331,7 @@ func (r *PolicyManagementPolicyRootResource) Update(ctx context.Context, req res
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorPoliciesApi.UpdatePolicy(ctx, plan.EnvironmentId.ValueString(), getResponse.GetId()).AuthorizeEditorDataPoliciesReferenceablePolicyDTO(*policyManagementPolicyRoot).Execute()
+			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorPoliciesApi.UpdatePolicy(ctx, plan.EnvironmentId.ValueString(), getResponse.GetId()).AuthorizeEditorDataPoliciesReferenceablePolicyDTO(*policyManagementRootPolicy).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdatePolicy-Update",
@@ -353,8 +353,8 @@ func (r *PolicyManagementPolicyRootResource) Update(ctx context.Context, req res
 	}
 }
 
-func (r *PolicyManagementPolicyRootResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *policyManagementPolicyRootResourceModel
+func (r *PolicyManagementRootPolicyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *policyManagementRootPolicyResourceModel
 
 	if r.Client == nil || r.Client.AuthorizeAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -376,7 +376,7 @@ func (r *PolicyManagementPolicyRootResource) Delete(ctx context.Context, req res
 		return
 	}
 
-	policyManagementPolicyRoot := authorize.NewAuthorizeEditorDataPoliciesReferenceablePolicyDTO(
+	policyManagementRootPolicy := authorize.NewAuthorizeEditorDataPoliciesReferenceablePolicyDTO(
 		getResponse.GetId(),
 		"Policies",
 		*authorize.NewAuthorizeEditorDataPoliciesCombiningAlgorithmDTO(
@@ -385,7 +385,7 @@ func (r *PolicyManagementPolicyRootResource) Delete(ctx context.Context, req res
 		getResponse.GetVersion(),
 	)
 
-	policyManagementPolicyRoot.SetEnabled(true)
+	policyManagementRootPolicy.SetEnabled(true)
 
 	// Run the API call
 	var response *authorize.AuthorizeEditorDataPoliciesReferenceablePolicyDTO
@@ -393,7 +393,7 @@ func (r *PolicyManagementPolicyRootResource) Delete(ctx context.Context, req res
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorPoliciesApi.UpdatePolicy(ctx, data.EnvironmentId.ValueString(), getResponse.GetId()).AuthorizeEditorDataPoliciesReferenceablePolicyDTO(*policyManagementPolicyRoot).Execute()
+			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorPoliciesApi.UpdatePolicy(ctx, data.EnvironmentId.ValueString(), getResponse.GetId()).AuthorizeEditorDataPoliciesReferenceablePolicyDTO(*policyManagementRootPolicy).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdatePolicy-Delete",
@@ -404,7 +404,7 @@ func (r *PolicyManagementPolicyRootResource) Delete(ctx context.Context, req res
 
 }
 
-func (r *PolicyManagementPolicyRootResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *PolicyManagementRootPolicyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 
 	idComponents := []framework.ImportComponent{
 		{
@@ -433,7 +433,7 @@ func (r *PolicyManagementPolicyRootResource) ImportState(ctx context.Context, re
 	}
 }
 
-func (p *policyManagementPolicyRootResourceModel) expandCreate(ctx context.Context) (*authorize.AuthorizeEditorDataPoliciesPolicyDTO, diag.Diagnostics) {
+func (p *policyManagementRootPolicyResourceModel) expandCreate(ctx context.Context) (*authorize.AuthorizeEditorDataPoliciesPolicyDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var plan *policyManagementPolicyCombiningAlgorithmResourceModel
@@ -465,7 +465,7 @@ func (p *policyManagementPolicyRootResourceModel) expandCreate(ctx context.Conte
 	}
 
 	// if !p.Statements.IsNull() && !p.Statements.IsUnknown() {
-	// 	var plan []policyManagementPolicyRootStatementResourceModel
+	// 	var plan []policyManagementRootPolicyStatementResourceModel
 	// 	diags.Append(p.Statements.ElementsAs(ctx, &plan, false)...)
 	// 	if diags.HasError() {
 	// 		return nil, diags
@@ -513,7 +513,7 @@ func (p *policyManagementPolicyRootResourceModel) expandCreate(ctx context.Conte
 	return data, diags
 }
 
-func (p *policyManagementPolicyRootResourceModel) expandUpdate(ctx context.Context, versionId string) (*authorize.AuthorizeEditorDataPoliciesReferenceablePolicyDTO, diag.Diagnostics) {
+func (p *policyManagementRootPolicyResourceModel) expandUpdate(ctx context.Context, versionId string) (*authorize.AuthorizeEditorDataPoliciesReferenceablePolicyDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	dataCreate, d := p.expandCreate(ctx)
@@ -546,14 +546,14 @@ func (p *policyManagementPolicyRootResourceModel) expandUpdate(ctx context.Conte
 	return data, diags
 }
 
-// func (p *policyManagementPolicyRootStatementResourceModel) expand() map[string]interface{} {
+// func (p *policyManagementRootPolicyStatementResourceModel) expand() map[string]interface{} {
 
 // 	log.Panicf("Not implemented")
 
 // 	return nil
 // }
 
-func (p *policyManagementPolicyRootResourceModel) toState(ctx context.Context, apiObject *authorize.AuthorizeEditorDataPoliciesReferenceablePolicyDTO) diag.Diagnostics {
+func (p *policyManagementRootPolicyResourceModel) toState(ctx context.Context, apiObject *authorize.AuthorizeEditorDataPoliciesReferenceablePolicyDTO) diag.Diagnostics {
 	var diags, d diag.Diagnostics
 
 	if apiObject == nil {
@@ -591,7 +591,7 @@ func (p *policyManagementPolicyRootResourceModel) toState(ctx context.Context, a
 	return diags
 }
 
-func (r *PolicyManagementPolicyRootResource) getRootPolicy(ctx context.Context, environmentId string) (*authorize.AuthorizeEditorDataPoliciesReferenceablePolicyDTO, diag.Diagnostics) {
+func (r *PolicyManagementRootPolicyResource) getRootPolicy(ctx context.Context, environmentId string) (*authorize.AuthorizeEditorDataPoliciesReferenceablePolicyDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var response *authorize.AuthorizeEditorDataPoliciesReferenceablePolicyDTO

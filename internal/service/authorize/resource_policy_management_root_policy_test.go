@@ -16,11 +16,11 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func TestAccPolicyManagementPolicyRoot_RemovalDrift(t *testing.T) {
+func TestAccPolicyManagementRootPolicy_RemovalDrift(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_authorize_policy_management_policy_root.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_authorize_policy_management_root_policy.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 
@@ -42,25 +42,25 @@ func TestAccPolicyManagementPolicyRoot_RemovalDrift(t *testing.T) {
 			p1Client = acctest.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             authorize.PolicyManagementPolicyRoot_CheckDestroy,
+		CheckDestroy:             authorize.PolicyManagementRootPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: testAccPolicyManagementPolicyRootConfig_Minimal(resourceName, name),
-				Check:  authorize.PolicyManagementPolicyRoot_GetIDs(resourceFullName, &environmentID, &policyID),
+				Config: testAccPolicyManagementRootPolicyConfig_Minimal(resourceName, name),
+				Check:  authorize.PolicyManagementRootPolicy_GetIDs(resourceFullName, &environmentID, &policyID),
 			},
 			{
 				PreConfig: func() {
-					authorize.PolicyManagementPolicyRoot_RemovalDrift_PreConfig(ctx, p1Client.API.AuthorizeAPIClient, t, environmentID, policyID)
+					authorize.PolicyManagementRootPolicy_RemovalDrift_PreConfig(ctx, p1Client.API.AuthorizeAPIClient, t, environmentID, policyID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
 			},
 			// Test removal of the environment
 			{
-				Config: testAccPolicyManagementPolicyRootConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  authorize.PolicyManagementPolicyRoot_GetIDs(resourceFullName, &environmentID, &policyID),
+				Config: testAccPolicyManagementRootPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  authorize.PolicyManagementRootPolicy_GetIDs(resourceFullName, &environmentID, &policyID),
 			},
 			{
 				PreConfig: func() {
@@ -73,11 +73,11 @@ func TestAccPolicyManagementPolicyRoot_RemovalDrift(t *testing.T) {
 	})
 }
 
-func TestAccPolicyManagementPolicyRoot_Full(t *testing.T) {
+func TestAccPolicyManagementRootPolicy_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_authorize_policy_management_policy_root.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_authorize_policy_management_root_policy.%s", resourceName)
 
 	name := resourceName
 
@@ -204,42 +204,42 @@ func TestAccPolicyManagementPolicyRoot_Full(t *testing.T) {
 			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_AUTHORIZEPMTF)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             authorize.PolicyManagementPolicyRoot_CheckDestroy,
+		CheckDestroy:             authorize.PolicyManagementRootPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Full
 			{
-				Config: testAccPolicyManagementPolicyRootConfig_Full1(resourceName, name),
+				Config: testAccPolicyManagementRootPolicyConfig_Full1(resourceName, name),
 				Check:  fullCheck1,
 			},
 			{
-				Config:  testAccPolicyManagementPolicyRootConfig_Full1(resourceName, name),
+				Config:  testAccPolicyManagementRootPolicyConfig_Full1(resourceName, name),
 				Destroy: true,
 			},
 			// Minimal
 			{
-				Config: testAccPolicyManagementPolicyRootConfig_Minimal(resourceName, name),
+				Config: testAccPolicyManagementRootPolicyConfig_Minimal(resourceName, name),
 				Check:  minimalCheck,
 			},
 			{
-				Config:  testAccPolicyManagementPolicyRootConfig_Minimal(resourceName, name),
+				Config:  testAccPolicyManagementRootPolicyConfig_Minimal(resourceName, name),
 				Destroy: true,
 			},
 			// Change
 			{
-				Config: testAccPolicyManagementPolicyRootConfig_Full1(resourceName, name),
+				Config: testAccPolicyManagementRootPolicyConfig_Full1(resourceName, name),
 				Check:  fullCheck1,
 			},
 			{
-				Config: testAccPolicyManagementPolicyRootConfig_Full2(resourceName, name),
+				Config: testAccPolicyManagementRootPolicyConfig_Full2(resourceName, name),
 				Check:  fullCheck2,
 			},
 			{
-				Config: testAccPolicyManagementPolicyRootConfig_Minimal(resourceName, name),
+				Config: testAccPolicyManagementRootPolicyConfig_Minimal(resourceName, name),
 				Check:  minimalCheck,
 			},
 			{
-				Config: testAccPolicyManagementPolicyRootConfig_Full1(resourceName, name),
+				Config: testAccPolicyManagementRootPolicyConfig_Full1(resourceName, name),
 				Check:  fullCheck1,
 			},
 			// Test importing the resource
@@ -262,11 +262,11 @@ func TestAccPolicyManagementPolicyRoot_Full(t *testing.T) {
 	})
 }
 
-func TestAccPolicyManagementPolicyRoot_BadParameters(t *testing.T) {
+func TestAccPolicyManagementRootPolicy_BadParameters(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_authorize_policy_management_policy_root.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_authorize_policy_management_root_policy.%s", resourceName)
 
 	name := resourceName
 
@@ -276,12 +276,12 @@ func TestAccPolicyManagementPolicyRoot_BadParameters(t *testing.T) {
 			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_AUTHORIZEPMTF)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             authorize.PolicyManagementPolicyRoot_CheckDestroy,
+		CheckDestroy:             authorize.PolicyManagementRootPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: testAccPolicyManagementPolicyRootConfig_Minimal(resourceName, name),
+				Config: testAccPolicyManagementRootPolicyConfig_Minimal(resourceName, name),
 			},
 			// Errors
 			{
@@ -305,11 +305,11 @@ func TestAccPolicyManagementPolicyRoot_BadParameters(t *testing.T) {
 	})
 }
 
-func testAccPolicyManagementPolicyRootConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
+func testAccPolicyManagementRootPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_authorize_policy_management_policy_root" "%[3]s" {
+resource "pingone_authorize_policy_management_root_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[3]s"
   description    = "Test policy"
@@ -320,7 +320,7 @@ resource "pingone_authorize_policy_management_policy_root" "%[3]s" {
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccPolicyManagementPolicyRootConfig_Full1(resourceName, name string) string {
+func testAccPolicyManagementRootPolicyConfig_Full1(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -359,7 +359,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
 //   }
 // }
 
-resource "pingone_authorize_policy_management_policy_root" "%[2]s" {
+resource "pingone_authorize_policy_management_root_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "Test policy full"
@@ -557,7 +557,7 @@ resource "pingone_authorize_policy_management_policy_root" "%[2]s" {
 }`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
-func testAccPolicyManagementPolicyRootConfig_Full2(resourceName, name string) string {
+func testAccPolicyManagementRootPolicyConfig_Full2(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -596,7 +596,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
 //   }
 // }
 
-resource "pingone_authorize_policy_management_policy_root" "%[2]s" {
+resource "pingone_authorize_policy_management_root_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "Test policy full"
@@ -722,7 +722,7 @@ resource "pingone_authorize_policy_management_policy_root" "%[2]s" {
 }`, acctest.AuthorizePMTFSandboxEnvironment(), resourceName, name)
 }
 
-func testAccPolicyManagementPolicyRootConfig_Minimal(resourceName, name string) string {
+func testAccPolicyManagementRootPolicyConfig_Minimal(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -761,7 +761,7 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
 //   }
 // }
 
-resource "pingone_authorize_policy_management_policy_root" "%[2]s" {
+resource "pingone_authorize_policy_management_root_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
   combining_algorithm = {

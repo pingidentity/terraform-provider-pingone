@@ -9,8 +9,6 @@ description: |-
 
 Resource to create and manage an authorization policy for the PingOne Authorize Policy Manager in a PingOne environment.
 
-~> Only one `pingone_authorize_policy_management_policy` resource should be configured for an environment.  If multiple `pingone_authorize_policy_management_policy` resource definitions exist in HCL code, these are likely to conflict with each other on apply.
-
 ## Example Usage
 
 ```terraform
