@@ -20,9 +20,19 @@ func Resources() []func() resource.Resource {
 		NewApplicationResourcePermissionResource,
 		NewApplicationRolePermissionResource,
 		NewApplicationRoleResource,
+		NewTrustFrameworkAttributeResource,
+		NewTrustFrameworkConditionResource,
+		NewPolicyManagementPolicyResource,
+		NewPolicyManagementRootPolicyResource,
+		NewTrustFrameworkProcessorResource,
+		NewPolicyManagementRuleResource,
+		NewTrustFrameworkServiceResource,
+		NewPolicyManagementStatementResource,
 	}
 }
 
 func DataSources() []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		NewTrustFrameworkAttributeDataSource,
+	}
 }

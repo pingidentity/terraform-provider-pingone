@@ -1,0 +1,30 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: "Authorize"
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+## Example Usage - HTTP Service
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-http.tf") }}
+
+## Example Usage - Connector Service
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-connector.tf") }}
+
+## Example Usage - Abstract Service
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-none.tf") }}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
+
+{{ codefile "shell" (printf "%s%s%s" "examples/resources/" .Name "/import.sh") }}
