@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -15,7 +16,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 )
 
-const policyNestedIterationMaxDepth = 1
+const policyNestedIterationMaxDepth = 5
 
 func dataPolicyObjectSchemaAttributes() (attributes map[string]schema.Attribute) {
 	const initialIteration = 1
@@ -40,10 +41,13 @@ func dataPolicyObjectSchemaAttributesIteration(iteration int32) (attributes map[
 			},
 		},
 
-		// "type": schema.StringAttribute{
-		// 	Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the type of the policy.").Description,
-		// 	Optional:    true,
-		// },
+		"type": schema.StringAttribute{
+			Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the type of the policy.").Description,
+			Optional:    true,
+			Computed:    true,
+
+			Default: stringdefault.StaticString("POLICY"),
+		},
 
 		"description": schema.StringAttribute{
 			Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a description to apply to the policy.").Description,
@@ -105,7 +109,7 @@ func dataPolicyObjectSchemaAttributesIteration(iteration int32) (attributes map[
 }
 
 type editorDataPolicyLeafResourceModel struct {
-	// Type          types.String                 `tfsdk:"type"`
+	Type        types.String `tfsdk:"type"`
 	Name        types.String `tfsdk:"name"`
 	Description types.String `tfsdk:"description"`
 	Enabled     types.Bool   `tfsdk:"enabled"`
@@ -116,7 +120,7 @@ type editorDataPolicyLeafResourceModel struct {
 }
 
 type editorDataPolicyResourceModel struct {
-	// Type          types.String                 `tfsdk:"type"`
+	Type        types.String `tfsdk:"type"`
 	Name        types.String `tfsdk:"name"`
 	Description types.String `tfsdk:"description"`
 	Enabled     types.Bool   `tfsdk:"enabled"`
@@ -132,7 +136,7 @@ var editorDataPolicyTFObjectTypes = initializeEditorDataPolicyTFObjectTypes(1)
 func initializeEditorDataPolicyTFObjectTypes(iteration int32) map[string]attr.Type {
 
 	attrMap := map[string]attr.Type{
-		// "type": types.StringType,
+		"type":        types.StringType,
 		"name":        types.StringType,
 		"description": types.StringType,
 		"enabled":     types.BoolType,
@@ -208,13 +212,13 @@ func expandEditorDataPolicyChildrenIteration(ctx context.Context, policyChildren
 }
 
 func (p *editorDataPolicyLeafResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataPoliciesPolicyChild, diag.Diagnostics) {
-	return expandChildPolicy(ctx, p.Name, p.Description, p.Enabled, p.CombiningAlgorithm, p.Condition, p.RepetitionSettings)
+	return expandChildPolicy(ctx, p.Name, p.Type, p.Description, p.Enabled, p.CombiningAlgorithm, p.Condition, p.RepetitionSettings)
 }
 
 func (p *editorDataPolicyResourceModel) expand(ctx context.Context, iteration int32) (*authorize.AuthorizeEditorDataPoliciesPolicyChild, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data, d := expandChildPolicy(ctx, p.Name, p.Description, p.Enabled, p.CombiningAlgorithm, p.Condition, p.RepetitionSettings)
+	data, d := expandChildPolicy(ctx, p.Name, p.Type, p.Description, p.Enabled, p.CombiningAlgorithm, p.Condition, p.RepetitionSettings)
 	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
@@ -233,7 +237,7 @@ func (p *editorDataPolicyResourceModel) expand(ctx context.Context, iteration in
 	return data, diags
 }
 
-func expandChildPolicy(ctx context.Context, name, description basetypes.StringValue, enabled basetypes.BoolValue, combiningAlgorithm, condition, repetitionSettings basetypes.ObjectValue) (*authorize.AuthorizeEditorDataPoliciesPolicyChild, diag.Diagnostics) {
+func expandChildPolicy(ctx context.Context, name, policyType, description basetypes.StringValue, enabled basetypes.BoolValue, combiningAlgorithm, condition, repetitionSettings basetypes.ObjectValue) (*authorize.AuthorizeEditorDataPoliciesPolicyChild, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var plan *policyManagementPolicyCombiningAlgorithmResourceModel
@@ -252,9 +256,9 @@ func expandChildPolicy(ctx context.Context, name, description basetypes.StringVa
 		*combiningAlgorithmExp,
 	)
 
-	// if !p.Type.IsNull() && !p.Type.IsUnknown() {
-	// 	data.SetType(p.Type.ValueString())
-	// }
+	if !policyType.IsNull() && !policyType.IsUnknown() {
+		data.SetType(policyType.ValueString())
+	}
 
 	if !description.IsNull() && !description.IsUnknown() {
 		data.SetDescription(description.ValueString())
@@ -369,7 +373,7 @@ func editorDataPolicyOkToTFIteration(ctx context.Context, iteration int32, apiOb
 	}
 
 	attrMap := map[string]attr.Value{
-		// "type": framework.EnumOkToTF(apiObject.GetTypeOk()),
+		"type":        framework.EnumOkToTF(apiObject.GetTypeOk()),
 		"name":        framework.StringOkToTF(apiObject.GetNameOk()),
 		"description": framework.StringOkToTF(apiObject.GetDescriptionOk()),
 		"enabled":     framework.BoolOkToTF(apiObject.GetEnabledOk()),

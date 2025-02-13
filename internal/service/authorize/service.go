@@ -23,6 +23,7 @@ func Resources() []func() resource.Resource {
 		NewTrustFrameworkAttributeResource,
 		NewTrustFrameworkConditionResource,
 		NewPolicyManagementPolicyResource,
+		NewPolicyManagementPolicyRootResource,
 		NewTrustFrameworkProcessorResource,
 		NewPolicyManagementRuleResource,
 		NewTrustFrameworkServiceResource,
