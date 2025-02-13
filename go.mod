@@ -2,6 +2,8 @@ module github.com/pingidentity/terraform-provider-pingone
 
 go 1.23.3
 
+replace github.com/patrickcping/pingone-go-sdk-v2/authorize => github.com/patrickcping/pingone-go-sdk-v2/authorize v0.8.1-0.20250213181451-487ba44c8ce7
+
 require (
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/terraform-plugin-framework v1.13.0
