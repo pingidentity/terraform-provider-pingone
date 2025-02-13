@@ -38,7 +38,7 @@ type policyManagementPolicyResourceModel struct {
 	Condition          types.Object `tfsdk:"condition"`
 	CombiningAlgorithm types.Object `tfsdk:"combining_algorithm"`
 	Children           types.List   `tfsdk:"children"`
-	// RepetitionSettings types.Object `tfsdk:"repetition_settings"`
+	RepetitionSettings types.Object `tfsdk:"repetition_settings"`
 	// ManagedEntity      types.Object `tfsdk:"managed_entity"`
 	Version types.String `tfsdk:"version"`
 }
@@ -69,13 +69,9 @@ func (r *PolicyManagementPolicyResource) Schema(ctx context.Context, req resourc
 		"A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.",
 	).DefaultValue(true)
 
-	// repetitionSettingsDecisionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-	// 	"A string that specifies the decision filter.",
-	// ).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataPoliciesRepetitionSettingsDTODecisionEnumValues)
-
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage the root authorization policy for the PingOne Authorize Policy Manager in a PingOne environment.",
+		Description: "Resource to create and manage an authorization policy for the PingOne Authorize Policy Manager in a PingOne environment.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -86,8 +82,7 @@ func (r *PolicyManagementPolicyResource) Schema(ctx context.Context, req resourc
 
 			"name": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a user-friendly name to apply to the authorization policy.  The value must be unique.").Description,
-				Optional:    true,
-				Computed:    true,
+				Required:    true,
 
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
@@ -102,7 +97,6 @@ func (r *PolicyManagementPolicyResource) Schema(ctx context.Context, req resourc
 			"description": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a description to apply to the policy.").Description,
 				Optional:    true,
-				Computed:    true,
 			},
 
 			"enabled": schema.BoolAttribute{
@@ -144,6 +138,13 @@ func (r *PolicyManagementPolicyResource) Schema(ctx context.Context, req resourc
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: dataPolicyObjectSchemaAttributes(),
 				},
+			},
+
+			"repetition_settings": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies configuration settings that appies the policy to each item of the specific attribute, filtered by decision.").Description,
+				Optional:    true,
+
+				Attributes: repetitionSettingsObjectSchemaAttributes(),
 			},
 
 			// "managed_entity": schema.SingleNestedAttribute{
@@ -253,8 +254,6 @@ func (r *PolicyManagementPolicyResource) Read(ctx context.Context, req resource.
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	// TODO: Check if the root policy is being imported
 
 	// Run the API call
 	var response *authorize.AuthorizeEditorDataPoliciesReferenceablePolicyDTO
@@ -462,16 +461,7 @@ func (r *PolicyManagementPolicyResource) ImportState(ctx context.Context, req re
 func (p *policyManagementPolicyResourceModel) expandCreate(ctx context.Context) (*authorize.AuthorizeEditorDataPoliciesPolicyDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var plan *policyManagementPolicyCombiningAlgorithmResourceModel
-	diags.Append(p.CombiningAlgorithm.As(ctx, &plan, basetypes.ObjectAsOptions{
-		UnhandledNullAsEmpty:    false,
-		UnhandledUnknownAsEmpty: false,
-	})...)
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	combiningAlgorithm := plan.expand()
+	combiningAlgorithm := &authorize.AuthorizeEditorDataPoliciesCombiningAlgorithmDTO{}
 
 	data := authorize.NewAuthorizeEditorDataPoliciesPolicyDTO(
 		p.Name.ValueString(),
@@ -515,6 +505,21 @@ func (p *policyManagementPolicyResourceModel) expandCreate(ctx context.Context) 
 		data.SetCondition(*condition)
 	}
 
+	if !p.CombiningAlgorithm.IsNull() && !p.CombiningAlgorithm.IsUnknown() {
+		var plan *policyManagementPolicyCombiningAlgorithmResourceModel
+		diags.Append(p.CombiningAlgorithm.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		combiningAlgorithm := plan.expand()
+
+		data.SetCombiningAlgorithm(*combiningAlgorithm)
+	}
+
 	if !p.Children.IsNull() && !p.Children.IsUnknown() {
 		children, d := expandEditorDataPolicyChildren(ctx, p.Children)
 		diags.Append(d...)
@@ -523,6 +528,25 @@ func (p *policyManagementPolicyResourceModel) expandCreate(ctx context.Context) 
 		}
 
 		data.SetChildren(children)
+	}
+
+	if !p.RepetitionSettings.IsNull() && !p.RepetitionSettings.IsUnknown() {
+		var plan *policyManagementPolicyRepetitionSettingsResourceModel
+		diags.Append(p.RepetitionSettings.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		repetitionSettings, d := plan.expand(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetRepetitionSettings(*repetitionSettings)
 	}
 
 	// if !p.ManagedEntity.IsNull() && !p.ManagedEntity.IsUnknown() {
@@ -607,6 +631,9 @@ func (p *policyManagementPolicyResourceModel) toState(ctx context.Context, apiOb
 
 	childrenPolicies, ok := apiObject.GetChildrenOk()
 	p.Children, d = editorDataPolicysOkToListTF(ctx, childrenPolicies, ok)
+	diags.Append(d...)
+
+	p.RepetitionSettings, d = policyManagementPolicyRepetitionSettingsOkToTF(apiObject.GetRepetitionSettingsOk())
 	diags.Append(d...)
 
 	// p.ManagedEntity, d = editorManagedEntityOkToTF(apiObject.GetManagedEntityOk())

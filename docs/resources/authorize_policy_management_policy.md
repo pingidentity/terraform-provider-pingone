@@ -2,12 +2,12 @@
 page_title: "pingone_authorize_policy_management_policy Resource - terraform-provider-pingone"
 subcategory: "Authorize"
 description: |-
-  Resource to create and manage the root authorization policy for the PingOne Authorize Policy Manager in a PingOne environment.
+  Resource to create and manage an authorization policy for the PingOne Authorize Policy Manager in a PingOne environment.
 ---
 
 # pingone_authorize_policy_management_policy (Resource)
 
-Resource to create and manage the root authorization policy for the PingOne Authorize Policy Manager in a PingOne environment.
+Resource to create and manage an authorization policy for the PingOne Authorize Policy Manager in a PingOne environment.
 
 ~> Only one `pingone_authorize_policy_management_policy` resource should be configured for an environment.  If multiple `pingone_authorize_policy_management_policy` resource definitions exist in HCL code, these are likely to conflict with each other on apply.
 
@@ -32,6 +32,7 @@ resource "pingone_authorize_policy_management_policy" "my_awesome_policy" {
 
 - `combining_algorithm` (Attributes) An object that specifies configuration settings that determine how rules are combined to produce an authorization decision. (see [below for nested schema](#nestedatt--combining_algorithm))
 - `environment_id` (String) The ID of the environment to configure the Authorize editor policy in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `name` (String) A string that specifies a user-friendly name to apply to the authorization policy.  The value must be unique.
 
 ### Optional
 
@@ -39,7 +40,7 @@ resource "pingone_authorize_policy_management_policy" "my_awesome_policy" {
 - `condition` (Attributes) An object that specifies configuration settings for an authorization condition to apply to the policy. (see [below for nested schema](#nestedatt--condition))
 - `description` (String) A string that specifies a description to apply to the policy.
 - `enabled` (Boolean) A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.  Defaults to `true`.
-- `name` (String) A string that specifies a user-friendly name to apply to the authorization policy.  The value must be unique.
+- `repetition_settings` (Attributes) An object that specifies configuration settings that appies the policy to each item of the specific attribute, filtered by decision. (see [below for nested schema](#nestedatt--repetition_settings))
 
 ### Read-Only
 
@@ -69,6 +70,7 @@ Optional:
 - `description` (String) A string that specifies a description to apply to the policy.
 - `enabled` (Boolean) A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.  Defaults to `true`.
 - `repetition_settings` (Attributes) An object that specifies configuration settings that appies the policy to each item of the specific attribute, filtered by decision. (see [below for nested schema](#nestedatt--children--repetition_settings))
+- `type` (String) A string that specifies the type of the policy.
 
 <a id="nestedatt--children--combining_algorithm"></a>
 ### Nested Schema for `children.combining_algorithm`
@@ -93,6 +95,7 @@ Optional:
 - `description` (String) A string that specifies a description to apply to the policy.
 - `enabled` (Boolean) A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.  Defaults to `true`.
 - `repetition_settings` (Attributes) An object that specifies configuration settings that appies the policy to each item of the specific attribute, filtered by decision. (see [below for nested schema](#nestedatt--children--children--repetition_settings))
+- `type` (String) A string that specifies the type of the policy.
 
 <a id="nestedatt--children--children--combining_algorithm"></a>
 ### Nested Schema for `children.children.combining_algorithm`
@@ -117,6 +120,7 @@ Optional:
 - `description` (String) A string that specifies a description to apply to the policy.
 - `enabled` (Boolean) A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.  Defaults to `true`.
 - `repetition_settings` (Attributes) An object that specifies configuration settings that appies the policy to each item of the specific attribute, filtered by decision. (see [below for nested schema](#nestedatt--children--children--children--repetition_settings))
+- `type` (String) A string that specifies the type of the policy.
 
 <a id="nestedatt--children--children--children--combining_algorithm"></a>
 ### Nested Schema for `children.children.children.combining_algorithm`
@@ -141,6 +145,7 @@ Optional:
 - `description` (String) A string that specifies a description to apply to the policy.
 - `enabled` (Boolean) A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.  Defaults to `true`.
 - `repetition_settings` (Attributes) An object that specifies configuration settings that appies the policy to each item of the specific attribute, filtered by decision. (see [below for nested schema](#nestedatt--children--children--children--children--repetition_settings))
+- `type` (String) A string that specifies the type of the policy.
 
 <a id="nestedatt--children--children--children--children--combining_algorithm"></a>
 ### Nested Schema for `children.children.children.children.combining_algorithm`
@@ -164,6 +169,7 @@ Optional:
 - `description` (String) A string that specifies a description to apply to the policy.
 - `enabled` (Boolean) A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.  Defaults to `true`.
 - `repetition_settings` (Attributes) An object that specifies configuration settings that appies the policy to each item of the specific attribute, filtered by decision. (see [below for nested schema](#nestedatt--children--children--children--children--children--repetition_settings))
+- `type` (String) A string that specifies the type of the policy.
 
 <a id="nestedatt--children--children--children--children--children--combining_algorithm"></a>
 ### Nested Schema for `children.children.children.children.children.combining_algorithm`
@@ -4664,6 +4670,23 @@ Optional:
 
 - `id` (String) A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.  This field is required when `type` is `ATTRIBUTE`.  Must be a valid PingOne resource ID.
 - `value` (String) A string that specifies a constant text value to use as the condition comparand.  This field is required when `type` is `CONSTANT`.
+
+
+
+<a id="nestedatt--repetition_settings"></a>
+### Nested Schema for `repetition_settings`
+
+Required:
+
+- `decision` (String) A string that specifies the decision filter.  Options are `DENY`, `INDETERMINATE`, `NOT_APPLICABLE`, `PERMIT`.
+- `source` (Attributes) An object that specifies configuration settings for the source associated with the policy rule. (see [below for nested schema](#nestedatt--repetition_settings--source))
+
+<a id="nestedatt--repetition_settings--source"></a>
+### Nested Schema for `repetition_settings.source`
+
+Required:
+
+- `id` (String) A string that specifies the ID of the authorization policy repetition source in the policy manager.  Must be a valid PingOne resource ID.
 
 ## Import
 
