@@ -76,11 +76,11 @@ func dataPolicyObjectSchemaAttributesIteration(iteration int32) (attributes map[
 		"An ordered list of objects that specifies child policies or policy sets. Policies can either be specified by reference using the `value` field, or by inline definition.",
 	).AppendMarkdownString("Also requires `name` and `combining_algorithm`.").ConflictsWith([]string{"value"})
 
-	valueConflictsWithExpressions := make([]path.Expression, 0, len(valueConflictingPathKeys))
+	// valueConflictsWithExpressions := make([]path.Expression, 0, len(valueConflictingPathKeys))
 
-	for _, key := range valueConflictingPathKeys {
-		valueConflictsWithExpressions = append(valueConflictsWithExpressions, path.MatchRelative().AtParent().AtName(key))
-	}
+	// for _, key := range valueConflictingPathKeys {
+	// 	valueConflictsWithExpressions = append(valueConflictsWithExpressions, path.MatchRelative().AtParent().AtName(key))
+	// }
 
 	attributes = map[string]schema.Attribute{
 		"value": schema.SingleNestedAttribute{
@@ -329,7 +329,7 @@ func expandEditorDataPolicyChildrenIteration(ctx context.Context, policyChildren
 		var plan []editorDataPolicyLeafResourceModel
 		diags.Append(policyChildren.ElementsAs(ctx, &plan, false)...)
 		if diags.HasError() {
-			return
+			return nil, diags
 		}
 
 		for _, policyPlan := range plan {
@@ -344,7 +344,7 @@ func expandEditorDataPolicyChildrenIteration(ctx context.Context, policyChildren
 		var plan []editorDataPolicyResourceModel
 		diags.Append(policyChildren.ElementsAs(ctx, &plan, false)...)
 		if diags.HasError() {
-			return
+			return nil, diags
 		}
 
 		for _, policyPlan := range plan {
@@ -357,9 +357,7 @@ func expandEditorDataPolicyChildrenIteration(ctx context.Context, policyChildren
 		}
 	}
 
-	policyObjects = returnPolicies
-
-	return
+	return returnPolicies, diags
 }
 
 func (p *editorDataPolicyLeafResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataPoliciesPolicyChild, diag.Diagnostics) {

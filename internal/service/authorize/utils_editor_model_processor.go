@@ -445,7 +445,7 @@ func expandEditorDataProcessorIteration(ctx context.Context, processor basetypes
 			UnhandledUnknownAsEmpty: false,
 		})...)
 		if diags.HasError() {
-			return
+			return nil, diags
 		}
 
 		processorObject, d = plan.expand(ctx)
@@ -457,17 +457,17 @@ func expandEditorDataProcessorIteration(ctx context.Context, processor basetypes
 			UnhandledUnknownAsEmpty: false,
 		})...)
 		if diags.HasError() {
-			return
+			return nil, diags
 		}
 
 		processorObject, d = plan.expand(ctx, iteration)
 		diags.Append(d...)
 	}
 	if diags.HasError() {
-		return
+		return nil, diags
 	}
 
-	return
+	return processorObject, diags
 }
 
 func expandEditorDataProcessors(ctx context.Context, processor basetypes.ListValue) (processorObject []authorize.AuthorizeEditorDataProcessorDTO, diags diag.Diagnostics) {
@@ -521,7 +521,7 @@ func expandEditorDataProcessorsIteration(ctx context.Context, processors basetyp
 
 	}
 
-	return
+	return processorObjects, diags
 
 }
 

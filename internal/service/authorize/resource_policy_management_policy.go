@@ -136,9 +136,9 @@ func (r *PolicyManagementPolicyResource) Schema(ctx context.Context, req resourc
 			},
 
 			"children": schema.ListNestedAttribute{
-				Description: childrenDescription.Description,
+				Description:         childrenDescription.Description,
 				MarkdownDescription: childrenDescription.MarkdownDescription,
-				Optional:    true,
+				Optional:            true,
 
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: dataPolicyObjectSchemaAttributes(),

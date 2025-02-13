@@ -271,7 +271,7 @@ func expandEditorDataConditionIteration(ctx context.Context, condition basetypes
 			UnhandledUnknownAsEmpty: false,
 		})...)
 		if diags.HasError() {
-			return
+			return nil, diags
 		}
 
 		conditionObject, d = plan.expand(ctx)
@@ -283,17 +283,17 @@ func expandEditorDataConditionIteration(ctx context.Context, condition basetypes
 			UnhandledUnknownAsEmpty: false,
 		})...)
 		if diags.HasError() {
-			return
+			return nil, diags
 		}
 
 		conditionObject, d = plan.expand(ctx, iteration)
 		diags.Append(d...)
 	}
 	if diags.HasError() {
-		return
+		return nil, diags
 	}
 
-	return
+	return conditionObject, diags
 }
 
 func expandEditorDataConditions(ctx context.Context, conditions basetypes.SetValue) (conditionSet []authorize.AuthorizeEditorDataConditionDTO, diags diag.Diagnostics) {
@@ -309,7 +309,7 @@ func expandEditorDataConditionsIteration(ctx context.Context, conditions basetyp
 		var plan []editorDataConditionLeafResourceModel
 		diags.Append(conditions.ElementsAs(ctx, &plan, false)...)
 		if diags.HasError() {
-			return
+			return nil, diags
 		}
 
 		conditionSet = make([]authorize.AuthorizeEditorDataConditionDTO, 0, len(plan))
@@ -329,7 +329,7 @@ func expandEditorDataConditionsIteration(ctx context.Context, conditions basetyp
 		var plan []editorDataConditionResourceModel
 		diags.Append(conditions.ElementsAs(ctx, &plan, false)...)
 		if diags.HasError() {
-			return
+			return nil, diags
 		}
 
 		conditionSet = make([]authorize.AuthorizeEditorDataConditionDTO, 0, len(plan))
@@ -346,7 +346,7 @@ func expandEditorDataConditionsIteration(ctx context.Context, conditions basetyp
 
 	}
 
-	return
+	return conditionSet, diags
 }
 
 func (p *editorDataConditionResourceModel) expand(ctx context.Context, iteration int32) (*authorize.AuthorizeEditorDataConditionDTO, diag.Diagnostics) {
