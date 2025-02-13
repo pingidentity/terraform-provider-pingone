@@ -3,9 +3,13 @@ package authorize
 import (
 	"context"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
@@ -26,32 +30,110 @@ func dataPolicyObjectSchemaAttributes() (attributes map[string]schema.Attribute)
 func dataPolicyObjectSchemaAttributesIteration(iteration int32) (attributes map[string]schema.Attribute) {
 
 	const attrMinLength = 1
+	var valueConflictingPathKeys = []string{
+		"name",
+		"description",
+		"enabled",
+		// "statements",
+		"condition",
+		"combining_algorithm",
+		"repetition_settings",
+	}
+
+	if iteration < policyNestedIterationMaxDepth {
+		valueConflictingPathKeys = append(valueConflictingPathKeys, "children")
+	}
+
+	valueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An object that defines a relationship to a child policy.",
+	).ConflictsWith(valueConflictingPathKeys)
+
+	nameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies a user-friendly name to apply to the authorization policy.  The value must be unique.",
+	).AppendMarkdownString("Also requires `name` and `combining_algorithm`.").ConflictsWith([]string{"value"})
+
+	descriptionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies a description to apply to the policy.",
+	).AppendMarkdownString("Also requires `name` and `combining_algorithm`.").ConflictsWith([]string{"value"})
 
 	enabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.",
-	).DefaultValue(true)
+	).DefaultValue(true).AppendMarkdownString("Also requires `name` and `combining_algorithm`.").ConflictsWith([]string{"value"})
+
+	conditionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An object that specifies configuration settings for an authorization condition to apply to the policy.",
+	).AppendMarkdownString("Also requires `name` and `combining_algorithm`.").ConflictsWith([]string{"value"})
+
+	combiningAlgorithmDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An object that specifies configuration settings that determine how rules are combined to produce an authorization decision.",
+	).AppendMarkdownString("Also requires `name` and `combining_algorithm`.").ConflictsWith([]string{"value"})
+
+	repetitionSettingsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An object that specifies configuration settings that appies the policy to each item of the specific attribute, filtered by decision.",
+	).AppendMarkdownString("Also requires `name` and `combining_algorithm`.").ConflictsWith([]string{"value"})
+
+	childrenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An ordered list of objects that specifies child policies or policy sets. Policies can either be specified by reference using the `value` field, or by inline definition.",
+	).AppendMarkdownString("Also requires `name` and `combining_algorithm`.").ConflictsWith([]string{"value"})
+
+	valueConflictsWithExpressions := make([]path.Expression, 0, len(valueConflictingPathKeys))
+
+	for _, key := range valueConflictingPathKeys {
+		valueConflictsWithExpressions = append(valueConflictsWithExpressions, path.MatchRelative().AtParent().AtName(key))
+	}
 
 	attributes = map[string]schema.Attribute{
+		"value": schema.SingleNestedAttribute{
+			Description:         valueDescription.Description,
+			MarkdownDescription: valueDescription.MarkdownDescription,
+			// Optional:            true,
+			Computed: true,
+
+			// Validators: []validator.Object{
+			// 	objectvalidator.ConflictsWith(valueConflictsWithExpressions...),
+			// },
+
+			Attributes: referenceIdObjectSchemaAttributes(framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of a child policy.")),
+		},
+
 		"name": schema.StringAttribute{
-			Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a user-friendly name to apply to the authorization policy.  The value must be unique.").Description,
-			Required:    true,
+			Description:         nameDescription.Description,
+			MarkdownDescription: nameDescription.MarkdownDescription,
+			Optional:            true,
 
 			Validators: []validator.String{
 				stringvalidator.LengthAtLeast(attrMinLength),
+				stringvalidator.ConflictsWith(
+					path.MatchRelative().AtParent().AtName("value"),
+				),
+				stringvalidator.AlsoRequires(
+					path.MatchRelative().AtParent().AtName("combining_algorithm"),
+					path.MatchRelative().AtParent().AtName("name"),
+				),
 			},
 		},
 
 		"type": schema.StringAttribute{
 			Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the type of the policy.").Description,
-			Optional:    true,
 			Computed:    true,
 
 			Default: stringdefault.StaticString("POLICY"),
 		},
 
 		"description": schema.StringAttribute{
-			Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a description to apply to the policy.").Description,
-			Optional:    true,
+			Description:         descriptionDescription.Description,
+			MarkdownDescription: descriptionDescription.MarkdownDescription,
+			Optional:            true,
+
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(
+					path.MatchRelative().AtParent().AtName("value"),
+				),
+				stringvalidator.AlsoRequires(
+					path.MatchRelative().AtParent().AtName("combining_algorithm"),
+					path.MatchRelative().AtParent().AtName("name"),
+				),
+			},
 		},
 
 		"enabled": schema.BoolAttribute{
@@ -61,6 +143,16 @@ func dataPolicyObjectSchemaAttributesIteration(iteration int32) (attributes map[
 			Computed:            true,
 
 			Default: booldefault.StaticBool(true),
+
+			Validators: []validator.Bool{
+				boolvalidator.ConflictsWith(
+					path.MatchRelative().AtParent().AtName("value"),
+				),
+				boolvalidator.AlsoRequires(
+					path.MatchRelative().AtParent().AtName("combining_algorithm"),
+					path.MatchRelative().AtParent().AtName("name"),
+				),
+			},
 		},
 
 		// "statements": schema.ListNestedAttribute{
@@ -70,37 +162,91 @@ func dataPolicyObjectSchemaAttributesIteration(iteration int32) (attributes map[
 		// 	NestedObject: schema.NestedAttributeObject{
 		// 		Attributes: map[string]schema.Attribute{},
 		// 	},
+
+		// Validators: []validator.List{
+		// 	listvalidator.ConflictsWith(
+		// 		path.MatchRelative().AtParent().AtName("value"),
+		// 	),
+		// listvalidator.AlsoRequires(
+		// 	path.MatchRelative().AtParent().AtName("combining_algorithm"),
+		// 	path.MatchRelative().AtParent().AtName("name"),
+		// ),
+		// },
 		// },
 
 		"condition": schema.SingleNestedAttribute{
-			Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies configuration settings for an authorization condition to apply to the policy.").Description,
-			Optional:    true,
+			Description:         conditionDescription.Description,
+			MarkdownDescription: conditionDescription.MarkdownDescription,
+			Optional:            true,
 
 			Attributes: dataConditionObjectSchemaAttributes(),
+
+			Validators: []validator.Object{
+				objectvalidator.ConflictsWith(
+					path.MatchRelative().AtParent().AtName("value"),
+				),
+				objectvalidator.AlsoRequires(
+					path.MatchRelative().AtParent().AtName("combining_algorithm"),
+					path.MatchRelative().AtParent().AtName("name"),
+				),
+			},
 		},
 
 		"combining_algorithm": schema.SingleNestedAttribute{
-			Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies configuration settings that determine how rules are combined to produce an authorization decision.").Description,
-			Required:    true,
+			Description:         combiningAlgorithmDescription.Description,
+			MarkdownDescription: combiningAlgorithmDescription.MarkdownDescription,
+			Optional:            true,
 
 			Attributes: combiningAlgorithmObjectSchemaAttributes(),
+
+			Validators: []validator.Object{
+				objectvalidator.ConflictsWith(
+					path.MatchRelative().AtParent().AtName("value"),
+				),
+				objectvalidator.AlsoRequires(
+					path.MatchRelative().AtParent().AtName("combining_algorithm"),
+					path.MatchRelative().AtParent().AtName("name"),
+				),
+			},
 		},
 
 		"repetition_settings": schema.SingleNestedAttribute{
-			Description: framework.SchemaAttributeDescriptionFromMarkdown("An object that specifies configuration settings that appies the policy to each item of the specific attribute, filtered by decision.").Description,
-			Optional:    true,
+			Description:         repetitionSettingsDescription.Description,
+			MarkdownDescription: repetitionSettingsDescription.MarkdownDescription,
+			Optional:            true,
 
 			Attributes: repetitionSettingsObjectSchemaAttributes(),
+
+			Validators: []validator.Object{
+				objectvalidator.ConflictsWith(
+					path.MatchRelative().AtParent().AtName("value"),
+				),
+				objectvalidator.AlsoRequires(
+					path.MatchRelative().AtParent().AtName("combining_algorithm"),
+					path.MatchRelative().AtParent().AtName("name"),
+				),
+			},
 		},
 	}
 
 	if iteration < policyNestedIterationMaxDepth {
 		attributes["children"] = schema.ListNestedAttribute{
-			Description: framework.SchemaAttributeDescriptionFromMarkdown("An ordered list of objects that specifies child policies or policy sets.").Description,
-			Optional:    true,
+			Description:         childrenDescription.Description,
+			MarkdownDescription: childrenDescription.MarkdownDescription,
+			Optional:            true,
 
 			NestedObject: schema.NestedAttributeObject{
 				Attributes: dataPolicyObjectSchemaAttributesIteration(iteration + 1),
+			},
+
+			Validators: []validator.List{
+				listvalidator.ConflictsWith(
+					path.MatchRelative().AtParent().AtName("value"),
+				),
+				listvalidator.AlsoRequires(
+					path.MatchRelative().AtParent().AtName("combining_algorithm"),
+					path.MatchRelative().AtParent().AtName("name"),
+				),
 			},
 		}
 	}
@@ -117,6 +263,7 @@ type editorDataPolicyLeafResourceModel struct {
 	Condition          types.Object `tfsdk:"condition"`
 	CombiningAlgorithm types.Object `tfsdk:"combining_algorithm"`
 	RepetitionSettings types.Object `tfsdk:"repetition_settings"`
+	Value              types.Object `tfsdk:"value"`
 }
 
 type editorDataPolicyResourceModel struct {
@@ -129,6 +276,7 @@ type editorDataPolicyResourceModel struct {
 	CombiningAlgorithm types.Object `tfsdk:"combining_algorithm"`
 	Children           types.List   `tfsdk:"children"`
 	RepetitionSettings types.Object `tfsdk:"repetition_settings"`
+	Value              types.Object `tfsdk:"value"`
 }
 
 var editorDataPolicyTFObjectTypes = initializeEditorDataPolicyTFObjectTypes(1)
@@ -149,6 +297,9 @@ func initializeEditorDataPolicyTFObjectTypes(iteration int32) map[string]attr.Ty
 		},
 		"repetition_settings": types.ObjectType{
 			AttrTypes: policyManagementPolicyRepetitionSettingsTFObjectTypes,
+		},
+		"value": types.ObjectType{
+			AttrTypes: editorReferenceObjectTFObjectTypes,
 		},
 	}
 
@@ -212,13 +363,13 @@ func expandEditorDataPolicyChildrenIteration(ctx context.Context, policyChildren
 }
 
 func (p *editorDataPolicyLeafResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataPoliciesPolicyChild, diag.Diagnostics) {
-	return expandChildPolicy(ctx, p.Name, p.Type, p.Description, p.Enabled, p.CombiningAlgorithm, p.Condition, p.RepetitionSettings)
+	return expandChildPolicy(ctx, p.Name, p.Type, p.Description, p.Enabled, p.CombiningAlgorithm, p.Condition, p.RepetitionSettings, p.Value)
 }
 
 func (p *editorDataPolicyResourceModel) expand(ctx context.Context, iteration int32) (*authorize.AuthorizeEditorDataPoliciesPolicyChild, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data, d := expandChildPolicy(ctx, p.Name, p.Type, p.Description, p.Enabled, p.CombiningAlgorithm, p.Condition, p.RepetitionSettings)
+	data, d := expandChildPolicy(ctx, p.Name, p.Type, p.Description, p.Enabled, p.CombiningAlgorithm, p.Condition, p.RepetitionSettings, p.Value)
 	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
@@ -237,27 +388,24 @@ func (p *editorDataPolicyResourceModel) expand(ctx context.Context, iteration in
 	return data, diags
 }
 
-func expandChildPolicy(ctx context.Context, name, policyType, description basetypes.StringValue, enabled basetypes.BoolValue, combiningAlgorithm, condition, repetitionSettings basetypes.ObjectValue) (*authorize.AuthorizeEditorDataPoliciesPolicyChild, diag.Diagnostics) {
+func expandChildPolicy(ctx context.Context, name, policyType, description basetypes.StringValue, enabled basetypes.BoolValue, combiningAlgorithm, condition, repetitionSettings, refValue basetypes.ObjectValue) (*authorize.AuthorizeEditorDataPoliciesPolicyChild, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var plan *policyManagementPolicyCombiningAlgorithmResourceModel
-	diags.Append(combiningAlgorithm.As(ctx, &plan, basetypes.ObjectAsOptions{
-		UnhandledNullAsEmpty:    false,
-		UnhandledUnknownAsEmpty: false,
-	})...)
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	combiningAlgorithmExp := plan.expand()
-
 	data := authorize.NewAuthorizeEditorDataPoliciesPolicyChild(
-		name.ValueString(),
-		*combiningAlgorithmExp,
+		policyType.ValueString(),
 	)
 
-	if !policyType.IsNull() && !policyType.IsUnknown() {
-		data.SetType(policyType.ValueString())
+	if !refValue.IsNull() && !refValue.IsUnknown() {
+		refValueObj, d := expandEditorReferenceData(ctx, refValue)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+		data.SetValue(*refValueObj)
+	}
+
+	if !name.IsNull() && !name.IsUnknown() {
+		data.SetName(name.ValueString())
 	}
 
 	if !description.IsNull() && !description.IsUnknown() {
@@ -282,6 +430,21 @@ func expandChildPolicy(ctx context.Context, name, policyType, description basety
 
 	// 	data.SetStatements(statements)
 	// }
+
+	if !combiningAlgorithm.IsNull() && !combiningAlgorithm.IsUnknown() {
+		var plan *policyManagementPolicyCombiningAlgorithmResourceModel
+		diags.Append(combiningAlgorithm.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		combiningAlgorithmExp := plan.expand()
+
+		data.SetCombiningAlgorithm(*combiningAlgorithmExp)
+	}
 
 	if !condition.IsNull() && !condition.IsUnknown() {
 		conditionExp, d := expandEditorDataCondition(ctx, condition)
@@ -368,6 +531,9 @@ func editorDataPolicyOkToTFIteration(ctx context.Context, iteration int32, apiOb
 	repetitionSettings, d := policyManagementPolicyRepetitionSettingsOkToTF(apiObject.GetRepetitionSettingsOk())
 	diags.Append(d...)
 
+	value, d := editorDataReferenceObjectOkToTF(apiObject.GetValueOk())
+	diags.Append(d...)
+
 	if diags.HasError() {
 		return types.ObjectNull(initializeEditorDataPolicyTFObjectTypes(iteration)), diags
 	}
@@ -381,6 +547,7 @@ func editorDataPolicyOkToTFIteration(ctx context.Context, iteration int32, apiOb
 		"condition":           condition,
 		"combining_algorithm": combiningAlgorithm,
 		"repetition_settings": repetitionSettings,
+		"value":               value,
 	}
 
 	if iteration < policyNestedIterationMaxDepth {

@@ -68,6 +68,10 @@ func (r *PolicyManagementPolicyRootResource) Schema(ctx context.Context, req res
 		"A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.",
 	).DefaultValue(true)
 
+	childrenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An ordered list of objects that specifies child policies or policy sets. Policies can either be specified by reference using the `value` field, or by inline definition.",
+	)
+
 	// repetitionSettingsDecisionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 	// 	"A string that specifies the decision filter.",
 	// ).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataPoliciesRepetitionSettingsDTODecisionEnumValues)
@@ -142,8 +146,9 @@ func (r *PolicyManagementPolicyRootResource) Schema(ctx context.Context, req res
 			},
 
 			"children": schema.ListNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("An ordered list of objects that specifies child policies or policy sets.").Description,
-				Optional:    true,
+				Description:         childrenDescription.Description,
+				MarkdownDescription: childrenDescription.MarkdownDescription,
+				Optional:            true,
 
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: dataPolicyObjectSchemaAttributes(),
@@ -379,6 +384,8 @@ func (r *PolicyManagementPolicyRootResource) Delete(ctx context.Context, req res
 		),
 		getResponse.GetVersion(),
 	)
+
+	policyManagementPolicyRoot.SetEnabled(true)
 
 	// Run the API call
 	var response *authorize.AuthorizeEditorDataPoliciesReferenceablePolicyDTO

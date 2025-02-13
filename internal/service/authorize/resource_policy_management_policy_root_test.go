@@ -100,6 +100,7 @@ func TestAccPolicyManagementPolicyRoot_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "children.0.combining_algorithm.algorithm", "DENY_UNLESS_PERMIT"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "children.0.children"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "children.0.repetition_settings"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "children.0.value"),
 		resource.TestCheckResourceAttr(resourceFullName, "children.1.name", "Child 2"),
 		resource.TestCheckResourceAttr(resourceFullName, "children.1.description", "Child 2 description"),
 		resource.TestCheckResourceAttr(resourceFullName, "children.1.enabled", "false"),
@@ -111,6 +112,7 @@ func TestAccPolicyManagementPolicyRoot_Full(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "children.1.children"),
 		resource.TestMatchResourceAttr(resourceFullName, "children.1.repetition_settings.source.id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "children.1.repetition_settings.decision", "PERMIT"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "children.1.value"),
 		resource.TestCheckResourceAttr(resourceFullName, "children.2.name", "Child 3"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "children.2.description"),
 		resource.TestCheckResourceAttr(resourceFullName, "children.2.enabled", "true"),
@@ -138,6 +140,16 @@ func TestAccPolicyManagementPolicyRoot_Full(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "children.2.children.1.children"),
 		resource.TestMatchResourceAttr(resourceFullName, "children.2.children.1.repetition_settings.source.id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "children.2.children.1.repetition_settings.decision", "PERMIT"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "children.2.value"),
+		// resource.TestCheckNoResourceAttr(resourceFullName, "children.3.name"),
+		// resource.TestCheckNoResourceAttr(resourceFullName, "children.3.description"),
+		// resource.TestCheckNoResourceAttr(resourceFullName, "children.3.enabled"),
+		// resource.TestCheckNoResourceAttr(resourceFullName, "children.3.type"),
+		// resource.TestCheckNoResourceAttr(resourceFullName, "children.3.condition"),
+		// resource.TestCheckNoResourceAttr(resourceFullName, "children.3.combining_algorithm.algorithm"),
+		// resource.TestCheckNoResourceAttr(resourceFullName, "children.3.children"),
+		// resource.TestCheckNoResourceAttr(resourceFullName, "children.3.repetition_settings"),
+		// resource.TestMatchResourceAttr(resourceFullName, "children.3.value.id", verify.P1ResourceIDRegexpFullString),
 		resource.TestMatchResourceAttr(resourceFullName, "version", verify.P1ResourceIDRegexpFullString),
 	)
 
@@ -152,6 +164,16 @@ func TestAccPolicyManagementPolicyRoot_Full(t *testing.T) {
 		resource.TestCheckNoResourceAttr(resourceFullName, "children.0.children"),
 		resource.TestMatchResourceAttr(resourceFullName, "children.0.repetition_settings.source.id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "children.0.repetition_settings.decision", "PERMIT"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "children.0.value"),
+		// resource.TestCheckNoResourceAttr(resourceFullName, "children.2.name"),
+		// resource.TestCheckNoResourceAttr(resourceFullName, "children.2.description"),
+		// resource.TestCheckNoResourceAttr(resourceFullName, "children.2.enabled"),
+		// resource.TestCheckNoResourceAttr(resourceFullName, "children.2.type"),
+		// resource.TestCheckNoResourceAttr(resourceFullName, "children.2.condition"),
+		// resource.TestCheckNoResourceAttr(resourceFullName, "children.2.combining_algorithm.algorithm"),
+		// resource.TestCheckNoResourceAttr(resourceFullName, "children.2.children"),
+		// resource.TestCheckNoResourceAttr(resourceFullName, "children.2.repetition_settings"),
+		// resource.TestMatchResourceAttr(resourceFullName, "children.2.value.id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "children.1.name", "Child 1"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "children.1.description"),
 		resource.TestCheckResourceAttr(resourceFullName, "children.1.enabled", "true"),
@@ -160,6 +182,7 @@ func TestAccPolicyManagementPolicyRoot_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "children.1.combining_algorithm.algorithm", "DENY_UNLESS_PERMIT"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "children.1.children"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "children.1.repetition_settings"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "children.1.value"),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
@@ -326,6 +349,15 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
     type = "STRING"
   }
 }
+
+// resource "pingone_authorize_policy_management_policy" "%[2]s-1" {
+//   environment_id = data.pingone_environment.general_test.id
+//   name           = "%[3]s"
+
+//   combining_algorithm = {
+//     algorithm = "PERMIT_OVERRIDES"
+//   }
+// }
 
 resource "pingone_authorize_policy_management_policy_root" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -514,6 +546,11 @@ resource "pingone_authorize_policy_management_policy_root" "%[2]s" {
         },
       ]
     },
+    // {
+    //   value = {
+    //     id = pingone_authorize_policy_management_policy.%[2]s-1.id
+    //   }
+    // },
   ]
 
 
@@ -549,6 +586,15 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
     type = "STRING"
   }
 }
+
+// resource "pingone_authorize_policy_management_policy" "%[2]s-1" {
+//   environment_id = data.pingone_environment.general_test.id
+//   name           = "%[3]s"
+
+//   combining_algorithm = {
+//     algorithm = "PERMIT_OVERRIDES"
+//   }
+// }
 
 resource "pingone_authorize_policy_management_policy_root" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -658,6 +704,11 @@ resource "pingone_authorize_policy_management_policy_root" "%[2]s" {
         decision = "PERMIT"
       }
     },
+    // {
+    //   value = {
+    //     id = pingone_authorize_policy_management_policy.%[2]s-1.id
+    //   }
+    // },
     {
       name = "Child 1"
 
@@ -700,6 +751,15 @@ resource "pingone_authorize_trust_framework_attribute" "%[2]s-current-user-id" {
     type = "STRING"
   }
 }
+
+// resource "pingone_authorize_policy_management_policy" "%[2]s-1" {
+//   environment_id = data.pingone_environment.general_test.id
+//   name           = "%[3]s"
+
+//   combining_algorithm = {
+//     algorithm = "PERMIT_OVERRIDES"
+//   }
+// }
 
 resource "pingone_authorize_policy_management_policy_root" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id

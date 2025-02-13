@@ -69,6 +69,10 @@ func (r *PolicyManagementPolicyResource) Schema(ctx context.Context, req resourc
 		"A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.",
 	).DefaultValue(true)
 
+	childrenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An ordered list of objects that specifies child policies or policy sets. Policies can either be specified by reference using the `value` field, or by inline definition.",
+	)
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to create and manage an authorization policy for the PingOne Authorize Policy Manager in a PingOne environment.",
@@ -132,7 +136,8 @@ func (r *PolicyManagementPolicyResource) Schema(ctx context.Context, req resourc
 			},
 
 			"children": schema.ListNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("An ordered list of objects that specifies child policies or policy sets.").Description,
+				Description: childrenDescription.Description,
+				MarkdownDescription: childrenDescription.MarkdownDescription,
 				Optional:    true,
 
 				NestedObject: schema.NestedAttributeObject{

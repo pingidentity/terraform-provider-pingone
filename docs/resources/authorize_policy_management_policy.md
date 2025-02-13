@@ -36,7 +36,7 @@ resource "pingone_authorize_policy_management_policy" "my_awesome_policy" {
 
 ### Optional
 
-- `children` (Attributes List) An ordered list of objects that specifies child policies or policy sets. (see [below for nested schema](#nestedatt--children))
+- `children` (Attributes List) An ordered list of objects that specifies child policies or policy sets. Policies can either be specified by reference using the `value` field, or by inline definition. (see [below for nested schema](#nestedatt--children))
 - `condition` (Attributes) An object that specifies configuration settings for an authorization condition to apply to the policy. (see [below for nested schema](#nestedatt--condition))
 - `description` (String) A string that specifies a description to apply to the policy.
 - `enabled` (Boolean) A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.  Defaults to `true`.
@@ -58,118 +58,91 @@ Required:
 <a id="nestedatt--children"></a>
 ### Nested Schema for `children`
 
-Required:
-
-- `combining_algorithm` (Attributes) An object that specifies configuration settings that determine how rules are combined to produce an authorization decision. (see [below for nested schema](#nestedatt--children--combining_algorithm))
-- `name` (String) A string that specifies a user-friendly name to apply to the authorization policy.  The value must be unique.
-
 Optional:
 
-- `children` (Attributes List) An ordered list of objects that specifies child policies or policy sets. (see [below for nested schema](#nestedatt--children--children))
-- `condition` (Attributes) An object that specifies configuration settings for an authorization condition to apply to the policy. (see [below for nested schema](#nestedatt--children--condition))
-- `description` (String) A string that specifies a description to apply to the policy.
-- `enabled` (Boolean) A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.  Defaults to `true`.
-- `repetition_settings` (Attributes) An object that specifies configuration settings that appies the policy to each item of the specific attribute, filtered by decision. (see [below for nested schema](#nestedatt--children--repetition_settings))
+- `children` (Attributes List) An ordered list of objects that specifies child policies or policy sets. Policies can either be specified by reference using the `value` field, or by inline definition.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`. (see [below for nested schema](#nestedatt--children--children))
+- `combining_algorithm` (Attributes) An object that specifies configuration settings that determine how rules are combined to produce an authorization decision.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`. (see [below for nested schema](#nestedatt--children--combining_algorithm))
+- `condition` (Attributes) An object that specifies configuration settings for an authorization condition to apply to the policy.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`. (see [below for nested schema](#nestedatt--children--condition))
+- `description` (String) A string that specifies a description to apply to the policy.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`.
+- `enabled` (Boolean) A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.  Defaults to `true`.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`.
+- `name` (String) A string that specifies a user-friendly name to apply to the authorization policy.  The value must be unique.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`.
+- `repetition_settings` (Attributes) An object that specifies configuration settings that appies the policy to each item of the specific attribute, filtered by decision.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`. (see [below for nested schema](#nestedatt--children--repetition_settings))
+
+Read-Only:
+
 - `type` (String) A string that specifies the type of the policy.
-
-<a id="nestedatt--children--combining_algorithm"></a>
-### Nested Schema for `children.combining_algorithm`
-
-Required:
-
-- `algorithm` (String) A string that specifies the algorithm that determines how rules are combined to produce an authorization decision.  Options are `DENY_OVERRIDES`, `DENY_UNLESS_PERMIT`, `FIRST_APPLICABLE`, `ONLY_ONE_APPLICABLE`, `PERMIT_OVERRIDES`, `PERMIT_UNLESS_DENY`.
-
+- `value` (Attributes) An object that defines a relationship to a child policy.  Conflicts with `name`, `description`, `enabled`, `condition`, `combining_algorithm`, `repetition_settings`, `children`. (see [below for nested schema](#nestedatt--children--value))
 
 <a id="nestedatt--children--children"></a>
 ### Nested Schema for `children.children`
 
-Required:
-
-- `combining_algorithm` (Attributes) An object that specifies configuration settings that determine how rules are combined to produce an authorization decision. (see [below for nested schema](#nestedatt--children--children--combining_algorithm))
-- `name` (String) A string that specifies a user-friendly name to apply to the authorization policy.  The value must be unique.
-
 Optional:
 
-- `children` (Attributes List) An ordered list of objects that specifies child policies or policy sets. (see [below for nested schema](#nestedatt--children--children--children))
-- `condition` (Attributes) An object that specifies configuration settings for an authorization condition to apply to the policy. (see [below for nested schema](#nestedatt--children--children--condition))
-- `description` (String) A string that specifies a description to apply to the policy.
-- `enabled` (Boolean) A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.  Defaults to `true`.
-- `repetition_settings` (Attributes) An object that specifies configuration settings that appies the policy to each item of the specific attribute, filtered by decision. (see [below for nested schema](#nestedatt--children--children--repetition_settings))
+- `children` (Attributes List) An ordered list of objects that specifies child policies or policy sets. Policies can either be specified by reference using the `value` field, or by inline definition.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`. (see [below for nested schema](#nestedatt--children--children--children))
+- `combining_algorithm` (Attributes) An object that specifies configuration settings that determine how rules are combined to produce an authorization decision.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`. (see [below for nested schema](#nestedatt--children--children--combining_algorithm))
+- `condition` (Attributes) An object that specifies configuration settings for an authorization condition to apply to the policy.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`. (see [below for nested schema](#nestedatt--children--children--condition))
+- `description` (String) A string that specifies a description to apply to the policy.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`.
+- `enabled` (Boolean) A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.  Defaults to `true`.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`.
+- `name` (String) A string that specifies a user-friendly name to apply to the authorization policy.  The value must be unique.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`.
+- `repetition_settings` (Attributes) An object that specifies configuration settings that appies the policy to each item of the specific attribute, filtered by decision.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`. (see [below for nested schema](#nestedatt--children--children--repetition_settings))
+
+Read-Only:
+
 - `type` (String) A string that specifies the type of the policy.
-
-<a id="nestedatt--children--children--combining_algorithm"></a>
-### Nested Schema for `children.children.combining_algorithm`
-
-Required:
-
-- `algorithm` (String) A string that specifies the algorithm that determines how rules are combined to produce an authorization decision.  Options are `DENY_OVERRIDES`, `DENY_UNLESS_PERMIT`, `FIRST_APPLICABLE`, `ONLY_ONE_APPLICABLE`, `PERMIT_OVERRIDES`, `PERMIT_UNLESS_DENY`.
-
+- `value` (Attributes) An object that defines a relationship to a child policy.  Conflicts with `name`, `description`, `enabled`, `condition`, `combining_algorithm`, `repetition_settings`, `children`. (see [below for nested schema](#nestedatt--children--children--value))
 
 <a id="nestedatt--children--children--children"></a>
 ### Nested Schema for `children.children.children`
 
-Required:
-
-- `combining_algorithm` (Attributes) An object that specifies configuration settings that determine how rules are combined to produce an authorization decision. (see [below for nested schema](#nestedatt--children--children--children--combining_algorithm))
-- `name` (String) A string that specifies a user-friendly name to apply to the authorization policy.  The value must be unique.
-
 Optional:
 
-- `children` (Attributes List) An ordered list of objects that specifies child policies or policy sets. (see [below for nested schema](#nestedatt--children--children--children--children))
-- `condition` (Attributes) An object that specifies configuration settings for an authorization condition to apply to the policy. (see [below for nested schema](#nestedatt--children--children--children--condition))
-- `description` (String) A string that specifies a description to apply to the policy.
-- `enabled` (Boolean) A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.  Defaults to `true`.
-- `repetition_settings` (Attributes) An object that specifies configuration settings that appies the policy to each item of the specific attribute, filtered by decision. (see [below for nested schema](#nestedatt--children--children--children--repetition_settings))
+- `children` (Attributes List) An ordered list of objects that specifies child policies or policy sets. Policies can either be specified by reference using the `value` field, or by inline definition.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`. (see [below for nested schema](#nestedatt--children--children--children--children))
+- `combining_algorithm` (Attributes) An object that specifies configuration settings that determine how rules are combined to produce an authorization decision.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`. (see [below for nested schema](#nestedatt--children--children--children--combining_algorithm))
+- `condition` (Attributes) An object that specifies configuration settings for an authorization condition to apply to the policy.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`. (see [below for nested schema](#nestedatt--children--children--children--condition))
+- `description` (String) A string that specifies a description to apply to the policy.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`.
+- `enabled` (Boolean) A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.  Defaults to `true`.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`.
+- `name` (String) A string that specifies a user-friendly name to apply to the authorization policy.  The value must be unique.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`.
+- `repetition_settings` (Attributes) An object that specifies configuration settings that appies the policy to each item of the specific attribute, filtered by decision.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`. (see [below for nested schema](#nestedatt--children--children--children--repetition_settings))
+
+Read-Only:
+
 - `type` (String) A string that specifies the type of the policy.
-
-<a id="nestedatt--children--children--children--combining_algorithm"></a>
-### Nested Schema for `children.children.children.combining_algorithm`
-
-Required:
-
-- `algorithm` (String) A string that specifies the algorithm that determines how rules are combined to produce an authorization decision.  Options are `DENY_OVERRIDES`, `DENY_UNLESS_PERMIT`, `FIRST_APPLICABLE`, `ONLY_ONE_APPLICABLE`, `PERMIT_OVERRIDES`, `PERMIT_UNLESS_DENY`.
-
+- `value` (Attributes) An object that defines a relationship to a child policy.  Conflicts with `name`, `description`, `enabled`, `condition`, `combining_algorithm`, `repetition_settings`, `children`. (see [below for nested schema](#nestedatt--children--children--children--value))
 
 <a id="nestedatt--children--children--children--children"></a>
 ### Nested Schema for `children.children.children.children`
 
-Required:
-
-- `combining_algorithm` (Attributes) An object that specifies configuration settings that determine how rules are combined to produce an authorization decision. (see [below for nested schema](#nestedatt--children--children--children--children--combining_algorithm))
-- `name` (String) A string that specifies a user-friendly name to apply to the authorization policy.  The value must be unique.
-
 Optional:
 
-- `children` (Attributes List) An ordered list of objects that specifies child policies or policy sets. (see [below for nested schema](#nestedatt--children--children--children--children--children))
-- `condition` (Attributes) An object that specifies configuration settings for an authorization condition to apply to the policy. (see [below for nested schema](#nestedatt--children--children--children--children--condition))
-- `description` (String) A string that specifies a description to apply to the policy.
-- `enabled` (Boolean) A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.  Defaults to `true`.
-- `repetition_settings` (Attributes) An object that specifies configuration settings that appies the policy to each item of the specific attribute, filtered by decision. (see [below for nested schema](#nestedatt--children--children--children--children--repetition_settings))
+- `children` (Attributes List) An ordered list of objects that specifies child policies or policy sets. Policies can either be specified by reference using the `value` field, or by inline definition.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`. (see [below for nested schema](#nestedatt--children--children--children--children--children))
+- `combining_algorithm` (Attributes) An object that specifies configuration settings that determine how rules are combined to produce an authorization decision.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`. (see [below for nested schema](#nestedatt--children--children--children--children--combining_algorithm))
+- `condition` (Attributes) An object that specifies configuration settings for an authorization condition to apply to the policy.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`. (see [below for nested schema](#nestedatt--children--children--children--children--condition))
+- `description` (String) A string that specifies a description to apply to the policy.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`.
+- `enabled` (Boolean) A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.  Defaults to `true`.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`.
+- `name` (String) A string that specifies a user-friendly name to apply to the authorization policy.  The value must be unique.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`.
+- `repetition_settings` (Attributes) An object that specifies configuration settings that appies the policy to each item of the specific attribute, filtered by decision.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`. (see [below for nested schema](#nestedatt--children--children--children--children--repetition_settings))
+
+Read-Only:
+
 - `type` (String) A string that specifies the type of the policy.
-
-<a id="nestedatt--children--children--children--children--combining_algorithm"></a>
-### Nested Schema for `children.children.children.children.combining_algorithm`
-
-Required:
-
-- `algorithm` (String) A string that specifies the algorithm that determines how rules are combined to produce an authorization decision.  Options are `DENY_OVERRIDES`, `DENY_UNLESS_PERMIT`, `FIRST_APPLICABLE`, `ONLY_ONE_APPLICABLE`, `PERMIT_OVERRIDES`, `PERMIT_UNLESS_DENY`.
-
+- `value` (Attributes) An object that defines a relationship to a child policy.  Conflicts with `name`, `description`, `enabled`, `condition`, `combining_algorithm`, `repetition_settings`, `children`. (see [below for nested schema](#nestedatt--children--children--children--children--value))
 
 <a id="nestedatt--children--children--children--children--children"></a>
 ### Nested Schema for `children.children.children.children.children`
 
-Required:
-
-- `combining_algorithm` (Attributes) An object that specifies configuration settings that determine how rules are combined to produce an authorization decision. (see [below for nested schema](#nestedatt--children--children--children--children--children--combining_algorithm))
-- `name` (String) A string that specifies a user-friendly name to apply to the authorization policy.  The value must be unique.
-
 Optional:
 
-- `condition` (Attributes) An object that specifies configuration settings for an authorization condition to apply to the policy. (see [below for nested schema](#nestedatt--children--children--children--children--children--condition))
-- `description` (String) A string that specifies a description to apply to the policy.
-- `enabled` (Boolean) A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.  Defaults to `true`.
-- `repetition_settings` (Attributes) An object that specifies configuration settings that appies the policy to each item of the specific attribute, filtered by decision. (see [below for nested schema](#nestedatt--children--children--children--children--children--repetition_settings))
+- `combining_algorithm` (Attributes) An object that specifies configuration settings that determine how rules are combined to produce an authorization decision.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`. (see [below for nested schema](#nestedatt--children--children--children--children--children--combining_algorithm))
+- `condition` (Attributes) An object that specifies configuration settings for an authorization condition to apply to the policy.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`. (see [below for nested schema](#nestedatt--children--children--children--children--children--condition))
+- `description` (String) A string that specifies a description to apply to the policy.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`.
+- `enabled` (Boolean) A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.  Defaults to `true`.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`.
+- `name` (String) A string that specifies a user-friendly name to apply to the authorization policy.  The value must be unique.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`.
+- `repetition_settings` (Attributes) An object that specifies configuration settings that appies the policy to each item of the specific attribute, filtered by decision.  Also requires `name` and `combining_algorithm`.  Conflicts with `value`. (see [below for nested schema](#nestedatt--children--children--children--children--children--repetition_settings))
+
+Read-Only:
+
 - `type` (String) A string that specifies the type of the policy.
+- `value` (Attributes) An object that defines a relationship to a child policy.  Conflicts with `name`, `description`, `enabled`, `condition`, `combining_algorithm`, `repetition_settings`. (see [below for nested schema](#nestedatt--children--children--children--children--children--value))
 
 <a id="nestedatt--children--children--children--children--children--combining_algorithm"></a>
 ### Nested Schema for `children.children.children.children.children.combining_algorithm`
@@ -930,6 +903,22 @@ Required:
 
 
 
+<a id="nestedatt--children--children--children--children--children--value"></a>
+### Nested Schema for `children.children.children.children.children.value`
+
+Required:
+
+- `id` (String) A string that specifies the ID of a child policy.  Must be a valid PingOne resource ID.
+
+
+
+<a id="nestedatt--children--children--children--children--combining_algorithm"></a>
+### Nested Schema for `children.children.children.children.combining_algorithm`
+
+Required:
+
+- `algorithm` (String) A string that specifies the algorithm that determines how rules are combined to produce an authorization decision.  Options are `DENY_OVERRIDES`, `DENY_UNLESS_PERMIT`, `FIRST_APPLICABLE`, `ONLY_ONE_APPLICABLE`, `PERMIT_OVERRIDES`, `PERMIT_UNLESS_DENY`.
+
 
 <a id="nestedatt--children--children--children--children--condition"></a>
 ### Nested Schema for `children.children.children.children.condition`
@@ -1681,6 +1670,22 @@ Required:
 - `id` (String) A string that specifies the ID of the authorization policy repetition source in the policy manager.  Must be a valid PingOne resource ID.
 
 
+
+<a id="nestedatt--children--children--children--children--value"></a>
+### Nested Schema for `children.children.children.children.value`
+
+Required:
+
+- `id` (String) A string that specifies the ID of a child policy.  Must be a valid PingOne resource ID.
+
+
+
+<a id="nestedatt--children--children--children--combining_algorithm"></a>
+### Nested Schema for `children.children.children.combining_algorithm`
+
+Required:
+
+- `algorithm` (String) A string that specifies the algorithm that determines how rules are combined to produce an authorization decision.  Options are `DENY_OVERRIDES`, `DENY_UNLESS_PERMIT`, `FIRST_APPLICABLE`, `ONLY_ONE_APPLICABLE`, `PERMIT_OVERRIDES`, `PERMIT_UNLESS_DENY`.
 
 
 <a id="nestedatt--children--children--children--condition"></a>
@@ -2434,6 +2439,22 @@ Required:
 
 
 
+<a id="nestedatt--children--children--children--value"></a>
+### Nested Schema for `children.children.children.value`
+
+Required:
+
+- `id` (String) A string that specifies the ID of a child policy.  Must be a valid PingOne resource ID.
+
+
+
+<a id="nestedatt--children--children--combining_algorithm"></a>
+### Nested Schema for `children.children.combining_algorithm`
+
+Required:
+
+- `algorithm` (String) A string that specifies the algorithm that determines how rules are combined to produce an authorization decision.  Options are `DENY_OVERRIDES`, `DENY_UNLESS_PERMIT`, `FIRST_APPLICABLE`, `ONLY_ONE_APPLICABLE`, `PERMIT_OVERRIDES`, `PERMIT_UNLESS_DENY`.
+
 
 <a id="nestedatt--children--children--condition"></a>
 ### Nested Schema for `children.children.condition`
@@ -3186,6 +3207,22 @@ Required:
 
 
 
+<a id="nestedatt--children--children--value"></a>
+### Nested Schema for `children.children.value`
+
+Required:
+
+- `id` (String) A string that specifies the ID of a child policy.  Must be a valid PingOne resource ID.
+
+
+
+<a id="nestedatt--children--combining_algorithm"></a>
+### Nested Schema for `children.combining_algorithm`
+
+Required:
+
+- `algorithm` (String) A string that specifies the algorithm that determines how rules are combined to produce an authorization decision.  Options are `DENY_OVERRIDES`, `DENY_UNLESS_PERMIT`, `FIRST_APPLICABLE`, `ONLY_ONE_APPLICABLE`, `PERMIT_OVERRIDES`, `PERMIT_UNLESS_DENY`.
+
 
 <a id="nestedatt--children--condition"></a>
 ### Nested Schema for `children.condition`
@@ -3936,6 +3973,14 @@ Required:
 
 - `id` (String) A string that specifies the ID of the authorization policy repetition source in the policy manager.  Must be a valid PingOne resource ID.
 
+
+
+<a id="nestedatt--children--value"></a>
+### Nested Schema for `children.value`
+
+Required:
+
+- `id` (String) A string that specifies the ID of a child policy.  Must be a valid PingOne resource ID.
 
 
 
