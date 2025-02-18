@@ -400,7 +400,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 				Validators: []validator.Object{
 					objectvalidatorinternal.ConflictsIfMatchesPathValue(
 						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_NONE)),
-						path.MatchRelative().AtParent().AtName("type"),
+						path.MatchRoot("service_type"),
 					),
 				},
 
@@ -607,7 +607,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 								Validators: []validator.Object{
 									objectvalidatorinternal.IsRequiredIfMatchesPathValue(
 										types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_BASIC)),
-										path.MatchRoot("type"),
+										path.MatchRelative().AtParent().AtName("type"),
 									),
 								},
 
@@ -622,7 +622,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 								Validators: []validator.Object{
 									objectvalidatorinternal.IsRequiredIfMatchesPathValue(
 										types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_BASIC)),
-										path.MatchRoot("type"),
+										path.MatchRelative().AtParent().AtName("type"),
 									),
 								},
 
@@ -638,7 +638,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 								Validators: []validator.String{
 									stringvalidatorinternal.IsRequiredIfMatchesPathValue(
 										types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)),
-										path.MatchRoot("type"),
+										path.MatchRelative().AtParent().AtName("type"),
 									),
 								},
 							},
@@ -651,7 +651,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 								Validators: []validator.String{
 									stringvalidatorinternal.IsRequiredIfMatchesPathValue(
 										types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)),
-										path.MatchRoot("type"),
+										path.MatchRelative().AtParent().AtName("type"),
 									),
 								},
 							},
@@ -664,7 +664,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 								Validators: []validator.Object{
 									objectvalidatorinternal.IsRequiredIfMatchesPathValue(
 										types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)),
-										path.MatchRoot("type"),
+										path.MatchRelative().AtParent().AtName("type"),
 									),
 								},
 
@@ -679,7 +679,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 								Validators: []validator.String{
 									stringvalidatorinternal.IsRequiredIfMatchesPathValue(
 										types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)),
-										path.MatchRoot("type"),
+										path.MatchRelative().AtParent().AtName("type"),
 									),
 								},
 							},
@@ -696,7 +696,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 								Validators: []validator.Object{
 									objectvalidatorinternal.IsRequiredIfMatchesPathValue(
 										types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_TOKEN)),
-										path.MatchRoot("type"),
+										path.MatchRelative().AtParent().AtName("type"),
 									),
 								},
 
@@ -841,11 +841,11 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 									Validators: []validator.Object{
 										objectvalidatorinternal.IsRequiredIfMatchesPathValue(
 											types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_ATTRIBUTE)),
-											path.MatchRoot("type"),
+											path.MatchRelative().AtParent().AtName("type"),
 										),
 										objectvalidatorinternal.ConflictsIfMatchesPathValue(
 											types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_INPUT)),
-											path.MatchRoot("type"),
+											path.MatchRelative().AtParent().AtName("type"),
 										),
 									},
 
@@ -860,11 +860,11 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 									Validators: []validator.String{
 										stringvalidatorinternal.IsRequiredIfMatchesPathValue(
 											types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_INPUT)),
-											path.MatchRoot("type"),
+											path.MatchRelative().AtParent().AtName("type"),
 										),
 										stringvalidatorinternal.ConflictsIfMatchesPathValue(
 											types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_ATTRIBUTE)),
-											path.MatchRoot("type"),
+											path.MatchRelative().AtParent().AtName("type"),
 										),
 									},
 								},
