@@ -141,7 +141,7 @@ func (r *PolicyManagementPolicyResource) Schema(ctx context.Context, req resourc
 				Optional:            true,
 
 				NestedObject: schema.NestedAttributeObject{
-					Attributes: dataPolicyObjectSchemaAttributes(),
+					Attributes: dataPolicyChildObjectSchemaAttributes(),
 				},
 			},
 
@@ -635,7 +635,7 @@ func (p *policyManagementPolicyResourceModel) toState(ctx context.Context, apiOb
 	diags.Append(d...)
 
 	childrenPolicies, ok := apiObject.GetChildrenOk()
-	p.Children, d = editorDataPolicysOkToListTF(ctx, childrenPolicies, ok)
+	p.Children, d = editorDataPolicyChildrenOkToListTF(ctx, childrenPolicies, ok)
 	diags.Append(d...)
 
 	p.RepetitionSettings, d = policyManagementPolicyRepetitionSettingsOkToTF(apiObject.GetRepetitionSettingsOk())

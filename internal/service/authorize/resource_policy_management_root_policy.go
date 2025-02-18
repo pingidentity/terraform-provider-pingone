@@ -151,7 +151,7 @@ func (r *PolicyManagementRootPolicyResource) Schema(ctx context.Context, req res
 				Optional:            true,
 
 				NestedObject: schema.NestedAttributeObject{
-					Attributes: dataPolicyObjectSchemaAttributes(),
+					Attributes: dataPolicyChildObjectSchemaAttributes(),
 				},
 			},
 
@@ -580,7 +580,7 @@ func (p *policyManagementRootPolicyResourceModel) toState(ctx context.Context, a
 	diags.Append(d...)
 
 	childrenPolicies, ok := apiObject.GetChildrenOk()
-	p.Children, d = editorDataPolicysOkToListTF(ctx, childrenPolicies, ok)
+	p.Children, d = editorDataPolicyChildrenOkToListTF(ctx, childrenPolicies, ok)
 	diags.Append(d...)
 
 	// p.ManagedEntity, d = editorManagedEntityOkToTF(apiObject.GetManagedEntityOk())

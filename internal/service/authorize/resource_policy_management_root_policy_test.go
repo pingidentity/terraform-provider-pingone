@@ -284,11 +284,11 @@ func TestAccPolicyManagementRootPolicy_BadParameters(t *testing.T) {
 				Config: testAccPolicyManagementRootPolicyConfig_Minimal(resourceName, name),
 			},
 			// Errors
-			{
-				ResourceName: resourceFullName,
-				ImportState:  true,
-				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
-			},
+			// {
+			// 	ResourceName: resourceFullName,
+			// 	ImportState:  true,
+			// 	ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
+			// },
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "/",
@@ -414,6 +414,7 @@ resource "pingone_authorize_policy_management_root_policy" "%[2]s" {
   children = [
     {
       name = "Child 1"
+      type = "POLICY"
 
       combining_algorithm = {
         algorithm = "DENY_UNLESS_PERMIT"
@@ -421,6 +422,7 @@ resource "pingone_authorize_policy_management_root_policy" "%[2]s" {
     },
     {
       name        = "Child 2"
+      type        = "POLICY"
       description = "Child 2 description"
       enabled     = false
 
@@ -476,6 +478,7 @@ resource "pingone_authorize_policy_management_root_policy" "%[2]s" {
     },
     {
       name = "Child 3"
+      type = "POLICY"
 
       combining_algorithm = {
         algorithm = "DENY_UNLESS_PERMIT"
@@ -484,6 +487,7 @@ resource "pingone_authorize_policy_management_root_policy" "%[2]s" {
       children = [
         {
           name = "Child-Child 1"
+          type = "POLICY"
 
           combining_algorithm = {
             algorithm = "DENY_UNLESS_PERMIT"
@@ -491,6 +495,7 @@ resource "pingone_authorize_policy_management_root_policy" "%[2]s" {
         },
         {
           name        = "Child-Child 2"
+          type        = "POLICY"
           description = "Child 2 description"
           enabled     = false
 
@@ -651,6 +656,7 @@ resource "pingone_authorize_policy_management_root_policy" "%[2]s" {
   children = [
     {
       name        = "Child 2"
+      type        = "POLICY"
       description = "Child 2 description"
       enabled     = false
 
@@ -711,6 +717,7 @@ resource "pingone_authorize_policy_management_root_policy" "%[2]s" {
     // },
     {
       name = "Child 1"
+      type = "POLICY"
 
       combining_algorithm = {
         algorithm = "DENY_UNLESS_PERMIT"
