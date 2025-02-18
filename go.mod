@@ -17,10 +17,10 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/patrickcping/pingone-go-sdk-v2 v0.12.7
 	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.7.0
-	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.10.0
+	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.11.0
 	github.com/patrickcping/pingone-go-sdk-v2/management v0.49.0
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.22.0
-	github.com/patrickcping/pingone-go-sdk-v2/risk v0.18.0
+	github.com/patrickcping/pingone-go-sdk-v2/risk v0.19.0
 	github.com/patrickcping/pingone-go-sdk-v2/verify v0.8.0
 )
 
