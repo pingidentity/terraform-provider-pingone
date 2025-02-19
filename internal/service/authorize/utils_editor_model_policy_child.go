@@ -120,6 +120,14 @@ func dataPolicyChildObjectSchemaAttributesIteration(iteration int32) (attributes
 				stringvalidator.ConflictsWith(
 					path.MatchRelative().AtParent().AtName("value"),
 				),
+				stringvalidator.Any(
+					stringvalidator.AlsoRequires(
+						path.MatchRelative().AtParent().AtName("combining_algorithm"),
+					),
+					stringvalidator.AlsoRequires(
+						path.MatchRelative().AtParent().AtName("effect_settings"),
+					),
+				),
 			},
 		},
 
@@ -143,8 +151,15 @@ func dataPolicyChildObjectSchemaAttributesIteration(iteration int32) (attributes
 					path.MatchRelative().AtParent().AtName("value"),
 				),
 				stringvalidator.AlsoRequires(
-					path.MatchRelative().AtParent().AtName("combining_algorithm"),
 					path.MatchRelative().AtParent().AtName("name"),
+				),
+				stringvalidator.Any(
+					stringvalidator.AlsoRequires(
+						path.MatchRelative().AtParent().AtName("combining_algorithm"),
+					),
+					stringvalidator.AlsoRequires(
+						path.MatchRelative().AtParent().AtName("effect_settings"),
+					),
 				),
 			},
 		},
@@ -162,8 +177,15 @@ func dataPolicyChildObjectSchemaAttributesIteration(iteration int32) (attributes
 					path.MatchRelative().AtParent().AtName("value"),
 				),
 				boolvalidator.AlsoRequires(
-					path.MatchRelative().AtParent().AtName("combining_algorithm"),
 					path.MatchRelative().AtParent().AtName("name"),
+				),
+				boolvalidator.Any(
+					boolvalidator.AlsoRequires(
+						path.MatchRelative().AtParent().AtName("combining_algorithm"),
+					),
+					boolvalidator.AlsoRequires(
+						path.MatchRelative().AtParent().AtName("effect_settings"),
+					),
 				),
 			},
 		},
@@ -199,8 +221,15 @@ func dataPolicyChildObjectSchemaAttributesIteration(iteration int32) (attributes
 					path.MatchRelative().AtParent().AtName("value"),
 				),
 				objectvalidator.AlsoRequires(
-					path.MatchRelative().AtParent().AtName("combining_algorithm"),
 					path.MatchRelative().AtParent().AtName("name"),
+				),
+				objectvalidator.Any(
+					objectvalidator.AlsoRequires(
+						path.MatchRelative().AtParent().AtName("combining_algorithm"),
+					),
+					objectvalidator.AlsoRequires(
+						path.MatchRelative().AtParent().AtName("effect_settings"),
+					),
 				),
 			},
 		},
@@ -220,9 +249,20 @@ func dataPolicyChildObjectSchemaAttributesIteration(iteration int32) (attributes
 					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
+				objectvalidatorinternal.IsRequiredIfMatchesPathValue(
+					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY)),
+					path.MatchRelative().AtParent().AtName("type"),
+				),
 				objectvalidator.AlsoRequires(
-					path.MatchRelative().AtParent().AtName("combining_algorithm"),
 					path.MatchRelative().AtParent().AtName("name"),
+				),
+				objectvalidator.Any(
+					objectvalidator.AlsoRequires(
+						path.MatchRelative().AtParent().AtName("combining_algorithm"),
+					),
+					objectvalidator.AlsoRequires(
+						path.MatchRelative().AtParent().AtName("effect_settings"),
+					),
 				),
 			},
 		},
@@ -262,6 +302,10 @@ func dataPolicyChildObjectSchemaAttributesIteration(iteration int32) (attributes
 				),
 				objectvalidatorinternal.ConflictsIfMatchesPathValue(
 					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY)),
+					path.MatchRelative().AtParent().AtName("type"),
+				),
+				objectvalidatorinternal.IsRequiredIfMatchesPathValue(
+					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 				objectvalidator.AlsoRequires(
