@@ -9,7 +9,7 @@ OS_ARCH=linux_amd64
 default: install
 
 tools:
-	go generate -tags tools tools/tools.go
+	go generate -tags tools tools/main.go
 
 fmtcheck:
 	@echo "==> Formatting Terraform documentation examples with terraform fmt..."

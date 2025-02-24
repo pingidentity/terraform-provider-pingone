@@ -1603,7 +1603,7 @@ resource "pingone_identity_provider" "%[2]s" {
   microsoft = {
     client_id     = "dummyclientid1"
     client_secret = "dummyclientsecret1"
-	tenant_id    = "dummytenantid1"
+    tenant_id     = "dummytenantid1"
   }
 }
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
