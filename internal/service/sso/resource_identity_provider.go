@@ -1945,9 +1945,9 @@ func identityProviderMicrosoftToTF(idpApiObject *management.IdentityProviderMicr
 	}
 
 	attributesMap := map[string]attr.Value{
-		"client_id":          framework.StringOkToTF(idpApiObject.GetClientIdOk()),
-		"client_secret":      framework.StringOkToTF(idpApiObject.GetClientSecretOk()),
-		"client_environment": framework.StringOkToTF(idpApiObject.GetTenantIdOk()),
+		"client_id":     framework.StringOkToTF(idpApiObject.GetClientIdOk()),
+		"client_secret": framework.StringOkToTF(idpApiObject.GetClientSecretOk()),
+		"tenant_id":     framework.StringOkToTF(idpApiObject.GetTenantIdOk()),
 	}
 
 	returnVar, d := types.ObjectValue(identityProviderMicrosoftTFObjectTypes, attributesMap)

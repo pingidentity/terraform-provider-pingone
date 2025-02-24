@@ -814,6 +814,7 @@ func TestAccIdentityProvider_Microsoft(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "microsoft.client_id", "dummyclientid1"),
 					resource.TestCheckResourceAttr(resourceFullName, "microsoft.client_secret", "dummyclientsecret1"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.tenant_id", "dummytenantid1"),
 					// resource.TestMatchResourceAttr(resourceFullName, "microsoft.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/microsoft$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
@@ -1602,6 +1603,7 @@ resource "pingone_identity_provider" "%[2]s" {
   microsoft = {
     client_id     = "dummyclientid1"
     client_secret = "dummyclientsecret1"
+	tenant_id    = "dummytenantid1"
   }
 }
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
