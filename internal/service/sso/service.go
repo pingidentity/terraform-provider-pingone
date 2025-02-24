@@ -14,6 +14,7 @@ type serviceClientType struct {
 
 func Resources() []func() resource.Resource {
 	return []func() resource.Resource{
+		NewAdministratorSecurityResource,
 		NewApplicationAttributeMappingResource,
 		NewApplicationFlowPolicyAssignmentResource,
 		NewApplicationResource,

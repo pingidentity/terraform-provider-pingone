@@ -168,8 +168,7 @@ func administratorSecurity_MinimalHCL(resourceName string) string {
 
 resource "pingone_administrator_security" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  // TODO set values for minimal fields
-  recovery = //TODO
+  recovery = true
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
@@ -185,7 +184,7 @@ resource "pingone_administrator_security" "%[2]s" {
   allowed_methods = //TODO
   authentication_method = //TODO
   mfa_status = //TODO
-  provider = {
+  identity_provider = {
     id = //TODO
   }
   recovery = //TODO

@@ -72,7 +72,7 @@ type administratorSecurityResourceModel struct {
 	EnvironmentId        pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	MfaStatus            types.String                 `tfsdk:"mfa_status"`
 	Policy               types.Object                 `tfsdk:"policy"`
-	Provider             types.Object                 `tfsdk:"provider"`
+	IdentityProvider     types.Object                 `tfsdk:"identity_provider"`
 	Recovery             types.Bool                   `tfsdk:"recovery"`
 }
 
@@ -110,17 +110,15 @@ func (r *administratorSecurityResource) Schema(ctx context.Context, req resource
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create and manage the administrator_security in."),
 			),
 			"mfa_status": schema.StringAttribute{
-				Optional:            true,
 				Computed:            true,
-				Description:         "This applies only to the specified environment, and can be either \"OPT_IN\" (indicating MFA is to be used for administrator sign-ons), or \"OPT_OUT\" (indicating MFA is not to be used for administrator sign-ons). This currently defaults to \"OPT_OUT\". Options are \"OPT_IN\", \"OPT_OUT\". The default value is \"OPT_OUT\".",
-				MarkdownDescription: "This applies only to the specified environment, and can be either `OPT_IN` (indicating MFA is to be used for administrator sign-ons), or `OPT_OUT` (indicating MFA is not to be used for administrator sign-ons). This currently defaults to `OPT_OUT`. Options are `OPT_IN`, `OPT_OUT`. The default value is `OPT_OUT`.",
+				Description:         "This applies only to the specified environment, and must be set to \"ENFORCE\".",
+				MarkdownDescription: "This applies only to the specified environment, and must be set to `ENFORCE`.",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
-						"OPT_IN",
-						"OPT_OUT",
+						"ENFORCE",
 					),
 				},
-				Default: stringdefault.StaticString("OPT_OUT"),
+				Default: stringdefault.StaticString("ENFORCE"),
 			},
 			"policy": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -131,7 +129,7 @@ func (r *administratorSecurityResource) Schema(ctx context.Context, req resource
 				},
 				Computed: true,
 			},
-			"provider": schema.SingleNestedAttribute{
+			"identity_provider": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
 						Required:    true,
@@ -181,7 +179,9 @@ func (model *administratorSecurityResourceModel) buildClientStruct() (*managemen
 
 	// mfa_status
 	if !model.MfaStatus.IsNull() {
-		mfaStatusValue, err := management.NewEnumAdministratorSecurityMfaStatusFromValue(model.MfaStatus.ValueString())
+		mfaStatusValue := management.EnumAdministratorSecurityMfaStatus(model.MfaStatus.ValueString())
+		result.MfaStatus = &mfaStatusValue
+		/*mfaStatusValue, err := management.NewEnumAdministratorSecurityMfaStatusFromValue(model.MfaStatus.ValueString())
 		if err != nil {
 			respDiags.AddAttributeError(
 				path.Root("mfa_status"),
@@ -190,15 +190,15 @@ func (model *administratorSecurityResourceModel) buildClientStruct() (*managemen
 			)
 		} else {
 			result.MfaStatus = mfaStatusValue
-		}
+		}*/
 	}
 
-	// provider
-	if !model.Provider.IsNull() {
-		providerValue := &management.AdministratorSecurityProvider{}
-		providerAttrs := model.Provider.Attributes()
-		providerValue.Id = providerAttrs["id"].(types.String).ValueString()
-		result.Provider = providerValue
+	// identity_provider
+	if !model.IdentityProvider.IsNull() {
+		identityProviderValue := &management.AdministratorSecurityProvider{}
+		identityProviderAttrs := model.IdentityProvider.Attributes()
+		identityProviderValue.Id = identityProviderAttrs["id"].(types.String).ValueString()
+		result.Provider = identityProviderValue
 	}
 
 	// recovery
@@ -211,7 +211,7 @@ func (model *administratorSecurityResourceModel) buildClientStruct() (*managemen
 func (model *administratorSecurityResource) buildDefaultClientStruct() *management.AdministratorSecurity {
 	result := &management.AdministratorSecurity{}
 	result.AuthenticationMethod = management.EnumAdministratorSecurityAuthenticationMethod("PINGONE")
-	result.MfaStatus = utils.Pointer(management.EnumAdministratorSecurityMfaStatus("OPT_OUT"))
+	result.MfaStatus = utils.Pointer(management.EnumAdministratorSecurityMfaStatus("ENFORCE"))
 	return result
 }
 
@@ -250,20 +250,20 @@ func (state *administratorSecurityResourceModel) readClientResponse(response *ma
 		respDiags.Append(diags...)
 	}
 	state.Policy = policyValue
-	// provider
-	providerAttrTypes := map[string]attr.Type{
+	// identity_provider
+	identityProviderAttrTypes := map[string]attr.Type{
 		"id": types.StringType,
 	}
-	var providerValue types.Object
+	var identityProviderValue types.Object
 	if response.Provider == nil {
-		providerValue = types.ObjectNull(providerAttrTypes)
+		identityProviderValue = types.ObjectNull(identityProviderAttrTypes)
 	} else {
-		providerValue, diags = types.ObjectValue(providerAttrTypes, map[string]attr.Value{
+		identityProviderValue, diags = types.ObjectValue(identityProviderAttrTypes, map[string]attr.Value{
 			"id": types.StringValue(response.Provider.Id),
 		})
 		respDiags.Append(diags...)
 	}
-	state.Provider = providerValue
+	state.IdentityProvider = identityProviderValue
 	// recovery
 	state.Recovery = types.BoolValue(response.Recovery)
 	return respDiags
