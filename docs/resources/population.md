@@ -38,17 +38,26 @@ resource "pingone_population" "my_population" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to create the population in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
-- `name` (String) A string that specifies the name of the population.
+- `environment_id` (String) The ID of the environment to create and manage the population in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `name` (String) A string that specifies the population name, which must be provided and must be unique within an environment.
 
 ### Optional
 
-- `description` (String) A string that specifies a description to apply to the population.
-- `password_policy_id` (String) A string that specifies the ID of a password policy to assign to the population.  Must be a valid PingOne resource ID.
+- `description` (String) A string that specifies the description of the population.
+- `password_policy` (Attributes) The object reference to the password policy resource. This is an optional property. Conflicts with `password_policy_id`. (see [below for nested schema](#nestedatt--password_policy))
+- `password_policy_id` (String, Deprecated) A string that specifies the ID of a password policy to assign to the population.  Must be a valid PingOne resource ID. The "password_policy.id" attribute should be used instead of this attribute.  Conflicts with "password_policy".
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `user_count` (Number) The number of users that belong to the population
+
+<a id="nestedatt--password_policy"></a>
+### Nested Schema for `password_policy`
+
+Required:
+
+- `id` (String) The ID of the password policy that is used for this population. If absent, the environment's default is used. Must be a valid PingOne resource ID.
 
 ## Import
 

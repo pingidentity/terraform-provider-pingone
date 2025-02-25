@@ -34,12 +34,21 @@ data "pingone_population" "example_by_id" {
 
 ### Optional
 
-- `name` (String) A string that specifies the name of the population to retrieve configuration for.  Exactly one of the following must be defined: `population_id`, `name`.
-- `population_id` (String) A string that specifies the ID of the population to retrieve configuration for.  Must be a valid PingOne resource ID.  Exactly one of the following must be defined: `population_id`, `name`.
+- `name` (String) A string that specifies the name of the population to retrieve configuration for. Exactly one of `name` or `population_id` must be defined.
+- `population_id` (String) A string that specifies the ID of the population to retrieve configuration for. Must be a valid PingOne resource ID. Exactly one of `name` or `population_id` must be defined.
 
 ### Read-Only
 
 - `default` (Boolean) A boolean that indicates whether the population is the default population for the environment.
-- `description` (String) A string that specifies the description applied to the population.
+- `description` (String) A string that specifies the description of the population.
 - `id` (String) The ID of this resource.
-- `password_policy_id` (String) A string that specifies the ID of the password policy applied to the population.
+- `password_policy` (Attributes) The object reference to the password policy resource applied to the population. (see [below for nested schema](#nestedatt--password_policy))
+- `password_policy_id` (String, Deprecated) A string that specifies the ID of the password policy applied to the population.
+- `user_count` (Number) The number of users that belong to the population
+
+<a id="nestedatt--password_policy"></a>
+### Nested Schema for `password_policy`
+
+Read-Only:
+
+- `id` (String) The ID of the password policy that is used for this population. If absent, the environment's default is used.
