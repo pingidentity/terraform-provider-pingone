@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_risk_policy`: Fix policy naming regex validation to allow numbers.
+```

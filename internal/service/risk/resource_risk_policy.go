@@ -293,7 +293,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
 					stringvalidator.LengthAtMost(attrNameMaxLength),
-					stringvalidator.RegexMatches(regexp.MustCompile(`^[\p{L}\p{M}#\/.'_\s-]+$`), " Valid characters consist of any Unicode letter, mark (such as, accent, umlaut), # (numeric), / (forward slash), . (period), ' (apostrophe), _ (underscore), space, or - (hyphen)."),
+					stringvalidator.RegexMatches(regexp.MustCompile(`^[\p{L}\p{M}0-9\/.'_\s-]+$`), " Valid characters consist of any Unicode letter, mark (such as, accent, umlaut), # (numeric), / (forward slash), . (period), ' (apostrophe), _ (underscore), space, or - (hyphen)."),
 				},
 			},
 
