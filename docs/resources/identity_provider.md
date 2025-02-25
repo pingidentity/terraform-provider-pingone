@@ -169,6 +169,10 @@ Required:
 - `client_id` (String) A string that specifies the application client ID from Microsoft.
 - `client_secret` (String, Sensitive) A string that specifies the application client secret from Microsoft.
 
+Optional:
+
+- `tenant_id` (String) A string that specifies the tenant ID from Microsoft Entra ID. This property is required if Entra ID is enabled.
+
 
 <a id="nestedatt--openid_connect"></a>
 ### Nested Schema for `openid_connect`
