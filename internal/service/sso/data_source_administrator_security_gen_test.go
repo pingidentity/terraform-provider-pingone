@@ -82,7 +82,7 @@ data "pingone_administrator_security" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
   depends_on = [
-	pingone_administrator_security.%[2]s
+    pingone_administrator_security.%[2]s
   ]
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
