@@ -1,0 +1,7 @@
+```release-note:new-resource
+pingone_administrator_security
+```
+
+```release-note:new-data-source
+pingone_administrator_security
+```
