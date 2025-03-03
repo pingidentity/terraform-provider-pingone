@@ -1,0 +1,3 @@
+```release-note:bug
+Fix `service_endpoints` and `global_options` provider parameters when defined explicitly in the HCL provider configuration.
+```

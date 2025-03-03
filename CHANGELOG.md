@@ -1,3 +1,30 @@
+## 1.5.0 (26 February 2025)
+
+NOTES:
+
+* bump `github.com/hashicorp/terraform-plugin-framework-validators` 0.16.0 => 0.17.0 ([#994](https://github.com/pingidentity/terraform-provider-pingone/issues/994))
+* bump `github.com/hashicorp/terraform-plugin-framework` 1.13.0 => 1.14.1 ([#997](https://github.com/pingidentity/terraform-provider-pingone/issues/997))
+* bump `github.com/hashicorp/terraform-plugin-sdk/v2` 2.35.0 => 2.36.0 ([#981](https://github.com/pingidentity/terraform-provider-pingone/issues/981))
+* bump `github.com/hashicorp/terraform-plugin-sdk/v2` 2.36.0 => 2.36.1 ([#996](https://github.com/pingidentity/terraform-provider-pingone/issues/996))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` 0.7.0 => 0.8.0 ([#987](https://github.com/pingidentity/terraform-provider-pingone/issues/987))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` 0.10.0 => 0.11.0 ([#985](https://github.com/pingidentity/terraform-provider-pingone/issues/985))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.47.0 => 0.49.0 ([#986](https://github.com/pingidentity/terraform-provider-pingone/issues/986))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.49 => 0.51.0 ([#999](https://github.com/pingidentity/terraform-provider-pingone/issues/999))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` 0.22.0 => 0.23.0 ([#982](https://github.com/pingidentity/terraform-provider-pingone/issues/982))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` 0.18.0 => 0.19.0 ([#984](https://github.com/pingidentity/terraform-provider-pingone/issues/984))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/verify` 0.8.0 => 0.9.0 ([#982](https://github.com/pingidentity/terraform-provider-pingone/issues/982))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.7 => 0.12.9 ([#982](https://github.com/pingidentity/terraform-provider-pingone/issues/982))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.9 => 0.12.11 ([#999](https://github.com/pingidentity/terraform-provider-pingone/issues/999))
+
+ENHANCEMENTS:
+
+* `resource/identity_provider`: Added support for the `microsoft.tenant_id` field. ([#999](https://github.com/pingidentity/terraform-provider-pingone/issues/999))
+
+BUG FIXES:
+
+* Fix `service_endpoints` and `global_options` provider parameters when defined explicitly in the HCL provider configuration. ([#998](https://github.com/pingidentity/terraform-provider-pingone/issues/998))
+* `resource/pingone_risk_policy`: Fix policy naming regex validation to allow numbers. ([#991](https://github.com/pingidentity/terraform-provider-pingone/issues/991))
+
 ## 1.4.0 (29 January 2025)
 
 NOTES:
