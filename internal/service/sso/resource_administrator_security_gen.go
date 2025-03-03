@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -21,7 +22,6 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -67,36 +67,73 @@ func (r *administratorSecurityResource) Configure(ctx context.Context, req resou
 }
 
 type administratorSecurityResourceModel struct {
-	AllowedMethods       types.String                 `tfsdk:"allowed_methods"`
+	AllowedMethods       types.Object                 `tfsdk:"allowed_methods"`
 	AuthenticationMethod types.String                 `tfsdk:"authentication_method"`
 	EnvironmentId        pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	HasFido2Capabilities types.Bool                   `tfsdk:"has_fido2_capabilities"`
+	Id                   pingonetypes.ResourceIDValue `tfsdk:"id"`
+	IsPingIdinBom        types.Bool                   `tfsdk:"is_pingid_in_bom"`
 	MfaStatus            types.String                 `tfsdk:"mfa_status"`
-	Policy               types.Object                 `tfsdk:"policy"`
 	IdentityProvider     types.Object                 `tfsdk:"identity_provider"`
 	Recovery             types.Bool                   `tfsdk:"recovery"`
 }
 
 func (r *administratorSecurityResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Resource to create and manage the administrator security.",
+		Description: "Resource to create and manage environment administrator sign-on settings.",
 		Attributes: map[string]schema.Attribute{
-			"allowed_methods": schema.StringAttribute{
-				Optional:            true,
-				Description:         "Indicates the methods to enable or disable for admin sign-on. Possible values are \"TOTP\" (temporary one-time password), \"FIDO2\", or \"EMAIL\".",
-				MarkdownDescription: "Indicates the methods to enable or disable for admin sign-on. Possible values are `TOTP` (temporary one-time password), `FIDO2`, or `EMAIL`.",
-				Validators: []validator.String{
-					stringvalidator.OneOf(
-						"TOTP",
-						"FIDO2",
-						"EMAIL",
-					),
+			"allowed_methods": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"email": schema.StringAttribute{
+						Required:    true,
+						Description: "Indicates whether to enable email for sign-on.",
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								`{"enabled":true}`,
+								`{"enabled":false}`,
+							),
+						},
+					},
+					"fido2": schema.StringAttribute{
+						Required:    true,
+						Description: "Indicates whether to enable FIDO2 for sign-on.",
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								`{"enabled":true}`,
+								`{"enabled":false}`,
+							),
+						},
+					},
+					"totp": schema.StringAttribute{
+						Required:    true,
+						Description: "Indicates whether to enable TOTP for sign-on.",
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								`{"enabled":true}`,
+								`{"enabled":false}`,
+							),
+						},
+					},
 				},
+				Optional: true,
+				Computed: true,
+				Default: objectdefault.StaticValue(types.ObjectValueMust(map[string]attr.Type{
+					"email": types.StringType,
+					"fido2": types.StringType,
+					"totp":  types.StringType,
+				}, map[string]attr.Value{
+					"email": types.StringValue(`{"enabled":true}`),
+					"fido2": types.StringValue(`{"enabled":true}`),
+					"totp":  types.StringValue(`{"enabled":true}`),
+				})),
+				Description:         "Indicates the methods to enable or disable for admin sign-on. Required properties are \"TOTP\" (temporary one-time password), \"FIDO2\", or \"EMAIL\".",
+				MarkdownDescription: "Indicates the methods to enable or disable for admin sign-on. Required properties are `TOTP` (temporary one-time password), `FIDO2`, or `EMAIL`.",
 			},
 			"authentication_method": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Indicates whether to use PingOne MFA, an external IdP, or a combination of both for admin sign-on. Possible values are \"PINGONE\", \"EXTERNAL\", or \"HYBRID\". The default is \"PINGONE\". The default value is \"PINGONE\".",
-				MarkdownDescription: "Indicates whether to use PingOne MFA, an external IdP, or a combination of both for admin sign-on. Possible values are `PINGONE`, `EXTERNAL`, or `HYBRID`. The default is `PINGONE`. The default value is `PINGONE`.",
+				Description:         "Indicates whether to use PingOne MFA, an external IdP, or a combination of both for admin sign-on. Possible values are \"PINGONE\", \"EXTERNAL\", or \"HYBRID\". The default is \"PINGONE\".",
+				MarkdownDescription: "Indicates whether to use PingOne MFA, an external IdP, or a combination of both for admin sign-on. Possible values are `PINGONE`, `EXTERNAL`, or `HYBRID`. The default is `PINGONE`.",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"PINGONE",
@@ -109,34 +146,36 @@ func (r *administratorSecurityResource) Schema(ctx context.Context, req resource
 			"environment_id": framework.Attr_LinkID(
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create and manage the administrator_security in."),
 			),
+			"has_fido2_capabilities": schema.BoolAttribute{
+				Computed:    true,
+				Description: "Indicates whether the environment supports FIDO2 passkeys for MFA.",
+			},
+			"id": framework.Attr_ID(),
+			"is_pingid_in_bom": schema.BoolAttribute{
+				Computed:    true,
+				Description: "Indicates whether the environment supports FIDO2 passkeys for MFA.",
+			},
 			"mfa_status": schema.StringAttribute{
-				Computed:            true,
-				Description:         "This applies only to the specified environment, and must be set to \"ENFORCE\".",
-				MarkdownDescription: "This applies only to the specified environment, and must be set to `ENFORCE`.",
+				Required:            true,
+				Description:         "This property must be set to \"ENFORCE\" as MFA is required for administrator sign-ons. This property applies only to the specified environment.",
+				MarkdownDescription: "This property must be set to `ENFORCE` as MFA is required for administrator sign-ons. This property applies only to the specified environment.",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"ENFORCE",
 					),
 				},
-				Default: stringdefault.StaticString("ENFORCE"),
-			},
-			"policy": schema.SingleNestedAttribute{
-				Attributes: map[string]schema.Attribute{
-					"id": schema.StringAttribute{
-						Computed:    true,
-						Description: "The admin sign-on policy ID.",
-					},
-				},
-				Computed: true,
 			},
 			"identity_provider": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
 						Required:    true,
 						Description: "The UUID of the external IdP, if applicable.",
+						CustomType:  pingonetypes.ResourceIDType{},
 					},
 				},
-				Optional: true,
+				Optional:            true,
+				Description:         "The external IdP, if applicable. Required when the authentication_method is set to \"EXTERNAL\" or \"HYBRID\", otherwise should not be set.",
+				MarkdownDescription: "The external IdP, if applicable. Required when the authentication_method is set to `EXTERNAL` or `HYBRID`, otherwise should not be set.",
 			},
 			"recovery": schema.BoolAttribute{
 				Required:    true,
@@ -151,16 +190,12 @@ func (model *administratorSecurityResourceModel) buildClientStruct() (*managemen
 	var respDiags diag.Diagnostics
 	// allowed_methods
 	if !model.AllowedMethods.IsNull() {
-		allowedMethodsValue, err := management.NewEnumAdministratorSecurityAllowedMethodsFromValue(model.AllowedMethods.ValueString())
-		if err != nil {
-			respDiags.AddAttributeError(
-				path.Root("allowed_methods"),
-				"Provided value is not valid",
-				fmt.Sprintf("The value provided for allowed_methods is not valid: %s", err.Error()),
-			)
-		} else {
-			result.AllowedMethods = allowedMethodsValue
-		}
+		allowedMethodsValue := &management.AdministratorSecurityAllowedMethods{}
+		allowedMethodsAttrs := model.AllowedMethods.Attributes()
+		allowedMethodsValue.EMAIL = allowedMethodsAttrs["email"].(types.String).ValueString()
+		allowedMethodsValue.FIDO2 = allowedMethodsAttrs["fido2"].(types.String).ValueString()
+		allowedMethodsValue.TOTP = allowedMethodsAttrs["totp"].(types.String).ValueString()
+		result.AllowedMethods = allowedMethodsValue
 	}
 
 	// authentication_method
@@ -178,27 +213,23 @@ func (model *administratorSecurityResourceModel) buildClientStruct() (*managemen
 	}
 
 	// mfa_status
-	if !model.MfaStatus.IsNull() {
-		mfaStatusValue := management.EnumAdministratorSecurityMfaStatus(model.MfaStatus.ValueString())
-		result.MfaStatus = &mfaStatusValue
-		/*mfaStatusValue, err := management.NewEnumAdministratorSecurityMfaStatusFromValue(model.MfaStatus.ValueString())
-		if err != nil {
-			respDiags.AddAttributeError(
-				path.Root("mfa_status"),
-				"Provided value is not valid",
-				fmt.Sprintf("The value provided for mfa_status is not valid: %s", err.Error()),
-			)
-		} else {
-			result.MfaStatus = mfaStatusValue
-		}*/
+	mfaStatusValue, err := management.NewEnumAdministratorSecurityMfaStatusFromValue(model.MfaStatus.ValueString())
+	if err != nil {
+		respDiags.AddAttributeError(
+			path.Root("mfa_status"),
+			"Provided value is not valid",
+			fmt.Sprintf("The value provided for mfa_status is not valid: %s", err.Error()),
+		)
+	} else {
+		result.MfaStatus = *mfaStatusValue
 	}
 
 	// identity_provider
 	if !model.IdentityProvider.IsNull() {
-		identityProviderValue := &management.AdministratorSecurityProvider{}
-		identityProviderAttrs := model.IdentityProvider.Attributes()
-		identityProviderValue.Id = identityProviderAttrs["id"].(types.String).ValueString()
-		result.Provider = identityProviderValue
+		providerValue := &management.AdministratorSecurityProvider{}
+		providerAttrs := model.IdentityProvider.Attributes()
+		providerValue.Id = providerAttrs["id"].(pingonetypes.ResourceIDValue).ValueString()
+		result.Provider = providerValue
 	}
 
 	// recovery
@@ -211,59 +242,57 @@ func (model *administratorSecurityResourceModel) buildClientStruct() (*managemen
 func (model *administratorSecurityResource) buildDefaultClientStruct() *management.AdministratorSecurity {
 	result := &management.AdministratorSecurity{}
 	result.AuthenticationMethod = management.EnumAdministratorSecurityAuthenticationMethod("PINGONE")
-	result.MfaStatus = utils.Pointer(management.EnumAdministratorSecurityMfaStatus("ENFORCE"))
+	result.MfaStatus = management.EnumAdministratorSecurityMfaStatus("ENFORCE")
+	result.Recovery = true
 	return result
 }
 
 func (state *administratorSecurityResourceModel) readClientResponse(response *management.AdministratorSecurity) diag.Diagnostics {
 	var respDiags, diags diag.Diagnostics
 	// allowed_methods
-	var allowedMethodsPtrValue *string
-	if response.AllowedMethods != nil {
-		allowedMethodsStringValue := string(*response.AllowedMethods)
-		allowedMethodsPtrValue = &allowedMethodsStringValue
+	allowedMethodsAttrTypes := map[string]attr.Type{
+		"email": types.StringType,
+		"fido2": types.StringType,
+		"totp":  types.StringType,
 	}
-	allowedMethodsValue := types.StringPointerValue(allowedMethodsPtrValue)
+	var allowedMethodsValue types.Object
+	if response.AllowedMethods == nil {
+		allowedMethodsValue = types.ObjectNull(allowedMethodsAttrTypes)
+	} else {
+		allowedMethodsValue, diags = types.ObjectValue(allowedMethodsAttrTypes, map[string]attr.Value{
+			"email": types.StringValue(response.AllowedMethods.EMAIL),
+			"fido2": types.StringValue(response.AllowedMethods.FIDO2),
+			"totp":  types.StringValue(response.AllowedMethods.TOTP),
+		})
+		respDiags.Append(diags...)
+	}
 	state.AllowedMethods = allowedMethodsValue
 	// authentication_method
 	authenticationMethodValue := types.StringValue(string(response.AuthenticationMethod))
 	state.AuthenticationMethod = authenticationMethodValue
+	// has_fido2_capabilities
+	state.HasFido2Capabilities = types.BoolPointerValue(response.HasFido2Capabilities)
+	// id
+	state.Id = framework.PingOneResourceIDToTF(*response.GetEnvironment().Id)
+	// is_pingid_in_bom
+	state.IsPingIdinBom = types.BoolPointerValue(response.IsPingIDInBOM)
 	// mfa_status
-	var mfaStatusPtrValue *string
-	if response.MfaStatus != nil {
-		mfaStatusStringValue := string(*response.MfaStatus)
-		mfaStatusPtrValue = &mfaStatusStringValue
-	}
-	mfaStatusValue := types.StringPointerValue(mfaStatusPtrValue)
+	mfaStatusValue := types.StringValue(string(response.MfaStatus))
 	state.MfaStatus = mfaStatusValue
-	// policy
-	policyAttrTypes := map[string]attr.Type{
-		"id": types.StringType,
-	}
-	var policyValue types.Object
-	if response.Policy == nil {
-		policyValue = types.ObjectNull(policyAttrTypes)
-	} else {
-		policyValue, diags = types.ObjectValue(policyAttrTypes, map[string]attr.Value{
-			"id": types.StringPointerValue(response.Policy.Id),
-		})
-		respDiags.Append(diags...)
-	}
-	state.Policy = policyValue
 	// identity_provider
-	identityProviderAttrTypes := map[string]attr.Type{
+	providerAttrTypes := map[string]attr.Type{
 		"id": types.StringType,
 	}
-	var identityProviderValue types.Object
+	var providerValue types.Object
 	if response.Provider == nil {
-		identityProviderValue = types.ObjectNull(identityProviderAttrTypes)
+		providerValue = types.ObjectNull(providerAttrTypes)
 	} else {
-		identityProviderValue, diags = types.ObjectValue(identityProviderAttrTypes, map[string]attr.Value{
+		providerValue, diags = types.ObjectValue(providerAttrTypes, map[string]attr.Value{
 			"id": types.StringValue(response.Provider.Id),
 		})
 		respDiags.Append(diags...)
 	}
-	state.IdentityProvider = identityProviderValue
+	state.IdentityProvider = providerValue
 	// recovery
 	state.Recovery = types.BoolValue(response.Recovery)
 	return respDiags
@@ -464,7 +493,6 @@ func (r *administratorSecurityResource) Delete(ctx context.Context, req resource
 }
 
 func (r *administratorSecurityResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-
 	idComponents := []framework.ImportComponent{
 		{
 			Label:     "environment_id",
@@ -482,13 +510,6 @@ func (r *administratorSecurityResource) ImportState(ctx context.Context, req res
 		return
 	}
 
-	for _, idComponent := range idComponents {
-		pathKey := idComponent.Label
-
-		if idComponent.PrimaryID {
-			pathKey = "id"
-		}
-
-		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
-	}
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes["environment_id"])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes["environment_id"])...)
 }

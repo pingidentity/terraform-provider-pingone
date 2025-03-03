@@ -153,9 +153,10 @@ func TestAccAdministratorSecurity_BadParameters(t *testing.T) {
 			},
 			// Errors
 			{
-				ResourceName: resourceFullName,
-				ImportState:  true,
-				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})
@@ -168,6 +169,7 @@ func administratorSecurity_MinimalHCL(resourceName string) string {
 
 resource "pingone_administrator_security" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
+  mfa_status = "ENFORCE"
   recovery = true
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
@@ -178,16 +180,43 @@ func administratorSecurity_CompleteHCL(resourceName string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_identity_provider" "%[2]s-idp" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[2]s-idp"
+  enabled                    = true
+
+  microsoft = {
+    client_id     = "dummyclientid1"
+    client_secret = "dummyclientsecret1"
+    tenant_id     = "dummytenantid1"
+  }
+}
+
 resource "pingone_administrator_security" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  // TODO set values for complete fields
-  allowed_methods = //TODO
-  authentication_method = //TODO
-  mfa_status = //TODO
-  identity_provider = {
-    id = //TODO
+  allowed_methods = {
+    email = jsonencode(
+                {
+                 enabled = true
+                }
+            )
+    fido2 = jsonencode(
+                {
+                 enabled = false
+                }
+            )
+    totp = jsonencode(
+                {
+                 enabled = false
+                }
+            )
   }
-  recovery = //TODO
+  authentication_method = "HYBRID"
+  mfa_status = "ENFORCE"
+  identity_provider = {
+    id = pingone_identity_provider.%[2]s-idp.id
+  }
+  recovery = false
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
@@ -198,34 +227,29 @@ func administratorSecurity_NewEnvHCL(environmentName, licenseID, resourceName st
 
 resource "pingone_administrator_security" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  // TODO set values for minimal fields
-  recovery = //TODO
+  mfa_status = "ENFORCE"
+  recovery = true
 }
 `, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 // Validate any computed values when applying minimal HCL
-// TODO remove any values that are not computed from this check
-// TODO set expected values
 func administratorSecurity_CheckComputedValuesMinimal(resourceName string) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_administrator_security.%s", resourceName), "allowed_methods", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_administrator_security.%s", resourceName), "authentication_method", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_administrator_security.%s", resourceName), "mfa_status", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_administrator_security.%s", resourceName), "policy.id", "expected_value"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_administrator_security.%s", resourceName), "allowed_methods.email", `{"enabled":true}`),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_administrator_security.%s", resourceName), "allowed_methods.fido2", `{"enabled":true}`),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_administrator_security.%s", resourceName), "allowed_methods.totp", `{"enabled":true}`),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_administrator_security.%s", resourceName), "authentication_method", "PINGONE"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_administrator_security.%s", resourceName), "has_fido2_capabilities", "true"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_administrator_security.%s", resourceName), "is_pingid_in_bom", "false"),
 	)
 }
 
 // Validate any computed values when applying complete HCL
-// TODO This may not be needed as a separate function from minimal HCL if the expected values match
-// TODO remove any values that are not computed from this check
-// TODO set expected values
 func administratorSecurity_CheckComputedValuesComplete(resourceName string) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_administrator_security.%s", resourceName), "allowed_methods", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_administrator_security.%s", resourceName), "authentication_method", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_administrator_security.%s", resourceName), "mfa_status", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_administrator_security.%s", resourceName), "policy.id", "expected_value"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_administrator_security.%s", resourceName), "has_fido2_capabilities", "true"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_administrator_security.%s", resourceName), "is_pingid_in_bom", "false"),
 	)
 }
 
