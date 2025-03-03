@@ -72,7 +72,7 @@ type administratorSecurityResourceModel struct {
 	EnvironmentId        pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	HasFido2Capabilities types.Bool                   `tfsdk:"has_fido2_capabilities"`
 	Id                   pingonetypes.ResourceIDValue `tfsdk:"id"`
-	IsPingIdinBom        types.Bool                   `tfsdk:"is_pingid_in_bom"`
+	IsPingIdInBom        types.Bool                   `tfsdk:"is_pingid_in_bom"`
 	MfaStatus            types.String                 `tfsdk:"mfa_status"`
 	IdentityProvider     types.Object                 `tfsdk:"identity_provider"`
 	Recovery             types.Bool                   `tfsdk:"recovery"`
@@ -275,7 +275,7 @@ func (state *administratorSecurityResourceModel) readClientResponse(response *ma
 	// id
 	state.Id = framework.PingOneResourceIDToTF(*response.GetEnvironment().Id)
 	// is_pingid_in_bom
-	state.IsPingIdinBom = types.BoolPointerValue(response.IsPingIDInBOM)
+	state.IsPingIdInBom = types.BoolPointerValue(response.IsPingIDInBOM)
 	// mfa_status
 	mfaStatusValue := types.StringValue(string(response.MfaStatus))
 	state.MfaStatus = mfaStatusValue
