@@ -169,8 +169,8 @@ func administratorSecurity_MinimalHCL(resourceName string) string {
 
 resource "pingone_administrator_security" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  mfa_status = "ENFORCE"
-  recovery = true
+  mfa_status     = "ENFORCE"
+  recovery       = true
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
@@ -183,7 +183,7 @@ func administratorSecurity_CompleteHCL(resourceName string) string {
 resource "pingone_identity_provider" "%[2]s-idp" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[2]s-idp"
-  enabled                    = true
+  enabled        = true
 
   microsoft = {
     client_id     = "dummyclientid1"
@@ -196,23 +196,23 @@ resource "pingone_administrator_security" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   allowed_methods = {
     email = jsonencode(
-                {
-                 enabled = true
-                }
-            )
+      {
+        enabled = true
+      }
+    )
     fido2 = jsonencode(
-                {
-                 enabled = false
-                }
-            )
+      {
+        enabled = false
+      }
+    )
     totp = jsonencode(
-                {
-                 enabled = false
-                }
-            )
+      {
+        enabled = false
+      }
+    )
   }
   authentication_method = "HYBRID"
-  mfa_status = "ENFORCE"
+  mfa_status            = "ENFORCE"
   identity_provider = {
     id = pingone_identity_provider.%[2]s-idp.id
   }
@@ -227,8 +227,8 @@ func administratorSecurity_NewEnvHCL(environmentName, licenseID, resourceName st
 
 resource "pingone_administrator_security" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  mfa_status = "ENFORCE"
-  recovery = true
+  mfa_status     = "ENFORCE"
+  recovery       = true
 }
 `, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }

@@ -153,7 +153,7 @@ func (r *administratorSecurityResource) Schema(ctx context.Context, req resource
 			"id": framework.Attr_ID(),
 			"is_pingid_in_bom": schema.BoolAttribute{
 				Computed:    true,
-				Description: "Indicates whether the environment supports FIDO2 passkeys for MFA.",
+				Description: "Indicates whether the environment supports PingID for MFA.",
 			},
 			"mfa_status": schema.StringAttribute{
 				Required:            true,
