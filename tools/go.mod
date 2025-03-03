@@ -3,7 +3,7 @@ module github.com/pingidentity/terraform-provider-pingone/tools
 go 1.23.3
 
 require (
-	github.com/bflad/tfproviderlint v0.30.0
+	github.com/bflad/tfproviderlint v0.31.0
 	github.com/golangci/golangci-lint v1.64.6
 	github.com/hashicorp/go-changelog v0.0.0-20230630083008-522d403eacf1
 	github.com/hashicorp/terraform-plugin-docs v0.21.0
