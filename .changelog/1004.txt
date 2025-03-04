@@ -5,3 +5,11 @@ pingone_administrator_security
 ```release-note:new-data-source
 pingone_administrator_security
 ```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.11 => 0.12.12
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.51.0 => 0.52.0
+```
