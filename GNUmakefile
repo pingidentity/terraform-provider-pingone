@@ -33,29 +33,6 @@ testacc: build
 	TF_ACC=1 go test $$(go list ./internal/client/...) -v $(TESTARGS) -timeout 120m
 	TF_ACC=1 go test $$(go list ./internal/service/...) -v $(TESTARGS) -timeout 120m
 
-# Run all tests from the excluded list
-testacc_failing: build
-	@bash -c 'while IFS="," read -r test dir; do \
-		echo "Running $$test in $$dir"; \
-		TF_ACC=1 go test -v -timeout 120m -run "^$$test" github.com/pingidentity/terraform-provider-pingone/internal/service/$$dir; \
-	done < testacc_failing.txt'
-  
-
-# Run all tests that are NOT in the excluded list
-testacc_passing: build
-	@find internal/service -name '*_test.go' | while read -r file; do \
-		for test in $$(grep -E 'func TestAcc[[:alnum:]_]+\(' $$file | sed -E 's/func (TestAcc[[:alnum:]_]+).*/\1/'); do \
-			dir=$$(dirname $$file | sed 's|internal/service/||'); \
-			if ! grep -qF "$$test" testacc_failing.txt; then \
-				echo "Running $$test in $$dir"; \
-				TF_ACC=1 go test -v -timeout 3000s -run "^$$test" github.com/pingidentity/terraform-provider-pingone/internal/service/$$dir; \
-			fi; \
-		done; \
-	done
-
-# Run both groups sequentially
-testacc_all: testacc_passing testacc_failing
-
 sweep: build
 	@echo "WARNING: This will destroy infrastructure. Use only in development accounts."
 	go test $(SWEEP_DIR) -v -sweep=all $(SWEEPARGS) -timeout 10m
@@ -127,4 +104,4 @@ fmt: terrafmt fmtcheck
 
 devcheck: build vet tools fmt generate docscategorycheck lint test sweep testacc
 
-.PHONY: tools build install generate docscategorycheck test testacc testacc_failing testacc_passing sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck
+.PHONY: tools build install generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck
