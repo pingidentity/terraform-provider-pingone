@@ -3,7 +3,7 @@
 #
 # This pipeline is for isolating the known flaky tests until they can be properly
 # triaged and corrected through API improvements, test improvements, and so on.
-name: Failing Acceptance Tests (Feature Flagged)
+name: Multi-region Failing Acceptance Tests
 on:
   workflow_dispatch:
   # For systems with an upstream API that could drift unexpectedly (like most SaaS systems, etc.),

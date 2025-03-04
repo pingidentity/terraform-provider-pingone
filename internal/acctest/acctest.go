@@ -77,7 +77,6 @@ type MinMaxChecks struct {
 }
 
 type EnumFeatureFlag string
-type TestAccFlaky bool
 
 const (
 	ENUMFEATUREFLAG_DAVINCI EnumFeatureFlag = "DAVINCI"
