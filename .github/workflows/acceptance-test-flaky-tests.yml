@@ -1,0 +1,519 @@
+# This GitHub action runs your tests for each commit push and/or PR. Optionally
+# you can turn it on using a cron schedule for regular testing.
+#
+# This pipeline is for isolating the known flaky tests until they can be properly
+# triaged and corrected through API improvements, test improvements, and so on.
+name: Failing Acceptance Tests (Feature Flagged)
+on:
+  workflow_dispatch:
+  # For systems with an upstream API that could drift unexpectedly (like most SaaS systems, etc.),
+  # we recommend testing at a regular interval not necessarily tied to code changes. This will 
+  # ensure you are alerted to something breaking due to an API change, even if the code did not
+  # change.
+  schedule:
+    - cron: '0 3 * * *'
+jobs:
+  # ensure the code builds...
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: 'go.mod'
+        cache: true
+      id: go
+
+    - name: Get dependencies
+      run: |
+        go mod download
+
+    - name: Build
+      run: |
+        make build
+
+  prepare-ap:
+    name: Prepare AP
+    runs-on: ubuntu-latest
+
+    env:
+      FEATURE_FLAG: TESTACC_FLAKY
+      PINGONE_TESTING_PROVIDER_VERSION: test
+      PINGONE_CLIENT_ID: ${{ secrets.AP_PINGONE_FF_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.AP_PINGONE_FF_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.AP_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_REGION_CODE: "AP"
+      PINGONE_LICENSE_ID: ${{ secrets.AP_PINGONE_FF_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.AP_PINGONE_FF_ORGANIZATION_ID }}
+
+    timeout-minutes: 5
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: 'go.mod'
+        cache: true
+      id: go
+
+    - name: Get dependencies
+      run: |
+        go mod download
+
+    - name: Sweep to prepare
+      run: |
+        make sweep
+
+  # run acceptance tests in a matrix with Terraform core versions
+  test-ap:
+    name: Acceptance Test AP
+    needs: [prepare-ap, build]
+    runs-on: ubuntu-latest
+
+    env:
+      FEATURE_FLAG: TESTACC_FLAKY
+      PINGONE_TESTING_PROVIDER_VERSION: test
+      PINGONE_CLIENT_ID: ${{ secrets.AP_PINGONE_FF_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.AP_PINGONE_FF_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.AP_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_REGION_CODE: "AP"
+      PINGONE_LICENSE_ID: ${{ secrets.AP_PINGONE_FF_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.AP_PINGONE_FF_ORGANIZATION_ID }}
+
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        # list whatever Terraform versions here you would like to support
+        terraform:
+          - '1.10.*'
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: 'go.mod'
+        cache: true
+      id: go
+
+    - uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ matrix.terraform }}
+        terraform_wrapper: false
+
+    - name: Get dependencies
+      run: |
+        go mod download
+
+    - name: TF acceptance tests
+      timeout-minutes: 45
+      run: |
+        make testacc
+
+  cleanup-ap:
+    name: Clean up AP
+    needs: test-ap
+    runs-on: ubuntu-latest
+
+    env:
+      FEATURE_FLAG: TESTACC_FLAKY
+      PINGONE_TESTING_PROVIDER_VERSION: test
+      PINGONE_CLIENT_ID: ${{ secrets.AP_PINGONE_FF_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.AP_PINGONE_FF_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.AP_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_REGION_CODE: "AP"
+      PINGONE_LICENSE_ID: ${{ secrets.AP_PINGONE_FF_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.AP_PINGONE_FF_ORGANIZATION_ID }}
+
+    timeout-minutes: 5
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: 'go.mod'
+        cache: true
+      id: go
+
+    - name: Get dependencies
+      run: |
+        go mod download
+
+    - name: Sweep to prepare
+      run: |
+        make sweep
+
+  prepare-ca:
+    name: Prepare CA
+    runs-on: ubuntu-latest
+
+    env:
+      TESTACC_FLAKY: true
+      PINGONE_TESTING_PROVIDER_VERSION: test
+      PINGONE_CLIENT_ID: ${{ secrets.CA_PINGONE_FF_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.CA_PINGONE_FF_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.CA_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_REGION_CODE: "CA"
+      PINGONE_LICENSE_ID: ${{ secrets.CA_PINGONE_FF_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.CA_PINGONE_FF_ORGANIZATION_ID }}
+
+    timeout-minutes: 5
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: 'go.mod'
+        cache: true
+      id: go
+
+    - name: Get dependencies
+      run: |
+        go mod download
+
+    - name: Sweep to prepare
+      run: |
+        make sweep
+
+  # run acceptance tests in a matrix with Terraform core versions
+  test-ca:
+    name: Acceptance Test CA
+    needs: [prepare-ca, build]
+    runs-on: ubuntu-latest
+
+    env:
+      FEATURE_FLAG: TESTACC_FLAKY
+      PINGONE_TESTING_PROVIDER_VERSION: test
+      PINGONE_CLIENT_ID: ${{ secrets.CA_PINGONE_FF_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.CA_PINGONE_FF_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.CA_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_REGION_CODE: "CA"
+      PINGONE_LICENSE_ID: ${{ secrets.CA_PINGONE_FF_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.CA_PINGONE_FF_ORGANIZATION_ID }}
+
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        # list whatever Terraform versions here you would like to support
+        terraform:
+          - '1.10.*'
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: 'go.mod'
+        cache: true
+      id: go
+
+    - uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ matrix.terraform }}
+        terraform_wrapper: false
+
+    - name: Get dependencies
+      run: |
+        go mod download
+
+    - name: TF acceptance tests
+      timeout-minutes: 45
+      run: |
+        make testacc
+
+  cleanup-ca:
+    name: Clean up CA
+    needs: test-ca
+    runs-on: ubuntu-latest
+
+    env:
+      FEATURE_FLAG: TESTACC_FLAKY
+      PINGONE_TESTING_PROVIDER_VERSION: test
+      PINGONE_CLIENT_ID: ${{ secrets.CA_PINGONE_FF_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.CA_PINGONE_FF_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.CA_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_REGION_CODE: "CA"
+      PINGONE_LICENSE_ID: ${{ secrets.CA_PINGONE_FF_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.CA_PINGONE_FF_ORGANIZATION_ID }}
+
+    timeout-minutes: 5
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: 'go.mod'
+        cache: true
+      id: go
+
+    - name: Get dependencies
+      run: |
+        go mod download
+
+    - name: Sweep to prepare
+      run: |
+        make sweep
+
+  prepare-eu:
+    name: Prepare EU
+    runs-on: ubuntu-latest
+
+    env:
+      FEATURE_FLAG: TESTACC_FLAKY
+      PINGONE_TESTING_PROVIDER_VERSION: test
+      PINGONE_CLIENT_ID: ${{ secrets.EU_PINGONE_FF_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.EU_PINGONE_FF_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.EU_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_REGION_CODE: "EU"
+      PINGONE_LICENSE_ID: ${{ secrets.EU_PINGONE_FF_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.EU_PINGONE_FF_ORGANIZATION_ID }}
+
+    timeout-minutes: 5
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: 'go.mod'
+        cache: true
+      id: go
+
+    - name: Get dependencies
+      run: |
+        go mod download
+
+    - name: Sweep to prepare
+      run: |
+        make sweep
+
+  # run acceptance tests in a matrix with Terraform core versions
+  test-eu:
+    name: Acceptance Test EU
+    needs: [prepare-eu, build]
+    runs-on: ubuntu-latest
+
+    env:
+      FEATURE_FLAG: TESTACC_FLAKY
+      PINGONE_TESTING_PROVIDER_VERSION: test
+      PINGONE_CLIENT_ID: ${{ secrets.EU_PINGONE_FF_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.EU_PINGONE_FF_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.EU_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_REGION_CODE: "EU"
+      PINGONE_LICENSE_ID: ${{ secrets.EU_PINGONE_FF_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.EU_PINGONE_FF_ORGANIZATION_ID }}
+
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        # list whatever Terraform versions here you would like to support
+        terraform:
+          - '1.10.*'
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: 'go.mod'
+        cache: true
+      id: go
+
+    - uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ matrix.terraform }}
+        terraform_wrapper: false
+
+    - name: Get dependencies
+      run: |
+        go mod download
+
+    - name: TF acceptance tests
+      timeout-minutes: 45
+      run: |
+        make testacc
+
+  cleanup-eu:
+    name: Clean up EU
+    needs: test-eu
+    runs-on: ubuntu-latest
+
+    env:
+      FEATURE_FLAG: TESTACC_FLAKY
+      PINGONE_TESTING_PROVIDER_VERSION: test
+      PINGONE_CLIENT_ID: ${{ secrets.EU_PINGONE_FF_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.EU_PINGONE_FF_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.EU_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_REGION_CODE: "EU"
+      PINGONE_LICENSE_ID: ${{ secrets.EU_PINGONE_FF_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.EU_PINGONE_FF_ORGANIZATION_ID }}
+
+    timeout-minutes: 5
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: 'go.mod'
+        cache: true
+      id: go
+
+    - name: Get dependencies
+      run: |
+        go mod download
+
+    - name: Sweep to prepare
+      run: |
+        make sweep
+
+  prepare-na:
+    name: Prepare NA
+    runs-on: ubuntu-latest
+
+    env:
+      FEATURE_FLAG: TESTACC_FLAKY
+      PINGONE_TESTING_PROVIDER_VERSION: test
+      PINGONE_CLIENT_ID: ${{ secrets.NA_PINGONE_FF_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.NA_PINGONE_FF_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.NA_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_REGION_CODE: "NA"
+      PINGONE_LICENSE_ID: ${{ secrets.NA_PINGONE_FF_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.NA_PINGONE_FF_ORGANIZATION_ID }}
+
+    timeout-minutes: 5
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: 'go.mod'
+        cache: true
+      id: go
+
+    - name: Get dependencies
+      run: |
+        go mod download
+
+    - name: Sweep to prepare
+      run: |
+        make sweep
+
+  # run acceptance tests in a matrix with Terraform core versions
+  test-na:
+    name: Acceptance Test NA
+    needs: [prepare-na, build]
+    runs-on: ubuntu-latest
+
+    env:
+      FEATURE_FLAG: TESTACC_FLAKY
+      PINGONE_TESTING_PROVIDER_VERSION: test
+      PINGONE_CLIENT_ID: ${{ secrets.NA_PINGONE_FF_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.NA_PINGONE_FF_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.NA_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_REGION_CODE: "NA"
+      PINGONE_LICENSE_ID: ${{ secrets.NA_PINGONE_FF_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.NA_PINGONE_FF_ORGANIZATION_ID }}
+
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        # list whatever Terraform versions here you would like to support
+        terraform:
+          - '1.10.*'
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: 'go.mod'
+        cache: true
+      id: go
+
+    - uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ matrix.terraform }}
+        terraform_wrapper: false
+
+    - name: Get dependencies
+      run: |
+        go mod download
+
+    - name: TF acceptance tests
+      timeout-minutes: 45
+      run: |
+        make testacc
+
+  cleanup-na:
+    name: Clean up NA
+    needs: test-na
+    runs-on: ubuntu-latest
+
+    env:
+      FEATURE_FLAG: TESTACC_FLAKY
+      PINGONE_TESTING_PROVIDER_VERSION: test
+      PINGONE_CLIENT_ID: ${{ secrets.NA_PINGONE_FF_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.NA_PINGONE_FF_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.NA_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_REGION_CODE: "NA"
+      PINGONE_LICENSE_ID: ${{ secrets.NA_PINGONE_FF_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.NA_PINGONE_FF_ORGANIZATION_ID }}
+
+    timeout-minutes: 5
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: 'go.mod'
+        cache: true
+      id: go
+
+    - name: Get dependencies
+      run: |
+        go mod download
+
+    - name: Sweep to prepare
+      run: |
+        make sweep

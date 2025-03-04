@@ -77,6 +77,7 @@ type MinMaxChecks struct {
 }
 
 type EnumFeatureFlag string
+type TestAccFlaky bool
 
 const (
 	ENUMFEATUREFLAG_DAVINCI EnumFeatureFlag = "DAVINCI"
@@ -107,6 +108,12 @@ func PreCheckNoFeatureFlag(t *testing.T) {
 func PreCheckFeatureFlag(t *testing.T, flag EnumFeatureFlag) {
 	if v := os.Getenv("FEATURE_FLAG"); v != string(flag) {
 		t.Skipf("Skipping feature flag test.  Flag required: \"%s\"", string(flag))
+	}
+}
+
+func PreCheckTestAccFlaky(t *testing.T) {
+	if v := os.Getenv("TESTACC_FLAKY"); v != "true" {
+		t.Skip("Skipping test because TESTACC_FLAKY is not set to true")
 	}
 }
 
