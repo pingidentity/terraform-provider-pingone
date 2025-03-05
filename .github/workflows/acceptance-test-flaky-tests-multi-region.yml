@@ -1,9 +1,11 @@
 # This GitHub action runs your tests for each commit push and/or PR. Optionally
 # you can turn it on using a cron schedule for regular testing.
 #
-# This pipeline is for isolating the known flaky tests until they can be properly
-# triaged and corrected through API improvements, test improvements, and so on.
-name: Multi-region Flaky Acceptance Tests
+# This pipeline isolates the known flaky tests until they can be properly triaged 
+# and corrected through API improvements, test improvements, and so on.
+# All flaky tests now expect the TESTACC_FLAKY environment variable set to true
+# in order to be executed.  This pipeline sets this value.
+name: Multi-Region Flaky Acceptance Tests
 on:
   workflow_dispatch:
   # For systems with an upstream API that could drift unexpectedly (like most SaaS systems, etc.),
@@ -45,12 +47,12 @@ jobs:
     env:
       TESTACC_FLAKY: true
       PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets.AP_PINGONE_FF_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.AP_PINGONE_FF_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.AP_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_CLIENT_ID: ${{ secrets.AP_PINGONE_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.AP_PINGONE_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.AP_PINGONE_ENVIRONMENT_ID }}
       PINGONE_REGION_CODE: "AP"
-      PINGONE_LICENSE_ID: ${{ secrets.AP_PINGONE_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.AP_PINGONE_FF_ORGANIZATION_ID }}
+      PINGONE_LICENSE_ID: ${{ secrets.AP_PINGONE_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.AP_PINGONE_ORGANIZATION_ID }}
 
     timeout-minutes: 5
     steps:
@@ -82,12 +84,12 @@ jobs:
     env:
       TESTACC_FLAKY: true
       PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets.AP_PINGONE_FF_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.AP_PINGONE_FF_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.AP_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_CLIENT_ID: ${{ secrets.AP_PINGONE_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.AP_PINGONE_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.AP_PINGONE_ENVIRONMENT_ID }}
       PINGONE_REGION_CODE: "AP"
-      PINGONE_LICENSE_ID: ${{ secrets.AP_PINGONE_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.AP_PINGONE_FF_ORGANIZATION_ID }}
+      PINGONE_LICENSE_ID: ${{ secrets.AP_PINGONE_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.AP_PINGONE_ORGANIZATION_ID }}
 
     timeout-minutes: 45
     strategy:
@@ -130,12 +132,12 @@ jobs:
     env:
       TESTACC_FLAKY: true
       PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets.AP_PINGONE_FF_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.AP_PINGONE_FF_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.AP_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_CLIENT_ID: ${{ secrets.AP_PINGONE_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.AP_PINGONE_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.AP_PINGONE_ENVIRONMENT_ID }}
       PINGONE_REGION_CODE: "AP"
-      PINGONE_LICENSE_ID: ${{ secrets.AP_PINGONE_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.AP_PINGONE_FF_ORGANIZATION_ID }}
+      PINGONE_LICENSE_ID: ${{ secrets.AP_PINGONE_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.AP_PINGONE_ORGANIZATION_ID }}
 
     timeout-minutes: 5
     steps:
@@ -165,12 +167,12 @@ jobs:
     env:
       TESTACC_FLAKY: true
       PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets.CA_PINGONE_FF_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.CA_PINGONE_FF_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.CA_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_CLIENT_ID: ${{ secrets.CA_PINGONE_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.CA_PINGONE_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.CA_PINGONE_ENVIRONMENT_ID }}
       PINGONE_REGION_CODE: "CA"
-      PINGONE_LICENSE_ID: ${{ secrets.CA_PINGONE_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.CA_PINGONE_FF_ORGANIZATION_ID }}
+      PINGONE_LICENSE_ID: ${{ secrets.CA_PINGONE_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.CA_PINGONE_ORGANIZATION_ID }}
 
     timeout-minutes: 5
     steps:
@@ -202,12 +204,12 @@ jobs:
     env:
       TESTACC_FLAKY: true
       PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets.CA_PINGONE_FF_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.CA_PINGONE_FF_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.CA_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_CLIENT_ID: ${{ secrets.CA_PINGONE_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.CA_PINGONE_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.CA_PINGONE_ENVIRONMENT_ID }}
       PINGONE_REGION_CODE: "CA"
-      PINGONE_LICENSE_ID: ${{ secrets.CA_PINGONE_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.CA_PINGONE_FF_ORGANIZATION_ID }}
+      PINGONE_LICENSE_ID: ${{ secrets.CA_PINGONE_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.CA_PINGONE_ORGANIZATION_ID }}
 
     timeout-minutes: 45
     strategy:
@@ -250,12 +252,12 @@ jobs:
     env:
       TESTACC_FLAKY: true
       PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets.CA_PINGONE_FF_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.CA_PINGONE_FF_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.CA_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_CLIENT_ID: ${{ secrets.CA_PINGONE_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.CA_PINGONE_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.CA_PINGONE_ENVIRONMENT_ID }}
       PINGONE_REGION_CODE: "CA"
-      PINGONE_LICENSE_ID: ${{ secrets.CA_PINGONE_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.CA_PINGONE_FF_ORGANIZATION_ID }}
+      PINGONE_LICENSE_ID: ${{ secrets.CA_PINGONE_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.CA_PINGONE_ORGANIZATION_ID }}
 
     timeout-minutes: 5
     steps:
@@ -285,12 +287,12 @@ jobs:
     env:
       TESTACC_FLAKY: true
       PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets.EU_PINGONE_FF_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.EU_PINGONE_FF_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.EU_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_CLIENT_ID: ${{ secrets.EU_PINGONE_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.EU_PINGONE_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.EU_PINGONE_ENVIRONMENT_ID }}
       PINGONE_REGION_CODE: "EU"
-      PINGONE_LICENSE_ID: ${{ secrets.EU_PINGONE_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.EU_PINGONE_FF_ORGANIZATION_ID }}
+      PINGONE_LICENSE_ID: ${{ secrets.EU_PINGONE_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.EU_PINGONE_ORGANIZATION_ID }}
 
     timeout-minutes: 5
     steps:
@@ -322,12 +324,12 @@ jobs:
     env:
       TESTACC_FLAKY: true
       PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets.EU_PINGONE_FF_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.EU_PINGONE_FF_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.EU_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_CLIENT_ID: ${{ secrets.EU_PINGONE_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.EU_PINGONE_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.EU_PINGONE_ENVIRONMENT_ID }}
       PINGONE_REGION_CODE: "EU"
-      PINGONE_LICENSE_ID: ${{ secrets.EU_PINGONE_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.EU_PINGONE_FF_ORGANIZATION_ID }}
+      PINGONE_LICENSE_ID: ${{ secrets.EU_PINGONE_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.EU_PINGONE_ORGANIZATION_ID }}
 
     timeout-minutes: 45
     strategy:
@@ -370,12 +372,12 @@ jobs:
     env:
       TESTACC_FLAKY: true
       PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets.EU_PINGONE_FF_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.EU_PINGONE_FF_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.EU_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_CLIENT_ID: ${{ secrets.EU_PINGONE_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.EU_PINGONE_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.EU_PINGONE_ENVIRONMENT_ID }}
       PINGONE_REGION_CODE: "EU"
-      PINGONE_LICENSE_ID: ${{ secrets.EU_PINGONE_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.EU_PINGONE_FF_ORGANIZATION_ID }}
+      PINGONE_LICENSE_ID: ${{ secrets.EU_PINGONE_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.EU_PINGONE_ORGANIZATION_ID }}
 
     timeout-minutes: 5
     steps:
@@ -405,12 +407,12 @@ jobs:
     env:
       TESTACC_FLAKY: true
       PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets.NA_PINGONE_FF_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.NA_PINGONE_FF_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.NA_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_CLIENT_ID: ${{ secrets.NA_PINGONE_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.NA_PINGONE_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.NA_PINGONE_ENVIRONMENT_ID }}
       PINGONE_REGION_CODE: "NA"
-      PINGONE_LICENSE_ID: ${{ secrets.NA_PINGONE_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.NA_PINGONE_FF_ORGANIZATION_ID }}
+      PINGONE_LICENSE_ID: ${{ secrets.NA_PINGONE_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.NA_PINGONE_ORGANIZATION_ID }}
 
     timeout-minutes: 5
     steps:
@@ -442,12 +444,12 @@ jobs:
     env:
       TESTACC_FLAKY: true
       PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets.NA_PINGONE_FF_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.NA_PINGONE_FF_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.NA_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_CLIENT_ID: ${{ secrets.NA_PINGONE_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.NA_PINGONE_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.NA_PINGONE_ENVIRONMENT_ID }}
       PINGONE_REGION_CODE: "NA"
-      PINGONE_LICENSE_ID: ${{ secrets.NA_PINGONE_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.NA_PINGONE_FF_ORGANIZATION_ID }}
+      PINGONE_LICENSE_ID: ${{ secrets.NA_PINGONE_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.NA_PINGONE_ORGANIZATION_ID }}
 
     timeout-minutes: 45
     strategy:
@@ -490,12 +492,12 @@ jobs:
     env:
       TESTACC_FLAKY: true
       PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets.NA_PINGONE_FF_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.NA_PINGONE_FF_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.NA_PINGONE_FF_ENVIRONMENT_ID }}
+      PINGONE_CLIENT_ID: ${{ secrets.NA_PINGONE_CLIENT_ID }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.NA_PINGONE_CLIENT_SECRET }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets.NA_PINGONE_ENVIRONMENT_ID }}
       PINGONE_REGION_CODE: "NA"
-      PINGONE_LICENSE_ID: ${{ secrets.NA_PINGONE_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.NA_PINGONE_FF_ORGANIZATION_ID }}
+      PINGONE_LICENSE_ID: ${{ secrets.NA_PINGONE_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets.NA_PINGONE_ORGANIZATION_ID }}
 
     timeout-minutes: 5
     steps:
