@@ -426,6 +426,7 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckTestAccFlaky(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.PhoneDeliverySettings_CheckDestroy,

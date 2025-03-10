@@ -37,6 +37,7 @@ func TestAccLanguageUpdate_RemovalDrift(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckTestAccFlaky(t)
 
 			p1Client = acctest.PreCheckTestClient(ctx, t)
 		},

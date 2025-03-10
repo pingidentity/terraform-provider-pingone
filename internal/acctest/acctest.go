@@ -110,6 +110,12 @@ func PreCheckFeatureFlag(t *testing.T, flag EnumFeatureFlag) {
 	}
 }
 
+func PreCheckTestAccFlaky(t *testing.T) {
+	if v := os.Getenv("TESTACC_FLAKY"); v != "true" {
+		t.Skip("Skipping test because TESTACC_FLAKY is not set to true")
+	}
+}
+
 func PreCheckOrganisationName(t *testing.T) {
 	if v := os.Getenv("PINGONE_ORGANIZATION_NAME"); v == "" {
 		t.Fatal("PINGONE_ORGANIZATION_NAME is missing and must be set")
