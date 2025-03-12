@@ -3232,7 +3232,7 @@ resource "pingone_application" "%[2]s" {
     target_link_uri    = "https://www.pingidentity.com/target"
     pkce_enforcement   = "OPTIONAL"
 
-	idp_signoff = true
+    idp_signoff = true
 
     par_requirement = "OPTIONAL"
     par_timeout     = 60
@@ -3860,7 +3860,7 @@ resource "pingone_application" "%[2]s" {
     target_link_uri    = "https://www.pingidentity.com/target"
     pkce_enforcement   = "REQUIRED"
 
-	idp_signoff = true
+    idp_signoff = true
 
     par_requirement = "REQUIRED"
     par_timeout     = 180
@@ -4105,7 +4105,7 @@ resource "pingone_application" "%[2]s" {
 
     support_unsigned_request_object = true
 
-	idp_signoff = true
+    idp_signoff = true
 
     cors_settings = {
       behavior = "ALLOW_SPECIFIC_ORIGINS"
