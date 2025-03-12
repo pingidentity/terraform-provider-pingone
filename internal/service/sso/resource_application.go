@@ -905,6 +905,9 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Description:         oidcOptionsIdpSignoffDescription.Description,
 						MarkdownDescription: oidcOptionsIdpSignoffDescription.MarkdownDescription,
 						Optional:            true,
+						Computed:            true,
+
+						Default: booldefault.StaticBool(false),
 					},
 
 					"initiate_login_uri": schema.StringAttribute{
