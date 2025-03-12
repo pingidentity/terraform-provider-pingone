@@ -366,7 +366,7 @@ resource "pingone_application" "%[2]s" {
     refresh_token_rolling_duration                     = 30000000
     refresh_token_rolling_grace_period_duration        = 80000
     additional_refresh_token_replay_protection_enabled = false
-	idp_signoff                                        = false
+	idp_signoff                                        = true
 
     home_page_url      = "https://www.pingidentity.com"
     initiate_login_uri = "https://www.pingidentity.com/initiate"
