@@ -287,6 +287,10 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						MarkdownDescription: oidcOptionsDevicePollingIntervalDescription.MarkdownDescription,
 						Computed:            true,
 					},
+					"idp_signoff": schema.BoolAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean flag to allow signoff without access to the session token cookie.").Description,
+						Computed:    true,
+					},
 					"initiate_login_uri": schema.StringAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the URI to use for third-parties to begin the sign-on process for the application.").Description,
 						Computed:    true,
