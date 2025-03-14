@@ -1644,6 +1644,7 @@ func TestAccForm_ItemFlowLink(t *testing.T) {
 }
 
 func TestAccForm_ItemQRCode(t *testing.T) {
+	t.Skipf("Skipping test due to QR code functionality not being fully released in PingOne. Test should be re-enabled when QR code functionality is fully released.")
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
