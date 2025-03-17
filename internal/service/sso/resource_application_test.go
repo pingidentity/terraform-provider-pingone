@@ -158,6 +158,7 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.idp_signoff", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://pingidentity.com"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
@@ -362,6 +363,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.idp_signoff", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://pingidentity.com"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
@@ -1154,6 +1156,7 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.device_custom_verification_uri"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_timeout", "600"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_polling_interval", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.idp_signoff", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "3"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "TOKEN"),
@@ -1250,6 +1253,7 @@ func TestAccApplication_OIDCMinimalCustom(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.device_custom_verification_uri"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_timeout", "600"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_polling_interval", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.idp_signoff", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
@@ -1325,6 +1329,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.device_custom_verification_uri"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_timeout", "600"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_polling_interval", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.idp_signoff", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "3"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "TOKEN"),
@@ -1384,6 +1389,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.device_custom_verification_uri"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_timeout", "600"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_polling_interval", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.idp_signoff", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
@@ -1435,6 +1441,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.device_custom_verification_uri"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_timeout", "600"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_polling_interval", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.idp_signoff", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "3"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "TOKEN"),
@@ -1949,6 +1956,7 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "S256_REQUIRED"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.idp_signoff", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://pingidentity.com"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
@@ -2150,6 +2158,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "S256_REQUIRED"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.idp_signoff", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://pingidentity.com"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
@@ -3223,6 +3232,8 @@ resource "pingone_application" "%[2]s" {
     target_link_uri    = "https://www.pingidentity.com/target"
     pkce_enforcement   = "OPTIONAL"
 
+    idp_signoff = true
+
     par_requirement = "OPTIONAL"
     par_timeout     = 60
 
@@ -3849,6 +3860,8 @@ resource "pingone_application" "%[2]s" {
     target_link_uri    = "https://www.pingidentity.com/target"
     pkce_enforcement   = "REQUIRED"
 
+    idp_signoff = true
+
     par_requirement = "REQUIRED"
     par_timeout     = 180
 
@@ -4091,6 +4104,8 @@ resource "pingone_application" "%[2]s" {
     target_link_uri                 = "https://www.pingidentity.com/target"
 
     support_unsigned_request_object = true
+
+    idp_signoff = true
 
     cors_settings = {
       behavior = "ALLOW_SPECIFIC_ORIGINS"
