@@ -2,6 +2,8 @@ module github.com/pingidentity/terraform-provider-pingone
 
 go 1.23.3
 
+toolchain go1.24.1
+
 require (
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/terraform-plugin-framework v1.14.1
@@ -18,7 +20,7 @@ require (
 	github.com/patrickcping/pingone-go-sdk-v2 v0.12.12
 	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.8.0
 	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.11.0
-	github.com/patrickcping/pingone-go-sdk-v2/management v0.52.0
+	github.com/patrickcping/pingone-go-sdk-v2/management v0.53.0
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.23.0
 	github.com/patrickcping/pingone-go-sdk-v2/risk v0.19.0
 	github.com/patrickcping/pingone-go-sdk-v2/verify v0.9.0
