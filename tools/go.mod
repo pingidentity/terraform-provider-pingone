@@ -1,7 +1,6 @@
 module github.com/pingidentity/terraform-provider-pingone/tools
 
-go 1.23.3
-toolchain go1.24.1
+go 1.24.1
 
 require (
 	github.com/bflad/tfproviderlint v0.31.0
