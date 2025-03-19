@@ -11,12 +11,17 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
@@ -88,7 +93,7 @@ type applicationv2ResourceModel struct {
 	EnableRequestedAuthnContext                   types.Bool                   `tfsdk:"enable_requested_authn_context"`
 	Enabled                                       types.Bool                   `tfsdk:"enabled"`
 	EnvironmentId                                 pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	GrantTypes                                    types.List                   `tfsdk:"grant_types"`
+	GrantTypes                                    types.Set                    `tfsdk:"grant_types"`
 	HiddenFromAppPortal                           types.Bool                   `tfsdk:"hidden_from_app_portal"`
 	HomePageUrl                                   types.String                 `tfsdk:"home_page_url"`
 	Icon                                          types.Object                 `tfsdk:"icon"`
@@ -208,8 +213,12 @@ func (r *applicationv2Resource) Schema(ctx context.Context, req resource.SchemaR
 				MarkdownDescription: "A boolean that specifies whether the SAML assertion itself should be signed. The default value is `true`. The default value is `true`.",
 			},
 			"assign_actor_roles": schema.BoolAttribute{
-				Optional:    true,
-				Description: "A boolean that specifies whether the permissions service should assign default roles to the application. This property is set only on the POST request. The property is ignored when included in a PUT request.",
+				Optional: true,
+				Computed: true,
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.RequiresReplace(),
+				},
+				Description: "A boolean that specifies whether the permissions service should assign default roles to the application. This property is set only on the POST request. The property is ignored when included in a PUT request. The default value is \"false\".",
 			},
 			"bundle_id": schema.StringAttribute{
 				Optional:            true,
@@ -295,12 +304,12 @@ func (r *applicationv2Resource) Schema(ctx context.Context, req resource.SchemaR
 			"environment_id": framework.Attr_LinkID(
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create and manage the application in."),
 			),
-			"grant_types": schema.ListAttribute{
+			"grant_types": schema.SetAttribute{
 				ElementType: types.StringType,
 				Optional:    true,
 				Description: "A string that specifies the grant type for the authorization request. This is a required property. Options are AUTHORIZATION_CODE, IMPLICIT, REFRESH_TOKEN, CLIENT_CREDENTIALS.",
-				Validators: []validator.List{
-					listvalidator.ValueStringsAre(stringvalidator.OneOf(
+				Validators: []validator.Set{
+					setvalidator.ValueStringsAre(stringvalidator.OneOf(
 						"AUTHORIZATION_CODE",
 						"IMPLICIT",
 						"REFRESH_TOKEN",
@@ -311,7 +320,9 @@ func (r *applicationv2Resource) Schema(ctx context.Context, req resource.SchemaR
 			},
 			"hidden_from_app_portal": schema.BoolAttribute{
 				Optional:    true,
-				Description: "A boolean to specify whether the application is hidden in the application portal despite the configured group access policy.",
+				Computed:    true,
+				Description: "A boolean to specify whether the application is hidden in the application portal despite the configured group access policy. The default value is `false`.",
+				Default:     booldefault.StaticBool(false),
 			},
 			"home_page_url": schema.StringAttribute{
 				Optional:    true,
@@ -568,7 +579,8 @@ func (r *applicationv2Resource) Schema(ctx context.Context, req resource.SchemaR
 			},
 			"pkce_enforcement": schema.StringAttribute{
 				Optional:    true,
-				Description: "A string that specifies how PKCE request parameters are handled on the authorize request. Options are OPTIONAL PKCE code_challenge is optional and any code challenge method is acceptable. REQUIRED PKCE code_challenge is required and any code challenge method is acceptable. S256_REQUIRED PKCE code_challege is required and the code_challenge_method must be S256.",
+				Computed:    true,
+				Description: "A string that specifies how PKCE request parameters are handled on the authorize request. Options are OPTIONAL PKCE code_challenge is optional and any code challenge method is acceptable. REQUIRED PKCE code_challenge is required and any code challenge method is acceptable. S256_REQUIRED PKCE code_challege is required and the code_challenge_method must be S256. Defaults to `OPTIONAL`.",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"OPTIONAL",
@@ -667,7 +679,11 @@ func (r *applicationv2Resource) Schema(ctx context.Context, req resource.SchemaR
 						MarkdownDescription: "Contains the Key Rotation Policy (KRP) ID. This property is required if `signing` is set.",
 					},
 				},
-				Optional:            true,
+				Optional: true,
+				Computed: true,
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
 				Description:         "Configuration for the signing key. If absent, application tokens will be signed and verified by the PingOne default key at runtime. This property only applies to OIDC applications of type \"WEB_APP\", \"NATIVE_APP\", \"SINGLE_PAGE_APP\", and \"CUSTOM_APP\".",
 				MarkdownDescription: "Configuration for the signing key. If absent, application tokens will be signed and verified by the PingOne default key at runtime. This property only applies to OIDC applications of type `WEB_APP`, `NATIVE_APP`, `SINGLE_PAGE_APP`, and `CUSTOM_APP`.",
 			},
@@ -1256,6 +1272,13 @@ func (r *applicationv2Resource) ModifyPlan(ctx context.Context, req resource.Mod
 	if plan.AssertionSigned.IsUnknown() {
 		if plan.Protocol.ValueString() == "SAML" {
 			plan.AssertionSigned = types.BoolValue(true)
+		} else {
+			plan.AssertionSigned = types.BoolNull()
+		}
+	}
+	if plan.AssignActorRoles.IsUnknown() {
+		if plan.Protocol.ValueString() == "OPENID_CONNECT" {
+			plan.AssignActorRoles = types.BoolValue(false)
 		}
 	}
 	if plan.DevicePollingInterval.IsUnknown() {
@@ -1278,6 +1301,11 @@ func (r *applicationv2Resource) ModifyPlan(ctx context.Context, req resource.Mod
 			plan.ParTimeout = types.Int32Value(60)
 		}
 	}
+	if plan.PkceEnforcement.IsUnknown() {
+		if plan.Protocol.ValueString() == "OPENID_CONNECT" {
+			plan.PkceEnforcement = types.StringValue("OPTIONAL")
+		}
+	}
 	if plan.RefreshTokenDuration.IsUnknown() {
 		if plan.Protocol.ValueString() == "OPENID_CONNECT" {
 			plan.RefreshTokenDuration = types.Int32Value(2592000)
@@ -1286,11 +1314,15 @@ func (r *applicationv2Resource) ModifyPlan(ctx context.Context, req resource.Mod
 	if plan.ResponseSigned.IsUnknown() {
 		if plan.Protocol.ValueString() == "SAML" {
 			plan.ResponseSigned = types.BoolValue(false)
+		} else {
+			plan.ResponseSigned = types.BoolNull()
 		}
 	}
 	if plan.SloBinding.IsUnknown() {
 		if plan.Protocol.ValueString() == "SAML" {
 			plan.SloBinding = types.StringValue("HTTP_POST")
+		} else {
+			plan.SloBinding = types.StringNull()
 		}
 	}
 
@@ -1726,7 +1758,7 @@ func (model *applicationv2ResourceModel) buildClientStruct() (*management.Create
 		}
 
 		// OPENID_CONNECT - signing
-		if !model.Signing.IsNull() {
+		if !model.Signing.IsNull() && !model.Signing.IsUnknown() {
 			signingValue := &management.ApplicationOIDCAllOfSigning{}
 			signingAttrs := model.Signing.Attributes()
 			signingKeyRotationPolicyValue := management.ApplicationOIDCAllOfSigningKeyRotationPolicy{}
@@ -2247,7 +2279,7 @@ func (state *applicationv2ResourceModel) readClientResponse(response *management
 		// ApplicationOIDC - enabled
 		state.Enabled = types.BoolValue(response.ApplicationOIDC.Enabled)
 		// ApplicationOIDC - grant_types
-		state.GrantTypes, diags = types.ListValueFrom(context.Background(), types.StringType, response.ApplicationOIDC.GrantTypes)
+		state.GrantTypes, diags = types.SetValueFrom(context.Background(), types.StringType, response.ApplicationOIDC.GrantTypes)
 		respDiags.Append(diags...)
 		// ApplicationOIDC - hidden_from_app_portal
 		state.HiddenFromAppPortal = types.BoolPointerValue(response.ApplicationOIDC.HiddenFromAppPortal)
@@ -2815,7 +2847,7 @@ func (r *applicationv2Resource) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 
-	var responseData *management.ReadOneApplication200Response
+	var createResponseData *management.CreateApplication201Response
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
@@ -2826,11 +2858,17 @@ func (r *applicationv2Resource) Create(ctx context.Context, req resource.CreateR
 		"CreateApplication",
 		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
-		&responseData,
+		&createResponseData,
 	)...)
 
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	responseData := &management.ReadOneApplication200Response{
+		ApplicationOIDC:         createResponseData.ApplicationOIDC,
+		ApplicationSAML:         createResponseData.ApplicationSAML,
+		ApplicationExternalLink: createResponseData.ApplicationExternalLink,
 	}
 
 	// Read response into the model
