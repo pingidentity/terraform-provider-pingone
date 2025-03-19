@@ -1267,6 +1267,8 @@ func (r *applicationv2Resource) ModifyPlan(ctx context.Context, req resource.Mod
 	if plan.AdditionalRefreshTokenReplayProtectionEnabled.IsUnknown() {
 		if plan.Protocol.ValueString() == "OPENID_CONNECT" {
 			plan.AdditionalRefreshTokenReplayProtectionEnabled = types.BoolValue(true)
+		} else {
+			plan.AdditionalRefreshTokenReplayProtectionEnabled = types.BoolNull()
 		}
 	}
 	if plan.AssertionSigned.IsUnknown() {
@@ -1279,36 +1281,50 @@ func (r *applicationv2Resource) ModifyPlan(ctx context.Context, req resource.Mod
 	if plan.AssignActorRoles.IsUnknown() {
 		if plan.Protocol.ValueString() == "OPENID_CONNECT" {
 			plan.AssignActorRoles = types.BoolValue(false)
+		} else {
+			plan.AssignActorRoles = types.BoolNull()
 		}
 	}
 	if plan.DevicePollingInterval.IsUnknown() {
 		if plan.Protocol.ValueString() == "OPENID_CONNECT" {
 			plan.DevicePollingInterval = types.Int32Value(5)
+		} else {
+			plan.DevicePollingInterval = types.Int32Null()
 		}
 	}
 	if plan.DeviceTimeout.IsUnknown() {
 		if plan.Protocol.ValueString() == "OPENID_CONNECT" {
 			plan.DeviceTimeout = types.Int32Value(600)
+		} else {
+			plan.DeviceTimeout = types.Int32Null()
 		}
 	}
 	if plan.ParRequirement.IsUnknown() {
 		if plan.Protocol.ValueString() == "OPENID_CONNECT" {
 			plan.ParRequirement = types.StringValue("OPTIONAL")
+		} else {
+			plan.ParRequirement = types.StringNull()
 		}
 	}
 	if plan.ParTimeout.IsUnknown() {
 		if plan.Protocol.ValueString() == "OPENID_CONNECT" {
 			plan.ParTimeout = types.Int32Value(60)
+		} else {
+			plan.ParTimeout = types.Int32Null()
 		}
 	}
 	if plan.PkceEnforcement.IsUnknown() {
 		if plan.Protocol.ValueString() == "OPENID_CONNECT" {
 			plan.PkceEnforcement = types.StringValue("OPTIONAL")
+		} else {
+			plan.PkceEnforcement = types.StringNull()
 		}
 	}
 	if plan.RefreshTokenDuration.IsUnknown() {
 		if plan.Protocol.ValueString() == "OPENID_CONNECT" {
 			plan.RefreshTokenDuration = types.Int32Value(2592000)
+		} else {
+			plan.RefreshTokenDuration = types.Int32Null()
 		}
 	}
 	if plan.ResponseSigned.IsUnknown() {
@@ -1316,6 +1332,17 @@ func (r *applicationv2Resource) ModifyPlan(ctx context.Context, req resource.Mod
 			plan.ResponseSigned = types.BoolValue(false)
 		} else {
 			plan.ResponseSigned = types.BoolNull()
+		}
+	}
+	if plan.Signing.IsUnknown() {
+		if plan.Protocol.ValueString() != "OPENID_CONNECT" {
+			signingKeyRotationPolicyAttrTypes := map[string]attr.Type{
+				"id": types.StringType,
+			}
+			signingAttrTypes := map[string]attr.Type{
+				"key_rotation_policy": types.ObjectType{AttrTypes: signingKeyRotationPolicyAttrTypes},
+			}
+			plan.Signing = types.ObjectNull(signingAttrTypes)
 		}
 	}
 	if plan.SloBinding.IsUnknown() {
