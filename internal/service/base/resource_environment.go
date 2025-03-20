@@ -536,6 +536,9 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 	// Create the state to save
 	state = plan
 
+	// Wait one second right off the bat
+	time.Sleep(1 * time.Second)
+
 	// Wait until the notification settings and population return successful for this environment, to confirm
 	// it has propagated in PingOne. Max wait ten seconds for testing.
 	popsFound := false
@@ -549,7 +552,7 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 		// TODO don't really need a for loop here, just need to check the first page
 		for pageCursor, err := range pagedIterator {
 			initialHttpResponse = pageCursor.HTTPResponse
-			if initialHttpResponse.StatusCode >= 300 && initialHttpResponse.StatusCode != 404 {
+			if initialHttpResponse.StatusCode >= 300 && initialHttpResponse.StatusCode != 404 && initialHttpResponse.StatusCode != 403 {
 				// Unexpected error
 				errorString := "Error reading populations after env creation"
 				if err != nil {
