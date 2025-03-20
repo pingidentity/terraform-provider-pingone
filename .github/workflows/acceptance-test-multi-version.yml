@@ -210,7 +210,7 @@ jobs:
         run: |
           go mod download
 
-      - name: TF acceptance tests
+      - name: TF acceptance tests (flaky)
         id: tf-flaky-acc-test
         continue-on-error: true
         timeout-minutes: 180

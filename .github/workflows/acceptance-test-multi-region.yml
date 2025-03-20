@@ -206,7 +206,7 @@ jobs:
         run: |
           go mod download
 
-      - name: TF acceptance tests
+      - name: TF acceptance tests (FLAKY)
         id: tf-flaky-acc-test-ap
         continue-on-error: true
         timeout-minutes: 180
@@ -417,7 +417,7 @@ jobs:
         run: |
           go mod download
 
-      - name: TF acceptance tests
+      - name: TF acceptance tests (FLAKY)
         id: tf-flaky-acc-test-ca
         continue-on-error: true
         timeout-minutes: 180
@@ -631,7 +631,7 @@ jobs:
         run: |
           go mod download
 
-      - name: TF acceptance tests
+      - name: TF acceptance tests (FLAKY)
         id: tf-flaky-acc-test-eu
         continue-on-error: true
         timeout-minutes: 180
@@ -845,7 +845,7 @@ jobs:
         run: |
           go mod download
 
-      - name: TF acceptance tests
+      - name: TF acceptance tests (FLAKY)
         id: tf-flaky-acc-test-na
         continue-on-error: true
         timeout-minutes: 180
