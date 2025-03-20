@@ -536,6 +536,49 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 	// Create the state to save
 	state = plan
 
+	// Wait until the notification settings and population return successful for this environment, to confirm
+	// it has propagated in PingOne. Max wait ten seconds for testing.
+	popsFound := false
+	notificationSettingsFound := false
+	timeLimit := time.Now().Add(10 * time.Second)
+	for time.Now().Before(timeLimit) && (!popsFound || !notificationSettingsFound) {
+		// Try to read populations
+		pagedIterator := r.Client.ManagementAPIClient.PopulationsApi.ReadAllPopulations(ctx, environmentResponse.GetId()).Execute()
+		var initialHttpResponse *http.Response
+
+		// TODO don't really need a for loop here, just need to check the first page
+		for pageCursor, err := range pagedIterator {
+			initialHttpResponse = pageCursor.HTTPResponse
+			if initialHttpResponse.StatusCode >= 300 && initialHttpResponse.StatusCode != 404 {
+				// Unexpected error
+				errorString := "Error reading populations after env creation"
+				if err != nil {
+					errorString = fmt.Sprintf("%s: %s", errorString, err.Error())
+				}
+				resp.Diagnostics.AddError(
+					"Error reading populations after env creation",
+					errorString)
+				return
+			} else if initialHttpResponse.StatusCode < 300 {
+				popsFound = true
+			}
+			break
+		}
+
+		// Also try to read notification settings
+		_, httpResp, err := r.Client.ManagementAPIClient.NotificationsSettingsApi.ReadNotificationsSettings(ctx, environmentResponse.GetId()).Execute()
+		if httpResp.StatusCode >= 300 && httpResp.StatusCode != 404 {
+			// Unexpected error
+			errorString := fmt.Sprintf("Error reading notification settings: %s", err.Error())
+			resp.Diagnostics.AddError(
+				"Error reading notification settings after env creation",
+				errorString)
+			return
+		} else if initialHttpResponse.StatusCode < 300 {
+			notificationSettingsFound = true
+		}
+	}
+
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(state.toState(environmentResponse, billOfMaterials)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
