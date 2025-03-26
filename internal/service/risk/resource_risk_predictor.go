@@ -71,6 +71,7 @@ type riskPredictorResourceModel struct {
 	PredictorEmailReputation      types.Object                 `tfsdk:"predictor_email_reputation"`
 	PredictorGeoVelocity          types.Object                 `tfsdk:"predictor_geovelocity"`
 	PredictorIPReputation         types.Object                 `tfsdk:"predictor_ip_reputation"`
+	PredictorTrafficAnomaly       types.Object                 `tfsdk:"predictor_traffic_anomaly"`
 	PredictorUserLocationAnomaly  types.Object                 `tfsdk:"predictor_user_location_anomaly"`
 	PredictorUserRiskBehavior     types.Object                 `tfsdk:"predictor_user_risk_behavior"`
 	PredictorVelocity             types.Object                 `tfsdk:"predictor_velocity"`
@@ -131,6 +132,28 @@ type predictorDevice struct {
 	ActivationAt                   timetypes.RFC3339 `tfsdk:"activation_at"`
 	Detect                         types.String      `tfsdk:"detect"`
 	ShouldValidatePayloadSignature types.Bool        `tfsdk:"should_validate_payload_signature"`
+}
+
+// Traffic Anomaly
+type predictorTrafficAnomaly struct {
+	Rules types.List `tfsdk:"rules"`
+}
+
+type predictorTrafficAnomalyRule struct {
+	Enabled   types.Bool   `tfsdk:"enabled"`
+	Interval  types.Object `tfsdk:"interval"`
+	Threshold types.Object `tfsdk:"threshold"`
+	Type      types.String `tfsdk:"type"`
+}
+
+type predictorTrafficAnomalyRuleInterval struct {
+	Unit     types.String `tfsdk:"unit"`
+	Quantity types.Int32  `tfsdk:"quantity"`
+}
+
+type predictorTrafficAnomalyRuleThreshold struct {
+	High   types.Float32 `tfsdk:"high"`
+	Medium types.Float32 `tfsdk:"medium"`
 }
 
 // User Location Anomaly
@@ -290,6 +313,30 @@ var (
 		"activation_at":                     timetypes.RFC3339Type{},
 		"detect":                            types.StringType,
 		"should_validate_payload_signature": types.BoolType,
+	}
+
+	// Traffic Anomaly
+	predictorTrafficAnomalyTFObjectTypes = map[string]attr.Type{
+		"rules": types.ListType{
+			ElemType: types.ObjectType{AttrTypes: predictorTrafficAnomalyRulesTFObjectTypes},
+		},
+	}
+
+	predictorTrafficAnomalyRulesTFObjectTypes = map[string]attr.Type{
+		"enabled":   types.BoolType,
+		"interval":  types.ObjectType{AttrTypes: predictorTrafficAnomalyRulesIntervalTFObjectTypes},
+		"threshold": types.ObjectType{AttrTypes: predictorTrafficAnomalyRulesThresholdTFObjectTypes},
+		"type":      types.StringType,
+	}
+
+	predictorTrafficAnomalyRulesIntervalTFObjectTypes = map[string]attr.Type{
+		"unit":     types.StringType,
+		"quantity": types.Int32Type,
+	}
+
+	predictorTrafficAnomalyRulesThresholdTFObjectTypes = map[string]attr.Type{
+		"high":   types.Float32Type,
+		"medium": types.Float32Type,
 	}
 
 	// User Location Anomaly
@@ -495,6 +542,49 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 	predictorDeviceShouldValidatePayloadSignatureDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Relevant only for Suspicious Device predictors. A boolean that, if set to `true`, then any risk policies that include this predictor will require that the Signals SDK payload be provided as a signed JWT whose signature will be verified before proceeding with risk evaluation. You instruct the Signals SDK to provide the payload as a signed JWT by using the `universalDeviceIdentification` flag during initialization of the SDK, or by selecting the relevant setting for the `skrisk` component in DaVinci flows.",
 	)
+
+	// Traffic Anomaly Predictor
+	const minRules = 1
+	const maxRules = 1
+	predictorTrafficAnomalyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single nested object that specifies options for the Traffic Anomaly predictor.",
+	).ExactlyOneOf(descriptionPredictorObjectPaths)
+
+	predictorTrafficAnomalyRulesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A list collection of rules to use for this traffic anomaly predictor.",
+	)
+
+	predictorTrafficAnomalyRulesEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean to use the defined rule in the predictor.",
+	)
+
+	predictorTrafficAnomalyRulesIntervalDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single nested object that contains the fields used to define the timeframe to consider. The timeframe can be between 1 hour and 14 days.",
+	)
+
+	predictorTrafficAnomalyRulesIntervalUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies time unit for defining the timeframe for tracking number of users on the device.",
+	).AllowedValues(string(risk.ENUMRISKPREDICTORTRAFFICANOMALYRULEINTERVALUNIT_DAY), string(risk.ENUMRISKPREDICTORTRAFFICANOMALYRULEINTERVALUNIT_HOUR))
+
+	predictorTrafficAnomalyRulesIntervalQuantityDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the number of days or hours for the timeframe for tracking number of users on the device.",
+	)
+
+	predictorTrafficAnomalyRulesThresholdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single nested object that contains the fields used to define the risk thresholds.",
+	)
+
+	predictorTrafficAnomalyRulesThresholdHighDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A float that specifies the number of users during the defined timeframe that will be considered High risk.",
+	)
+
+	predictorTrafficAnomalyRulesThresholdMediumDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A float that specifies the number of users during the defined timeframe that will be considered Medium risk.",
+	)
+
+	predictorTrafficAnomalyRulesTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the type of velocity algorithm to use.",
+	).AllowedValuesEnum(risk.AllowedEnumRiskPredictorTrafficAnomalyRuleTypeEnumValues)
 
 	// User location Predictor
 	predictorUserLocationAnomalyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -987,6 +1077,92 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				},
 			},
 
+			"predictor_traffic_anomaly": schema.SingleNestedAttribute{
+				Description:         predictorTrafficAnomalyDescription.Description,
+				MarkdownDescription: predictorTrafficAnomalyDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"rules": schema.ListNestedAttribute{
+						Description:         predictorTrafficAnomalyRulesDescription.Description,
+						MarkdownDescription: predictorTrafficAnomalyRulesDescription.MarkdownDescription,
+						Required:            true,
+
+						Validators: []validator.List{
+							listvalidator.SizeAtLeast(minRules),
+							listvalidator.SizeAtMost(maxRules),
+						},
+
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"enabled": schema.BoolAttribute{
+									Description:         predictorTrafficAnomalyRulesEnabledDescription.Description,
+									MarkdownDescription: predictorTrafficAnomalyRulesEnabledDescription.MarkdownDescription,
+									Required:            true,
+								},
+
+								"interval": schema.SingleNestedAttribute{
+									Description:         predictorTrafficAnomalyRulesIntervalDescription.Description,
+									MarkdownDescription: predictorTrafficAnomalyRulesIntervalDescription.MarkdownDescription,
+									Required:            true,
+									Attributes: map[string]schema.Attribute{
+										"unit": schema.StringAttribute{
+											Description:         predictorTrafficAnomalyRulesIntervalUnitDescription.Description,
+											MarkdownDescription: predictorTrafficAnomalyRulesIntervalUnitDescription.MarkdownDescription,
+											Required:            true,
+											Validators: []validator.String{
+												stringvalidator.OneOf(utils.EnumSliceToStringSlice(risk.AllowedEnumRiskPredictorTrafficAnomalyRuleIntervalUnitEnumValues)...),
+											},
+										},
+
+										"quantity": schema.Int32Attribute{
+											Description:         predictorTrafficAnomalyRulesIntervalQuantityDescription.Description,
+											MarkdownDescription: predictorTrafficAnomalyRulesIntervalQuantityDescription.MarkdownDescription,
+											Required:            true,
+										},
+									},
+								},
+
+								"threshold": schema.SingleNestedAttribute{
+									Description:         predictorTrafficAnomalyRulesThresholdDescription.Description,
+									MarkdownDescription: predictorTrafficAnomalyRulesThresholdDescription.MarkdownDescription,
+									Required:            true,
+
+									Attributes: map[string]schema.Attribute{
+										"high": schema.Float32Attribute{
+											Description:         predictorTrafficAnomalyRulesThresholdHighDescription.Description,
+											MarkdownDescription: predictorTrafficAnomalyRulesThresholdHighDescription.MarkdownDescription,
+											Required:            true,
+										},
+										"medium": schema.Float32Attribute{
+											Description:         predictorTrafficAnomalyRulesThresholdMediumDescription.Description,
+											MarkdownDescription: predictorTrafficAnomalyRulesThresholdMediumDescription.MarkdownDescription,
+											Required:            true,
+										},
+									},
+								},
+
+								"type": schema.StringAttribute{
+									Description:         predictorTrafficAnomalyRulesTypeDescription.Description,
+									MarkdownDescription: predictorTrafficAnomalyRulesTypeDescription.MarkdownDescription,
+									Required:            true,
+
+									Validators: []validator.String{
+										stringvalidator.OneOf(utils.EnumSliceToStringSlice(risk.AllowedEnumRiskPredictorTrafficAnomalyRuleTypeEnumValues)...),
+									},
+								},
+							},
+						},
+					},
+				},
+
+				Validators: predictorObjectValidators,
+
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
+				},
+			},
+
 			"predictor_user_location_anomaly": schema.SingleNestedAttribute{
 				Description:         predictorUserLocationAnomalyDescription.Description,
 				MarkdownDescription: predictorUserLocationAnomalyDescription.MarkdownDescription,
@@ -1320,6 +1496,7 @@ var (
 			path.MatchRelative().AtParent().AtName("predictor_email_reputation"),
 			path.MatchRelative().AtParent().AtName("predictor_geovelocity"),
 			path.MatchRelative().AtParent().AtName("predictor_ip_reputation"),
+			path.MatchRelative().AtParent().AtName("predictor_traffic_anomaly"),
 			path.MatchRelative().AtParent().AtName("predictor_user_location_anomaly"),
 			path.MatchRelative().AtParent().AtName("predictor_user_risk_behavior"),
 			path.MatchRelative().AtParent().AtName("predictor_velocity"),
@@ -1336,6 +1513,7 @@ var (
 		"predictor_email_reputation",
 		"predictor_geovelocity",
 		"predictor_ip_reputation",
+		"predictor_traffic_anomaly",
 		"predictor_user_location_anomaly",
 		"predictor_user_risk_behavior",
 		"predictor_velocity",
@@ -1848,6 +2026,10 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 							predictorId = t.GetId()
 							predictorCompactName = t.GetCompactName()
 							predictorDeletable = t.GetDeletable()
+						case *risk.RiskPredictorTrafficAnomaly:
+							predictorId = t.GetId()
+							predictorCompactName = t.GetCompactName()
+							predictorDeletable = t.GetDeletable()
 						case *risk.RiskPredictorUserLocationAnomaly:
 							predictorId = t.GetId()
 							predictorCompactName = t.GetCompactName()
@@ -1954,6 +2136,10 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 
 	if !p.PredictorIPReputation.IsNull() && !p.PredictorIPReputation.IsUnknown() {
 		riskPredictor.RiskPredictorIPReputation, d = p.expandPredictorIPReputation(ctx, riskPredictorCommonData)
+	}
+
+	if !p.PredictorTrafficAnomaly.IsNull() && !p.PredictorTrafficAnomaly.IsUnknown() {
+		riskPredictor.RiskPredictorTrafficAnomaly, d = p.expandPredictorTrafficAnomaly(ctx, riskPredictorCommonData)
 	}
 
 	if !p.PredictorUserRiskBehavior.IsNull() && !p.PredictorUserRiskBehavior.IsUnknown() {
@@ -2673,6 +2859,90 @@ func (p *riskPredictorResourceModel) expandPredictorIPReputation(ctx context.Con
 	return &data, diags
 }
 
+func (p *riskPredictorResourceModel) expandPredictorTrafficAnomaly(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorTrafficAnomaly, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := risk.RiskPredictorTrafficAnomaly{
+		Name:        riskPredictorCommon.Name,
+		CompactName: riskPredictorCommon.CompactName,
+		Description: riskPredictorCommon.Description,
+		Type:        risk.ENUMPREDICTORTYPE_TRAFFIC_ANOMALY,
+		Default:     riskPredictorCommon.Default,
+	}
+
+	var predictorPlan predictorTrafficAnomaly
+	d := p.PredictorTrafficAnomaly.As(ctx, &predictorPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	if !predictorPlan.Rules.IsNull() && !predictorPlan.Rules.IsUnknown() {
+		var rulesPlan []predictorTrafficAnomalyRule
+		d := predictorPlan.Rules.ElementsAs(ctx, &rulesPlan, false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		rules := make([]risk.RiskPredictorTrafficAnomalyAllOfRules, 0)
+		for _, rule := range rulesPlan {
+			dataRule, diags := rule.expandPredictorTrafficAnomalyRule(ctx)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			rules = append(rules, *dataRule)
+		}
+
+		data.SetRules(rules)
+	}
+
+	return &data, diags
+}
+
+func (p *predictorTrafficAnomalyRule) expandPredictorTrafficAnomalyRule(ctx context.Context) (*risk.RiskPredictorTrafficAnomalyAllOfRules, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var intervalPlan predictorTrafficAnomalyRuleInterval
+	d := p.Interval.As(ctx, &intervalPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	interval := risk.NewRiskPredictorTrafficAnomalyAllOfInterval(
+		risk.EnumRiskPredictorTrafficAnomalyRuleIntervalUnit(intervalPlan.Unit.ValueString()),
+		intervalPlan.Quantity.ValueInt32(),
+	)
+
+	var thresholdPlan predictorTrafficAnomalyRuleThreshold
+	diags.Append(p.Threshold.As(ctx, &thresholdPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	threshold := risk.NewRiskPredictorTrafficAnomalyAllOfThreshold(
+		thresholdPlan.Medium.ValueFloat32(),
+		thresholdPlan.High.ValueFloat32(),
+	)
+
+	return risk.NewRiskPredictorTrafficAnomalyAllOfRules(
+		p.Enabled.ValueBool(),
+		*interval,
+		*threshold,
+		risk.EnumRiskPredictorTrafficAnomalyRuleType(p.Type.ValueString())), diags
+}
+
 func (p *riskPredictorResourceModel) expandPredictorUserLocationAnomaly(ctx context.Context, riskPredictorCommon *risk.RiskPredictorCommon) (*risk.RiskPredictorUserLocationAnomaly, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -3114,6 +3384,19 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 		}
 	}
 
+	if apiObject.RiskPredictorTrafficAnomaly != nil {
+		apiObjectCommon = risk.RiskPredictorCommon{
+			Id:          apiObject.RiskPredictorTrafficAnomaly.Id,
+			Name:        apiObject.RiskPredictorTrafficAnomaly.Name,
+			CompactName: apiObject.RiskPredictorTrafficAnomaly.CompactName,
+			Description: apiObject.RiskPredictorTrafficAnomaly.Description,
+			Type:        apiObject.RiskPredictorTrafficAnomaly.Type,
+			Default:     apiObject.RiskPredictorTrafficAnomaly.Default,
+			Licensed:    apiObject.RiskPredictorTrafficAnomaly.Licensed,
+			Deletable:   apiObject.RiskPredictorTrafficAnomaly.Deletable,
+		}
+	}
+
 	if apiObject.RiskPredictorUserRiskBehavior != nil {
 		apiObjectCommon = risk.RiskPredictorCommon{
 			Id:          apiObject.RiskPredictorUserRiskBehavior.Id,
@@ -3219,6 +3502,9 @@ func (p *riskPredictorResourceModel) toState(ctx context.Context, apiObject *ris
 	diags.Append(d...)
 
 	p.PredictorIPReputation, d = p.toStateRiskPredictorIPReputation(apiObject.RiskPredictorIPReputation)
+	diags.Append(d...)
+
+	p.PredictorTrafficAnomaly, d = p.toStateRiskPredictorTrafficAnomaly(apiObject.RiskPredictorTrafficAnomaly)
 	diags.Append(d...)
 
 	p.PredictorUserRiskBehavior, d = p.toStateRiskPredictorUserRiskBehavior(apiObject.RiskPredictorUserRiskBehavior)
@@ -3775,6 +4061,98 @@ func (p *riskPredictorResourceModel) toStateRiskPredictorIPReputation(apiObject 
 	objValue, d := types.ObjectValue(predictorGenericAllowedCIDRTFObjectTypes, map[string]attr.Value{
 		"allowed_cidr_list": framework.StringSetOkToTF(apiObject.GetWhiteListOk()),
 	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func (p *riskPredictorResourceModel) toStateRiskPredictorTrafficAnomaly(apiObject *risk.RiskPredictorTrafficAnomaly) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if apiObject == nil || apiObject.GetId() == "" {
+		return types.ObjectNull(predictorTrafficAnomalyTFObjectTypes), diags
+	}
+
+	rulesList, d := toStateRiskPredictorTrafficAnomalyRules(apiObject.GetRulesOk())
+	diags.Append(d...)
+
+	o := map[string]attr.Value{
+		"rules": rulesList,
+	}
+
+	objValue, d := types.ObjectValue(predictorTrafficAnomalyTFObjectTypes, o)
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func toStateRiskPredictorTrafficAnomalyRules(apiObject []risk.RiskPredictorTrafficAnomalyAllOfRules, ok bool) (basetypes.ListValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	tfObjType := types.ObjectType{AttrTypes: predictorTrafficAnomalyRulesTFObjectTypes}
+
+	if !ok || apiObject == nil {
+		return types.ListNull(tfObjType), diags
+	}
+
+	objectAttrTypes := []attr.Value{}
+	for _, v := range apiObject {
+
+		threshold, d := toStateRiskPredictorTrafficAnomalyRulesThreshold(v.GetThresholdOk())
+		diags.Append(d...)
+
+		interval, d := toStateRiskPredictorTrafficAnomalyRulesInterval(v.GetIntervalOk())
+		diags.Append(d...)
+
+		o := map[string]attr.Value{
+			"type":      framework.EnumOkToTF(v.GetTypeOk()),
+			"enabled":   framework.BoolOkToTF(v.GetEnabledOk()),
+			"threshold": threshold,
+			"interval":  interval,
+		}
+
+		objValue, d := types.ObjectValue(predictorTrafficAnomalyRulesTFObjectTypes, o)
+		diags.Append(d...)
+
+		objectAttrTypes = append(objectAttrTypes, objValue)
+	}
+
+	returnVar, d := types.ListValue(tfObjType, objectAttrTypes)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func toStateRiskPredictorTrafficAnomalyRulesThreshold(apiObject *risk.RiskPredictorTrafficAnomalyAllOfThreshold, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(predictorTrafficAnomalyRulesThresholdTFObjectTypes), diags
+	}
+
+	o := map[string]attr.Value{
+		"high":   framework.Float32OkToTF(apiObject.GetHighOk()),
+		"medium": framework.Float32OkToTF(apiObject.GetMediumOk()),
+	}
+
+	objValue, d := types.ObjectValue(predictorTrafficAnomalyRulesThresholdTFObjectTypes, o)
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func toStateRiskPredictorTrafficAnomalyRulesInterval(apiObject *risk.RiskPredictorTrafficAnomalyAllOfInterval, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(predictorTrafficAnomalyRulesIntervalTFObjectTypes), diags
+	}
+
+	o := map[string]attr.Value{
+		"unit":     framework.EnumOkToTF(apiObject.GetUnitOk()),
+		"quantity": framework.Int32OkToTF(apiObject.GetQuantityOk()),
+	}
+
+	objValue, d := types.ObjectValue(predictorTrafficAnomalyRulesIntervalTFObjectTypes, o)
 	diags.Append(d...)
 
 	return objValue, diags

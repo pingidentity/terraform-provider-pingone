@@ -1687,6 +1687,87 @@ func TestAccRiskPredictor_SuspiciousDevice_OverwriteUndeletable(t *testing.T) {
 	})
 }
 
+func TestAccRiskPredictor_TrafficAnomaly(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+
+	name := resourceName
+	compactName := "trafficAnomalyCompactName"
+
+	initialCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "TRAFFIC_ANOMALY"),
+		resource.TestCheckResourceAttr(resourceFullName, "compact_name", compactName),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "name", name),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_traffic_anomaly.rules.0.enabled", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_traffic_anomaly.rules.0.type", "UNIQUE_USERS_PER_DEVICE"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_traffic_anomaly.rules.0.interval.quantity", "1"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_traffic_anomaly.rules.0.interval.unit", "DAY"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_traffic_anomaly.rules.0.threshold.high", "4"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_traffic_anomaly.rules.0.threshold.medium", "3"),
+	)
+	changeCheck := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(resourceFullName, "type", "TRAFFIC_ANOMALY"),
+		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "default.result.level", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_traffic_anomaly.rules.0.enabled", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_traffic_anomaly.rules.0.type", "UNIQUE_USERS_PER_DEVICE"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_traffic_anomaly.rules.0.interval.quantity", "2"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_traffic_anomaly.rules.0.interval.unit", "HOUR"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_traffic_anomaly.rules.0.threshold.high", "5"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_traffic_anomaly.rules.0.threshold.medium", "4"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Initial (all properties in type are required)
+			{
+				Config: testAccRiskPredictorConfig_TrafficAnomaly_Initial(resourceName, name, compactName),
+				Check:  initialCheck,
+			},
+			{
+				Config:  testAccRiskPredictorConfig_TrafficAnomaly_Initial(resourceName, name, compactName),
+				Destroy: true,
+			},
+			// Change
+			{
+				Config: testAccRiskPredictorConfig_TrafficAnomaly_Initial(resourceName, name, compactName),
+				Check:  initialCheck,
+			},
+			{
+				Config: testAccRiskPredictorConfig_TrafficAnomaly_Change(resourceName, name, compactName),
+				Check:  changeCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccRiskPredictor_UserLocationAnomaly(t *testing.T) {
 	t.Parallel()
 
@@ -3262,6 +3343,76 @@ resource "pingone_risk_predictor" "%[2]s" {
 
   predictor_device = {
     detect = "SUSPICIOUS_DEVICE"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
+}
+
+func testAccRiskPredictorConfig_TrafficAnomaly_Initial(resourceName, name, compactName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[4]s"
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  predictor_traffic_anomaly = {
+    rules = [
+      {
+        type = "UNIQUE_USERS_PER_DEVICE"
+        threshold = {
+          medium = 3
+          high   = 4
+        }
+        interval = {
+          unit     = "DAY"
+          quantity = 1
+        }
+        enabled = true
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
+}
+
+func testAccRiskPredictorConfig_TrafficAnomaly_Change(resourceName, name, compactName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[4]s"
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  predictor_traffic_anomaly = {
+    rules = [
+      {
+        type = "UNIQUE_USERS_PER_DEVICE"
+        threshold = {
+          medium = 4
+          high   = 5
+        }
+        interval = {
+          unit     = "HOUR"
+          quantity = 2
+        }
+        enabled = false
+      }
+    ]
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, compactName)
 }
