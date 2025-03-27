@@ -544,6 +544,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 	)
 
 	// Traffic Anomaly Predictor
+	// if the maxRules is ever increased, the collection data type (Set/List) needs to be reviewed
 	const minRules = 1
 	const maxRules = 1
 	predictorTrafficAnomalyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -551,7 +552,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 	).ExactlyOneOf(descriptionPredictorObjectPaths)
 
 	predictorTrafficAnomalyRulesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A list collection of rules to use for this traffic anomaly predictor.",
+		"A collection with a single rule to use for this traffic anomaly predictor.",
 	)
 
 	predictorTrafficAnomalyRulesEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(

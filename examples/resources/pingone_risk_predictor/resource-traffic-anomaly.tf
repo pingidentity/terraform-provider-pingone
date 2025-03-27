@@ -1,7 +1,7 @@
 resource "pingone_risk_predictor" "my_traffic_anomaly_predictor" {
   environment_id = pingone_environment.my_environment.id
-  name           = "my test traffic anomaly predictor"
-  compact_name   = "myAwesometrafficMPredictor"
+  name           = "My Awesome Traffic Anomaly Predictor"
+  compact_name   = "myAwesomeTrafficAnomalyPredictor"
 
   default = {
     result = {
