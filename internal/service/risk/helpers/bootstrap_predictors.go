@@ -17,6 +17,7 @@ var (
 		defaultIpRisk().RiskPredictorIPReputation.CompactName:                     defaultIpRisk(),
 		defaultNewDevice().RiskPredictorDevice.CompactName:                        defaultNewDevice(),
 		defaultUserLocationAnomaly().RiskPredictorUserLocationAnomaly.CompactName: defaultUserLocationAnomaly(),
+		defaultTrafficAnomaly().RiskPredictorTrafficAnomaly.CompactName:           defaultTrafficAnomaly(),
 	}
 )
 
@@ -247,6 +248,39 @@ func defaultNewDevice() risk.RiskPredictor {
 				Weight:    int32(defaultWeight),
 				Score:     risk.PtrInt32(int32(defaultScore)),
 				Evaluated: risk.PtrBool(false),
+			},
+		},
+	}
+}
+
+func defaultTrafficAnomaly() risk.RiskPredictor {
+
+	defaultIntervalQuantity := 1
+	interval := risk.RiskPredictorTrafficAnomalyAllOfInterval{
+		Unit:     risk.ENUMRISKPREDICTORTRAFFICANOMALYRULEINTERVALUNIT_DAY,
+		Quantity: int32(defaultIntervalQuantity),
+	}
+
+	defaultHighThreshold := 4
+	defaultMediumThreshold := 3
+
+	threshold := risk.RiskPredictorTrafficAnomalyAllOfThreshold{
+		High:   float32(defaultHighThreshold),
+		Medium: float32(defaultMediumThreshold),
+	}
+
+	return risk.RiskPredictor{
+		RiskPredictorTrafficAnomaly: &risk.RiskPredictorTrafficAnomaly{
+			Name:        "Traffic Anomaly",
+			CompactName: "trafficAnomaly",
+			Type:        risk.ENUMPREDICTORTYPE_TRAFFIC_ANOMALY,
+			Rules: []risk.RiskPredictorTrafficAnomalyAllOfRules{
+				{
+					Enabled:   true,
+					Interval:  interval,
+					Threshold: threshold,
+					Type:      risk.ENUMRISKPREDICTORTRAFFICANOMALYRULETYPE_UNIQUE_USERS_PER_DEVICE,
+				},
 			},
 		},
 	}

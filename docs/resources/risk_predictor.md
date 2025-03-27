@@ -325,6 +325,39 @@ resource "pingone_risk_predictor" "my_awesome_suspicious_device_predictor" {
 }
 ```
 
+## Example Usage - Traffic Anomaly Predictor
+
+```terraform
+resource "pingone_risk_predictor" "my_traffic_anomaly_predictor" {
+  environment_id = pingone_environment.my_environment.id
+  name           = "My Awesome Traffic Anomaly Predictor"
+  compact_name   = "myAwesomeTrafficAnomalyPredictor"
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  predictor_traffic_anomaly = {
+    rules = [
+      {
+        type = "UNIQUE_USERS_PER_DEVICE"
+        threshold = {
+          medium = 3
+          high   = 4
+        }
+        interval = {
+          unit     = "DAY"
+          quantity = 1
+        }
+        enabled = true
+      }
+    ]
+  }
+}
+```
+
 ## Example Usage - User Location Predictor
 
 ```terraform
@@ -437,18 +470,19 @@ resource "pingone_risk_predictor" "my_awesome_velocity_predictor_by_user" {
 
 - `default` (Attributes) A single nested object that specifies the default configuration values for the risk predictor. (see [below for nested schema](#nestedatt--default))
 - `description` (String) A string that specifies the description of the risk predictor. Maximum length is 1024 characters.
-- `predictor_adversary_in_the_middle` (Attributes) A single nested object that specifies options for the Adversary-In-The-Middle (AitM) predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_adversary_in_the_middle))
-- `predictor_anonymous_network` (Attributes) A single nested object that specifies options for the Anonymous Network predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_anonymous_network))
-- `predictor_bot_detection` (Attributes) A single nested object that specifies options for the Bot Detection predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_bot_detection))
-- `predictor_composite` (Attributes) A single nested object that specifies options for the Composite predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_composite))
-- `predictor_custom_map` (Attributes) A single nested object that specifies options for the Custom Map predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_custom_map))
-- `predictor_device` (Attributes) A single nested object that specifies options for the Device predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_device))
-- `predictor_email_reputation` (Attributes) A single nested object that specifies options for the Email reputation predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_email_reputation))
-- `predictor_geovelocity` (Attributes) A single nested object that specifies options for the Geovelocity predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_geovelocity))
-- `predictor_ip_reputation` (Attributes) A single nested object that specifies options for the IP reputation predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_ip_reputation))
-- `predictor_user_location_anomaly` (Attributes) A single nested object that specifies options for the User Location Anomaly predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_user_location_anomaly))
-- `predictor_user_risk_behavior` (Attributes) A single nested object that specifies options for the User Risk Behavior predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_user_risk_behavior))
-- `predictor_velocity` (Attributes) A single nested object that specifies options for the Velocity predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_velocity))
+- `predictor_adversary_in_the_middle` (Attributes) A single nested object that specifies options for the Adversary-In-The-Middle (AitM) predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_traffic_anomaly`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_adversary_in_the_middle))
+- `predictor_anonymous_network` (Attributes) A single nested object that specifies options for the Anonymous Network predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_traffic_anomaly`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_anonymous_network))
+- `predictor_bot_detection` (Attributes) A single nested object that specifies options for the Bot Detection predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_traffic_anomaly`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_bot_detection))
+- `predictor_composite` (Attributes) A single nested object that specifies options for the Composite predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_traffic_anomaly`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_composite))
+- `predictor_custom_map` (Attributes) A single nested object that specifies options for the Custom Map predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_traffic_anomaly`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_custom_map))
+- `predictor_device` (Attributes) A single nested object that specifies options for the Device predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_traffic_anomaly`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_device))
+- `predictor_email_reputation` (Attributes) A single nested object that specifies options for the Email reputation predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_traffic_anomaly`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_email_reputation))
+- `predictor_geovelocity` (Attributes) A single nested object that specifies options for the Geovelocity predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_traffic_anomaly`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_geovelocity))
+- `predictor_ip_reputation` (Attributes) A single nested object that specifies options for the IP reputation predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_traffic_anomaly`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_ip_reputation))
+- `predictor_traffic_anomaly` (Attributes) A single nested object that specifies options for the Traffic Anomaly predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_traffic_anomaly`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_traffic_anomaly))
+- `predictor_user_location_anomaly` (Attributes) A single nested object that specifies options for the User Location Anomaly predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_traffic_anomaly`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_user_location_anomaly))
+- `predictor_user_risk_behavior` (Attributes) A single nested object that specifies options for the User Risk Behavior predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_traffic_anomaly`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_user_risk_behavior))
+- `predictor_velocity` (Attributes) A single nested object that specifies options for the Velocity predictor.  Exactly one of the following must be defined: `predictor_adversary_in_the_middle`, `predictor_anonymous_network`, `predictor_bot_detection`, `predictor_composite`, `predictor_custom_map`, `predictor_device`, `predictor_email_reputation`, `predictor_geovelocity`, `predictor_ip_reputation`, `predictor_traffic_anomaly`, `predictor_user_location_anomaly`, `predictor_user_risk_behavior`, `predictor_velocity`. (see [below for nested schema](#nestedatt--predictor_velocity))
 
 ### Read-Only
 
@@ -674,6 +708,43 @@ Optional:
 Optional:
 
 - `allowed_cidr_list` (Set of String) A set of IP addresses (CIDRs) that are ignored for the predictor results. The list can include IPs in IPv4 format and IPs in IPv6 format.
+
+
+<a id="nestedatt--predictor_traffic_anomaly"></a>
+### Nested Schema for `predictor_traffic_anomaly`
+
+Required:
+
+- `rules` (Attributes List) A collection with a single rule to use for this traffic anomaly predictor. (see [below for nested schema](#nestedatt--predictor_traffic_anomaly--rules))
+
+<a id="nestedatt--predictor_traffic_anomaly--rules"></a>
+### Nested Schema for `predictor_traffic_anomaly.rules`
+
+Required:
+
+- `enabled` (Boolean) A boolean to use the defined rule in the predictor.
+- `interval` (Attributes) A single nested object that contains the fields used to define the timeframe to consider. The timeframe can be between 1 hour and 14 days. (see [below for nested schema](#nestedatt--predictor_traffic_anomaly--rules--interval))
+- `threshold` (Attributes) A single nested object that contains the fields used to define the risk thresholds. (see [below for nested schema](#nestedatt--predictor_traffic_anomaly--rules--threshold))
+- `type` (String) A string that specifies the type of velocity algorithm to use.  Options are `UNIQUE_USERS_PER_DEVICE`.
+
+<a id="nestedatt--predictor_traffic_anomaly--rules--interval"></a>
+### Nested Schema for `predictor_traffic_anomaly.rules.interval`
+
+Required:
+
+- `quantity` (Number) An integer that specifies the number of days or hours for the timeframe for tracking number of users on the device.
+- `unit` (String) A string that specifies time unit for defining the timeframe for tracking number of users on the device.  Options are `DAY`, `HOUR`.
+
+
+<a id="nestedatt--predictor_traffic_anomaly--rules--threshold"></a>
+### Nested Schema for `predictor_traffic_anomaly.rules.threshold`
+
+Required:
+
+- `high` (Number) A float that specifies the number of users during the defined timeframe that will be considered High risk.
+- `medium` (Number) A float that specifies the number of users during the defined timeframe that will be considered Medium risk.
+
+
 
 
 <a id="nestedatt--predictor_user_location_anomaly"></a>
