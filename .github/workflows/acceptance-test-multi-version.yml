@@ -149,7 +149,7 @@ jobs:
   # run acceptance tests in a matrix with Terraform core versions
   # flaky flag set
   test-flaky:
-    name: Acceptance Test
+    name: Acceptance Test (FLAKY)
     needs: [build, prepare]
     runs-on: ubuntu-latest
     env:

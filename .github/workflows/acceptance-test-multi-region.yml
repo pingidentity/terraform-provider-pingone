@@ -145,7 +145,7 @@ jobs:
   # run acceptance tests in a matrix with Terraform core versions
   # flaky flag set
   test-ap-flaky:
-    name: Acceptance Test AP
+    name: Acceptance Test AP (FLAKY)
     needs: [build, prepare-ap]
     runs-on: ubuntu-latest
 
@@ -357,7 +357,7 @@ jobs:
   # run acceptance tests in a matrix with Terraform core versions
   # flaky flag set
   test-ca-flaky:
-    name: Acceptance Test CA
+    name: Acceptance Test CA (FLAKY)
     needs: [build, prepare-ca]
     runs-on: ubuntu-latest
 
@@ -570,7 +570,7 @@ jobs:
   # run acceptance tests in a matrix with Terraform core versions
   # flaky flag set
   test-eu-flaky:
-    name: Acceptance Test EU
+    name: Acceptance Test EU (FLAKY)
     needs: [build, prepare-eu]
     runs-on: ubuntu-latest
 
@@ -784,7 +784,7 @@ jobs:
   # run acceptance tests in a matrix with Terraform core versions
   # flaky flag set
   test-na-flaky:
-    name: Acceptance Test NA
+    name: Acceptance Test NA (FLAKY)
     needs: [build, prepare-na]
     runs-on: ubuntu-latest
 
