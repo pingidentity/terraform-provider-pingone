@@ -1,3 +1,25 @@
+## 1.6.0 (26 March 2025)
+
+NOTES:
+
+* Upgraded go version to 1.24.1. See the go [release policy](https://go.dev/doc/devel/release#policy). ([#1014](https://github.com/pingidentity/terraform-provider-pingone/issues/1014))
+* bump `github.com/google/go-cmp` v0.6.0 => v0.7.0 ([#1003](https://github.com/pingidentity/terraform-provider-pingone/issues/1003))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.51.0 => 0.52.0 ([#1004](https://github.com/pingidentity/terraform-provider-pingone/issues/1004))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.52.0 => 0.53.0 ([#1008](https://github.com/pingidentity/terraform-provider-pingone/issues/1008))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.11 => 0.12.12 ([#1004](https://github.com/pingidentity/terraform-provider-pingone/issues/1004))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.12 => 0.12.13 ([#1008](https://github.com/pingidentity/terraform-provider-pingone/issues/1008))
+* bump `golang.org/x/net` v0.34.0 => v0.36.0 ([#1009](https://github.com/pingidentity/terraform-provider-pingone/issues/1009))
+
+FEATURES:
+
+* **New Data Source:** `pingone_administrator_security` ([#1004](https://github.com/pingidentity/terraform-provider-pingone/issues/1004))
+* **New Resource:** `pingone_administrator_security` ([#1004](https://github.com/pingidentity/terraform-provider-pingone/issues/1004))
+
+ENHANCEMENTS:
+
+* `data-source/pingone_application`: Added support for the `oidc_options.idp_signoff` field. ([#1008](https://github.com/pingidentity/terraform-provider-pingone/issues/1008))
+* `resource/pingone_application`: Added support for the `oidc_options.idp_signoff` field. ([#1008](https://github.com/pingidentity/terraform-provider-pingone/issues/1008))
+
 ## 1.5.0 (26 February 2025)
 
 NOTES:

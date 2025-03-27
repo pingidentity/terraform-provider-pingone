@@ -79,6 +79,7 @@ type applicationOIDCOptionsResourceModelV1 struct {
 	DevicePollingInterval                         types.Int32  `tfsdk:"device_polling_interval"`
 	GrantTypes                                    types.Set    `tfsdk:"grant_types"`
 	HomePageUrl                                   types.String `tfsdk:"home_page_url"`
+	IdpSignoff                                    types.Bool   `tfsdk:"idp_signoff"`
 	InitiateLoginUri                              types.String `tfsdk:"initiate_login_uri"`
 	Jwks                                          types.String `tfsdk:"jwks"`
 	JwksUrl                                       types.String `tfsdk:"jwks_url"`
@@ -196,6 +197,7 @@ var (
 		"device_polling_interval":                            types.Int32Type,
 		"grant_types":                                        types.SetType{ElemType: types.StringType},
 		"home_page_url":                                      types.StringType,
+		"idp_signoff":                                        types.BoolType,
 		"initiate_login_uri":                                 types.StringType,
 		"jwks_url":                                           types.StringType,
 		"jwks":                                               types.StringType,
@@ -410,6 +412,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	oidcOptionsDevicePollingIntervalDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("An integer that specifies the frequency (in seconds) for the client to poll the `/as/token` endpoint. This property is required only for applications in which the `grant_types` property is set to `%[1]s`. The default value is `%[2]d` seconds. It can have a value of no more than `%[4]d` seconds (min/max=`%[3]d`/`%[4]d`).", management.ENUMAPPLICATIONOIDCGRANTTYPE_DEVICE_CODE, oidcOptionsDevicePollingIntervalDefault, oidcOptionsDevicePollingIntervalMin, oidcOptionsDevicePollingIntervalMax),
 	)
+
+	oidcOptionsIdpSignoffDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean flag to allow signoff without access to the session token cookie.",
+	).DefaultValue(false)
 
 	oidcOptionsInitiateLoginUriDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the URI to use for third-parties to begin the sign-on process for the application. If specified, PingOne redirects users to this URI to initiate SSO to PingOne. The application is responsible for implementing the relevant OIDC flow when the initiate login URI is requested. This property is required if you want the application to appear in the PingOne Application Portal. See the OIDC specification section of [Initiating Login from a Third Party](https://openid.net/specs/openid-connect-core-1_0.html#ThirdPartyInitiatedLogin) for more information.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.",
@@ -893,6 +899,15 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Validators: []validator.Int32{
 							int32validator.Between(oidcOptionsDevicePollingIntervalMin, oidcOptionsDevicePollingIntervalMax),
 						},
+					},
+
+					"idp_signoff": schema.BoolAttribute{
+						Description:         oidcOptionsIdpSignoffDescription.Description,
+						MarkdownDescription: oidcOptionsIdpSignoffDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: booldefault.StaticBool(false),
 					},
 
 					"initiate_login_uri": schema.StringAttribute{
@@ -2232,6 +2247,10 @@ func (p *applicationResourceModelV1) expandApplicationOIDC(ctx context.Context) 
 
 		if !plan.DevicePollingInterval.IsNull() && !plan.DevicePollingInterval.IsUnknown() {
 			data.SetDevicePollingInterval(plan.DevicePollingInterval.ValueInt32())
+		}
+
+		if !plan.IdpSignoff.IsNull() && !plan.IdpSignoff.IsUnknown() {
+			data.SetIdpSignoff(plan.IdpSignoff.ValueBool())
 		}
 
 		if !plan.InitiateLoginUri.IsNull() && !plan.InitiateLoginUri.IsUnknown() {
