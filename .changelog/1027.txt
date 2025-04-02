@@ -1,0 +1,7 @@
+```release-note:note
+`resource/pingone_notification_settings`: Updated Example Usage documentation to include both Ping-hosted smtp and Twilio examples.
+```
+
+```release-note:note
+`resource/pingone_notification_settings_email`: Added documentation note to recommend use of `pingone_notification_settings` when using Ping-hosted SMTP email service.
+```

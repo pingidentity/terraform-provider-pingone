@@ -11,11 +11,13 @@ description: |-
 
 ~> Only one `pingone_notification_settings` resource should be configured for an environment.  If multiple `pingone_notification_settings` resource definitions exist in HCL code, these are likely to conflict with each other on apply.
 
-{{ if .HasExample -}}
-## Example Usage
+## Example Usage - Ping-Hosted SMTP
 
-{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource.tf") }}
-{{- end }}
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-ping-smtp.tf") }}
+
+## Example Usage - Custom Twilio
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-custom-twilio.tf") }}
 
 {{ .SchemaMarkdown | trimspace }}
 
