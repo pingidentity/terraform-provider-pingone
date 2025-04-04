@@ -325,7 +325,7 @@ resource "pingone_identity_provider" "%[3]s-idp" {
 }
 
 resource "pingone_administrator_security" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
+  environment_id        = pingone_environment.%[2]s.id
   authentication_method = "HYBRID"
   mfa_status            = "ENFORCE"
   identity_provider = {
@@ -353,7 +353,7 @@ resource "pingone_identity_provider" "%[3]s-idp" {
 }
 
 resource "pingone_administrator_security" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
+  environment_id        = pingone_environment.%[2]s.id
   authentication_method = "EXTERNAL"
   mfa_status            = "ENFORCE"
   identity_provider = {
