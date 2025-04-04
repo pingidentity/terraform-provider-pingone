@@ -18,7 +18,7 @@ resource "pingone_phone_delivery_settings" "my_awesome_custom_twilio_provider" {
   }
 }
 
-resource "pingone_notification_settings" "my_awesome_notification_settings" {
+resource "pingone_notification_settings" "my_awesome_twilio_notification_settings" {
   environment_id = pingone_environment.my_environment.id
 
   provider_fallback_chain = [

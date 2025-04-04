@@ -9,7 +9,7 @@ description: |-
 
 Resource to manage the email sender settings in a PingOne environment.
 
-~> Only one `pingone_notification_settings_email` resource should be configured for an environment.  If multiple `pingone_notification_settings_email` resource definitions exist in HCL code, these are likely to conflict with each other on apply.
+~> Only one `pingone_notification_settings_email` resource should be configured for an environment.  If multiple `pingone_notification_settings_email` resource definitions exist in HCL code, these are likely to conflict with each other on apply. The `pingone_notification_settings` resource should be used if using the Ping-hosted SMTP email service.
 
 ## Example Usage
 

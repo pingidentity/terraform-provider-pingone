@@ -11,7 +11,27 @@ Resource to manage the notifications settings in a PingOne environment.
 
 ~> Only one `pingone_notification_settings` resource should be configured for an environment.  If multiple `pingone_notification_settings` resource definitions exist in HCL code, these are likely to conflict with each other on apply.
 
-## Example Usage
+## Example Usage - Ping-Hosted SMTP
+
+```terraform
+resource "pingone_environment" "my_environment" {
+  # ...
+}
+
+resource "pingone_notification_settings" "my_awesome_ping_smtp_notification_settings" {
+  environment_id = pingone_environment.my_environment.id
+
+  from = {
+    email_address = "noreply@pingidentity.com"
+  }
+
+  reply_to = {
+    email_address = "noreply@pingidentity.com"
+  }
+}
+```
+
+## Example Usage - Custom Twilio
 
 ```terraform
 resource "pingone_environment" "my_environment" {
@@ -34,7 +54,7 @@ resource "pingone_phone_delivery_settings" "my_awesome_custom_twilio_provider" {
   }
 }
 
-resource "pingone_notification_settings" "my_awesome_notification_settings" {
+resource "pingone_notification_settings" "my_awesome_twilio_notification_settings" {
   environment_id = pingone_environment.my_environment.id
 
   provider_fallback_chain = [
