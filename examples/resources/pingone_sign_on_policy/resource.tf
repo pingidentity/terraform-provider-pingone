@@ -31,7 +31,7 @@ resource "pingone_sign_on_policy_action" "my_policy_mfa" {
   priority = 2
 
   conditions {
-    last_sign_on_older_than_seconds = 86400 // 24 hours
+    last_sign_on_older_than_seconds_mfa = 86400 // 24 hours
 
     ip_reputation_high_risk      = true
     geovelocity_anomaly_detected = true
