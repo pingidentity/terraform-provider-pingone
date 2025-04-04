@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_administrator_security`: Fix invalid configuration error when configuring an `EXTERNAL` authentication method
+```

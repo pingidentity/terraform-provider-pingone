@@ -35,7 +35,7 @@ func (r *administratorSecurityResource) ModifyPlan(ctx context.Context, req reso
 		)
 	}
 
-	if plan.AuthenticationMethod.ValueString() == "EXTERNAL" || plan.AuthenticationMethod.ValueString() == "HYBRID" &&
+	if (plan.AuthenticationMethod.ValueString() == "EXTERNAL" || plan.AuthenticationMethod.ValueString() == "HYBRID") &&
 		plan.IdentityProvider.IsNull() {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("identity_provider"),
