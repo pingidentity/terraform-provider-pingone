@@ -5,6 +5,13 @@ on:
     branches: [ "WorkflowFailureWebhook" ]
 
 jobs:
+  thisonewillwork:
+    name: This one will work
+    runs-on: ubuntu-latest
+    steps:
+    - name: Print somethin
+      run: |
+        echo "jajaja"
   expectedfailure:
     name: Expected failure
     runs-on: ubuntu-latest
@@ -15,3 +22,16 @@ jobs:
     - name: Whoops
       run: |
         cat /this/doesnt/exist
+  onfailure:
+    if: failure()
+    name: On failure
+    steps:
+      - run: |
+          curl --silent --location --request POST "$FAILURE_WEBHOOK_URL" \
+          --header 'Accept: application/json' \
+          --header 'Content-Type: text/plain' \
+          --data-raw '{
+              "WorkflowName": "${{ github.workflow }}",
+              "WorkflowURL": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "RepoName" : "${{ github.repository }}",
+          }'
