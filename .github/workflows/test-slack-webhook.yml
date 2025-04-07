@@ -23,7 +23,8 @@ jobs:
       run: |
         cat /this/doesnt/exist
   onfailure:
-    if: failure()
+    if: ${{ always() && contains(needs.*.result, 'failure') }}
+    needs: [thisonewillwork, expectedfailure]
     name: On failure
     runs-on: ubuntu-latest
     steps:
