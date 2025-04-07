@@ -44,7 +44,7 @@ func TestAccAdministratorSecurity_RemovalDrift(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Test removal of the environment
 			{
-				Config: administratorSecurity_NewEnvHCL(environmentName, licenseID, resourceName),
+				Config: administratorSecurity_NewEnvHCLPingOne(environmentName, licenseID, resourceName),
 				Check:  administratorSecurity_GetIDs(resourceFullName, &environmentId),
 			},
 			{
@@ -73,12 +73,35 @@ func TestAccAdministratorSecurity_MinimalMaximal(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				// Create the resource with a minimal model
-				Config: administratorSecurity_MinimalHCL(resourceName),
-				Check:  administratorSecurity_CheckComputedValuesMinimal(resourceName),
+				// Create with a complete model, then destroy
+				Config: administratorSecurity_CompleteHCL(resourceName),
+				Check:  administratorSecurity_CheckComputedValuesComplete(resourceName),
 			},
 			{
-				// Update to a complete model
+				Config:  administratorSecurity_CompleteHCL(resourceName),
+				Destroy: true,
+			},
+			{
+				// Create the resource with a minimal model, then destroy
+				Config: administratorSecurity_MinimalHCL(resourceName),
+				Check:  administratorSecurity_CheckComputedValuesMinimal(resourceName, "PINGONE"),
+			},
+			{
+				Config:  administratorSecurity_MinimalHCL(resourceName),
+				Destroy: true,
+			},
+			{
+				// Create again with a complete model
+				Config: administratorSecurity_CompleteHCL(resourceName),
+				Check:  administratorSecurity_CheckComputedValuesComplete(resourceName),
+			},
+			{
+				// Back to minimal model
+				Config: administratorSecurity_MinimalHCL(resourceName),
+				Check:  administratorSecurity_CheckComputedValuesMinimal(resourceName, "PINGONE"),
+			},
+			{
+				// Back to complete model
 				Config: administratorSecurity_CompleteHCL(resourceName),
 				Check:  administratorSecurity_CheckComputedValuesComplete(resourceName),
 			},
@@ -99,16 +122,11 @@ func TestAccAdministratorSecurity_MinimalMaximal(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
-			{
-				// Back to minimal model
-				Config: administratorSecurity_MinimalHCL(resourceName),
-				Check:  administratorSecurity_CheckComputedValuesMinimal(resourceName),
-			},
 		},
 	})
 }
 
-func TestAccAdministratorSecurity_NewEnv(t *testing.T) {
+func TestAccAdministratorSecurity_NewEnvPingOne(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -127,17 +145,74 @@ func TestAccAdministratorSecurity_NewEnv(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: administratorSecurity_NewEnvHCL(environmentName, licenseID, resourceName),
-				Check:  administratorSecurity_CheckComputedValuesMinimal(resourceName),
+				Config: administratorSecurity_NewEnvHCLPingOne(environmentName, licenseID, resourceName),
+				Check:  administratorSecurity_CheckComputedValuesMinimal(resourceName, "PINGONE"),
 			},
 		},
 	})
 }
+
+func TestAccAdministratorSecurity_NewEnvHybrid(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: administratorSecurity_NewEnvHCLHybrid(environmentName, licenseID, resourceName),
+				Check:  administratorSecurity_CheckComputedValuesMinimal(resourceName, "HYBRID"),
+			},
+		},
+	})
+}
+
+func TestAccAdministratorSecurity_NewEnvExternal(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: administratorSecurity_NewEnvHCLExternal(environmentName, licenseID, resourceName),
+				Check:  administratorSecurity_CheckComputedValuesMinimal(resourceName, "EXTERNAL"),
+			},
+		},
+	})
+}
+
 func TestAccAdministratorSecurity_BadParameters(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_administrator_security.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -149,7 +224,7 @@ func TestAccAdministratorSecurity_BadParameters(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: administratorSecurity_MinimalHCL(resourceName),
+				Config: administratorSecurity_NewEnvHCLPingOne(environmentName, licenseID, resourceName),
 			},
 			// Errors
 			{
@@ -221,7 +296,7 @@ resource "pingone_administrator_security" "%[2]s" {
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
-func administratorSecurity_NewEnvHCL(environmentName, licenseID, resourceName string) string {
+func administratorSecurity_NewEnvHCLPingOne(environmentName, licenseID, resourceName string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -233,13 +308,69 @@ resource "pingone_administrator_security" "%[3]s" {
 `, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
+func administratorSecurity_NewEnvHCLHybrid(environmentName, licenseID, resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_identity_provider" "%[3]s-idp" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[3]s-idp"
+  enabled        = true
+
+  microsoft = {
+    client_id     = "dummyclientid1"
+    client_secret = "dummyclientsecret1"
+    tenant_id     = "dummytenantid1"
+  }
+}
+
+resource "pingone_administrator_security" "%[3]s" {
+  environment_id        = pingone_environment.%[2]s.id
+  authentication_method = "HYBRID"
+  mfa_status            = "ENFORCE"
+  identity_provider = {
+    id = pingone_identity_provider.%[3]s-idp.id
+  }
+  recovery = false
+}
+`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}
+
+func administratorSecurity_NewEnvHCLExternal(environmentName, licenseID, resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_identity_provider" "%[3]s-idp" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[3]s-idp"
+  enabled        = true
+
+  microsoft = {
+    client_id     = "dummyclientid1"
+    client_secret = "dummyclientsecret1"
+    tenant_id     = "dummytenantid1"
+  }
+}
+
+resource "pingone_administrator_security" "%[3]s" {
+  environment_id        = pingone_environment.%[2]s.id
+  authentication_method = "EXTERNAL"
+  mfa_status            = "ENFORCE"
+  identity_provider = {
+    id = pingone_identity_provider.%[3]s-idp.id
+  }
+  recovery = false
+}
+`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}
+
 // Validate any computed values when applying minimal HCL
-func administratorSecurity_CheckComputedValuesMinimal(resourceName string) resource.TestCheckFunc {
+func administratorSecurity_CheckComputedValuesMinimal(resourceName, authMethod string) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_administrator_security.%s", resourceName), "allowed_methods.email", `{"enabled":true}`),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_administrator_security.%s", resourceName), "allowed_methods.fido2", `{"enabled":true}`),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_administrator_security.%s", resourceName), "allowed_methods.totp", `{"enabled":true}`),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_administrator_security.%s", resourceName), "authentication_method", "PINGONE"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_administrator_security.%s", resourceName), "authentication_method", authMethod),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_administrator_security.%s", resourceName), "has_fido2_capabilities", "true"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_administrator_security.%s", resourceName), "is_pingid_in_bom", "false"),
 	)
