@@ -1,0 +1,17 @@
+name: "Test Webhook"
+
+on:
+  push:
+    branches: [ "WorkflowFailureWebhook" ]
+
+jobs:
+  expectedfailure:
+    name: Expected failure
+    runs-on: ubuntu-latest
+    steps:
+    - name: Print somethin
+      run: |
+        echo "hehehe"
+    - name: Whoops
+      run: |
+        cat /this/doesnt/exist
