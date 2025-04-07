@@ -25,6 +25,7 @@ jobs:
   onfailure:
     if: failure()
     name: On failure
+    runs-on: ubuntu-latest
     steps:
       - run: |
           curl --silent --location --request POST "$FAILURE_WEBHOOK_URL" \
