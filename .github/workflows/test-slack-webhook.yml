@@ -42,13 +42,13 @@ jobs:
       run: |
         echo "Test Flaky"
   onfailure:
-    if: ${{ contains(needs.*.result, 'failure') }}
+    if: ${{ always() && contains(needs.*.result, 'failure') }}
     needs: [build, prepare, test, test-flaky]
     name: On failure
     runs-on: ubuntu-latest
     steps:
       - run: |
-          curl --silent --location --request POST "${{ secrets.FAILURE_WEBHOOK_URL }}" \
+          curl --silent --request POST "${{ secrets.FAILURE_WEBHOOK_URL }}" \
           --header 'Accept: application/json' \
           --header 'Content-Type: text/plain' \
           --data-raw '{
