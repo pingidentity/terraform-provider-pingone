@@ -21,6 +21,10 @@ jobs:
     - name: Prepare
       run: |
         echo "Prepare"
+    - name: Fail
+      run: |
+        echo "Fail"
+        exit 1
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -29,10 +33,6 @@ jobs:
     - name: Test
       run: |
         echo "Test"
-    - name: Fail
-      run: |
-        echo "Fail"
-        exit 1
   test-flaky:
     name: Test Flaky
     runs-on: ubuntu-latest
@@ -42,7 +42,7 @@ jobs:
       run: |
         echo "Test Flaky"
   onfailure:
-    if: ${{ always() && contains(needs.*.result, 'failure') }}
+    if: ${{ always() && github.event_name == "push" && contains(needs.*.result, 'failure') }}
     needs: [build, prepare, test, test-flaky]
     name: On failure
     runs-on: ubuntu-latest
