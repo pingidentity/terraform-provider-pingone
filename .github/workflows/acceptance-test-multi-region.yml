@@ -893,3 +893,23 @@ jobs:
       - name: Sweep to prepare
         run: |
           make sweep
+
+  onfailure:
+    if: ${{ always() && github.event_name == 'schedule' && contains(needs.*.result, 'failure') }}
+    needs: [build,
+            prepare-ap, test-ap, test-ap-flaky, cleanup-ap,
+            prepare-ca, test-ca, test-ca-flaky, cleanup-ca,
+            prepare-eu, test-eu, test-eu-flaky, cleanup-eu,
+            prepare-na, test-na, test-na-flaky, cleanup-na]
+    name: Send failure webhook
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl --silent --request POST "${{ secrets.FAILURE_WEBHOOK_URL }}" \
+          --header 'Accept: application/json' \
+          --header 'Content-Type: text/plain' \
+          --data-raw '{
+              "WorkflowName": "${{ github.workflow }}",
+              "WorkflowURL": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "RepoName" : "${{ github.repository }}",
+          }'
