@@ -42,7 +42,7 @@ jobs:
       run: |
         echo "Test Flaky"
   onfailure:
-    if: ${{ always() && github.event_name == 'push' && contains(needs.*.result, 'failure') }}
+    if: ${{ always() && github.event_name == 'schedule' && contains(needs.*.result, 'failure') }}
     needs: [build, prepare, test, test-flaky]
     name: On failure
     runs-on: ubuntu-latest
