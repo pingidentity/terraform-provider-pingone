@@ -6,26 +6,44 @@ on:
 
 
 jobs:
-  thisonewillwork:
-    name: This one will work
+  build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
-    - name: Print somethin
+    - name: Build
       run: |
-        echo "jajaja"
-  expectedfailure:
-    name: Expected failure
+        echo "Build"
+    - name: Fail
+      run: |
+        echo "Fail"
+        exit 1
+  prepare:
+    name: Prepare
     runs-on: ubuntu-latest
+    needs: build
     steps:
-    - name: Print somethin
+    - name: Prepare
       run: |
-        echo "hehehe"
-    - name: Whoops
+        echo "Prepare"
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: [build, prepare]
+    steps:
+    - name: Test
       run: |
-        cat /this/doesnt/exist
+        echo "Test"
+  test-flaky:
+    name: Test Flaky
+    runs-on: ubuntu-latest
+    needs: [build, prepare]
+    steps:
+    - name: Test Flaky
+      run: |
+        echo "Test Flaky"
   onfailure:
     if: ${{ always() && contains(needs.*.result, 'failure') }}
-    needs: [thisonewillwork, expectedfailure]
+    needs: [build, prepare, test, test-flaky]
     name: On failure
     runs-on: ubuntu-latest
     steps:
