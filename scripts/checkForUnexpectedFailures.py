@@ -34,7 +34,6 @@ with open(rf'{testOutputFile}') as testOutput:
         # Find failed tests
         if match:
             testName = match.group(1)
-            print(f"Test failed: {testName}")
             # Get the corresponding output for the test, continuing to read in the file in reverse until hitting the same test name
             testErrorLines = deque()
             for j in range(i+1, len(reversedOutput)):
@@ -47,8 +46,6 @@ with open(rf'{testOutputFile}') as testOutput:
                     testErrorLines = []
                 else:
                     testErrorLines.insert(0, line)
-            # Print the error lines
-            print("".join(testErrorLines))
             if len(testErrorLines) > 0:
                 errorsByTestName[testName] = "".join(testErrorLines)
 
