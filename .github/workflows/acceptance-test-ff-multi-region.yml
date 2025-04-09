@@ -519,10 +519,10 @@ jobs:
   onfailure:
     if: ${{ always() && github.event_name == 'schedule' && contains(needs.*.result, 'failure') }}
     needs: [build,
-            prepare-ap, test-ap, test-ap-flaky, cleanup-ap,
-            prepare-ca, test-ca, test-ca-flaky, cleanup-ca,
-            prepare-eu, test-eu, test-eu-flaky, cleanup-eu,
-            prepare-na, test-na, test-na-flaky, cleanup-na]
+            prepare-ap, test-ap, cleanup-ap,
+            prepare-ca, test-ca, cleanup-ca,
+            prepare-eu, test-eu, cleanup-eu,
+            prepare-na, test-na, cleanup-na]
     name: Send failure webhook
     runs-on: ubuntu-latest
     steps:
