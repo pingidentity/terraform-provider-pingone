@@ -78,7 +78,8 @@ for issue in issues:
 if len(testNotFound) > 0:
     print("The following tests failed but are not known in any existing Github test-failure issues:")
     for testName in testNotFound:
-        print(testName)
+        print(f"FAIL: {testName}")
+        print(errorsByTestName[testName])
     #TODO send notification
     # Exit with a non-zero status to indicate failure
     sys.exit(1)
