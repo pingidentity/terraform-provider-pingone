@@ -153,19 +153,19 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 
 	minCharactersAlphabeticalUppercaseDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that specifies the count of alphabetical uppercase characters (`ABCDEFGHIJKLMNOPQRSTUVWXYZ`) that should feature in the user's password.",
-	).DefaultValue(minCharactersFixedValue).FixedValue(minCharactersFixedValue)
+	).FixedValue(minCharactersFixedValue)
 
 	minCharactersAlphabeticalLowercaseDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that specifies the count of alphabetical uppercase characters (`abcdefghijklmnopqrstuvwxyz`) that should feature in the user's password.",
-	).DefaultValue(minCharactersFixedValue).FixedValue(minCharactersFixedValue)
+	).FixedValue(minCharactersFixedValue)
 
 	minCharactersNumericDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that specifies the count of numeric characters (`0123456789`) that should feature in the user's password.",
-	).DefaultValue(minCharactersFixedValue).FixedValue(minCharactersFixedValue)
+	).FixedValue(minCharactersFixedValue)
 
 	minCharactersSpecialCharactersDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that specifies the count of special characters (`~!@#$%^&*()-_=+[]{}\\|;:,.<>/?`) that should feature in the user's password.",
-	).DefaultValue(minCharactersFixedValue).FixedValue(minCharactersFixedValue)
+	).FixedValue(minCharactersFixedValue)
 
 	passwordAgeMaxDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that specifies the maximum number of days the same password can be used before it must be changed. The value must be a positive, non-zero integer.  The value must be greater than the sum of `min` (if set) + 21 (the expiration warning interval for passwords).",
@@ -332,9 +332,6 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Description:         minCharactersAlphabeticalUppercaseDescription.Description,
 						MarkdownDescription: minCharactersAlphabeticalUppercaseDescription.MarkdownDescription,
 						Optional:            true,
-						Computed:            true,
-
-						Default: int32default.StaticInt32(minCharactersFixedValue),
 
 						Validators: []validator.Int32{
 							int32validator.Between(minCharactersFixedValue, minCharactersFixedValue),
@@ -345,9 +342,6 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Description:         minCharactersAlphabeticalLowercaseDescription.Description,
 						MarkdownDescription: minCharactersAlphabeticalLowercaseDescription.MarkdownDescription,
 						Optional:            true,
-						Computed:            true,
-
-						Default: int32default.StaticInt32(minCharactersFixedValue),
 
 						Validators: []validator.Int32{
 							int32validator.Between(minCharactersFixedValue, minCharactersFixedValue),
@@ -358,9 +352,6 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Description:         minCharactersNumericDescription.Description,
 						MarkdownDescription: minCharactersNumericDescription.MarkdownDescription,
 						Optional:            true,
-						Computed:            true,
-
-						Default: int32default.StaticInt32(minCharactersFixedValue),
 
 						Validators: []validator.Int32{
 							int32validator.Between(minCharactersFixedValue, minCharactersFixedValue),
@@ -371,9 +362,6 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Description:         minCharactersSpecialCharactersDescription.Description,
 						MarkdownDescription: minCharactersSpecialCharactersDescription.MarkdownDescription,
 						Optional:            true,
-						Computed:            true,
-
-						Default: int32default.StaticInt32(minCharactersFixedValue),
 
 						Validators: []validator.Int32{
 							int32validator.Between(minCharactersFixedValue, minCharactersFixedValue),

@@ -122,10 +122,10 @@ Required:
 
 Optional:
 
-- `alphabetical_lowercase` (Number) An integer that specifies the count of alphabetical uppercase characters (`abcdefghijklmnopqrstuvwxyz`) that should feature in the user's password.  Defaults to `1`.  Fixed value of `1`.
-- `alphabetical_uppercase` (Number) An integer that specifies the count of alphabetical uppercase characters (`ABCDEFGHIJKLMNOPQRSTUVWXYZ`) that should feature in the user's password.  Defaults to `1`.  Fixed value of `1`.
-- `numeric` (Number) An integer that specifies the count of numeric characters (`0123456789`) that should feature in the user's password.  Defaults to `1`.  Fixed value of `1`.
-- `special_characters` (Number) An integer that specifies the count of special characters (`~!@#$%^&*()-_=+[]{}\|;:,.<>/?`) that should feature in the user's password.  Defaults to `1`.  Fixed value of `1`.
+- `alphabetical_lowercase` (Number) An integer that specifies the count of alphabetical uppercase characters (`abcdefghijklmnopqrstuvwxyz`) that should feature in the user's password.  Fixed value of `1`.
+- `alphabetical_uppercase` (Number) An integer that specifies the count of alphabetical uppercase characters (`ABCDEFGHIJKLMNOPQRSTUVWXYZ`) that should feature in the user's password.  Fixed value of `1`.
+- `numeric` (Number) An integer that specifies the count of numeric characters (`0123456789`) that should feature in the user's password.  Fixed value of `1`.
+- `special_characters` (Number) An integer that specifies the count of special characters (`~!@#$%^&*()-_=+[]{}\|;:,.<>/?`) that should feature in the user's password.  Fixed value of `1`.
 
 ## Import
 
