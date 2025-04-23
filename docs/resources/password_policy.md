@@ -45,7 +45,7 @@ resource "pingone_password_policy" "my_password_policy" {
   }
 
   min_characters = {
-    alphabetical_uppercase = 1
+    alphabetical_uppercase = 0
     alphabetical_lowercase = 1
     numeric                = 1
     special_characters     = 1
@@ -122,10 +122,10 @@ Required:
 
 Optional:
 
-- `alphabetical_lowercase` (Number) An integer that specifies the count of alphabetical uppercase characters (`abcdefghijklmnopqrstuvwxyz`) that should feature in the user's password.  Fixed value of `1`.
-- `alphabetical_uppercase` (Number) An integer that specifies the count of alphabetical uppercase characters (`ABCDEFGHIJKLMNOPQRSTUVWXYZ`) that should feature in the user's password.  Fixed value of `1`.
-- `numeric` (Number) An integer that specifies the count of numeric characters (`0123456789`) that should feature in the user's password.  Fixed value of `1`.
-- `special_characters` (Number) An integer that specifies the count of special characters (`~!@#$%^&*()-_=+[]{}\|;:,.<>/?`) that should feature in the user's password.  Fixed value of `1`.
+- `alphabetical_lowercase` (Number) An integer that specifies the count of alphabetical uppercase characters (`abcdefghijklmnopqrstuvwxyz`) that should feature in the user's password. Setting to `0` will remove the requirement. The default of `1` will be removed in the next major release.  Defaults to `1`.
+- `alphabetical_uppercase` (Number) An integer that specifies the count of alphabetical uppercase characters (`ABCDEFGHIJKLMNOPQRSTUVWXYZ`) that should feature in the user's password. Setting to `0` will remove the requirement. The default of `1` will be removed in the next major release.  Defaults to `1`.
+- `numeric` (Number) An integer that specifies the count of numeric characters (`0123456789`) that should feature in the user's password. Setting to `0` will remove the requirement. The default of `1` will be removed in the next major release.  Defaults to `1`.
+- `special_characters` (Number) An integer that specifies the count of special characters (`~!@#$%^&*()-_=+[]{}\|;:,.<>/?`) that should feature in the user's password. Setting to `0` will remove the requirement. The default of `1` will be removed in the next major release.  Defaults to `1`.
 
 ## Import
 

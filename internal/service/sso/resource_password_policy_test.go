@@ -140,7 +140,7 @@ func TestAccPasswordPolicy_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "length.max", "255"),
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.duration_seconds", "30"),
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.failure_count", "5"),
-					resource.TestCheckResourceAttr(resourceFullName, "min_characters.alphabetical_uppercase", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "min_characters.alphabetical_uppercase", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "min_characters.alphabetical_lowercase", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "min_characters.numeric", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "min_characters.special_characters", "1"),
@@ -306,7 +306,7 @@ resource "pingone_password_policy" "%[2]s" {
   }
 
   min_characters = {
-    alphabetical_uppercase = 1
+    alphabetical_uppercase = 0
     alphabetical_lowercase = 1
     numeric                = 1
     special_characters     = 1
