@@ -1,5 +1,22 @@
 ## 1.7.0 (23 April 2025)
 
+NOTES:
+
+* `resource/pingone_notification_settings_email`: Added documentation note to recommend use of `pingone_notification_settings` when using Ping-hosted SMTP email service. ([#1027](https://github.com/pingidentity/terraform-provider-pingone/issues/1027))
+* `resource/pingone_notification_settings`: Updated Example Usage documentation to include both Ping-hosted SMTP and Twilio examples. ([#1027](https://github.com/pingidentity/terraform-provider-pingone/issues/1027))
+* `resource/pingone_sign_on_policy_action`: Corrected the documented MFA example HCL to use the `last_sign_on_older_than_seconds_mfa` condition. ([#1022](https://github.com/pingidentity/terraform-provider-pingone/issues/1022))
+* `resource/pingone_sign_on_policy`: Corrected the documented MFA action example HCL to use the `last_sign_on_older_than_seconds_mfa` condition. ([#1022](https://github.com/pingidentity/terraform-provider-pingone/issues/1022))
+
+ENHANCEMENTS:
+
+* `resource/pingone_risk_predictor`: Added support for the `predictor_traffic_anomaly` field. ([#1017](https://github.com/pingidentity/terraform-provider-pingone/issues/1017))
+
+BUG FIXES:
+
+* `resource/pingone_administrator_security`: Fix invalid configuration error when configuring an `EXTERNAL` authentication method ([#1028](https://github.com/pingidentity/terraform-provider-pingone/issues/1028))
+* `resource/pingone_custom_domain_verify`: Fix early verification failure of NXDOMAIN. ([#1026](https://github.com/pingidentity/terraform-provider-pingone/issues/1026))
+* `resource/pingone_digital_wallet_application`: Correctly force replacement when the `application_id` attribute changes, to prevent potential resource not found errors during updates. ([#1031](https://github.com/pingidentity/terraform-provider-pingone/issues/1031))
+
 ## 1.6.0 (26 March 2025)
 
 NOTES:
