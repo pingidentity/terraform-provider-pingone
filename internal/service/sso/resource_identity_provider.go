@@ -48,6 +48,7 @@ type identityProviderResourceModelV1 struct {
 	Facebook                 types.Object                 `tfsdk:"facebook"`
 	Google                   types.Object                 `tfsdk:"google"`
 	LinkedIn                 types.Object                 `tfsdk:"linkedin"`
+	LinkedInOIDC             types.Object                 `tfsdk:"linkedin_oidc"`
 	Yahoo                    types.Object                 `tfsdk:"yahoo"`
 	Amazon                   types.Object                 `tfsdk:"amazon"`
 	Twitter                  types.Object                 `tfsdk:"twitter"`
@@ -252,7 +253,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 	const samlSloWindowMin = 1
 	const samlSloWindowMax = 24
 
-	providerAttributeList := []string{"facebook", "google", "linkedin", "yahoo", "amazon", "twitter", "apple", "paypal", "microsoft", "github", "openid_connect", "saml"}
+	providerAttributeList := []string{"facebook", "google", "linkedin", "linkedin_oidc", "yahoo", "amazon", "twitter", "apple", "paypal", "microsoft", "github", "openid_connect", "saml"}
 
 	enabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the identity provider is enabled in the environment.",
@@ -453,10 +454,44 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 				providerAttributeList,
 			),
 
-			"linkedin": identityProviderSchemaAttribute(
+			"linkedin": schema.SingleNestedAttribute{
+				Description:        framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the LinkedIn social identity provider.").Description,
+				DeprecationMessage: framework.SchemaAttributeDescriptionFromMarkdown("This block is deprecated and will be removed in February 2026. Use the `linkedin_oidc` block instead.").Description,
+				Optional:           true,
+				Attributes: map[string]schema.Attribute{
+					"client_id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application client ID from LinkedIn.").Description,
+						Required:    true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(1),
+						},
+					},
+
+					"client_secret": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application client secret from LinkedIn.").Description,
+						Required:    true,
+						Sensitive:   true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(1),
+						},
+					},
+				},
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
+				},
+				Validators: []validator.Object{
+					objectvalidator.ExactlyOneOf(
+						exactlyOneOfPaths(providerAttributeList)...,
+					),
+				},
+			},
+
+			"linkedin_oidc": identityProviderSchemaAttribute(
 				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the LinkedIn social identity provider."),
 
-				identityProviderClientIdClientSecretAttributes("LinkedIn"),
+				identityProviderClientIdClientSecretAttributes("LinkedInOIDC"),
 
 				providerAttributeList,
 			),
@@ -892,13 +927,17 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 	}
 }
 
-func identityProviderSchemaAttribute(description framework.SchemaAttributeDescription, attributes map[string]schema.Attribute, exactlyOneOfBlockNames []string) schema.SingleNestedAttribute {
-	description = description.ExactlyOneOf(exactlyOneOfBlockNames).RequiresReplaceNestedAttributes()
-
+func exactlyOneOfPaths(exactlyOneOfBlockNames []string) []path.Expression {
 	exactlyOneOfPaths := make([]path.Expression, len(exactlyOneOfBlockNames))
 	for i, blockName := range exactlyOneOfBlockNames {
 		exactlyOneOfPaths[i] = path.MatchRelative().AtParent().AtName(blockName)
 	}
+	return exactlyOneOfPaths
+}
+
+func identityProviderSchemaAttribute(description framework.SchemaAttributeDescription, attributes map[string]schema.Attribute, exactlyOneOfBlockNames []string) schema.SingleNestedAttribute {
+	description = description.ExactlyOneOf(exactlyOneOfBlockNames).RequiresReplaceNestedAttributes()
+	pathExpressions := exactlyOneOfPaths(exactlyOneOfBlockNames)
 
 	return schema.SingleNestedAttribute{
 		Description:         description.Description,
@@ -909,7 +948,7 @@ func identityProviderSchemaAttribute(description framework.SchemaAttributeDescri
 
 		Validators: []validator.Object{
 			objectvalidator.ExactlyOneOf(
-				exactlyOneOfPaths...,
+				pathExpressions...,
 			),
 		},
 
@@ -1297,6 +1336,34 @@ func (p *identityProviderResourceModelV1) expand(ctx context.Context) (*manageme
 	if !p.LinkedIn.IsNull() && !p.LinkedIn.IsUnknown() {
 		var plan identityProviderLinkedInResourceModelV1
 		d := p.LinkedIn.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		idpData := management.IdentityProviderClientIDClientSecret{
+			Enabled:         common.Enabled,
+			Name:            common.Name,
+			Type:            management.ENUMIDENTITYPROVIDEREXT_LINKEDIN,
+			Description:     common.Description,
+			Registration:    common.Registration,
+			LoginButtonIcon: common.LoginButtonIcon,
+			Icon:            common.Icon,
+		}
+
+		idpData.SetClientId(plan.ClientId.ValueString())
+		idpData.SetClientSecret(plan.ClientSecret.ValueString())
+
+		data.IdentityProviderClientIDClientSecret = &idpData
+		processedCount += 1
+	}
+
+	if !p.LinkedInOIDC.IsNull() && !p.LinkedInOIDC.IsUnknown() {
+		var plan identityProviderLinkedInResourceModelV1
+		d := p.LinkedInOIDC.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
 		})
@@ -1830,6 +1897,9 @@ func (p *identityProviderResourceModelV1) toState(apiObject *management.Identity
 	diags.Append(d...)
 
 	p.LinkedIn, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_LINKEDIN)
+	diags.Append(d...)
+
+	// p.LinkedInOIDC, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_LINKEDIN_OIDC)
 	diags.Append(d...)
 
 	p.Yahoo, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_YAHOO)

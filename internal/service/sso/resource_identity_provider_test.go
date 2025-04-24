@@ -203,6 +203,7 @@ func TestAccIdentityProvider_Facebook(t *testing.T) {
 					// resource.TestMatchResourceAttr(resourceFullName, "facebook.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/facebook$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -222,6 +223,7 @@ func TestAccIdentityProvider_Facebook(t *testing.T) {
 					// resource.TestMatchResourceAttr(resourceFullName, "facebook.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/facebook$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -278,6 +280,7 @@ func TestAccIdentityProvider_Google(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "google.client_secret", "dummyclientsecret1"),
 					// resource.TestMatchResourceAttr(resourceFullName, "google.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/google$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -297,6 +300,7 @@ func TestAccIdentityProvider_Google(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "google.client_secret", "dummyclientsecret2"),
 					// resource.TestMatchResourceAttr(resourceFullName, "google.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/google$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -346,12 +350,13 @@ func TestAccIdentityProvider_LinkedIn(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderConfig_LinkedIn1(resourceName, name),
+				Config: testAccIdentityProviderConfig_LinkedIn1(resourceName, name, "linkedin"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.client_id", "dummyclientid1"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.client_secret", "dummyclientsecret1"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					// resource.TestMatchResourceAttr(resourceFullName, "linkedin.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/linkedin$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
@@ -365,12 +370,90 @@ func TestAccIdentityProvider_LinkedIn(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccIdentityProviderConfig_LinkedIn2(resourceName, name),
+				Config: testAccIdentityProviderConfig_LinkedIn2(resourceName, name, "linkedin"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.client_id", "dummyclientid2"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.client_secret", "dummyclientsecret2"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
+					// resource.TestMatchResourceAttr(resourceFullName, "linkedin.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/linkedin$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
+				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccIdentityProvider_LinkedInOIDC(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_identity_provider.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccIdentityProviderConfig_LinkedIn1(resourceName, name, "linkedin_oidc"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.client_id", "dummyclientid1"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.client_secret", "dummyclientsecret1"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					// resource.TestMatchResourceAttr(resourceFullName, "linkedin.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/linkedin$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
+				),
+			},
+			{
+				Config: testAccIdentityProviderConfig_LinkedIn2(resourceName, name, "linkedin_oidc"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.client_id", "dummyclientid2"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.client_secret", "dummyclientsecret2"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
 					// resource.TestMatchResourceAttr(resourceFullName, "linkedin.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/linkedin$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
@@ -426,6 +509,7 @@ func TestAccIdentityProvider_Yahoo(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.client_id", "dummyclientid1"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.client_secret", "dummyclientsecret1"),
 					// resource.TestMatchResourceAttr(resourceFullName, "yahoo.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/yahoo$`)),
@@ -445,6 +529,7 @@ func TestAccIdentityProvider_Yahoo(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.client_id", "dummyclientid2"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.client_secret", "dummyclientsecret2"),
 					// resource.TestMatchResourceAttr(resourceFullName, "yahoo.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/yahoo$`)),
@@ -501,6 +586,7 @@ func TestAccIdentityProvider_Amazon(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.client_id", "dummyclientid1"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.client_secret", "dummyclientsecret1"),
@@ -520,6 +606,7 @@ func TestAccIdentityProvider_Amazon(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.client_id", "dummyclientid2"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.client_secret", "dummyclientsecret2"),
@@ -576,6 +663,7 @@ func TestAccIdentityProvider_Twitter(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.client_id", "dummyclientid1"),
@@ -595,6 +683,7 @@ func TestAccIdentityProvider_Twitter(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.client_id", "dummyclientid2"),
@@ -651,6 +740,7 @@ func TestAccIdentityProvider_Apple(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -672,6 +762,7 @@ func TestAccIdentityProvider_Apple(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -730,6 +821,7 @@ func TestAccIdentityProvider_Paypal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -750,6 +842,7 @@ func TestAccIdentityProvider_Paypal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -807,6 +900,7 @@ func TestAccIdentityProvider_Microsoft(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -827,6 +921,7 @@ func TestAccIdentityProvider_Microsoft(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -883,6 +978,7 @@ func TestAccIdentityProvider_Github(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -902,6 +998,7 @@ func TestAccIdentityProvider_Github(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -956,6 +1053,7 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -987,6 +1085,7 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -1073,6 +1172,7 @@ func TestAccIdentityProvider_SAML(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -1103,6 +1203,7 @@ func TestAccIdentityProvider_SAML(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -1195,6 +1296,7 @@ func TestAccIdentityProvider_ChangeProvider(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -1216,6 +1318,7 @@ func TestAccIdentityProvider_ChangeProvider(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -1407,34 +1510,34 @@ resource "pingone_identity_provider" "%[2]s" {
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_LinkedIn1(resourceName, name string) string {
+func testAccIdentityProviderConfig_LinkedIn1(resourceName, linkedInType, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  linkedin = {
+  %[4]s = {
     client_id     = "dummyclientid1"
     client_secret = "dummyclientsecret1"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name, linkedInType)
 }
 
-func testAccIdentityProviderConfig_LinkedIn2(resourceName, name string) string {
+func testAccIdentityProviderConfig_LinkedIn2(resourceName, name, linkedInType string) string {
 	return fmt.Sprintf(`
 		%[1]s
 resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  linkedin = {
+  %[4]s = {
     client_id     = "dummyclientid2"
     client_secret = "dummyclientsecret2"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name, linkedInType)
 }
 
 func testAccIdentityProviderConfig_Yahoo1(resourceName, name string) string {

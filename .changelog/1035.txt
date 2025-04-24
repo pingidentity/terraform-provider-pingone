@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_identity_provider`: Support new `linkedin_oidc` social identity provider type.
+```
+
+```release-note:note
+`resource/pingone_application`: Add deprecation for the legacy `linkedin` social identity provider type.
+```
