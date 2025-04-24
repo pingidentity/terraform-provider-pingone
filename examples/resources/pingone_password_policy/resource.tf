@@ -31,7 +31,7 @@ resource "pingone_password_policy" "my_password_policy" {
   }
 
   min_characters = {
-    alphabetical_uppercase = 1
+    alphabetical_uppercase = 0
     alphabetical_lowercase = 1
     numeric                = 1
     special_characters     = 1

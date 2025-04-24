@@ -1,0 +1,3 @@
+```release-note:enhancement
+`resource/pingone_password_policy`: Allow 0 to disable character-type requirements in min_characters object.
+```
