@@ -42,6 +42,9 @@ type applicationDataSourceModel struct {
 	ExternalLinkOptions       types.Object                 `tfsdk:"external_link_options"`
 	OIDCOptions               types.Object                 `tfsdk:"oidc_options"`
 	SAMLOptions               types.Object                 `tfsdk:"saml_options"`
+	Configuration             types.Map                    `tfsdk:"configuration"`
+	Integration               types.Object                 `tfsdk:"integration"`
+	Version                   types.Object                 `tfsdk:"version"`
 }
 
 // Framework interfaces
@@ -609,6 +612,11 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 					"cors_settings": datasourceApplicationSchemaCorsSettings(),
 				},
 			},
+			"template": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"configuration": schema.MapAttribute{},
+				},
+			},
 		},
 	}
 }
@@ -751,6 +759,9 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 							case *management.ApplicationSAML:
 								applicationName = v.GetName()
+
+							case *management.ApplicationTemplate:
+								applicationName = applicationObj.App
 							}
 
 							if applicationName == data.Name.ValueString() {
@@ -920,6 +931,8 @@ func (p *applicationDataSourceModel) toState(ctx context.Context, apiObject *man
 		diags = append(diags, d...)
 
 		p.ExternalLinkOptions = types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes)
+
+	case *management.ApplicationTemplate:
 	}
 
 	return diags
