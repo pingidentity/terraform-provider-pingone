@@ -323,6 +323,14 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 		fmt.Sprintf("An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request. The minimum value is `%d` hour and the maximum is `%d` hours.", samlSloWindowMin, samlSloWindowMax),
 	)
 
+	linkedInSchemaAttr := identityProviderSchemaAttribute(
+		framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the LinkedIn social identity provider."),
+		identityProviderClientIdClientSecretAttributes("LinkedIn"),
+		providerAttributeList,
+	)
+
+	linkedInSchemaAttr.DeprecationMessage = framework.SchemaAttributeDescriptionFromMarkdown("This block is deprecated and will be removed in February 2026. Use the `linkedin_oidc` block instead.").Description
+
 	resp.Schema = schema.Schema{
 
 		Version: 1,
@@ -454,39 +462,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 				providerAttributeList,
 			),
 
-			"linkedin": schema.SingleNestedAttribute{
-				Description:        framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the LinkedIn social identity provider.").Description,
-				DeprecationMessage: framework.SchemaAttributeDescriptionFromMarkdown("This block is deprecated and will be removed in February 2026. Use the `linkedin_oidc` block instead.").Description,
-				Optional:           true,
-				Attributes: map[string]schema.Attribute{
-					"client_id": schema.StringAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application client ID from LinkedIn.").Description,
-						Required:    true,
-
-						Validators: []validator.String{
-							stringvalidator.LengthAtLeast(1),
-						},
-					},
-
-					"client_secret": schema.StringAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application client secret from LinkedIn.").Description,
-						Required:    true,
-						Sensitive:   true,
-
-						Validators: []validator.String{
-							stringvalidator.LengthAtLeast(1),
-						},
-					},
-				},
-				PlanModifiers: []planmodifier.Object{
-					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
-				},
-				Validators: []validator.Object{
-					objectvalidator.ExactlyOneOf(
-						exactlyOneOfPaths(providerAttributeList)...,
-					),
-				},
-			},
+			"linkedin": linkedInSchemaAttr,
 
 			"linkedin_oidc": identityProviderSchemaAttribute(
 				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the LinkedIn social identity provider."),
@@ -927,17 +903,13 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 	}
 }
 
-func exactlyOneOfPaths(exactlyOneOfBlockNames []string) []path.Expression {
+func identityProviderSchemaAttribute(description framework.SchemaAttributeDescription, attributes map[string]schema.Attribute, exactlyOneOfBlockNames []string) schema.SingleNestedAttribute {
+	description = description.ExactlyOneOf(exactlyOneOfBlockNames).RequiresReplaceNestedAttributes()
+
 	exactlyOneOfPaths := make([]path.Expression, len(exactlyOneOfBlockNames))
 	for i, blockName := range exactlyOneOfBlockNames {
 		exactlyOneOfPaths[i] = path.MatchRelative().AtParent().AtName(blockName)
 	}
-	return exactlyOneOfPaths
-}
-
-func identityProviderSchemaAttribute(description framework.SchemaAttributeDescription, attributes map[string]schema.Attribute, exactlyOneOfBlockNames []string) schema.SingleNestedAttribute {
-	description = description.ExactlyOneOf(exactlyOneOfBlockNames).RequiresReplaceNestedAttributes()
-	pathExpressions := exactlyOneOfPaths(exactlyOneOfBlockNames)
 
 	return schema.SingleNestedAttribute{
 		Description:         description.Description,
@@ -948,7 +920,7 @@ func identityProviderSchemaAttribute(description framework.SchemaAttributeDescri
 
 		Validators: []validator.Object{
 			objectvalidator.ExactlyOneOf(
-				pathExpressions...,
+				exactlyOneOfPaths...,
 			),
 		},
 
