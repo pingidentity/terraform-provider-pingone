@@ -1375,7 +1375,7 @@ func (p *identityProviderResourceModelV1) expand(ctx context.Context) (*manageme
 		idpData := management.IdentityProviderClientIDClientSecret{
 			Enabled:         common.Enabled,
 			Name:            common.Name,
-			Type:            management.ENUMIDENTITYPROVIDEREXT_LINKEDIN,
+			Type:            management.ENUMIDENTITYPROVIDEREXT_LINKEDIN_OIDC,
 			Description:     common.Description,
 			Registration:    common.Registration,
 			LoginButtonIcon: common.LoginButtonIcon,
@@ -1899,7 +1899,7 @@ func (p *identityProviderResourceModelV1) toState(apiObject *management.Identity
 	p.LinkedIn, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_LINKEDIN)
 	diags.Append(d...)
 
-	// p.LinkedInOIDC, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_LINKEDIN_OIDC)
+	p.LinkedInOIDC, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_LINKEDIN_OIDC)
 	diags.Append(d...)
 
 	p.Yahoo, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_YAHOO)

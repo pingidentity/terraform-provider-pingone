@@ -1510,7 +1510,7 @@ resource "pingone_identity_provider" "%[2]s" {
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_LinkedIn1(resourceName, linkedInType, name string) string {
+func testAccIdentityProviderConfig_LinkedIn1(resourceName, name, linkedInType string) string {
 	return fmt.Sprintf(`
 		%[1]s
 resource "pingone_identity_provider" "%[2]s" {
