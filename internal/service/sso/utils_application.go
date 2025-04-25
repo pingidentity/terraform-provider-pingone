@@ -432,3 +432,62 @@ func applicationSamlSpVerificationOkToTF(apiObject *management.ApplicationSAMLAl
 
 	return returnVar, diags
 }
+
+func applicationTemplateToTF(apiObject *management.ApplicationTemplate, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(applicationTemplateTFObjectTypes), diags
+	}
+
+	integration, d := applicationTemplateIntegrationOkToTF(apiObject.GetIntegrationOk())
+	diags.Append(d...)
+
+	version, d := applicationTemplateVersionOkToTF(apiObject.GetVersionOk())
+	diags.Append(d...)
+
+	attributesMap := map[string]attr.Value{
+		"configuration": framework.StringMapOkToTF(apiObject.GetConfigurationOk()),
+		"integration":   integration,
+		"version":       version,
+	}
+
+	returnVar, d := types.ObjectValue(applicationTemplateTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func applicationTemplateIntegrationOkToTF(apiObject *management.ApplicationTemplateIntegration, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(applicationTemplateIntegrationTFObjectTypes), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"id": framework.StringOkToTF(apiObject.GetIdOk()),
+	}
+
+	returnVar, d := types.ObjectValue(applicationTemplateIntegrationTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func applicationTemplateVersionOkToTF(apiObject *management.ApplicationTemplateVersion, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(applicationTemplateVersionTFObjectTypes), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"id": framework.StringOkToTF(apiObject.GetIdOk()),
+	}
+
+	returnVar, d := types.ObjectValue(applicationTemplateVersionTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}

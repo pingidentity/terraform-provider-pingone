@@ -42,6 +42,7 @@ type applicationDataSourceModel struct {
 	ExternalLinkOptions       types.Object                 `tfsdk:"external_link_options"`
 	OIDCOptions               types.Object                 `tfsdk:"oidc_options"`
 	SAMLOptions               types.Object                 `tfsdk:"saml_options"`
+	Template                  types.Object                 `tfsdk:"template"`
 	Configuration             types.Map                    `tfsdk:"configuration"`
 	Integration               types.Object                 `tfsdk:"integration"`
 	Version                   types.Object                 `tfsdk:"version"`
@@ -613,8 +614,28 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 				},
 			},
 			"template": schema.SingleNestedAttribute{
+				Computed: true,
 				Attributes: map[string]schema.Attribute{
-					"configuration": schema.MapAttribute{},
+					"configuration": schema.MapAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A map of strings that contains a key/value map of the parameters required by the integration in Integration Catalog.").Description,
+						Computed:    true,
+					},
+					"integration": schema.SingleNestedAttribute{
+						Computed: true,
+						Attributes: map[string]schema.Attribute{
+							"id": schema.StringAttribute{
+								Computed: true,
+							},
+						},
+					},
+					"version": schema.SingleNestedAttribute{
+						Computed: true,
+						Attributes: map[string]schema.Attribute{
+							"id": schema.StringAttribute{
+								Computed: true,
+							},
+						},
+					},
 				},
 			},
 		},
@@ -759,9 +780,6 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 							case *management.ApplicationSAML:
 								applicationName = v.GetName()
-
-							case *management.ApplicationTemplate:
-								applicationName = applicationObj.App
 							}
 
 							if applicationName == data.Name.ValueString() {
@@ -895,7 +913,11 @@ func (p *applicationDataSourceModel) toState(ctx context.Context, apiObject *man
 		diags = append(diags, d...)
 
 		p.SAMLOptions = types.ObjectNull(applicationSamlOptionsTFObjectTypes)
+
 		p.ExternalLinkOptions = types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes)
+
+		p.Template, d = applicationTemplateToTF(v.GetTemplateOk())
+		diags = append(diags, d...)
 
 	case *management.ApplicationSAML:
 		p.Id = framework.PingOneResourceIDOkToTF(v.GetIdOk())
@@ -931,6 +953,9 @@ func (p *applicationDataSourceModel) toState(ctx context.Context, apiObject *man
 		diags = append(diags, d...)
 
 		p.ExternalLinkOptions = types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes)
+
+		p.Template, d = applicationTemplateToTF(v.GetTemplateOk())
+		diags = append(diags, d...)
 
 	case *management.ApplicationTemplate:
 	}

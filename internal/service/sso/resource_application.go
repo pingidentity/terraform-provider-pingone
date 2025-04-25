@@ -300,6 +300,20 @@ var (
 		"groups": types.SetType{ElemType: pingonetypes.ResourceIDType{}},
 		"type":   types.StringType,
 	}
+
+	applicationTemplateIntegrationTFObjectTypes = map[string]attr.Type{
+		"id": types.StringType,
+	}
+
+	applicationTemplateVersionTFObjectTypes = map[string]attr.Type{
+		"id": types.StringType,
+	}
+
+	applicationTemplateTFObjectTypes = map[string]attr.Type{
+		"configuration": types.MapType{ElemType: types.StringType},
+		"integration":   types.ObjectType{AttrTypes: applicationTemplateIntegrationTFObjectTypes},
+		"version":       types.ObjectType{AttrTypes: applicationTemplateVersionTFObjectTypes},
+	}
 )
 
 // Framework interfaces
@@ -1618,6 +1632,31 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 				PlanModifiers: []planmodifier.Object{
 					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
+				},
+			},
+			"template": schema.SingleNestedAttribute{
+				Computed: true,
+				Attributes: map[string]schema.Attribute{
+					"configuration": schema.MapAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A map of strings that contains a key/value map of the parameters required by the integration in Integration Catalog.").Description,
+						Computed:    true,
+					},
+					"integration": schema.SingleNestedAttribute{
+						Computed: true,
+						Attributes: map[string]schema.Attribute{
+							"id": schema.StringAttribute{
+								Computed: true,
+							},
+						},
+					},
+					"version": schema.SingleNestedAttribute{
+						Computed: true,
+						Attributes: map[string]schema.Attribute{
+							"id": schema.StringAttribute{
+								Computed: true,
+							},
+						},
+					},
 				},
 			},
 		},
