@@ -105,6 +105,9 @@ func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.Appli
 	mobileApp, d := applicationMobileAppOkToTF(ctx, mobileAppObject, ok, mobileAppState)
 	diags.Append(d...)
 
+	template, d := applicationTemplateOkToTF(apiObject.GetTemplateOk())
+	diags.Append(d...)
+
 	attributesMap := map[string]attr.Value{
 		"additional_refresh_token_replay_protection_enabled": framework.BoolOkToTF(apiObject.GetAdditionalRefreshTokenReplayProtectionEnabledOk()),
 		"allow_wildcard_in_redirect_uris":                    framework.BoolOkToTF(apiObject.GetAllowWildcardInRedirectUrisOk()),
@@ -136,6 +139,7 @@ func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.Appli
 		"target_link_uri":                                    framework.StringOkToTF(apiObject.GetTargetLinkUriOk()),
 		"token_endpoint_auth_method":                         framework.EnumOkToTF(apiObject.GetTokenEndpointAuthMethodOk()),
 		"type":                                               framework.EnumOkToTF(apiObject.GetTypeOk()),
+		"template":                                           template,
 	}
 
 	returnVar, d := types.ObjectValue(applicationOidcOptionsTFObjectTypes, attributesMap)
@@ -320,6 +324,9 @@ func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Ob
 	spVerification, d := applicationSamlSpVerificationOkToTF(apiObject.GetSpVerificationOk())
 	diags.Append(d...)
 
+	template, d := applicationTemplateOkToTF(apiObject.GetTemplateOk())
+	diags.Append(d...)
+
 	attributesMap := map[string]attr.Value{
 		"acs_urls":                         framework.StringSetOkToTF(apiObject.GetAcsUrlsOk()),
 		"assertion_duration":               framework.Int32OkToTF(apiObject.GetAssertionDurationOk()),
@@ -339,6 +346,7 @@ func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Ob
 		"sp_encryption":                    spEncryption,
 		"sp_entity_id":                     framework.StringOkToTF(apiObject.GetSpEntityIdOk()),
 		"sp_verification":                  spVerification,
+		"template":                         template,
 		"type":                             framework.EnumOkToTF(apiObject.GetTypeOk()),
 	}
 
@@ -433,7 +441,7 @@ func applicationSamlSpVerificationOkToTF(apiObject *management.ApplicationSAMLAl
 	return returnVar, diags
 }
 
-func applicationTemplateToTF(apiObject *management.ApplicationTemplate, ok bool) (types.Object, diag.Diagnostics) {
+func applicationTemplateOkToTF(apiObject *management.ApplicationTemplate, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {

@@ -96,6 +96,7 @@ type applicationOIDCOptionsResourceModelV1 struct {
 	ResponseTypes                                 types.Set    `tfsdk:"response_types"`
 	SupportUnsignedRequestObject                  types.Bool   `tfsdk:"support_unsigned_request_object"`
 	TargetLinkUri                                 types.String `tfsdk:"target_link_uri"`
+	Template                                      types.Object `tfsdk:"template"`
 	TokenEndpointAuthnMethod                      types.String `tfsdk:"token_endpoint_auth_method"`
 	Type                                          types.String `tfsdk:"type"`
 }
@@ -157,6 +158,7 @@ type applicationSAMLOptionsResourceModelV1 struct {
 	SpEncryption                types.Object `tfsdk:"sp_encryption"`
 	SpEntityId                  types.String `tfsdk:"sp_entity_id"`
 	SpVerification              types.Object `tfsdk:"sp_verification"`
+	Template                    types.Object `tfsdk:"template"`
 	Type                        types.String `tfsdk:"type"`
 }
 
@@ -177,6 +179,20 @@ type applicationSAMLOptionsSpEncryptionCertificateResourceModelV1 struct {
 type applicationSAMLOptionsSpVerificationResourceModelV1 struct {
 	CertificateIds     types.Set  `tfsdk:"certificate_ids"`
 	AuthnRequestSigned types.Bool `tfsdk:"authn_request_signed"`
+}
+
+type applicationTemplateIntegrationResourceModelV1 struct {
+	Id types.String `tfsdk:"id"`
+}
+
+type applicationTemplateVersionResourceModelV1 struct {
+	Id types.String `tfsdk:"id"`
+}
+
+type applicationTemplateResourceModelV1 struct {
+	Configuration types.Map    `tfsdk:"configuration"`
+	Integration   types.Object `tfsdk:"integration"`
+	Version       types.Object `tfsdk:"version"`
 }
 
 var (
@@ -214,6 +230,7 @@ var (
 		"response_types":                                     types.SetType{ElemType: types.StringType},
 		"support_unsigned_request_object":                    types.BoolType,
 		"target_link_uri":                                    types.StringType,
+		"template":                                           types.ObjectType{AttrTypes: applicationTemplateTFObjectTypes},
 		"token_endpoint_auth_method":                         types.StringType,
 		"type":                                               types.StringType,
 	}
@@ -270,6 +287,7 @@ var (
 		"sp_encryption":                    types.ObjectType{AttrTypes: applicationSamlOptionsSpEncryptionTFObjectTypes},
 		"sp_entity_id":                     types.StringType,
 		"sp_verification":                  types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes},
+		"template":                         types.ObjectType{AttrTypes: applicationTemplateTFObjectTypes},
 		"type":                             types.StringType,
 	}
 
@@ -858,6 +876,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 								string(management.ENUMAPPLICATIONTYPE_WORKER),
 								string(management.ENUMAPPLICATIONTYPE_CUSTOM_APP),
 								string(management.ENUMAPPLICATIONTYPE_SERVICE),
+								string(management.ENUMAPPLICATIONTYPE_TEMPLATE_APP),
 							),
 						},
 					},
@@ -1387,7 +1406,8 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						},
 					},
 
-					"cors_settings": resourceApplicationSchemaCorsSettings(),
+					"cors_settings": resourceApplicationSchemaCorsSettingsSchema(),
+					"template":      applicationTemplateSchema(),
 				},
 
 				Validators: []validator.Object{
@@ -1434,6 +1454,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							stringvalidator.OneOf(
 								string(management.ENUMAPPLICATIONTYPE_WEB_APP),
 								string(management.ENUMAPPLICATIONTYPE_CUSTOM_APP),
+								string(management.ENUMAPPLICATIONTYPE_TEMPLATE_APP),
 							),
 						},
 					},
@@ -1619,7 +1640,8 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						},
 					},
 
-					"cors_settings": resourceApplicationSchemaCorsSettings(),
+					"cors_settings": resourceApplicationSchemaCorsSettingsSchema(),
+					"template":      applicationTemplateSchema(),
 				},
 
 				Validators: []validator.Object{
@@ -1634,36 +1656,11 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
 				},
 			},
-			"template": schema.SingleNestedAttribute{
-				Computed: true,
-				Attributes: map[string]schema.Attribute{
-					"configuration": schema.MapAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A map of strings that contains a key/value map of the parameters required by the integration in Integration Catalog.").Description,
-						Computed:    true,
-					},
-					"integration": schema.SingleNestedAttribute{
-						Computed: true,
-						Attributes: map[string]schema.Attribute{
-							"id": schema.StringAttribute{
-								Computed: true,
-							},
-						},
-					},
-					"version": schema.SingleNestedAttribute{
-						Computed: true,
-						Attributes: map[string]schema.Attribute{
-							"id": schema.StringAttribute{
-								Computed: true,
-							},
-						},
-					},
-				},
-			},
 		},
 	}
 }
 
-func resourceApplicationSchemaCorsSettings() schema.SingleNestedAttribute {
+func resourceApplicationSchemaCorsSettingsSchema() schema.SingleNestedAttribute {
 
 	listDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings.",
@@ -1712,6 +1709,40 @@ func resourceApplicationSchemaCorsSettings() schema.SingleNestedAttribute {
 							"Expected value to be a URL (with schema of \"http\" or \"https\") without a path.  Subdomains may use a wildcard to match any string",
 						),
 					),
+				},
+			},
+		},
+	}
+}
+
+func applicationTemplateSchema() schema.SingleNestedAttribute {
+	return schema.SingleNestedAttribute{
+		Optional:    true,
+		Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that identifies the application as integration in Integration Catalog (by integration.id and version.id) and provides key-value map of parameters needed by the integration.").Description,
+		Attributes: map[string]schema.Attribute{
+			"configuration": schema.MapAttribute{
+				ElementType: types.StringType,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A map of strings that contains a key/value map of the parameters required by the integration in Integration Catalog.").Description,
+				Required:    true,
+			},
+			"integration": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that contains the UUID of the integration in Integration Catalog.").Description,
+				Required:    true,
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the UUID of the integration in Integration Catalog.").Description,
+						Required:    true,
+					},
+				},
+			},
+			"version": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that contains the UUID of the integration version in Integration Catalog.").Description,
+				Required:    true,
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the UUID of the integration version in Integration Catalog.").Description,
+						Required:    true,
+					},
 				},
 			},
 		},
@@ -2471,6 +2502,24 @@ func (p *applicationResourceModelV1) expandApplicationOIDC(ctx context.Context) 
 
 			data.SetMobile(*mobile)
 		}
+
+		if !plan.Template.IsNull() && !plan.Template.IsUnknown() {
+			var templatePlan applicationTemplateResourceModelV1
+			diags.Append(plan.Template.As(ctx, &templatePlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+			template, d := templatePlan.expand(ctx)
+			diags = append(diags, d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			data.SetTemplate(*template)
+		}
 	}
 
 	return data, diags
@@ -2526,6 +2575,56 @@ func (p *applicationOIDCMobileAppResourceModelV1) expand(ctx context.Context) (*
 
 	if !p.UniversalAppLink.IsNull() && !p.UniversalAppLink.IsUnknown() {
 		data.SetUriPrefix(p.UniversalAppLink.ValueString())
+	}
+
+	return data, diags
+}
+
+func (p *applicationTemplateResourceModelV1) expand(ctx context.Context) (*management.ApplicationTemplate, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewApplicationTemplate(
+		nil,
+		management.ApplicationTemplateIntegration{},
+		management.ApplicationTemplateVersion{},
+	)
+
+	var configuration map[string]string
+	if !p.Configuration.IsNull() && !p.Configuration.IsUnknown() {
+		diags.Append(p.Configuration.ElementsAs(ctx, &configuration, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetConfiguration(configuration)
+	}
+
+	if !p.Integration.IsNull() && !p.Integration.IsUnknown() {
+		var integration applicationTemplateIntegrationResourceModelV1
+		diags.Append(p.Integration.As(ctx, &integration, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetIntegration(*management.NewApplicationTemplateIntegration(integration.Id.ValueString()))
+	}
+
+	if !p.Version.IsNull() && !p.Version.IsUnknown() {
+		var version applicationTemplateVersionResourceModelV1
+		diags.Append(p.Version.As(ctx, &version, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVersion(*management.NewApplicationTemplateVersion(version.Id.ValueString()))
 	}
 
 	return data, diags
@@ -2842,6 +2941,24 @@ func (p *applicationResourceModelV1) expandApplicationSAML(ctx context.Context) 
 			}
 
 			data.SetSpVerification(*spVerification)
+		}
+
+		if !plan.Template.IsNull() && !plan.Template.IsUnknown() {
+			var templatePlan applicationTemplateResourceModelV1
+			diags.Append(plan.Template.As(ctx, &templatePlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+			template, d := templatePlan.expand(ctx)
+			diags = append(diags, d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			data.SetTemplate(*template)
 		}
 	}
 

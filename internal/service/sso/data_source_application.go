@@ -43,9 +43,6 @@ type applicationDataSourceModel struct {
 	OIDCOptions               types.Object                 `tfsdk:"oidc_options"`
 	SAMLOptions               types.Object                 `tfsdk:"saml_options"`
 	Template                  types.Object                 `tfsdk:"template"`
-	Configuration             types.Map                    `tfsdk:"configuration"`
-	Integration               types.Object                 `tfsdk:"integration"`
-	Version                   types.Object                 `tfsdk:"version"`
 }
 
 // Framework interfaces
@@ -614,25 +611,31 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 				},
 			},
 			"template": schema.SingleNestedAttribute{
-				Computed: true,
+				Computed:    true,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that identifies the application as integration in Integration Catalog (by integration.id and version.id) and provides key-value map of parameters needed by the integration.").Description,
 				Attributes: map[string]schema.Attribute{
 					"configuration": schema.MapAttribute{
+						ElementType: types.StringType,
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A map of strings that contains a key/value map of the parameters required by the integration in Integration Catalog.").Description,
 						Computed:    true,
 					},
 					"integration": schema.SingleNestedAttribute{
-						Computed: true,
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that contains the UUID of the integration in Integration Catalog.").Description,
+						Computed:    true,
 						Attributes: map[string]schema.Attribute{
 							"id": schema.StringAttribute{
-								Computed: true,
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the UUID of the integration in Integration Catalog.").Description,
+								Computed:    true,
 							},
 						},
 					},
 					"version": schema.SingleNestedAttribute{
-						Computed: true,
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that contains the UUID of the integration version in Integration Catalog.").Description,
+						Computed:    true,
 						Attributes: map[string]schema.Attribute{
 							"id": schema.StringAttribute{
-								Computed: true,
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the UUID of the integration version in Integration Catalog.").Description,
+								Computed:    true,
 							},
 						},
 					},
@@ -916,9 +919,6 @@ func (p *applicationDataSourceModel) toState(ctx context.Context, apiObject *man
 
 		p.ExternalLinkOptions = types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes)
 
-		p.Template, d = applicationTemplateToTF(v.GetTemplateOk())
-		diags = append(diags, d...)
-
 	case *management.ApplicationSAML:
 		p.Id = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 		p.EnvironmentId = framework.PingOneResourceIDOkToTF(v.Environment.GetIdOk())
@@ -953,11 +953,6 @@ func (p *applicationDataSourceModel) toState(ctx context.Context, apiObject *man
 		diags = append(diags, d...)
 
 		p.ExternalLinkOptions = types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes)
-
-		p.Template, d = applicationTemplateToTF(v.GetTemplateOk())
-		diags = append(diags, d...)
-
-	case *management.ApplicationTemplate:
 	}
 
 	return diags
