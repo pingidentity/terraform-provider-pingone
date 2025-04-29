@@ -3,5 +3,13 @@
 ```
 
 ```release-note:note
-`resource/pingone_application`: Add deprecation for the legacy `linkedin` social identity provider type.
+`resource/pingone_identity_provider`: Add deprecation for the legacy `linkedin` social identity provider type. Use `linkedin_oidc` instead.
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.13 => 0.12.14
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.53.0 => 0.54.0
 ```

@@ -324,12 +324,12 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 	)
 
 	linkedInSchemaAttr := identityProviderSchemaAttribute(
-		framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the LinkedIn social identity provider."),
+		framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the LinkedIn social identity provider. This block is deprecated and will be removed in a future release. Use the `linkedin_oidc` block instead."),
 		identityProviderClientIdClientSecretAttributes("LinkedIn"),
 		providerAttributeList,
 	)
 
-	linkedInSchemaAttr.DeprecationMessage = framework.SchemaAttributeDescriptionFromMarkdown("This block is deprecated and will be removed in February 2026. Use the `linkedin_oidc` block instead.").Description
+	linkedInSchemaAttr.DeprecationMessage = framework.SchemaAttributeDescriptionFromMarkdown("This block is deprecated and will be removed in a future release. Use the `linkedin_oidc` block instead.").Description
 
 	resp.Schema = schema.Schema{
 
@@ -467,7 +467,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 			"linkedin_oidc": identityProviderSchemaAttribute(
 				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the LinkedIn social identity provider."),
 
-				identityProviderClientIdClientSecretAttributes("LinkedInOIDC"),
+				identityProviderClientIdClientSecretAttributes("LinkedIn"),
 
 				providerAttributeList,
 			),
