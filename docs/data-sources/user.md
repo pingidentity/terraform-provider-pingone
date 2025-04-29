@@ -97,7 +97,7 @@ Read-Only:
 Read-Only:
 
 - `id` (String) A string that identifies the external identity provider used to authenticate the user. If not provided, PingOne is the identity provider. This attribute is required if the identity provider is authoritative for just-in-time user provisioning.
-- `type` (String) A string that specifies the type of identity provider used to authenticate the user.  Options are `AMAZON`, `APPLE`, `FACEBOOK`, `GITHUB`, `GOOGLE`, `LINKEDIN`, `MICROSOFT`, `OPENID_CONNECT`, `PAYPAL`, `PING_ONE`, `SAML`, `TWITTER`, `YAHOO`.  The default value of `PING_ONE` is set when a value for `id` was not provided when the user was originally created.
+- `type` (String) A string that specifies the type of identity provider used to authenticate the user.  Options are `AMAZON`, `APPLE`, `FACEBOOK`, `GITHUB`, `GOOGLE`, `LINKEDIN`, `LINKEDIN_OIDC`, `MICROSOFT`, `OPENID_CONNECT`, `PAYPAL`, `PING_ONE`, `SAML`, `TWITTER`, `YAHOO`.  The default value of `PING_ONE` is set when a value for `id` was not provided when the user was originally created.
 
 
 <a id="nestedatt--name"></a>
