@@ -2974,6 +2974,176 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 	})
 }
 
+// func TestAccApplication_SAML_AppCatalogFull(t *testing.T) {
+// 	t.Parallel()
+
+// 	resourceName := acctest.ResourceNameGen()
+// 	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+
+// 	environmentName := acctest.ResourceNameGenEnvironment()
+
+// 	name := resourceName
+
+// 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+// 	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+// 	image := base64.StdEncoding.EncodeToString(data)
+
+// 	pem_cert := os.Getenv("PINGONE_KEY_PEM_CERT")
+// 	pkcs7_cert := os.Getenv("PINGONE_KEY_PKCS7_CERT")
+
+// 	resource.Test(t, resource.TestCase{
+// 		PreCheck: func() {
+// 			acctest.PreCheckClient(t)
+// 			acctest.PreCheckNewEnvironment(t)
+// 			acctest.PreCheckNoFeatureFlag(t)
+// 			acctest.PreCheckPKCS7Cert(t)
+// 			acctest.PreCheckPEMCert(t)
+// 		},
+// 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+// 		CheckDestroy:             sso.Application_CheckDestroy,
+// 		ErrorCheck:               acctest.ErrorCheck(t),
+// 		Steps: []resource.TestStep{
+// 			{
+// 				Config: testAccApplicationConfig_SAML_Full(environmentName, licenseID, resourceName, name, image, pkcs7_cert, pem_cert),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+// 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+// 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+// 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test SAML app"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
+// 					resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
+// 					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+// 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.groups.#", "2"),
+// 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
+// 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.1", verify.P1ResourceIDRegexpFullString),
+// 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
+// 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.home_page_url", "https://www.pingidentity.com"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.type", "WEB_APP"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.acs_urls.#", "2"),
+// 					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.acs_urls.*", "https://pingidentity.com"),
+// 					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.acs_urls.*", "https://www.pingidentity.com"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.assertion_duration", "3600"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.assertion_signed_enabled", "false"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.default_target_url", "https://www.pingidentity.com/relaystate"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.idp_signing_key.algorithm", "SHA384withECDSA"),
+// 					resource.TestMatchResourceAttr(resourceFullName, "saml_options.idp_signing_key.key_id", verify.P1ResourceIDRegexpFullString),
+// 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.enable_requested_authn_context", "true"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.nameid_format", "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.response_is_signed", "true"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.session_not_on_or_after_duration", "64"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.slo_binding", "HTTP_REDIRECT"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.slo_endpoint", "https://www.pingidentity.com/sloendpoint"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.slo_response_endpoint", "https://www.pingidentity.com/sloresponseendpoint"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.slo_window", "3"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.sp_encryption.algorithm", "AES_256"),
+// 					resource.TestMatchResourceAttr(resourceFullName, "saml_options.sp_encryption.certificate.id", verify.P1ResourceIDRegexpFullString),
+// 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.sp_entity_id", fmt.Sprintf("sp:entity:%s", resourceName)),
+// 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.sp_verification.authn_request_signed", "true"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.sp_verification.certificate_ids.#", "2"),
+// 					resource.TestMatchResourceAttr(resourceFullName, "saml_options.sp_verification.certificate_ids.0", verify.P1ResourceIDRegexpFullString),
+// 					resource.TestMatchResourceAttr(resourceFullName, "saml_options.sp_verification.certificate_ids.1", verify.P1ResourceIDRegexpFullString),
+// 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.cors_settings.behavior", "ALLOW_SPECIFIC_ORIGINS"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.cors_settings.origins.#", "8"),
+// 					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.cors_settings.origins.*", "http://localhost"),
+// 					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.cors_settings.origins.*", "https://localhost"),
+// 					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.cors_settings.origins.*", "http://auth.pingidentity.com"),
+// 					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.cors_settings.origins.*", "https://auth.pingidentity.com"),
+// 					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.cors_settings.origins.*", "http://*.pingidentity.com"),
+// 					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.cors_settings.origins.*", "https://*.pingidentity.com"),
+// 					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.cors_settings.origins.*", "http://192.168.1.1"),
+// 					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.cors_settings.origins.*", "https://192.168.1.1"),
+// 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+// 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
+// 				),
+// 			},
+// 			// Test importing the resource
+// 			{
+// 				ResourceName: resourceFullName,
+// 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+// 					return func(s *terraform.State) (string, error) {
+// 						rs, ok := s.RootModule().Resources[resourceFullName]
+// 						if !ok {
+// 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+// 						}
+
+// 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+// 					}
+// 				}(),
+// 				ImportState:       true,
+// 				ImportStateVerify: true,
+// 			},
+// 		},
+// 	})
+// }
+
+func TestAccApplication_SAML_AppCatalogMinimal(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckPKCS7Cert(t)
+			acctest.PreCheckPEMCert(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.Application_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccApplicationConfig_SAML_ApplicationCatalogMinimal(environmentName, licenseID, resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options.home_page_url"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.type", "TEMPLATE_APP"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.acs_urls.#", "1"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.acs_urls.*", "https://sso.example.com/sp/ACS.saml2"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.assertion_duration", "900"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.assertion_signed_enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.default_target_url", ""),
+					resource.TestMatchResourceAttr(resourceFullName, "saml_options.idp_signing_key.key_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options.enable_requested_authn_context"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options.nameid_format"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.response_is_signed", "true"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options.session_not_on_or_after_duration"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.slo_binding", "HTTP_POST"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options.slo_endpoint"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options.slo_response_endpoint"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options.slo_window"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options.sp_encryption"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.sp_entity_id", "PingOneProvisioner"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.sp_verification.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.cors_settings.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccApplication_ExternalLinkFull(t *testing.T) {
 	t.Parallel()
 
@@ -4523,6 +4693,73 @@ resource "pingone_application" "%[3]s" {
     }
   }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, image, pkcs7_cert, pem_cert)
+}
+
+func testAccApplicationConfig_SAML_ApplicationCatalogMinimal(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_key" "%[3]s"" {
+  environment_id = pingone_environment.%[2]s.id
+  name                = "%[3]s""
+  algorithm           = "RSA"
+  default             = true
+  key_length          = 2048
+  signature_algorithm = "SHA256withRSA"
+  subject_dn          = "CN=%[3]s", OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}
+
+
+resource "pingone_application" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+  enabled        = true
+
+  saml_options = {
+    acs_urls           = ["https://sso.example.com/sp/ACS.saml2"]
+    assertion_duration = 3600
+		assertion_duration       = 900
+		assertion_signed_enabled = false
+
+		default_target_url       = ""
+	
+    idp_signing_key = {
+      key_id    = data.pingone_certificate.%[3]s.id
+      algorithm = data.pingone_certificate.%[3]s.signature_algorithm
+    }
+		
+		response_is_signed = true
+		
+		sp_entity_id       = "PingOneProvisioner"
+
+		template = {
+      integration_id = "9d9cbbef-9aff-4df8-b115-00e3d91a9e77"
+      version_id = "919f7210-4b71-464d-97af-5d66cdcf3295"
+    }
+		
+		type = "TEMPLATE_APP"
+  }
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}
+
+func testAccApplicationConfig_SAML_ApplicationCatalogUnsetDefaultKey(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_key" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  name                = "%[4]s"
+	default = false
+  algorithm           = "RSA"
+  key_length          = 2048
+  signature_algorithm = "SHA256withRSA"
+  subject_dn          = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccApplicationConfig_ExternalLinkFull(resourceName, name, image string) string {

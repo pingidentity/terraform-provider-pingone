@@ -21,6 +21,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -181,18 +182,10 @@ type applicationSAMLOptionsSpVerificationResourceModelV1 struct {
 	AuthnRequestSigned types.Bool `tfsdk:"authn_request_signed"`
 }
 
-type applicationTemplateIntegrationResourceModelV1 struct {
-	Id types.String `tfsdk:"id"`
-}
-
-type applicationTemplateVersionResourceModelV1 struct {
-	Id types.String `tfsdk:"id"`
-}
-
 type applicationTemplateResourceModelV1 struct {
 	Configuration types.Map    `tfsdk:"configuration"`
-	Integration   types.Object `tfsdk:"integration"`
-	Version       types.Object `tfsdk:"version"`
+	IntegrationId types.String `tfsdk:"integration_id"`
+	VersionId     types.String `tfsdk:"version_id"`
 }
 
 var (
@@ -319,18 +312,10 @@ var (
 		"type":   types.StringType,
 	}
 
-	applicationTemplateIntegrationTFObjectTypes = map[string]attr.Type{
-		"id": types.StringType,
-	}
-
-	applicationTemplateVersionTFObjectTypes = map[string]attr.Type{
-		"id": types.StringType,
-	}
-
 	applicationTemplateTFObjectTypes = map[string]attr.Type{
-		"configuration": types.MapType{ElemType: types.StringType},
-		"integration":   types.ObjectType{AttrTypes: applicationTemplateIntegrationTFObjectTypes},
-		"version":       types.ObjectType{AttrTypes: applicationTemplateVersionTFObjectTypes},
+		"configuration":  types.MapType{ElemType: types.StringType},
+		"integration_id": types.StringType,
+		"version_id":     types.StringType,
 	}
 )
 
@@ -1723,27 +1708,17 @@ func applicationTemplateSchema() schema.SingleNestedAttribute {
 			"configuration": schema.MapAttribute{
 				ElementType: types.StringType,
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A map of strings that contains a key/value map of the parameters required by the integration in Integration Catalog.").Description,
+				Optional:    true,
+				Computed:    true,
+				Default:     mapdefault.StaticValue(types.MapValueMust(types.StringType, map[string]attr.Value{})),
+			},
+			"integration_id": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the UUID of the integration in Integration Catalog.").Description,
 				Required:    true,
 			},
-			"integration": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that contains the UUID of the integration in Integration Catalog.").Description,
+			"version_id": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the UUID of the integration version in Integration Catalog.").Description,
 				Required:    true,
-				Attributes: map[string]schema.Attribute{
-					"id": schema.StringAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the UUID of the integration in Integration Catalog.").Description,
-						Required:    true,
-					},
-				},
-			},
-			"version": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that contains the UUID of the integration version in Integration Catalog.").Description,
-				Required:    true,
-				Attributes: map[string]schema.Attribute{
-					"id": schema.StringAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the UUID of the integration version in Integration Catalog.").Description,
-						Required:    true,
-					},
-				},
 			},
 		},
 	}
@@ -2599,32 +2574,12 @@ func (p *applicationTemplateResourceModelV1) expand(ctx context.Context) (*manag
 		data.SetConfiguration(configuration)
 	}
 
-	if !p.Integration.IsNull() && !p.Integration.IsUnknown() {
-		var integration applicationTemplateIntegrationResourceModelV1
-		diags.Append(p.Integration.As(ctx, &integration, basetypes.ObjectAsOptions{
-			UnhandledNullAsEmpty:    false,
-			UnhandledUnknownAsEmpty: false,
-		})...)
-
-		if diags.HasError() {
-			return nil, diags
-		}
-
-		data.SetIntegration(*management.NewApplicationTemplateIntegration(integration.Id.ValueString()))
+	if !p.IntegrationId.IsNull() && !p.IntegrationId.IsUnknown() {
+		data.SetIntegration(*management.NewApplicationTemplateIntegration(p.IntegrationId.ValueString()))
 	}
 
-	if !p.Version.IsNull() && !p.Version.IsUnknown() {
-		var version applicationTemplateVersionResourceModelV1
-		diags.Append(p.Version.As(ctx, &version, basetypes.ObjectAsOptions{
-			UnhandledNullAsEmpty:    false,
-			UnhandledUnknownAsEmpty: false,
-		})...)
-
-		if diags.HasError() {
-			return nil, diags
-		}
-
-		data.SetVersion(*management.NewApplicationTemplateVersion(version.Id.ValueString()))
+	if !p.VersionId.IsNull() && !p.VersionId.IsUnknown() {
+		data.SetVersion(*management.NewApplicationTemplateVersion(p.VersionId.ValueString()))
 	}
 
 	return data, diags

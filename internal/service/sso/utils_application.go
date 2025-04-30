@@ -455,9 +455,9 @@ func applicationTemplateOkToTF(apiObject *management.ApplicationTemplate, ok boo
 	diags.Append(d...)
 
 	attributesMap := map[string]attr.Value{
-		"configuration": framework.StringMapOkToTF(apiObject.GetConfigurationOk()),
-		"integration":   integration,
-		"version":       version,
+		"configuration":  framework.StringMapOkToTF(apiObject.GetConfigurationOk()),
+		"integration_id": integration,
+		"version_id":     version,
 	}
 
 	returnVar, d := types.ObjectValue(applicationTemplateTFObjectTypes, attributesMap)
@@ -466,36 +466,22 @@ func applicationTemplateOkToTF(apiObject *management.ApplicationTemplate, ok boo
 	return returnVar, diags
 }
 
-func applicationTemplateIntegrationOkToTF(apiObject *management.ApplicationTemplateIntegration, ok bool) (types.Object, diag.Diagnostics) {
+func applicationTemplateIntegrationOkToTF(apiObject *management.ApplicationTemplateIntegration, ok bool) (types.String, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
-		return types.ObjectNull(applicationTemplateIntegrationTFObjectTypes), diags
+		return types.StringNull(), diags
 	}
 
-	attributesMap := map[string]attr.Value{
-		"id": framework.StringOkToTF(apiObject.GetIdOk()),
-	}
-
-	returnVar, d := types.ObjectValue(applicationTemplateIntegrationTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	return returnVar, diags
+	return framework.StringOkToTF(apiObject.GetIdOk()), nil
 }
 
-func applicationTemplateVersionOkToTF(apiObject *management.ApplicationTemplateVersion, ok bool) (types.Object, diag.Diagnostics) {
+func applicationTemplateVersionOkToTF(apiObject *management.ApplicationTemplateVersion, ok bool) (types.String, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
-		return types.ObjectNull(applicationTemplateVersionTFObjectTypes), diags
+		return types.StringNull(), diags
 	}
 
-	attributesMap := map[string]attr.Value{
-		"id": framework.StringOkToTF(apiObject.GetIdOk()),
-	}
-
-	returnVar, d := types.ObjectValue(applicationTemplateVersionTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	return returnVar, diags
+	return framework.StringOkToTF(apiObject.GetIdOk()), nil
 }
