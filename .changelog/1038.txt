@@ -1,0 +1,7 @@
+```release-note:bug
+`resource/pingone_gateway`: Correctly include `description` when supplied for `RADIUS` and `LDAP` types.
+```
+
+```release-note:bug
+`resource/pingone_gateway`: Remove unneeded PingOne resource ID validation for `radius_davinci_policy_id` when using `RADIUS` type.
+```

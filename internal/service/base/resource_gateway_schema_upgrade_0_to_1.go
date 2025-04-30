@@ -37,9 +37,9 @@ type gatewayResourceModelV0 struct {
 	UserType                              types.Set    `tfsdk:"user_type"`
 
 	// Radius
-	RadiusClient              types.Set                    `tfsdk:"radius_client"`
-	RadiusDavinciPolicyId     pingonetypes.ResourceIDValue `tfsdk:"radius_davinci_policy_id"`
-	RadiusDefaultSharedSecret types.String                 `tfsdk:"radius_default_shared_secret"`
+	RadiusClient              types.Set    `tfsdk:"radius_client"`
+	RadiusDavinciPolicyId     types.String `tfsdk:"radius_davinci_policy_id"`
+	RadiusDefaultSharedSecret types.String `tfsdk:"radius_default_shared_secret"`
 }
 
 type gatewayUserTypeResourceModelV0 struct {
