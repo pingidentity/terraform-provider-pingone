@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/davincitypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
 
@@ -37,9 +38,9 @@ type gatewayResourceModelV0 struct {
 	UserType                              types.Set    `tfsdk:"user_type"`
 
 	// Radius
-	RadiusClient              types.Set    `tfsdk:"radius_client"`
-	RadiusDavinciPolicyId     types.String `tfsdk:"radius_davinci_policy_id"`
-	RadiusDefaultSharedSecret types.String `tfsdk:"radius_default_shared_secret"`
+	RadiusClient              types.Set                    `tfsdk:"radius_client"`
+	RadiusDavinciPolicyId     davincitypes.ResourceIDValue `tfsdk:"radius_davinci_policy_id"`
+	RadiusDefaultSharedSecret types.String                 `tfsdk:"radius_default_shared_secret"`
 }
 
 type gatewayUserTypeResourceModelV0 struct {

@@ -3,5 +3,5 @@
 ```
 
 ```release-note:bug
-`resource/pingone_gateway`: Remove unneeded PingOne resource ID validation for `radius_davinci_policy_id` when using `RADIUS` type.
+`resource/pingone_gateway`: Corrected `radius_davinci_policy_id` format validation.
 ```
