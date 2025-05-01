@@ -1,0 +1,3 @@
+```release-note:note
+`resource/pingone_language`: Fix error message when using reserved language codes to refer to the correct `pingone_language_update` resource.
+```

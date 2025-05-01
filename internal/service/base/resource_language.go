@@ -135,7 +135,7 @@ func resourceLanguageRead(ctx context.Context, d *schema.ResourceData, meta inte
 
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("The language code `%s` is reserved and cannot be imported into this provider.  Please use `pingone_language_override` for system-defined languages instead.", respObject.GetLocale()),
+			Summary:  fmt.Sprintf("The language code `%s` is reserved and cannot be imported into this provider.  Please use `pingone_language_update` for system-defined languages instead.", respObject.GetLocale()),
 		})
 
 		return diags
