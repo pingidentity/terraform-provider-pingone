@@ -674,7 +674,7 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 			},
 
 			"radius_davinci_policy_id": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("For RADIUS gateways only: A string that specifies the ID of the DaVinci flow policy to use. Must be a valid DaVinci resource ID.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("For RADIUS gateways only: A string that specifies the ID of the DaVinci flow policy to use. Must be a valid PingOne DaVinci resource ID.").Description,
 				Optional:    true,
 
 				CustomType: davincitypes.ResourceIDType{},
