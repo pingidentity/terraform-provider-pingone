@@ -149,7 +149,7 @@ resource "pingone_gateway" "my_awesome_api_gateway" {
 - `follow_referrals` (Boolean) For LDAP gateways only: A boolean that, when set to true, PingOne sends LDAP queries per referrals it receives from the LDAP servers.  Defaults to `false`.
 - `kerberos` (Attributes) For LDAP gateways only: A single object that specifies Kerberos connection details. (see [below for nested schema](#nestedatt--kerberos))
 - `radius_clients` (Attributes Set) For RADIUS gateways only: A set of objects describing RADIUS client connections. (see [below for nested schema](#nestedatt--radius_clients))
-- `radius_davinci_policy_id` (String) For RADIUS gateways only: A string that specifies the ID of the DaVinci flow policy to use.
+- `radius_davinci_policy_id` (String) For RADIUS gateways only: A string that specifies the ID of the DaVinci flow policy to use. Must be a valid DaVinci resource ID.
 - `radius_default_shared_secret` (String, Sensitive) For RADIUS gateways only: A string that specifies the value to use for the shared secret if the shared secret is not provided for one or more of the RADIUS clients specified.
 - `radius_network_policy_server` (Attributes) For RADIUS gateways only: A single object that allows configuration of the RADIUS gateway to authenticate using the MS-CHAP v2 protocol. (see [below for nested schema](#nestedatt--radius_network_policy_server))
 - `servers` (Set of String) For LDAP gateways only: A set of LDAP server host name and port number combinations (for example, [`ds1.bxretail.org:636`, `ds2.bxretail.org:636`]).
