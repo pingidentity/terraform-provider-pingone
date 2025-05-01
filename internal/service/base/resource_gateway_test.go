@@ -558,7 +558,7 @@ func TestAccGateway_RADIUS(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "description", "My test gateway"),
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "type", "RADIUS"),
-			resource.TestCheckResourceAttr(resourceFullName, "radius_davinci_policy_id", "ee8470a281614d76a7afa8505a2da084"),
+			resource.TestMatchResourceAttr(resourceFullName, "radius_davinci_policy_id", verify.P1DVResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "radius_default_shared_secret", "sharedsecret123"),
 			resource.TestCheckResourceAttr(resourceFullName, "radius_clients.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "radius_clients.*", map[string]string{
@@ -583,7 +583,7 @@ func TestAccGateway_RADIUS(t *testing.T) {
 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "type", "RADIUS"),
-			resource.TestCheckResourceAttr(resourceFullName, "radius_davinci_policy_id", "ee8470a281614d76a7afa8505a2da084"),
+			resource.TestMatchResourceAttr(resourceFullName, "radius_davinci_policy_id", verify.P1DVResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "radius_default_shared_secret", "sharedsecret123"),
 			resource.TestCheckResourceAttr(resourceFullName, "radius_clients.#", "1"),
 

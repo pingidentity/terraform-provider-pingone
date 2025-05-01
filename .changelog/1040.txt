@@ -1,7 +1,7 @@
 ```release-note:bug
-`resource/pingone_gateway`: Correctly include `description` when supplied for `RADIUS` and `LDAP` types.
+`resource/pingone_gateway`: Resolved `inconsistent result after apply` error when `description` is supplied for `RADIUS` and `LDAP` types.
 ```
 
 ```release-note:bug
-`resource/pingone_gateway`: Corrected `radius_davinci_policy_id` format validation.
+`resource/pingone_gateway`: Corrected the type of `radius_davinci_policy_id`, resulting in format validation that no longer incorrectly enforces dash characters.
 ```
