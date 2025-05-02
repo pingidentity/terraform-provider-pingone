@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/davincitypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
@@ -45,7 +46,7 @@ type gatewayDataSourceModel struct {
 
 	// Radius
 	RadiusClients             types.Set                    `tfsdk:"radius_clients"`
-	RadiusDavinciPolicyId     pingonetypes.ResourceIDValue `tfsdk:"radius_davinci_policy_id"`
+	RadiusDavinciPolicyId     davincitypes.ResourceIDValue `tfsdk:"radius_davinci_policy_id"`
 	RadiusDefaultSharedSecret types.String                 `tfsdk:"radius_default_shared_secret"`
 	RadiusNetworkPolicyServer types.Object                 `tfsdk:"radius_network_policy_server"`
 }
@@ -331,10 +332,10 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 
 			// RADIUS
 			"radius_davinci_policy_id": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("For RADIUS gateways only: The ID of the DaVinci flow policy to use.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("For RADIUS gateways only: The ID of the PingOne DaVinci flow policy to use.").Description,
 				Computed:    true,
 
-				CustomType: pingonetypes.ResourceIDType{},
+				CustomType: davincitypes.ResourceIDType{},
 			},
 			"radius_default_shared_secret": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("For RADIUS gateways only: Value to use for the shared secret if the shared secret is not provided for one or more of the RADIUS clients specified.").Description,
@@ -555,7 +556,7 @@ func (p *gatewayDataSourceModel) toState(ctx context.Context, apiObject interfac
 		p.UserTypes = types.MapNull(types.ObjectType{AttrTypes: gatewayUserTypesTFObjectTypes})
 
 		// Radius
-		p.RadiusDavinciPolicyId = pingonetypes.NewResourceIDNull()
+		p.RadiusDavinciPolicyId = davincitypes.NewResourceIDNull()
 		p.RadiusDefaultSharedSecret = types.StringNull()
 		p.RadiusClients = types.SetNull(types.ObjectType{AttrTypes: gatewayRadiusClientsTFObjectTypes})
 		p.RadiusNetworkPolicyServer = types.ObjectNull(gatewayRadiusNetworkPolicyServerTFObjectTypes)
@@ -597,7 +598,7 @@ func (p *gatewayDataSourceModel) toState(ctx context.Context, apiObject interfac
 		diags.Append(d...)
 
 		// Radius
-		p.RadiusDavinciPolicyId = pingonetypes.NewResourceIDNull()
+		p.RadiusDavinciPolicyId = davincitypes.NewResourceIDNull()
 		p.RadiusDefaultSharedSecret = types.StringNull()
 		p.RadiusClients = types.SetNull(types.ObjectType{AttrTypes: gatewayRadiusClientsTFObjectTypes})
 		p.RadiusNetworkPolicyServer = types.ObjectNull(gatewayRadiusNetworkPolicyServerTFObjectTypes)
@@ -624,7 +625,7 @@ func (p *gatewayDataSourceModel) toState(ctx context.Context, apiObject interfac
 		// Radius
 		if dv, ok := t.GetDavinciOk(); ok {
 			if policy, ok := dv.GetPolicyOk(); ok {
-				p.RadiusDavinciPolicyId = framework.PingOneResourceIDOkToTF(policy.GetIdOk())
+				p.RadiusDavinciPolicyId = framework.DaVinciResourceIDOkToTF(policy.GetIdOk())
 			}
 		}
 		p.RadiusDefaultSharedSecret = framework.StringOkToTF(t.GetDefaultSharedSecretOk())
