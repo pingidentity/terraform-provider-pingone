@@ -87,7 +87,7 @@ func TestAccGatewayDataSource_FindRADIUSGatewayByID(t *testing.T) {
 
 					resource.TestCheckResourceAttr(dataSourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "type", "RADIUS"),
-					resource.TestMatchResourceAttr(dataSourceFullName, "radius_davinci_policy_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "radius_davinci_policy_id", verify.P1DVResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "radius_default_shared_secret", "sharedsecret123"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "radius_clients.#", "2"),
 
@@ -131,7 +131,7 @@ func TestAccGatewayDataSource_FindRADIUSGatewayByName(t *testing.T) {
 					resource.TestCheckNoResourceAttr(dataSourceFullName, "description"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "type", "RADIUS"),
-					resource.TestMatchResourceAttr(dataSourceFullName, "radius_davinci_policy_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "radius_davinci_policy_id", verify.P1DVResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "radius_default_shared_secret", "sharedsecret123"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "radius_clients.#", "1"),
 
@@ -330,7 +330,7 @@ resource "pingone_gateway" "%[2]s" {
 
   radius_default_shared_secret = "sharedsecret123"
 
-  radius_davinci_policy_id = "ee8470a2-8161-4d76-a7af-a8505a2da084" // dummy ID
+  radius_davinci_policy_id = "ee8470a281614d76a7afa8505a2da084" // dummy ID
 
   radius_clients = [
     {
@@ -362,7 +362,7 @@ resource "pingone_gateway" "%[2]s" {
 
   radius_default_shared_secret = "sharedsecret123"
 
-  radius_davinci_policy_id = "ee8470a2-8161-4d76-a7af-a8505a2da085" // dummy ID
+  radius_davinci_policy_id = "ee8470a281614d76a7afa8505a2da085" // dummy ID
 
   radius_clients = [
     {
