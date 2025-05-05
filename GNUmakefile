@@ -8,16 +8,12 @@ OS_ARCH=linux_amd64
 
 default: install
 
-tools:
-	go generate -tags tools tools/main.go
-
 fmtcheck:
 	@echo "==> Formatting Terraform documentation examples with terraform fmt..."
 	@terraform fmt -recursive ./examples/
 
 build:
 	go mod tidy
-	go work vendor
 	go build -v .
 
 install: build
@@ -102,6 +98,6 @@ terrafmtcheck:
 
 fmt: terrafmt fmtcheck
 
-devcheck: build vet tools fmt generate docscategorycheck lint test sweep testacc
+devcheck: build vet fmt generate docscategorycheck lint test sweep testacc
 
-.PHONY: tools build install generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck
+.PHONY: build install generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck

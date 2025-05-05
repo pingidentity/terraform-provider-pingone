@@ -118,13 +118,8 @@ jobs:
           go-version-file: 'go.mod'
 
       - id: golangci-lint-version
-        working-directory: tools
         run: >-
-          echo "version=$(
-            go list -m all |
-            grep github.com/golangci/golangci-lint |
-            awk '{print $2}'
-          )" >> $GITHUB_OUTPUT
+          echo "version=$(go tool golangci-lint version --format short)" >> $GITHUB_OUTPUT
 
       - name: lint
         uses: golangci/golangci-lint-action@v6
