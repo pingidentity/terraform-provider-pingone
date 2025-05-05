@@ -71,8 +71,6 @@ jobs:
 
       - uses: hashicorp/setup-terraform@v3
       
-      - run: cd tools && go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
-      - run: cd tools && go install github.com/katbyte/terrafmt
       - run: make generate
 
       - name: git diff
@@ -91,8 +89,6 @@ jobs:
       
       - uses: hashicorp/setup-terraform@v3
       
-      - run: cd tools && go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
-      - run: cd tools && go install github.com/katbyte/terrafmt
       - run: make generate
 
       - name: docscategory lint
@@ -108,7 +104,6 @@ jobs:
         with:
           go-version-file: 'go.mod'
 
-      - run: cd tools && go install github.com/katbyte/terrafmt
       - name: terrafmtcheck lint
         run: |
           make terrafmtcheck
@@ -145,8 +140,6 @@ jobs:
         with:
           go-version-file: 'go.mod'
 
-      - run: cd tools && go install github.com/pavius/impi/cmd/impi
-
       - name: Check dependencies
         run: make depscheck
 
@@ -164,8 +157,6 @@ jobs:
         with:
           go-version-file: 'go.mod'
 
-      - run: cd tools && go install github.com/bflad/tfproviderlint/cmd/tfproviderlintx
-
       - name: Check dependencies
         run: make depscheck
 
@@ -181,8 +172,6 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-
-      - run: cd tools && go install github.com/terraform-linters/tflint
 
       - name: Check dependencies
         run: make depscheck

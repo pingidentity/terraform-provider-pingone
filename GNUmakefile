@@ -24,7 +24,7 @@ install: build
 	go install -ldflags="-X main.version=$(VERSION)"
 
 generate: build fmt
-	tfplugindocs generate
+	go tool tfplugindocs generate
 
 test: build
 	go test $(TEST_PATH) $(TESTARGS) -timeout=5m
@@ -64,15 +64,15 @@ lint: golangci-lint providerlint importlint tflint terrafmtcheck
 
 golangci-lint:
 	@echo "==> Checking source code with golangci-lint..."
-	@golangci-lint run ./...
+	@go tool golangci-lint run ./...
 
 importlint:
 	@echo "==> Checking source code with importlint..."
-	@impi --local . --scheme stdThirdPartyLocal ./...
+	@go tool impi --local . --scheme stdThirdPartyLocal ./...
 
 providerlint:
 	@echo "==> Checking source code with tfproviderlintx..."
-	@tfproviderlintx \
+	@go tool tfproviderlintx \
 		-c 1 \
 		-AT001.ignored-filename-suffixes=_data_source_test.go \
 		-XR004=false \
@@ -81,19 +81,19 @@ providerlint:
 
 tflint:
 	@echo "==> Checking Terraform code with tflint..."
-	@tflint --init
+	@go tool tflint --init
 
 terrafmt:
 	@echo "==> Formatting embedded Terraform code with terrafmt..."
 	@find ./internal/service -type f -name '*_test.go' \
     | sort -u \
-    | xargs -I {} terrafmt -f fmt {}
+    | xargs -I {} go tool terrafmt -f fmt {}
 
 terrafmtcheck:
 	@echo "==> Checking embedded Terraform code with terrafmt..."
 	@find ./internal/service -type f -name '*_test.go' \
     | sort -u \
-    | xargs -I {} terrafmt diff -f --check --fmtcompat {} ; if [ $$? -ne 0 ]; then \
+    | xargs -I {} go tool terrafmt diff -f --check --fmtcompat {} ; if [ $$? -ne 0 ]; then \
 		echo ""; \
 		echo "terrafmt found bad formatting of HCL embedded in the test scripts. Please run "; \
 		echo "\"make terrafmt\" before submitting the code for review."; \

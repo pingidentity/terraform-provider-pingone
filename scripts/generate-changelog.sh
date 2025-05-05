@@ -25,7 +25,7 @@ then
     exit 1
 fi 
 
-CHANGELOG=$($(go env GOPATH)/bin/changelog-build -this-release $TARGET_SHA \
+CHANGELOG=$(go tool changelog-build -this-release $TARGET_SHA \
                       -last-release $PREVIOUS_RELEASE_SHA \
                       -git-dir $__parent \
                       -entries-dir .changelog \
