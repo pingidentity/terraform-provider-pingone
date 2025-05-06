@@ -327,6 +327,8 @@ func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Ob
 	template, d := applicationTemplateOkToTF(apiObject.GetTemplateOk())
 	diags.Append(d...)
 
+	typeValue := framework.EnumOkToTF(apiObject.GetTypeOk())
+
 	attributesMap := map[string]attr.Value{
 		"acs_urls":                         framework.StringSetOkToTF(apiObject.GetAcsUrlsOk()),
 		"assertion_duration":               framework.Int32OkToTF(apiObject.GetAssertionDurationOk()),
@@ -347,7 +349,14 @@ func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Ob
 		"sp_entity_id":                     framework.StringOkToTF(apiObject.GetSpEntityIdOk()),
 		"sp_verification":                  spVerification,
 		"template":                         template,
-		"type":                             framework.EnumOkToTF(apiObject.GetTypeOk()),
+		"type":                             typeValue,
+	}
+
+	defaultTargetUrl := framework.StringOkToTF(apiObject.GetDefaultTargetUrlOk())
+	if typeValue != framework.EnumToTF(management.ENUMAPPLICATIONTYPE_TEMPLATE_APP) && defaultTargetUrl.ValueString() != "" {
+		attributesMap["default_target_url"] = defaultTargetUrl
+	} else {
+		attributesMap["default_target_url"] = types.StringNull()
 	}
 
 	returnVar, d := types.ObjectValue(applicationSamlOptionsTFObjectTypes, attributesMap)

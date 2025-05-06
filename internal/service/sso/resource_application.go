@@ -33,6 +33,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	objectplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectplanmodifier"
+	objectvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -1720,6 +1721,11 @@ func applicationTemplateSchema() schema.SingleNestedAttribute {
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the UUID of the integration version in Integration Catalog.").Description,
 				Required:    true,
 			},
+		},
+		Validators: []validator.Object{
+			objectvalidatorinternal.IsRequiredIfMatchesPathValue(types.StringValue(string(management.ENUMAPPLICATIONTYPE_TEMPLATE_APP)), path.MatchRelative().AtParent().AtName("type")),
+			objectvalidatorinternal.ConflictsIfMatchesPathValue(types.StringValue(string(management.ENUMAPPLICATIONTYPE_CUSTOM_APP)), path.MatchRelative().AtParent().AtName("type")),
+			objectvalidatorinternal.ConflictsIfMatchesPathValue(types.StringValue(string(management.ENUMAPPLICATIONTYPE_WEB_APP)), path.MatchRelative().AtParent().AtName("type")),
 		},
 	}
 }

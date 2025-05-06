@@ -775,9 +775,6 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 							case *management.ApplicationSAML:
 								applicationName = v.GetName()
-
-							case *management.Template:
-								applicationName = v.GetDisplayName()
 							}
 
 							if applicationName == data.Name.ValueString() {
