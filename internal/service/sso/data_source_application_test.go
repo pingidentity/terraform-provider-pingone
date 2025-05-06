@@ -214,7 +214,6 @@ func TestAccApplicationDataSource_SAMLAppByID(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckPKCS7Cert(t)
 			acctest.PreCheckPEMCert(t)
-			acctest.PreCheckTestAccFlaky(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
