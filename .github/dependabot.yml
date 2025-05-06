@@ -24,14 +24,6 @@ updates:
         update-types:
           - "patch"
           - "minor"
-
-  # Maintain dependencies for Go modules for tools
-  - package-ecosystem: "gomod"
-    directory: "/tools"
-    schedule:
-      # Check for updates to Go modules every week
-      interval: "weekly"
-    groups:
       # Group all linting tools together
       linters:
         applies-to: version-updates
