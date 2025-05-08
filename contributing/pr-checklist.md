@@ -39,7 +39,6 @@ $ make generate
 - [ ] **Code Lint**. When PRs are raised, the structure, readability and overall cleanliness of code is tested.  Before raising the PR you can view the output of these tests (and correct where needed) by running the following commands.  The linter tool settings are continually tuned, if you have any feedback or suggestions please do provide comments as these will help the maintainers streamline the contribution process
 
 ```shell
-$ make tools
 $ make vet
 $ make lint
 ```

@@ -1,3 +1,71 @@
+## 1.7.0 (23 April 2025)
+
+NOTES:
+
+* `resource/pingone_notification_settings_email`: Added documentation note to recommend use of `pingone_notification_settings` when using Ping-hosted SMTP email service. ([#1027](https://github.com/pingidentity/terraform-provider-pingone/issues/1027))
+* `resource/pingone_notification_settings`: Updated Example Usage documentation to include both Ping-hosted SMTP and Twilio examples. ([#1027](https://github.com/pingidentity/terraform-provider-pingone/issues/1027))
+* `resource/pingone_sign_on_policy_action`: Corrected the documented MFA example HCL to use the `last_sign_on_older_than_seconds_mfa` condition. ([#1022](https://github.com/pingidentity/terraform-provider-pingone/issues/1022))
+* `resource/pingone_sign_on_policy`: Corrected the documented MFA action example HCL to use the `last_sign_on_older_than_seconds_mfa` condition. ([#1022](https://github.com/pingidentity/terraform-provider-pingone/issues/1022))
+
+ENHANCEMENTS:
+
+* `resource/pingone_risk_predictor`: Added support for the `predictor_traffic_anomaly` field. ([#1017](https://github.com/pingidentity/terraform-provider-pingone/issues/1017))
+
+BUG FIXES:
+
+* `resource/pingone_administrator_security`: Fix invalid configuration error when configuring an `EXTERNAL` authentication method ([#1028](https://github.com/pingidentity/terraform-provider-pingone/issues/1028))
+* `resource/pingone_custom_domain_verify`: Fix early verification failure of NXDOMAIN. ([#1026](https://github.com/pingidentity/terraform-provider-pingone/issues/1026))
+* `resource/pingone_digital_wallet_application`: Correctly force replacement when the `application_id` attribute changes, to prevent potential resource not found errors during updates. ([#1031](https://github.com/pingidentity/terraform-provider-pingone/issues/1031))
+
+## 1.6.0 (26 March 2025)
+
+NOTES:
+
+* Upgraded go version to 1.24.1. See the go [release policy](https://go.dev/doc/devel/release#policy). ([#1014](https://github.com/pingidentity/terraform-provider-pingone/issues/1014))
+* bump `github.com/google/go-cmp` v0.6.0 => v0.7.0 ([#1003](https://github.com/pingidentity/terraform-provider-pingone/issues/1003))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.51.0 => 0.52.0 ([#1004](https://github.com/pingidentity/terraform-provider-pingone/issues/1004))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.52.0 => 0.53.0 ([#1008](https://github.com/pingidentity/terraform-provider-pingone/issues/1008))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.11 => 0.12.12 ([#1004](https://github.com/pingidentity/terraform-provider-pingone/issues/1004))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.12 => 0.12.13 ([#1008](https://github.com/pingidentity/terraform-provider-pingone/issues/1008))
+* bump `golang.org/x/net` v0.34.0 => v0.36.0 ([#1009](https://github.com/pingidentity/terraform-provider-pingone/issues/1009))
+
+FEATURES:
+
+* **New Data Source:** `pingone_administrator_security` ([#1004](https://github.com/pingidentity/terraform-provider-pingone/issues/1004))
+* **New Resource:** `pingone_administrator_security` ([#1004](https://github.com/pingidentity/terraform-provider-pingone/issues/1004))
+
+ENHANCEMENTS:
+
+* `data-source/pingone_application`: Added support for the `oidc_options.idp_signoff` field. ([#1008](https://github.com/pingidentity/terraform-provider-pingone/issues/1008))
+* `resource/pingone_application`: Added support for the `oidc_options.idp_signoff` field. ([#1008](https://github.com/pingidentity/terraform-provider-pingone/issues/1008))
+
+## 1.5.0 (26 February 2025)
+
+NOTES:
+
+* bump `github.com/hashicorp/terraform-plugin-framework-validators` 0.16.0 => 0.17.0 ([#994](https://github.com/pingidentity/terraform-provider-pingone/issues/994))
+* bump `github.com/hashicorp/terraform-plugin-framework` 1.13.0 => 1.14.1 ([#997](https://github.com/pingidentity/terraform-provider-pingone/issues/997))
+* bump `github.com/hashicorp/terraform-plugin-sdk/v2` 2.35.0 => 2.36.0 ([#981](https://github.com/pingidentity/terraform-provider-pingone/issues/981))
+* bump `github.com/hashicorp/terraform-plugin-sdk/v2` 2.36.0 => 2.36.1 ([#996](https://github.com/pingidentity/terraform-provider-pingone/issues/996))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` 0.7.0 => 0.8.0 ([#987](https://github.com/pingidentity/terraform-provider-pingone/issues/987))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` 0.10.0 => 0.11.0 ([#985](https://github.com/pingidentity/terraform-provider-pingone/issues/985))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.47.0 => 0.49.0 ([#986](https://github.com/pingidentity/terraform-provider-pingone/issues/986))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.49 => 0.51.0 ([#999](https://github.com/pingidentity/terraform-provider-pingone/issues/999))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` 0.22.0 => 0.23.0 ([#982](https://github.com/pingidentity/terraform-provider-pingone/issues/982))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` 0.18.0 => 0.19.0 ([#984](https://github.com/pingidentity/terraform-provider-pingone/issues/984))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/verify` 0.8.0 => 0.9.0 ([#982](https://github.com/pingidentity/terraform-provider-pingone/issues/982))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.7 => 0.12.9 ([#982](https://github.com/pingidentity/terraform-provider-pingone/issues/982))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.9 => 0.12.11 ([#999](https://github.com/pingidentity/terraform-provider-pingone/issues/999))
+
+ENHANCEMENTS:
+
+* `resource/identity_provider`: Added support for the `microsoft.tenant_id` field. ([#999](https://github.com/pingidentity/terraform-provider-pingone/issues/999))
+
+BUG FIXES:
+
+* Fix `service_endpoints` and `global_options` provider parameters when defined explicitly in the HCL provider configuration. ([#998](https://github.com/pingidentity/terraform-provider-pingone/issues/998))
+* `resource/pingone_risk_policy`: Fix policy naming regex validation to allow numbers. ([#991](https://github.com/pingidentity/terraform-provider-pingone/issues/991))
+
 ## 1.4.0 (29 January 2025)
 
 NOTES:

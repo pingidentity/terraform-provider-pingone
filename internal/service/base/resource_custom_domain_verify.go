@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -182,7 +183,7 @@ func (r *CustomDomainVerifyResource) Create(ctx context.Context, req resource.Cr
 
 			return diags
 		},
-		sdk.DefaultCreateReadRetryable,
+		customDomainRetryConditions,
 		&response,
 		timeout,
 	)...)
@@ -267,4 +268,49 @@ func (p *CustomDomainVerifyResourceModel) toState(apiObject *management.CustomDo
 	p.Status = framework.EnumOkToTF(apiObject.GetStatusOk())
 
 	return diags
+}
+
+func customDomainRetryConditions(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
+
+	var err error
+
+	if p1error != nil {
+
+		// Permissions may not have propagated by this point
+		if m, _ := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
+			tflog.Warn(ctx, "Insufficient PingOne privileges detected")
+			return true
+		}
+		if err != nil {
+			tflog.Warn(ctx, "Cannot match error string for retry")
+			return false
+		}
+
+		// add retry time for DNS propegating
+		if details, ok := p1error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+
+			// perhaps it's the DNS authority
+			if m, err := regexp.MatchString("^Error response from authoritative name servers: NXDOMAIN", details[0].GetMessage()); err == nil && m {
+				tflog.Warn(ctx, fmt.Sprintf("Cannot verify the domain - %s.  Retrying...", details[0].GetMessage()))
+				return true
+			}
+			if err != nil {
+				tflog.Warn(ctx, "Cannot match error string for retry")
+				return false
+			}
+
+			// perhaps it's the CNAME
+			if m, err := regexp.MatchString("^No CNAME records found", details[0].GetMessage()); err == nil && m {
+				tflog.Warn(ctx, fmt.Sprintf("Cannot verify the domain - %s.  Retrying...", details[0].GetMessage()))
+				return true
+			}
+			if err != nil {
+				tflog.Warn(ctx, "Cannot match error string for retry")
+				return false
+			}
+		}
+
+	}
+
+	return false
 }

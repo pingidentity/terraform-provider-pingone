@@ -5,6 +5,7 @@ package credentials
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -55,7 +56,7 @@ func CredentialIssuanceRule_CheckDestroy(s *terraform.State) error {
 	return nil
 }
 
-func CredentialIssuanceRule_GetIDs(resourceName string, environmentID, credentialTypeID, digitalWalletApplicationID, resourceID *string) resource.TestCheckFunc {
+func CredentialIssuanceRule_GetIDs(resourceName string, environmentID, credentialTypeID, applicationID, digitalWalletApplicationID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -69,6 +70,14 @@ func CredentialIssuanceRule_GetIDs(resourceName string, environmentID, credentia
 
 		if credentialTypeID != nil {
 			*credentialTypeID = rs.Primary.Attributes["credential_type_id"]
+		}
+
+		if applicationID != nil {
+			app, ok := s.RootModule().Resources[strings.Replace(resourceName, "_credential_issuance_rule.", "_application.", 1)]
+			if !ok {
+				return fmt.Errorf("Resource Not found: %s", resourceName)
+			}
+			*applicationID = app.Primary.ID
 		}
 
 		if digitalWalletApplicationID != nil {

@@ -478,7 +478,7 @@ func (p *notificationSettingsEmailResourceModelV1) toState(apiObject *management
 
 	p.Host = framework.StringOkToTF(apiObject.GetHostOk())
 	p.Port = framework.Int32OkToTF(apiObject.GetPortOk())
-	p.Protocol = framework.StringOkToTF(apiObject.GetProtocolOk())
+	p.Protocol = framework.EnumOkToTF(apiObject.GetProtocolOk())
 	p.Username = framework.StringOkToTF(apiObject.GetUsernameOk())
 
 	from, d := toStateEmailSource(apiObject.GetFromOk())

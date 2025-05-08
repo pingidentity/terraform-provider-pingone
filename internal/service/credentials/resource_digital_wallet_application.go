@@ -69,12 +69,9 @@ func (r *DigitalWalletApplicationResource) Schema(ctx context.Context, req resou
 				framework.SchemaAttributeDescriptionFromMarkdown("PingOne environment identifier (UUID) in which the credential digital wallet application is created and managed."),
 			),
 
-			"application_id": schema.StringAttribute{
-				Description: "The identifier (UUID) of the PingOne application associated with the digital wallet application.",
-				Required:    true,
-
-				CustomType: pingonetypes.ResourceIDType{},
-			},
+			"application_id": framework.Attr_LinkID(
+				framework.SchemaAttributeDescriptionFromMarkdown("The identifier (UUID) of the PingOne application associated with the digital wallet application."),
+			),
 
 			"app_open_url": schema.StringAttribute{
 				Description: "The URL enables deep-linking to the digital wallet application, and is sent in notifications to the user to communicate with the service.",

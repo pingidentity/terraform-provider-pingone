@@ -117,6 +117,7 @@ func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.Appli
 		"device_polling_interval":                            framework.Int32OkToTF(apiObject.GetDevicePollingIntervalOk()),
 		"grant_types":                                        framework.EnumSetOkToTF(apiObject.GetGrantTypesOk()),
 		"home_page_url":                                      framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
+		"idp_signoff":                                        framework.BoolOkToTF(apiObject.GetIdpSignoffOk()),
 		"initiate_login_uri":                                 framework.StringOkToTF(apiObject.GetInitiateLoginUriOk()),
 		"jwks_url":                                           framework.StringOkToTF(apiObject.GetJwksUrlOk()),
 		"jwks":                                               framework.StringOkToTF(apiObject.GetJwksOk()),

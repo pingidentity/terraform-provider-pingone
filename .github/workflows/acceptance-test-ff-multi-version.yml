@@ -16,25 +16,25 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     timeout-minutes: 5
+ 
     steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
 
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+        id: go
 
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version-file: 'go.mod'
-        cache: true
-      id: go
+      - name: Get dependencies
+        run: |
+          go mod download
 
-    - name: Get dependencies
-      run: |
-        go mod download
-
-    - name: Build
-      run: |
-        make build
+      - name: Build
+        run: |
+          make build
 
   # run acceptance tests in a matrix with Terraform core versions
   test:
@@ -60,36 +60,52 @@ jobs:
         terraform: # We test the earliest supported (v1.4).  The latest supported is in the multi-region test
           - '1.4.*'
       max-parallel: 1
+
     steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
 
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+        id: go
 
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version-file: 'go.mod'
-        cache: true
-      id: go
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ matrix.terraform }}
+          terraform_wrapper: false
 
-    - uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: ${{ matrix.terraform }}
-        terraform_wrapper: false
+      - name: Get dependencies
+        run: |
+          go mod download
 
-    - name: Get dependencies
-      run: |
-        go mod download
+      - name: Sweep to prepare
+        run: |
+          make sweep
 
-    - name: Sweep to prepare
-      run: |
-        make sweep
+      - name: TF acceptance tests
+        timeout-minutes: 45
+        run: |
+          make testacc
 
-    - name: TF acceptance tests
-      timeout-minutes: 45
-      run: |
-        make testacc
+      - name: Sweep to clean up
+        run: |
+          make sweep
 
-    - name: Sweep to clean up
-      run: |
-        make sweep
+  onfailure:
+    if: ${{ always() && github.event_name == 'schedule' && contains(needs.*.result, 'failure') }}
+    needs: [build, test]
+    name: Send failure webhook
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl --silent --request POST "${{ secrets.FAILURE_WEBHOOK_URL }}" \
+          --header 'Accept: application/json' \
+          --header 'Content-Type: text/plain' \
+          --data-raw '{
+              "WorkflowName": "${{ github.workflow }}",
+              "WorkflowURL": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "RepoName" : "${{ github.repository }}",
+          }'

@@ -192,19 +192,34 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 		}
 
 		if v, ok := d.Get("service_endpoints").([]interface{}); ok && len(v) > 0 && v[0] != nil {
-			if v, ok := d.Get("auth_hostname").(string); ok && v != "" {
+			vp, ok := v[0].(map[string]interface{})
+			if !ok {
+				return nil, diag.Errorf("service_endpoints must be a map.  This is always an error in the provider code, please raise an issue with the provider maintainers.")
+			}
+
+			if v, ok := vp["auth_hostname"].(string); ok && v != "" {
 				config.AuthHostnameOverride = &v
 			}
 
-			if v, ok := d.Get("api_hostname").(string); ok && v != "" {
+			if v, ok := vp["api_hostname"].(string); ok && v != "" {
 				config.APIHostnameOverride = &v
 			}
 		}
 
 		if v, ok := d.Get("global_options").([]interface{}); ok && len(v) > 0 && v[0] != nil {
-			if v, ok := d.Get("population").([]interface{}); ok && len(v) > 0 && v[0] != nil {
-				if v, ok := d.Get("contains_users_force_delete").(bool); ok {
-					config.GlobalOptions.Population.ContainsUsersForceDelete = v
+			vp, ok := v[0].(map[string]interface{})
+			if !ok {
+				return nil, diag.Errorf("global_options must be a map.  This is always an error in the provider code, please raise an issue with the provider maintainers.")
+			}
+
+			if v1, ok := vp["population"].([]interface{}); ok && len(v1) > 0 && v1[0] != nil {
+				v1p, ok := v1[0].(map[string]interface{})
+				if !ok {
+					return nil, diag.Errorf("global_options.population must be a map.  This is always an error in the provider code, please raise an issue with the provider maintainers.")
+				}
+
+				if v2, ok := v1p["contains_users_force_delete"].(bool); ok {
+					config.GlobalOptions.Population.ContainsUsersForceDelete = v2
 				}
 			}
 		}

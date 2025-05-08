@@ -38,6 +38,7 @@ func TestAccMFASettings_RemovalDrift(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckTestAccFlaky(t)
 
 			p1Client = acctest.PreCheckTestClient(ctx, t)
 		},
@@ -88,6 +89,7 @@ func TestAccMFASettings_Full(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckTestAccFlaky(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             mfa.MFASettings_CheckDestroy,
@@ -141,6 +143,7 @@ func TestAccMFASettings_Minimal(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckTestAccFlaky(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             mfa.MFASettings_CheckDestroy,
@@ -189,6 +192,7 @@ func TestAccMFASettings_Change(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckTestAccFlaky(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             mfa.MFASettings_CheckDestroy,
@@ -248,6 +252,7 @@ func TestAccMFASettings_BadParameters(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckTestAccFlaky(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             mfa.MFASettings_CheckDestroy,
