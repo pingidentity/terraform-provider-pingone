@@ -50,7 +50,6 @@ resource "pingone_population" "my_population" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `user_count` (Number) The number of users that belong to the population
 
 <a id="nestedatt--password_policy"></a>
 ### Nested Schema for `password_policy`

@@ -73,14 +73,15 @@ type populationsDataSourceModel struct {
 
 func (r *populationsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Data source to retrieve all populations.",
+		Description: "Data source to retrieve multiple PingOne populations.",
 		Attributes: map[string]schema.Attribute{
 			"data_filters": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
-							Required:    true,
-							Description: "The attribute name to filter on.",
+							Required:            true,
+							Description:         "The attribute name to filter on. Must be one of the following values: \"id\", \"name\".",
+							MarkdownDescription: "The attribute name to filter on. Must be one of the following values: `id`, `name`.",
 							Validators: []validator.String{
 								stringvalidator.LengthAtLeast(1),
 							},
@@ -101,14 +102,14 @@ func (r *populationsDataSource) Schema(ctx context.Context, req datasource.Schem
 					},
 				},
 				Optional:            true,
-				Description:         "Individual data filters to apply to the selection. Exactly one of the following must be defined: \"scim_filter\", \"data_filters\"",
-				MarkdownDescription: "Individual data filters to apply to the selection. Exactly one of the following must be defined: `scim_filter`, `data_filters`",
+				Description:         "Individual data filters to apply to the selection. Allowed attributes to filter: \"id\", \"name\". Exactly one of the following must be defined: \"scim_filter\", \"data_filters\"",
+				MarkdownDescription: "Individual data filters to apply to the selection. Allowed attributes to filter: `id`, `name`. Exactly one of the following must be defined: `scim_filter`, `data_filters`",
 				Validators: []validator.List{
 					listvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("scim_filter")),
 				},
 			},
 			"environment_id": framework.Attr_LinkID(
-				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to read populations objects from."),
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to filter populations from."),
 			),
 			"id": framework.Attr_ID(),
 			"ids": schema.SetAttribute{
@@ -118,8 +119,8 @@ func (r *populationsDataSource) Schema(ctx context.Context, req datasource.Schem
 			},
 			"scim_filter": schema.StringAttribute{
 				Optional:            true,
-				Description:         "A SCIM filter to apply to the selection.  A SCIM filter offers the greatest flexibility in filtering. Exactly one of the following must be defined: \"scim_filter\", \"data_filters\"",
-				MarkdownDescription: "A SCIM filter to apply to the selection.  A SCIM filter offers the greatest flexibility in filtering. Exactly one of the following must be defined: `scim_filter`, `data_filters`",
+				Description:         "A SCIM filter to apply to the selection.  A SCIM filter offers the greatest flexibility in filtering. The SCIM filter can use the following attributes: \"id\", \"name\". Exactly one of the following must be defined: \"scim_filter\", \"data_filters\"",
+				MarkdownDescription: "A SCIM filter to apply to the selection.  A SCIM filter offers the greatest flexibility in filtering. The SCIM filter can use the following attributes: `id`, `name`. Exactly one of the following must be defined: `scim_filter`, `data_filters`",
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("data_filters")),
 				},

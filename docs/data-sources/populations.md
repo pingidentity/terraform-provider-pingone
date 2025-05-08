@@ -2,12 +2,12 @@
 page_title: "pingone_populations Data Source - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Data source to retrieve all populations.
+  Data source to retrieve multiple PingOne populations.
 ---
 
 # pingone_populations (Data Source)
 
-Data source to retrieve all populations.
+Data source to retrieve multiple PingOne populations.
 
 ## Example Usage
 
@@ -35,12 +35,12 @@ data "pingone_populations" "by_data_filter" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to read populations objects from.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `environment_id` (String) The ID of the environment to filter populations from.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Optional
 
-- `data_filters` (Attributes List) Individual data filters to apply to the selection. Exactly one of the following must be defined: `scim_filter`, `data_filters` (see [below for nested schema](#nestedatt--data_filters))
-- `scim_filter` (String) A SCIM filter to apply to the selection.  A SCIM filter offers the greatest flexibility in filtering. Exactly one of the following must be defined: `scim_filter`, `data_filters`
+- `data_filters` (Attributes List) Individual data filters to apply to the selection. Allowed attributes to filter: `id`, `name`. Exactly one of the following must be defined: `scim_filter`, `data_filters` (see [below for nested schema](#nestedatt--data_filters))
+- `scim_filter` (String) A SCIM filter to apply to the selection.  A SCIM filter offers the greatest flexibility in filtering. The SCIM filter can use the following attributes: `id`, `name`. Exactly one of the following must be defined: `scim_filter`, `data_filters`
 
 ### Read-Only
 
@@ -52,5 +52,5 @@ data "pingone_populations" "by_data_filter" {
 
 Required:
 
-- `name` (String) The attribute name to filter on.
+- `name` (String) The attribute name to filter on. Must be one of the following values: `id`, `name`.
 - `values` (List of String) The possible values (case sensitive) of the attribute defined in the `name` parameter to filter.

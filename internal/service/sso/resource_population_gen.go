@@ -80,7 +80,6 @@ type populationResourceModel struct {
 	Name             types.String                 `tfsdk:"name"`
 	PasswordPolicyId pingonetypes.ResourceIDValue `tfsdk:"password_policy_id"`
 	PasswordPolicy   types.Object                 `tfsdk:"password_policy"`
-	UserCount        types.Int32                  `tfsdk:"user_count"`
 }
 
 func (r *populationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -121,10 +120,6 @@ func (r *populationResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Validators: []validator.String{
 					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("password_policy")),
 				},
-			},
-			"user_count": schema.Int32Attribute{
-				Computed:    true,
-				Description: "The number of users that belong to the population",
 			},
 		},
 	}
@@ -186,8 +181,6 @@ func (state *populationResourceModel) readClientResponse(response *management.Po
 		}
 		state.PasswordPolicy = passwordPolicyValue
 	}
-	// user_count
-	state.UserCount = types.Int32PointerValue(response.UserCount)
 	return respDiags
 }
 
