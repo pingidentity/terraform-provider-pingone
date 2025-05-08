@@ -116,12 +116,10 @@ func (r *AgreementLocalizationRevisionResource) Schema(ctx context.Context, req 
 			},
 
 			"effective_at": schema.StringAttribute{
-				Description: "The start date that the revision is presented to users.  The effective date must be unique for each language agreement, and the property value can be the present date or a future date only.  Must be a valid RFC3339 date/time string.  If left undefined, will default to the current date and time (the revision will be effective immediately).",
+				Description: "The start date that the revision is presented to users.  The effective date must be unique for each language agreement, and the property value can be the present date or a future date only.  Must be a valid RFC3339 date/time string.  If left undefined, will default to the current date and time plus 1 minute in the future to allow for processing.",
 				Optional:    true,
 				Computed:    true,
-
-				CustomType: timetypes.RFC3339Type{},
-
+				CustomType:  timetypes.RFC3339Type{},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 					stringplanmodifier.UseStateForUnknown(),
@@ -476,17 +474,36 @@ func (r *AgreementLocalizationRevisionResource) ImportState(ctx context.Context,
 func (p *AgreementLocalizationRevisionResourceModel) expand() (*management.AgreementLanguageRevision, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
+	// Provide a buffer for the effective_at time to allow for processing in Terraform
+	//     when setting the value in the plan if not provided by the user
+	// Grace period used to prevent the effective_at time from being set in the past by the user in HCL
+	now := time.Now().UTC().Truncate(time.Second)
+	buffer := 1 * time.Minute
+	grace := 1 * time.Second
+	// Flag for notification to indicate if a generated effective_at time was used
+	usedGenerated := false
+
 	var t time.Time
 
 	if !p.EffectiveAt.IsNull() && !p.EffectiveAt.IsUnknown() {
 		t, d = p.EffectiveAt.ValueRFC3339Time()
 		diags.Append(d...)
+
+		// Report if user set effective_at in the past during modification or creation
+		if !diags.HasError() && t.Before(now.Add(-grace)) {
+			diags.AddError(
+				"Invalid effective_at value",
+				fmt.Sprintf("The effective_at time must not be in the past. Provided: %s",
+					t.Format(time.RFC3339)),
+			)
+			return nil, diags
+		}
 	} else {
-		bufferTimeMins := 1 * time.Minute
-		t = time.Now().Local().Add(bufferTimeMins)
-	}
-	if diags.HasError() {
-		return nil, diags
+		// Only compute and round when the field is not set
+		// Milliseconds are not applicable to agreement effective_at times
+		t = now.Add(buffer).Truncate(time.Second)
+		fmt.Printf("t in ELSE: %s\n", t.Format(time.RFC3339))
+		usedGenerated = true
 	}
 
 	data := management.NewAgreementLanguageRevision(
@@ -495,6 +512,14 @@ func (p *AgreementLocalizationRevisionResourceModel) expand() (*management.Agree
 		p.RequireReconsent.ValueBool(),
 		p.Text.ValueString(),
 	)
+
+	if usedGenerated {
+		diags.AddAttributeWarning(
+			path.Root("effective_at"),
+			"Generated effective_at value used",
+			fmt.Sprintf("No effective_at value was provided; defaulted to: %s", t.Format(time.RFC3339)),
+		)
+	}
 
 	return data, diags
 }
@@ -515,7 +540,10 @@ func (p *AgreementLocalizationRevisionResourceModel) toState(apiObject *manageme
 	p.AgreementId = framework.PingOneResourceIDToTF(*apiObject.GetAgreement().Id)
 	p.AgreementLocalizationId = framework.PingOneResourceIDToTF(*apiObject.GetLanguage().Id)
 	p.ContentType = framework.EnumOkToTF(apiObject.GetContentTypeOk())
-	p.EffectiveAt = framework.TimeOkToTF(apiObject.GetEffectiveAtOk())
+	if val, ok := apiObject.GetEffectiveAtOk(); ok && val != nil {
+		truncated := val.Truncate(time.Second)
+		p.EffectiveAt = framework.TimeOkToTF(&truncated, true)
+	}
 	p.NotValidAfter = framework.TimeOkToTF(apiObject.GetNotValidAfterOk())
 	p.RequireReconsent = framework.BoolOkToTF(apiObject.GetRequireReconsentOk())
 	p.StoredText = framework.StringOkToTF(revisionText.GetDataOk())

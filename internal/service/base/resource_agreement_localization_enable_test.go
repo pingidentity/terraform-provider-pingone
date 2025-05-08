@@ -46,7 +46,6 @@ func TestAccAgreementLocalizationEnable_RemovalDrift(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
-			acctest.PreCheckTestAccFlaky(t)
 
 			p1Client = acctest.PreCheckTestClient(ctx, t)
 		},
@@ -247,15 +246,12 @@ resource "pingone_agreement_localization" "%[3]s" {
   display_name = "%[3]s"
 }
 
-resource "time_static" "%[3]s" {}
-
 resource "pingone_agreement_localization_revision" "%[3]s" {
   environment_id            = pingone_environment.%[2]s.id
   agreement_id              = pingone_agreement.%[3]s.id
   agreement_localization_id = pingone_agreement_localization.%[3]s.id
 
   content_type      = "text/html"
-  effective_at      = time_static.%[3]s.id
   require_reconsent = true
   text              = <<EOT
 			<h1>Conditions de service</h1>
