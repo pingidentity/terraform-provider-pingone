@@ -15,6 +15,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
@@ -74,18 +77,27 @@ func (r *populationResource) Configure(ctx context.Context, req resource.Configu
 }
 
 type populationResourceModel struct {
-	Description      types.String                 `tfsdk:"description"`
-	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
-	Name             types.String                 `tfsdk:"name"`
-	PasswordPolicyId pingonetypes.ResourceIDValue `tfsdk:"password_policy_id"`
-	PasswordPolicy   types.Object                 `tfsdk:"password_policy"`
+	AlternativeIdentifiers types.Set                    `tfsdk:"alternative_identifiers"`
+	Description            types.String                 `tfsdk:"description"`
+	EnvironmentId          pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Id                     pingonetypes.ResourceIDValue `tfsdk:"id"`
+	Name                   types.String                 `tfsdk:"name"`
+	PasswordPolicyId       pingonetypes.ResourceIDValue `tfsdk:"password_policy_id"`
+	PasswordPolicy         types.Object                 `tfsdk:"password_policy"`
+	PreferredLanguage      types.String                 `tfsdk:"preferred_language"`
+	Theme                  types.Object                 `tfsdk:"theme"`
 }
 
 func (r *populationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Resource to create and manage a PingOne population in an environment.",
 		Attributes: map[string]schema.Attribute{
+			"alternative_identifiers": schema.SetAttribute{
+				ElementType:         types.StringType,
+				Optional:            true,
+				Description:         "Alternative identifiers that can be used to search for populations besides \"name\".",
+				MarkdownDescription: "Alternative identifiers that can be used to search for populations besides `name`.",
+			},
 			"description": schema.StringAttribute{
 				Optional:    true,
 				Description: "A string that specifies the description of the population.",
@@ -121,27 +133,70 @@ func (r *populationResource) Schema(ctx context.Context, req resource.SchemaRequ
 					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("password_policy")),
 				},
 			},
+			"preferred_language": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+				Description: "The language locale for the population. If absent, the environment default is used.",
+			},
+			"theme": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Required:    true,
+						CustomType:  pingonetypes.ResourceIDType{},
+						Description: "The ID of the theme to use for the population. If absent, the environment's default is used. Must be a valid PingOne resource ID.",
+					},
+				},
+				Optional:    true,
+				Computed:    true,
+				Description: "The object reference to the theme resource.",
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
+			},
 		},
 	}
 }
 
 func (model *populationResourceModel) buildClientStruct() (*management.Population, diag.Diagnostics) {
 	result := &management.Population{}
+	// alternative_identifiers
+	if !model.AlternativeIdentifiers.IsNull() && !model.AlternativeIdentifiers.IsUnknown() {
+		result.AlternativeIdentifiers = []string{}
+		for _, alternativeIdentifiersElement := range model.AlternativeIdentifiers.Elements() {
+			result.AlternativeIdentifiers = append(result.AlternativeIdentifiers, alternativeIdentifiersElement.(types.String).ValueString())
+		}
+	}
+
 	// description
 	result.Description = model.Description.ValueStringPointer()
 	// name
 	result.Name = model.Name.ValueString()
 	// password_policy
-	if !model.PasswordPolicy.IsNull() {
+	if !model.PasswordPolicy.IsNull() && !model.PasswordPolicy.IsUnknown() {
 		passwordPolicyValue := &management.PopulationPasswordPolicy{}
 		passwordPolicyAttrs := model.PasswordPolicy.Attributes()
 		passwordPolicyValue.Id = passwordPolicyAttrs["id"].(pingonetypes.ResourceIDValue).ValueString()
 		result.PasswordPolicy = passwordPolicyValue
-	} else if !model.PasswordPolicyId.IsNull() {
+	} else if !model.PasswordPolicyId.IsNull() && !model.PasswordPolicyId.IsUnknown() {
 		// password_policy_id
 		result.PasswordPolicy = &management.PopulationPasswordPolicy{
 			Id: model.PasswordPolicyId.ValueString(),
 		}
+	}
+
+	// preferred_language
+	if !model.PreferredLanguage.IsNull() && !model.PreferredLanguage.IsUnknown() {
+		result.PreferredLanguage = model.PreferredLanguage.ValueStringPointer()
+	}
+	// theme
+	if !model.Theme.IsNull() && !model.Theme.IsUnknown() {
+		themeValue := &management.PopulationTheme{}
+		themeAttrs := model.Theme.Attributes()
+		themeValue.Id = themeAttrs["id"].(pingonetypes.ResourceIDValue).ValueStringPointer()
+		result.Theme = themeValue
 	}
 
 	return result, nil
@@ -149,6 +204,9 @@ func (model *populationResourceModel) buildClientStruct() (*management.Populatio
 
 func (state *populationResourceModel) readClientResponse(response *management.Population) diag.Diagnostics {
 	var respDiags, diags diag.Diagnostics
+	// alternative_identifiers
+	state.AlternativeIdentifiers, diags = types.SetValueFrom(context.Background(), types.StringType, response.AlternativeIdentifiers)
+	respDiags.Append(diags...)
 	// description
 	state.Description = types.StringPointerValue(response.Description)
 	// id
@@ -181,6 +239,22 @@ func (state *populationResourceModel) readClientResponse(response *management.Po
 		}
 		state.PasswordPolicy = passwordPolicyValue
 	}
+	// preferred_language
+	state.PreferredLanguage = types.StringPointerValue(response.PreferredLanguage)
+	// theme
+	themeAttrTypes := map[string]attr.Type{
+		"id": pingonetypes.ResourceIDType{},
+	}
+	var themeValue types.Object
+	if response.Theme == nil {
+		themeValue = types.ObjectNull(themeAttrTypes)
+	} else {
+		themeValue, diags = types.ObjectValue(themeAttrTypes, map[string]attr.Value{
+			"id": framework.PingOneResourceIDOkToTF(response.Theme.GetIdOk()),
+		})
+		respDiags.Append(diags...)
+	}
+	state.Theme = themeValue
 	return respDiags
 }
 
