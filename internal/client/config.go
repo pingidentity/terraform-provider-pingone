@@ -2,7 +2,10 @@
 
 package client
 
-import "github.com/patrickcping/pingone-go-sdk-v2/management"
+import (
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
+)
 
 type Config struct {
 	ClientID             string
@@ -10,6 +13,7 @@ type Config struct {
 	EnvironmentID        string
 	AccessToken          string
 	RegionCode           *management.EnumRegionCode
+	OverridenRegion      *model.RegionMapping
 	APIHostnameOverride  *string
 	AuthHostnameOverride *string
 	ProxyURL             *string

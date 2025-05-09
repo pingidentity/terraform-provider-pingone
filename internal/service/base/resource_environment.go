@@ -1028,7 +1028,15 @@ func (p *environmentResourceModel) toState(environmentApiObject *management.Envi
 	p.Name = framework.StringOkToTF(environmentApiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(environmentApiObject.GetDescriptionOk())
 	p.Type = framework.EnumOkToTF(environmentApiObject.GetTypeOk())
-	p.Region = framework.EnumOkToTF(environmentApiObject.GetRegionOk())
+
+	region, ok := environmentApiObject.GetRegionOk()
+	if !ok || region == nil {
+		p.Region = types.StringNull()
+	} else if region.EnumRegionCode != nil {
+		p.Region = types.StringValue(string(*region.EnumRegionCode))
+	} else {
+		p.Region = types.StringPointerValue(region.String)
+	}
 
 	if v, ok := environmentApiObject.GetLicenseOk(); ok {
 		p.LicenseId = framework.PingOneResourceIDOkToTF(v.GetIdOk())

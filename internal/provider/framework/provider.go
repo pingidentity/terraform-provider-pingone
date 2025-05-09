@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/client"
 	pingone "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -282,6 +283,14 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 	if !data.RegionCode.IsNull() && !data.RegionCode.IsUnknown() {
 		regionCode := management.EnumRegionCode(data.RegionCode.ValueString())
 		config.RegionCode = &regionCode
+	}
+	urlSuffixOverride := os.Getenv("PINGONE_TERRAFORM_REGION_URL_SUFFIX_OVERRIDE")
+	apiCodeOverride := os.Getenv("PINGONE_TERRAFORM_REGION_OVERRIDE")
+	if urlSuffixOverride != "" && apiCodeOverride != "" {
+		config.OverridenRegion = &model.RegionMapping{
+			URLSuffix: urlSuffixOverride,
+			APICode:   management.EnumRegionCode(apiCodeOverride),
+		}
 	}
 
 	if !data.HTTPProxy.IsNull() {

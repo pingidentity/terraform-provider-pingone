@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/base"
@@ -179,6 +180,14 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 		if v, ok := d.Get("region_code").(string); ok && v != "" {
 			regionCode := management.EnumRegionCode(v)
 			config.RegionCode = &regionCode
+		}
+		urlSuffixOverride := os.Getenv("PINGONE_TERRAFORM_REGION_URL_SUFFIX_OVERRIDE")
+		apiCodeOverride := os.Getenv("PINGONE_TERRAFORM_REGION_OVERRIDE")
+		if urlSuffixOverride != "" && apiCodeOverride != "" {
+			config.OverridenRegion = &model.RegionMapping{
+				URLSuffix: urlSuffixOverride,
+				APICode:   management.EnumRegionCode(apiCodeOverride),
+			}
 		}
 
 		config.GlobalOptions = &client.GlobalOptions{
