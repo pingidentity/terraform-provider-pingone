@@ -102,6 +102,8 @@ func TestAccPopulation_NewEnv(t *testing.T) {
 				Config: testAccPopulationConfig_NewEnv(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "preferred_language", "en"),
+					resource.TestMatchResourceAttr(resourceFullName, "theme.id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -133,6 +135,11 @@ func TestAccPopulation_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "Test description"),
 					resource.TestMatchResourceAttr(resourceFullName, "password_policy.id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "alternative_identifiers.#", "2"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "alternative_identifiers.*", "identifier1"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "alternative_identifiers.*", "identifier2"),
+					resource.TestCheckResourceAttr(resourceFullName, "preferred_language", "es"),
+					resource.TestMatchResourceAttr(resourceFullName, "theme.id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 			// Test importing the resource
@@ -180,6 +187,8 @@ func TestAccPopulation_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "password_policy.id"),
+					resource.TestCheckResourceAttr(resourceFullName, "preferred_language", "en"),
+					resource.TestMatchResourceAttr(resourceFullName, "theme.id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -349,12 +358,45 @@ resource "pingone_password_policy" "%[2]s" {
   name           = "%[3]s"
 }
 
+data "pingone_language" "%[3]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  locale = "es"
+}
+
+resource "pingone_language_update" "%[3]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  language_id = data.pingone_language.%[3]s.id
+  enabled     = true
+}
+
+resource "pingone_branding_theme" "%[3]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name     = "%[3]s"
+  template = "split"
+
+  background_color   = "#FF00F0"
+  button_text_color  = "#FF6C6C"
+  heading_text_color = "#FF0005"
+  card_color         = "#0FFF39"
+  body_text_color    = "#8620FF"
+  link_text_color    = "#8A7F06"
+  button_color       = "#0CFFFB"
+}
+
 resource "pingone_population" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   description    = "Test description"
   password_policy = {
     id = pingone_password_policy.%[2]s.id
+  }
+  preferred_language = pingone_language_update.%[3]s.locale
+  alternative_identifiers = ["identifier1", "identifier2"]
+  theme = {
+     id = pingone_branding_theme.%[3]s.id
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
