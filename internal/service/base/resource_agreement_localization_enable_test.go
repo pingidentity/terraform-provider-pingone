@@ -246,12 +246,17 @@ resource "pingone_agreement_localization" "%[3]s" {
   display_name = "%[3]s"
 }
 
+resource "time_offset" "%[3]s" {
+  offset_seconds = 10
+}
+
 resource "pingone_agreement_localization_revision" "%[3]s" {
   environment_id            = pingone_environment.%[2]s.id
   agreement_id              = pingone_agreement.%[3]s.id
   agreement_localization_id = pingone_agreement_localization.%[3]s.id
 
   content_type      = "text/html"
+	effective_at      = time_offset.%[3]s.rfc3339
   require_reconsent = true
   text              = <<EOT
 			<h1>Conditions de service</h1>
@@ -268,6 +273,11 @@ resource "pingone_agreement_localization_revision" "%[3]s" {
 			EOT
 }
 
+resource "time_sleep" "%[3]s" {
+  depends_on = [pingone_agreement_localization_revision.%[3]s]
+  create_duration = "10s"  # hardcoded buffer matching the 10s offset
+}
+
 resource "pingone_agreement_localization_enable" "%[3]s" {
   environment_id            = pingone_environment.%[2]s.id
   agreement_id              = pingone_agreement.%[3]s.id
@@ -276,7 +286,8 @@ resource "pingone_agreement_localization_enable" "%[3]s" {
   enabled = true
 
   depends_on = [
-    pingone_agreement_localization_revision.%[3]s
+    pingone_agreement_localization_revision.%[3]s,
+		time_sleep.%[3]s
   ]
 }
 `, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)

@@ -477,7 +477,7 @@ func (p *AgreementLocalizationRevisionResourceModel) expand() (*management.Agree
 	// Provide a buffer for the effective_at time to allow for processing in Terraform
 	//     when setting the value in the plan if not provided by the user
 	// Grace period used to prevent the effective_at time from being set in the past by the user in HCL
-	now := time.Now().UTC().Truncate(time.Second)
+	now := time.Now().UTC()
 	buffer := 1 * time.Minute
 	grace := 1 * time.Second
 	// Flag for notification to indicate if a generated effective_at time was used
@@ -501,8 +501,7 @@ func (p *AgreementLocalizationRevisionResourceModel) expand() (*management.Agree
 	} else {
 		// Only compute and round when the field is not set
 		// Milliseconds are not applicable to agreement effective_at times
-		t = now.Add(buffer).Truncate(time.Second)
-		fmt.Printf("t in ELSE: %s\n", t.Format(time.RFC3339))
+		t = now.Add(buffer)
 		usedGenerated = true
 	}
 
@@ -540,10 +539,7 @@ func (p *AgreementLocalizationRevisionResourceModel) toState(apiObject *manageme
 	p.AgreementId = framework.PingOneResourceIDToTF(*apiObject.GetAgreement().Id)
 	p.AgreementLocalizationId = framework.PingOneResourceIDToTF(*apiObject.GetLanguage().Id)
 	p.ContentType = framework.EnumOkToTF(apiObject.GetContentTypeOk())
-	if val, ok := apiObject.GetEffectiveAtOk(); ok && val != nil {
-		truncated := val.Truncate(time.Second)
-		p.EffectiveAt = framework.TimeOkToTF(&truncated, true)
-	}
+	p.EffectiveAt = framework.TimeOkToTF(apiObject.GetEffectiveAtOk())
 	p.NotValidAfter = framework.TimeOkToTF(apiObject.GetNotValidAfterOk())
 	p.RequireReconsent = framework.BoolOkToTF(apiObject.GetRequireReconsentOk())
 	p.StoredText = framework.StringOkToTF(revisionText.GetDataOk())
