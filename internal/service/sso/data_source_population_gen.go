@@ -64,21 +64,30 @@ func (r *populationDataSource) Configure(ctx context.Context, req datasource.Con
 }
 
 type populationDataSourceModel struct {
-	Default          types.Bool                   `tfsdk:"default"`
-	Description      types.String                 `tfsdk:"description"`
-	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
-	Name             types.String                 `tfsdk:"name"`
-	PasswordPolicy   types.Object                 `tfsdk:"password_policy"`
-	PasswordPolicyId pingonetypes.ResourceIDValue `tfsdk:"password_policy_id"`
-	PopulationId     pingonetypes.ResourceIDValue `tfsdk:"population_id"`
-	UserCount        types.Int32                  `tfsdk:"user_count"`
+	AlternativeIdentifiers types.Set                    `tfsdk:"alternative_identifiers"`
+	Default                types.Bool                   `tfsdk:"default"`
+	Description            types.String                 `tfsdk:"description"`
+	EnvironmentId          pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Id                     pingonetypes.ResourceIDValue `tfsdk:"id"`
+	Name                   types.String                 `tfsdk:"name"`
+	PasswordPolicy         types.Object                 `tfsdk:"password_policy"`
+	PasswordPolicyId       pingonetypes.ResourceIDValue `tfsdk:"password_policy_id"`
+	PopulationId           pingonetypes.ResourceIDValue `tfsdk:"population_id"`
+	PreferredLanguage      types.String                 `tfsdk:"preferred_language"`
+	Theme                  types.Object                 `tfsdk:"theme"`
+	UserCount              types.Int32                  `tfsdk:"user_count"`
 }
 
 func (r *populationDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Datasource to retrieve a PingOne population in a PingOne environment, by ID or by name.",
 		Attributes: map[string]schema.Attribute{
+			"alternative_identifiers": schema.SetAttribute{
+				ElementType:         types.StringType,
+				Computed:            true,
+				Description:         "Alternative identifiers that can be used to search for populations besides \"name\".",
+				MarkdownDescription: "Alternative identifiers that can be used to search for populations besides `name`.",
+			},
 			"default": schema.BoolAttribute{
 				Computed:    true,
 				Description: "A boolean that indicates whether the population is the default population for the environment.",
@@ -129,6 +138,21 @@ func (r *populationDataSource) Schema(ctx context.Context, req datasource.Schema
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
 				},
 			},
+			"preferred_language": schema.StringAttribute{
+				Computed:    true,
+				Description: "The language locale for the population.",
+			},
+			"theme": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Computed:    true,
+						CustomType:  pingonetypes.ResourceIDType{},
+						Description: "The ID of the theme to use for the population.",
+					},
+				},
+				Computed:    true,
+				Description: "The object reference to the theme resource.",
+			},
 			"user_count": schema.Int32Attribute{
 				Computed:    true,
 				Description: "The number of users that belong to the population",
@@ -139,6 +163,9 @@ func (r *populationDataSource) Schema(ctx context.Context, req datasource.Schema
 
 func (state *populationDataSourceModel) readClientResponse(response *management.Population) diag.Diagnostics {
 	var respDiags, diags diag.Diagnostics
+	// alternative_identifiers
+	state.AlternativeIdentifiers, diags = types.SetValueFrom(context.Background(), types.StringType, response.AlternativeIdentifiers)
+	respDiags.Append(diags...)
 	// default
 	state.Default = types.BoolPointerValue(response.Default)
 	// description
@@ -174,6 +201,22 @@ func (state *populationDataSourceModel) readClientResponse(response *management.
 	// population_id
 	populationIdValue := framework.PingOneResourceIDToTF(response.GetId())
 	state.PopulationId = populationIdValue
+	// preferred_language
+	state.PreferredLanguage = types.StringPointerValue(response.PreferredLanguage)
+	// theme
+	themeAttrTypes := map[string]attr.Type{
+		"id": pingonetypes.ResourceIDType{},
+	}
+	var themeValue types.Object
+	if response.Theme == nil {
+		themeValue = types.ObjectNull(themeAttrTypes)
+	} else {
+		themeValue, diags = types.ObjectValue(themeAttrTypes, map[string]attr.Value{
+			"id": framework.PingOneResourceIDOkToTF(response.Theme.GetIdOk()),
+		})
+		respDiags.Append(diags...)
+	}
+	state.Theme = themeValue
 	// user_count
 	state.UserCount = types.Int32PointerValue(response.UserCount)
 	return respDiags
