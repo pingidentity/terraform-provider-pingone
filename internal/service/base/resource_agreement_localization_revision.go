@@ -480,7 +480,6 @@ func (p *AgreementLocalizationRevisionResourceModel) expand() (*management.Agree
 	now := time.Now().UTC()
 	buffer := 30 * time.Second
 	grace := 1 * time.Second
-	// Flag for notification to indicate if a generated effective_at time was used
 	usedGenerated := false
 
 	var t time.Time
@@ -489,8 +488,11 @@ func (p *AgreementLocalizationRevisionResourceModel) expand() (*management.Agree
 		t, d = p.EffectiveAt.ValueRFC3339Time()
 		diags.Append(d...)
 
-		// Report if user set effective_at in the past during modification or creation
-		if !diags.HasError() && t.Before(now.Add(-grace)) {
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if t.Before(now.Add(-grace)) {
 			diags.AddError(
 				"Invalid effective_at value",
 				fmt.Sprintf("The effective_at time must not be in the past. Provided: %s",
@@ -499,8 +501,6 @@ func (p *AgreementLocalizationRevisionResourceModel) expand() (*management.Agree
 			return nil, diags
 		}
 	} else {
-		// Only compute and round when the field is not set
-		// Milliseconds are not applicable to agreement effective_at times
 		t = now.Add(buffer)
 		usedGenerated = true
 	}
