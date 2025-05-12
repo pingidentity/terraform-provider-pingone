@@ -116,7 +116,7 @@ func (r *AgreementLocalizationRevisionResource) Schema(ctx context.Context, req 
 			},
 
 			"effective_at": schema.StringAttribute{
-				Description: "The start date that the revision is presented to users.  The effective date must be unique for each language agreement, and the property value can be the present date or a future date only.  Must be a valid RFC3339 date/time string.  If left undefined, will default to the current date and time plus 1 minute in the future to allow for processing.",
+				Description: "The start date that the revision is presented to users.  The effective date must be unique for each language agreement, and the property value can be the present date or a future date only.  Must be a valid RFC3339 date/time string.  If left undefined, will default to the current date and time plus a 30 second buffer to allow for processing.",
 				Optional:    true,
 				Computed:    true,
 				CustomType:  timetypes.RFC3339Type{},
@@ -478,7 +478,7 @@ func (p *AgreementLocalizationRevisionResourceModel) expand() (*management.Agree
 	//     when setting the value in the plan if not provided by the user
 	// Grace period used to prevent the effective_at time from being set in the past by the user in HCL
 	now := time.Now().UTC()
-	buffer := 1 * time.Minute
+	buffer := 30 * time.Second
 	grace := 1 * time.Second
 	// Flag for notification to indicate if a generated effective_at time was used
 	usedGenerated := false

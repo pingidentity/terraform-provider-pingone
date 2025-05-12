@@ -26,6 +26,53 @@ var (
 	}
 )
 
+func TestAccAgreementLocalizationEnable_NoEnableAt_RemovalDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_agreement_localization_enable.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var agreementLocalizationID, agreementID, environmentID string
+	var p1Client *client.Client
+	var ctx = context.Background()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+			p1Client = acctest.PreCheckTestClient(ctx, t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.AgreementLocalizationEnable_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		ExternalProviders:        agreementLocalizationEnableExternalProviders,
+		Steps: []resource.TestStep{
+			// Create agreement without explicit enable_at
+			{
+				Config: testAccAgreementLocalizationEnableConfig_NoEnableAt(environmentName, licenseID, resourceName, "fr"),
+				Check: base.AgreementLocalizationEnable_GetIDs(
+					resourceFullName, &environmentID, &agreementID, &agreementLocalizationID),
+			},
+			// Simulate drift (removal outside Terraform)
+			{
+				PreConfig: func() {
+					base.Agreement_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, agreementID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			{
+				Config:  testAccAgreementLocalizationEnableConfig_NoEnableAt(environmentName, licenseID, resourceName, "fr"),
+				Destroy: true,
+			},
+		},
+	})
+}
+
 func TestAccAgreementLocalizationEnable_RemovalDrift(t *testing.T) {
 	t.Parallel()
 
@@ -256,7 +303,7 @@ resource "pingone_agreement_localization_revision" "%[3]s" {
   agreement_localization_id = pingone_agreement_localization.%[3]s.id
 
   content_type      = "text/html"
-	effective_at      = time_offset.%[3]s.rfc3339
+  effective_at      = time_offset.%[3]s.rfc3339
   require_reconsent = true
   text              = <<EOT
 			<h1>Conditions de service</h1>
@@ -274,8 +321,8 @@ resource "pingone_agreement_localization_revision" "%[3]s" {
 }
 
 resource "time_sleep" "%[3]s" {
-  depends_on = [pingone_agreement_localization_revision.%[3]s]
-  create_duration = "10s"  # hardcoded buffer matching the 10s offset
+  depends_on      = [pingone_agreement_localization_revision.%[3]s]
+  create_duration = "10s" # hardcoded buffer matching the 10s offset
 }
 
 resource "pingone_agreement_localization_enable" "%[3]s" {
@@ -287,7 +334,7 @@ resource "pingone_agreement_localization_enable" "%[3]s" {
 
   depends_on = [
     pingone_agreement_localization_revision.%[3]s,
-		time_sleep.%[3]s
+    time_sleep.%[3]s
   ]
 }
 `, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
@@ -346,4 +393,63 @@ resource "pingone_agreement_localization_enable" "%[2]s" {
   enabled = "false"
 }
 `, acctest.AgreementSandboxEnvironment(), resourceName)
+}
+
+func testAccAgreementLocalizationEnableConfig_NoEnableAt(environmentName, licenseID, resourceName, locale string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+data "pingone_language" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  locale         = "%[4]s"
+}
+
+resource "pingone_language_update" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  language_id    = data.pingone_language.%[3]s.id
+  default        = false
+  enabled        = true
+}
+
+resource "pingone_agreement" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[3]s"
+  description    = "Test agreement"
+}
+
+resource "pingone_agreement_localization" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  agreement_id   = pingone_agreement.%[3]s.id
+  language_id    = pingone_language_update.%[3]s.id
+  display_name   = "%[3]s"
+}
+
+resource "pingone_agreement_localization_revision" "%[3]s" {
+  environment_id            = pingone_environment.%[2]s.id
+  agreement_id              = pingone_agreement.%[3]s.id
+  agreement_localization_id = pingone_agreement_localization.%[3]s.id
+
+  content_type      = "text/html"
+  require_reconsent = true
+  text              = "<h1>Auto-enabled agreement</h1>"
+}
+
+resource "time_sleep" "%[3]s" {
+  depends_on      = [pingone_agreement_localization_revision.%[3]s]
+  create_duration = "30s" # hardcoded buffer matching the provider default
+}
+
+resource "pingone_agreement_localization_enable" "%[3]s" {
+  environment_id            = pingone_environment.%[2]s.id
+  agreement_id              = pingone_agreement.%[3]s.id
+  agreement_localization_id = pingone_agreement_localization.%[3]s.id
+
+  enabled = true
+
+  depends_on = [
+    pingone_agreement_localization_revision.%[3]s,
+    time_sleep.%[3]s
+  ]
+}
+`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
 }
