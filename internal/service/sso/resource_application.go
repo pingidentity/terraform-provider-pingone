@@ -56,6 +56,7 @@ type applicationResourceModelV1 struct {
 	ExternalLinkOptions       types.Object                 `tfsdk:"external_link_options"`
 	OIDCOptions               types.Object                 `tfsdk:"oidc_options"`
 	SAMLOptions               types.Object                 `tfsdk:"saml_options"`
+	WSFedOptions              types.Object                 `tfsdk:"wsfed_options"`
 }
 
 type applicationAccessControlGroupOptionsResourceModelV1 struct {
@@ -179,6 +180,9 @@ type applicationSAMLOptionsSpVerificationResourceModelV1 struct {
 	AuthnRequestSigned types.Bool `tfsdk:"authn_request_signed"`
 }
 
+// TODO
+type applicationWSFedOptionsResourceModelV1 struct{}
+
 var (
 	applicationCorsSettingsTFObjectTypes = map[string]attr.Type{
 		"behavior": types.StringType,
@@ -300,6 +304,9 @@ var (
 		"groups": types.SetType{ElemType: pingonetypes.ResourceIDType{}},
 		"type":   types.StringType,
 	}
+
+	//TODO
+	applicationWsfedOptionsTFObjectTypes = map[string]attr.Type{}
 )
 
 // Framework interfaces
@@ -335,7 +342,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 	tagsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An array of strings that specifies the list of labels associated with the application.",
-	).AllowedValuesEnum(management.AllowedEnumApplicationTagsEnumValues).ConflictsWith([]string{"external_link_options", "saml_options"})
+	).AllowedValuesEnum(management.AllowedEnumApplicationTagsEnumValues).ConflictsWith([]string{"external_link_options", "saml_options", "wsfed_options"})
 
 	loginPageUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the custom login page URL for the application. If you set the `login_page_url` property for applications in an environment that sets a custom domain, the URL should include the top-level domain and at least one additional domain level. **Warning** To avoid issues with third-party cookies in some browsers, a custom domain must be used, giving your PingOne environment the same parent domain as your authentication application. For more information about custom domains, see Custom domains.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.",
@@ -360,7 +367,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 		"A string that specifies the URL for the application icon.  Both `http://` and `https://` are permitted.",
 	)
 
-	appTypesExactlyOneOf := []string{"external_link_options", "oidc_options", "saml_options"}
+	appTypesExactlyOneOf := []string{"external_link_options", "oidc_options", "saml_options", "wsfed_options"}
 
 	externalLinkOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that specifies External link application specific settings.",
@@ -647,12 +654,17 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 		"A boolean that specifies whether the Authn Request signing should be enforced.",
 	).DefaultValue(false)
 
+	//TODO
+	wsfedOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies WS-Fed application specific settings.",
+	).ExactlyOneOf(appTypesExactlyOneOf).RequiresReplaceNestedAttributes()
+
 	resp.Schema = schema.Schema{
 
 		Version: 1,
 
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage a PingOne application (SAML, OpenID Connect, External Link) in an environment.",
+		Description: "Resource to create and manage a PingOne application (SAML, OpenID Connect, External Link, WS-Fed) in an environment.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -700,6 +712,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 					setvalidator.ConflictsWith(
 						path.MatchRelative().AtParent().AtName("external_link_options"),
 						path.MatchRelative().AtParent().AtName("saml_options"),
+						path.MatchRelative().AtParent().AtName("wsfed_options"),
 					),
 				},
 			},
@@ -813,6 +826,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						path.MatchRelative().AtParent().AtName("external_link_options"),
 						path.MatchRelative().AtParent().AtName("oidc_options"),
 						path.MatchRelative().AtParent().AtName("saml_options"),
+						path.MatchRelative().AtParent().AtName("wsfed_options"),
 					),
 				},
 
@@ -1381,6 +1395,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						path.MatchRelative().AtParent().AtName("external_link_options"),
 						path.MatchRelative().AtParent().AtName("oidc_options"),
 						path.MatchRelative().AtParent().AtName("saml_options"),
+						path.MatchRelative().AtParent().AtName("wsfed_options"),
 					),
 				},
 
@@ -1613,6 +1628,30 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						path.MatchRelative().AtParent().AtName("external_link_options"),
 						path.MatchRelative().AtParent().AtName("oidc_options"),
 						path.MatchRelative().AtParent().AtName("saml_options"),
+						path.MatchRelative().AtParent().AtName("wsfed_options"),
+					),
+				},
+
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
+				},
+			},
+
+			"wsfed_options": schema.SingleNestedAttribute{
+				Description:         wsfedOptionsDescription.Description,
+				MarkdownDescription: wsfedOptionsDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{ //TODO
+					"cors_settings": resourceApplicationSchemaCorsSettings(),
+				},
+
+				Validators: []validator.Object{
+					objectvalidator.ExactlyOneOf(
+						path.MatchRelative().AtParent().AtName("external_link_options"),
+						path.MatchRelative().AtParent().AtName("oidc_options"),
+						path.MatchRelative().AtParent().AtName("saml_options"),
+						path.MatchRelative().AtParent().AtName("wsfed_options"),
 					),
 				},
 
@@ -1769,6 +1808,8 @@ func (r *ApplicationResource) Create(ctx context.Context, req resource.CreateReq
 		applicationId = createResponse.ApplicationSAML.GetId()
 	} else if createResponse.ApplicationExternalLink != nil && createResponse.ApplicationExternalLink.GetId() != "" {
 		applicationId = createResponse.ApplicationExternalLink.GetId()
+	} else if createResponse.ApplicationWSFED != nil && createResponse.ApplicationWSFED.GetId() != "" {
+		applicationId = createResponse.ApplicationWSFED.GetId()
 	} else {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Cannot determine application ID from API response for application: %s", plan.Name.ValueString()),
@@ -2103,6 +2144,11 @@ func (p *applicationResourceModelV1) expandCreate(ctx context.Context) (*managem
 		diags = append(diags, d...)
 	}
 
+	if !p.WSFedOptions.IsNull() && !p.WSFedOptions.IsUnknown() {
+		data.ApplicationWSFED, d = p.expandApplicationWSFed(ctx)
+		diags = append(diags, d...)
+	}
+
 	return data, diags
 }
 
@@ -2123,6 +2169,11 @@ func (p *applicationResourceModelV1) expandUpdate(ctx context.Context) (*managem
 
 	if !p.ExternalLinkOptions.IsNull() && !p.ExternalLinkOptions.IsUnknown() {
 		data.ApplicationExternalLink, d = p.expandApplicationExternalLink(ctx)
+		diags = append(diags, d...)
+	}
+
+	if !p.WSFedOptions.IsNull() && !p.WSFedOptions.IsUnknown() {
+		data.ApplicationWSFED, d = p.expandApplicationWSFed(ctx)
 		diags = append(diags, d...)
 	}
 
@@ -2850,6 +2901,48 @@ func (p *applicationResourceModelV1) expandApplicationExternalLink(ctx context.C
 	return data, diags
 }
 
+func (p *applicationResourceModelV1) expandApplicationWSFed(ctx context.Context) (*management.ApplicationWSFED, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var data *management.ApplicationWSFED
+
+	if !p.WSFedOptions.IsNull() && !p.WSFedOptions.IsUnknown() {
+		var plan applicationWSFedOptionsResourceModelV1
+		d := p.WSFedOptions.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		// data = management.NewApplicationWSFED(
+		// 	p.Enabled.ValueBool(),
+		// 	p.Name.ValueString(),
+		// 	management.ENUMAPPLICATIONPROTOCOL_WS_FED,
+		// 	//TODO
+		// )
+
+		applicationCommon, d := p.expandApplicationCommon(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.Description = applicationCommon.Description
+		data.LoginPageUrl = applicationCommon.LoginPageUrl
+		data.Icon = applicationCommon.Icon
+		data.AccessControl = applicationCommon.AccessControl
+		data.HiddenFromAppPortal = applicationCommon.HiddenFromAppPortal
+
+		// WS-Fed specific options
+		//TODO
+	}
+
+	return data, diags
+}
+
 func (p *applicationResourceModelV1) expandApplicationCommon(ctx context.Context) (*management.Application, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -2983,6 +3076,7 @@ func (p *applicationResourceModelV1) toState(ctx context.Context, apiObject *man
 		p.Tags = types.SetNull(types.StringType)
 		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsTFObjectTypes)
 		p.SAMLOptions = types.ObjectNull(applicationSamlOptionsTFObjectTypes)
+		p.WSFedOptions = types.ObjectNull(applicationWsfedOptionsTFObjectTypes)
 
 		p.ExternalLinkOptions, d = applicationExternalLinkOptionsToTF(v)
 		diags = append(diags, d...)
@@ -3032,6 +3126,7 @@ func (p *applicationResourceModelV1) toState(ctx context.Context, apiObject *man
 
 		p.SAMLOptions = types.ObjectNull(applicationSamlOptionsTFObjectTypes)
 		p.ExternalLinkOptions = types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes)
+		p.WSFedOptions = types.ObjectNull(applicationWsfedOptionsTFObjectTypes)
 
 	case *management.ApplicationSAML:
 		p.Id = framework.PingOneResourceIDOkToTF(v.GetIdOk())
@@ -3067,6 +3162,42 @@ func (p *applicationResourceModelV1) toState(ctx context.Context, apiObject *man
 		diags = append(diags, d...)
 
 		p.ExternalLinkOptions = types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes)
+		p.WSFedOptions = types.ObjectNull(applicationWsfedOptionsTFObjectTypes)
+
+	case *management.ApplicationWSFED:
+		p.Id = framework.PingOneResourceIDOkToTF(v.GetIdOk())
+		p.EnvironmentId = framework.PingOneResourceIDOkToTF(v.Environment.GetIdOk())
+		p.Name = framework.StringOkToTF(v.GetNameOk())
+		p.Description = framework.StringOkToTF(v.GetDescriptionOk())
+		p.Enabled = framework.BoolOkToTF(v.GetEnabledOk())
+		p.LoginPageUrl = framework.StringOkToTF(v.GetLoginPageUrlOk())
+
+		p.AccessControlRoleType = types.StringNull()
+		p.AccessControlGroupOptions = types.ObjectNull(applicationAccessControlGroupOptionsTFObjectTypes)
+		if vA, ok := v.GetAccessControlOk(); ok {
+			if vR, ok := vA.GetRoleOk(); ok {
+				p.AccessControlRoleType = framework.EnumOkToTF(vR.GetTypeOk())
+			}
+
+			p.AccessControlGroupOptions, d = applicationAccessControlGroupOptionsToTF(vA.GetGroupOk())
+			diags = append(diags, d...)
+		}
+
+		p.HiddenFromAppPortal = framework.BoolOkToTF(v.GetHiddenFromAppPortalOk())
+
+		p.Icon, d = service.ImageOkToTF(v.GetIconOk())
+		diags = append(diags, d...)
+
+		p.LoginPageUrl = framework.StringOkToTF(v.GetLoginPageUrlOk())
+
+		// Service specific attributes
+		p.Tags = types.SetNull(types.StringType)
+		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsTFObjectTypes)
+		p.SAMLOptions = types.ObjectNull(applicationSamlOptionsTFObjectTypes)
+		p.ExternalLinkOptions = types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes)
+
+		p.WSFedOptions, d = applicationWsfedOptionsToTF(v)
+		diags = append(diags, d...)
 	}
 
 	return diags

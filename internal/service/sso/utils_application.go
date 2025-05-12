@@ -432,3 +432,25 @@ func applicationSamlSpVerificationOkToTF(apiObject *management.ApplicationSAMLAl
 
 	return returnVar, diags
 }
+
+// TODO
+func applicationWsfedOptionsToTF(apiObject *management.ApplicationWSFED) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if apiObject == nil || apiObject.GetId() == "" {
+		return types.ObjectNull(applicationWsfedOptionsTFObjectTypes), diags
+	}
+
+	corsSettings, d := applicationCorsSettingsOkToTF(apiObject.GetCorsSettingsOk())
+	diags.Append(d...)
+
+	attributesMap := map[string]attr.Value{
+		"cors_settings": corsSettings,
+		"type":          framework.EnumOkToTF(apiObject.GetTypeOk()),
+	}
+
+	returnVar, d := types.ObjectValue(applicationWsfedOptionsTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
