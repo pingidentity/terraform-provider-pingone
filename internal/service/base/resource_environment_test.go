@@ -238,46 +238,44 @@ func TestAccEnvironment_NonCompatibleRegion(t *testing.T) {
 	})
 }
 
-// Commenting test out due to buildup of soft-deleted environments (of which there is a limit of 100)
+func TestAccEnvironment_EnvironmentTypeSwitching(t *testing.T) {
+	t.Parallel()
 
-// func TestAccEnvironment_EnvironmentTypeSwitching(t *testing.T) {
-// 	t.Parallel()
+	resourceName := acctest.ResourceNameGenEnvironment()
+	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
 
-// 	resourceName := acctest.ResourceNameGenEnvironment()
-// 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
+	name := resourceName
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-// 	name := resourceName
-// 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			acctest.PreCheckClient(t)
-// 			acctest.PreCheckNewEnvironment(t)
-// 			acctest.PreCheckNoFeatureFlag(t)
-// 		},
-// 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-// 		CheckDestroy:             nil,
-// 		ErrorCheck:               acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccEnvironmentConfig_MinimalWithType(resourceName, name, "SANDBOX", licenseID),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr(resourceFullName, "type", "SANDBOX"),
-// 				),
-// 			},
-// 			{
-// 				Config: testAccEnvironmentConfig_MinimalWithType(resourceName, name, "PRODUCTION", licenseID),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr(resourceFullName, "type", "PRODUCTION"),
-// 				),
-// 			},
-// 			{
-// 				Config:      testAccEnvironmentConfig_MinimalWithType(resourceName, name, "SANDBOX", licenseID),
-// 				ExpectError: regexp.MustCompile(`Data protection notice - The environment type cannot be changed from PRODUCTION to SANDBOX`),
-// 			},
-// 		},
-// 	})
-// }
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             nil,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccEnvironmentConfig_MinimalWithType(resourceName, name, "SANDBOX", licenseID),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "type", "SANDBOX"),
+				),
+			},
+			{
+				Config: testAccEnvironmentConfig_MinimalWithType(resourceName, name, "PRODUCTION", licenseID),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "type", "PRODUCTION"),
+				),
+			},
+			{
+				Config:      testAccEnvironmentConfig_MinimalWithType(resourceName, name, "SANDBOX", licenseID),
+				ExpectError: regexp.MustCompile(`Data protection notice - The environment type cannot be changed from PRODUCTION to SANDBOX`),
+			},
+		},
+	})
+}
 
 func TestAccEnvironment_ServiceSwitching(t *testing.T) {
 	t.Parallel()
