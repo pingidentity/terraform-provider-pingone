@@ -58,6 +58,7 @@ type applicationResourceModelV1 struct {
 	ExternalLinkOptions       types.Object                 `tfsdk:"external_link_options"`
 	OIDCOptions               types.Object                 `tfsdk:"oidc_options"`
 	SAMLOptions               types.Object                 `tfsdk:"saml_options"`
+	TemplateOptions           types.Object                 `tfsdk:"template_options"`
 }
 
 type applicationAccessControlGroupOptionsResourceModelV1 struct {
@@ -160,8 +161,30 @@ type applicationSAMLOptionsResourceModelV1 struct {
 	SpEncryption                types.Object `tfsdk:"sp_encryption"`
 	SpEntityId                  types.String `tfsdk:"sp_entity_id"`
 	SpVerification              types.Object `tfsdk:"sp_verification"`
-	Template                    types.Object `tfsdk:"template"`
 	Type                        types.String `tfsdk:"type"`
+}
+
+type applicationTemplateOptionsResourceModelV1 struct {
+	AcsUrls                     types.Set    `tfsdk:"acs_urls"`
+	AssertionDuration           types.Int32  `tfsdk:"assertion_duration"`
+	AssertionSignedEnabled      types.Bool   `tfsdk:"assertion_signed_enabled"`
+	CorsSettings                types.Object `tfsdk:"cors_settings"`
+	DefaultTargetUrl            types.String `tfsdk:"default_target_url"`
+	EnableRequestedAuthnContext types.Bool   `tfsdk:"enable_requested_authn_context"`
+	HomePageUrl                 types.String `tfsdk:"home_page_url"`
+	IdpSigningKey               types.Object `tfsdk:"idp_signing_key"`
+	IntegrationId               types.String `tfsdk:"integration_id"`
+	NameIdFormat                types.String `tfsdk:"nameid_format"`
+	ResponseIsSigned            types.Bool   `tfsdk:"response_is_signed"`
+	SessionNotOnOrAfterDuration types.Int32  `tfsdk:"session_not_on_or_after_duration"`
+	SloBinding                  types.String `tfsdk:"slo_binding"`
+	SloEndpoint                 types.String `tfsdk:"slo_endpoint"`
+	SloResponseEndpoint         types.String `tfsdk:"slo_response_endpoint"`
+	SloWindow                   types.Int32  `tfsdk:"slo_window"`
+	SpEncryption                types.Object `tfsdk:"sp_encryption"`
+	SpEntityId                  types.String `tfsdk:"sp_entity_id"`
+	SpVerification              types.Object `tfsdk:"sp_verification"`
+	VersionId                   types.String `tfsdk:"version_id"`
 }
 
 type applicationSAMLOptionsIdpSigningKeyResourceModelV1 struct {
@@ -224,7 +247,6 @@ var (
 		"response_types":                                     types.SetType{ElemType: types.StringType},
 		"support_unsigned_request_object":                    types.BoolType,
 		"target_link_uri":                                    types.StringType,
-		"template":                                           types.ObjectType{AttrTypes: applicationTemplateTFObjectTypes},
 		"token_endpoint_auth_method":                         types.StringType,
 		"type":                                               types.StringType,
 	}
@@ -281,8 +303,30 @@ var (
 		"sp_encryption":                    types.ObjectType{AttrTypes: applicationSamlOptionsSpEncryptionTFObjectTypes},
 		"sp_entity_id":                     types.StringType,
 		"sp_verification":                  types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes},
-		"template":                         types.ObjectType{AttrTypes: applicationTemplateTFObjectTypes},
 		"type":                             types.StringType,
+	}
+
+	applicationCatalogOptionsTFObjectTypes = map[string]attr.Type{
+		"acs_urls":                         types.SetType{ElemType: types.StringType},
+		"assertion_duration":               types.Int32Type,
+		"assertion_signed_enabled":         types.BoolType,
+		"cors_settings":                    types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
+		"enable_requested_authn_context":   types.BoolType,
+		"home_page_url":                    types.StringType,
+		"idp_signing_key":                  types.ObjectType{AttrTypes: applicationSamlOptionsIdpSigningKeyTFObjectTypes},
+		"integration_id":                   types.StringType,
+		"default_target_url":               types.StringType,
+		"nameid_format":                    types.StringType,
+		"response_is_signed":               types.BoolType,
+		"session_not_on_or_after_duration": types.Int32Type,
+		"slo_binding":                      types.StringType,
+		"slo_endpoint":                     types.StringType,
+		"slo_response_endpoint":            types.StringType,
+		"slo_window":                       types.Int32Type,
+		"sp_encryption":                    types.ObjectType{AttrTypes: applicationSamlOptionsSpEncryptionTFObjectTypes},
+		"sp_entity_id":                     types.StringType,
+		"sp_verification":                  types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes},
+		"version_id":                       types.StringType,
 	}
 
 	applicationSamlOptionsIdpSigningKeyTFObjectTypes = map[string]attr.Type{
@@ -378,7 +422,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 		"A string that specifies the URL for the application icon.  Both `http://` and `https://` are permitted.",
 	)
 
-	appTypesExactlyOneOf := []string{"external_link_options", "oidc_options", "saml_options"}
+	appTypesExactlyOneOf := []string{"external_link_options", "oidc_options", "saml_options", "template_options"}
 
 	externalLinkOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that specifies External link application specific settings.",
@@ -1393,7 +1437,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 					},
 
 					"cors_settings": resourceApplicationSchemaCorsSettingsSchema(),
-					"template":      applicationTemplateSchema(),
 				},
 
 				Validators: []validator.Object{
@@ -1440,7 +1483,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							stringvalidator.OneOf(
 								string(management.ENUMAPPLICATIONTYPE_WEB_APP),
 								string(management.ENUMAPPLICATIONTYPE_CUSTOM_APP),
-								string(management.ENUMAPPLICATIONTYPE_TEMPLATE_APP),
 							),
 						},
 					},
@@ -1627,9 +1669,236 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 					},
 
 					"cors_settings": resourceApplicationSchemaCorsSettingsSchema(),
-					"template":      applicationTemplateSchema(),
 				},
 
+				Validators: []validator.Object{
+					objectvalidator.ExactlyOneOf(
+						path.MatchRelative().AtParent().AtName("external_link_options"),
+						path.MatchRelative().AtParent().AtName("oidc_options"),
+						path.MatchRelative().AtParent().AtName("saml_options"),
+					),
+				},
+
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifierinternal.RequiresReplaceIfExistenceChanges(),
+				},
+			},
+
+			"template_options": schema.SingleNestedAttribute{
+				Optional: true,
+				Attributes: map[string]schema.Attribute{
+					"home_page_url": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the custom home page URL for the application.").Description,
+						Optional:    true,
+
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Expected value to have a url with schema of \"https\"."),
+						},
+					},
+
+					"type": schema.StringAttribute{
+						Description:         samlOptionsTypeDescription.Description,
+						MarkdownDescription: samlOptionsTypeDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: stringdefault.StaticString(string(management.ENUMAPPLICATIONTYPE_WEB_APP)),
+
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.RequiresReplace(),
+						},
+
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								string(management.ENUMAPPLICATIONTYPE_WEB_APP),
+								string(management.ENUMAPPLICATIONTYPE_CUSTOM_APP),
+							),
+						},
+					},
+
+					"acs_urls": schema.SetAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A list of string that specifies the Assertion Consumer Service URLs. The first URL in the list is used as default (there must be at least one URL).").Description,
+						Required:    true,
+
+						ElementType: types.StringType,
+					},
+
+					"assertion_duration": schema.Int32Attribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the assertion validity duration in seconds.").Description,
+						Required:    true,
+					},
+
+					"assertion_signed_enabled": schema.BoolAttribute{
+						Description:         samlOptionsAssertionSignedEnabledDescription.Description,
+						MarkdownDescription: samlOptionsAssertionSignedEnabledDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: booldefault.StaticBool(true),
+					},
+
+					"default_target_url": schema.StringAttribute{
+						Description:         samlOptionsDefaultTargetUrlDescription.Description,
+						MarkdownDescription: samlOptionsDefaultTargetUrlDescription.MarkdownDescription,
+						Optional:            true,
+					},
+
+					"enable_requested_authn_context": schema.BoolAttribute{
+						Description:         samlOptionsEnableRequestedAuthnContextDescription.Description,
+						MarkdownDescription: samlOptionsEnableRequestedAuthnContextDescription.MarkdownDescription,
+						Optional:            true,
+					},
+
+					"nameid_format": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the format of the Subject NameID attibute in the SAML assertion.").Description,
+						Optional:    true,
+					},
+
+					"response_is_signed": schema.BoolAttribute{
+						Description:         samlOptionsResponseIsSignedDescription.Description,
+						MarkdownDescription: samlOptionsResponseIsSignedDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: booldefault.StaticBool(false),
+					},
+
+					"session_not_on_or_after_duration": schema.Int32Attribute{
+						Description:         samlOptionsSessionNotOnOrAfterDurationDescription.Description,
+						MarkdownDescription: samlOptionsSessionNotOnOrAfterDurationDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.Int32{
+							int32validator.AtLeast(samlOptionsSessionNotOnOrAfterDurationMin),
+						},
+					},
+
+					"slo_binding": schema.StringAttribute{
+						Description:         samlOptionsSloBindingDescription.Description,
+						MarkdownDescription: samlOptionsSloBindingDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: stringdefault.StaticString(string(management.ENUMAPPLICATIONSAMLSLOBINDING_POST)),
+
+						Validators: []validator.String{
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationSAMLSloBindingEnumValues)...),
+						},
+					},
+
+					"slo_endpoint": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the logout endpoint URL. This is an optional property. However, if a logout endpoint URL is not defined, logout actions result in an error.").Description,
+						Optional:    true,
+
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Expected value to have a url with schema of \"http\" or \"https\"."),
+						},
+					},
+
+					"slo_response_endpoint": schema.StringAttribute{
+						Description:         samlOptionsSloResponseEndpointDescription.Description,
+						MarkdownDescription: samlOptionsSloResponseEndpointDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Expected value to have a url with schema of \"http\" or \"https\"."),
+						},
+					},
+
+					"slo_window": schema.Int32Attribute{
+						Description:         samlOptionsSloWindowDescription.Description,
+						MarkdownDescription: samlOptionsSloWindowDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.Int32{
+							int32validator.Between(samlOptionsSloWindowMin, samlOptionsSloWindowMax),
+						},
+					},
+
+					"sp_encryption": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies settings for PingOne to encrypt SAML assertions to be sent to the application. Assertions are not encrypted by default.").Description,
+						Optional:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"algorithm": schema.StringAttribute{
+								Description:         samlSpEncryptionAlgorithmDescription.Description,
+								MarkdownDescription: samlSpEncryptionAlgorithmDescription.MarkdownDescription,
+								Required:            true,
+
+								Validators: []validator.String{
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumCertificateKeyEncryptionAlgorithmEnumValues)...),
+								},
+							},
+
+							"certificate": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the certificate settings used to encrypt SAML assertions.").Description,
+								Required:    true,
+								Attributes: map[string]schema.Attribute{
+									"id": schema.StringAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the unique identifier of the encryption public certificate that has been uploaded to PingOne.").Description,
+										Required:    true,
+
+										CustomType: pingonetypes.ResourceIDType{},
+									},
+								},
+							},
+						},
+					},
+
+					"sp_entity_id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the service provider entity ID used to lookup the application. This is a required property and is unique within the environment.").Description,
+						Required:    true,
+					},
+
+					"idp_signing_key": schema.SingleNestedAttribute{
+						Description:         samlOptionsIdpSigningKeyDescription.Description,
+						MarkdownDescription: samlOptionsIdpSigningKeyDescription.MarkdownDescription,
+						Required:            true,
+
+						Attributes: map[string]schema.Attribute{
+							"algorithm": schema.StringAttribute{
+								Description:         samlOptionsIdpSigningKeyAlgorithmDescription.Description,
+								MarkdownDescription: samlOptionsIdpSigningKeyAlgorithmDescription.MarkdownDescription,
+								Required:            true,
+
+								Validators: []validator.String{
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumCertificateKeySignagureAlgorithmEnumValues)...),
+								},
+							},
+
+							"key_id": schema.StringAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.  Must be a valid PingOne resource ID.").Description,
+								Required:    true,
+
+								CustomType: pingonetypes.ResourceIDType{},
+							},
+						},
+					},
+
+					"sp_verification": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object item that specifies SP signature verification settings.").Description,
+						Optional:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"authn_request_signed": schema.BoolAttribute{
+								Description:         samlOptionsSpVerificationAuthnRequestSignedDescription.Description,
+								MarkdownDescription: samlOptionsSpVerificationAuthnRequestSignedDescription.MarkdownDescription,
+								Optional:            true,
+								Computed:            true,
+
+								Default: booldefault.StaticBool(false),
+							},
+
+							"certificate_ids": schema.SetAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A list that specifies the certificate IDs used to verify the service provider signature.  Values must be valid PingOne resource IDs.").Description,
+								ElementType: pingonetypes.ResourceIDType{},
+								Required:    true,
+							},
+						},
+					},
+
+					"cors_settings": resourceApplicationSchemaCorsSettingsSchema(),
+				},
 				Validators: []validator.Object{
 					objectvalidator.ExactlyOneOf(
 						path.MatchRelative().AtParent().AtName("external_link_options"),
@@ -2154,6 +2423,11 @@ func (p *applicationResourceModelV1) expandCreate(ctx context.Context) (*managem
 		diags = append(diags, d...)
 	}
 
+	if !p.TemplateOptions.IsNull() && !p.TemplateOptions.IsUnknown() {
+		data.ApplicationSAML, d = p.expandApplicationSAML(ctx)
+		diags = append(diags, d...)
+	}
+
 	return data, diags
 }
 
@@ -2174,6 +2448,12 @@ func (p *applicationResourceModelV1) expandUpdate(ctx context.Context) (*managem
 
 	if !p.ExternalLinkOptions.IsNull() && !p.ExternalLinkOptions.IsUnknown() {
 		data.ApplicationExternalLink, d = p.expandApplicationExternalLink(ctx)
+		diags = append(diags, d...)
+	}
+
+	// Only SAML Apps can be template apps
+	if !p.TemplateOptions.IsNull() && !p.TemplateOptions.IsUnknown() {
+		data.ApplicationSAML, d = p.expandApplicationTemplate(ctx)
 		diags = append(diags, d...)
 	}
 
@@ -2903,23 +3183,212 @@ func (p *applicationResourceModelV1) expandApplicationSAML(ctx context.Context) 
 
 			data.SetSpVerification(*spVerification)
 		}
+	}
 
-		if !plan.Template.IsNull() && !plan.Template.IsUnknown() {
-			var templatePlan applicationTemplateResourceModelV1
-			diags.Append(plan.Template.As(ctx, &templatePlan, basetypes.ObjectAsOptions{
+	return data, diags
+}
+
+func (p *applicationResourceModelV1) expandApplicationTemplate(ctx context.Context) (*management.ApplicationSAML, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var data *management.ApplicationTemplate
+
+	if !p.TemplateOptions.IsNull() && !p.TemplateOptions.IsUnknown() {
+		var plan applicationTemplateOptionsResourceModelV1
+		d := p.SAMLOptions.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		var acsUrlsPlan []types.String
+
+		diags.Append(plan.AcsUrls.ElementsAs(ctx, &acsUrlsPlan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		acsUrls, d := framework.TFTypeStringSliceToStringSlice(acsUrlsPlan, path.Root("saml_options").AtName("acs_urls"))
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data = management.NewApplicationSAML(
+			p.Enabled.ValueBool(),
+			p.Name.ValueString(),
+			management.ENUMAPPLICATIONPROTOCOL_SAML,
+			management.EnumApplicationType(plan.Type.ValueString()),
+			acsUrls,
+			plan.AssertionDuration.ValueInt32(),
+			plan.SpEntityId.ValueString(),
+		)
+
+		applicationCommon, d := p.expandApplicationCommon(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.Description = applicationCommon.Description
+		data.LoginPageUrl = applicationCommon.LoginPageUrl
+		data.Icon = applicationCommon.Icon
+		data.AccessControl = applicationCommon.AccessControl
+		data.HiddenFromAppPortal = applicationCommon.HiddenFromAppPortal
+
+		// SAML specific options
+		if !plan.CorsSettings.IsNull() && !plan.CorsSettings.IsUnknown() {
+			var corsPlan applicationCorsSettingsResourceModelV1
+
+			diags.Append(plan.CorsSettings.As(ctx, &corsPlan, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    false,
 				UnhandledUnknownAsEmpty: false,
 			})...)
 			if diags.HasError() {
 				return nil, diags
 			}
-			template, d := templatePlan.expand(ctx)
+
+			corsSettings, d := corsPlan.expand()
 			diags = append(diags, d...)
 			if diags.HasError() {
 				return nil, diags
 			}
+			data.SetCorsSettings(*corsSettings)
+		}
 
-			data.SetTemplate(*template)
+		if !plan.HomePageUrl.IsNull() && !plan.HomePageUrl.IsUnknown() {
+			data.SetHomePageUrl(plan.HomePageUrl.ValueString())
+		}
+
+		if !plan.AssertionSignedEnabled.IsNull() && !plan.AssertionSignedEnabled.IsUnknown() {
+			data.SetAssertionSigned(plan.AssertionSignedEnabled.ValueBool())
+		}
+
+		if !plan.IdpSigningKey.IsNull() && !plan.IdpSigningKey.IsUnknown() {
+
+			var idpSigningOptionsPlan applicationSAMLOptionsIdpSigningKeyResourceModelV1
+
+			diags.Append(plan.IdpSigningKey.As(ctx, &idpSigningOptionsPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			idpSigning := *management.NewApplicationSAMLAllOfIdpSigning(*management.NewApplicationSAMLAllOfIdpSigningKey(idpSigningOptionsPlan.KeyId.ValueString()))
+			idpSigning.SetAlgorithm(management.EnumCertificateKeySignagureAlgorithm(idpSigningOptionsPlan.Algorithm.ValueString()))
+
+			data.SetIdpSigning(idpSigning)
+		}
+
+		if !plan.EnableRequestedAuthnContext.IsNull() && !plan.EnableRequestedAuthnContext.IsUnknown() {
+			data.SetEnableRequestedAuthnContext(plan.EnableRequestedAuthnContext.ValueBool())
+		}
+
+		if !plan.DefaultTargetUrl.IsNull() && !plan.DefaultTargetUrl.IsUnknown() {
+			data.SetDefaultTargetUrl(plan.DefaultTargetUrl.ValueString())
+		}
+
+		if !plan.NameIdFormat.IsNull() && !plan.NameIdFormat.IsUnknown() {
+			data.SetNameIdFormat(plan.NameIdFormat.ValueString())
+		}
+
+		if !plan.ResponseIsSigned.IsNull() && !plan.ResponseIsSigned.IsUnknown() {
+			data.SetResponseSigned(plan.ResponseIsSigned.ValueBool())
+		}
+
+		if !plan.SessionNotOnOrAfterDuration.IsNull() && !plan.SessionNotOnOrAfterDuration.IsUnknown() {
+			data.SetSessionNotOnOrAfterDuration(plan.SessionNotOnOrAfterDuration.ValueInt32())
+		}
+
+		if !plan.SloBinding.IsNull() && !plan.SloBinding.IsUnknown() {
+			data.SetSloBinding(management.EnumApplicationSAMLSloBinding(plan.SloBinding.ValueString()))
+		}
+
+		if !plan.SloEndpoint.IsNull() && !plan.SloEndpoint.IsUnknown() {
+			data.SetSloEndpoint(plan.SloEndpoint.ValueString())
+		}
+
+		if !plan.SloResponseEndpoint.IsNull() && !plan.SloResponseEndpoint.IsUnknown() {
+			data.SetSloResponseEndpoint(plan.SloResponseEndpoint.ValueString())
+		}
+
+		if !plan.SloWindow.IsNull() && !plan.SloWindow.IsUnknown() {
+			data.SetSloWindow(plan.SloWindow.ValueInt32())
+		}
+
+		if !plan.SpEncryption.IsNull() && !plan.SpEncryption.IsUnknown() {
+			var spEncryptionPlan applicationSAMLOptionsSpEncryptionResourceModelV1
+
+			diags.Append(plan.SpEncryption.As(ctx, &spEncryptionPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			var spEncryptionCertificatePlan applicationSAMLOptionsSpEncryptionCertificateResourceModelV1
+
+			diags.Append(spEncryptionPlan.Certificate.As(ctx, &spEncryptionCertificatePlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			spEncryption := management.NewApplicationSAMLAllOfSpEncryption(
+				management.EnumCertificateKeyEncryptionAlgorithm(spEncryptionPlan.Algorithm.ValueString()),
+				*management.NewApplicationSAMLAllOfSpEncryptionCertificate(spEncryptionCertificatePlan.Id.ValueString()),
+			)
+
+			data.SetSpEncryption(*spEncryption)
+		}
+
+		if !plan.SpVerification.IsNull() && !plan.SpVerification.IsUnknown() {
+			var spVerificationPlan applicationSAMLOptionsSpVerificationResourceModelV1
+
+			diags.Append(plan.SpVerification.As(ctx, &spVerificationPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			certificates := make([]management.ApplicationSAMLAllOfSpVerificationCertificates, 0)
+			if !spVerificationPlan.CertificateIds.IsNull() && !spVerificationPlan.CertificateIds.IsUnknown() {
+				var certificateIdsPlan []pingonetypes.ResourceIDValue
+
+				diags.Append(spVerificationPlan.CertificateIds.ElementsAs(ctx, &certificateIdsPlan, false)...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				certificateIds, d := framework.TFTypePingOneResourceIDSliceToStringSlice(certificateIdsPlan, path.Root("saml_options").AtName("sp_verification").AtName("certificate_ids"))
+				diags.Append(d...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				for _, v := range certificateIds {
+					certificate := *management.NewApplicationSAMLAllOfSpVerificationCertificates(v)
+					certificates = append(certificates, certificate)
+				}
+			}
+
+			spVerification := management.NewApplicationSAMLAllOfSpVerification(certificates)
+
+			if !spVerificationPlan.AuthnRequestSigned.IsNull() && !spVerificationPlan.AuthnRequestSigned.IsUnknown() {
+				spVerification.SetAuthnRequestSigned(spVerificationPlan.AuthnRequestSigned.ValueBool())
+			}
+
+			data.SetSpVerification(*spVerification)
 		}
 	}
 
@@ -3184,6 +3653,13 @@ func (p *applicationResourceModelV1) toState(ctx context.Context, apiObject *man
 		diags = append(diags, d...)
 
 		p.ExternalLinkOptions = types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes)
+
+	case *management.ApplicationTemplate:
+		p.TemplateOptions, d = applicationTemplateOptionsToTF(v)
+		diags = append(diags, d...)
+		// p.Id = framework.PingOneResourceIDOkToTF(v.GetIdOk())
+		// p.EnvironmentId = framework.PingOneResourceIDOkToTF(v.Environment.GetIdOk())
+		// p.Name = framework.StringOkToTF(v.GetNameOk())
 	}
 
 	return diags

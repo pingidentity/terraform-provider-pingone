@@ -324,11 +324,6 @@ func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Ob
 	spVerification, d := applicationSamlSpVerificationOkToTF(apiObject.GetSpVerificationOk())
 	diags.Append(d...)
 
-	template, d := applicationTemplateOkToTF(apiObject.GetTemplateOk())
-	diags.Append(d...)
-
-	typeValue := framework.EnumOkToTF(apiObject.GetTypeOk())
-
 	attributesMap := map[string]attr.Value{
 		"acs_urls":                         framework.StringSetOkToTF(apiObject.GetAcsUrlsOk()),
 		"assertion_duration":               framework.Int32OkToTF(apiObject.GetAssertionDurationOk()),
@@ -348,15 +343,55 @@ func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Ob
 		"sp_encryption":                    spEncryption,
 		"sp_entity_id":                     framework.StringOkToTF(apiObject.GetSpEntityIdOk()),
 		"sp_verification":                  spVerification,
-		"template":                         template,
-		"type":                             typeValue,
+		"type":                             framework.EnumOkToTF(apiObject.GetTypeOk()),
 	}
 
-	defaultTargetUrl := framework.StringOkToTF(apiObject.GetDefaultTargetUrlOk())
-	if typeValue != framework.EnumToTF(management.ENUMAPPLICATIONTYPE_TEMPLATE_APP) && defaultTargetUrl.ValueString() != "" {
-		attributesMap["default_target_url"] = defaultTargetUrl
-	} else {
-		attributesMap["default_target_url"] = types.StringNull()
+	returnVar, d := types.ObjectValue(applicationSamlOptionsTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func applicationTemplateOptionsToTF(apiObject *management.ApplicationTemplate) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if apiObject == nil || apiObject.GetId() == "" {
+		return types.ObjectNull(applicationSamlOptionsTFObjectTypes), diags
+	}
+
+	corsSettings, d := applicationCorsSettingsOkToTF(apiObject.GetCorsSettingsOk())
+	diags.Append(d...)
+
+	idpSigningKey, d := applicationSamlIdpSigningKeyOkToTF(apiObject.GetIdpSigningOk())
+	diags.Append(d...)
+
+	spEncryption, d := applicationSamlSpEncryptionOkToTF(apiObject.GetSpEncryptionOk())
+	diags.Append(d...)
+
+	spVerification, d := applicationSamlSpVerificationOkToTF(apiObject.GetSpVerificationOk())
+	diags.Append(d...)
+
+	attributesMap := map[string]attr.Value{
+		"acs_urls":                         framework.StringSetOkToTF(apiObject.GetAcsUrlsOk()),
+		"assertion_duration":               framework.Int32OkToTF(apiObject.GetAssertionDurationOk()),
+		"assertion_signed_enabled":         framework.BoolOkToTF(apiObject.GetAssertionSignedOk()),
+		"cors_settings":                    corsSettings,
+		"default_target_url":               framework.StringOkToTF(apiObject.GetDefaultTargetUrlOk()),
+		"enable_requested_authn_context":   framework.BoolOkToTF(apiObject.GetEnableRequestedAuthnContextOk()),
+		"home_page_url":                    framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
+		"idp_signing_key":                  idpSigningKey,
+		"nameid_format":                    framework.StringOkToTF(apiObject.GetNameIdFormatOk()),
+		"response_is_signed":               framework.BoolOkToTF(apiObject.GetResponseSignedOk()),
+		"session_not_on_or_after_duration": framework.Int32OkToTF(apiObject.GetSessionNotOnOrAfterDurationOk()),
+		"slo_binding":                      framework.EnumOkToTF(apiObject.GetSloBindingOk()),
+		"slo_endpoint":                     framework.StringOkToTF(apiObject.GetSloEndpointOk()),
+		"slo_response_endpoint":            framework.StringOkToTF(apiObject.GetSloResponseEndpointOk()),
+		"slo_window":                       framework.Int32OkToTF(apiObject.GetSloWindowOk()),
+		"sp_encryption":                    spEncryption,
+		"sp_entity_id":                     framework.StringOkToTF(apiObject.GetSpEntityIdOk()),
+		"sp_verification":                  spVerification,
+		"type":                             framework.StringToTF("TEMPLATE_APP"),
+		"version_id":                       framework.StringOkToTF(apiObject.GetVersionIdOk()),
 	}
 
 	returnVar, d := types.ObjectValue(applicationSamlOptionsTFObjectTypes, attributesMap)
