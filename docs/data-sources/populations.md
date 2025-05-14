@@ -45,7 +45,7 @@ data "pingone_populations" "by_data_filter" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `ids` (Set of String) The list of resulting IDs of populations objects that have been successfully retrieved.
+- `ids` (List of String) The list of resulting IDs of populations objects that have been successfully retrieved.
 
 <a id="nestedatt--data_filters"></a>
 ### Nested Schema for `data_filters`

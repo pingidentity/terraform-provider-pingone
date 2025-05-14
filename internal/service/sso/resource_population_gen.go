@@ -171,7 +171,9 @@ func (model *populationResourceModel) buildClientStruct() (*management.Populatio
 	}
 
 	// description
-	result.Description = model.Description.ValueStringPointer()
+	if !model.Description.IsNull() && !model.Description.IsUnknown() {
+		result.Description = model.Description.ValueStringPointer()
+	}
 	// name
 	result.Name = model.Name.ValueString()
 	// password_policy

@@ -67,7 +67,7 @@ type populationsDataSourceModel struct {
 	DataFilters   types.List                   `tfsdk:"data_filters"`
 	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
-	Ids           types.Set                    `tfsdk:"ids"`
+	Ids           types.List                   `tfsdk:"ids"`
 	ScimFilter    types.String                 `tfsdk:"scim_filter"`
 }
 
@@ -112,7 +112,7 @@ func (r *populationsDataSource) Schema(ctx context.Context, req datasource.Schem
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to filter populations from."),
 			),
 			"id": framework.Attr_ID(),
-			"ids": schema.SetAttribute{
+			"ids": schema.ListAttribute{
 				ElementType: pingonetypes.ResourceIDType{},
 				Computed:    true,
 				Description: "The list of resulting IDs of populations objects that have been successfully retrieved.",
@@ -132,7 +132,7 @@ func (r *populationsDataSource) Schema(ctx context.Context, req datasource.Schem
 func (state *populationsDataSourceModel) readClientResponse(response []string) diag.Diagnostics {
 	var respDiags diag.Diagnostics
 	state.Id = framework.PingOneResourceIDToTF(state.EnvironmentId.ValueString())
-	state.Ids, respDiags = framework.StringSliceToTFSet(response)
+	state.Ids, respDiags = framework.StringSliceToTF(response)
 	return respDiags
 }
 
