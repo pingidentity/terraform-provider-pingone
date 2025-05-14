@@ -159,14 +159,14 @@ resource "pingone_branding_theme" "%[2]s" {
 }
 
 resource "pingone_population" "%[2]s-name" {
-  environment_id     = data.pingone_environment.general_test.id
-  name               = "%[3]s"
-  description        = "Test description"
-  password_policy_id = pingone_password_policy.%[2]s.id
-  preferred_language = pingone_language_update.%[2]s.locale
+  environment_id          = data.pingone_environment.general_test.id
+  name                    = "%[3]s"
+  description             = "Test description"
+  password_policy_id      = pingone_password_policy.%[2]s.id
+  preferred_language      = pingone_language_update.%[2]s.locale
   alternative_identifiers = ["identifier1", "identifier2"]
   theme = {
-     id = pingone_branding_theme.%[2]s.id
+    id = pingone_branding_theme.%[2]s.id
   }
 }
 
@@ -222,10 +222,10 @@ resource "pingone_population" "%[2]s-name" {
   password_policy = {
     id = pingone_password_policy.%[2]s.id
   }
-  preferred_language = pingone_language_update.%[2]s.locale
+  preferred_language      = pingone_language_update.%[2]s.locale
   alternative_identifiers = ["identifier1", "identifier2"]
   theme = {
-     id = pingone_branding_theme.%[2]s.id
+    id = pingone_branding_theme.%[2]s.id
   }
 }
 

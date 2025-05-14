@@ -39,11 +39,14 @@ data "pingone_population" "example_by_id" {
 
 ### Read-Only
 
+- `alternative_identifiers` (Set of String) Alternative identifiers that can be used to search for populations besides `name`.
 - `default` (Boolean) A boolean that indicates whether the population is the default population for the environment.
 - `description` (String) A string that specifies the description of the population.
 - `id` (String) The ID of this resource.
 - `password_policy` (Attributes) The object reference to the password policy resource applied to the population. (see [below for nested schema](#nestedatt--password_policy))
 - `password_policy_id` (String, Deprecated) A string that specifies the ID of the password policy applied to the population.
+- `preferred_language` (String) The language locale for the population.
+- `theme` (Attributes) The object reference to the theme resource. (see [below for nested schema](#nestedatt--theme))
 - `user_count` (Number) The number of users that belong to the population
 
 <a id="nestedatt--password_policy"></a>
@@ -52,3 +55,11 @@ data "pingone_population" "example_by_id" {
 Read-Only:
 
 - `id` (String) The ID of the password policy that is used for this population. If absent, the environment's default is used.
+
+
+<a id="nestedatt--theme"></a>
+### Nested Schema for `theme`
+
+Read-Only:
+
+- `id` (String) The ID of the theme to use for the population.

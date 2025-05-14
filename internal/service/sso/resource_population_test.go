@@ -393,10 +393,10 @@ resource "pingone_population" "%[2]s" {
   password_policy = {
     id = pingone_password_policy.%[2]s.id
   }
-  preferred_language = pingone_language_update.%[3]s.locale
+  preferred_language      = pingone_language_update.%[3]s.locale
   alternative_identifiers = ["identifier1", "identifier2"]
   theme = {
-     id = pingone_branding_theme.%[3]s.id
+    id = pingone_branding_theme.%[3]s.id
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
