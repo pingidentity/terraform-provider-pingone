@@ -339,7 +339,7 @@ var (
 	}
 
 	applicationWsfedOptionsKerberosTFObjectTypes = map[string]attr.Type{
-		"gateways": types.SetType{},
+		"gateways": types.SetType{ElemType: types.ObjectType{AttrTypes: applicationWsfedOptionsKerberosGatewayTFObjectTypes}},
 	}
 
 	applicationWsfedOptionsKerberosGatewayTFObjectTypes = map[string]attr.Type{
@@ -686,7 +686,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 		"SAML application assertion/response signing key settings.  Use with `assertion_signed_enabled` to enable assertion signing and/or `response_is_signed` to enable response signing.  It's highly recommended, and best practice, to define signing key settings for the configured SAML application.  However if this property is omitted, the default signing certificate for the environment is used.  This parameter will become a required field in the next major release of the provider.",
 	)
 
-	samlOptionsIdpSigningKeyAlgorithmDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+	idpSigningKeyAlgorithmDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("Specifies the signature algorithm of the key. For RSA keys, options are `%s`, `%s` and `%s`. For elliptical curve (EC) keys, options are `%s`, `%s` and `%s`.", string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_RSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA256WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA384WITH_ECDSA), string(management.ENUMCERTIFICATEKEYSIGNAGUREALGORITHM_SHA512WITH_ECDSA)),
 	)
 
@@ -698,7 +698,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 		"A boolean that specifies whether the Authn Request signing should be enforced.",
 	).DefaultValue(false)
 
-	//TODO
 	wsfedOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that specifies WS-Fed application specific settings.",
 	).ExactlyOneOf(appTypesExactlyOneOf).RequiresReplaceNestedAttributes()
@@ -1624,8 +1623,8 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 						Attributes: map[string]schema.Attribute{
 							"algorithm": schema.StringAttribute{
-								Description:         samlOptionsIdpSigningKeyAlgorithmDescription.Description,
-								MarkdownDescription: samlOptionsIdpSigningKeyAlgorithmDescription.MarkdownDescription,
+								Description:         idpSigningKeyAlgorithmDescription.Description,
+								MarkdownDescription: idpSigningKeyAlgorithmDescription.MarkdownDescription,
 								Required:            true,
 
 								Validators: []validator.String{
@@ -1686,8 +1685,116 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 				MarkdownDescription: wsfedOptionsDescription.MarkdownDescription,
 				Optional:            true,
 
-				Attributes: map[string]schema.Attribute{ //TODO
+				Attributes: map[string]schema.Attribute{ //
+					"audience_restriction": schema.StringAttribute{
+						Optional:            true,
+						Computed:            true,
+						Description:         "The service provider ID. The default value is \"urn:federation:MicrosoftOnline\".",
+						MarkdownDescription: "The service provider ID. The default value is `urn:federation:MicrosoftOnline`.",
+						Default:             stringdefault.StaticString("urn:federation:MicrosoftOnline"),
+					},
 					"cors_settings": resourceApplicationSchemaCorsSettings(),
+					"domain_name": schema.StringAttribute{
+						Required:    true,
+						Description: "The federated domain name (for example, the Azure custom domain).",
+					},
+					"idp_signing_key": schema.SingleNestedAttribute{
+						Description: "Contains the information about the signing of requests by the identity provider (IdP).",
+						Required:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"algorithm": schema.StringAttribute{
+								Description:         idpSigningKeyAlgorithmDescription.Description,
+								MarkdownDescription: idpSigningKeyAlgorithmDescription.MarkdownDescription,
+								Required:            true,
+
+								Validators: []validator.String{
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumCertificateKeySignagureAlgorithmEnumValues)...),
+								},
+							},
+
+							"key_id": schema.StringAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.  Must be a valid PingOne resource ID.").Description,
+								Required:    true,
+
+								CustomType: pingonetypes.ResourceIDType{},
+							},
+						},
+					},
+					"kerberos": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{
+							"gateways": schema.ListNestedAttribute{
+								NestedObject: schema.NestedAttributeObject{
+									Attributes: map[string]schema.Attribute{
+										"id": schema.StringAttribute{
+											Required:    true,
+											Description: "The UUID of the LDAP gateway. Must be a valid PingOne resource ID.",
+											CustomType:  pingonetypes.ResourceIDType{},
+										},
+										"type": schema.StringAttribute{
+											Optional:    true,
+											Computed:    true,
+											Default:     stringdefault.StaticString("LDAP"),
+											Description: "The gateway type. This must be \"LDAP\".",
+											Validators: []validator.String{
+												stringvalidator.OneOf(
+													"LDAP",
+												),
+											},
+										},
+										"user_type": schema.SingleNestedAttribute{
+											Attributes: map[string]schema.Attribute{
+												"id": schema.StringAttribute{
+													Optional:            true,
+													Description:         "The UUID of a user type in the list of \"userTypes\" for the LDAP gateway. Must be a valid PingOne resource ID.",
+													MarkdownDescription: "The UUID of a user type in the list of `userTypes` for the LDAP gateway. Must be a valid PingOne resource ID.",
+													CustomType:          pingonetypes.ResourceIDType{},
+												},
+											},
+											Required:    true,
+											Description: "The object reference to the user type in the list of \"userTypes\" for the LDAP gateway.",
+										},
+									},
+								},
+								Optional:    true,
+								Description: "The LDAP gateway properties.",
+							},
+						},
+						Optional:    true,
+						Description: "The Kerberos authentication settings. Leave this out of the configuration to disable Kerberos authentication.",
+					},
+					"reply_url": schema.StringAttribute{
+						Required:    true,
+						Description: "The URL that the replying party (such as, Office365) uses to accept submissions of RequestSecurityTokenResponse messages that are a result of SSO requests.",
+						Validators: []validator.String{
+							//TODO verify that this validator is acceptable here
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Expected value to have a url with schema of \"http\" or \"https\"."),
+						},
+					},
+					"slo_endpoint": schema.StringAttribute{
+						Optional:    true,
+						Description: "The single logout endpoint URL.",
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Expected value to have a url with schema of \"http\" or \"https\"."),
+						},
+					},
+					//TODO which of these apply. At least WEB_APP does
+					"type": schema.StringAttribute{
+						Required:            true,
+						Description:         "A string that specifies the type associated with the application. This is a required property. Options are \"WEB_APP\", \"NATIVE_APP\", \"SINGLE_PAGE_APP\", \"WORKER\", \"SERVICE\", \"CUSTOM_APP\", \"PORTAL_LINK_APP\".",
+						MarkdownDescription: "A string that specifies the type associated with the application. This is a required property. Options are `WEB_APP`, `NATIVE_APP`, `SINGLE_PAGE_APP`, `WORKER`, `SERVICE`, `CUSTOM_APP`, `PORTAL_LINK_APP`.",
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								"WEB_APP",
+								"NATIVE_APP",
+								"SINGLE_PAGE_APP",
+								"WORKER",
+								"SERVICE",
+								"CUSTOM_APP",
+								"PORTAL_LINK_APP",
+							),
+						},
+					},
 				},
 
 				Validators: []validator.Object{
