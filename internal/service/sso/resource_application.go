@@ -161,7 +161,7 @@ type applicationSAMLOptionsResourceModelV1 struct {
 	Type                        types.String `tfsdk:"type"`
 }
 
-type applicationSAMLOptionsIdpSigningKeyResourceModelV1 struct {
+type applicationOptionsIdpSigningKeyResourceModelV1 struct {
 	Algorithm types.String                 `tfsdk:"algorithm"`
 	KeyId     pingonetypes.ResourceIDValue `tfsdk:"key_id"`
 }
@@ -180,13 +180,40 @@ type applicationSAMLOptionsSpVerificationResourceModelV1 struct {
 	AuthnRequestSigned types.Bool `tfsdk:"authn_request_signed"`
 }
 
-// TODO
-type applicationWSFedOptionsResourceModelV1 struct{}
+type applicationWSFedOptionsResourceModelV1 struct {
+	AudienceRestriction types.String `tfsdk:"audience_restriction"`
+	CorsSettings        types.Object `tfsdk:"cors_settings"`
+	DomainName          types.String `tfsdk:"domain_name"`
+	IdpSigningKey       types.Object `tfsdk:"idp_signing_key"`
+	Kerberos            types.Object `tfsdk:"cors_settings"`
+	ReplyUrl            types.String `tfsdk:"reply_url"`
+	SloEndpoint         types.String `tfsdk:"slo_endpoint"`
+	Type                types.String `tfsdk:"type"`
+}
+
+type applicationWSFedKerberosResourceModelV1 struct {
+	Gateways types.Set `tfsdk:"gateways"`
+}
+
+type applicationWSFedKerberosGatewayResourceModelV1 struct {
+	Id       types.String `tfsdk:"id"`
+	Type     types.String `tfsdk:"type"`
+	UserType types.Object `tfsdk:"user_type"`
+}
+
+type applicationWSFedGatewayUserTypeRersourceModelV1 struct {
+	Id types.String `tfsdk:"id"`
+}
 
 var (
 	applicationCorsSettingsTFObjectTypes = map[string]attr.Type{
 		"behavior": types.StringType,
 		"origins":  types.SetType{ElemType: types.StringType},
+	}
+
+	applicationIdpSigningKeyTFObjectTypes = map[string]attr.Type{
+		"algorithm": types.StringType,
+		"key_id":    pingonetypes.ResourceIDType{},
 	}
 
 	applicationOidcOptionsTFObjectTypes = map[string]attr.Type{
@@ -262,7 +289,7 @@ var (
 		"cors_settings":                    types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
 		"enable_requested_authn_context":   types.BoolType,
 		"home_page_url":                    types.StringType,
-		"idp_signing_key":                  types.ObjectType{AttrTypes: applicationSamlOptionsIdpSigningKeyTFObjectTypes},
+		"idp_signing_key":                  types.ObjectType{AttrTypes: applicationIdpSigningKeyTFObjectTypes},
 		"default_target_url":               types.StringType,
 		"nameid_format":                    types.StringType,
 		"response_is_signed":               types.BoolType,
@@ -275,11 +302,6 @@ var (
 		"sp_entity_id":                     types.StringType,
 		"sp_verification":                  types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes},
 		"type":                             types.StringType,
-	}
-
-	applicationSamlOptionsIdpSigningKeyTFObjectTypes = map[string]attr.Type{
-		"algorithm": types.StringType,
-		"key_id":    pingonetypes.ResourceIDType{},
 	}
 
 	applicationSamlOptionsSpEncryptionTFObjectTypes = map[string]attr.Type{
@@ -305,8 +327,30 @@ var (
 		"type":   types.StringType,
 	}
 
-	//TODO
-	applicationWsfedOptionsTFObjectTypes = map[string]attr.Type{}
+	applicationWsfedOptionsTFObjectTypes = map[string]attr.Type{
+		"audience_restriction": types.StringType,
+		"cors_settings":        types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
+		"domain_name":          types.StringType,
+		"idp_signing_key":      types.ObjectType{AttrTypes: applicationIdpSigningKeyTFObjectTypes},
+		"kerberos":             types.ObjectType{AttrTypes: applicationWsfedOptionsKerberosTFObjectTypes},
+		"reply_url":            types.StringType,
+		"slo_endpoint":         types.StringType,
+		"type":                 types.StringType,
+	}
+
+	applicationWsfedOptionsKerberosTFObjectTypes = map[string]attr.Type{
+		"gateways": types.SetType{},
+	}
+
+	applicationWsfedOptionsKerberosGatewayTFObjectTypes = map[string]attr.Type{
+		"id":        types.StringType,
+		"type":      types.StringType,
+		"user_type": types.ObjectType{AttrTypes: applicationWsfedOptionsKerberosGatewayUserTypeTFObjectTypes},
+	}
+
+	applicationWsfedOptionsKerberosGatewayUserTypeTFObjectTypes = map[string]attr.Type{
+		"id": types.StringType,
+	}
 )
 
 // Framework interfaces
@@ -2734,7 +2778,7 @@ func (p *applicationResourceModelV1) expandApplicationSAML(ctx context.Context) 
 
 		if !plan.IdpSigningKey.IsNull() && !plan.IdpSigningKey.IsUnknown() {
 
-			var idpSigningOptionsPlan applicationSAMLOptionsIdpSigningKeyResourceModelV1
+			var idpSigningOptionsPlan applicationOptionsIdpSigningKeyResourceModelV1
 
 			diags.Append(plan.IdpSigningKey.As(ctx, &idpSigningOptionsPlan, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    false,
@@ -2917,12 +2961,29 @@ func (p *applicationResourceModelV1) expandApplicationWSFed(ctx context.Context)
 			return nil, diags
 		}
 
-		// data = management.NewApplicationWSFED(
-		// 	p.Enabled.ValueBool(),
-		// 	p.Name.ValueString(),
-		// 	management.ENUMAPPLICATIONPROTOCOL_WS_FED,
-		// 	//TODO
-		// )
+		var idpSigningOptionsPlan applicationOptionsIdpSigningKeyResourceModelV1
+		diags.Append(plan.IdpSigningKey.As(ctx, &idpSigningOptionsPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		idpSigning := *management.NewApplicationWSFEDAllOfIdpSigning(management.EnumApplicationWSFEDIDPSigningAlgorithm(idpSigningOptionsPlan.Algorithm.ValueString()),
+			*management.NewApplicationWSFEDAllOfIdpSigningKey(idpSigningOptionsPlan.KeyId.ValueString()))
+
+		data.SetIdpSigning(idpSigning)
+
+		data = management.NewApplicationWSFED(
+			p.Enabled.ValueBool(),
+			p.Name.ValueString(),
+			management.ENUMAPPLICATIONPROTOCOL_WS_FED,
+			management.EnumApplicationType(plan.Type.ValueString()),
+			plan.DomainName.ValueString(),
+			idpSigning,
+			plan.ReplyUrl.ValueString(),
+		)
 
 		applicationCommon, d := p.expandApplicationCommon(ctx)
 		diags.Append(d...)
@@ -2937,10 +2998,126 @@ func (p *applicationResourceModelV1) expandApplicationWSFed(ctx context.Context)
 		data.HiddenFromAppPortal = applicationCommon.HiddenFromAppPortal
 
 		// WS-Fed specific options
-		//TODO
+		if !plan.AudienceRestriction.IsNull() && !plan.AudienceRestriction.IsUnknown() {
+			data.SetAudienceRestriction(plan.AudienceRestriction.ValueString())
+		}
+
+		if !plan.CorsSettings.IsNull() && !plan.CorsSettings.IsUnknown() {
+			var corsPlan applicationCorsSettingsResourceModelV1
+
+			diags.Append(plan.CorsSettings.As(ctx, &corsPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			corsSettings, d := corsPlan.expand()
+			diags = append(diags, d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+			data.SetCorsSettings(*corsSettings)
+		}
+
+		if !plan.DomainName.IsNull() && !plan.DomainName.IsUnknown() {
+			data.SetDomainName(plan.DomainName.ValueString())
+		}
+
+		if !plan.Kerberos.IsNull() && !plan.Kerberos.IsUnknown() {
+			var kerberosPlan applicationWSFedKerberosResourceModelV1
+
+			diags.Append(plan.Kerberos.As(ctx, &kerberosPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			kerberos, d := kerberosPlan.expand(ctx)
+			diags = append(diags, d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+			data.SetKerberos(*kerberos)
+		}
+
+		if !plan.ReplyUrl.IsNull() && !plan.ReplyUrl.IsUnknown() {
+			data.SetReplyUrl(plan.ReplyUrl.ValueString())
+		}
+
+		if !plan.SloEndpoint.IsNull() && !plan.SloEndpoint.IsUnknown() {
+			data.SetSloEndpoint(plan.AudienceRestriction.ValueString())
+		}
+
+		if !plan.Type.IsNull() && !plan.Type.IsUnknown() {
+			data.SetType(management.EnumApplicationType(plan.Type.ValueString()))
+		}
 	}
 
 	return data, diags
+}
+
+func (p *applicationWSFedKerberosResourceModelV1) expand(ctx context.Context) (*management.ApplicationWSFEDAllOfKerberos, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	result := management.NewApplicationWSFEDAllOfKerberos()
+
+	var gateways []management.ApplicationWSFEDAllOfKerberosGateways
+	for _, gateway := range p.Gateways.Elements() {
+		var gatewayPlan applicationWSFedKerberosGatewayResourceModelV1
+		d := gateway.(types.Object).As(ctx, &gatewayPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		gateway, d := gatewayPlan.expand(ctx)
+		diags = append(diags, d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		gateways = append(gateways, *gateway)
+	}
+
+	return result, diags
+}
+
+func (p *applicationWSFedKerberosGatewayResourceModelV1) expand(ctx context.Context) (*management.ApplicationWSFEDAllOfKerberosGateways, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var userTypePlan applicationWSFedGatewayUserTypeRersourceModelV1
+	d := p.UserType.As(ctx, &userTypePlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	userType := userTypePlan.expand()
+
+	result := management.NewApplicationWSFEDAllOfKerberosGateways(
+		p.Id.ValueString(),
+		management.EnumApplicationWSFEDKerberosGatewayType(p.Type.ValueString()),
+		*userType,
+	)
+
+	return result, diags
+}
+
+func (p *applicationWSFedGatewayUserTypeRersourceModelV1) expand() *management.ApplicationWSFEDAllOfKerberosUserType {
+	result := management.NewApplicationWSFEDAllOfKerberosUserType()
+	if !p.Id.IsNull() && !p.Id.IsUnknown() {
+		result.SetId(p.Id.ValueString())
+	}
+	return result
 }
 
 func (p *applicationResourceModelV1) expandApplicationCommon(ctx context.Context) (*management.Application, diag.Diagnostics) {

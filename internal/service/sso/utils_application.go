@@ -352,7 +352,7 @@ func applicationSamlIdpSigningKeyOkToTF(apiObject *management.ApplicationSAMLAll
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
-		return types.ObjectNull(applicationSamlOptionsIdpSigningKeyTFObjectTypes), diags
+		return types.ObjectNull(applicationIdpSigningKeyTFObjectTypes), diags
 	}
 
 	attributesMap := map[string]attr.Value{
@@ -364,7 +364,7 @@ func applicationSamlIdpSigningKeyOkToTF(apiObject *management.ApplicationSAMLAll
 		attributesMap["key_id"] = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	}
 
-	returnVar, d := types.ObjectValue(applicationSamlOptionsIdpSigningKeyTFObjectTypes, attributesMap)
+	returnVar, d := types.ObjectValue(applicationIdpSigningKeyTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags
