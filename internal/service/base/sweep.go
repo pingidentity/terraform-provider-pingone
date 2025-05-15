@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -45,20 +46,25 @@ func sweepEnvironments(regionString string) error {
 
 		// Reset back to sandbox
 		if environment.GetType() == "PRODUCTION" {
-			updateEnvironmentTypeRequest := *management.NewUpdateEnvironmentTypeRequest()
-			updateEnvironmentTypeRequest.SetType("SANDBOX")
-			_, _, err := apiClient.EnvironmentsApi.UpdateEnvironmentType(ctx, environment.GetId()).UpdateEnvironmentTypeRequest(updateEnvironmentTypeRequest).Execute()
+			// Mark the environment for soft delete
+			environmentStatus := management.NewEnvironmentStatus(management.ENUMENVIRONMENTSTATUS_DELETE_PENDING)
+			_, resp, err := apiClient.EnvironmentsApi.UpdateEnvironmentStatus(ctx, environment.GetId()).EnvironmentStatus(*environmentStatus).Execute()
 
 			if err != nil {
-				log.Printf("Error setting environment %s of type PRODUCTION to SANDBOX during sweep: %s", environment.GetName(), err)
+				log.Printf("Error setting environment %s of type PRODUCTION to soft delete during sweep: %s", environment.GetName(), err)
 			}
-		}
 
-		// Delete the environment
-		_, err := apiClient.EnvironmentsApi.DeleteEnvironment(ctx, environment.GetId()).Execute()
+			if resp.StatusCode != http.StatusOK {
+				log.Printf("Unexpected status code when setting environment %s of type PRODUCTION to soft delete during sweep: %s", environment.GetName(), resp.Status)
+			}
+		} else {
 
-		if err != nil {
-			log.Printf("Error destroying environment %s during sweep: %s", environment.GetName(), err)
+			// Delete the environment
+			_, err := apiClient.EnvironmentsApi.DeleteEnvironment(ctx, environment.GetId()).Execute()
+
+			if err != nil {
+				log.Printf("Error destroying environment %s during sweep: %s", environment.GetName(), err)
+			}
 		}
 
 	}
