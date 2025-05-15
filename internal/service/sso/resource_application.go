@@ -185,7 +185,7 @@ type applicationWSFedOptionsResourceModelV1 struct {
 	CorsSettings        types.Object `tfsdk:"cors_settings"`
 	DomainName          types.String `tfsdk:"domain_name"`
 	IdpSigningKey       types.Object `tfsdk:"idp_signing_key"`
-	Kerberos            types.Object `tfsdk:"cors_settings"`
+	Kerberos            types.Object `tfsdk:"kerberos"`
 	ReplyUrl            types.String `tfsdk:"reply_url"`
 	SloEndpoint         types.String `tfsdk:"slo_endpoint"`
 	Type                types.String `tfsdk:"type"`
@@ -196,13 +196,13 @@ type applicationWSFedKerberosResourceModelV1 struct {
 }
 
 type applicationWSFedKerberosGatewayResourceModelV1 struct {
-	Id       types.String `tfsdk:"id"`
-	Type     types.String `tfsdk:"type"`
-	UserType types.Object `tfsdk:"user_type"`
+	Id       pingonetypes.ResourceIDValue `tfsdk:"id"`
+	Type     types.String                 `tfsdk:"type"`
+	UserType types.Object                 `tfsdk:"user_type"`
 }
 
 type applicationWSFedGatewayUserTypeRersourceModelV1 struct {
-	Id types.String `tfsdk:"id"`
+	Id pingonetypes.ResourceIDValue `tfsdk:"id"`
 }
 
 var (
@@ -343,13 +343,13 @@ var (
 	}
 
 	applicationWsfedOptionsKerberosGatewayTFObjectTypes = map[string]attr.Type{
-		"id":        types.StringType,
+		"id":        pingonetypes.ResourceIDType{},
 		"type":      types.StringType,
 		"user_type": types.ObjectType{AttrTypes: applicationWsfedOptionsKerberosGatewayUserTypeTFObjectTypes},
 	}
 
 	applicationWsfedOptionsKerberosGatewayUserTypeTFObjectTypes = map[string]attr.Type{
-		"id": types.StringType,
+		"id": pingonetypes.ResourceIDType{},
 	}
 )
 
@@ -1557,7 +1557,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Optional:    true,
 
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Expected value to have a url with schema of \"http\" or \"https\"."),
+							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Expected value to have a url with schema of \"https\"."),
 						},
 					},
 
@@ -1697,6 +1697,9 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 					"domain_name": schema.StringAttribute{
 						Required:    true,
 						Description: "The federated domain name (for example, the Azure custom domain).",
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(verify.IsDomain, "Must be a valid domain name"),
+						},
 					},
 					"idp_signing_key": schema.SingleNestedAttribute{
 						Description: "Contains the information about the signing of requests by the identity provider (IdP).",
@@ -1723,7 +1726,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 					},
 					"kerberos": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
-							"gateways": schema.ListNestedAttribute{
+							"gateways": schema.SetNestedAttribute{
 								NestedObject: schema.NestedAttributeObject{
 									Attributes: map[string]schema.Attribute{
 										"id": schema.StringAttribute{
@@ -1767,7 +1770,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Required:    true,
 						Description: "The URL that the replying party (such as, Office365) uses to accept submissions of RequestSecurityTokenResponse messages that are a result of SSO requests.",
 						Validators: []validator.String{
-							//TODO verify that this validator is acceptable here
 							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Expected value to have a url with schema of \"http\" or \"https\"."),
 						},
 					},
@@ -1778,7 +1780,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Expected value to have a url with schema of \"http\" or \"https\"."),
 						},
 					},
-					//TODO which of these apply. At least WEB_APP does
 					"type": schema.StringAttribute{
 						Required:            true,
 						Description:         "A string that specifies the type associated with the application. This is a required property. Options are \"WEB_APP\", \"NATIVE_APP\", \"SINGLE_PAGE_APP\", \"WORKER\", \"SERVICE\", \"CUSTOM_APP\", \"PORTAL_LINK_APP\".",
@@ -3080,12 +3081,12 @@ func (p *applicationResourceModelV1) expandApplicationWSFed(ctx context.Context)
 		idpSigning := *management.NewApplicationWSFEDAllOfIdpSigning(management.EnumApplicationWSFEDIDPSigningAlgorithm(idpSigningOptionsPlan.Algorithm.ValueString()),
 			*management.NewApplicationWSFEDAllOfIdpSigningKey(idpSigningOptionsPlan.KeyId.ValueString()))
 
-		data.SetIdpSigning(idpSigning)
-
 		data = management.NewApplicationWSFED(
 			p.Enabled.ValueBool(),
 			p.Name.ValueString(),
-			management.ENUMAPPLICATIONPROTOCOL_WS_FED,
+			//TODO enum uses invalid value here, should be underscore not dash
+			management.EnumApplicationProtocol("WS_FED"),
+			//management.ENUMAPPLICATIONPROTOCOL_WS_FED,
 			management.EnumApplicationType(plan.Type.ValueString()),
 			plan.DomainName.ValueString(),
 			idpSigning,
@@ -3156,7 +3157,7 @@ func (p *applicationResourceModelV1) expandApplicationWSFed(ctx context.Context)
 		}
 
 		if !plan.SloEndpoint.IsNull() && !plan.SloEndpoint.IsUnknown() {
-			data.SetSloEndpoint(plan.AudienceRestriction.ValueString())
+			data.SetSloEndpoint(plan.SloEndpoint.ValueString())
 		}
 
 		if !plan.Type.IsNull() && !plan.Type.IsUnknown() {
@@ -3191,6 +3192,7 @@ func (p *applicationWSFedKerberosResourceModelV1) expand(ctx context.Context) (*
 
 		gateways = append(gateways, *gateway)
 	}
+	result.SetGateways(gateways)
 
 	return result, diags
 }
