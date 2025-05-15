@@ -160,7 +160,6 @@ func TestAccAgreementLocalizationEnable_Full(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
-			acctest.PreCheckTestAccFlaky(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.AgreementLocalizationEnable_CheckDestroy,
