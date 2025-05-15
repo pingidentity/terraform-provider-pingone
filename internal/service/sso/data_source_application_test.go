@@ -828,166 +828,166 @@ func testAccApplicationDataSource_WSFedAppByID(environmentName, licenseID, resou
 	return fmt.Sprintf(`
 		%[1]s
 
-		resource "pingone_group" "%[3]s-1" {
+resource "pingone_group" "%[3]s-1" {
   environment_id = pingone_environment.%[2]s.id
-			name           = "%[4]s-1"
-		  }
-		  
-		  resource "pingone_group" "%[3]s-2" {
+  name           = "%[4]s-1"
+}
+
+resource "pingone_group" "%[3]s-2" {
   environment_id = pingone_environment.%[2]s.id
-			name           = "%[4]s-2"
-		  }
-		  
-		resource "pingone_key" "%[3]s" {
+  name           = "%[4]s-2"
+}
+
+resource "pingone_key" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-		  
-			name                = "%[4]s"
-			algorithm           = "EC"
-			key_length          = 256
-			signature_algorithm = "SHA384withECDSA"
-			subject_dn          = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
-			usage_type          = "SIGNING"
-			validity_period     = 365
-		  }
-		  
-		  resource "pingone_image" "%[3]s" {
+
+  name                = "%[4]s"
+  algorithm           = "EC"
+  key_length          = 256
+  signature_algorithm = "SHA384withECDSA"
+  subject_dn          = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}
+
+resource "pingone_image" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-		  
-			image_file_base64 = "%[5]s"
-		  }
-		  
-		  resource "pingone_population" "%[3]s" {
+
+  image_file_base64 = "%[5]s"
+}
+
+resource "pingone_population" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-		  
-			name = "%[4]s"
-		  }
-		  
-		  resource "pingone_gateway" "%[3]s" {
+
+  name = "%[4]s"
+}
+
+resource "pingone_gateway" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-			name           = "%[4]s"
-			enabled        = true
-			type           = "LDAP"
-			description    = "My test gateway"
-		  
-			bind_dn       = "ou=test1,dc=example,dc=com"
-			bind_password = "dummyPasswordValue1"
-		  
-			connection_security = "TLS"
-			vendor              = "Microsoft Active Directory"
-		  
-			kerberos = {
-			  service_account_upn              = "username@domainname"
-			  service_account_password         = "dummyKerberosPasswordValue"
-			  retain_previous_credentials_mins = 20
-			}
-		  
-			servers = [
-			  "ds1.dummyldapservice.com:636",
-			  "ds3.dummyldapservice.com:636",
-			  "ds2.dummyldapservice.com:636",
-			]
-		  
-			validate_tls_certificates = false
-		  
-			user_types = {
-			  "User Set 1" = {
-				password_authority = "LDAP"
-				search_base_dn     = "ou=users1,dc=example,dc=com"
-		  
-				user_link_attributes = ["objectGUID", "objectSid"]
-			  },
-			  "User Set 2" = {
-				password_authority = "PING_ONE"
-				search_base_dn     = "ou=users,dc=example,dc=com"
-		  
-				user_link_attributes = ["objectGUID", "dn", "objectSid"]
-		  
-				new_user_lookup = {
-				  ldap_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
-		  
-				  population_id = pingone_population.%[3]s.id
-		  
-				  attribute_mappings = [
-					{
-					  name  = "username"
-					  value = "$${ldapAttributes.uid}"
-					},
-					{
-					  name  = "email"
-					  value = "$${ldapAttributes.mail}"
-					},
-					{
-					  name  = "name.family"
-					  value = "$${ldapAttributes.sn}"
-					}
-				  ]
-				}
-			  }
-			}
-		  }
-		  
-		  resource "pingone_application" "%[3]s" {
+  name           = "%[4]s"
+  enabled        = true
+  type           = "LDAP"
+  description    = "My test gateway"
+
+  bind_dn       = "ou=test1,dc=example,dc=com"
+  bind_password = "dummyPasswordValue1"
+
+  connection_security = "TLS"
+  vendor              = "Microsoft Active Directory"
+
+  kerberos = {
+    service_account_upn              = "username@domainname"
+    service_account_password         = "dummyKerberosPasswordValue"
+    retain_previous_credentials_mins = 20
+  }
+
+  servers = [
+    "ds1.dummyldapservice.com:636",
+    "ds3.dummyldapservice.com:636",
+    "ds2.dummyldapservice.com:636",
+  ]
+
+  validate_tls_certificates = false
+
+  user_types = {
+    "User Set 1" = {
+      password_authority = "LDAP"
+      search_base_dn     = "ou=users1,dc=example,dc=com"
+
+      user_link_attributes = ["objectGUID", "objectSid"]
+    },
+    "User Set 2" = {
+      password_authority = "PING_ONE"
+      search_base_dn     = "ou=users,dc=example,dc=com"
+
+      user_link_attributes = ["objectGUID", "dn", "objectSid"]
+
+      new_user_lookup = {
+        ldap_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
+
+        population_id = pingone_population.%[3]s.id
+
+        attribute_mappings = [
+          {
+            name  = "username"
+            value = "$${ldapAttributes.uid}"
+          },
+          {
+            name  = "email"
+            value = "$${ldapAttributes.mail}"
+          },
+          {
+            name  = "name.family"
+            value = "$${ldapAttributes.sn}"
+          }
+        ]
+      }
+    }
+  }
+}
+
+resource "pingone_application" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-			name           = "%[4]s"
-			description    = "My test WS-Fed app"
-			login_page_url = "https://www.pingidentity.com"
-		  
-			icon = {
-			  id   = pingone_image.%[3]s.id
-			  href = pingone_image.%[3]s.uploaded_image.href
-			}
-		  
-			access_control_role_type = "ADMIN_USERS_ONLY"
-		  
-			access_control_group_options = {
-			  type = "ANY_GROUP"
-		  
-			  groups = [
-				pingone_group.%[3]s-2.id,
-				pingone_group.%[3]s-1.id
-			  ]
-			}
-		  
-			hidden_from_app_portal = true
-		  
-			enabled = true
-		  
-			wsfed_options = {
-			  audience_restriction = "urn:federation:Example"
-			  cors_settings = {
-				behavior = "ALLOW_SPECIFIC_ORIGINS"
-				origins = [
-				  "http://localhost",
-				  "https://localhost",
-				  "http://auth.pingidentity.com",
-				  "https://auth.pingidentity.com",
-				  "http://*.pingidentity.com",
-				  "https://*.pingidentity.com",
-				  "http://192.168.1.1",
-				  "https://192.168.1.1",
-				]
-			  }
-			  domain_name = "my.updated.domain.name.example.com"
-			  idp_signing_key = {
-				  key_id    = pingone_key.%[3]s.id
-				  algorithm = pingone_key.%[3]s.signature_algorithm
-			  }
-			  kerberos = {
-				  gateways = [
-					  {
-						  id = pingone_gateway.%[3]s.id
-						  type = "LDAP"
-						  user_type = {
-							  id = pingone_gateway.%[3]s.user_types["User Set 2"].id
-						  }
-					  }
-				  ]
-			  }
-			  reply_url = "https://example.com"
-			  slo_endpoint = "https://example.com/slo"
-			  type = "WEB_APP"
-			}
-		  }
+  name           = "%[4]s"
+  description    = "My test WS-Fed app"
+  login_page_url = "https://www.pingidentity.com"
+
+  icon = {
+    id   = pingone_image.%[3]s.id
+    href = pingone_image.%[3]s.uploaded_image.href
+  }
+
+  access_control_role_type = "ADMIN_USERS_ONLY"
+
+  access_control_group_options = {
+    type = "ANY_GROUP"
+
+    groups = [
+      pingone_group.%[3]s-2.id,
+      pingone_group.%[3]s-1.id
+    ]
+  }
+
+  hidden_from_app_portal = true
+
+  enabled = true
+
+  wsfed_options = {
+    audience_restriction = "urn:federation:Example"
+    cors_settings = {
+      behavior = "ALLOW_SPECIFIC_ORIGINS"
+      origins = [
+        "http://localhost",
+        "https://localhost",
+        "http://auth.pingidentity.com",
+        "https://auth.pingidentity.com",
+        "http://*.pingidentity.com",
+        "https://*.pingidentity.com",
+        "http://192.168.1.1",
+        "https://192.168.1.1",
+      ]
+    }
+    domain_name = "my.updated.domain.name.example.com"
+    idp_signing_key = {
+      key_id    = pingone_key.%[3]s.id
+      algorithm = pingone_key.%[3]s.signature_algorithm
+    }
+    kerberos = {
+      gateways = [
+        {
+          id   = pingone_gateway.%[3]s.id
+          type = "LDAP"
+          user_type = {
+            id = pingone_gateway.%[3]s.user_types["User Set 2"].id
+          }
+        }
+      ]
+    }
+    reply_url    = "https://example.com"
+    slo_endpoint = "https://example.com/slo"
+    type         = "WEB_APP"
+  }
+}
 data "pingone_application" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   application_id = pingone_application.%[3]s.id
@@ -1021,8 +1021,8 @@ resource "pingone_application" "%[2]s" {
       key_id    = pingone_key.%[2]s.id
       algorithm = pingone_key.%[2]s.signature_algorithm
     }
-	reply_url = "https://example.com"
-	type = "WEB_APP"
+    reply_url = "https://example.com"
+    type      = "WEB_APP"
   }
 }
 data "pingone_application" "%[2]s" {

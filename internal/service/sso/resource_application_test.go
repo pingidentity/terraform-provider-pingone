@@ -3191,14 +3191,10 @@ func TestAccApplication_WSFedMinimalMaximal(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
-
 	name := resourceName
 
 	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
 	image := base64.StdEncoding.EncodeToString(data)
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -3211,32 +3207,32 @@ func TestAccApplication_WSFedMinimalMaximal(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_WSFed_Minimal(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationConfig_WSFed_Minimal(resourceName, name),
 				Check:  testAccApplicationConfig_WSFed_MinimalCheck(resourceFullName, name),
 			},
 			{
 				// Delete the minimal model
-				Config:  testAccApplicationConfig_WSFed_Minimal(environmentName, licenseID, resourceName, name),
+				Config:  testAccApplicationConfig_WSFed_Minimal(resourceName, name),
 				Destroy: true,
 			},
 			{
 				// Re-create with a complete model
-				Config: testAccApplicationConfig_WSFed_Full(environmentName, licenseID, resourceName, name, image),
+				Config: testAccApplicationConfig_WSFed_Full(resourceName, name, image),
 				Check:  testAccApplicationConfig_WSFed_FullCheck(resourceFullName, name),
 			},
 			{
 				// Back to minimal model
-				Config: testAccApplicationConfig_WSFed_Minimal(environmentName, licenseID, resourceName, name),
+				Config: testAccApplicationConfig_WSFed_Minimal(resourceName, name),
 				Check:  testAccApplicationConfig_WSFed_MinimalCheck(resourceFullName, name),
 			},
 			{
 				// Back to complete model
-				Config: testAccApplicationConfig_WSFed_Full(environmentName, licenseID, resourceName, name, image),
+				Config: testAccApplicationConfig_WSFed_Full(resourceName, name, image),
 				Check:  testAccApplicationConfig_WSFed_FullCheck(resourceFullName, name),
 			},
 			{
 				// Test importing the resource
-				Config:       testAccApplicationConfig_WSFed_Full(environmentName, licenseID, resourceName, name, image),
+				Config:       testAccApplicationConfig_WSFed_Full(resourceName, name, image),
 				ResourceName: fmt.Sprintf("pingone_application.%s", resourceName),
 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
 					return func(s *terraform.State) (string, error) {
@@ -4863,7 +4859,7 @@ resource "pingone_application" "%[2]s" {
 `, acctest.GenericSandboxEnvironment(), resourceName, name, enabled)
 }
 
-func testAccApplicationConfig_WSFed_Full(environmentName, licenseID, resourceName, name, image string) string {
+func testAccApplicationConfig_WSFed_Full(resourceName, name, image string) string {
 	return testAccApplicationConfig_WSFed_FullWithEnv(acctest.GenericSandboxEnvironment(), "data.pingone_environment.general_test.id", resourceName, name, image)
 }
 
@@ -5000,7 +4996,7 @@ resource "pingone_application" "%[3]s" {
   enabled = true
 
   wsfed_options = {
-	audience_restriction = "urn:federation:Example"
+    audience_restriction = "urn:federation:Example"
     cors_settings = {
       behavior = "ALLOW_SPECIFIC_ORIGINS"
       origins = [
@@ -5014,30 +5010,30 @@ resource "pingone_application" "%[3]s" {
         "https://192.168.1.1",
       ]
     }
-	domain_name = "my.updated.domain.name.example.com"
-	idp_signing_key = {
-		key_id    = pingone_key.%[3]s.id
-		algorithm = pingone_key.%[3]s.signature_algorithm
-	}
-	kerberos = {
-		gateways = [
-			{
-				id = pingone_gateway.%[3]s.id
-				type = "LDAP"
-				user_type = {
-					id = pingone_gateway.%[3]s.user_types["User Set 2"].id
-				}
-			}
-		]
-	}
-	reply_url = "https://example.com"
-	slo_endpoint = "https://example.com/slo"
-	type = "WEB_APP"
+    domain_name = "my.updated.domain.name.example.com"
+    idp_signing_key = {
+      key_id    = pingone_key.%[3]s.id
+      algorithm = pingone_key.%[3]s.signature_algorithm
+    }
+    kerberos = {
+      gateways = [
+        {
+          id   = pingone_gateway.%[3]s.id
+          type = "LDAP"
+          user_type = {
+            id = pingone_gateway.%[3]s.user_types["User Set 2"].id
+          }
+        }
+      ]
+    }
+    reply_url    = "https://example.com"
+    slo_endpoint = "https://example.com/slo"
+    type         = "WEB_APP"
   }
 }`, environmentHcl, environmentIdResourceLink, resourceName, name, image)
 }
 
-func testAccApplicationConfig_WSFed_Minimal(environmentName, licenseID, resourceName, name string) string {
+func testAccApplicationConfig_WSFed_Minimal(resourceName, name string) string {
 	return testAccApplicationConfig_WSFed_MinimalWithEnv(acctest.GenericSandboxEnvironment(), "data.pingone_environment.general_test.id", resourceName, name)
 }
 
@@ -5072,8 +5068,8 @@ resource "pingone_application" "%[3]s" {
       key_id    = pingone_key.%[3]s.id
       algorithm = pingone_key.%[3]s.signature_algorithm
     }
-	reply_url = "https://example.com"
-	type = "WEB_APP"
+    reply_url = "https://example.com"
+    type      = "WEB_APP"
   }
 }`, environmentHcl, environmentIdResourceLink, resourceName, name)
 }
