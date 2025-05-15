@@ -124,7 +124,7 @@ type applicationSAMLOptionsResourceModelV0 struct {
 	Type                         types.String `tfsdk:"type"`
 }
 
-type applicationSAMLOptionsIdpSigningKeyResourceModelV0 applicationSAMLOptionsIdpSigningKeyResourceModelV1
+type applicationSAMLOptionsIdpSigningKeyResourceModelV0 applicationOptionsIdpSigningKeyResourceModelV1
 
 type applicationSAMLOptionsSpEncryptionResourceModelV0 struct {
 	Algorithm   types.String `tfsdk:"algorithm"`
@@ -1150,7 +1150,7 @@ func (p *applicationSAMLOptionsResourceModelV0) schemaUpgradeCorsSettingsV0toV1(
 func (p *applicationSAMLOptionsResourceModelV0) schemaUpgradeIdPSigningKeyV0toV1(ctx context.Context) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	attributeTypes := applicationSamlOptionsIdpSigningKeyTFObjectTypes
+	attributeTypes := applicationIdpSigningKeyTFObjectTypes
 	planAttribute := p.IdpSigningKey
 
 	if planAttribute.IsNull() {
@@ -1169,7 +1169,7 @@ func (p *applicationSAMLOptionsResourceModelV0) schemaUpgradeIdPSigningKeyV0toV1
 			return types.ObjectNull(attributeTypes), diags
 		}
 
-		upgradedStateData := applicationSAMLOptionsIdpSigningKeyResourceModelV1{
+		upgradedStateData := applicationOptionsIdpSigningKeyResourceModelV1{
 			Algorithm: priorStateData[0].Algorithm,
 			KeyId:     priorStateData[0].KeyId,
 		}
