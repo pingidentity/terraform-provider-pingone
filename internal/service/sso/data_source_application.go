@@ -42,6 +42,7 @@ type applicationDataSourceModel struct {
 	ExternalLinkOptions       types.Object                 `tfsdk:"external_link_options"`
 	OIDCOptions               types.Object                 `tfsdk:"oidc_options"`
 	SAMLOptions               types.Object                 `tfsdk:"saml_options"`
+	WSFedOptions              types.Object                 `tfsdk:"wsfed_options"`
 }
 
 // Framework interfaces
@@ -609,6 +610,87 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 					"cors_settings": datasourceApplicationSchemaCorsSettings(),
 				},
 			},
+			"wsfed_options": schema.SingleNestedAttribute{
+				Description: "A single object that specifies WS-Fed application specific settings.",
+				Computed:    true,
+
+				Attributes: map[string]schema.Attribute{ //
+					"audience_restriction": schema.StringAttribute{
+						Computed:            true,
+						Description:         "The service provider ID. The default value is \"urn:federation:MicrosoftOnline\".",
+						MarkdownDescription: "The service provider ID. The default value is `urn:federation:MicrosoftOnline`.",
+					},
+					"cors_settings": datasourceApplicationSchemaCorsSettings(),
+					"domain_name": schema.StringAttribute{
+						Computed:    true,
+						Description: "The federated domain name (for example, the Azure custom domain).",
+					},
+					"idp_signing_key": schema.SingleNestedAttribute{
+						Description: "Contains the information about the signing of requests by the identity provider (IdP).",
+						Computed:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"algorithm": schema.StringAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the signature algorithm of the key.").Description,
+								Computed:    true,
+							},
+							"key_id": schema.StringAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.").Description,
+								Computed:    true,
+								CustomType:  pingonetypes.ResourceIDType{},
+							},
+						},
+					},
+					"kerberos": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{
+							"gateways": schema.SetNestedAttribute{
+								NestedObject: schema.NestedAttributeObject{
+									Attributes: map[string]schema.Attribute{
+										"id": schema.StringAttribute{
+											Computed:    true,
+											Description: "The UUID of the LDAP gateway. Must be a valid PingOne resource ID.",
+											CustomType:  pingonetypes.ResourceIDType{},
+										},
+										"type": schema.StringAttribute{
+											Computed:    true,
+											Description: "The gateway type. This must be \"LDAP\".",
+										},
+										"user_type": schema.SingleNestedAttribute{
+											Attributes: map[string]schema.Attribute{
+												"id": schema.StringAttribute{
+													Computed:            true,
+													Description:         "The UUID of a user type in the list of \"userTypes\" for the LDAP gateway. Must be a valid PingOne resource ID.",
+													MarkdownDescription: "The UUID of a user type in the list of `userTypes` for the LDAP gateway. Must be a valid PingOne resource ID.",
+													CustomType:          pingonetypes.ResourceIDType{},
+												},
+											},
+											Computed:    true,
+											Description: "The object reference to the user type in the list of \"userTypes\" for the LDAP gateway.",
+										},
+									},
+								},
+								Computed:    true,
+								Description: "The LDAP gateway properties.",
+							},
+						},
+						Computed:    true,
+						Description: "The Kerberos authentication settings. Leave this out of the configuration to disable Kerberos authentication.",
+					},
+					"reply_url": schema.StringAttribute{
+						Computed:    true,
+						Description: "The URL that the replying party (such as, Office365) uses to accept submissions of RequestSecurityTokenResponse messages that are a result of SSO requests.",
+					},
+					"slo_endpoint": schema.StringAttribute{
+						Computed:    true,
+						Description: "The single logout endpoint URL.",
+					},
+					"type": schema.StringAttribute{
+						Computed:            true,
+						Description:         "A string that specifies the type associated with the application. This is a required property. Options are \"WEB_APP\", \"NATIVE_APP\", \"SINGLE_PAGE_APP\", \"WORKER\", \"SERVICE\", \"CUSTOM_APP\", \"PORTAL_LINK_APP\".",
+						MarkdownDescription: "A string that specifies the type associated with the application. This is a required property. Options are `WEB_APP`, `NATIVE_APP`, `SINGLE_PAGE_APP`, `WORKER`, `SERVICE`, `CUSTOM_APP`, `PORTAL_LINK_APP`.",
+					},
+				},
+			},
 		},
 	}
 }
@@ -750,6 +832,9 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 								applicationName = v.GetName()
 
 							case *management.ApplicationSAML:
+								applicationName = v.GetName()
+
+							case *management.ApplicationWSFED:
 								applicationName = v.GetName()
 							}
 
@@ -920,6 +1005,41 @@ func (p *applicationDataSourceModel) toState(ctx context.Context, apiObject *man
 		diags = append(diags, d...)
 
 		p.ExternalLinkOptions = types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes)
+
+	case *management.ApplicationWSFED:
+		p.Id = framework.PingOneResourceIDOkToTF(v.GetIdOk())
+		p.EnvironmentId = framework.PingOneResourceIDOkToTF(v.Environment.GetIdOk())
+		p.Name = framework.StringOkToTF(v.GetNameOk())
+		p.Description = framework.StringOkToTF(v.GetDescriptionOk())
+		p.Enabled = framework.BoolOkToTF(v.GetEnabledOk())
+		p.LoginPageUrl = framework.StringOkToTF(v.GetLoginPageUrlOk())
+
+		p.AccessControlRoleType = types.StringNull()
+		p.AccessControlGroupOptions = types.ObjectNull(applicationAccessControlGroupOptionsTFObjectTypes)
+		if vA, ok := v.GetAccessControlOk(); ok {
+			if vR, ok := vA.GetRoleOk(); ok {
+				p.AccessControlRoleType = framework.EnumOkToTF(vR.GetTypeOk())
+			}
+
+			p.AccessControlGroupOptions, d = applicationAccessControlGroupOptionsToTF(vA.GetGroupOk())
+			diags = append(diags, d...)
+		}
+
+		p.HiddenFromAppPortal = framework.BoolOkToTF(v.GetHiddenFromAppPortalOk())
+
+		p.Icon, d = service.ImageOkToTF(v.GetIconOk())
+		diags = append(diags, d...)
+
+		p.LoginPageUrl = framework.StringOkToTF(v.GetLoginPageUrlOk())
+
+		// Service specific attributes
+		p.Tags = types.SetNull(types.StringType)
+		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsTFObjectTypes)
+		p.SAMLOptions = types.ObjectNull(applicationSamlOptionsTFObjectTypes)
+		p.ExternalLinkOptions = types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes)
+
+		p.WSFedOptions, d = applicationWsfedOptionsToTF(v)
+		diags = append(diags, d...)
 	}
 
 	return diags
