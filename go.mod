@@ -32,7 +32,10 @@ require (
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.23.0
 	github.com/patrickcping/pingone-go-sdk-v2/risk v0.19.0
 	github.com/patrickcping/pingone-go-sdk-v2/verify v0.9.0
+	github.com/pingidentity/pingone-go-client v0.1.0
 )
+
+replace github.com/pingidentity/pingone-go-client v0.1.0 => ../pingone-go-client
 
 require (
 	4d63.com/gocheckcompilerdirectives v1.3.0 // indirect
@@ -194,6 +197,7 @@ require (
 	github.com/katbyte/andreyvit-diff v0.0.2 // indirect
 	github.com/katbyte/sergi-go-diff v1.2.2 // indirect
 	github.com/katbyte/terrafmt v0.5.5 // indirect
+	github.com/kelseyhightower/envconfig v1.4.0 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/kisielk/errcheck v1.9.0 // indirect
 	github.com/kisielk/gotool v1.0.0 // indirect
