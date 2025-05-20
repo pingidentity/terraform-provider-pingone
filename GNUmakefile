@@ -100,4 +100,6 @@ fmt: terrafmt fmtcheck
 
 devcheck: build vet fmt generate docscategorycheck lint test sweep testacc
 
-.PHONY: build install generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck
+devchecknotest: build vet fmt generate docscategorycheck lint
+
+.PHONY: build install generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck devcheck devchecknotest
