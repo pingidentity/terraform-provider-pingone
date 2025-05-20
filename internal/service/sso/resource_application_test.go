@@ -806,7 +806,6 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 }
 
 func TestAccApplication_NativeKerberos(t *testing.T) {
-	t.SkipNow()
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
