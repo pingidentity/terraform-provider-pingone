@@ -450,14 +450,15 @@ func applicationWsfedOptionsToTF(apiObject *management.ApplicationWSFED) (types.
 	diags.Append(d...)
 
 	attributesMap := map[string]attr.Value{
-		"audience_restriction": framework.StringOkToTF(apiObject.GetAudienceRestrictionOk()),
-		"cors_settings":        corsSettings,
-		"domain_name":          framework.StringOkToTF(apiObject.GetDomainNameOk()),
-		"idp_signing_key":      idpSigningKey,
-		"kerberos":             kerberos,
-		"reply_url":            framework.StringOkToTF(apiObject.GetReplyUrlOk()),
-		"slo_endpoint":         framework.StringOkToTF(apiObject.GetSloEndpointOk()),
-		"type":                 framework.EnumOkToTF(apiObject.GetTypeOk()),
+		"audience_restriction":           framework.StringOkToTF(apiObject.GetAudienceRestrictionOk()),
+		"cors_settings":                  corsSettings,
+		"domain_name":                    framework.StringOkToTF(apiObject.GetDomainNameOk()),
+		"idp_signing_key":                idpSigningKey,
+		"kerberos":                       kerberos,
+		"reply_url":                      framework.StringOkToTF(apiObject.GetReplyUrlOk()),
+		"slo_endpoint":                   framework.StringOkToTF(apiObject.GetSloEndpointOk()),
+		"subject_name_identifier_format": framework.EnumOkToTF(apiObject.GetSubjectNameIdentifierFormatOk()),
+		"type":                           framework.EnumOkToTF(apiObject.GetTypeOk()),
 	}
 
 	returnVar, d := types.ObjectValue(applicationWsfedOptionsTFObjectTypes, attributesMap)

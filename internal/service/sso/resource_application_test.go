@@ -3315,6 +3315,7 @@ func testAccApplicationConfig_WSFed_FullCheck(resourceFullName, name string) res
 		resource.TestMatchResourceAttr(resourceFullName, "wsfed_options.kerberos.gateways.0.user_type.id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.reply_url", "https://example.com"),
 		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.slo_endpoint", "https://example.com/slo"),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.subject_name_identifier_format", "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"),
 		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.type", "WEB_APP"),
 	)
 }
@@ -5026,9 +5027,10 @@ resource "pingone_application" "%[3]s" {
         }
       ]
     }
-    reply_url    = "https://example.com"
-    slo_endpoint = "https://example.com/slo"
-    type         = "WEB_APP"
+    reply_url                      = "https://example.com"
+    slo_endpoint                   = "https://example.com/slo"
+    subject_name_identifier_format = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+    type                           = "WEB_APP"
   }
 }`, environmentHcl, environmentIdResourceLink, resourceName, name, image)
 }

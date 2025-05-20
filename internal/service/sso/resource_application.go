@@ -181,14 +181,15 @@ type applicationSAMLOptionsSpVerificationResourceModelV1 struct {
 }
 
 type applicationWSFedOptionsResourceModelV1 struct {
-	AudienceRestriction types.String `tfsdk:"audience_restriction"`
-	CorsSettings        types.Object `tfsdk:"cors_settings"`
-	DomainName          types.String `tfsdk:"domain_name"`
-	IdpSigningKey       types.Object `tfsdk:"idp_signing_key"`
-	Kerberos            types.Object `tfsdk:"kerberos"`
-	ReplyUrl            types.String `tfsdk:"reply_url"`
-	SloEndpoint         types.String `tfsdk:"slo_endpoint"`
-	Type                types.String `tfsdk:"type"`
+	AudienceRestriction         types.String `tfsdk:"audience_restriction"`
+	CorsSettings                types.Object `tfsdk:"cors_settings"`
+	DomainName                  types.String `tfsdk:"domain_name"`
+	IdpSigningKey               types.Object `tfsdk:"idp_signing_key"`
+	Kerberos                    types.Object `tfsdk:"kerberos"`
+	ReplyUrl                    types.String `tfsdk:"reply_url"`
+	SloEndpoint                 types.String `tfsdk:"slo_endpoint"`
+	SubjectNameIdentifierFormat types.String `tfsdk:"subject_name_identifier_format"`
+	Type                        types.String `tfsdk:"type"`
 }
 
 type applicationWSFedKerberosResourceModelV1 struct {
@@ -328,14 +329,15 @@ var (
 	}
 
 	applicationWsfedOptionsTFObjectTypes = map[string]attr.Type{
-		"audience_restriction": types.StringType,
-		"cors_settings":        types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
-		"domain_name":          types.StringType,
-		"idp_signing_key":      types.ObjectType{AttrTypes: applicationIdpSigningKeyTFObjectTypes},
-		"kerberos":             types.ObjectType{AttrTypes: applicationWsfedOptionsKerberosTFObjectTypes},
-		"reply_url":            types.StringType,
-		"slo_endpoint":         types.StringType,
-		"type":                 types.StringType,
+		"audience_restriction":           types.StringType,
+		"cors_settings":                  types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
+		"domain_name":                    types.StringType,
+		"idp_signing_key":                types.ObjectType{AttrTypes: applicationIdpSigningKeyTFObjectTypes},
+		"kerberos":                       types.ObjectType{AttrTypes: applicationWsfedOptionsKerberosTFObjectTypes},
+		"reply_url":                      types.StringType,
+		"slo_endpoint":                   types.StringType,
+		"subject_name_identifier_format": types.StringType,
+		"type":                           types.StringType,
 	}
 
 	applicationWsfedOptionsKerberosTFObjectTypes = map[string]attr.Type{
@@ -1780,6 +1782,17 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Expected value to have a url with schema of \"http\" or \"https\"."),
 						},
 					},
+					"subject_name_identifier_format": schema.StringAttribute{
+						Optional:            true,
+						Description:         "The format to use for the SubjectNameIdentifier element. Options are \"urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified\", \"urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress\".",
+						MarkdownDescription: "The format to use for the SubjectNameIdentifier element. Options are `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`, `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`.",
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								"urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified",
+								"urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
+							),
+						},
+					},
 					"type": schema.StringAttribute{
 						Required:            true,
 						Description:         "A string that specifies the type associated with the application. This is a required property. Options are \"WEB_APP\", \"NATIVE_APP\", \"SINGLE_PAGE_APP\", \"WORKER\", \"SERVICE\", \"CUSTOM_APP\", \"PORTAL_LINK_APP\".",
@@ -3084,9 +3097,7 @@ func (p *applicationResourceModelV1) expandApplicationWSFed(ctx context.Context)
 		data = management.NewApplicationWSFED(
 			p.Enabled.ValueBool(),
 			p.Name.ValueString(),
-			//TODO enum uses invalid value here, should be underscore not dash
-			management.EnumApplicationProtocol("WS_FED"),
-			//management.ENUMAPPLICATIONPROTOCOL_WS_FED,
+			management.ENUMAPPLICATIONPROTOCOL_WS_FED,
 			management.EnumApplicationType(plan.Type.ValueString()),
 			plan.DomainName.ValueString(),
 			idpSigning,
@@ -3158,6 +3169,10 @@ func (p *applicationResourceModelV1) expandApplicationWSFed(ctx context.Context)
 
 		if !plan.SloEndpoint.IsNull() && !plan.SloEndpoint.IsUnknown() {
 			data.SetSloEndpoint(plan.SloEndpoint.ValueString())
+		}
+
+		if !plan.SubjectNameIdentifierFormat.IsNull() && !plan.SubjectNameIdentifierFormat.IsUnknown() {
+			data.SetSubjectNameIdentifierFormat(management.EnumApplicationWSFEDSubjectNameIdentifierFormat(plan.SubjectNameIdentifierFormat.ValueString()))
 		}
 
 		if !plan.Type.IsNull() && !plan.Type.IsUnknown() {

@@ -513,6 +513,7 @@ Optional:
 - `cors_settings` (Attributes) A single object that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings. (see [below for nested schema](#nestedatt--wsfed_options--cors_settings))
 - `kerberos` (Attributes) The Kerberos authentication settings. Leave this out of the configuration to disable Kerberos authentication. (see [below for nested schema](#nestedatt--wsfed_options--kerberos))
 - `slo_endpoint` (String) The single logout endpoint URL.
+- `subject_name_identifier_format` (String) The format to use for the SubjectNameIdentifier element. Options are `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`, `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`.
 
 <a id="nestedatt--wsfed_options--idp_signing_key"></a>
 ### Nested Schema for `wsfed_options.idp_signing_key`
