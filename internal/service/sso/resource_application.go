@@ -1687,7 +1687,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 				MarkdownDescription: wsfedOptionsDescription.MarkdownDescription,
 				Optional:            true,
 
-				Attributes: map[string]schema.Attribute{ //
+				Attributes: map[string]schema.Attribute{
 					"audience_restriction": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
