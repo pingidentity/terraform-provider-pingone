@@ -983,10 +983,10 @@ resource "pingone_application" "%[3]s" {
         }
       ]
     }
-    reply_url    = "https://example.com"
-    slo_endpoint = "https://example.com/slo"
+    reply_url                      = "https://example.com"
+    slo_endpoint                   = "https://example.com/slo"
     subject_name_identifier_format = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-    type         = "WEB_APP"
+    type                           = "WEB_APP"
   }
 }
 data "pingone_application" "%[3]s" {

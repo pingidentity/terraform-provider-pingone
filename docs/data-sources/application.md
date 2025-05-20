@@ -258,6 +258,7 @@ Read-Only:
 - `kerberos` (Attributes) The Kerberos authentication settings. Leave this out of the configuration to disable Kerberos authentication. (see [below for nested schema](#nestedatt--wsfed_options--kerberos))
 - `reply_url` (String) The URL that the replying party (such as, Office365) uses to accept submissions of RequestSecurityTokenResponse messages that are a result of SSO requests.
 - `slo_endpoint` (String) The single logout endpoint URL.
+- `subject_name_identifier_format` (String) The format to use for the SubjectNameIdentifier element. Options are `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`, `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`.
 - `type` (String) A string that specifies the type associated with the application. This is a required property. Options are `WEB_APP`, `NATIVE_APP`, `SINGLE_PAGE_APP`, `WORKER`, `SERVICE`, `CUSTOM_APP`, `PORTAL_LINK_APP`.
 
 <a id="nestedatt--wsfed_options--cors_settings"></a>
