@@ -684,6 +684,11 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						Computed:    true,
 						Description: "The single logout endpoint URL.",
 					},
+					"subject_name_identifier_format": schema.StringAttribute{
+						Computed:            true,
+						Description:         "The format to use for the SubjectNameIdentifier element. Options are \"urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified\", \"urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress\".",
+						MarkdownDescription: "The format to use for the SubjectNameIdentifier element. Options are `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`, `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`.",
+					},
 					"type": schema.StringAttribute{
 						Computed:            true,
 						Description:         "A string that specifies the type associated with the application. This is a required property. Options are \"WEB_APP\", \"NATIVE_APP\", \"SINGLE_PAGE_APP\", \"WORKER\", \"SERVICE\", \"CUSTOM_APP\", \"PORTAL_LINK_APP\".",
