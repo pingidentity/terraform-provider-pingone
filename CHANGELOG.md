@@ -1,4 +1,35 @@
-## 1.8.0 (Unreleased)
+## 1.8.0 (21 May 2025)
+
+NOTES:
+
+* `resource/pingone_application_flow_policy_assignment`: Corrected documented HCL example to avoid deprecated fields on the DaVinci provider's `davinci_application` resource. ([#1053](https://github.com/pingidentity/terraform-provider-pingone/issues/1053))
+* `resource/pingone_identity_provider`: Add deprecation for the legacy `linkedin` social identity provider type. Use `linkedin_oidc` instead. ([#1035](https://github.com/pingidentity/terraform-provider-pingone/issues/1035))
+* `resource/pingone_language`: Fix error message when using reserved language codes to refer to the correct `pingone_language_update` resource. ([#1036](https://github.com/pingidentity/terraform-provider-pingone/issues/1036))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.53.0 => 0.54.0 ([#1035](https://github.com/pingidentity/terraform-provider-pingone/issues/1035))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.54.0 => 0.55.0 ([#1052](https://github.com/pingidentity/terraform-provider-pingone/issues/1052))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.54.0 => 0.55.0 ([#983](https://github.com/pingidentity/terraform-provider-pingone/issues/983))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.55.0 => 0.56.0 ([#1055](https://github.com/pingidentity/terraform-provider-pingone/issues/1055))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.13 => 0.12.14 ([#1035](https://github.com/pingidentity/terraform-provider-pingone/issues/1035))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.14 => 0.12.15 ([#1052](https://github.com/pingidentity/terraform-provider-pingone/issues/1052))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.14 => 0.12.15 ([#983](https://github.com/pingidentity/terraform-provider-pingone/issues/983))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.15 => 0.12.16 ([#1055](https://github.com/pingidentity/terraform-provider-pingone/issues/1055))
+
+ENHANCEMENTS:
+
+* `data-source/pingone_application`: Added support for WS-Fed applications via the `wsfed_options` attribute. ([#1055](https://github.com/pingidentity/terraform-provider-pingone/issues/1055))
+* `resource/pingone_application`: Added support for WS-Fed applications via the `wsfed_options` attribute. ([#1055](https://github.com/pingidentity/terraform-provider-pingone/issues/1055))
+* `resource/pingone_identity_provider`: Support new `linkedin_oidc` social identity provider type. ([#1035](https://github.com/pingidentity/terraform-provider-pingone/issues/1035))
+* `resource/pingone_password_policy`: Allow 0 to disable character-type requirements in min_characters object. ([#1034](https://github.com/pingidentity/terraform-provider-pingone/issues/1034))
+* `resource/pingone_population`: Added support for new `alternative_identifiers`, `preferred_language`, and `theme.id` attributes. Also added support for a new `password_policy.id` attribute to better align with the API. `password_policy.id` should be used in place of the now-deprecated `password_policy_id` attribute. `password_policy_id` will be removed in the next major release. ([#983](https://github.com/pingidentity/terraform-provider-pingone/issues/983))
+
+BUG FIXES:
+
+* Fix URL validators (most notably on the `pingone_application` resource) to allow localhost URLs, and/or URLs with a defined port number. ([#1054](https://github.com/pingidentity/terraform-provider-pingone/issues/1054))
+* `data-source/pingone_gateway`: Corrected the type of `radius_davinci_policy_id`, resulting in format validation that no longer incorrectly enforces dash characters. ([#1042](https://github.com/pingidentity/terraform-provider-pingone/issues/1042))
+* `resource/ageement_localization`: Improved handling of enable_at parameter when creating or revising localization agreements ([#1050](https://github.com/pingidentity/terraform-provider-pingone/issues/1050))
+* `resource/certificate`: Added retry logic handling possible temporary still-in-use errors when deleting a certificate ([#1048](https://github.com/pingidentity/terraform-provider-pingone/issues/1048))
+* `resource/pingone_gateway`: Corrected the type of `radius_davinci_policy_id`, resulting in format validation that no longer incorrectly enforces dash characters. ([#1040](https://github.com/pingidentity/terraform-provider-pingone/issues/1040))
+* `resource/pingone_gateway`: Resolved `inconsistent result after apply` error when `description` is supplied for `RADIUS` and `LDAP` types. ([#1040](https://github.com/pingidentity/terraform-provider-pingone/issues/1040))
 
 ## 1.7.0 (23 April 2025)
 
