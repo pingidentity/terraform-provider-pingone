@@ -8,11 +8,13 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
 func applicationExternalLinkOptionsToTF(apiObject *management.ApplicationExternalLink) (types.Object, diag.Diagnostics) {
@@ -320,22 +322,22 @@ func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Ob
 	spVerification, d := applicationSamlSpVerificationOkToTF(apiObject.GetSpVerificationOk())
 	diags.Append(d...)
 
-	// var computedType types.String
-	// if plan != nil && plan.SAMLOptions.Attributes()["computed_type"] != nil {
-	// 	computedType = plan.SAMLOptions.Attributes()["computed_type"].(types.String)
-	// } else {
-	// 	computedType = framework.EnumOkToTF(apiObject.GetTypeOk())
-	// 	if computedType.ValueString() == utils.EnumToString(management.ENUMAPPLICATIONTYPE_TEMPLATE_APP) {
-	// 		computedType = framework.EnumToTF(management.ENUMAPPLICATIONTYPE_WEB_APP)
-	// 	}
-	// }
+	typeValue, ok := apiObject.GetTypeOk()
+	if ok {
+		if *typeValue == management.ENUMAPPLICATIONTYPE_TEMPLATE_APP {
+			diags.AddAttributeWarning(
+				path.Root("saml_options").AtName("type"),
+				"Application Type Update",
+				"`saml_options.type` is being updated from `TEMPLATE_APP` to `WEB_APP` as Catalog Applications are not supported and are converted to `WEB_APP` for Terraform use.\nThis will enable Advanced Configuration for managing the application.\nNo functional changes will occur.")
+			*typeValue = management.ENUMAPPLICATIONTYPE_WEB_APP
+		}
+	}
 
 	attributesMap := map[string]attr.Value{
 		"acs_urls":                         framework.StringSetOkToTF(apiObject.GetAcsUrlsOk()),
 		"assertion_duration":               framework.Int32OkToTF(apiObject.GetAssertionDurationOk()),
 		"assertion_signed_enabled":         framework.BoolOkToTF(apiObject.GetAssertionSignedOk()),
 		"cors_settings":                    corsSettings,
-		"computed_type":                    framework.EnumOkToTF(apiObject.GetTypeOk()),
 		"enable_requested_authn_context":   framework.BoolOkToTF(apiObject.GetEnableRequestedAuthnContextOk()),
 		"home_page_url":                    framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
 		"idp_signing_key":                  idpSigningKey,
@@ -350,7 +352,7 @@ func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Ob
 		"sp_encryption":                    spEncryption,
 		"sp_entity_id":                     framework.StringOkToTF(apiObject.GetSpEntityIdOk()),
 		"sp_verification":                  spVerification,
-		"type":                             framework.EnumOkToTF(apiObject.GetTypeOk()),
+		"type":                             types.StringValue(utils.EnumToString(typeValue)),
 	}
 
 	returnVar, d := types.ObjectValue(applicationSamlOptionsTFObjectTypes, attributesMap)
