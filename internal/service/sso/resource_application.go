@@ -1795,17 +1795,12 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 					},
 					"type": schema.StringAttribute{
 						Required:            true,
-						Description:         "A string that specifies the type associated with the application. This is a required property. Options are \"WEB_APP\", \"NATIVE_APP\", \"SINGLE_PAGE_APP\", \"WORKER\", \"SERVICE\", \"CUSTOM_APP\", \"PORTAL_LINK_APP\".",
-						MarkdownDescription: "A string that specifies the type associated with the application. This is a required property. Options are `WEB_APP`, `NATIVE_APP`, `SINGLE_PAGE_APP`, `WORKER`, `SERVICE`, `CUSTOM_APP`, `PORTAL_LINK_APP`.",
+						Description:         "A string that specifies the type associated with the application. This is a required property. Options are \"WEB_APP\", \"CUSTOM_APP\".",
+						MarkdownDescription: "A string that specifies the type associated with the application. This is a required property. Options are `WEB_APP`, `CUSTOM_APP`.",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"WEB_APP",
-								"NATIVE_APP",
-								"SINGLE_PAGE_APP",
-								"WORKER",
-								"SERVICE",
 								"CUSTOM_APP",
-								"PORTAL_LINK_APP",
 							),
 						},
 					},

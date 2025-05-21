@@ -505,7 +505,7 @@ Required:
 - `domain_name` (String) The federated domain name (for example, the Azure custom domain).
 - `idp_signing_key` (Attributes) Contains the information about the signing of requests by the identity provider (IdP). (see [below for nested schema](#nestedatt--wsfed_options--idp_signing_key))
 - `reply_url` (String) The URL that the replying party (such as, Office365) uses to accept submissions of RequestSecurityTokenResponse messages that are a result of SSO requests.
-- `type` (String) A string that specifies the type associated with the application. This is a required property. Options are `WEB_APP`, `NATIVE_APP`, `SINGLE_PAGE_APP`, `WORKER`, `SERVICE`, `CUSTOM_APP`, `PORTAL_LINK_APP`.
+- `type` (String) A string that specifies the type associated with the application. This is a required property. Options are `WEB_APP`, `CUSTOM_APP`.
 
 Optional:
 
