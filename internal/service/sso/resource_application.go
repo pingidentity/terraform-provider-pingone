@@ -1422,6 +1422,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Description:         samlOptionsDescription.Description,
 				MarkdownDescription: samlOptionsDescription.MarkdownDescription,
 				Optional:            true,
+				Computed:            true,
 
 				Attributes: map[string]schema.Attribute{
 					"home_page_url": schema.StringAttribute{
@@ -1445,8 +1446,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 					"computed_type": schema.StringAttribute{
 						Description:         samlOptionsComputedTypeDescription.Description,
 						MarkdownDescription: samlOptionsComputedTypeDescription.MarkdownDescription,
-						Optional:            true,
 						Computed:            true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
 					},
 
 					"acs_urls": schema.SetAttribute{
@@ -1706,60 +1709,64 @@ func resourceApplicationSchemaCorsSettingsSchema() schema.SingleNestedAttribute 
 
 // ModifyPlan
 func (r *ApplicationResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
-	var planDefaultTargetUrl, planComputedType, planType, stateDefaultTargetUrl, stateComputedType, stateType types.String
+	// var planDefaultTargetUrl, planType, stateDefaultTargetUrl, stateType types.String
 
-	// Destruction plan
-	if req.Plan.Raw.IsNull() {
-		return
-	}
+	var plan, state *applicationResourceModelV1
 
-	//  default_target_url plan value
-	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("saml_options").AtName("default_target_url"), &planDefaultTargetUrl)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// default_target_url state value
-	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("saml_options").AtName("default_target_url"), &stateDefaultTargetUrl)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// computed_type plan value
-	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("saml_options").AtName("computed_type"), &planComputedType)...)
-	if resp.Diagnostics.HasError() {
+	if plan == nil {
 		return
 	}
 
-	// computed_type state value
-	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("saml_options").AtName("computed_type"), &stateComputedType)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	// if !plan.SAMLOptions.IsNull() || !plan.SAMLOptions.IsUnknown() {
+	// 	//  default_target_url plan value
+	// 	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("saml_options").AtName("default_target_url"), &planDefaultTargetUrl)...)
+	// 	if resp.Diagnostics.HasError() {
+	// 		return
+	// 	}
 
-	// type plan value
-	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("saml_options").AtName("type"), &planType)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	// 	// default_target_url state value
+	// 	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("saml_options").AtName("default_target_url"), &stateDefaultTargetUrl)...)
+	// 	if resp.Diagnostics.HasError() {
+	// 		return
+	// 	}
 
-	// type state value
-	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("saml_options").AtName("type"), &stateType)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	// 	// type plan value
+	// 	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("saml_options").AtName("type"), &planType)...)
+	// 	if resp.Diagnostics.HasError() {
+	// 		return
+	// 	}
 
-	//  saml_options.default_target_url is an empty string when saml_options.type originally is TEMPLATE_APP
-	if stateType.ValueString() == utils.EnumToString(management.ENUMAPPLICATIONTYPE_TEMPLATE_APP) && stateDefaultTargetUrl.ValueString() == "" {
-		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("saml_options").AtName("default_target_url"), types.StringValue(""))...)
-	} else {
-		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("saml_options").AtName("default_target_url"), planDefaultTargetUrl)...)
-	}
+	// 	// type state value
+	// 	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("saml_options").AtName("type"), &stateType)...)
+	// 	if resp.Diagnostics.HasError() {
+	// 		return
+	// 	}
 
-	if planType.ValueString() == utils.EnumToString(management.ENUMAPPLICATIONTYPE_TEMPLATE_APP) {
-		resp.Diagnostics.AddWarning("Application Type Update", "`saml_options.type` is being updated from `TEMPLATE_APP` to `WEB_APP` as Catalog Applications are not supported. This will enable Advanced Configuration for managing the application.")
-		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("saml_options").AtName("computed_type"), framework.EnumToTF(management.ENUMAPPLICATIONTYPE_WEB_APP))...)
-	}
+	// 	//  saml_options.default_target_url is an empty string when saml_options.type originally is TEMPLATE_APP
+	// 	if stateType.ValueString() == utils.EnumToString(management.ENUMAPPLICATIONTYPE_TEMPLATE_APP) && stateDefaultTargetUrl.ValueString() == "" {
+	// 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("saml_options").AtName("default_target_url"), types.StringValue(""))...)
+	// 	} else {
+	// 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("saml_options").AtName("default_target_url"), planDefaultTargetUrl)...)
+	// 	}
+
+	// 	switch planType.ValueString() {
+	// 	case utils.EnumToString(management.ENUMAPPLICATIONTYPE_TEMPLATE_APP):
+	// 		resp.Diagnostics.AddWarning("Application Type Update", "`saml_options.type` is being updated from `TEMPLATE_APP` to `WEB_APP` as Catalog Applications are not supported. This will enable Advanced Configuration for managing the application.")
+	// 		// 	resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("saml_options").AtName("computed_type"), utils.EnumToString(management.ENUMAPPLICATIONTYPE_WEB_APP))...)
+	// 		// default:
+	// 		// 	resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("saml_options").AtName("computed_type"), planType.ValueString())...)
+	// 	}
+	// }
 }
 
 func (r *ApplicationResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -1885,7 +1892,7 @@ func (r *ApplicationResource) Create(ctx context.Context, req resource.CreateReq
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(ctx, response)...)
+	resp.Diagnostics.Append(state.toState(ctx, response, &plan)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -1930,7 +1937,7 @@ func (r *ApplicationResource) Read(ctx context.Context, req resource.ReadRequest
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(ctx, response)...)
+	resp.Diagnostics.Append(data.toState(ctx, response, nil)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -1949,6 +1956,16 @@ func (r *ApplicationResource) Update(ctx context.Context, req resource.UpdateReq
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	// // Set custom_type
+	// if !plan.SAMLOptions.IsNull() || !plan.SAMLOptions.IsUnknown() {
+	// 	if plan.SAMLOptions.Attributes()["computed_type"] != nil {
+	// 		resp.Diagnostics.Append(req.Plan.SetAttribute(ctx, path.Root("saml_options").AtName("computed_type"), plan.SAMLOptions.Attributes()["computed_type"].(types.String).ValueString())...)
+	// 		if resp.Diagnostics.HasError() {
+	// 			return
+	// 		}
+	// 	}
+	// }
 
 	resp.Diagnostics.Append(plan.validate(ctx, false)...)
 	if resp.Diagnostics.HasError() {
@@ -1984,7 +2001,7 @@ func (r *ApplicationResource) Update(ctx context.Context, req resource.UpdateReq
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(ctx, response)...)
+	resp.Diagnostics.Append(state.toState(ctx, response, &plan)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -2036,6 +2053,8 @@ func (r *ApplicationResource) ImportState(ctx context.Context, req resource.Impo
 			PrimaryID: true,
 		},
 	}
+
+	resp.State.SetAttribute(ctx, path.Root("saml_options").AtName("computed_type"), "")
 
 	attributes, err := framework.ParseImportID(req.ID, idComponents...)
 	if err != nil {
@@ -2138,41 +2157,41 @@ func (p *applicationOIDCOptionsResourceModelV1) validateCertificateBasedAuthenti
 
 func (p *applicationSAMLOptionsResourceModelV1) validateSAMLOptionsApplicationType(allowUnknown bool) diag.Diagnostics {
 	var diags diag.Diagnostics
-	samlAppTypes := []management.EnumApplicationType{management.ENUMAPPLICATIONTYPE_WEB_APP, management.ENUMAPPLICATIONTYPE_CUSTOM_APP}
+	// samlAppTypes := []management.EnumApplicationType{management.ENUMAPPLICATIONTYPE_WEB_APP, management.ENUMAPPLICATIONTYPE_CUSTOM_APP}
 
-	if p.Type.IsUnknown() && !allowUnknown {
-		diags.AddAttributeError(
-			path.Root("saml_options").AtName("type"),
-			"Invalid configuration",
-			"Current configuration is invalid as the `saml_options.type` value is unknown, cannot validate.",
-		)
-	}
-
-	// if !p.ComputedType.IsNull() && !p.ComputedType.IsUnknown() {
+	// if p.Type.IsUnknown() && !allowUnknown {
 	// 	diags.AddAttributeError(
-	// 		path.Root("saml_options").AtName("computed_type"),
+	// 		path.Root("saml_options").AtName("type"),
 	// 		"Invalid configuration",
-	// 		"Cannot set `computed_type` as it is a read only attribute.",
+	// 		"Current configuration is invalid as the `saml_options.type` value is unknown, cannot validate.",
 	// 	)
 	// }
 
-	if !p.Type.IsNull() && !p.Type.IsUnknown() {
-		webApp := p.Type.Equal(framework.EnumToTF(management.ENUMAPPLICATIONTYPE_WEB_APP))
-		customApp := p.Type.Equal(framework.EnumToTF(management.ENUMAPPLICATIONTYPE_CUSTOM_APP))
-		templateApp := p.Type.Equal(framework.EnumToTF(management.ENUMAPPLICATIONTYPE_TEMPLATE_APP))
+	// // if !p.ComputedType.IsNull() && !p.ComputedType.IsUnknown() {
+	// // 	diags.AddAttributeError(
+	// // 		path.Root("saml_options").AtName("computed_type"),
+	// // 		"Invalid configuration",
+	// // 		"Cannot set `computed_type` as it is a read only attribute.",
+	// // 	)
+	// // }
 
-		// Only present error if TEMPLATE_APP is not config value
-		// The TemplateApplicationType plan modifier will present a warning and change value to TEMPLATE_APP
-		if templateApp {
-			return diags
-		} else if !webApp || !customApp {
-			diags.AddAttributeError(
-				path.Root("saml_options").AtName("type"),
-				"Invalid configuration",
-				fmt.Sprintf("Attribute saml_options.type value must be one of: [%s]", strings.Join(utils.EnumSliceToStringSlice(samlAppTypes), ", ")),
-			)
-		}
-	}
+	// if !p.Type.IsNull() && !p.Type.IsUnknown() {
+	// 	webApp := p.Type.Equal(framework.EnumToTF(management.ENUMAPPLICATIONTYPE_WEB_APP))
+	// 	customApp := p.Type.Equal(framework.EnumToTF(management.ENUMAPPLICATIONTYPE_CUSTOM_APP))
+	// 	templateApp := p.Type.Equal(framework.EnumToTF(management.ENUMAPPLICATIONTYPE_TEMPLATE_APP))
+
+	// 	// Only present error if TEMPLATE_APP is not config value
+	// 	// The TemplateApplicationType plan modifier will present a warning and change value to TEMPLATE_APP
+	// 	if templateApp {
+	// 		return diags
+	// 	} else if !webApp || !customApp {
+	// 		diags.AddAttributeError(
+	// 			path.Root("saml_options").AtName("type"),
+	// 			"Invalid configuration",
+	// 			fmt.Sprintf("Attribute saml_options.type value must be one of: [%s]", strings.Join(utils.EnumSliceToStringSlice(samlAppTypes), ", ")),
+	// 		)
+	// 	}
+	// }
 
 	return diags
 }
@@ -2773,11 +2792,16 @@ func (p *applicationResourceModelV1) expandApplicationSAML(ctx context.Context) 
 			return nil, diags
 		}
 
+		typeVal := plan.ComputedType.ValueString()
+		if typeVal == "" {
+			typeVal = plan.Type.ValueString()
+		}
+
 		data = management.NewApplicationSAML(
 			p.Enabled.ValueBool(),
 			p.Name.ValueString(),
 			management.ENUMAPPLICATIONPROTOCOL_SAML,
-			management.EnumApplicationType(plan.ComputedType.ValueString()),
+			management.EnumApplicationType(typeVal),
 			acsUrls,
 			plan.AssertionDuration.ValueInt32(),
 			plan.SpEntityId.ValueString(),
@@ -3081,7 +3105,7 @@ func (p *applicationResourceModelV1) expandApplicationCommon(ctx context.Context
 	return &data, diags
 }
 
-func (p *applicationResourceModelV1) toState(ctx context.Context, apiObject *management.ReadOneApplication200Response) diag.Diagnostics {
+func (p *applicationResourceModelV1) toState(ctx context.Context, apiObject *management.ReadOneApplication200Response, plan *applicationResourceModelV1) diag.Diagnostics {
 	var diags, d diag.Diagnostics
 
 	if apiObject == nil {

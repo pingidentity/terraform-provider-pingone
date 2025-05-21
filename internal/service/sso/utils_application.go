@@ -320,6 +320,16 @@ func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Ob
 	spVerification, d := applicationSamlSpVerificationOkToTF(apiObject.GetSpVerificationOk())
 	diags.Append(d...)
 
+	// var computedType types.String
+	// if plan != nil && plan.SAMLOptions.Attributes()["computed_type"] != nil {
+	// 	computedType = plan.SAMLOptions.Attributes()["computed_type"].(types.String)
+	// } else {
+	// 	computedType = framework.EnumOkToTF(apiObject.GetTypeOk())
+	// 	if computedType.ValueString() == utils.EnumToString(management.ENUMAPPLICATIONTYPE_TEMPLATE_APP) {
+	// 		computedType = framework.EnumToTF(management.ENUMAPPLICATIONTYPE_WEB_APP)
+	// 	}
+	// }
+
 	attributesMap := map[string]attr.Value{
 		"acs_urls":                         framework.StringSetOkToTF(apiObject.GetAcsUrlsOk()),
 		"assertion_duration":               framework.Int32OkToTF(apiObject.GetAssertionDurationOk()),
