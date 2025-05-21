@@ -49,6 +49,7 @@ data "pingone_application" "example_by_id" {
 - `oidc_options` (Attributes) OIDC/OAuth application specific settings. (see [below for nested schema](#nestedatt--oidc_options))
 - `saml_options` (Attributes) SAML application specific settings. (see [below for nested schema](#nestedatt--saml_options))
 - `tags` (Set of String) An array that specifies the list of labels associated with the application.
+- `wsfed_options` (Attributes) A single object that specifies WS-Fed application specific settings. (see [below for nested schema](#nestedatt--wsfed_options))
 
 <a id="nestedatt--access_control_group_options"></a>
 ### Nested Schema for `access_control_group_options`
@@ -242,3 +243,61 @@ Read-Only:
 
 - `authn_request_signed` (Boolean) A boolean that specifies whether the Authn Request signing should be enforced.
 - `certificate_ids` (Set of String) A list that specifies the certificate IDs used to verify the service provider signature.
+
+
+
+<a id="nestedatt--wsfed_options"></a>
+### Nested Schema for `wsfed_options`
+
+Read-Only:
+
+- `audience_restriction` (String) The service provider ID. The default value is `urn:federation:MicrosoftOnline`.
+- `cors_settings` (Attributes) A single object that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings. (see [below for nested schema](#nestedatt--wsfed_options--cors_settings))
+- `domain_name` (String) The federated domain name (for example, the Azure custom domain).
+- `idp_signing_key` (Attributes) Contains the information about the signing of requests by the identity provider (IdP). (see [below for nested schema](#nestedatt--wsfed_options--idp_signing_key))
+- `kerberos` (Attributes) The Kerberos authentication settings. Leave this out of the configuration to disable Kerberos authentication. (see [below for nested schema](#nestedatt--wsfed_options--kerberos))
+- `reply_url` (String) The URL that the replying party (such as, Office365) uses to accept submissions of RequestSecurityTokenResponse messages that are a result of SSO requests.
+- `slo_endpoint` (String) The single logout endpoint URL.
+- `subject_name_identifier_format` (String) The format to use for the SubjectNameIdentifier element. Options are `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`, `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`.
+- `type` (String) A string that specifies the type associated with the application. This is a required property. Options are `WEB_APP`, `NATIVE_APP`, `SINGLE_PAGE_APP`, `WORKER`, `SERVICE`, `CUSTOM_APP`, `PORTAL_LINK_APP`.
+
+<a id="nestedatt--wsfed_options--cors_settings"></a>
+### Nested Schema for `wsfed_options.cors_settings`
+
+Read-Only:
+
+- `behavior` (String) A string that represents the behavior of how Authorization and Authentication APIs interact with CORS requests that reference the application.  Options are `ALLOW_NO_ORIGINS` (rejects all CORS requests), `ALLOW_SPECIFIC_ORIGINS` (rejects all CORS requests except those listed in `origins`).
+- `origins` (Set of String) A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value will be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 address.  Subdomains may use the wildcard (`*`) to match any string.  Is expected to be non-empty when `behavior` is `ALLOW_SPECIFIC_ORIGINS` and is expected to be omitted or empty when `behavior` is `ALLOW_NO_ORIGINS`.  Limited to 20 values.
+
+
+<a id="nestedatt--wsfed_options--idp_signing_key"></a>
+### Nested Schema for `wsfed_options.idp_signing_key`
+
+Read-Only:
+
+- `algorithm` (String) A string that specifies the signature algorithm of the key.
+- `key_id` (String) An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.
+
+
+<a id="nestedatt--wsfed_options--kerberos"></a>
+### Nested Schema for `wsfed_options.kerberos`
+
+Read-Only:
+
+- `gateways` (Attributes Set) The LDAP gateway properties. (see [below for nested schema](#nestedatt--wsfed_options--kerberos--gateways))
+
+<a id="nestedatt--wsfed_options--kerberos--gateways"></a>
+### Nested Schema for `wsfed_options.kerberos.gateways`
+
+Read-Only:
+
+- `id` (String) The UUID of the LDAP gateway. Must be a valid PingOne resource ID.
+- `type` (String) The gateway type. This must be "LDAP".
+- `user_type` (Attributes) The object reference to the user type in the list of "userTypes" for the LDAP gateway. (see [below for nested schema](#nestedatt--wsfed_options--kerberos--gateways--user_type))
+
+<a id="nestedatt--wsfed_options--kerberos--gateways--user_type"></a>
+### Nested Schema for `wsfed_options.kerberos.gateways.user_type`
+
+Read-Only:
+
+- `id` (String) The UUID of a user type in the list of `userTypes` for the LDAP gateway. Must be a valid PingOne resource ID.
