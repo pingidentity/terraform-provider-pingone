@@ -19,12 +19,6 @@ $ git clone git@github.com:pingidentity/terraform-provider-pingone.git
 ...
 ```
 
-Enter the provider directory and run `make tools`. This will install the needed tools for the provider.
-
-```sh
-$ make tools
-```
-
 To compile the provider, run `make build`.
 
 ```sh
@@ -91,9 +85,8 @@ require (
 ...
 ```
 
-Once updated, run the following to update the vendor cache and build the project:
+Once updated, run the following to build the project:
 
 ```shell
-$ go work vendor
 $ make build
 ```

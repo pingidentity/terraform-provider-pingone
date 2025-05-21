@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/certificate`: Added retry logic handling possible temporary still-in-use errors when deleting a certificate
+```

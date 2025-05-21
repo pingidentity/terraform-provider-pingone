@@ -7,12 +7,15 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -228,22 +231,27 @@ func resourceCertificateDelete(ctx context.Context, d *schema.ResourceData, meta
 	p1Client := meta.(*client.Client)
 	apiClient := p1Client.API.ManagementAPIClient
 
-	var diags diag.Diagnostics
+	timeout := 10 * time.Second
 
-	_, diags = sdk.ParseResponse(
+	_, diags := sdk.ParseResponseWithCustomTimeout(
 		ctx,
-
 		func() (any, *http.Response, error) {
-			fR, fErr := apiClient.CertificateManagementApi.DeleteCertificate(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
+			resp, err := apiClient.CertificateManagementApi.DeleteCertificate(ctx, d.Get("environment_id").(string), d.Id()).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, resp, err)
 		},
 		"DeleteCertificate",
 		sdk.CustomErrorResourceNotFoundWarning,
-		nil,
+		func(ctx context.Context, r *http.Response, p1Error *model.P1Error) bool {
+			if p1Error != nil && r.StatusCode == http.StatusConflict {
+				if message, ok := p1Error.GetMessageOk(); ok && strings.Contains(*message, "Certificate must not be in use") {
+					tflog.Warn(ctx, "Certificate still in use. Retrying deletion...")
+					return true
+				}
+			}
+			return false
+		},
+		timeout,
 	)
-	if diags.HasError() {
-		return diags
-	}
 
 	return diags
 }

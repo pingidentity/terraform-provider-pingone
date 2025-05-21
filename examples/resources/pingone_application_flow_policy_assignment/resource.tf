@@ -6,55 +6,35 @@ resource "pingone_application" "my_application" {
   # ...
 }
 
-resource "davinci_application" "davinci_app" {
+resource "davinci_flow" "authentication" {
+  # ...
+}
+
+resource "davinci_application" "awesome_dv_app" {
   environment_id = pingone_environment.my_environment.id
 
   name = "Awesome DaVinci Application"
+}
 
-  oauth {
-    enabled = true
-    values {
-      allowed_grants                = ["authorizationCode"]
-      allowed_scopes                = ["openid", "profile"]
-      enabled                       = true
-      enforce_signed_request_openid = false
-      redirect_uris                 = [var.redirect_uri]
-    }
-  }
+resource "davinci_application_flow_policy" "authentication_flow_policy" {
+  environment_id = pingone_environment.my_environment.id
+  application_id = davinci_application.awesome_dv_app.id
 
-  policy {
-    name   = "Flow Policy"
-    status = "enabled"
-    policy_flow {
-      flow_id    = var.davinci_flow_id
-      version_id = -1
-      weight     = 100
-    }
-  }
+  name   = "Authentication"
+  status = "enabled"
 
-  policy {
-    name   = "Second Flow Policy"
-    status = "enabled"
-    policy_flow {
-      flow_id    = var.second_davinci_flow_id
-      version_id = -1
-      weight     = 100
-    }
-  }
-
-  saml {
-    values {
-      enabled                = false
-      enforce_signed_request = false
-    }
+  policy_flow {
+    flow_id    = davinci_flow.authentication.id
+    version_id = -1
+    weight     = 100
   }
 }
 
-resource "pingone_application_flow_policy_assignment" "foo" {
+resource "pingone_application_flow_policy_assignment" "authentication_davinci_flow_policy_assignment" {
   environment_id = pingone_environment.my_environment.id
   application_id = pingone_application.my_application.id
 
-  flow_policy_id = davinci_application.davinci_app.policy.* [index(davinci_application.davinci_app.policy[*].name, "Flow Policy")].policy_id
+  flow_policy_id = davinci_application_flow_policy.authentication_flow_policy.id
 
   priority = 1
 }

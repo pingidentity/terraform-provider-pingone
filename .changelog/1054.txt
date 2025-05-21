@@ -1,0 +1,3 @@
+```release-note:bug
+Fix URL validators (most notably on the `pingone_application` resource) to allow localhost URLs, and/or URLs with a defined port number.
+```
