@@ -105,9 +105,6 @@ func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.Appli
 	mobileApp, d := applicationMobileAppOkToTF(ctx, mobileAppObject, ok, mobileAppState)
 	diags.Append(d...)
 
-	template, d := applicationTemplateOkToTF(apiObject.GetTemplateOk())
-	diags.Append(d...)
-
 	attributesMap := map[string]attr.Value{
 		"additional_refresh_token_replay_protection_enabled": framework.BoolOkToTF(apiObject.GetAdditionalRefreshTokenReplayProtectionEnabledOk()),
 		"allow_wildcard_in_redirect_uris":                    framework.BoolOkToTF(apiObject.GetAllowWildcardInRedirectUrisOk()),
@@ -139,7 +136,6 @@ func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.Appli
 		"target_link_uri":                                    framework.StringOkToTF(apiObject.GetTargetLinkUriOk()),
 		"token_endpoint_auth_method":                         framework.EnumOkToTF(apiObject.GetTokenEndpointAuthMethodOk()),
 		"type":                                               framework.EnumOkToTF(apiObject.GetTypeOk()),
-		"template":                                           template,
 	}
 
 	returnVar, d := types.ObjectValue(applicationOidcOptionsTFObjectTypes, attributesMap)
@@ -329,6 +325,7 @@ func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Ob
 		"assertion_duration":               framework.Int32OkToTF(apiObject.GetAssertionDurationOk()),
 		"assertion_signed_enabled":         framework.BoolOkToTF(apiObject.GetAssertionSignedOk()),
 		"cors_settings":                    corsSettings,
+		"computed_type":                    framework.EnumOkToTF(apiObject.GetTypeOk()),
 		"enable_requested_authn_context":   framework.BoolOkToTF(apiObject.GetEnableRequestedAuthnContextOk()),
 		"home_page_url":                    framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
 		"idp_signing_key":                  idpSigningKey,
@@ -344,54 +341,6 @@ func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Ob
 		"sp_entity_id":                     framework.StringOkToTF(apiObject.GetSpEntityIdOk()),
 		"sp_verification":                  spVerification,
 		"type":                             framework.EnumOkToTF(apiObject.GetTypeOk()),
-	}
-
-	returnVar, d := types.ObjectValue(applicationSamlOptionsTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	return returnVar, diags
-}
-
-func applicationTemplateOptionsToTF(apiObject *management.ApplicationTemplate) (types.Object, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if apiObject == nil || apiObject.GetId() == "" {
-		return types.ObjectNull(applicationSamlOptionsTFObjectTypes), diags
-	}
-
-	corsSettings, d := applicationCorsSettingsOkToTF(apiObject.GetCorsSettingsOk())
-	diags.Append(d...)
-
-	idpSigningKey, d := applicationSamlIdpSigningKeyOkToTF(apiObject.GetIdpSigningOk())
-	diags.Append(d...)
-
-	spEncryption, d := applicationSamlSpEncryptionOkToTF(apiObject.GetSpEncryptionOk())
-	diags.Append(d...)
-
-	spVerification, d := applicationSamlSpVerificationOkToTF(apiObject.GetSpVerificationOk())
-	diags.Append(d...)
-
-	attributesMap := map[string]attr.Value{
-		"acs_urls":                         framework.StringSetOkToTF(apiObject.GetAcsUrlsOk()),
-		"assertion_duration":               framework.Int32OkToTF(apiObject.GetAssertionDurationOk()),
-		"assertion_signed_enabled":         framework.BoolOkToTF(apiObject.GetAssertionSignedOk()),
-		"cors_settings":                    corsSettings,
-		"default_target_url":               framework.StringOkToTF(apiObject.GetDefaultTargetUrlOk()),
-		"enable_requested_authn_context":   framework.BoolOkToTF(apiObject.GetEnableRequestedAuthnContextOk()),
-		"home_page_url":                    framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
-		"idp_signing_key":                  idpSigningKey,
-		"nameid_format":                    framework.StringOkToTF(apiObject.GetNameIdFormatOk()),
-		"response_is_signed":               framework.BoolOkToTF(apiObject.GetResponseSignedOk()),
-		"session_not_on_or_after_duration": framework.Int32OkToTF(apiObject.GetSessionNotOnOrAfterDurationOk()),
-		"slo_binding":                      framework.EnumOkToTF(apiObject.GetSloBindingOk()),
-		"slo_endpoint":                     framework.StringOkToTF(apiObject.GetSloEndpointOk()),
-		"slo_response_endpoint":            framework.StringOkToTF(apiObject.GetSloResponseEndpointOk()),
-		"slo_window":                       framework.Int32OkToTF(apiObject.GetSloWindowOk()),
-		"sp_encryption":                    spEncryption,
-		"sp_entity_id":                     framework.StringOkToTF(apiObject.GetSpEntityIdOk()),
-		"sp_verification":                  spVerification,
-		"type":                             framework.StringToTF("TEMPLATE_APP"),
-		"version_id":                       framework.StringOkToTF(apiObject.GetVersionIdOk()),
 	}
 
 	returnVar, d := types.ObjectValue(applicationSamlOptionsTFObjectTypes, attributesMap)
@@ -483,49 +432,4 @@ func applicationSamlSpVerificationOkToTF(apiObject *management.ApplicationSAMLAl
 	diags.Append(d...)
 
 	return returnVar, diags
-}
-
-func applicationTemplateOkToTF(apiObject *management.ApplicationTemplate, ok bool) (types.Object, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if !ok || apiObject == nil {
-		return types.ObjectNull(applicationTemplateTFObjectTypes), diags
-	}
-
-	integration, d := applicationTemplateIntegrationOkToTF(apiObject.GetIntegrationOk())
-	diags.Append(d...)
-
-	version, d := applicationTemplateVersionOkToTF(apiObject.GetVersionOk())
-	diags.Append(d...)
-
-	attributesMap := map[string]attr.Value{
-		"configuration":  framework.StringMapOkToTF(apiObject.GetConfigurationOk()),
-		"integration_id": integration,
-		"version_id":     version,
-	}
-
-	returnVar, d := types.ObjectValue(applicationTemplateTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	return returnVar, diags
-}
-
-func applicationTemplateIntegrationOkToTF(apiObject *management.ApplicationTemplateIntegration, ok bool) (types.String, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if !ok || apiObject == nil {
-		return types.StringNull(), diags
-	}
-
-	return framework.StringOkToTF(apiObject.GetIdOk()), nil
-}
-
-func applicationTemplateVersionOkToTF(apiObject *management.ApplicationTemplateVersion, ok bool) (types.String, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if !ok || apiObject == nil {
-		return types.StringNull(), diags
-	}
-
-	return framework.StringOkToTF(apiObject.GetIdOk()), nil
 }

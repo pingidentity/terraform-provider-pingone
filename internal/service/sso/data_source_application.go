@@ -390,7 +390,6 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						Computed:            true,
 					},
 					"cors_settings": datasourceApplicationSchemaCorsSettings(),
-					"template":      datasourceApplicationTemplateSchema(),
 					"mobile_app": schema.SingleNestedAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("Mobile application integration settings.").Description,
 						Computed:    true,
@@ -608,7 +607,6 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						},
 					},
 					"cors_settings": datasourceApplicationSchemaCorsSettings(),
-					"template":      datasourceApplicationTemplateSchema(),
 				},
 			},
 		},
@@ -649,28 +647,6 @@ func datasourceApplicationSchemaCorsSettings() schema.SingleNestedAttribute {
 				Computed:            true,
 
 				ElementType: types.StringType,
-			},
-		},
-	}
-}
-
-func datasourceApplicationTemplateSchema() schema.SingleNestedAttribute {
-	return schema.SingleNestedAttribute{
-		Computed:    true,
-		Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that identifies the application as integration in Integration Catalog (by integration.id and version.id) and provides key-value map of parameters needed by the integration.").Description,
-		Attributes: map[string]schema.Attribute{
-			"configuration": schema.MapAttribute{
-				ElementType: types.StringType,
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A map of strings that contains a key/value map of the parameters required by the integration in Integration Catalog.").Description,
-				Computed:    true,
-			},
-			"integration_id": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the UUID of the integration in Integration Catalog.").Description,
-				Computed:    true,
-			},
-			"version_id": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the UUID of the integration version in Integration Catalog.").Description,
-				Computed:    true,
 			},
 		},
 	}
