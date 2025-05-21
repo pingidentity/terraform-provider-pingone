@@ -330,8 +330,9 @@ var (
 	_ resource.Resource                   = &ApplicationResource{}
 	_ resource.ResourceWithConfigure      = &ApplicationResource{}
 	_ resource.ResourceWithImportState    = &ApplicationResource{}
-	_ resource.ResourceWithValidateConfig = &ApplicationResource{}
+	_ resource.ResourceWithModifyPlan     = &ApplicationResource{}
 	_ resource.ResourceWithUpgradeState   = &ApplicationResource{}
+	_ resource.ResourceWithValidateConfig = &ApplicationResource{}
 )
 
 // New Object
@@ -1435,6 +1436,13 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Computed:            true,
 
 						Default: stringdefault.StaticString(string(management.ENUMAPPLICATIONTYPE_WEB_APP)),
+
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								string(management.ENUMAPPLICATIONTYPE_WEB_APP),
+								string(management.ENUMAPPLICATIONTYPE_CUSTOM_APP),
+							),
+						},
 					},
 
 					"acs_urls": schema.SetAttribute{
@@ -1696,14 +1704,9 @@ func resourceApplicationSchemaCorsSettingsSchema() schema.SingleNestedAttribute 
 func (r *ApplicationResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	var planDefaultTargetUrl, planType, stateDefaultTargetUrl, stateType types.String
 
-	var plan, state *applicationResourceModelV1
+	var plan *applicationResourceModelV1
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
