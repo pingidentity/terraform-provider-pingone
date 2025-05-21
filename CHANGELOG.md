@@ -1,3 +1,5 @@
+## 1.8.0 (Unreleased)
+
 ## 1.7.0 (23 April 2025)
 
 NOTES:
