@@ -1,0 +1,7 @@
+```release-note:note
+`resource/pingone_form`: Deprecated the `TEXTBLOB` form field type. This field type will be removed in a future release.
+```
+
+```release-note:bug
+`resource/pingone_form`: Changed `components.fields` from unordered set to ordered list (resolves field arrangement issues in mobile SDKs)
+```
