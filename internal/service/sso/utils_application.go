@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
@@ -320,6 +321,14 @@ func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Ob
 	spVerification, d := applicationSamlSpVerificationOkToTF(apiObject.GetSpVerificationOk())
 	diags.Append(d...)
 
+	typeValue := framework.EnumOkToTF(apiObject.GetTypeOk())
+	if management.EnumApplicationType(typeValue.ValueString()) == management.ENUMAPPLICATIONTYPE_TEMPLATE_APP {
+		diags.AddAttributeError(
+			path.Root("saml_options").AtName("type"),
+			"Application Type Not Supported",
+			"The `saml_options.type` value `TEMPLATE_APP` (used for Catalog Applications) is not supported.\nTo proceed, select Enable Advanced Configuration in the UI or change `saml_options.type` to `WEB_APP` before using this resource in Terraform.")
+	}
+
 	attributesMap := map[string]attr.Value{
 		"acs_urls":                         framework.StringSetOkToTF(apiObject.GetAcsUrlsOk()),
 		"assertion_duration":               framework.Int32OkToTF(apiObject.GetAssertionDurationOk()),
@@ -339,7 +348,7 @@ func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Ob
 		"sp_encryption":                    spEncryption,
 		"sp_entity_id":                     framework.StringOkToTF(apiObject.GetSpEntityIdOk()),
 		"sp_verification":                  spVerification,
-		"type":                             framework.EnumOkToTF(apiObject.GetTypeOk()),
+		"type":                             typeValue,
 	}
 
 	returnVar, d := types.ObjectValue(applicationSamlOptionsTFObjectTypes, attributesMap)
