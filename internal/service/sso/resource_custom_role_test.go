@@ -342,7 +342,8 @@ resource "pingone_custom_role" "%[2]s-dependent_role" {
   name           = "%[3]s Dependent Role"
   applicable_to = [
     "ENVIRONMENT",
-    "POPULATION"
+    "POPULATION",
+    "APPLICATION"
   ]
   can_be_assigned_by = [
     {
@@ -365,7 +366,8 @@ resource "pingone_custom_role" "%[2]s" {
   name           = "%[3]s"
   applicable_to = [
     "ENVIRONMENT",
-    "POPULATION"
+    "POPULATION",
+    "APPLICATION"
   ]
   can_be_assigned_by = [
     {
