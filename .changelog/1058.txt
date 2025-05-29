@@ -1,5 +1,5 @@
 ```release-note:note
-`resource/pingone_form`: Deprecated the `TEXTBLOB` form field type. This field type will be removed in a future release.
+`resource/pingone_form`: Deprecated the `TEXTBLOB` form field type. `SLATE_TEXTBLOB` can be used instead. This field type will be removed in a future release.
 ```
 
 ```release-note:bug
