@@ -39,7 +39,7 @@ data "pingone_custom_role" "example_by_id" {
 
 ### Read-Only
 
-- `applicable_to` (Set of String) The scope types to which the role can be applied. Options are `ENVIRONMENT`, `ORGANIZATION`, `POPULATION`.
+- `applicable_to` (Set of String) The scope types to which the role can be applied. Options are `ORGANIZATION`, `ENVIRONMENT`, `POPULATION`, `APPLICATION`.
 - `can_assign` (Attributes Set) A relationship that specifies if an actor is assigned the current custom role for a jurisdiction, then the actor can assign any of this set of roles to another actor for the same jurisdiction or sub-jurisdiction. This capability is derived from the `can_be_assigned_by` property. (see [below for nested schema](#nestedatt--can_assign))
 - `can_be_assigned_by` (Attributes Set) A relationship that determines whether a user assigned to one of this set of roles for a jurisdiction can assign the current custom role to another user for the same jurisdiction or sub-jurisdiction. (see [below for nested schema](#nestedatt--can_be_assigned_by))
 - `description` (String) The description of the role.
