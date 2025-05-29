@@ -100,6 +100,10 @@ func (model *languageTranslationResource) buildDefaultClientStruct() *management
 	return result
 }
 
+func (p *languageTranslationResourceModel) expand(ctx context.Context, apiClient *management.APIClient, managementApiClient *management.APIClient) (*management.LocaleTranslation, *string, diag.Diagnostics) {
+
+}
+
 func (state *languageTranslationResourceModel) readClientResponse(response *management.EntityArray) diag.Diagnostics {
 	// id
 	idValue := framework.PingOneResourceIDToTF(response.GetId())
@@ -136,7 +140,7 @@ func (r *languageTranslationResource) Create(ctx context.Context, req resource.C
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.TranslationsApi.UpdateTranslations(ctx, data.EnvironmentId.ValueString(), data.Locale.ValueString()).LocaleTranslations(*clientData).Execute()
+			fO, fR, fErr := r.Client.ManagementAPIClient.TranslationsApi.UpdateTranslations(ctx, data.EnvironmentId.ValueString(), data.Locale.ValueString()).LocaleTranslation(*clientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient.APIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateTranslations-Create",
@@ -183,8 +187,27 @@ func (r *languageTranslationResource) Read(ctx context.Context, req resource.Rea
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.TranslationsApi.ReadTranslations(ctx, data.EnvironmentId.ValueString(), data.Locale.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient.APIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			pagedIterator := r.Client.ManagementAPIClient.TranslationsApi.ReadTranslations(ctx, data.EnvironmentId.ValueString(), data.Locale.ValueString()).Execute()
+			var initialHttpResponse *http.Response
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if translations, ok := pageCursor.EntityArray.Embedded.GetTranslationsOk(); ok {
+					for _, translation := range translations {
+
+						return v, pageCursor.HTTPResponse, nil
+					}
+				}
+			}
+
+			return nil, initialHttpResponse, nil
 		},
 		"ReadTranslations",
 		framework.CustomErrorResourceNotFoundWarning,
