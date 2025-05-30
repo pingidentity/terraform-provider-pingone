@@ -302,16 +302,17 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	fullCheck := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-		resource.TestCheckResourceAttr(resourceFullName, "provider_type", "CUSTOM_PROVIDER"),
-		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.name", name),
+	fullCheck := func(username, password string) resource.TestCheckFunc {
+		return resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "provider_type", "CUSTOM_PROVIDER"),
+			resource.TestCheckResourceAttr(resourceFullName, "provider_custom.name", name),
 
-		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.method", "BASIC"),
-		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.username", "testusername"),
-		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.password", "testpassword"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom.authentication.auth_token"),
+			resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.method", "BASIC"),
+			resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.username", username),
+			resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.password", password),
+			resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom.authentication.auth_token"),
 
 		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.numbers.#", "3"),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.numbers.*", map[string]string{
@@ -432,13 +433,14 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 		CheckDestroy:             base.PhoneDeliverySettings_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			// Full
+			// Full + update
 			{
-				Config: testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name),
-				Check:  fullCheck,
+				Config: testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name, "initialusername", "initialpassword"),
+				Check:  fullCheck("initialusername", "initialpassword"),
 			},
 			{
-				Config:  testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name),
+				Config:  testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name, "updatedusername", "updatedpassword"),
+				Check:  fullCheck("updatedusername", "updatedpassword"),
 				Destroy: true,
 			},
 			// Minimal
@@ -452,16 +454,16 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 			},
 			// update
 			{
-				Config: testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name),
-				Check:  fullCheck,
+				Config: testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name, "testusername", "testpassword"),
+				Check:  fullCheck("testusername", "testpassword"),
 			},
 			{
 				Config: testAccPhoneDeliverySettingsConfig_Custom_Minimal(environmentName, licenseID, resourceName, name),
 				Check:  minimalCheck,
 			},
 			{
-				Config: testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name),
-				Check:  fullCheck,
+				Config: testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name, "testusername", "testpassword"),
+				Check:  fullCheck("testusername", "testpassword"),
 			},
 			{
 				ResourceName: resourceFullName,
@@ -591,17 +593,17 @@ resource "pingone_phone_delivery_settings" "%[3]s" {
   provider_custom_syniverse = {
     auth_token = "%[4]s"
 
-    numbers = [
+    selected_numbers = [
       {
         number   = "%[5]s"
-        selected = true
+        type     = "PHONE_NUMBER"
       }
     ]
   }
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, syniverseAuthToken, number)
 }
 
-func testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name string) string {
+func testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name string, username string, password string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -613,8 +615,8 @@ resource "pingone_phone_delivery_settings" "%[3]s" {
 
     authentication = {
       method   = "BASIC"
-      username = "testusername"
-      password = "testpassword"
+      username = "%[5]s"
+      password = "%[6]s"
     }
 
     numbers = [
@@ -701,7 +703,7 @@ resource "pingone_phone_delivery_settings" "%[3]s" {
       }
     ]
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, username, password)
 }
 
 func testAccPhoneDeliverySettingsConfig_Custom_Minimal(environmentName, licenseID, resourceName, name string) string {
