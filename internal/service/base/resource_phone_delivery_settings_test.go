@@ -596,8 +596,8 @@ resource "pingone_phone_delivery_settings" "%[3]s" {
 
     selected_numbers = [
       {
-        number   = "%[5]s"
-        type     = "PHONE_NUMBER"
+        number = "%[5]s"
+        type   = "PHONE_NUMBER"
       }
     ]
   }
