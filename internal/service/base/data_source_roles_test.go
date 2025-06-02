@@ -20,6 +20,7 @@ func TestAccRolesDataSource_All(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
