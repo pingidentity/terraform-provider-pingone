@@ -139,7 +139,7 @@ func TestAccUser_All(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "user_lifecycle.status", "VERIFICATION_REQUIRED"),
 			resource.TestCheckResourceAttr(resourceFullName, "user_lifecycle.suppress_verification_code", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "locale", "es-419"),
-			resource.TestCheckResourceAttr(resourceFullName, "mfa_enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "mfa_enabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "mobile_phone", "+1 555-4796"),
 			resource.TestCheckResourceAttr(resourceFullName, "name.family", "Simpson"),
 			resource.TestCheckResourceAttr(resourceFullName, "name.formatted", "Mr. Homer Jay Simpson Jr."),
@@ -185,7 +185,7 @@ func TestAccUser_All(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "user_lifecycle.status", "ACCOUNT_OK"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "user_lifecycle.suppress_verification_code"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "locale"),
-			resource.TestCheckResourceAttr(resourceFullName, "mfa_enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "mfa_enabled", "true"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "mobile_phone"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "name.family"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "name.formatted"),
@@ -286,7 +286,7 @@ func TestAccUser_AllWithoutReplacement(t *testing.T) {
 			resource.TestCheckNoResourceAttr(resourceFullName, "identity_provider.id"),
 			resource.TestCheckResourceAttr(resourceFullName, "identity_provider.type", "PING_ONE"),
 			resource.TestCheckResourceAttr(resourceFullName, "locale", "es-419"),
-			resource.TestCheckResourceAttr(resourceFullName, "mfa_enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "mfa_enabled", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "mobile_phone", "+1 555-4796"),
 			resource.TestCheckResourceAttr(resourceFullName, "name.family", "Simpson"),
 			resource.TestCheckResourceAttr(resourceFullName, "name.formatted", "Mr. Homer Jay Simpson Jr."),
@@ -329,7 +329,7 @@ func TestAccUser_AllWithoutReplacement(t *testing.T) {
 			resource.TestCheckNoResourceAttr(resourceFullName, "identity_provider.id"),
 			resource.TestCheckResourceAttr(resourceFullName, "identity_provider.type", "PING_ONE"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "locale"),
-			resource.TestCheckResourceAttr(resourceFullName, "mfa_enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "mfa_enabled", "true"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "mobile_phone"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "name.family"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "name.formatted"),
@@ -656,7 +656,7 @@ resource "pingone_user" "%[2]s" {
   }
 
   locale      = "es-419"
-  mfa_enabled = true
+  mfa_enabled = false
 
   mobile_phone  = "+1 555-4796"
   primary_phone = "555-6832"
@@ -734,7 +734,7 @@ resource "pingone_user" "%[2]s" {
   external_id = "12345678-id"
 
   locale      = "es-419"
-  mfa_enabled = false
+  mfa_enabled = true
 
   mobile_phone  = "+1 555-4796"
   primary_phone = "555-6832"

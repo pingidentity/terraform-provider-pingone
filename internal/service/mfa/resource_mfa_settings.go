@@ -216,7 +216,7 @@ func (r *MFASettingsResource) Schema(ctx context.Context, req resource.SchemaReq
 				Default: objectdefault.StaticValue(types.ObjectValueMust(
 					MFASettingsUsersTFObjectTypes,
 					map[string]attr.Value{
-						"mfa_enabled": types.BoolValue(false),
+						"mfa_enabled": types.BoolValue(true),
 					},
 				)),
 

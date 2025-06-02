@@ -644,7 +644,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Optional:            true,
 				Computed:            true,
 
-				Default: booldefault.StaticBool(false),
+				Default: booldefault.StaticBool(true),
 			},
 
 			"mobile_phone": schema.StringAttribute{
