@@ -8,12 +8,14 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -64,12 +66,17 @@ func (r *languageTranslationResource) Configure(ctx context.Context, req resourc
 }
 
 type languageTranslationResourceModel struct {
-	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
-	Locale        types.String                 `tfsdk:"locale"`
+	EnvironmentId  pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Id             pingonetypes.ResourceIDValue `tfsdk:"id"`
+	Key            types.String                 `tfsdk:"key"`
+	Locale         types.String                 `tfsdk:"locale"`
+	ReferenceText  types.String                 `tfsdk:"reference_text"`
+	ShortKey       types.String                 `tfsdk:"short_key"`
+	TranslatedText types.String                 `tfsdk:"translated_text"`
 }
 
 func (r *languageTranslationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+
 	resp.Schema = schema.Schema{
 		Description: "Resource to create and manage the language translation.",
 		Attributes: map[string]schema.Attribute{
@@ -77,37 +84,98 @@ func (r *languageTranslationResource) Schema(ctx context.Context, req resource.S
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create and manage the language_translation in."),
 			),
 			"id": framework.Attr_ID(),
-			"locale": schema.StringAttribute{
+			"key": schema.StringAttribute{
 				Required:    true,
-				Description: "This field is immutable and will trigger a replace plan if changed.",
+				Description: "The page and name of the interface element to be localized (for example, `flow-ui.button.cancel`).",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
+			},
+			"locale": schema.StringAttribute{
+				Required:    true,
+				Description: fmt.Sprintf("An ISO standard language code. For more information about standard language codes, see [ISO Language Code Table](http://www.lingoes.net/en/translator/langcode.htm).  The following language codes are reserved as they are created automatically in the environment: %s.", verify.IsoReservedListString()),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						verify.ReservedIsoList()...,
+					),
+				},
+			},
+			"reference_text": schema.StringAttribute{
+				Computed:    true,
+				Description: "The English string text associated with the interface element.",
+			},
+			"short_key": schema.StringAttribute{
+				Computed:    true,
+				Description: "The interface element only (for example, `button.cancel`).",
+			},
+			"translated_text": schema.StringAttribute{
+				Required:    true,
+				Description: "The translated string text associated with the interface element.",
 			},
 		},
 	}
 }
 
-func (model *languageTranslationResourceModel) buildClientStruct() (*management.EntityArray, diag.Diagnostics) {
-	result := &management.EntityArray{}
-	return result, nil
+func (model *languageTranslationResourceModel) buildClientStruct() (*[]management.LocaleTranslation, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	localeTranslationSlice := &[]management.LocaleTranslation{}
+	innerLocaleTranslation := &management.LocaleTranslation{}
+
+	// Validate and set the Key field
+	if model.Key.IsNull() || model.Key.IsUnknown() {
+		diags.AddAttributeError(
+			path.Root("key"),
+			"Missing Key",
+			"The `key` attribute is required. Please set this value in your configuration.",
+		)
+		return nil, diags
+	}
+	innerLocaleTranslation.Key = model.Key.ValueString()
+
+	// Validate and set the TranslatedText field
+	if model.TranslatedText.IsNull() || model.TranslatedText.IsUnknown() {
+		diags.AddAttributeError(
+			path.Root("translated_text"),
+			"Missing Translated Text",
+			"The `translated_text` attribute is required. Please set this value in your configuration.",
+		)
+		return nil, diags
+	}
+	innerLocaleTranslation.TranslatedText = model.TranslatedText.ValueString()
+
+	// Add the innerLocaleTranslation to the slice
+	*localeTranslationSlice = append(*localeTranslationSlice, *innerLocaleTranslation)
+
+	return localeTranslationSlice, diags
 }
 
 // Build a default client struct to reset the resource to its default state
 // If necessary, update this function to set any other values that should be present in the default state of the resource
-func (model *languageTranslationResource) buildDefaultClientStruct() *management.EntityArray {
-	result := &management.EntityArray{}
-	return result
+func (model *languageTranslationResource) buildDefaultClientStruct(p languageTranslationResourceModel) *[]management.LocaleTranslation {
+	// Sending only the key will reset the translation to its original configuration - per API documentation
+	result := []management.LocaleTranslation{
+		{
+			Key: p.Key.ValueString(),
+		},
+	}
+	return &result
 }
 
-func (p *languageTranslationResourceModel) expand(ctx context.Context, apiClient *management.APIClient, managementApiClient *management.APIClient) (*management.LocaleTranslation, *string, diag.Diagnostics) {
+func (state *languageTranslationResourceModel) readClientResponse(response []management.LocaleTranslation, data languageTranslationResourceModel) diag.Diagnostics {
+	for _, translation := range response {
+		state.EnvironmentId = framework.PingOneResourceIDToTF(data.EnvironmentId.ValueString())
+		idValue := framework.PingOneResourceIDToTF(*translation.Id)
+		state.Id = idValue
+		state.Locale = data.Locale
+		state.Key = types.StringValue(translation.Key)
+		state.ReferenceText = types.StringPointerValue(translation.ReferenceText)
+		state.ShortKey = types.StringPointerValue(translation.ShortKey)
+		state.TranslatedText = types.StringValue(translation.TranslatedText)
+	}
 
-}
-
-func (state *languageTranslationResourceModel) readClientResponse(response *management.EntityArray) diag.Diagnostics {
-	// id
-	idValue := framework.PingOneResourceIDToTF(response.GetId())
-	state.Id = idValue
 	return nil
 }
 
@@ -135,16 +203,53 @@ func (r *languageTranslationResource) Create(ctx context.Context, req resource.C
 		return
 	}
 
-	var responseData *management.EntityArray
+	var responseData []management.LocaleTranslation
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.TranslationsApi.UpdateTranslations(ctx, data.EnvironmentId.ValueString(), data.Locale.ValueString()).LocaleTranslation(*clientData).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient.APIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateTranslations-Create",
 		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+		&responseData,
+	)...)
+
+	// Subsequent read needed as the API does not return the full object on any create or update operation.
+	resp.Diagnostics.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			pagedIterator := r.Client.ManagementAPIClient.TranslationsApi.ReadTranslations(ctx, data.EnvironmentId.ValueString(), data.Locale.ValueString()).Execute()
+			var initialHttpResponse *http.Response
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if translations, ok := pageCursor.EntityArray.Embedded.GetTranslationsOk(); ok {
+					for _, translation := range translations {
+						if v, ok := translation.GetKeyOk(); ok && *v == data.Key.ValueString() {
+							localeTranslationSlice := []management.LocaleTranslation{}
+							localeTranslationSlice = append(localeTranslationSlice, translation)
+							return localeTranslationSlice, pageCursor.HTTPResponse, nil
+						}
+					}
+				}
+			}
+
+			return nil, initialHttpResponse, nil
+		},
+		"UpdateTranslations-Create-SubsequentRead",
+		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
@@ -154,7 +259,7 @@ func (r *languageTranslationResource) Create(ctx context.Context, req resource.C
 	}
 
 	// Read response into the model
-	resp.Diagnostics.Append(data.readClientResponse(responseData)...)
+	resp.Diagnostics.Append(data.readClientResponse(responseData, data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -182,7 +287,7 @@ func (r *languageTranslationResource) Read(ctx context.Context, req resource.Rea
 	}
 
 	// Read API call logic
-	var responseData *management.EntityArray
+	var responseData []management.LocaleTranslation
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
@@ -201,8 +306,11 @@ func (r *languageTranslationResource) Read(ctx context.Context, req resource.Rea
 
 				if translations, ok := pageCursor.EntityArray.Embedded.GetTranslationsOk(); ok {
 					for _, translation := range translations {
-
-						return v, pageCursor.HTTPResponse, nil
+						if v, ok := translation.GetIdOk(); ok && *v == data.Id.ValueString() {
+							localeTranslationSlice := []management.LocaleTranslation{}
+							localeTranslationSlice = append(localeTranslationSlice, translation)
+							return localeTranslationSlice, pageCursor.HTTPResponse, nil
+						}
 					}
 				}
 			}
@@ -226,7 +334,7 @@ func (r *languageTranslationResource) Read(ctx context.Context, req resource.Rea
 	}
 
 	// Read response into the model
-	resp.Diagnostics.Append(data.readClientResponse(responseData)...)
+	resp.Diagnostics.Append(data.readClientResponse(responseData, data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -260,16 +368,52 @@ func (r *languageTranslationResource) Update(ctx context.Context, req resource.U
 		return
 	}
 
-	var responseData *management.EntityArray
+	var responseData []management.LocaleTranslation
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.TranslationsApi.UpdateTranslations(ctx, data.EnvironmentId.ValueString(), data.Locale.ValueString()).LocaleTranslations(*clientData).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient.APIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.TranslationsApi.UpdateTranslations(ctx, data.EnvironmentId.ValueString(), data.Locale.ValueString()).LocaleTranslation(*clientData).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateTranslations-Update",
 		framework.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+		&responseData,
+	)...)
+
+	// Subsequent read needed as the API does not return the full object on any create or update operation.
+	resp.Diagnostics.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			pagedIterator := r.Client.ManagementAPIClient.TranslationsApi.ReadTranslations(ctx, data.EnvironmentId.ValueString(), data.Locale.ValueString()).Execute()
+			var initialHttpResponse *http.Response
+
+			for pageCursor, err := range pagedIterator {
+				if err != nil {
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+				}
+
+				if initialHttpResponse == nil {
+					initialHttpResponse = pageCursor.HTTPResponse
+				}
+
+				if translations, ok := pageCursor.EntityArray.Embedded.GetTranslationsOk(); ok {
+					for _, translation := range translations {
+						if v, ok := translation.GetKeyOk(); ok && *v == data.Key.ValueString() {
+							localeTranslationSlice := []management.LocaleTranslation{}
+							localeTranslationSlice = append(localeTranslationSlice, translation)
+							return localeTranslationSlice, pageCursor.HTTPResponse, nil
+						}
+					}
+				}
+			}
+
+			return nil, initialHttpResponse, nil
+		},
+		"UpdateTranslations-Create-SubsequentRead",
+		framework.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
@@ -279,7 +423,7 @@ func (r *languageTranslationResource) Update(ctx context.Context, req resource.U
 	}
 
 	// Read response into the model
-	resp.Diagnostics.Append(data.readClientResponse(responseData)...)
+	resp.Diagnostics.Append(data.readClientResponse(responseData, data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -290,7 +434,7 @@ func (r *languageTranslationResource) Update(ctx context.Context, req resource.U
 }
 
 func (r *languageTranslationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	// This resource is singleton, so it can't be deleted from the service.
+	// This resource is pre-defined in PingOne, so it can't be deleted from the service.
 	// Instead this delete method will attempt to set the resource to its default state on the service.
 	var data languageTranslationResourceModel
 
@@ -309,13 +453,13 @@ func (r *languageTranslationResource) Delete(ctx context.Context, req resource.D
 	}
 
 	// Update API call logic to reset to default
-	clientData := r.buildDefaultClientStruct()
+	clientData := r.buildDefaultClientStruct(data)
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.TranslationsApi.UpdateTranslations(ctx, data.EnvironmentId.ValueString(), data.Locale.ValueString()).EntityArray(*clientData).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient.APIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.ManagementAPIClient.TranslationsApi.UpdateTranslations(ctx, data.EnvironmentId.ValueString(), data.Locale.ValueString()).LocaleTranslation(*clientData).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateTranslations",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -332,7 +476,11 @@ func (r *languageTranslationResource) ImportState(ctx context.Context, req resou
 			Regexp: verify.P1ResourceIDRegexp,
 		},
 		{
-			Label:     "locale",
+			Label:  "locale",
+			Regexp: verify.LocaleValidator(),
+		},
+		{
+			Label:     "translation_id",
 			Regexp:    verify.P1ResourceIDRegexp,
 			PrimaryID: true,
 		},
@@ -347,6 +495,13 @@ func (r *languageTranslationResource) ImportState(ctx context.Context, req resou
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes["environment_id"])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes["environment_id"])...)
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
+
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }

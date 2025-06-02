@@ -59,7 +59,7 @@ func TestAccLanguageTranslation_RemovalDrift(t *testing.T) {
 	})
 }
 
-func TestAccLanguageTranslation_MinimalMaximal(t *testing.T) {
+func TestAccLanguageTranslation_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -74,33 +74,12 @@ func TestAccLanguageTranslation_MinimalMaximal(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				// Create the resource with a minimal model
-				Config: languageTranslation_MinimalHCL(resourceName),
-				Check:  languageTranslation_CheckComputedValuesMinimal(resourceName),
-			},
-			{
-				// Delete the minimal model
-				Config:  languageTranslation_MinimalHCL(resourceName),
-				Destroy: true,
-			},
-			{
-				// Re-create with a complete model
-				Config: languageTranslation_CompleteHCL(resourceName),
-				Check:  languageTranslation_CheckComputedValuesComplete(resourceName),
-			},
-			{
-				// Back to minimal model
-				Config: languageTranslation_MinimalHCL(resourceName),
-				Check:  languageTranslation_CheckComputedValuesMinimal(resourceName),
-			},
-			{
-				// Back to complete model
-				Config: languageTranslation_CompleteHCL(resourceName),
-				Check:  languageTranslation_CheckComputedValuesComplete(resourceName),
+				Config: languageTranslation_UpdatedHCL(resourceName),
+				Check:  languageTranslation_CheckComputedValuesUpdated(resourceName),
 			},
 			{
 				// Test importing the resource
-				Config:       languageTranslation_CompleteHCL(resourceName),
+				Config:       languageTranslation_UpdatedHCL(resourceName),
 				ResourceName: fmt.Sprintf("pingone_language_translation.%s", resourceName),
 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
 					return func(s *terraform.State) (string, error) {
@@ -109,12 +88,41 @@ func TestAccLanguageTranslation_MinimalMaximal(t *testing.T) {
 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
 						}
 
-						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["locale"]), nil
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["locale"], rs.Primary.Attributes["id"]), nil
 					}
 				}(),
-				ImportStateVerifyIdentifierAttribute: "locale",
+				ImportStateVerifyIdentifierAttribute: "id",
 				ImportState:                          true,
 				ImportStateVerify:                    true,
+			},
+		},
+	})
+}
+
+func TestAccLanguageTranslation_Change(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: languageTranslation_UpdatedHCL(resourceName),
+				Check:  languageTranslation_CheckComputedValuesUpdated(resourceName),
+			},
+			{
+				Config: languageTranslation_InitialHCL(resourceName),
+				Check:  languageTranslation_CheckComputedValuesMinimal(resourceName),
+			},
+			{
+				Config: languageTranslation_UpdatedHCL(resourceName),
+				Check:  languageTranslation_CheckComputedValuesUpdated(resourceName),
 			},
 		},
 	})
@@ -161,7 +169,7 @@ func TestAccLanguageTranslation_BadParameters(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: languageTranslation_MinimalHCL(resourceName),
+				Config: languageTranslation_UpdatedHCL(resourceName),
 			},
 			// Errors
 			{
@@ -185,28 +193,30 @@ func TestAccLanguageTranslation_BadParameters(t *testing.T) {
 	})
 }
 
-// Minimal HCL with only required values set
-func languageTranslation_MinimalHCL(resourceName string) string {
+// Initial HCL with original required values set
+func languageTranslation_InitialHCL(resourceName string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
 resource "pingone_language_translation" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  locale = //TODO
-  // TODO set values for minimal fields
+  environment_id  = data.pingone_environment.general_test.id
+  locale          = "en"
+  key             = "flow-ui.button.createNewAccount"
+  translated_text = "Create new Account"
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
-// Maximal HCL with all values set where possible
-func languageTranslation_CompleteHCL(resourceName string) string {
+// Updated HCL with values updated to reflect a change
+func languageTranslation_UpdatedHCL(resourceName string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
 resource "pingone_language_translation" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  locale = //TODO
-  // TODO set values for complete fields
+  environment_id  = data.pingone_environment.general_test.id
+  locale          = "en"
+  key             = "flow-ui.button.createNewAccount"
+  translated_text = "Update New Account"
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
@@ -216,31 +226,31 @@ func languageTranslation_NewEnvHCL(environmentName, licenseID, resourceName stri
 		%[1]s
 
 resource "pingone_language_translation" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  locale = //TODO
-  // TODO set values for minimal fields
+  environment_id  = pingone_environment.%[2]s.id
+  locale          = "en"
+  key             = "flow-ui.button.createNewAccount"
+  translated_text = "Create new Account"
 }
 `, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 // Validate any computed values when applying minimal HCL
-// TODO remove any values that are not computed from this check
-// TODO set expected values
 func languageTranslation_CheckComputedValuesMinimal(resourceName string) resource.TestCheckFunc {
-	return resource.TestCheckResourceAttr(fmt.Sprintf("pingone_language_translation.%s", resourceName), "id", "expected_value")
-
+	return resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_language_translation.%s", resourceName), "short_key", "button.createNewAccount"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_language_translation.%s", resourceName), "reference_text", "Create new Account"),
+	)
 }
 
-// Validate any computed values when applying complete HCL
-// TODO This may not be needed as a separate function from minimal HCL if the expected values match
-// TODO remove any values that are not computed from this check
-// TODO set expected values
-func languageTranslation_CheckComputedValuesComplete(resourceName string) resource.TestCheckFunc {
-	return resource.TestCheckResourceAttr(fmt.Sprintf("pingone_language_translation.%s", resourceName), "id", "expected_value")
-
+// Validate any computed values when applying updated HCL
+func languageTranslation_CheckComputedValuesUpdated(resourceName string) resource.TestCheckFunc {
+	return resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_language_translation.%s", resourceName), "short_key", "button.createNewAccount"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_language_translation.%s", resourceName), "reference_text", "Update New Account"),
+	)
 }
 
-func languageTranslation_GetIDs(resourceName string, environmentId, locale *string) resource.TestCheckFunc {
+func languageTranslation_GetIDs(resourceName string, environmentId, id *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -250,8 +260,8 @@ func languageTranslation_GetIDs(resourceName string, environmentId, locale *stri
 		if environmentId != nil {
 			*environmentId = rs.Primary.Attributes["environment_id"]
 		}
-		if locale != nil {
-			*locale = rs.Primary.Attributes["locale"]
+		if id != nil {
+			*id = rs.Primary.Attributes["id"]
 		}
 
 		return nil

@@ -5,6 +5,7 @@ package verify
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -52,4 +53,15 @@ func P1ResourceIDValidator() validator.String {
 
 func P1DVResourceIDValidator() validator.String {
 	return stringvalidator.RegexMatches(P1DVResourceIDRegexpFullString, fmt.Sprintf("The PingOne DaVinci resource ID is malformed.  Must match regex %q", P1DVResourceIDRegexpFullString))
+}
+
+// Locale
+func LocaleValidator() *regexp.Regexp {
+	isoList := ReservedIsoList()
+	escaped := make([]string, len(isoList))
+	for i, v := range isoList {
+		escaped[i] = regexp.QuoteMeta(v)
+	}
+	pattern := "(" + strings.Join(escaped, "|") + ")"
+	return regexp.MustCompile(pattern)
 }
