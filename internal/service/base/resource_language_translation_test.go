@@ -197,7 +197,7 @@ func languageTranslation_InitialHCL(resourceName string) string {
 
 resource "pingone_language_translation" "%[2]s" {
   environment_id  = data.pingone_environment.general_test.id
-  locale          = "aa"
+  locale          = "fr"
   key             = "flow-ui.button.createNewAccount"
   translated_text = "Create new Account"
 }
@@ -211,7 +211,7 @@ func languageTranslation_UpdatedHCL(resourceName string) string {
 
 resource "pingone_language_translation" "%[2]s" {
   environment_id  = data.pingone_environment.general_test.id
-  locale          = "aa"
+  locale          = "fr"
   key             = "flow-ui.button.createNewAccount"
   translated_text = "Update New Account"
 }
@@ -224,9 +224,9 @@ func languageTranslation_NewEnvHCL(environmentName, licenseID, resourceName stri
 
 resource "pingone_language_translation" "%[3]s" {
   environment_id  = pingone_environment.%[2]s.id
-  locale          = "aa"
+  locale          = "fr"
   key             = "flow-ui.button.createNewAccount"
-  translated_text = "Create new Account"
+  translated_text = "Créer un nouveau compte"
 }
 `, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
@@ -293,8 +293,8 @@ func languageTranslation_CheckDestroy(s *terraform.State) error {
 
 			if translations, ok := pageCursor.EntityArray.Embedded.GetTranslationsOk(); ok {
 				for _, translation := range translations {
-					// the translated text is empty when the translation is set to the default, and `en` is not the locale
-					if v, ok := translation.GetIdOk(); ok && *v == rs.Primary.Attributes["id"] && translation.TranslatedText != "" {
+					// verifying the translation text is back to the original value for the `fr` locale
+					if v, ok := translation.GetIdOk(); ok && *v == rs.Primary.Attributes["id"] && translation.TranslatedText == "Créer un nouveau compte" {
 						found = true
 						break
 					}

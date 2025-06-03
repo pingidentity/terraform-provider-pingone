@@ -200,7 +200,7 @@ func (r *languageTranslationResource) Create(ctx context.Context, req resource.C
 	)...)
 
 	// Subsequent read needed as the API does not return the full object on any create or update operation.
-	var responseData management.LocaleTranslation
+	var responseData *management.LocaleTranslation
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
@@ -220,7 +220,7 @@ func (r *languageTranslationResource) Create(ctx context.Context, req resource.C
 				if translations, ok := pageCursor.EntityArray.Embedded.GetTranslationsOk(); ok {
 					for _, translation := range translations {
 						if v, ok := translation.GetKeyOk(); ok && *v == data.Key.ValueString() {
-							return translation, pageCursor.HTTPResponse, nil
+							return &translation, pageCursor.HTTPResponse, nil
 						}
 					}
 				}
@@ -234,12 +234,20 @@ func (r *languageTranslationResource) Create(ctx context.Context, req resource.C
 		&responseData,
 	)...)
 
+	if responseData == nil {
+		resp.Diagnostics.AddError(
+			"Resource Not Found",
+			"The language translation resource could not be found after creation. It may have been deleted outside of Terraform.",
+		)
+		return
+	}
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Read response into the model
-	resp.Diagnostics.Append(data.readClientResponse(responseData, data)...)
+	resp.Diagnostics.Append(data.readClientResponse(*responseData, data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -361,7 +369,7 @@ func (r *languageTranslationResource) Update(ctx context.Context, req resource.U
 	)...)
 
 	// Subsequent read needed as the API does not return the full object on any create or update operation.
-	var responseData management.LocaleTranslation
+	var responseData *management.LocaleTranslation
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
@@ -381,7 +389,7 @@ func (r *languageTranslationResource) Update(ctx context.Context, req resource.U
 				if translations, ok := pageCursor.EntityArray.Embedded.GetTranslationsOk(); ok {
 					for _, translation := range translations {
 						if v, ok := translation.GetKeyOk(); ok && *v == data.Key.ValueString() {
-							return translation, pageCursor.HTTPResponse, nil
+							return &translation, pageCursor.HTTPResponse, nil
 						}
 					}
 				}
@@ -395,12 +403,20 @@ func (r *languageTranslationResource) Update(ctx context.Context, req resource.U
 		&responseData,
 	)...)
 
+	if responseData == nil {
+		resp.Diagnostics.AddError(
+			"Resource Not Found",
+			"The language translation resource could not be found after update. It may have been deleted outside of Terraform.",
+		)
+		return
+	}
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Read response into the model
-	resp.Diagnostics.Append(data.readClientResponse(responseData, data)...)
+	resp.Diagnostics.Append(data.readClientResponse(*responseData, data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
