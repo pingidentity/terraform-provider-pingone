@@ -8,6 +8,7 @@ import (
 	"os"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -226,6 +227,12 @@ func TestAccPopulation_PasswordPolicy(t *testing.T) {
 }
 
 func TestAccPopulation_DataProtection(t *testing.T) {
+	// If it is before the week of the next release, skip this test
+	if time.Now().Before(time.Date(2025, time.June, 14, 0, 0, 0, 0, time.UTC)) {
+		t.Skipf("Skipping TestAccPopulation_DataProtection as it requires creating a production environment")
+	} else {
+		t.Fatal("Remove skip logic from TestAccPopulation_DataProtection")
+	}
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
