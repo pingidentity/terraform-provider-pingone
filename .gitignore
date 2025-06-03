@@ -38,6 +38,3 @@ vendor
 terraform-provider-pingone
 assets
 env*.sh
-
-# VSCode files
-.vscode/

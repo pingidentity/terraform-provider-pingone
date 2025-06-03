@@ -2,12 +2,12 @@
 page_title: "pingone_language_translation Resource - terraform-provider-pingone"
 subcategory: "Platform"
 description: |-
-  Resource to create and manage the language translation.
+  Resource to create and manage localized translations in an environment.
 ---
 
 # pingone_language_translation (Resource)
 
-Resource to create and manage the language translation.
+Resource to create and manage localized translations in an environment.
 
 ## Example Usage
 
@@ -16,11 +16,22 @@ resource "pingone_environment" "my_environment" {
   # ...
 }
 
+locals {
+  language_locales = [
+    "en", # English
+    "de", # German
+    "es", # Spanish
+    "fr", # French
+    "it", # Italian
+  ]
+}
+
 resource "pingone_language_translation" "my_language_translation" {
+  for_each       = toset(local.language_locales)
   environment_id = pingone_environment.my_environment.id
 
-  key             = "myKey"
-  locale          = "en"
+  key             = "flow-ui.button.createNewAccount"
+  locale          = each.key
   translated_test = "This is translated text"
 }
 ```
@@ -31,14 +42,14 @@ resource "pingone_language_translation" "my_language_translation" {
 ### Required
 
 - `environment_id` (String) The ID of the environment to create and manage the language_translation in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
-- `key` (String) The page and name of the interface element to be localized (for example, `flow-ui.button.cancel`).
-- `locale` (String) An ISO standard language code. For more information about standard language codes, see [ISO Language Code Table](http://www.lingoes.net/en/translator/langcode.htm).  The following language codes are reserved as they are created automatically in the environment: `cs`, `de`, `en`, `es`, `fr`, `fr-CA`, `hu`, `it`, `ja`, `ko`, `nl`, `pl`, `pt`, `ru`, `th`, `tr`, `zh`.
-- `translated_text` (String) The translated string text associated with the interface element.
+- `key` (String) The page and name of the interface element to be localized (for example, `flow-ui.button.cancel`). Keys for a locale can be found using the [PingOne Platform API](https://apidocs.pingidentity.com/pingone/platform/v1/api/#get-read-translation).
+- `locale` (String) An ISO standard language code. For more information about standard language codes, see [ISO Language Code Table](http://www.lingoes.net/en/translator/langcode.htm).  The following language codes are supported: `aa`, `ab`, `ae`, `af`, `af-ZA`, `ak`, `am`, `an`, `ar`, `ar-AE`, `ar-BH`, `ar-DZ`, `ar-EG`, `ar-IQ`, `ar-JO`, `ar-KW`, `ar-LB`, `ar-LY`, `ar-MA`, `ar-OM`, `ar-QA`, `ar-SA`, `ar-SY`, `ar-TN`, `ar-YE`, `as`, `av`, `ay`, `az`, `az-AZ`, `ba`, `be`, `be-BY`, `bg`, `bg-BG`, `bi`, `bm`, `bn`, `bo`, `br`, `bs`, `bs-BA`, `ca`, `ca-ES`, `ce`, `ch`, `cmn-CN`, `cmn-TW`, `co`, `cr`, `cs`, `cs-CZ`, `cu`, `cv`, `cy`, `cy-GB`, `da`, `da-DK`, `de`, `de-AT`, `de-CH`, `de-DE`, `de-LI`, `de-LU`, `dv`, `dv-MV`, `dz`, `ee`, `el`, `el-GR`, `en`, `en-AU`, `en-BZ`, `en-CA`, `en-CB`, `en-GB`, `en-GB-WLS`, `en-IE`, `en-IN`, `en-JM`, `en-NZ`, `en-PH`, `en-TT`, `en-US`, `en-ZA`, `en-ZW`, `eo`, `es`, `es-AR`, `es-BO`, `es-CL`, `es-CO`, `es-CR`, `es-DO`, `es-EC`, `es-ES`, `es-GT`, `es-HN`, `es-MX`, `es-NI`, `es-PA`, `es-PE`, `es-PR`, `es-PY`, `es-SV`, `es-US`, `es-UY`, `es-VE`, `et`, `et-EE`, `eu`, `eu-ES`, `fa`, `fa-IR`, `ff`, `fi`, `fi-FI`, `fj`, `fo`, `fo-FO`, `fr`, `fr-BE`, `fr-CA`, `fr-CH`, `fr-FR`, `fr-LU`, `fr-MC`, `fy`, `ga`, `gd`, `gl`, `gl-ES`, `gn`, `gu`, `gu-IN`, `gv`, `ha`, `he`, `he-IL`, `hi`, `hi-IN`, `ho`, `hr`, `hr-BA`, `hr-HR`, `ht`, `hu`, `hu-HU`, `hy`, `hy-AM`, `hz`, `ia`, `id`, `id-ID`, `ie`, `ig`, `ii`, `ik`, `io`, `is`, `is-IS`, `it`, `it-CH`, `it-IT`, `iu`, `ja`, `ja-JP`, `jv`, `ka`, `ka-GE`, `kg`, `ki`, `kj`, `kk`, `kk-KZ`, `kl`, `km`, `kn`, `kn-IN`, `ko`, `ko-KR`, `kok`, `kok-IN`, `kr`, `ks`, `ku`, `kv`, `kw`, `ky`, `ky-KG`, `la`, `lb`, `lg`, `li`, `ln`, `lo`, `lt`, `lt-LT`, `lu`, `lv`, `lv-LV`, `mg`, `mh`, `mi`, `mi-NZ`, `mk`, `mk-MK`, `ml`, `mn`, `mn-MN`, `mr`, `mr-IN`, `ms`, `ms-BN`, `ms-MY`, `mt`, `mt-MT`, `my`, `na`, `nb`, `nb-NO`, `nd`, `ne`, `ng`, `nl`, `nl-BE`, `nl-NL`, `nn`, `nn-NO`, `no`, `nr`, `ns`, `ns-ZA`, `nv`, `ny`, `oc`, `oj`, `om`, `or`, `os`, `pa`, `pa-IN`, `pi`, `pl`, `pl-PL`, `ps`, `ps-AR`, `pt`, `pt-BR`, `pt-PT`, `qu`, `qu-BO`, `qu-EC`, `qu-PE`, `rm`, `rn`, `ro`, `ro-RO`, `ru`, `ru-RU`, `rw`, `sa`, `sa-IN`, `sc`, `sd`, `se`, `se-FI`, `se-NO`, `se-SE`, `sg`, `si`, `sk`, `sk-SK`, `sl`, `sl-SI`, `sm`, `sn`, `so`, `sq`, `sq-AL`, `sr`, `sr-BA`, `sr-SP`, `ss`, `st`, `su`, `sv`, `sv-FI`, `sv-SE`, `sw`, `sw-KE`, `syr`, `syr-SY`, `ta`, `ta-IN`, `te`, `te-IN`, `tg`, `th`, `th-TH`, `ti`, `tk`, `tl`, `tl-PH`, `tn`, `tn-ZA`, `to`, `tr`, `tr-TR`, `ts`, `tt`, `tt-RU`, `tw`, `ty`, `ug`, `uk`, `uk-UA`, `ur`, `ur-PK`, `uz`, `uz-UZ`, `ve`, `vi`, `vi-VN`, `vo`, `wa`, `wo`, `xh`, `xh-ZA`, `yi`, `yo`, `yue-CN`, `za`, `zh`, `zh-CN`, `zh-HK`, `zh-MO`, `zh-SG`, `zh-TW`, `zu`, `zu-ZA`.
+- `translated_text` (String) The translated string text associated with the UI element.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `reference_text` (String) The English string text associated with the interface element.
+- `reference_text` (String) The English string text associated with the UI element.
 - `short_key` (String) The interface element only (for example, `button.cancel`).
 
 ## Import
@@ -46,5 +57,5 @@ resource "pingone_language_translation" "my_language_translation" {
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 ```shell
-terraform import pingone_language_translation.example <environment_id>/<locale_id>/<translation_id>
+terraform import pingone_language_translation.example <environment_id>/<locale>/<translation_id>
 ```

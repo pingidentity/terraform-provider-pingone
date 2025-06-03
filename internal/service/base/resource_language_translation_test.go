@@ -15,6 +15,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 )
 
 func TestAccLanguageTranslation_RemovalDrift(t *testing.T) {
@@ -72,10 +73,35 @@ func TestAccLanguageTranslation_Full(t *testing.T) {
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
+		CheckDestroy:             languageTranslation_CheckDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: languageTranslation_UpdatedHCL(resourceName),
-				Check:  languageTranslation_CheckComputedValuesUpdated(resourceName),
+				Check:  languageTranslation_CheckComputedValues(resourceName),
+			},
+			{
+				Config:  languageTranslation_UpdatedHCL(resourceName),
+				Destroy: true,
+			},
+			{
+				Config: languageTranslation_InitialHCL(resourceName),
+				Check:  languageTranslation_CheckComputedValues(resourceName),
+			},
+			{
+				Config:  languageTranslation_InitialHCL(resourceName),
+				Destroy: true,
+			},
+			{
+				Config: languageTranslation_UpdatedHCL(resourceName),
+				Check:  languageTranslation_CheckComputedValues(resourceName),
+			},
+			{
+				Config: languageTranslation_InitialHCL(resourceName),
+				Check:  languageTranslation_CheckComputedValues(resourceName),
+			},
+			{
+				Config: languageTranslation_UpdatedHCL(resourceName),
+				Check:  languageTranslation_CheckComputedValues(resourceName),
 			},
 			{
 				// Test importing the resource
@@ -94,35 +120,6 @@ func TestAccLanguageTranslation_Full(t *testing.T) {
 				ImportStateVerifyIdentifierAttribute: "id",
 				ImportState:                          true,
 				ImportStateVerify:                    true,
-			},
-		},
-	})
-}
-
-func TestAccLanguageTranslation_Change(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
-		},
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: languageTranslation_UpdatedHCL(resourceName),
-				Check:  languageTranslation_CheckComputedValuesUpdated(resourceName),
-			},
-			{
-				Config: languageTranslation_InitialHCL(resourceName),
-				Check:  languageTranslation_CheckComputedValuesMinimal(resourceName),
-			},
-			{
-				Config: languageTranslation_UpdatedHCL(resourceName),
-				Check:  languageTranslation_CheckComputedValuesUpdated(resourceName),
 			},
 		},
 	})
@@ -148,7 +145,7 @@ func TestAccLanguageTranslation_NewEnv(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: languageTranslation_NewEnvHCL(environmentName, licenseID, resourceName),
-				Check:  languageTranslation_CheckComputedValuesMinimal(resourceName),
+				Check:  languageTranslation_CheckComputedValues(resourceName),
 			},
 		},
 	})
@@ -200,7 +197,7 @@ func languageTranslation_InitialHCL(resourceName string) string {
 
 resource "pingone_language_translation" "%[2]s" {
   environment_id  = data.pingone_environment.general_test.id
-  locale          = "en"
+  locale          = "aa"
   key             = "flow-ui.button.createNewAccount"
   translated_text = "Create new Account"
 }
@@ -214,7 +211,7 @@ func languageTranslation_UpdatedHCL(resourceName string) string {
 
 resource "pingone_language_translation" "%[2]s" {
   environment_id  = data.pingone_environment.general_test.id
-  locale          = "en"
+  locale          = "aa"
   key             = "flow-ui.button.createNewAccount"
   translated_text = "Update New Account"
 }
@@ -227,26 +224,18 @@ func languageTranslation_NewEnvHCL(environmentName, licenseID, resourceName stri
 
 resource "pingone_language_translation" "%[3]s" {
   environment_id  = pingone_environment.%[2]s.id
-  locale          = "en"
+  locale          = "aa"
   key             = "flow-ui.button.createNewAccount"
   translated_text = "Create new Account"
 }
 `, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
-// Validate any computed values when applying minimal HCL
-func languageTranslation_CheckComputedValuesMinimal(resourceName string) resource.TestCheckFunc {
+// Validate any computed values when applying HCL - these do not change when `en` is not the supplied locale
+func languageTranslation_CheckComputedValues(resourceName string) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_language_translation.%s", resourceName), "short_key", "button.createNewAccount"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_language_translation.%s", resourceName), "reference_text", "Create new Account"),
-	)
-}
-
-// Validate any computed values when applying updated HCL
-func languageTranslation_CheckComputedValuesUpdated(resourceName string) resource.TestCheckFunc {
-	return resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_language_translation.%s", resourceName), "short_key", "button.createNewAccount"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_language_translation.%s", resourceName), "reference_text", "Update New Account"),
 	)
 }
 
@@ -266,4 +255,59 @@ func languageTranslation_GetIDs(resourceName string, environmentId, id *string) 
 
 		return nil
 	}
+}
+
+func languageTranslation_CheckDestroy(s *terraform.State) error {
+	var ctx = context.Background()
+
+	p1Client, err := acctest.TestClient(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	apiClient := p1Client.API.ManagementAPIClient
+
+	for _, rs := range s.RootModule().Resources {
+		if rs.Type != "pingone_language_translation" {
+			continue
+		}
+
+		shouldContinue, err := acctest.CheckParentEnvironmentDestroy(ctx, apiClient, rs.Primary.Attributes["environment_id"])
+		if err != nil {
+			return err
+		}
+
+		if shouldContinue {
+			continue
+		}
+
+		found := false
+		pagedIterator := apiClient.TranslationsApi.ReadTranslations(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["locale"]).Execute()
+
+		for pageCursor, err := range pagedIterator {
+			if err != nil {
+				_, _, err := framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, rs.Primary.Attributes["environment_id"], nil, pageCursor.HTTPResponse, err)
+				return err
+			}
+
+			if translations, ok := pageCursor.EntityArray.Embedded.GetTranslationsOk(); ok {
+				for _, translation := range translations {
+					// the translated text is empty when the translation is set to the default, and `en` is not the locale
+					if v, ok := translation.GetIdOk(); ok && *v == rs.Primary.Attributes["id"] && translation.TranslatedText != "" {
+						found = true
+						break
+					}
+				}
+			}
+		}
+
+		if !found {
+			continue
+		}
+
+		return fmt.Errorf("PingOne Language Translation %s still exists", rs.Primary.ID)
+	}
+
+	return nil
 }

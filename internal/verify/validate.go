@@ -57,7 +57,7 @@ func P1DVResourceIDValidator() validator.String {
 
 // Locale
 func LocaleValidator() *regexp.Regexp {
-	isoList := ReservedIsoList()
+	isoList := FullIsoList()
 	escaped := make([]string, len(isoList))
 	for i, v := range isoList {
 		escaped[i] = regexp.QuoteMeta(v)
