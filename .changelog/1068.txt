@@ -1,0 +1,7 @@
+```release-note:breaking-change
+`resource/pingone_mfa_settings`: Updated the default value for `users.mfa_enabled` to `true`, to align with current platform defaults.
+```
+
+```release-note:breaking-change
+`resource/pingone_user`: Updated the default value for `mfa_enabled` to `true`, to align with current platform defaults.
+```
