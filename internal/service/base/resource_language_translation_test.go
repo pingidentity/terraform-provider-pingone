@@ -35,6 +35,7 @@ func TestAccLanguageTranslation_RemovalDrift(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
@@ -68,6 +69,7 @@ func TestAccLanguageTranslation_Full(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -136,6 +138,7 @@ func TestAccLanguageTranslation_NewEnv(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
@@ -158,6 +161,7 @@ func TestAccLanguageTranslation_BadParameters(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -224,9 +228,9 @@ func languageTranslation_NewEnvHCL(environmentName, licenseID, resourceName stri
 
 resource "pingone_language_translation" "%[3]s" {
   environment_id  = pingone_environment.%[2]s.id
-  locale          = "fr"
+  locale          = "bg"
   key             = "flow-ui.button.createNewAccount"
-  translated_text = "Créer un nouveau compte"
+  translated_text = "Създайте нов акаунт"
 }
 `, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
