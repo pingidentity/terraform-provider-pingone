@@ -70,7 +70,7 @@ func TestAccLicenseDataSource_ByIDFull(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "environments.allow_custom_domain", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "environments.allow_custom_schema", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "environments.allow_production", "true"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "environments.max", "50"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "environments.max", "500"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "environments.regions.#", "4"),
 					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "environments.regions.*", "EU"),
 					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "environments.regions.*", "NORTH_AMERICA"),

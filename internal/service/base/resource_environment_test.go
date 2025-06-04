@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -243,6 +244,12 @@ func TestAccEnvironment_NonCompatibleRegion(t *testing.T) {
 }
 
 func TestAccEnvironment_EnvironmentTypeSwitching(t *testing.T) {
+	// If it is before the week of the next release, skip this test
+	if time.Now().Before(time.Date(2025, time.June, 14, 0, 0, 0, 0, time.UTC)) {
+		t.Skipf("Skipping TestAccEnvironment_EnvironmentTypeSwitching as it requires creating a production environment")
+	} else {
+		t.Fatal("Remove skip logic from TestAccEnvironment_EnvironmentTypeSwitching")
+	}
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGenEnvironment()
