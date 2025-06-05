@@ -440,8 +440,11 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 				Check:  fullCheck("initialusername", "initialpassword"),
 			},
 			{
+				Config: testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name, "updatedusername", "updatedpassword"),
+				Check:  fullCheck("updatedusername", "updatedpassword"),
+			},
+			{
 				Config:  testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name, "updatedusername", "updatedpassword"),
-				Check:   fullCheck("updatedusername", "updatedpassword"),
 				Destroy: true,
 			},
 			// Minimal
