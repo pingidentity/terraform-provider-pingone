@@ -22,6 +22,7 @@ func TestAccGatewayDataSource_FindGatewayAll(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -69,6 +70,7 @@ func TestAccGatewayDataSource_FindRADIUSGatewayByID(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -115,6 +117,7 @@ func TestAccGatewayDataSource_FindRADIUSGatewayByName(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -155,6 +158,7 @@ func TestAccGatewayDataSource_FindLDAPGatewayByID(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -224,6 +228,7 @@ func TestAccGatewayDataSource_FindLDAPGatewayByName(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},

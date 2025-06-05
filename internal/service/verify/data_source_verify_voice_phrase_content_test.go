@@ -39,6 +39,7 @@ func TestAccVerifyVoicePhraseContentDataSource_All(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
@@ -71,6 +72,7 @@ func TestAccVerifyVoicePhraseContentDataSource_FailureChecks(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)

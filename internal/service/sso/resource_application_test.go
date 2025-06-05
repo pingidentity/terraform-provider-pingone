@@ -38,6 +38,7 @@ func TestAccApplication_RemovalDrift(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
@@ -90,6 +91,7 @@ func TestAccApplication_NewEnv(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
@@ -121,6 +123,7 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -219,6 +222,7 @@ func TestAccApplication_OIDCMinimalWeb(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -286,6 +290,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -457,6 +462,7 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -558,6 +564,7 @@ func TestAccApplication_OIDCMinimalNative(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -629,6 +636,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -829,6 +837,7 @@ func TestAccApplication_NativeKerberos(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckRegionSupportsWorkforce(t)
@@ -943,6 +952,7 @@ func TestAccApplication_NativeMobile(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -1068,6 +1078,7 @@ func TestAccApplication_NativeMobile_IntegrityDetection(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckGoogleJSONKey(t)
@@ -1129,6 +1140,7 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -1235,6 +1247,7 @@ func TestAccApplication_OIDCMinimalCustom(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -1304,6 +1317,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -1533,6 +1547,7 @@ func TestAccApplication_OIDCCustom_Device(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -1577,6 +1592,7 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -1678,6 +1694,7 @@ func TestAccApplication_OIDCMinimalService(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -1745,6 +1762,7 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -1940,6 +1958,7 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -2037,6 +2056,7 @@ func TestAccApplication_OIDCMinimalSPA(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -2103,6 +2123,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -2271,6 +2292,7 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -2363,6 +2385,7 @@ func TestAccApplication_OIDCMinimalWorker(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -2429,6 +2452,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -2590,6 +2614,7 @@ func TestAccApplication_OIDC_WildcardInRedirectURI(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -2628,6 +2653,7 @@ func TestAccApplication_OIDC_LocalhostAddresses(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -2681,6 +2707,7 @@ func TestAccApplication_OIDC_NativeAppAddresses(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -2747,6 +2774,7 @@ func TestAccApplication_OIDC_JwtTokenAuth(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -2848,6 +2876,7 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
@@ -2956,6 +2985,7 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
@@ -3019,6 +3049,7 @@ func TestAccApplication_ExternalLinkFull(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -3077,6 +3108,7 @@ func TestAccApplication_ExternalLinkMinimal(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -3122,6 +3154,7 @@ func TestAccApplication_WSFedFull(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
@@ -3168,6 +3201,7 @@ func TestAccApplication_WSFedMinimal(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
@@ -3197,6 +3231,7 @@ func TestAccApplication_WSFedMinimalMaximal(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
@@ -3329,6 +3364,7 @@ func TestAccApplication_Enabled(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -3368,6 +3404,7 @@ func TestAccApplication_BadParameters(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},

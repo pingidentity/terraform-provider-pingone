@@ -8,6 +8,7 @@ import (
 	"os"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -38,6 +39,7 @@ func TestAccPopulation_RemovalDrift(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
@@ -90,6 +92,7 @@ func TestAccPopulation_NewEnv(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
@@ -120,6 +123,7 @@ func TestAccPopulation_Full(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -172,6 +176,7 @@ func TestAccPopulation_Minimal(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -204,6 +209,7 @@ func TestAccPopulation_PasswordPolicy(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -226,6 +232,12 @@ func TestAccPopulation_PasswordPolicy(t *testing.T) {
 }
 
 func TestAccPopulation_DataProtection(t *testing.T) {
+	// If it is before the week of the next release, skip this test
+	if time.Now().Before(time.Date(2025, time.June, 14, 0, 0, 0, 0, time.UTC)) {
+		t.Skipf("Skipping TestAccPopulation_DataProtection as it requires creating a production environment")
+	} else {
+		t.Fatal("Remove skip logic from TestAccPopulation_DataProtection")
+	}
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -244,6 +256,7 @@ func TestAccPopulation_DataProtection(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
@@ -306,6 +319,7 @@ func TestAccPopulation_BadParameters(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},

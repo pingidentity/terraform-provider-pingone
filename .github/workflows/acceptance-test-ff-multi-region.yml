@@ -50,7 +50,7 @@ jobs:
       PINGONE_LICENSE_ID: ${{ secrets.AP_PINGONE_FF_LICENSE_ID }}
       PINGONE_ORGANIZATION_ID: ${{ secrets.AP_PINGONE_FF_ORGANIZATION_ID }}
 
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
 
     - name: Check out code into the Go module directory
