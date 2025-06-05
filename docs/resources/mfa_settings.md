@@ -88,7 +88,7 @@ Required:
 
 Required:
 
-- `mfa_enabled` (Boolean) A boolean that, when set to `true`, will enable MFA by default for new users.
+- `mfa_enabled` (Boolean) A boolean that, when set to `true`, will enable MFA by default for new users.  Defaults to `true`.
 
 ## Import
 
