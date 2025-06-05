@@ -276,7 +276,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 
 	mfaEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether multi-factor authentication is enabled.",
-	).DefaultValue(false)
+	).DefaultValue(true)
 
 	mobilePhoneDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the user's native phone number. This might also match the `primary_phone` attribute. This may be explicitly set to null when updating a user to unset it. Valid phone numbers must have at least one number and a maximum character length of 32.",
