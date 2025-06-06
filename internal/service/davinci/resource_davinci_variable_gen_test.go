@@ -10,12 +10,12 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/pingidentity/pingone-go-client/pingone"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
-	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 )
 
 func TestAccDavinciVariable_RemovalDrift(t *testing.T) {
@@ -30,7 +30,7 @@ func TestAccDavinciVariable_RemovalDrift(t *testing.T) {
 	var environmentId string
 	var id string
 
-	var p1Client *client.Client
+	var p1Client *pingone.APIClient
 	var ctx = context.Background()
 
 	resource.Test(t, resource.TestCase{
@@ -52,7 +52,7 @@ func TestAccDavinciVariable_RemovalDrift(t *testing.T) {
 			},
 			{
 				PreConfig: func() {
-					davinciVariable_Delete(ctx, p1Client.API.ManagementAPIClient, t, environmentId, id)
+					davinciVariable_Delete(ctx, p1Client, t, environmentId, id)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -64,7 +64,7 @@ func TestAccDavinciVariable_RemovalDrift(t *testing.T) {
 			},
 			{
 				PreConfig: func() {
-					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentId)
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client, t, environmentId)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -238,7 +238,12 @@ resource "pingone_davinci_variable" "%[2]s" {
   min = //TODO
   mutable = //TODO
   name = //TODO
-  value = //TODO
+  value = {
+    bool = //TODO
+    float32 = //TODO
+    json_object = //TODO
+    string = //TODO
+  }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
@@ -267,7 +272,10 @@ func davinciVariable_CheckComputedValuesMinimal(resourceName string) resource.Te
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "display_name", "expected_value"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "max", "expected_value"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "min", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value", "expected_value"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.bool", "expected_value"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.float32", "expected_value"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.json_object", "expected_value"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.string", "expected_value"),
 	)
 }
 
@@ -280,7 +288,10 @@ func davinciVariable_CheckComputedValuesComplete(resourceName string) resource.T
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "display_name", "expected_value"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "max", "expected_value"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "min", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value", "expected_value"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.bool", "expected_value"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.float32", "expected_value"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.json_object", "expected_value"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.string", "expected_value"),
 	)
 }
 
@@ -303,12 +314,12 @@ func davinciVariable_GetIDs(resourceName string, environmentId, id *string) reso
 }
 
 // Delete the resource
-func davinciVariable_Delete(ctx context.Context, apiClient *management.APIClient, t *testing.T, environmentId, id string) {
+func davinciVariable_Delete(ctx context.Context, apiClient *pingone.APIClient, t *testing.T, environmentId, id string) {
 	if environmentId == "" || id == "" {
 		t.Fatalf("One of the identifier attributes can't be determined. environmentId: '%s' id: '%s'", environmentId, id)
 	}
 
-	_, err := apiClient.DaVinciVariableApi.DeleteVariableById(ctx, environmentId, id).Execute()
+	_, err := apiClient.DaVinciVariableApi.DeleteVariableById(ctx, uuid.MustParse(environmentId), uuid.MustParse(id)).Execute()
 	if err != nil {
 		t.Fatalf("Failed to delete davinci_variable: %v", err)
 	}
@@ -324,14 +335,11 @@ func davinciVariable_CheckDestroy(s *terraform.State) error {
 		return err
 	}
 
-	apiClient := p1Client.API.ManagementAPIClient
-
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "pingone_davinci_variable" {
 			continue
 		}
-
-		shouldContinue, err := acctest.CheckParentEnvironmentDestroy(ctx, p1Client.API.ManagementAPIClient, rs.Primary.Attributes["environment_id"])
+		shouldContinue, err := acctest.CheckParentEnvironmentDestroy(ctx, p1Client, rs.Primary.Attributes["environment_id"])
 		if err != nil {
 			return err
 		}
@@ -340,7 +348,7 @@ func davinciVariable_CheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, r, err := apiClient.DaVinciVariableApi.GetVariableById(ctx, rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["id"]).Execute()
+		_, r, err := p1Client.DaVinciVariableApi.GetVariableById(ctx, uuid.MustParse(rs.Primary.Attributes["environment_id"]), uuid.MustParse(rs.Primary.Attributes["id"])).Execute()
 
 		shouldContinue, err = acctest.CheckForResourceDestroy(r, err)
 		if err != nil {

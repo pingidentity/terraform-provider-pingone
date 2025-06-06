@@ -9,13 +9,20 @@ import (
 	"net/http"
 	"regexp"
 
+	"encoding/json"
+
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/float32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/pingidentity/pingone-go-client/pingone"
@@ -55,16 +62,7 @@ func (r *davinciVariableResource) Configure(ctx context.Context, req resource.Co
 		return
 	}
 
-	r.Client = resourceConfig.NewSdkClient
-	if r.Client == nil {
-		resp.Diagnostics.AddError(
-			"Client not initialised",
-			"Expected the updated PingOne client, got nil.  Please report this issue to the provider maintainers.",
-		)
-		return
-	}
-
-	r.ManagementClient = resourceConfig.Client.API
+	r.Client = resourceConfig.Client
 	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialised",
@@ -75,19 +73,17 @@ func (r *davinciVariableResource) Configure(ctx context.Context, req resource.Co
 }
 
 type davinciVariableResourceModel struct {
-	Context     types.String `tfsdk:"context"`
-	DataType    types.String `tfsdk:"data_type"`
-	DisplayName types.String `tfsdk:"display_name"`
-	//TODO UUID instead
+	Context       types.String `tfsdk:"context"`
+	DataType      types.String `tfsdk:"data_type"`
+	DisplayName   types.String `tfsdk:"display_name"`
 	EnvironmentId types.String `tfsdk:"environment_id"`
 	Flow          types.Object `tfsdk:"flow"`
-	//TODO UUID instead
-	Id      types.String `tfsdk:"id"`
-	Max     types.Int32  `tfsdk:"max"`
-	Min     types.Int32  `tfsdk:"min"`
-	Mutable types.Bool   `tfsdk:"mutable"`
-	Name    types.String `tfsdk:"name"`
-	Value   types.Object `tfsdk:"value"`
+	Id            types.String `tfsdk:"id"`
+	Max           types.Int32  `tfsdk:"max"`
+	Min           types.Int32  `tfsdk:"min"`
+	Mutable       types.Bool   `tfsdk:"mutable"`
+	Name          types.String `tfsdk:"name"`
+	Value         types.Object `tfsdk:"value"`
 }
 
 func (r *davinciVariableResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -128,9 +124,17 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 					stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
 				},
 			},
-			"environment_id": framework.Attr_LinkID(
-				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create and manage the davinci_variable in."),
-			),
+			"environment_id": schema.StringAttribute{
+				Required:    true,
+				Description: "The ID of the environment to create and manage the davinci_variable in.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
+					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
+				},
+			},
 			"flow": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
@@ -142,7 +146,14 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 				},
 				Optional: true,
 			},
-			"id": framework.Attr_ID(),
+			"id": schema.StringAttribute{
+				Computed:    true,
+				Description: "The ID of this resource.",
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
+					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
+				},
+			},
 			"max": schema.Int32Attribute{
 				Optional: true,
 			},
@@ -160,39 +171,87 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 				},
 			},
 			"value": schema.SingleNestedAttribute{
-				Attributes: map[string]schema.Attribute{},
-				Optional:   true,
+				Attributes: map[string]schema.Attribute{
+					"bool": schema.BoolAttribute{
+						Optional: true,
+						Validators: []validator.Bool{
+							boolvalidator.ExactlyOneOf(
+								path.MatchRelative().AtParent().AtName("float32"),
+								path.MatchRelative().AtParent().AtName("json_object"),
+								path.MatchRelative().AtParent().AtName("string"),
+							),
+						},
+					},
+					"float32": schema.Float32Attribute{
+						Optional: true,
+						Validators: []validator.Float32{
+							float32validator.ExactlyOneOf(
+								path.MatchRelative().AtParent().AtName("bool"),
+								path.MatchRelative().AtParent().AtName("json_object"),
+								path.MatchRelative().AtParent().AtName("string"),
+							),
+						},
+					},
+					"json_object": schema.StringAttribute{
+						CustomType: jsontypes.NormalizedType{},
+						Optional:   true,
+						Validators: []validator.String{
+							stringvalidator.ExactlyOneOf(
+								path.MatchRelative().AtParent().AtName("bool"),
+								path.MatchRelative().AtParent().AtName("float32"),
+								path.MatchRelative().AtParent().AtName("string"),
+							),
+						},
+					},
+					"string": schema.StringAttribute{
+						Optional: true,
+						Validators: []validator.String{
+							stringvalidator.ExactlyOneOf(
+								path.MatchRelative().AtParent().AtName("bool"),
+								path.MatchRelative().AtParent().AtName("float32"),
+								path.MatchRelative().AtParent().AtName("json_object"),
+							),
+						},
+					},
+				},
+				Optional: true,
 			},
 		},
 	}
 }
 
-func (model *davinciVariableResourceModel) buildClientStruct() (*pingone.DaVinciVariableCreateRequest, *pingone.DaVinciVariableReplaceRequest, diag.Diagnostics) {
+func (model *davinciVariableResourceModel) buildClientStructPost() (*pingone.DaVinciVariableCreateRequest, diag.Diagnostics) {
 	result := &pingone.DaVinciVariableCreateRequest{}
 	var respDiags diag.Diagnostics
 	var err error
 	// context
-	context, err := pingone.NewDaVinciVariableCreateRequestContextFromValue(model.Context.ValueString())
+	contextValue, err := pingone.NewDaVinciVariableCreateRequestContextFromValue(model.Context.ValueString())
 	if err != nil {
 		respDiags.AddAttributeError(
 			path.Root("context"),
 			"Provided value is not valid",
 			fmt.Sprintf("The value provided for context is not valid: %s", err.Error()),
 		)
+	} else {
+		result.Context = *contextValue
 	}
-	result.Context = *context
+
 	// data_type
-	dataType, err := pingone.NewDaVinciVariableCreateRequestDataTypeFromValue(model.DataType.ValueString())
+	dataTypeValue, err := pingone.NewDaVinciVariableCreateRequestDataTypeFromValue(model.DataType.ValueString())
 	if err != nil {
 		respDiags.AddAttributeError(
 			path.Root("data_type"),
 			"Provided value is not valid",
 			fmt.Sprintf("The value provided for data_type is not valid: %s", err.Error()),
 		)
+	} else {
+		result.DataType = *dataTypeValue
 	}
-	result.DataType = *dataType
+
 	// display_name
-	result.DisplayName = model.DisplayName.ValueStringPointer()
+	if !model.DisplayName.IsNull() && !model.DisplayName.IsUnknown() {
+		result.DisplayName = model.DisplayName.ValueStringPointer()
+	}
 	// flow
 	if !model.Flow.IsNull() && !model.Flow.IsUnknown() {
 		flowValue := &pingone.ResourceRelationshipDaVinci{}
@@ -202,40 +261,132 @@ func (model *davinciVariableResourceModel) buildClientStruct() (*pingone.DaVinci
 	}
 
 	// max
-	result.Max = model.Max.ValueInt32Pointer()
+	if !model.Max.IsNull() && !model.Max.IsUnknown() {
+		result.Max = model.Max.ValueInt32Pointer()
+	}
 	// min
-	result.Min = model.Min.ValueInt32Pointer()
+	if !model.Min.IsNull() && !model.Min.IsUnknown() {
+		result.Min = model.Min.ValueInt32Pointer()
+	}
 	// mutable
 	result.Mutable = model.Mutable.ValueBool()
 	// name
 	result.Name = model.Name.ValueString()
 	// value
-	// if !model.Value.IsNull() && !model.Value.IsUnknown() {
-	// 	valueValue := &pingone.DaVinciVariableCreateRequestValue{}
-	// 	valueAttrs := model.Value.Attributes()
-	// 	result.Value = valueValue
-	// }
-
-	updateResult := &pingone.DaVinciVariableReplaceRequest{
-		// Context:     result.Context,
-		// DataType:    result.DataType,
-		DisplayName: result.DisplayName,
-		Flow:        result.Flow,
-		Max:         result.Max,
-		Min:         result.Min,
-		Mutable:     result.Mutable,
-		Name:        result.Name,
-		// Value:       result.Value,
+	if !model.Value.IsNull() && !model.Value.IsUnknown() {
+		valueValue := &pingone.DaVinciVariableCreateRequestValue{}
+		valueAttrs := model.Value.Attributes()
+		valueValue.Bool = valueAttrs["bool"].(types.Bool).ValueBoolPointer()
+		valueValue.Float32 = valueAttrs["float32"].(types.Float32).ValueFloat32Pointer()
+		if !valueAttrs["json_object"].IsNull() && !valueAttrs["json_object"].IsUnknown() {
+			var jsonValueMap map[string]interface{}
+			err := json.Unmarshal([]byte(valueAttrs["json_object"].(jsontypes.Normalized).ValueString()), &jsonValueMap)
+			if err != nil {
+				respDiags.AddAttributeError(
+					path.Root("value").AtName("json_object"),
+					"Error Parsing JSON Object",
+					fmt.Sprintf("The value provided for json_object could not be parsed as json: %s", err.Error()),
+				)
+			}
+			valueValue.MapmapOfStringAny = &jsonValueMap
+		}
+		valueValue.String = valueAttrs["string"].(types.String).ValueStringPointer()
+		result.Value = valueValue
 	}
-	return result, updateResult, respDiags
+
+	return result, respDiags
+}
+
+func (model *davinciVariableResourceModel) buildClientStructPut() (*pingone.DaVinciVariableReplaceRequest, diag.Diagnostics) {
+	result := &pingone.DaVinciVariableReplaceRequest{}
+	var respDiags diag.Diagnostics
+	var err error
+	// context
+	contextValue, err := pingone.NewDaVinciVariableReplaceRequestContextFromValue(model.Context.ValueString())
+	if err != nil {
+		respDiags.AddAttributeError(
+			path.Root("context"),
+			"Provided value is not valid",
+			fmt.Sprintf("The value provided for context is not valid: %s", err.Error()),
+		)
+	} else {
+		result.Context = *contextValue
+	}
+
+	// data_type
+	dataTypeValue, err := pingone.NewDaVinciVariableReplaceRequestDataTypeFromValue(model.DataType.ValueString())
+	if err != nil {
+		respDiags.AddAttributeError(
+			path.Root("data_type"),
+			"Provided value is not valid",
+			fmt.Sprintf("The value provided for data_type is not valid: %s", err.Error()),
+		)
+	} else {
+		result.DataType = *dataTypeValue
+	}
+
+	// display_name
+	if !model.DisplayName.IsNull() && !model.DisplayName.IsUnknown() {
+		result.DisplayName = model.DisplayName.ValueStringPointer()
+	}
+	// flow
+	if !model.Flow.IsNull() && !model.Flow.IsUnknown() {
+		flowValue := &pingone.ResourceRelationshipDaVinci{}
+		flowAttrs := model.Flow.Attributes()
+		flowValue.Id = flowAttrs["id"].(types.String).ValueString()
+		result.Flow = flowValue
+	}
+
+	// max
+	if !model.Max.IsNull() && !model.Max.IsUnknown() {
+		result.Max = model.Max.ValueInt32Pointer()
+	}
+	// min
+	if !model.Min.IsNull() && !model.Min.IsUnknown() {
+		result.Min = model.Min.ValueInt32Pointer()
+	}
+	// mutable
+	result.Mutable = model.Mutable.ValueBool()
+	// name
+	result.Name = model.Name.ValueString()
+	// value
+	if !model.Value.IsNull() && !model.Value.IsUnknown() {
+		valueValue := &pingone.DaVinciVariableReplaceRequestValue{}
+		valueAttrs := model.Value.Attributes()
+		valueValue.Bool = valueAttrs["bool"].(types.Bool).ValueBoolPointer()
+		valueValue.Float32 = valueAttrs["float32"].(types.Float32).ValueFloat32Pointer()
+		if !valueAttrs["json_object"].IsNull() && !valueAttrs["json_object"].IsUnknown() {
+			var jsonValueMap map[string]interface{}
+			err := json.Unmarshal([]byte(valueAttrs["json_object"].(jsontypes.Normalized).ValueString()), &jsonValueMap)
+			if err != nil {
+				respDiags.AddAttributeError(
+					path.Root("value").AtName("json_object"),
+					"Error Parsing JSON Object",
+					fmt.Sprintf("The value provided for json_object could not be parsed as json: %s", err.Error()),
+				)
+			}
+			valueValue.MapmapOfStringAny = &jsonValueMap
+		}
+		valueValue.String = valueAttrs["string"].(types.String).ValueStringPointer()
+		result.Value = valueValue
+	}
+
+	return result, respDiags
 }
 
 func (state *davinciVariableResourceModel) readClientResponse(response *pingone.DaVinciVariable) diag.Diagnostics {
 	var respDiags, diags diag.Diagnostics
 	// context
-	state.Context = types.StringPointerValue(response.Context)
+	var contextPtrValue *string
+	if response.Context != nil {
+		contextStringValue := string(*response.Context)
+		contextPtrValue = &contextStringValue
+	}
+	contextValue := types.StringPointerValue(contextPtrValue)
+	state.Context = contextValue
 	// data_type
-	state.DataType = types.StringValue(string(response.DataType))
+	dataTypeValue := types.StringValue(string(response.DataType))
+	state.DataType = dataTypeValue
 	// display_name
 	state.DisplayName = types.StringPointerValue(response.DisplayName)
 	// flow
@@ -253,17 +404,20 @@ func (state *davinciVariableResourceModel) readClientResponse(response *pingone.
 	}
 	state.Flow = flowValue
 	// id
-	state.Id = types.StringValue(response.GetId().String())
+	state.Id = types.StringValue(response.Id.String())
+	// max
 	// max
 	if response.Max == nil {
 		state.Max = types.Int32Null()
 	} else {
+		// The API returns a float, but these values represent ints
 		state.Max = types.Int32Value(int32(*response.Max))
 	}
 	// min
 	if response.Min == nil {
 		state.Min = types.Int32Null()
 	} else {
+		// The API returns a float, but these values represent ints
 		state.Min = types.Int32Value(int32(*response.Min))
 	}
 	// mutable
@@ -271,12 +425,35 @@ func (state *davinciVariableResourceModel) readClientResponse(response *pingone.
 	// name
 	state.Name = types.StringValue(response.Name)
 	// value
-	valueAttrTypes := map[string]attr.Type{}
+	valueAttrTypes := map[string]attr.Type{
+		"bool":        types.BoolType,
+		"float32":     types.Float32Type,
+		"json_object": types.StringType,
+		"string":      types.StringType,
+	}
 	var valueValue types.Object
 	if response.Value == nil {
 		valueValue = types.ObjectNull(valueAttrTypes)
 	} else {
-		valueValue, diags = types.ObjectValue(valueAttrTypes, map[string]attr.Value{})
+		jsonObjectValue := jsontypes.NewNormalizedNull()
+		if response.Value.MapmapOfStringAny != nil {
+			jsonObjectBytes, err := json.Marshal(response.Value.MapmapOfStringAny)
+			if err != nil {
+				respDiags.AddAttributeError(
+					path.Root("value").AtName("json_object"),
+					"Error Marshaling JSON Object",
+					fmt.Sprintf("An error occurred while marshaling the value JSON object: %s", err.Error()),
+				)
+			} else {
+				jsonObjectValue = jsontypes.NewNormalizedValue(string(jsonObjectBytes))
+			}
+		}
+		valueValue, diags = types.ObjectValue(valueAttrTypes, map[string]attr.Value{
+			"bool":        types.BoolPointerValue(response.Value.Bool),
+			"float32":     types.Float32PointerValue(response.Value.Float32),
+			"json_object": jsonObjectValue,
+			"string":      types.StringPointerValue(response.Value.String),
+		})
 		respDiags.Append(diags...)
 	}
 	state.Value = valueValue
@@ -301,19 +478,28 @@ func (r *davinciVariableResource) Create(ctx context.Context, req resource.Creat
 	}
 
 	// Create API call logic
-	clientData, _, diags := data.buildClientStruct()
+	clientData, diags := data.buildClientStructPost()
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	environmentIdUuid, err := uuid.Parse(data.EnvironmentId.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("environment_id"),
+			"Attribute Validation Error",
+			fmt.Sprintf("The value '%s' for attribute '%s' is not a valid UUID: %s", data.EnvironmentId.ValueString(), "EnvironmentId", err.Error()),
+		)
+		return
+	}
 	var responseData *pingone.DaVinciVariable
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciVariableApi.CreateVariable(ctx, uuid.MustParse(data.EnvironmentId.ValueString())).DaVinciVariableCreateRequest(*clientData).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.ManagementClient.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.DaVinciVariableApi.CreateVariable(ctx, environmentIdUuid).DaVinciVariableCreateRequest(*clientData).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateVariable",
 		framework.DefaultCustomError,
@@ -354,13 +540,31 @@ func (r *davinciVariableResource) Read(ctx context.Context, req resource.ReadReq
 	}
 
 	// Read API call logic
+	environmentIdUuid, err := uuid.Parse(data.EnvironmentId.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("environment_id"),
+			"Attribute Validation Error",
+			fmt.Sprintf("The value '%s' for attribute '%s' is not a valid UUID: %s", data.EnvironmentId.ValueString(), "EnvironmentId", err.Error()),
+		)
+		return
+	}
+	idUuid, err := uuid.Parse(data.Id.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("id"),
+			"Attribute Validation Error",
+			fmt.Sprintf("The value '%s' for attribute '%s' is not a valid UUID: %s", data.Id.ValueString(), "Id", err.Error()),
+		)
+		return
+	}
 	var responseData *pingone.DaVinciVariable
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciVariableApi.GetVariableById(ctx, uuid.MustParse(data.EnvironmentId.ValueString()), uuid.MustParse(data.Id.ValueString())).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.ManagementClient.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.DaVinciVariableApi.GetVariableById(ctx, environmentIdUuid, idUuid).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetVariableById",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -407,19 +611,37 @@ func (r *davinciVariableResource) Update(ctx context.Context, req resource.Updat
 	}
 
 	// Update API call logic
-	_, clientData, diags := data.buildClientStruct()
+	clientData, diags := data.buildClientStructPut()
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	environmentIdUuid, err := uuid.Parse(data.EnvironmentId.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("environment_id"),
+			"Attribute Validation Error",
+			fmt.Sprintf("The value '%s' for attribute '%s' is not a valid UUID: %s", data.EnvironmentId.ValueString(), "EnvironmentId", err.Error()),
+		)
+		return
+	}
+	idUuid, err := uuid.Parse(data.Id.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("id"),
+			"Attribute Validation Error",
+			fmt.Sprintf("The value '%s' for attribute '%s' is not a valid UUID: %s", data.Id.ValueString(), "Id", err.Error()),
+		)
+		return
+	}
 	var responseData *pingone.DaVinciVariable
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciVariableApi.ReplaceVariableById(ctx, uuid.MustParse(data.EnvironmentId.ValueString()), uuid.MustParse(data.Id.ValueString())).DaVinciVariableReplaceRequest(*clientData).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.ManagementClient.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.DaVinciVariableApi.ReplaceVariableById(ctx, environmentIdUuid, idUuid).DaVinciVariableReplaceRequest(*clientData).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReplaceVariableById",
 		framework.DefaultCustomError,
@@ -460,12 +682,30 @@ func (r *davinciVariableResource) Delete(ctx context.Context, req resource.Delet
 	}
 
 	// Delete API call logic
+	environmentIdUuid, err := uuid.Parse(data.EnvironmentId.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("environment_id"),
+			"Attribute Validation Error",
+			fmt.Sprintf("The value '%s' for attribute '%s' is not a valid UUID: %s", data.EnvironmentId.ValueString(), "EnvironmentId", err.Error()),
+		)
+		return
+	}
+	idUuid, err := uuid.Parse(data.Id.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("id"),
+			"Attribute Validation Error",
+			fmt.Sprintf("The value '%s' for attribute '%s' is not a valid UUID: %s", data.Id.ValueString(), "Id", err.Error()),
+		)
+		return
+	}
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := r.Client.DaVinciVariableApi.DeleteVariableById(ctx, uuid.MustParse(data.EnvironmentId.ValueString()), uuid.MustParse(data.Id.ValueString())).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.ManagementClient.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+			fR, fErr := r.Client.DaVinciVariableApi.DeleteVariableById(ctx, environmentIdUuid, idUuid).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteVariableById",
 		framework.CustomErrorResourceNotFoundWarning,
