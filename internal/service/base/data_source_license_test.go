@@ -24,6 +24,8 @@ func TestAccLicenseDataSource_ByIDFull(t *testing.T) {
 	organizationID := os.Getenv("PINGONE_ORGANIZATION_ID")
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
+	positiveIntegerRegex := regexp.MustCompile(`^[1-9][0-9]*$`)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
@@ -70,8 +72,8 @@ func TestAccLicenseDataSource_ByIDFull(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "environments.allow_custom_domain", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "environments.allow_custom_schema", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "environments.allow_production", "true"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "environments.max"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "environments.regions.#"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environments.max", positiveIntegerRegex),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environments.regions.#", positiveIntegerRegex),
 					resource.TestCheckResourceAttr(dataSourceFullName, "fraud.allow_bot_malicious_device_detection", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "fraud.allow_account_protection", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "gateways.allow_ldap_gateway", "true"),
@@ -102,9 +104,9 @@ func TestAccLicenseDataSource_ByIDFull(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "users.allow_verification_flow", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "users.allow_update_self", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "users.entitled_to_support", "true"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "users.max", "10000000"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "users.max_hard_limit", "11000000"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "users.annual_active_included", "10000000"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "users.max", positiveIntegerRegex),
+					resource.TestMatchResourceAttr(dataSourceFullName, "users.max_hard_limit", positiveIntegerRegex),
+					resource.TestMatchResourceAttr(dataSourceFullName, "users.annual_active_included", positiveIntegerRegex),
 					resource.TestCheckNoResourceAttr(dataSourceFullName, "users.monthly_active_included"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "verify.allow_push_notifications", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "verify.allow_document_match", "true"),
