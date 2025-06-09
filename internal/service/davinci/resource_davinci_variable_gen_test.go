@@ -210,40 +210,34 @@ func davinciVariable_MinimalHCL(resourceName string) string {
 
 resource "pingone_davinci_variable" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  id = //TODO
-  // TODO set values for minimal fields
-  context = //TODO
-  data_type = //TODO
-  mutable = //TODO
-  name = //TODO
+  context = "flowInstance"
+  data_type = "string"
+  mutable = true
+  name = "%[2]s"
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
 // Maximal HCL with all values set where possible
+// TODO test with flow id once we have API/resource available
 func davinciVariable_CompleteHCL(resourceName string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
 resource "pingone_davinci_variable" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  id = //TODO
-  // TODO set values for complete fields
-  context = //TODO
-  data_type = //TODO
-  display_name = //TODO
-  flow = {
-    id = //TODO
-  }
-  max = //TODO
-  min = //TODO
-  mutable = //TODO
-  name = //TODO
+  context = "flowInstance"
+  data_type = "object"
+  display_name = "myobj"
+//   flow = {
+//     id = //TODO
+//   }
+  max = 200
+  min = 0
+  mutable = false
+  name = "%[2]s"
   value = {
-    bool = //TODO
-    float32 = //TODO
-    json_object = //TODO
-    string = //TODO
+    json_object = "{\"key1\":\"value1\",\"key2\":1234,\"key3\":false}"
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
@@ -255,44 +249,33 @@ func davinciVariable_NewEnvHCL(environmentName, licenseID, resourceName string) 
 
 resource "pingone_davinci_variable" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  id = //TODO
-  // TODO set values for minimal fields
-  context = //TODO
-  data_type = //TODO
-  mutable = //TODO
-  name = //TODO
+  context = "flowInstance"
+  data_type = "string"
+  mutable = true
+  name = "%[2]s"
 }
 `, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName) //TODO
 }
 
 // Validate any computed values when applying minimal HCL
-// TODO remove any values that are not computed from this check
-// TODO set expected values
 func davinciVariable_CheckComputedValuesMinimal(resourceName string) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "display_name", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "max", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "min", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.bool", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.float32", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.json_object", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.string", "expected_value"),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "display_name"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "max", "2000"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "min", "0"),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.bool"),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.float32"),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.json_object"),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.string"),
 	)
 }
 
 // Validate any computed values when applying complete HCL
-// TODO This may not be needed as a separate function from minimal HCL if the expected values match
-// TODO remove any values that are not computed from this check
-// TODO set expected values
 func davinciVariable_CheckComputedValuesComplete(resourceName string) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "display_name", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "max", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "min", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.bool", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.float32", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.json_object", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.string", "expected_value"),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.bool"),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.float32"),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.string"),
 	)
 }
 
