@@ -22,6 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -130,6 +131,9 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 						"user",
 					),
 				},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"data_type": schema.StringAttribute{
 				Required:            true,
@@ -171,6 +175,9 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 						Validators: []validator.String{
 							//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
 						},
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.RequiresReplace(),
+						},
 					},
 				},
 				Optional: true,
@@ -182,12 +189,19 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
 					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
 				},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"max": schema.Int32Attribute{
 				Optional: true,
+				Computed: true,
+				Default:  int32default.StaticInt32(2000),
 			},
 			"min": schema.Int32Attribute{
 				Optional: true,
+				Computed: true,
+				Default:  int32default.StaticInt32(0),
 			},
 			"mutable": schema.BoolAttribute{
 				Required: true,
@@ -197,6 +211,9 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(256),
 					//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
+				},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"value": schema.SingleNestedAttribute{
@@ -457,7 +474,7 @@ func (state *davinciVariableResourceModel) readClientResponse(response *pingone.
 	valueAttrTypes := map[string]attr.Type{
 		"bool":        types.BoolType,
 		"float32":     types.Float32Type,
-		"json_object": types.StringType,
+		"json_object": jsontypes.NormalizedType{},
 		"string":      types.StringType,
 	}
 	var valueValue types.Object
