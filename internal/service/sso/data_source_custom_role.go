@@ -20,6 +20,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -256,15 +257,15 @@ func (r *customRoleDataSource) Read(ctx context.Context, req datasource.ReadRequ
 
 	// Custom Role API does not support SCIM filtering currently in the SDK
 	if !data.RoleId.IsNull() {
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.CustomAdminRolesApi.ReadOneCustomAdminRole(ctx, data.EnvironmentId.ValueString(), data.RoleId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneCustomAdminRole",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&response,
 		)...)
@@ -273,7 +274,7 @@ func (r *customRoleDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		}
 	} else if !data.Name.IsNull() {
 		// Get all custom roles and find the one with the expected name
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
@@ -283,7 +284,7 @@ func (r *customRoleDataSource) Read(ctx context.Context, req datasource.ReadRequ
 
 				for pageCursor, err := range pagedIterator {
 					if err != nil {
-						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+						return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
 					}
 
 					if initialHttpResponse == nil {
@@ -309,7 +310,7 @@ func (r *customRoleDataSource) Read(ctx context.Context, req datasource.ReadRequ
 				return nil, initialHttpResponse, nil
 			},
 			"ReadAllCustomAdminRoles",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&response,
 		)...)

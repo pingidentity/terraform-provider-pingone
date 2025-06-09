@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -102,7 +103,7 @@ func (r *RolesDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 
 	// Run the API call
 	var roleIDs []string
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -131,7 +132,7 @@ func (r *RolesDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 			return roleIDs, initialHttpResponse, nil
 		},
 		"ReadAllRoles",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&roleIDs,
 	)...)

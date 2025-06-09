@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 )
 
 func TestAccTrustedEmailDomainSPFDataSource_Full(t *testing.T) {
@@ -84,7 +85,7 @@ data "pingone_trusted_email_domain_spf" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
   trusted_email_domain_id = pingone_trusted_email_domain.%[3]s.id
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 func testAccTrustedEmailDomainSPFDataSourceConfig_NotFoundByID(resourceName string) string {

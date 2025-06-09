@@ -13,7 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
-	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
+	baselegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base/legacysdk"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 )
 
@@ -37,7 +38,7 @@ func TestAccAdministratorSecurity_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 
-			p1Client = acctest.PreCheckTestClient(ctx, t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -49,7 +50,7 @@ func TestAccAdministratorSecurity_RemovalDrift(t *testing.T) {
 			},
 			{
 				PreConfig: func() {
-					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentId)
+					baselegacysdk.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentId)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -305,7 +306,7 @@ resource "pingone_administrator_security" "%[3]s" {
   mfa_status     = "ENFORCE"
   recovery       = true
 }
-`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 func administratorSecurity_NewEnvHCLHybrid(environmentName, licenseID, resourceName string) string {
@@ -333,7 +334,7 @@ resource "pingone_administrator_security" "%[3]s" {
   }
   recovery = false
 }
-`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 func administratorSecurity_NewEnvHCLExternal(environmentName, licenseID, resourceName string) string {
@@ -361,7 +362,7 @@ resource "pingone_administrator_security" "%[3]s" {
   }
   recovery = false
 }
-`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 // Validate any computed values when applying minimal HCL

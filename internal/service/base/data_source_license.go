@@ -17,6 +17,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -718,14 +719,14 @@ func (r *LicenseDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 	// Run the API call
 	var response *management.License
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			return r.Client.ManagementAPIClient.LicensesApi.ReadOneLicense(ctx, data.OrganizationId.ValueString(), data.LicenseId.ValueString()).Execute()
 		},
 		"ReadOneLicense",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)

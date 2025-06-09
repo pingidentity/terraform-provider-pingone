@@ -20,6 +20,7 @@ import (
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -179,15 +180,15 @@ func (r *PopulationResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	// Run the API call
 	var response *management.Population
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.ReadOnePopulation(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOnePopulation",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -227,15 +228,15 @@ func (r *PopulationResource) Update(ctx context.Context, req resource.UpdateRequ
 
 	// Run the API call
 	var response *management.Population
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.UpdatePopulation(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Population(*population).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdatePopulation",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&response,
 	)...)
@@ -282,12 +283,12 @@ func (r *PopulationResource) Delete(ctx context.Context, req resource.DeleteRequ
 	}
 
 	// Run the API call
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.DeletePopulation(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeletePopulation",
 		populationDeleteCustomErrorHandler,
@@ -436,7 +437,7 @@ func (r *PopulationResource) readUsers(ctx context.Context, environmentID, popul
 
 		// Run the API call
 		var users []management.User
-		diags.Append(framework.ParseResponse(
+		diags.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
@@ -448,7 +449,7 @@ func (r *PopulationResource) readUsers(ctx context.Context, environmentID, popul
 
 				for pageCursor, err := range pagedIterator {
 					if err != nil {
-						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentID, nil, pageCursor.HTTPResponse, err)
+						return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentID, nil, pageCursor.HTTPResponse, err)
 					}
 
 					if initialHttpResponse == nil {
@@ -463,7 +464,7 @@ func (r *PopulationResource) readUsers(ctx context.Context, environmentID, popul
 				return foundUsers, initialHttpResponse, nil
 			},
 			"ReadAllUsers",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&users,
 		)...)
@@ -491,15 +492,15 @@ func (r *PopulationResource) checkEnvironmentControls(ctx context.Context, envir
 	if r.options.Population.ContainsUsersForceDelete {
 		// Check if the environment is a sandbox type.  We'll only delete users in sandbox environments
 		var environmentResponse *management.Environment
-		diags.Append(framework.ParseResponse(
+		diags.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentID).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentID, fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentID, fO, fR, fErr)
 			},
 			"ReadOneEnvironment-DeletePopulation",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			nil,
 			&environmentResponse,
 		)...)
@@ -547,15 +548,15 @@ func (r *PopulationResource) checkControlsAndDeletePopulationUsers(ctx context.C
 			} else {
 				for _, user := range users {
 					var entityArray *management.EntityArray
-					diags.Append(framework.ParseResponse(
+					diags.Append(legacysdk.ParseResponse(
 						ctx,
 
 						func() (any, *http.Response, error) {
 							fR, fErr := r.Client.ManagementAPIClient.UsersApi.DeleteUser(ctx, environmentID, user.GetId()).Execute()
-							return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentID, nil, fR, fErr)
+							return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentID, nil, fR, fErr)
 						},
 						"DeleteUser-DeletePopulation",
-						framework.DefaultCustomError,
+						legacysdk.DefaultCustomError,
 						nil,
 						&entityArray,
 					)...)
@@ -575,15 +576,15 @@ func PingOnePopulationCreate(ctx context.Context, apiClient *management.APIClien
 	var diags diag.Diagnostics
 
 	var returnVar *management.Population
-	diags.Append(framework.ParseResponse(
+	diags.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.PopulationsApi.CreatePopulation(ctx, environmentID).Population(population).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 		},
 		"CreatePopulation",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&returnVar,
 	)...)

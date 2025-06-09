@@ -17,6 +17,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/davincitypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 )
 
 // Types
@@ -172,7 +173,7 @@ func (r *FlowPoliciesDataSource) Read(ctx context.Context, req datasource.ReadRe
 	}
 
 	var flowPolicyIDs []string
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -184,7 +185,7 @@ func (r *FlowPoliciesDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 			for pageCursor, err := range pagedIterator {
 				if err != nil {
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
 				}
 
 				if initialHttpResponse == nil {
@@ -201,7 +202,7 @@ func (r *FlowPoliciesDataSource) Read(ctx context.Context, req datasource.ReadRe
 			return foundIDs, initialHttpResponse, nil
 		},
 		"ReadAllFlowPolicies",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&flowPolicyIDs,
 	)...)

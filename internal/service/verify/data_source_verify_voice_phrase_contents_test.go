@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/verify"
 	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -98,5 +99,5 @@ data "pingone_verify_voice_phrase_contents" "%[3]s" {
   voice_phrase_id = pingone_verify_voice_phrase.%[3]s.id
 
   depends_on = [pingone_verify_voice_phrase_content.%[3]s-1, pingone_verify_voice_phrase_content.%[3]s-2, pingone_verify_voice_phrase_content.%[3]s-3, pingone_verify_voice_phrase_content.%[3]s-4]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

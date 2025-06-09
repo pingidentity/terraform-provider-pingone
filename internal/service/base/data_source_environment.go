@@ -19,6 +19,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 )
 
 // Types
@@ -264,7 +265,7 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 		scimFilter := fmt.Sprintf("name sw \"%s\"", data.Name.ValueString())
 
 		// Run the API call
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
@@ -295,7 +296,7 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 				return nil, initialHttpResponse, nil
 			},
 			"ReadAllEnvironments",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			retryEnvironmentDefault,
 			&environment,
 		)...)
@@ -314,15 +315,15 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 	} else if !data.EnvironmentId.IsNull() {
 
 		// Run the API call
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.EnvironmentsApi.ReadOneEnvironment(ctx, data.EnvironmentId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneEnvironment",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			retryEnvironmentDefault,
 			&environment,
 		)...)
@@ -340,15 +341,15 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	// The bill of materials
 	var billOfMaterialsResponse *management.BillOfMaterials
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, environment.GetId()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environment.GetId(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environment.GetId(), fO, fR, fErr)
 		},
 		"ReadOneBillOfMaterials",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		retryEnvironmentDefault,
 		&billOfMaterialsResponse,
 	)...)

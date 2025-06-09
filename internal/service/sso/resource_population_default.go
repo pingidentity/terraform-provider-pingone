@@ -22,6 +22,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -159,28 +160,28 @@ func (r *PopulationDefaultResource) Create(ctx context.Context, req resource.Cre
 
 	var response *management.Population
 	if readResponse == nil {
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.CreatePopulation(ctx, plan.EnvironmentId.ValueString()).Population(*population).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"CreatePopulation-Default",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&response,
 		)...)
 	} else {
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.UpdatePopulation(ctx, plan.EnvironmentId.ValueString(), readResponse.GetId()).Population(*population).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdatePopulation-Default",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			nil,
 			&response,
 		)...)
@@ -258,15 +259,15 @@ func (r *PopulationDefaultResource) Update(ctx context.Context, req resource.Upd
 	}
 
 	var response *management.Population
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.UpdatePopulation(ctx, plan.EnvironmentId.ValueString(), readResponse.GetId()).Population(*population).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdatePopulation-Default",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&response,
 	)...)
@@ -312,15 +313,15 @@ func (r *PopulationDefaultResource) Delete(ctx context.Context, req resource.Del
 
 	var response *management.Population
 	if readResponse != nil {
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.UpdatePopulation(ctx, data.EnvironmentId.ValueString(), readResponse.GetId()).Population(*population).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdatePopulation-DeleteDefault",
-			framework.CustomErrorResourceNotFoundWarning,
+			legacysdk.CustomErrorResourceNotFoundWarning,
 			nil,
 			&response,
 		)...)
@@ -419,9 +420,9 @@ func FetchDefaultPopulation(ctx context.Context, apiClient *management.APIClient
 func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *management.APIClient, environmentID string, warnOnNotFound bool, timeout time.Duration) (*management.Population, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	errorFunction := framework.DefaultCustomError
+	errorFunction := legacysdk.DefaultCustomError
 	if warnOnNotFound {
-		errorFunction = framework.CustomErrorResourceNotFoundWarning
+		errorFunction = legacysdk.CustomErrorResourceNotFoundWarning
 	}
 
 	stateConf := &retry.StateChangeConf{
@@ -436,7 +437,7 @@ func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *managemen
 
 			// Run the API call
 			var defaultPopulation *management.Population
-			diags.Append(framework.ParseResponse(
+			diags.Append(legacysdk.ParseResponse(
 				ctx,
 
 				func() (any, *http.Response, error) {
@@ -446,7 +447,7 @@ func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *managemen
 
 					for pageCursor, err := range pagedIterator {
 						if err != nil {
-							return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, nil, pageCursor.HTTPResponse, err)
+							return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, nil, pageCursor.HTTPResponse, err)
 						}
 
 						if initialHttpResponse == nil {

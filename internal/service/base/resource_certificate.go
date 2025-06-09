@@ -18,6 +18,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -163,7 +164,7 @@ func resourceCertificateCreate(ctx context.Context, d *schema.ResourceData, meta
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.CertificateManagementApi.CreateCertificateFromFile(ctx, d.Get("environment_id").(string)).ContentType("multipart/form-data").UsageType(d.Get("usage_type").(string)).File(&archive).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateCertificateFromFile",
 		sdk.DefaultCustomError,
@@ -191,7 +192,7 @@ func resourceCertificateRead(ctx context.Context, d *schema.ResourceData, meta i
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.CertificateManagementApi.GetCertificate(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"GetCertificate",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -237,7 +238,7 @@ func resourceCertificateDelete(ctx context.Context, d *schema.ResourceData, meta
 		ctx,
 		func() (any, *http.Response, error) {
 			resp, err := apiClient.CertificateManagementApi.DeleteCertificate(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, resp, err)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, resp, err)
 		},
 		"DeleteCertificate",
 		sdk.CustomErrorResourceNotFoundWarning,

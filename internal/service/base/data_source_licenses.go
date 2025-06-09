@@ -16,6 +16,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 )
 
 // Types
@@ -142,7 +143,7 @@ func (r *LicensesDataSource) Read(ctx context.Context, req datasource.ReadReques
 	}
 
 	var licenses []management.License
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -168,7 +169,7 @@ func (r *LicensesDataSource) Read(ctx context.Context, req datasource.ReadReques
 			return licenses, initialHttpResponse, nil
 		},
 		"ReadAllLicenses",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&licenses,
 	)...)

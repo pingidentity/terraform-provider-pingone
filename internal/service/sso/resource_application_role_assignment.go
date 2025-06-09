@@ -15,6 +15,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -165,12 +166,12 @@ func (r *ApplicationRoleAssignmentResource) Create(ctx context.Context, req reso
 
 	// Run the API call
 	var response *management.RoleAssignment
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationRoleAssignmentsApi.CreateApplicationRoleAssignment(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).RoleAssignment(*applicationRoleAssignment).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateApplicationRoleAssignment",
 		service.CreateRoleAssignmentErrorFunc,
@@ -228,15 +229,15 @@ func (r *ApplicationRoleAssignmentResource) Read(ctx context.Context, req resour
 
 	// Run the API call
 	var response *management.RoleAssignment
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationRoleAssignmentsApi.ReadOneApplicationRoleAssignment(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneApplicationRoleAssignment",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -274,15 +275,15 @@ func (r *ApplicationRoleAssignmentResource) Delete(ctx context.Context, req reso
 		return
 	}
 
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fR, fErr := r.Client.ManagementAPIClient.ApplicationRoleAssignmentsApi.DeleteApplicationRoleAssignment(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteApplicationRoleAssignment",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		service.RoleRemovalRetryable,
 		nil,
 	)...)
@@ -368,18 +369,18 @@ func (p *ApplicationRoleAssignmentResourceModel) toState(apiObject *management.R
 func fetchApplication(ctx context.Context, apiClient *management.APIClient, environmentId, applicationId string, warnIfNotFound bool) (*management.ReadOneApplication200Response, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	errorFunction := framework.DefaultCustomError
+	errorFunction := legacysdk.DefaultCustomError
 	if warnIfNotFound {
-		errorFunction = framework.CustomErrorResourceNotFoundWarning
+		errorFunction = legacysdk.CustomErrorResourceNotFoundWarning
 	}
 
 	var response *management.ReadOneApplication200Response
-	diags.Append(framework.ParseResponse(
+	diags.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.ApplicationsApi.ReadOneApplication(ctx, environmentId, applicationId).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, fO, fR, fErr)
 		},
 		"ReadOneApplication",
 		errorFunction,

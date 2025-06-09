@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -38,7 +39,7 @@ func TestAccTrustedEmailAddress_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckDomainVerification(t)
 
-			p1Client = acctest.PreCheckTestClient(ctx, t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.TrustedEmailAddress_CheckDestroy,
@@ -233,7 +234,7 @@ resource "pingone_trusted_email_address" "%[3]s" {
   email_domain_id = pingone_trusted_email_domain.%[3]s.id
 
   email_address = "%[5]s"
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, domain, emailAddress)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, domain, emailAddress)
 }
 
 func testAccTrustedEmailAddressConfig_New_DomainVerified(resourceName, verifiedDomain, emailAddress string) string {

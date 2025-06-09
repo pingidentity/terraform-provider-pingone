@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
-	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -125,7 +125,7 @@ func datasourcePingOneCertificateRead(ctx context.Context, d *schema.ResourceDat
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := apiClient.CertificateManagementApi.GetCertificates(ctx, d.Get("environment_id").(string)).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 			},
 			"GetCertificates",
 			sdk.DefaultCustomError,
@@ -167,7 +167,7 @@ func datasourcePingOneCertificateRead(ctx context.Context, d *schema.ResourceDat
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := apiClient.CertificateManagementApi.GetCertificate(ctx, d.Get("environment_id").(string), v.(string)).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 			},
 			"GetCertificate",
 			sdk.DefaultCustomError,

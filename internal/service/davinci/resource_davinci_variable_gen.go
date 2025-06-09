@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"regexp"
 
 	"encoding/json"
@@ -25,8 +26,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	clientconfig "github.com/pingidentity/pingone-go-client/config"
+	"github.com/pingidentity/pingone-go-client/oauth2"
 	"github.com/pingidentity/pingone-go-client/pingone"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -52,7 +56,7 @@ func (r *davinciVariableResource) Configure(ctx context.Context, req resource.Co
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	/*resourceConfig, ok := req.ProviderData.(framework.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -62,11 +66,35 @@ func (r *davinciVariableResource) Configure(ctx context.Context, req resource.Co
 		return
 	}
 
-	r.Client = resourceConfig.Client
+	//r.Client = resourceConfig.Client
+	//TODO
+
+
+
 	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialised",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
+		)
+		return
+	}*/
+
+	//TODO getting config from provider config
+
+	config := clientconfig.NewConfiguration().
+		WithGrantType(oauth2.GrantTypeClientCredentials).
+		WithClientID(os.Getenv("PINGONE_CLIENT_ID")).
+		WithClientSecret(os.Getenv("PINGONE_CLIENT_SECRET")).
+		WithAuthEnvironmentID(os.Getenv("PINGONE_ENVIRONMENT_ID")).
+		WithRootDomain("pingone.com") //TODO just using NA directly for now
+
+	//TODO user-agent suffix like the current sdk
+	var err error
+	r.Client, err = pingone.NewAPIClient(pingone.NewConfiguration(config))
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			fmt.Sprintf("Expected the PingOne client, got an error: %v. Please report this issue to the provider maintainers.", err),
 		)
 		return
 	}
@@ -121,7 +149,8 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 				Optional: true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(256),
-					stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
+					//TODO this syntax from the api spec may not be valid in go
+					//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
 				},
 			},
 			"environment_id": schema.StringAttribute{
@@ -138,9 +167,9 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 			"flow": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
-						Required: true,
+						Required:   true,
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
+							//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
 						},
 					},
 				},
@@ -167,7 +196,7 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 				Required: true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(256),
-					stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
+					//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
 				},
 			},
 			"value": schema.SingleNestedAttribute{
@@ -494,7 +523,7 @@ func (r *davinciVariableResource) Create(ctx context.Context, req resource.Creat
 		return
 	}
 	var responseData *pingone.DaVinciVariable
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -502,7 +531,7 @@ func (r *davinciVariableResource) Create(ctx context.Context, req resource.Creat
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateVariable",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
@@ -559,7 +588,8 @@ func (r *davinciVariableResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 	var responseData *pingone.DaVinciVariable
-	resp.Diagnostics.Append(framework.ParseResponse(
+	//TODO update from legacy sdk here
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -567,7 +597,8 @@ func (r *davinciVariableResource) Read(ctx context.Context, req resource.ReadReq
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetVariableById",
-		framework.CustomErrorResourceNotFoundWarning,
+		//TODO update from legacy sdk here
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
@@ -636,7 +667,7 @@ func (r *davinciVariableResource) Update(ctx context.Context, req resource.Updat
 		return
 	}
 	var responseData *pingone.DaVinciVariable
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -644,7 +675,7 @@ func (r *davinciVariableResource) Update(ctx context.Context, req resource.Updat
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReplaceVariableById",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&responseData,
 	)...)
@@ -700,7 +731,7 @@ func (r *davinciVariableResource) Delete(ctx context.Context, req resource.Delet
 		)
 		return
 	}
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -708,7 +739,7 @@ func (r *davinciVariableResource) Delete(ctx context.Context, req resource.Delet
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteVariableById",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		nil,
 		nil,
 	)...)

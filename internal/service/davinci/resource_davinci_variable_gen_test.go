@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/pingone-go-client/pingone"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 )
 
@@ -261,7 +262,7 @@ resource "pingone_davinci_variable" "%[3]s" {
   mutable = //TODO
   name = //TODO
 }
-`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName) //TODO
 }
 
 // Validate any computed values when applying minimal HCL

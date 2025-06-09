@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 )
 
 // Types
@@ -105,7 +106,7 @@ func (r *ApplicationSignOnPolicyAssignmentsDataSource) Read(ctx context.Context,
 	}
 
 	var sopAssignmentIDs []string
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -117,7 +118,7 @@ func (r *ApplicationSignOnPolicyAssignmentsDataSource) Read(ctx context.Context,
 
 			for pageCursor, err := range pagedIterator {
 				if err != nil {
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
 				}
 
 				if initialHttpResponse == nil {
@@ -134,7 +135,7 @@ func (r *ApplicationSignOnPolicyAssignmentsDataSource) Read(ctx context.Context,
 			return foundIDs, initialHttpResponse, nil
 		},
 		"ReadAllSignOnPolicyAssignments",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&sopAssignmentIDs,
 	)...)
