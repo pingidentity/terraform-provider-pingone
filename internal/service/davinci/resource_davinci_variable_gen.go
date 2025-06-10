@@ -31,8 +31,6 @@ import (
 	"github.com/pingidentity/pingone-go-client/oauth2"
 	"github.com/pingidentity/pingone-go-client/pingone"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
-	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -540,7 +538,7 @@ func (r *davinciVariableResource) Create(ctx context.Context, req resource.Creat
 		return
 	}
 	var responseData *pingone.DaVinciVariable
-	resp.Diagnostics.Append(legacysdk.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -548,8 +546,8 @@ func (r *davinciVariableResource) Create(ctx context.Context, req resource.Creat
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateVariable",
-		legacysdk.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
+		framework.DefaultCustomError,
+		framework.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 
@@ -605,8 +603,7 @@ func (r *davinciVariableResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 	var responseData *pingone.DaVinciVariable
-	//TODO update from legacy sdk here
-	resp.Diagnostics.Append(legacysdk.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -614,9 +611,8 @@ func (r *davinciVariableResource) Read(ctx context.Context, req resource.ReadReq
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetVariableById",
-		//TODO update from legacy sdk here
-		legacysdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultCreateReadRetryable,
+		framework.CustomErrorResourceNotFoundWarning,
+		framework.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 
@@ -684,7 +680,7 @@ func (r *davinciVariableResource) Update(ctx context.Context, req resource.Updat
 		return
 	}
 	var responseData *pingone.DaVinciVariable
-	resp.Diagnostics.Append(legacysdk.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -692,7 +688,7 @@ func (r *davinciVariableResource) Update(ctx context.Context, req resource.Updat
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReplaceVariableById",
-		legacysdk.DefaultCustomError,
+		framework.DefaultCustomError,
 		nil,
 		&responseData,
 	)...)
@@ -748,7 +744,7 @@ func (r *davinciVariableResource) Delete(ctx context.Context, req resource.Delet
 		)
 		return
 	}
-	resp.Diagnostics.Append(legacysdk.ParseResponse(
+	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -756,7 +752,7 @@ func (r *davinciVariableResource) Delete(ctx context.Context, req resource.Delet
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteVariableById",
-		legacysdk.CustomErrorResourceNotFoundWarning,
+		framework.CustomErrorResourceNotFoundWarning,
 		nil,
 		nil,
 	)...)
