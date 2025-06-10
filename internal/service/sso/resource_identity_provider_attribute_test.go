@@ -88,7 +88,7 @@ func TestAccIdentityProviderAttribute_RemovalDrift(t *testing.T) {
 	})
 }
 
-func TestAccIdentityProviderMicrosoftAttribute(t *testing.T) {
+func TestAccIdentityProviderAttribute_MicrosoftIdentityProvider(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
