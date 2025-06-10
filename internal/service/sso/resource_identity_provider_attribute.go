@@ -497,6 +497,8 @@ func (p *IdentityProviderAttributeResourceModel) getIdentityProviderType(ctx con
 		idpType = &respObject.IdentityProviderFacebook.Type
 	} else if respObject.IdentityProviderOIDC != nil && respObject.IdentityProviderOIDC.GetId() != "" {
 		idpType = &respObject.IdentityProviderOIDC.Type
+	} else if respObject.IdentityProviderMicrosoft != nil && respObject.IdentityProviderMicrosoft.GetId() != "" {
+		idpType = &respObject.IdentityProviderMicrosoft.Type
 	} else if respObject.IdentityProviderPaypal != nil && respObject.IdentityProviderPaypal.GetId() != "" {
 		idpType = &respObject.IdentityProviderPaypal.Type
 	} else if respObject.IdentityProviderSAML != nil && respObject.IdentityProviderSAML.GetId() != "" {
