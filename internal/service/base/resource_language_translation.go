@@ -9,8 +9,8 @@ import (
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -25,9 +25,8 @@ import (
 )
 
 var (
-	_ resource.Resource                = &languageTranslationResource{}
-	_ resource.ResourceWithConfigure   = &languageTranslationResource{}
-	_ resource.ResourceWithImportState = &languageTranslationResource{}
+	_ resource.Resource              = &languageTranslationResource{}
+	_ resource.ResourceWithConfigure = &languageTranslationResource{}
 )
 
 func NewLanguageTranslationResource() resource.Resource {
@@ -66,31 +65,25 @@ func (r *languageTranslationResource) Configure(ctx context.Context, req resourc
 }
 
 type languageTranslationResourceModel struct {
-	EnvironmentId  pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	Id             pingonetypes.ResourceIDValue `tfsdk:"id"`
-	Key            types.String                 `tfsdk:"key"`
-	Locale         types.String                 `tfsdk:"locale"`
-	ReferenceText  types.String                 `tfsdk:"reference_text"`
-	ShortKey       types.String                 `tfsdk:"short_key"`
-	TranslatedText types.String                 `tfsdk:"translated_text"`
+	Key            types.String `tfsdk:"key"`
+	ReferenceText  types.String `tfsdk:"reference_text"`
+	ShortKey       types.String `tfsdk:"short_key"`
+	TranslatedText types.String `tfsdk:"translated_text"`
+}
+
+type languageTranslationsResourceModel struct {
+	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Locale        types.String                 `tfsdk:"locale"`
+	Translations  types.List                   `tfsdk:"translations"`
 }
 
 func (r *languageTranslationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-
 	resp.Schema = schema.Schema{
 		Description: "Resource to create and manage localized translations in an environment.",
 		Attributes: map[string]schema.Attribute{
 			"environment_id": framework.Attr_LinkID(
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create and manage the language_translation in."),
 			),
-			"id": framework.Attr_ID(),
-			"key": schema.StringAttribute{
-				Required:    true,
-				Description: "The page and name of the interface element to be localized (for example, `flow-ui.button.cancel`). Keys for a locale can be found using the [PingOne Platform API](https://apidocs.pingidentity.com/pingone/platform/v1/api/#get-read-translation).",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
 			"locale": schema.StringAttribute{
 				Required:    true,
 				Description: fmt.Sprintf("An ISO standard language code. For more information about standard language codes, see [ISO Language Code Table](http://www.lingoes.net/en/translator/langcode.htm).  The following language codes are supported: %s.", verify.FullIsoListString()),
@@ -103,65 +96,109 @@ func (r *languageTranslationResource) Schema(ctx context.Context, req resource.S
 					),
 				},
 			},
-			"reference_text": schema.StringAttribute{
-				Computed:    true,
-				Description: "The English string text associated with the UI element.",
-			},
-			"short_key": schema.StringAttribute{
-				Computed:    true,
-				Description: "The interface element only (for example, `button.cancel`).",
-			},
-			"translated_text": schema.StringAttribute{
-				Required:    true,
-				Description: "The translated string text associated with the UI element.",
-				Validators: []validator.String{
-					stringvalidator.LengthAtLeast(1),
+			"translations": schema.ListNestedAttribute{
+				Description: "A list of translations for the specified locale.",
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"key": schema.StringAttribute{
+							Required:    true,
+							Description: "The page and name of the interface element to be localized (for example, `flow-ui.button.cancel`). Keys for a locale can be found using the [PingOne Platform API](https://apidocs.pingidentity.com/pingone/platform/v1/api/#get-read-translation).",
+						},
+						"reference_text": schema.StringAttribute{
+							Computed:    true,
+							Description: "The English string text associated with the UI element.",
+						},
+						"short_key": schema.StringAttribute{
+							Computed:    true,
+							Description: "The interface element only (for example, `button.cancel`).",
+						},
+						"translated_text": schema.StringAttribute{
+							Computed:    true,
+							Optional:    true,
+							Description: "The translated string text associated with the UI element. Excluding this attribute will reset the translation to its original configuration.",
+						},
+					},
 				},
+				Required: true,
 			},
 		},
 	}
 }
 
-func (model *languageTranslationResourceModel) buildClientStruct() (*[]management.LocaleTranslation, diag.Diagnostics) {
+func (model *languageTranslationsResourceModel) buildClientStruct() (*[]management.LocaleTranslation, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	localeTranslationSlice := &[]management.LocaleTranslation{}
-	innerLocaleTranslation := &management.LocaleTranslation{}
 
-	innerLocaleTranslation.Key = model.Key.ValueString()
-	innerLocaleTranslation.TranslatedText = model.TranslatedText.ValueString()
+	if !model.Translations.IsNull() || !model.Translations.IsUnknown() {
+		for _, translation := range model.Translations.Elements() {
+			innerLocaleTranslation := management.LocaleTranslation{}
+			innerTranslationAttrs := translation.(types.Object).Attributes()
 
-	// Add the innerLocaleTranslation to the slice
-	*localeTranslationSlice = append(*localeTranslationSlice, *innerLocaleTranslation)
+			if innerTranslationAttrs["translated_text"] != nil &&
+				!innerTranslationAttrs["translated_text"].(types.String).IsNull() &&
+				!innerTranslationAttrs["translated_text"].(types.String).IsUnknown() {
+				innerLocaleTranslation.TranslatedText = innerTranslationAttrs["translated_text"].(types.String).ValueString()
+			}
+			innerLocaleTranslation.Key = innerTranslationAttrs["key"].(types.String).ValueString()
+			innerLocaleTranslation.ReferenceText = innerTranslationAttrs["reference_text"].(types.String).ValueStringPointer()
+			innerLocaleTranslation.ShortKey = innerTranslationAttrs["short_key"].(types.String).ValueStringPointer()
+
+			*localeTranslationSlice = append(*localeTranslationSlice, innerLocaleTranslation)
+		}
+	}
 
 	return localeTranslationSlice, diags
 }
 
 // Build a default client struct to reset the resource to its default state
-func (model *languageTranslationResource) buildDefaultClientStruct(p languageTranslationResourceModel) *[]management.LocaleTranslation {
+func (model *languageTranslationResource) buildDefaultClientStruct(p languageTranslationsResourceModel) *[]management.LocaleTranslation {
 	// Sending only the key will reset the translation to its original configuration - per API documentation
-	result := []management.LocaleTranslation{
-		{
-			Key: p.Key.ValueString(),
-		},
+	result := &[]management.LocaleTranslation{}
+	for _, translation := range p.Translations.Elements() {
+		innerTranslationAttrs := translation.(types.Object).Attributes()
+		innerLocaleTranslation := management.LocaleTranslation{
+			Key: innerTranslationAttrs["key"].(types.String).ValueString(),
+		}
+
+		*result = append(*result, innerLocaleTranslation)
 	}
-	return &result
+
+	return result
 }
 
-func (state *languageTranslationResourceModel) readClientResponse(response management.LocaleTranslation, data languageTranslationResourceModel) diag.Diagnostics {
-	state.EnvironmentId = framework.PingOneResourceIDToTF(data.EnvironmentId.ValueString())
-	idValue := framework.PingOneResourceIDToTF(*response.Id)
-	state.Id = idValue
-	state.Locale = data.Locale
-	state.Key = types.StringValue(response.Key)
-	state.ReferenceText = types.StringPointerValue(response.ReferenceText)
-	state.ShortKey = types.StringPointerValue(response.ShortKey)
-	state.TranslatedText = types.StringValue(response.TranslatedText)
+func (state *languageTranslationsResourceModel) readClientResponse(response []management.LocaleTranslation, data languageTranslationsResourceModel) diag.Diagnostics {
+	var diags diag.Diagnostics
 
-	return nil
+	state.EnvironmentId = framework.PingOneResourceIDToTF(data.EnvironmentId.ValueString())
+	state.Locale = data.Locale
+
+	translations := []attr.Value{}
+	attrTypes := map[string]attr.Type{
+		"key":             types.StringType,
+		"reference_text":  types.StringType,
+		"short_key":       types.StringType,
+		"translated_text": types.StringType,
+	}
+
+	for _, elem := range data.Translations.Elements() {
+		for _, translationObj := range response {
+			// If the key matches, we can safely assume the translation is valid
+			if elem.(types.Object).Attributes()["key"].(types.String).ValueString() == translationObj.Key {
+				translations = append(translations, types.ObjectValueMust(attrTypes, map[string]attr.Value{
+					"key":             types.StringValue(translationObj.Key),
+					"reference_text":  types.StringPointerValue(translationObj.ReferenceText),
+					"short_key":       types.StringPointerValue(translationObj.ShortKey),
+					"translated_text": types.StringValue(translationObj.TranslatedText),
+				}))
+			}
+		}
+	}
+	state.Translations, diags = types.ListValue(types.ObjectType{AttrTypes: attrTypes}, translations)
+	return diags
 }
 
 func (r *languageTranslationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data languageTranslationResourceModel
+	var data languageTranslationsResourceModel
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -200,7 +237,7 @@ func (r *languageTranslationResource) Create(ctx context.Context, req resource.C
 	)...)
 
 	// Subsequent read needed as the API does not return the full object on any create or update operation.
-	var responseData *management.LocaleTranslation
+	var responseData *[]management.LocaleTranslation
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
@@ -208,6 +245,7 @@ func (r *languageTranslationResource) Create(ctx context.Context, req resource.C
 			pagedIterator := r.Client.ManagementAPIClient.TranslationsApi.ReadTranslations(ctx, data.EnvironmentId.ValueString(), data.Locale.ValueString()).Execute()
 			var initialHttpResponse *http.Response
 
+			translationsSlice := make([]management.LocaleTranslation, 0)
 			for pageCursor, err := range pagedIterator {
 				if err != nil {
 					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
@@ -218,15 +256,13 @@ func (r *languageTranslationResource) Create(ctx context.Context, req resource.C
 				}
 
 				if translations, ok := pageCursor.EntityArray.Embedded.GetTranslationsOk(); ok {
-					for _, translation := range translations {
-						if v, ok := translation.GetKeyOk(); ok && *v == data.Key.ValueString() {
-							return &translation, pageCursor.HTTPResponse, nil
-						}
-					}
+					// Append the translations to the slice
+					translationsSlice = append(translationsSlice, translations...)
+				} else {
+					return nil, pageCursor.HTTPResponse, fmt.Errorf("no translations found in response")
 				}
 			}
-
-			return nil, initialHttpResponse, nil
+			return &translationsSlice, initialHttpResponse, nil
 		},
 		"UpdateTranslations-Create-SubsequentRead",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -258,7 +294,7 @@ func (r *languageTranslationResource) Create(ctx context.Context, req resource.C
 }
 
 func (r *languageTranslationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data languageTranslationResourceModel
+	var data languageTranslationsResourceModel
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -275,7 +311,7 @@ func (r *languageTranslationResource) Read(ctx context.Context, req resource.Rea
 	}
 
 	// Read API call logic
-	var responseData *management.LocaleTranslation
+	var responseData *[]management.LocaleTranslation
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
@@ -283,6 +319,7 @@ func (r *languageTranslationResource) Read(ctx context.Context, req resource.Rea
 			pagedIterator := r.Client.ManagementAPIClient.TranslationsApi.ReadTranslations(ctx, data.EnvironmentId.ValueString(), data.Locale.ValueString()).Execute()
 			var initialHttpResponse *http.Response
 
+			translationsSlice := make([]management.LocaleTranslation, 0)
 			for pageCursor, err := range pagedIterator {
 				if err != nil {
 					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
@@ -293,15 +330,14 @@ func (r *languageTranslationResource) Read(ctx context.Context, req resource.Rea
 				}
 
 				if translations, ok := pageCursor.EntityArray.Embedded.GetTranslationsOk(); ok {
-					for _, translation := range translations {
-						if v, ok := translation.GetIdOk(); ok && *v == data.Id.ValueString() {
-							return &translation, pageCursor.HTTPResponse, nil
-						}
-					}
+					// Append the translations to the slice
+					translationsSlice = append(translationsSlice, translations...)
+				} else {
+					return nil, pageCursor.HTTPResponse, fmt.Errorf("no translations found in response")
 				}
 			}
 
-			return nil, initialHttpResponse, nil
+			return &translationsSlice, initialHttpResponse, nil
 		},
 		"ReadTranslations",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -331,7 +367,7 @@ func (r *languageTranslationResource) Read(ctx context.Context, req resource.Rea
 }
 
 func (r *languageTranslationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data languageTranslationResourceModel
+	var data languageTranslationsResourceModel
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -369,7 +405,7 @@ func (r *languageTranslationResource) Update(ctx context.Context, req resource.U
 	)...)
 
 	// Subsequent read needed as the API does not return the full object on any create or update operation.
-	var responseData *management.LocaleTranslation
+	var responseData *[]management.LocaleTranslation
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
@@ -377,6 +413,7 @@ func (r *languageTranslationResource) Update(ctx context.Context, req resource.U
 			pagedIterator := r.Client.ManagementAPIClient.TranslationsApi.ReadTranslations(ctx, data.EnvironmentId.ValueString(), data.Locale.ValueString()).Execute()
 			var initialHttpResponse *http.Response
 
+			translationsSlice := make([]management.LocaleTranslation, 0)
 			for pageCursor, err := range pagedIterator {
 				if err != nil {
 					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
@@ -387,15 +424,14 @@ func (r *languageTranslationResource) Update(ctx context.Context, req resource.U
 				}
 
 				if translations, ok := pageCursor.EntityArray.Embedded.GetTranslationsOk(); ok {
-					for _, translation := range translations {
-						if v, ok := translation.GetKeyOk(); ok && *v == data.Key.ValueString() {
-							return &translation, pageCursor.HTTPResponse, nil
-						}
-					}
+					// Append the translations to the slice
+					translationsSlice = append(translationsSlice, translations...)
+				} else {
+					return nil, pageCursor.HTTPResponse, fmt.Errorf("no translations found in response")
 				}
 			}
 
-			return nil, initialHttpResponse, nil
+			return &translationsSlice, initialHttpResponse, nil
 		},
 		"UpdateTranslations-Create-SubsequentRead",
 		framework.CustomErrorResourceNotFoundWarning,
@@ -429,7 +465,7 @@ func (r *languageTranslationResource) Update(ctx context.Context, req resource.U
 func (r *languageTranslationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	// This resource is pre-defined in PingOne, so it can't be deleted from the service.
 	// Instead this delete method will attempt to set the resource to its default state on the service.
-	var data languageTranslationResourceModel
+	var data languageTranslationsResourceModel
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -459,42 +495,4 @@ func (r *languageTranslationResource) Delete(ctx context.Context, req resource.D
 		sdk.DefaultCreateReadRetryable,
 		nil,
 	)...)
-}
-
-func (r *languageTranslationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-
-	idComponents := []framework.ImportComponent{
-		{
-			Label:  "environment_id",
-			Regexp: verify.P1ResourceIDRegexp,
-		},
-		{
-			Label:  "locale",
-			Regexp: verify.LocaleValidator(),
-		},
-		{
-			Label:     "translation_id",
-			Regexp:    verify.P1ResourceIDRegexp,
-			PrimaryID: true,
-		},
-	}
-
-	attributes, err := framework.ParseImportID(req.ID, idComponents...)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Unexpected Import Identifier",
-			err.Error(),
-		)
-		return
-	}
-
-	for _, idComponent := range idComponents {
-		pathKey := idComponent.Label
-
-		if idComponent.PrimaryID {
-			pathKey = "id"
-		}
-
-		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
-	}
 }

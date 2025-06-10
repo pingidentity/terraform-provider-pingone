@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -65,7 +64,6 @@ func TestAccLanguageTranslation_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_language_translation.%s", resourceName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -79,7 +77,7 @@ func TestAccLanguageTranslation_Full(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: languageTranslation_UpdatedHCL(resourceName),
-				Check:  languageTranslation_CheckComputedValues(resourceName),
+				Check:  languageTranslation_CheckUpdatedComputedValues(resourceName),
 			},
 			{
 				Config:  languageTranslation_UpdatedHCL(resourceName),
@@ -87,7 +85,7 @@ func TestAccLanguageTranslation_Full(t *testing.T) {
 			},
 			{
 				Config: languageTranslation_InitialHCL(resourceName),
-				Check:  languageTranslation_CheckComputedValues(resourceName),
+				Check:  languageTranslation_CheckInitialComputedValues(resourceName),
 			},
 			{
 				Config:  languageTranslation_InitialHCL(resourceName),
@@ -95,33 +93,15 @@ func TestAccLanguageTranslation_Full(t *testing.T) {
 			},
 			{
 				Config: languageTranslation_UpdatedHCL(resourceName),
-				Check:  languageTranslation_CheckComputedValues(resourceName),
+				Check:  languageTranslation_CheckUpdatedComputedValues(resourceName),
 			},
 			{
 				Config: languageTranslation_InitialHCL(resourceName),
-				Check:  languageTranslation_CheckComputedValues(resourceName),
+				Check:  languageTranslation_CheckInitialComputedValues(resourceName),
 			},
 			{
 				Config: languageTranslation_UpdatedHCL(resourceName),
-				Check:  languageTranslation_CheckComputedValues(resourceName),
-			},
-			{
-				// Test importing the resource
-				Config:       languageTranslation_UpdatedHCL(resourceName),
-				ResourceName: fmt.Sprintf("pingone_language_translation.%s", resourceName),
-				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-					return func(s *terraform.State) (string, error) {
-						rs, ok := s.RootModule().Resources[resourceFullName]
-						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
-						}
-
-						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["locale"], rs.Primary.Attributes["id"]), nil
-					}
-				}(),
-				ImportStateVerifyIdentifierAttribute: "id",
-				ImportState:                          true,
-				ImportStateVerify:                    true,
+				Check:  languageTranslation_CheckUpdatedComputedValues(resourceName),
 			},
 		},
 	})
@@ -148,47 +128,7 @@ func TestAccLanguageTranslation_NewEnv(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: languageTranslation_NewEnvHCL(environmentName, licenseID, resourceName),
-				Check:  languageTranslation_CheckComputedValues(resourceName),
-			},
-		},
-	})
-}
-func TestAccLanguageTranslation_BadParameters(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_language_translation.%s", resourceName)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckNoTestAccFlaky(t)
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
-		},
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			// Configure
-			{
-				Config: languageTranslation_UpdatedHCL(resourceName),
-			},
-			// Errors
-			{
-				ResourceName: resourceFullName,
-				ImportState:  true,
-				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
-			},
-			{
-				ResourceName:  resourceFullName,
-				ImportStateId: "/",
-				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
-			},
-			{
-				ResourceName:  resourceFullName,
-				ImportStateId: "badformat/badformat",
-				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+				Check:  languageTranslation_CheckInitialComputedValues(resourceName),
 			},
 		},
 	})
@@ -199,11 +139,20 @@ func languageTranslation_InitialHCL(resourceName string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_language" "sv" {
+  environment_id = data.pingone_environment.general_test.id
+
+  locale = "sv"
+}
+
 resource "pingone_language_translation" "%[2]s" {
-  environment_id  = data.pingone_environment.general_test.id
-  locale          = "fr"
-  key             = "flow-ui.button.createNewAccount"
-  translated_text = "Create new Account"
+  environment_id = data.pingone_environment.general_test.id
+  locale         = pingone_language.sv.locale
+  translations = [
+    {
+      key = "flow-ui.button.createNewAccount"
+    }
+  ]
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
@@ -214,10 +163,14 @@ func languageTranslation_UpdatedHCL(resourceName string) string {
 		%[1]s
 
 resource "pingone_language_translation" "%[2]s" {
-  environment_id  = data.pingone_environment.general_test.id
-  locale          = "fr"
-  key             = "flow-ui.button.createNewAccount"
-  translated_text = "Update New Account"
+  environment_id = data.pingone_environment.general_test.id
+  locale         = "sv"
+  translations = [
+    {
+      key             = "flow-ui.button.createNewAccount"
+      translated_text = "Skapa nytt konto"
+    }
+  ]
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
@@ -225,21 +178,36 @@ resource "pingone_language_translation" "%[2]s" {
 func languageTranslation_NewEnvHCL(environmentName, licenseID, resourceName string) string {
 	return fmt.Sprintf(`
 		%[1]s
+resource "pingone_language" "sv" {
+  environment_id = pingone_environment.%[2]s.id
+
+  locale = "sv"
+}
 
 resource "pingone_language_translation" "%[3]s" {
-  environment_id  = pingone_environment.%[2]s.id
-  locale          = "bg"
-  key             = "flow-ui.button.createNewAccount"
-  translated_text = "Създайте нов акаунт"
+  environment_id = pingone_environment.%[2]s.id
+  locale         = pingone_language.sv.locale
+  translations = [
+    {
+      key = "flow-ui.button.createNewAccount"
+    }
+  ]
 }
 `, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
-// Validate any computed values when applying HCL - these do not change when `en` is not the supplied locale
-func languageTranslation_CheckComputedValues(resourceName string) resource.TestCheckFunc {
+func languageTranslation_CheckInitialComputedValues(resourceName string) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_language_translation.%s", resourceName), "short_key", "button.createNewAccount"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_language_translation.%s", resourceName), "reference_text", "Create new Account"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_language_translation.%s", resourceName), "translations.0.short_key", "button.createNewAccount"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_language_translation.%s", resourceName), "translations.0.reference_text", "Create new Account"),
+	)
+}
+
+func languageTranslation_CheckUpdatedComputedValues(resourceName string) resource.TestCheckFunc {
+	return resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_language_translation.%s", resourceName), "translations.0.short_key", "button.createNewAccount"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_language_translation.%s", resourceName), "translations.0.reference_text", "Create new Account"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_language_translation.%s", resourceName), "translations.0.translated_text", "Skapa nytt konto"),
 	)
 }
 

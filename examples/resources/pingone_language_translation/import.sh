@@ -1,1 +1,0 @@
-terraform import pingone_language_translation.example <environment_id>/<locale>/<translation_id>
