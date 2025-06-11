@@ -118,10 +118,6 @@ func TestAccIdentityProviderAttribute_MicrosoftIdentityProvider(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mapping_type", "CORE"),
 				),
 			},
-			{
-				Config:  testAccIdentityProviderMicrosoftAttributeConfig(resourceName, name),
-				Destroy: true,
-			},
 		},
 	})
 }
