@@ -93,7 +93,7 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, req
 			if jsonErr == nil {
 				var targetError pingone.ServiceError
 				jsonErr = json.Unmarshal(errBytes, &targetError)
-				if jsonErr == nil {
+				if jsonErr == nil && targetError.Id != nil {
 					// Apply custom error handler
 					diags = customError(r, &targetError)
 					// If no custom error handling was applied, format the error for output
