@@ -35,9 +35,10 @@ import (
 )
 
 var (
-	_ resource.Resource                = &davinciVariableResource{}
-	_ resource.ResourceWithConfigure   = &davinciVariableResource{}
-	_ resource.ResourceWithImportState = &davinciVariableResource{}
+	_ resource.Resource                   = &davinciVariableResource{}
+	_ resource.ResourceWithConfigure      = &davinciVariableResource{}
+	_ resource.ResourceWithImportState    = &davinciVariableResource{}
+	_ resource.ResourceWithValidateConfig = &davinciVariableResource{}
 )
 
 func NewDavinciVariableResource() resource.Resource {
@@ -280,6 +281,103 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 	}
 }
 
+func (r *davinciVariableResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var data davinciVariableResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Ensure the specific value types correspond to the data_type
+	if !data.DataType.IsNull() && !data.DataType.IsUnknown() {
+		if !data.Value.IsNull() && !data.Value.IsUnknown() {
+			valueAttrs := data.Value.Attributes()
+			switch data.DataType.ValueString() {
+			case "boolean":
+				if valueAttrs["bool"].IsNull() {
+					resp.Diagnostics.AddAttributeError(
+						path.Root("value"),
+						"Invalid Value for Data Type",
+						"The `value.bool` attribute must be set when `data_type` is set to `boolean`",
+					)
+				}
+			case "number":
+				if valueAttrs["float32"].IsNull() {
+					resp.Diagnostics.AddAttributeError(
+						path.Root("value"),
+						"Invalid Value for Data Type",
+						"The `value.float32` attribute must be set when `data_type` is set to `number`",
+					)
+				}
+			case "object":
+				if valueAttrs["json_object"].IsNull() {
+					resp.Diagnostics.AddAttributeError(
+						path.Root("value"),
+						"Invalid Value for Data Type",
+						"The `value.json_object` attribute must be set when `data_type` is set to `object`",
+					)
+				}
+			case "secret":
+				if valueAttrs["secret_string"].IsNull() {
+					resp.Diagnostics.AddAttributeError(
+						path.Root("value"),
+						"Invalid Value for Data Type",
+						"The `value.secret_string` attribute must be set when `data_type` is set to `secret`",
+					)
+				}
+			case "string":
+				if valueAttrs["string"].IsNull() {
+					resp.Diagnostics.AddAttributeError(
+						path.Root("value"),
+						"Invalid Value for Data Type",
+						"The `value.string` attribute must be set when `data_type` is set to `string`",
+					)
+				}
+			}
+		}
+		// Ensure context is "company" when using secret variables
+		if data.DataType.ValueString() == "secret" && !data.Context.IsNull() && !data.Context.IsUnknown() {
+			if data.Context.ValueString() != "company" {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("context"),
+					"Invalid Context for Data Type",
+					"The `context` attribute must be set to `company` when `data_type` is set to `secret`",
+				)
+			}
+		}
+	}
+
+	// Ensure flow is set if and only if context is "flow"
+	if !data.Context.IsNull() && !data.Context.IsUnknown() {
+		if data.Context.ValueString() == "flow" {
+			if data.Flow.IsNull() {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("flow"),
+					"Flow Required for Context",
+					"The `flow` attribute must be set when `context` is set to `flow`.",
+				)
+			}
+		} else {
+			if !data.Flow.IsNull() && !data.Flow.IsUnknown() {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("flow"),
+					"Flow Not Applicable for Context",
+					"The `flow` attribute must not be set when `context` is not set to `flow`.",
+				)
+			}
+		}
+	}
+
+	// Ensure mutable is true if there is no value set
+	if data.Value.IsNull() && !data.Mutable.IsNull() && !data.Mutable.IsUnknown() && !data.Mutable.ValueBool() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("mutable"),
+			"Invalid Mutable Value",
+			"The `mutable` attribute must be set to `true` when no `value` is set.",
+		)
+	}
+}
+
 func (model *davinciVariableResourceModel) buildClientStructPost() (*pingone.DaVinciVariableCreateRequest, diag.Diagnostics) {
 	result := &pingone.DaVinciVariableCreateRequest{}
 	var respDiags diag.Diagnostics
@@ -501,7 +599,9 @@ func (state *davinciVariableResourceModel) readClientResponse(response *pingone.
 		"secret_string": types.StringType,
 	}
 	var valueValue types.Object
-	if response.Value == nil {
+	// If no value was planned for a secret type, create a null object and ignore asterisks returned by the API
+	if response.Value == nil ||
+		(state.Value.IsNull() && response.DataType == "secret") {
 		valueValue = types.ObjectNull(valueAttrTypes)
 	} else {
 		jsonObjectValue := jsontypes.NewNormalizedNull()
@@ -517,15 +617,17 @@ func (state *davinciVariableResourceModel) readClientResponse(response *pingone.
 				jsonObjectValue = jsontypes.NewNormalizedValue(string(jsonObjectBytes))
 			}
 		}
+		// For secret types, the API always returns a series of asterisks for the string value
 		stringValue := types.StringPointerValue(response.Value.String)
 		secretStringValue := types.StringNull()
-		if !state.Value.IsNull() && !state.Value.IsUnknown() {
-			valueAttrs := state.Value.Attributes()
-			if !valueAttrs["secret_string"].IsNull() && !valueAttrs["secret_string"].IsUnknown() {
-				// Use planned/state value for secret string, since it will not be returned by the API,
-				// and ignore the response of "******" from the API.
-				secretStringValue = types.StringValue(valueAttrs["secret_string"].(types.String).ValueString())
-				stringValue = types.StringNull()
+		if response.DataType == "secret" {
+			stringValue = types.StringNull()
+			// Use planned secret string instead of asterisk response
+			if !state.Value.IsNull() && !state.Value.IsUnknown() {
+				valueAttrs := state.Value.Attributes()
+				if !valueAttrs["secret_string"].IsNull() && !valueAttrs["secret_string"].IsUnknown() {
+					secretStringValue = types.StringValue(valueAttrs["secret_string"].(types.String).ValueString())
+				}
 			}
 		}
 		valueValue, diags = types.ObjectValue(valueAttrTypes, map[string]attr.Value{
