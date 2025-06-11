@@ -223,6 +223,7 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 								path.MatchRelative().AtParent().AtName("float32"),
 								path.MatchRelative().AtParent().AtName("json_object"),
 								path.MatchRelative().AtParent().AtName("string"),
+								path.MatchRelative().AtParent().AtName("secret_string"),
 							),
 						},
 					},
@@ -233,6 +234,7 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 								path.MatchRelative().AtParent().AtName("bool"),
 								path.MatchRelative().AtParent().AtName("json_object"),
 								path.MatchRelative().AtParent().AtName("string"),
+								path.MatchRelative().AtParent().AtName("secret_string"),
 							),
 						},
 					},
@@ -244,6 +246,7 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 								path.MatchRelative().AtParent().AtName("bool"),
 								path.MatchRelative().AtParent().AtName("float32"),
 								path.MatchRelative().AtParent().AtName("string"),
+								path.MatchRelative().AtParent().AtName("secret_string"),
 							),
 						},
 					},
@@ -254,6 +257,19 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 								path.MatchRelative().AtParent().AtName("bool"),
 								path.MatchRelative().AtParent().AtName("float32"),
 								path.MatchRelative().AtParent().AtName("json_object"),
+								path.MatchRelative().AtParent().AtName("secret_string"),
+							),
+						},
+					},
+					"secret_string": schema.StringAttribute{
+						Optional:  true,
+						Sensitive: true,
+						Validators: []validator.String{
+							stringvalidator.ExactlyOneOf(
+								path.MatchRelative().AtParent().AtName("bool"),
+								path.MatchRelative().AtParent().AtName("float32"),
+								path.MatchRelative().AtParent().AtName("json_object"),
+								path.MatchRelative().AtParent().AtName("string"),
 							),
 						},
 					},
@@ -334,7 +350,11 @@ func (model *davinciVariableResourceModel) buildClientStructPost() (*pingone.DaV
 			}
 			valueValue.MapmapOfStringAny = &jsonValueMap
 		}
-		valueValue.String = valueAttrs["string"].(types.String).ValueStringPointer()
+		if !valueAttrs["string"].IsNull() && !valueAttrs["string"].IsUnknown() {
+			valueValue.String = valueAttrs["string"].(types.String).ValueStringPointer()
+		} else if !valueAttrs["secret_string"].IsNull() && !valueAttrs["secret_string"].IsUnknown() {
+			valueValue.String = valueAttrs["secret_string"].(types.String).ValueStringPointer()
+		}
 		result.Value = valueValue
 	}
 
@@ -411,7 +431,11 @@ func (model *davinciVariableResourceModel) buildClientStructPut() (*pingone.DaVi
 			}
 			valueValue.MapmapOfStringAny = &jsonValueMap
 		}
-		valueValue.String = valueAttrs["string"].(types.String).ValueStringPointer()
+		if !valueAttrs["string"].IsNull() && !valueAttrs["string"].IsUnknown() {
+			valueValue.String = valueAttrs["string"].(types.String).ValueStringPointer()
+		} else if !valueAttrs["secret_string"].IsNull() && !valueAttrs["secret_string"].IsUnknown() {
+			valueValue.String = valueAttrs["secret_string"].(types.String).ValueStringPointer()
+		}
 		result.Value = valueValue
 	}
 
@@ -470,10 +494,11 @@ func (state *davinciVariableResourceModel) readClientResponse(response *pingone.
 	state.Name = types.StringValue(response.Name)
 	// value
 	valueAttrTypes := map[string]attr.Type{
-		"bool":        types.BoolType,
-		"float32":     types.Float32Type,
-		"json_object": jsontypes.NormalizedType{},
-		"string":      types.StringType,
+		"bool":          types.BoolType,
+		"float32":       types.Float32Type,
+		"json_object":   jsontypes.NormalizedType{},
+		"string":        types.StringType,
+		"secret_string": types.StringType,
 	}
 	var valueValue types.Object
 	if response.Value == nil {
@@ -492,11 +517,23 @@ func (state *davinciVariableResourceModel) readClientResponse(response *pingone.
 				jsonObjectValue = jsontypes.NewNormalizedValue(string(jsonObjectBytes))
 			}
 		}
+		stringValue := types.StringPointerValue(response.Value.String)
+		secretStringValue := types.StringNull()
+		if !state.Value.IsNull() && !state.Value.IsUnknown() {
+			valueAttrs := state.Value.Attributes()
+			if !valueAttrs["secret_string"].IsNull() && !valueAttrs["secret_string"].IsUnknown() {
+				// Use planned/state value for secret string, since it will not be returned by the API,
+				// and ignore the response of "******" from the API.
+				secretStringValue = types.StringValue(valueAttrs["secret_string"].(types.String).ValueString())
+				stringValue = types.StringNull()
+			}
+		}
 		valueValue, diags = types.ObjectValue(valueAttrTypes, map[string]attr.Value{
-			"bool":        types.BoolPointerValue(response.Value.Bool),
-			"float32":     types.Float32PointerValue(response.Value.Float32),
-			"json_object": jsonObjectValue,
-			"string":      types.StringPointerValue(response.Value.String),
+			"bool":          types.BoolPointerValue(response.Value.Bool),
+			"float32":       types.Float32PointerValue(response.Value.Float32),
+			"json_object":   jsonObjectValue,
+			"string":        stringValue,
+			"secret_string": secretStringValue,
 		})
 		respDiags.Append(diags...)
 	}

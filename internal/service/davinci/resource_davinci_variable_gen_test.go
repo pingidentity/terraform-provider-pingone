@@ -362,7 +362,6 @@ resource "pingone_davinci_variable" "%[2]s" {
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
-// TODO update with new sensitive attribute specifically for secrets
 func davinciVariable_SecretHCL(resourceName string) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -374,7 +373,7 @@ resource "pingone_davinci_variable" "%[2]s" {
   mutable = false
   name = "%[2]s"
   value = {
-    string = "asdf"
+    secret_string = "asdf"
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
