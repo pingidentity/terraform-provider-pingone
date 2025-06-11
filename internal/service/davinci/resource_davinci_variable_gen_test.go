@@ -136,6 +136,75 @@ func TestAccDavinciVariable_MinimalMaximal(t *testing.T) {
 	})
 }
 
+func TestAccDavinciVariable_Boolean(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             davinciVariable_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				// Create the resource with a minimal model
+				Config: davinciVariable_BooleanHCL(resourceName),
+				Check:  davinciVariable_CheckComputedValuesMinimal(resourceName),
+			},
+		},
+	})
+}
+
+func TestAccDavinciVariable_Number(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             davinciVariable_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				// Create the resource with a minimal model
+				Config: davinciVariable_NumberHCL(resourceName),
+				Check:  davinciVariable_CheckComputedValuesMinimal(resourceName),
+			},
+		},
+	})
+}
+
+func TestAccDavinciVariable_Secret(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             davinciVariable_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				// Create the resource with a minimal model
+				Config: davinciVariable_SecretHCL(resourceName),
+				Check:  davinciVariable_CheckComputedValuesMinimal(resourceName),
+			},
+		},
+	})
+}
+
 func TestAccDavinciVariable_NewEnv(t *testing.T) {
 	t.Parallel()
 
@@ -162,6 +231,7 @@ func TestAccDavinciVariable_NewEnv(t *testing.T) {
 		},
 	})
 }
+
 func TestAccDavinciVariable_BadParameters(t *testing.T) {
 	t.Parallel()
 
@@ -254,7 +324,60 @@ resource "pingone_davinci_variable" "%[3]s" {
   mutable = true
   name = "%[2]s"
 }
-`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName) //TODO
+`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}
+
+// TODO update to cover setting the value bool to false, which currently fails due to an API issue
+func davinciVariable_BooleanHCL(resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_variable" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  context = "user"
+  data_type = "boolean"
+  mutable = true
+  name = "%[2]s"
+  value = {
+    bool = true
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func davinciVariable_NumberHCL(resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_variable" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  context = "flowInstance"
+  data_type = "number"
+  mutable = false
+  name = "%[2]s"
+  value = {
+    float32 = 1.23
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+// TODO update with new sensitive attribute specifically for secrets
+func davinciVariable_SecretHCL(resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_variable" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  context = "company"
+  data_type = "secret"
+  mutable = false
+  name = "%[2]s"
+  value = {
+    string = "asdf"
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
 // Validate any computed values when applying minimal HCL
@@ -263,10 +386,6 @@ func davinciVariable_CheckComputedValuesMinimal(resourceName string) resource.Te
 		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "display_name"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "max", "2000"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "min", "0"),
-		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.bool"),
-		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.float32"),
-		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.json_object"),
-		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_variable.%s", resourceName), "value.string"),
 	)
 }
 
