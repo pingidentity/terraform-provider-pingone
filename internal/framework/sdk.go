@@ -4,6 +4,7 @@ package framework
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -19,22 +20,17 @@ import (
 
 type SDKInterfaceFunc func() (any, *http.Response, error)
 
-type pingOneError struct {
-	message string
-	code    *string
-}
-
-type CustomError func(*http.Response, *pingOneError) diag.Diagnostics
+type CustomError func(*http.Response, *pingone.ServiceError) diag.Diagnostics
 
 var (
-	DefaultCustomError = func(_ *http.Response, _ *pingOneError) diag.Diagnostics { return nil }
+	DefaultCustomError = func(_ *http.Response, _ *pingone.ServiceError) diag.Diagnostics { return nil }
 
-	CustomErrorResourceNotFoundWarning = func(r *http.Response, p1Error *pingOneError) diag.Diagnostics {
+	CustomErrorResourceNotFoundWarning = func(r *http.Response, p1Error *pingone.ServiceError) diag.Diagnostics {
 		var diags diag.Diagnostics
 
 		// Deleted outside of TF
-		if p1Error != nil && p1Error.code != nil && *p1Error.code == "NOT_FOUND" {
-			diags.AddWarning("Requested resource not found", fmt.Sprintf("The requested resource configuration cannot be found in the PingOne service.  If the requested resource is managed in Terraform's state, it may have been removed outside of Terraform.\nAPI error: %s", p1Error.message))
+		if p1Error != nil && p1Error.GetCode() == "NOT_FOUND" {
+			diags.AddWarning("Requested resource not found", fmt.Sprintf("The requested resource configuration cannot be found in the PingOne service.  If the requested resource is managed in Terraform's state, it may have been removed outside of Terraform.\nAPI error: %s", p1Error.GetMessage()))
 
 			return diags
 		}
@@ -67,187 +63,53 @@ func CheckEnvironmentExistsOnPermissionsError(ctx context.Context, apiClient *pi
 	return fO, fR, fErr
 }
 
-func ParseResponse(ctx context.Context, f SDKInterfaceFunc, requestID string, customError CustomError, customRetryConditions Retryable, targetObject any) diag.Diagnostics {
+func ParseResponse(ctx context.Context, f SDKInterfaceFunc, requestID string, customError CustomError, targetObject any) diag.Diagnostics {
 	defaultTimeout := 10
-	return ParseResponseWithCustomTimeout(ctx, f, requestID, customError, customRetryConditions, targetObject, time.Duration(defaultTimeout)*time.Minute)
+	return ParseResponseWithCustomTimeout(ctx, f, requestID, customError, targetObject, time.Duration(defaultTimeout)*time.Minute)
 }
 
-func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, requestID string, customError CustomError, customRetryConditions Retryable, targetObject any, timeout time.Duration) diag.Diagnostics {
+func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, requestID string, customError CustomError, targetObject any, timeout time.Duration) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if customError == nil {
 		customError = DefaultCustomError
 	}
 
-	resp, r, err := RetryWrapper(
-		ctx,
-		timeout,
-		f,
-		customRetryConditions,
-	)
+	// Note - retry logic is handled by the client SDK
+	resp, r, err := f()
 
 	if err != nil || r.StatusCode >= 300 {
-
-		var genericError *pingone.ServiceError
-
 		switch t := err.(type) {
-		case pingone.AccessFailedError:
-			code := string(t.Code)
-			diags = customError(r, &pingOneError{
-				message: t.Message,
-				code:    &code,
-			})
-			if diags != nil {
-				return diags
-			}
-
-			genericError = &pingone.ServiceError{
-				Details:              t.Details,
-				Id:                   t.Id,
-				Message:              t.Message,
-				Code:                 &code,
-				AdditionalProperties: t.AdditionalProperties,
-			}
-		case pingone.InvalidDataError:
-			code := string(t.Code)
-			diags = customError(r, &pingOneError{
-				message: t.Message,
-				code:    &code,
-			})
-			if diags != nil {
-				return diags
-			}
-
-			genericError = &pingone.ServiceError{
-				Details:              t.Details,
-				Id:                   t.Id,
-				Message:              t.Message,
-				Code:                 &code,
-				AdditionalProperties: t.AdditionalProperties,
-			}
-		case pingone.InvalidRequestError:
-			code := string(t.Code)
-			diags = customError(r, &pingOneError{
-				message: t.Message,
-				code:    &code,
-			})
-			if diags != nil {
-				return diags
-			}
-
-			genericError = &pingone.ServiceError{
-				Details:              t.Details,
-				Id:                   t.Id,
-				Message:              t.Message,
-				Code:                 &code,
-				AdditionalProperties: t.AdditionalProperties,
-			}
-		case pingone.NotFoundError:
-			code := string(t.Code)
-			diags = customError(r, &pingOneError{
-				message: t.Message,
-				code:    &code,
-			})
-			if diags != nil {
-				return diags
-			}
-
-			genericError = &pingone.ServiceError{
-				Details:              t.Details,
-				Id:                   t.Id,
-				Message:              t.Message,
-				Code:                 &code,
-				AdditionalProperties: t.AdditionalProperties,
-			}
-		case pingone.RequestFailedError:
-			code := string(t.Code)
-			diags = customError(r, &pingOneError{
-				message: t.Message,
-				code:    &code,
-			})
-			if diags != nil {
-				return diags
-			}
-
-			genericError = &pingone.ServiceError{
-				Details:              t.Details,
-				Id:                   t.Id,
-				Message:              t.Message,
-				Code:                 &code,
-				AdditionalProperties: t.AdditionalProperties,
-			}
-		case pingone.RequestLimitedError:
-			code := string(t.Code)
-			diags = customError(r, &pingOneError{
-				message: t.Message,
-				code:    &code,
-			})
-			if diags != nil {
-				return diags
-			}
-
-			genericError = &pingone.ServiceError{
-				Details:              t.Details,
-				Id:                   t.Id,
-				Message:              t.Message,
-				Code:                 &code,
-				AdditionalProperties: t.AdditionalProperties,
-			}
-		case pingone.ServiceError:
-			diags = customError(r, &pingOneError{
-				message: t.Message,
-				code:    t.Code,
-			})
-			if diags != nil {
-				return diags
-			}
-
-			genericError = err.(*pingone.ServiceError)
-		case pingone.UnexpectedServiceError:
-			code := string(t.Code)
-			diags = customError(r, &pingOneError{
-				message: t.Message,
-				code:    &code,
-			})
-			if diags != nil {
-				return diags
-			}
-
-			genericError = &pingone.ServiceError{
-				Details:              t.Details,
-				Id:                   t.Id,
-				Message:              t.Message,
-				Code:                 &code,
-				AdditionalProperties: t.AdditionalProperties,
-			}
 		case pingone.APIError:
 			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", requestID, t.Error()), "")
-
 			tflog.Error(ctx, fmt.Sprintf("Error when calling `%s`: %v\n\nResponse code: %d\nResponse content-type: %s\nFull response body: %+v", requestID, t.Error(), r.StatusCode, r.Header.Get("Content-Type"), r.Body))
-
-			return diags
 		case *url.Error:
 			tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s\n\nResponse code: %d\nResponse content-type: %s", t.Err.Error(), r.StatusCode, r.Header.Get("Content-Type")))
-
 			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", requestID, t.Error()), "")
-
-			return diags
 		default:
-			tflog.Warn(ctx, fmt.Sprintf("Detected unknown error (SDK) %+v", t))
-
-			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", requestID, t.Error()), fmt.Sprintf("A generic error has occurred.\nError details: %+v", t))
-
-			return diags
+			// Attempt to marshal the error into pingone.ServiceError
+			errorUnmarshaled := false
+			errBytes, jsonErr := json.Marshal(t)
+			if jsonErr == nil {
+				var targetError pingone.ServiceError
+				jsonErr = json.Unmarshal(errBytes, &targetError)
+				if jsonErr == nil {
+					// Apply custom error handler
+					diags = customError(r, &targetError)
+					// If no custom error handling was applied, format the error for output
+					if len(diags) == 0 {
+						summaryText, detailText := FormatPingOneError(requestID, targetError)
+						diags.AddError(summaryText, detailText)
+					}
+					errorUnmarshaled = true
+				}
+			}
+			if !errorUnmarshaled {
+				tflog.Warn(ctx, fmt.Sprintf("Detected unknown error (SDK) %+v", t))
+				diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", requestID, t.Error()), fmt.Sprintf("A generic error has occurred.\nError details: %+v", t))
+			}
 		}
-
-		if genericError != nil {
-			summaryText, detailText := FormatPingOneError(requestID, *genericError)
-
-			diags.AddError(summaryText, detailText)
-
-			return diags
-		}
-
+		return diags
 	}
 
 	if targetObject != nil {
@@ -309,10 +171,13 @@ func FormatPingOneError(sdkMethod string, v pingone.ServiceError) (summaryText, 
 					innerDetailsStr += fmt.Sprintf("      Allowed Pattern:\t%s\n", *v)
 				}
 
-				//TODO this field currently is just an array of interfaces
-				/*if v, ok := innerError.GetAllowedValuesOk(); ok {
-					innerDetailsStr += fmt.Sprintf("      Allowed Values:\t[%s]\n", strings.Join(v, ", "))
-				}*/
+				if v, ok := innerError.GetAllowedValuesOk(); ok {
+					// Attempt to convert the interface slice into json bytes
+					allowedValues, err := json.Marshal(v)
+					if err != nil {
+						innerDetailsStr += fmt.Sprintf("      Allowed Values:\t%s\n", string(allowedValues))
+					}
+				}
 
 				if v, ok := innerError.GetMaximumValueOk(); ok {
 					innerDetailsStr += fmt.Sprintf("      Max Value:\t%f\n", *v)
