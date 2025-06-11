@@ -2,20 +2,6 @@ module github.com/pingidentity/terraform-provider-pingone
 
 go 1.24.1
 
-// replace github.com/patrickcping/pingone-go-sdk-v2 => /Users/patrickcowland/Development/sdks/pingone-go-sdk-v2
-
-replace github.com/patrickcping/pingone-go-sdk-v2/authorize => github.com/patrickcping/pingone-go-sdk-v2/authorize v0.8.1-0.20250611142715-bc421bd19c26
-
-replace github.com/patrickcping/pingone-go-sdk-v2/credentials => github.com/patrickcping/pingone-go-sdk-v2/credentials v0.11.1-0.20250611142715-bc421bd19c26
-
-replace github.com/patrickcping/pingone-go-sdk-v2/management => github.com/patrickcping/pingone-go-sdk-v2/management v0.57.1-0.20250611142715-bc421bd19c26
-
-replace github.com/patrickcping/pingone-go-sdk-v2/mfa => github.com/patrickcping/pingone-go-sdk-v2/mfa v0.23.1-0.20250611142715-bc421bd19c26
-
-replace github.com/patrickcping/pingone-go-sdk-v2/risk => github.com/patrickcping/pingone-go-sdk-v2/risk v0.19.1-0.20250611142715-bc421bd19c26
-
-replace github.com/patrickcping/pingone-go-sdk-v2/verify => github.com/patrickcping/pingone-go-sdk-v2/verify v0.9.1-0.20250611142715-bc421bd19c26
-
 tool (
 	github.com/bflad/tfproviderlint/cmd/tfproviderlintx
 	github.com/golangci/golangci-lint/cmd/golangci-lint
@@ -39,13 +25,13 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.37.0
 	github.com/hashicorp/terraform-plugin-testing v1.13.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/patrickcping/pingone-go-sdk-v2 v0.12.17
-	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.8.0
-	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.11.0
-	github.com/patrickcping/pingone-go-sdk-v2/management v0.57.0
-	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.23.0
-	github.com/patrickcping/pingone-go-sdk-v2/risk v0.19.0
-	github.com/patrickcping/pingone-go-sdk-v2/verify v0.9.0
+	github.com/patrickcping/pingone-go-sdk-v2 v0.12.18
+	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.8.1
+	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.11.1
+	github.com/patrickcping/pingone-go-sdk-v2/management v0.57.1
+	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.23.1
+	github.com/patrickcping/pingone-go-sdk-v2/risk v0.19.1
+	github.com/patrickcping/pingone-go-sdk-v2/verify v0.9.1
 )
 
 require (
