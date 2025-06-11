@@ -4,17 +4,17 @@ go 1.24.1
 
 // replace github.com/patrickcping/pingone-go-sdk-v2 => /Users/patrickcowland/Development/sdks/pingone-go-sdk-v2
 
-replace github.com/patrickcping/pingone-go-sdk-v2/authorize => github.com/patrickcping/pingone-go-sdk-v2/authorize v0.8.1-0.20250611121459-13536dbf3c62
+replace github.com/patrickcping/pingone-go-sdk-v2/authorize => github.com/patrickcping/pingone-go-sdk-v2/authorize v0.8.1-0.20250611130540-f89ab8c07055
 
-replace github.com/patrickcping/pingone-go-sdk-v2/credentials => github.com/patrickcping/pingone-go-sdk-v2/credentials v0.11.1-0.20250611121459-13536dbf3c62
+replace github.com/patrickcping/pingone-go-sdk-v2/credentials => github.com/patrickcping/pingone-go-sdk-v2/credentials v0.11.1-0.20250611130540-f89ab8c07055
 
-replace github.com/patrickcping/pingone-go-sdk-v2/management => github.com/patrickcping/pingone-go-sdk-v2/management v0.57.1-0.20250611121459-13536dbf3c62
+replace github.com/patrickcping/pingone-go-sdk-v2/management => github.com/patrickcping/pingone-go-sdk-v2/management v0.57.1-0.20250611130540-f89ab8c07055
 
-replace github.com/patrickcping/pingone-go-sdk-v2/mfa => github.com/patrickcping/pingone-go-sdk-v2/mfa v0.23.1-0.20250611121459-13536dbf3c62
+replace github.com/patrickcping/pingone-go-sdk-v2/mfa => github.com/patrickcping/pingone-go-sdk-v2/mfa v0.23.1-0.20250611130540-f89ab8c07055
 
-replace github.com/patrickcping/pingone-go-sdk-v2/risk => github.com/patrickcping/pingone-go-sdk-v2/risk v0.19.1-0.20250611121459-13536dbf3c62
+replace github.com/patrickcping/pingone-go-sdk-v2/risk => github.com/patrickcping/pingone-go-sdk-v2/risk v0.19.1-0.20250611130540-f89ab8c07055
 
-replace github.com/patrickcping/pingone-go-sdk-v2/verify => github.com/patrickcping/pingone-go-sdk-v2/verify v0.9.1-0.20250611121459-13536dbf3c62
+replace github.com/patrickcping/pingone-go-sdk-v2/verify => github.com/patrickcping/pingone-go-sdk-v2/verify v0.9.1-0.20250611130540-f89ab8c07055
 
 tool (
 	github.com/bflad/tfproviderlint/cmd/tfproviderlintx
