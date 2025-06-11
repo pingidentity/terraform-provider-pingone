@@ -17,6 +17,10 @@ resource "pingone_language_translation" "my_customers_language_translation" {
     {
       key             = "flow-ui.button.createNewAccount"
       translated_text = "Skapa ett nytt konto"
-    }
+    },
+    {
+      key             = "flow-ui.label.email"
+      translated_text = "E-post"
+    },
   ]
 }

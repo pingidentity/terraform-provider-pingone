@@ -64,6 +64,7 @@ func TestAccLanguageTranslation_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_language_translation.%s", resourceName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -102,6 +103,22 @@ func TestAccLanguageTranslation_Full(t *testing.T) {
 			{
 				Config: languageTranslation_UpdatedHCL(resourceName),
 				Check:  languageTranslation_CheckUpdatedComputedValues(resourceName),
+			},
+			{
+				// Test importing the resource
+				ResourceName: fmt.Sprintf("pingone_language_translation.%s", resourceName),
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["locale"]), nil
+					}
+				}(),
+				ImportStateVerifyIdentifierAttribute: "locale",
+				ImportState:                          true,
 			},
 		},
 	})
@@ -169,6 +186,10 @@ resource "pingone_language_translation" "%[2]s" {
     {
       key             = "flow-ui.button.createNewAccount"
       translated_text = "Skapa nytt konto"
+    },
+    {
+      key             = "flow-ui.label.email"
+      translated_text = "E-post"
     }
   ]
 }
@@ -208,6 +229,9 @@ func languageTranslation_CheckUpdatedComputedValues(resourceName string) resourc
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_language_translation.%s", resourceName), "translations.0.short_key", "button.createNewAccount"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_language_translation.%s", resourceName), "translations.0.reference_text", "Create new Account"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_language_translation.%s", resourceName), "translations.0.translated_text", "Skapa nytt konto"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_language_translation.%s", resourceName), "translations.1.short_key", "label.email"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_language_translation.%s", resourceName), "translations.1.reference_text", "Email"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_language_translation.%s", resourceName), "translations.1.translated_text", "E-post"),
 	)
 }
 

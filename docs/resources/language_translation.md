@@ -31,7 +31,11 @@ resource "pingone_language_translation" "my_customers_language_translation" {
     {
       key             = "flow-ui.button.createNewAccount"
       translated_text = "Skapa ett nytt konto"
-    }
+    },
+    {
+      key             = "flow-ui.label.email"
+      translated_text = "E-post"
+    },
   ]
 }
 ```
@@ -61,4 +65,10 @@ Read-Only:
 - `reference_text` (String) The English string text associated with the UI element.
 - `short_key` (String) The interface element only (for example, `button.cancel`).
 
+## Import
 
+Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
+
+```shell
+terraform import pingone_language_translation.example <environment_id>/<locale>
+```

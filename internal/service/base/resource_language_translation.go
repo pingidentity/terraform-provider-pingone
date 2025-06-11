@@ -7,10 +7,13 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -120,6 +123,9 @@ func (r *languageTranslationResource) Schema(ctx context.Context, req resource.S
 					},
 				},
 				Required: true,
+				Validators: []validator.List{
+					listvalidator.SizeAtLeast(1),
+				},
 			},
 		},
 	}
@@ -167,7 +173,7 @@ func (model *languageTranslationResource) buildDefaultClientStruct(p languageTra
 }
 
 func (state *languageTranslationsResourceModel) readClientResponse(response []management.LocaleTranslation, data languageTranslationsResourceModel) diag.Diagnostics {
-	var diags diag.Diagnostics
+	var respDiags, diags diag.Diagnostics
 
 	state.EnvironmentId = framework.PingOneResourceIDToTF(data.EnvironmentId.ValueString())
 	state.Locale = data.Locale
@@ -180,20 +186,60 @@ func (state *languageTranslationsResourceModel) readClientResponse(response []ma
 		"translated_text": types.StringType,
 	}
 
-	for _, elem := range data.Translations.Elements() {
+	if len(data.Translations.Elements()) != 0 {
+		planKeys := make(map[string]bool)
+		missingKeys := make([]string, 0)
+
 		for _, translationObj := range response {
-			// If the key matches, we can safely assume the translation is valid
-			if elem.(types.Object).Attributes()["key"].(types.String).ValueString() == translationObj.Key {
-				translations = append(translations, types.ObjectValueMust(attrTypes, map[string]attr.Value{
-					"key":             types.StringValue(translationObj.Key),
-					"reference_text":  types.StringPointerValue(translationObj.ReferenceText),
-					"short_key":       types.StringPointerValue(translationObj.ShortKey),
-					"translated_text": types.StringValue(translationObj.TranslatedText),
-				}))
+			for _, elem := range data.Translations.Elements() {
+				// match the key from the plan with the key from the response
+				if elem.(types.Object).Attributes()["key"].(types.String).ValueString() == translationObj.Key {
+					translations = append(translations, types.ObjectValueMust(attrTypes, map[string]attr.Value{
+						"key":             types.StringValue(translationObj.Key),
+						"reference_text":  types.StringPointerValue(translationObj.ReferenceText),
+						"short_key":       types.StringPointerValue(translationObj.ShortKey),
+						"translated_text": types.StringValue(translationObj.TranslatedText),
+					}))
+					// mark the key as found in the plan map
+					// this will be used to check if there are any keys in the plan that were not found in the response
+					planKeys[elem.(types.Object).Attributes()["key"].(types.String).ValueString()] = true
+				}
 			}
 		}
+
+		// check if there are any keys in the plan that were not found in the response
+		for _, elem := range data.Translations.Elements() {
+			key := elem.(types.Object).Attributes()["key"].(types.String).ValueString()
+			if !planKeys[key] {
+				// if the key is not found in the response, add it to the missing keys
+				missingKeys = append(missingKeys, key)
+			}
+		}
+
+		if len(missingKeys) > 0 {
+			// if there are missing keys, we will return an error
+			respDiags.AddAttributeError(
+				path.Root("translations"),
+				"Missing Translations",
+				fmt.Sprintf("Verify your desired configuration contains valid keys.\nThe following translation keys are not supported by PingOne: %s", strings.Join(missingKeys[:], ", ")),
+			)
+			return respDiags
+		}
+
+	} else if state.Translations.IsNull() || state.Translations.IsUnknown() {
+		// if there are no translations in the plan or state, we will return all - this is used for import state
+		for _, translationObj := range response {
+			translations = append(translations, types.ObjectValueMust(attrTypes, map[string]attr.Value{
+				"key":             types.StringValue(translationObj.Key),
+				"reference_text":  types.StringPointerValue(translationObj.ReferenceText),
+				"short_key":       types.StringPointerValue(translationObj.ShortKey),
+				"translated_text": types.StringValue(translationObj.TranslatedText),
+			}))
+		}
 	}
+
 	state.Translations, diags = types.ListValue(types.ObjectType{AttrTypes: attrTypes}, translations)
+	respDiags.Append(diags...)
 	return diags
 }
 
@@ -495,4 +541,33 @@ func (r *languageTranslationResource) Delete(ctx context.Context, req resource.D
 		sdk.DefaultCreateReadRetryable,
 		nil,
 	)...)
+}
+
+func (r *languageTranslationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:  "locale",
+			Regexp: verify.LocaleValidator(),
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			err.Error(),
+		)
+		return
+	}
+
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
