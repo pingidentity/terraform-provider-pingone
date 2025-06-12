@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -77,7 +77,7 @@ type languageTranslationResourceModel struct {
 type languageTranslationsResourceModel struct {
 	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	Locale        types.String                 `tfsdk:"locale"`
-	Translations  types.List                   `tfsdk:"translations"`
+	Translations  types.Set                    `tfsdk:"translations"`
 }
 
 func (r *languageTranslationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -99,7 +99,7 @@ func (r *languageTranslationResource) Schema(ctx context.Context, req resource.S
 					),
 				},
 			},
-			"translations": schema.ListNestedAttribute{
+			"translations": schema.SetNestedAttribute{
 				Description: "A list of translations for the specified locale.",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
@@ -123,8 +123,8 @@ func (r *languageTranslationResource) Schema(ctx context.Context, req resource.S
 					},
 				},
 				Required: true,
-				Validators: []validator.List{
-					listvalidator.SizeAtLeast(1),
+				Validators: []validator.Set{
+					setvalidator.SizeAtLeast(1),
 				},
 			},
 		},
@@ -172,11 +172,8 @@ func (model *languageTranslationResource) buildDefaultClientStruct(p languageTra
 	return result
 }
 
-func (state *languageTranslationsResourceModel) readClientResponse(response []management.LocaleTranslation, data languageTranslationsResourceModel) diag.Diagnostics {
+func (state *languageTranslationsResourceModel) readClientResponse(response []management.LocaleTranslation) diag.Diagnostics {
 	var respDiags, diags diag.Diagnostics
-
-	state.EnvironmentId = framework.PingOneResourceIDToTF(data.EnvironmentId.ValueString())
-	state.Locale = data.Locale
 
 	translations := []attr.Value{}
 	attrTypes := map[string]attr.Type{
@@ -186,12 +183,12 @@ func (state *languageTranslationsResourceModel) readClientResponse(response []ma
 		"translated_text": types.StringType,
 	}
 
-	if len(data.Translations.Elements()) != 0 {
-		planKeys := make(map[string]bool)
+	if len(state.Translations.Elements()) != 0 {
 		missingKeys := make([]string, 0)
 
-		for _, translationObj := range response {
-			for _, elem := range data.Translations.Elements() {
+		for _, elem := range state.Translations.Elements() {
+			found := false
+			for _, translationObj := range response {
 				// match the key from the plan with the key from the response
 				if elem.(types.Object).Attributes()["key"].(types.String).ValueString() == translationObj.Key {
 					translations = append(translations, types.ObjectValueMust(attrTypes, map[string]attr.Value{
@@ -200,19 +197,13 @@ func (state *languageTranslationsResourceModel) readClientResponse(response []ma
 						"short_key":       types.StringPointerValue(translationObj.ShortKey),
 						"translated_text": types.StringValue(translationObj.TranslatedText),
 					}))
-					// mark the key as found in the plan map
-					// this will be used to check if there are any keys in the plan that were not found in the response
-					planKeys[elem.(types.Object).Attributes()["key"].(types.String).ValueString()] = true
+					// mark the key as found
+					found = true
 				}
 			}
-		}
-
-		// check if there are any keys in the plan that were not found in the response
-		for _, elem := range data.Translations.Elements() {
-			key := elem.(types.Object).Attributes()["key"].(types.String).ValueString()
-			if !planKeys[key] {
-				// if the key is not found in the response, add it to the missing keys
-				missingKeys = append(missingKeys, key)
+			if !found {
+				// if the key from the response is not found in the plan, we will add it to the missing keys
+				missingKeys = append(missingKeys, elem.(types.Object).Attributes()["key"].(types.String).ValueString())
 			}
 		}
 
@@ -238,7 +229,7 @@ func (state *languageTranslationsResourceModel) readClientResponse(response []ma
 		}
 	}
 
-	state.Translations, diags = types.ListValue(types.ObjectType{AttrTypes: attrTypes}, translations)
+	state.Translations, diags = types.SetValue(types.ObjectType{AttrTypes: attrTypes}, translations)
 	respDiags.Append(diags...)
 	return diags
 }
@@ -311,25 +302,17 @@ func (r *languageTranslationResource) Create(ctx context.Context, req resource.C
 			return &translationsSlice, initialHttpResponse, nil
 		},
 		"UpdateTranslations-Create-SubsequentRead",
-		framework.CustomErrorResourceNotFoundWarning,
+		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
-
-	if responseData == nil {
-		resp.Diagnostics.AddError(
-			"Resource Not Found",
-			"The language translation resource could not be found after creation. It may have been deleted outside of Terraform.",
-		)
-		return
-	}
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Read response into the model
-	resp.Diagnostics.Append(data.readClientResponse(*responseData, data)...)
+	resp.Diagnostics.Append(data.readClientResponse(*responseData)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -402,7 +385,7 @@ func (r *languageTranslationResource) Read(ctx context.Context, req resource.Rea
 	}
 
 	// Read response into the model
-	resp.Diagnostics.Append(data.readClientResponse(*responseData, data)...)
+	resp.Diagnostics.Append(data.readClientResponse(*responseData)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -479,26 +462,18 @@ func (r *languageTranslationResource) Update(ctx context.Context, req resource.U
 
 			return &translationsSlice, initialHttpResponse, nil
 		},
-		"UpdateTranslations-Create-SubsequentRead",
-		framework.CustomErrorResourceNotFoundWarning,
+		"UpdateTranslations-Update-SubsequentRead",
+		framework.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
-
-	if responseData == nil {
-		resp.Diagnostics.AddError(
-			"Resource Not Found",
-			"The language translation resource could not be found after update. It may have been deleted outside of Terraform.",
-		)
-		return
-	}
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Read response into the model
-	resp.Diagnostics.Append(data.readClientResponse(*responseData, data)...)
+	resp.Diagnostics.Append(data.readClientResponse(*responseData)...)
 
 	if resp.Diagnostics.HasError() {
 		return
