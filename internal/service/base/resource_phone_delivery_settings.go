@@ -1361,6 +1361,11 @@ func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context, service
 			*authentication,
 		)
 
+		// Set the ID if it exists (for updates)
+		if !p.Id.IsNull() && !p.Id.IsUnknown() {
+			providerData.SetId(p.Id.ValueString())
+		}
+
 		if !providerPlan.Numbers.IsNull() && !providerPlan.Numbers.IsUnknown() {
 			var numbersPlan []PhoneDeliverySettingsProviderCustomNumbersResourceModel
 			diags.Append(providerPlan.Numbers.ElementsAs(ctx, &numbersPlan, false)...)
@@ -1395,6 +1400,11 @@ func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context, service
 			providerPlan.Sid.ValueString(),
 			providerPlan.AuthToken.ValueString(),
 		)
+
+		// Set the ID if it exists (for updates)
+		if !p.Id.IsNull() && !p.Id.IsUnknown() {
+			providerData.SetId(p.Id.ValueString())
+		}
 
 		if !providerPlan.SelectedNumbers.IsNull() && !providerPlan.SelectedNumbers.IsUnknown() && len(serviceNumbers) > 0 {
 			var selectedNumbersPlan []PhoneDeliverySettingsProviderCustomSelectedNumbersResourceModel
@@ -1456,6 +1466,11 @@ func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context, service
 			"",
 			providerPlan.AuthToken.ValueString(),
 		)
+
+		// Set the ID if it exists (for updates)
+		if !p.Id.IsNull() && !p.Id.IsUnknown() {
+			providerData.SetId(p.Id.ValueString())
+		}
 
 		data.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse = providerData
 	}

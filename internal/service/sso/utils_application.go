@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
@@ -320,6 +321,14 @@ func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Ob
 	spVerification, d := applicationSamlSpVerificationOkToTF(apiObject.GetSpVerificationOk())
 	diags.Append(d...)
 
+	typeValue := framework.EnumOkToTF(apiObject.GetTypeOk())
+	if management.EnumApplicationType(typeValue.ValueString()) == management.ENUMAPPLICATIONTYPE_TEMPLATE_APP {
+		diags.AddAttributeError(
+			path.Root("saml_options").AtName("type"),
+			"Application Type Not Supported",
+			"The `saml_options.type` value `TEMPLATE_APP` (used for Catalog Applications) is not supported.\nTo proceed, select Enable Advanced Configuration in the UI or change `saml_options.type` to `WEB_APP` before using this resource in Terraform.")
+	}
+
 	attributesMap := map[string]attr.Value{
 		"acs_urls":                         framework.StringSetOkToTF(apiObject.GetAcsUrlsOk()),
 		"assertion_duration":               framework.Int32OkToTF(apiObject.GetAssertionDurationOk()),
@@ -339,7 +348,7 @@ func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Ob
 		"sp_encryption":                    spEncryption,
 		"sp_entity_id":                     framework.StringOkToTF(apiObject.GetSpEntityIdOk()),
 		"sp_verification":                  spVerification,
-		"type":                             framework.EnumOkToTF(apiObject.GetTypeOk()),
+		"type":                             typeValue,
 	}
 
 	returnVar, d := types.ObjectValue(applicationSamlOptionsTFObjectTypes, attributesMap)
@@ -352,7 +361,7 @@ func applicationSamlIdpSigningKeyOkToTF(apiObject *management.ApplicationSAMLAll
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
-		return types.ObjectNull(applicationSamlOptionsIdpSigningKeyTFObjectTypes), diags
+		return types.ObjectNull(applicationIdpSigningKeyTFObjectTypes), diags
 	}
 
 	attributesMap := map[string]attr.Value{
@@ -364,7 +373,7 @@ func applicationSamlIdpSigningKeyOkToTF(apiObject *management.ApplicationSAMLAll
 		attributesMap["key_id"] = framework.PingOneResourceIDOkToTF(v.GetIdOk())
 	}
 
-	returnVar, d := types.ObjectValue(applicationSamlOptionsIdpSigningKeyTFObjectTypes, attributesMap)
+	returnVar, d := types.ObjectValue(applicationIdpSigningKeyTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags
@@ -428,6 +437,106 @@ func applicationSamlSpVerificationOkToTF(apiObject *management.ApplicationSAMLAl
 	}
 
 	returnVar, d := types.ObjectValue(applicationSamlOptionsSpVerificationTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func applicationWsfedOptionsToTF(apiObject *management.ApplicationWSFED) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if apiObject == nil || apiObject.GetId() == "" {
+		return types.ObjectNull(applicationWsfedOptionsTFObjectTypes), diags
+	}
+
+	corsSettings, d := applicationCorsSettingsOkToTF(apiObject.GetCorsSettingsOk())
+	diags.Append(d...)
+
+	idpSigningKey, d := applicationWsfedIdpSigningKeyOkToTF(apiObject.GetIdpSigningOk())
+	diags.Append(d...)
+
+	kerberos, d := applicationWsfedKerberosOkToTF(apiObject.GetKerberosOk())
+	diags.Append(d...)
+
+	attributesMap := map[string]attr.Value{
+		"audience_restriction":           framework.StringOkToTF(apiObject.GetAudienceRestrictionOk()),
+		"cors_settings":                  corsSettings,
+		"domain_name":                    framework.StringOkToTF(apiObject.GetDomainNameOk()),
+		"idp_signing_key":                idpSigningKey,
+		"kerberos":                       kerberos,
+		"reply_url":                      framework.StringOkToTF(apiObject.GetReplyUrlOk()),
+		"slo_endpoint":                   framework.StringOkToTF(apiObject.GetSloEndpointOk()),
+		"subject_name_identifier_format": framework.EnumOkToTF(apiObject.GetSubjectNameIdentifierFormatOk()),
+		"type":                           framework.EnumOkToTF(apiObject.GetTypeOk()),
+	}
+
+	returnVar, d := types.ObjectValue(applicationWsfedOptionsTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func applicationWsfedIdpSigningKeyOkToTF(apiObject *management.ApplicationWSFEDAllOfIdpSigning, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(applicationIdpSigningKeyTFObjectTypes), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"algorithm": framework.EnumOkToTF(apiObject.GetAlgorithmOk()),
+		"key_id":    pingonetypes.NewResourceIDNull(),
+	}
+
+	if v, ok := apiObject.GetKeyOk(); ok {
+		attributesMap["key_id"] = framework.PingOneResourceIDOkToTF(v.GetIdOk())
+	}
+
+	returnVar, d := types.ObjectValue(applicationIdpSigningKeyTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func applicationWsfedKerberosOkToTF(apiObject *management.ApplicationWSFEDAllOfKerberos, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(applicationWsfedOptionsKerberosTFObjectTypes), diags
+	}
+
+	var gateways []attr.Value
+	for _, gateway := range apiObject.Gateways {
+		gatewayObj, d := applicationWsfedKerberosGatewaysToTF(gateway)
+		diags.Append(d...)
+		gateways = append(gateways, gatewayObj)
+	}
+
+	gatewaysValue, d := types.SetValue(types.ObjectType{
+		AttrTypes: applicationWsfedOptionsKerberosGatewayTFObjectTypes,
+	}, gateways)
+	diags.Append(d...)
+	returnVar, d := types.ObjectValue(applicationWsfedOptionsKerberosTFObjectTypes, map[string]attr.Value{
+		"gateways": gatewaysValue,
+	})
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func applicationWsfedKerberosGatewaysToTF(apiObject management.ApplicationWSFEDAllOfKerberosGateways) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	userType, d := types.ObjectValue(applicationWsfedOptionsKerberosGatewayUserTypeTFObjectTypes, map[string]attr.Value{
+		"id": framework.PingOneResourceIDOkToTF(apiObject.UserType.GetIdOk()),
+	})
+	diags.Append(d...)
+
+	returnVar, d := types.ObjectValue(applicationWsfedOptionsKerberosGatewayTFObjectTypes, map[string]attr.Value{
+		"id":        framework.PingOneResourceIDOkToTF(apiObject.GetIdOk()),
+		"type":      framework.EnumOkToTF(apiObject.GetTypeOk()),
+		"user_type": userType,
+	})
 	diags.Append(d...)
 
 	return returnVar, diags

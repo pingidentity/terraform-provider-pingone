@@ -38,6 +38,7 @@ func TestAccForm_RemovalDrift(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
@@ -90,6 +91,7 @@ func TestAccForm_NewEnv(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
@@ -148,6 +150,7 @@ func TestAccForm_Full(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -203,97 +206,67 @@ func TestAccForm_Multiple(t *testing.T) {
 		Config: testAccFormConfig_MultipleStep1(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "10"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"type":                       "PASSWORD",
-				"position.row":               "3",
-				"position.col":               "0",
-				"position.width":             "",
-				"key":                        "user.password",
-				"label":                      "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.password.label\",\"defaultTranslation\":\"Password\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
-				"required":                   "true",
-				"attribute_disabled":         "false",
-				"show_password_requirements": "false",
-				// "validation.type":            "NONE",
-			}),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"type":               "TEXT",
-				"position.row":       "2",
-				"position.col":       "0",
-				"position.width":     "",
-				"key":                "user.username",
-				"label":              "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.username.label\",\"defaultTranslation\":\"Enter your email address\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
-				"required":           "true",
-				"attribute_disabled": "false",
-				"validation.type":    "NONE",
-			}),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"type":           "SLATE_TEXTBLOB",
-				"position.row":   "0",
-				"position.col":   "0",
-				"position.width": "",
-				"content":        "[{\"children\":[{\"text\":\"Sign On\"}],\"type\":\"heading-1\"},{\"type\":\"divider\",\"children\":[{\"text\":\"\"}]},{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"}]}]",
-			}),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"type":           "FLOW_LINK",
-				"position.row":   "7",
-				"position.col":   "0",
-				"position.width": "",
-				"key":            "issues",
-				"label":          "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Issues signing on?\"}]}]",
-			}),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"type":           "FLOW_LINK",
-				"position.row":   "7",
-				"position.col":   "1",
-				"position.width": "",
-				"key":            "register",
-				"label":          "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Create your account\"}]}]",
-			}),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"type":                    "FLOW_BUTTON",
-				"position.row":            "5",
-				"position.col":            "1",
-				"position.width":          "",
-				"key":                     "passkey",
-				"label":                   "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Use your Passkey\"}]}]",
-				"styles.alignment":        "CENTER",
-				"styles.background_color": "#FFF",
-				"styles.border_color":     "#4462ED",
-				"styles.enabled":          "true",
-				"styles.height":           "36",
-				"styles.padding.bottom":   "5",
-				"styles.padding.left":     "0",
-				"styles.padding.right":    "0",
-				"styles.padding.top":      "5",
-				"styles.text_color":       "#4462ED",
-				"styles.width":            "100",
-				"styles.width_unit":       "PERCENT",
-			}),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"type":           "ERROR_DISPLAY",
-				"position.row":   "1",
-				"position.col":   "0",
-				"position.width": "",
-			}),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"type":           "SUBMIT_BUTTON",
-				"position.row":   "5",
-				"position.col":   "0",
-				"position.width": "",
-				"label":          "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text.signOn\",\"defaultTranslation\":\"Sign On\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
-			}),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"type":           "DIVIDER",
-				"position.row":   "4",
-				"position.col":   "0",
-				"position.width": "",
-			}),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"type":           "DIVIDER",
-				"position.row":   "6",
-				"position.col":   "0",
-				"position.width": "",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "PASSWORD"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "3"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "user.password"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.password.label\",\"defaultTranslation\":\"Password\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.show_password_requirements", "false"),
+			// "validation.type":            "NONE",
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.type", "TEXT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.position.row", "2"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.key", "user.username"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.username.label\",\"defaultTranslation\":\"Enter your email address\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.required", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.validation.type", "NONE"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.2.type", "SLATE_TEXTBLOB"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.2.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.2.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.2.content", "[{\"children\":[{\"text\":\"Sign On\"}],\"type\":\"heading-1\"},{\"type\":\"divider\",\"children\":[{\"text\":\"\"}]},{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.type", "FLOW_LINK"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.position.row", "7"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.key", "issues"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Issues signing on?\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.4.type", "FLOW_BUTTON"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.4.position.row", "5"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.4.position.col", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.4.key", "passkey"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.4.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Use your Passkey\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.4.styles.alignment", "CENTER"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.4.styles.background_color", "#FFF"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.4.styles.border_color", "#4462ED"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.4.styles.enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.4.styles.height", "36"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.4.styles.padding.bottom", "5"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.4.styles.padding.left", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.4.styles.padding.right", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.4.styles.padding.top", "5"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.4.styles.text_color", "#4462ED"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.4.styles.width", "100"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.4.styles.width_unit", "PERCENT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.5.type", "FLOW_LINK"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.5.position.row", "7"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.5.position.col", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.5.key", "register"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.5.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Create your account\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.6.type", "SUBMIT_BUTTON"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.6.position.row", "5"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.6.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.6.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text.signOn\",\"defaultTranslation\":\"Sign On\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.7.type", "ERROR_DISPLAY"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.7.position.row", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.7.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.8.type", "DIVIDER"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.8.position.row", "4"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.8.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.9.type", "DIVIDER"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.9.position.row", "6"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.9.position.col", "0"),
 		),
 	}
 
@@ -301,41 +274,30 @@ func TestAccForm_Multiple(t *testing.T) {
 		Config: testAccFormConfig_MultipleStep2(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "4"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"type":           "TEXTBLOB",
-				"position.row":   "0",
-				"position.col":   "0",
-				"position.width": "",
-				"content":        "<h2>Sign On</h2><hr>",
-			}),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"type":           "ERROR_DISPLAY",
-				"position.row":   "1",
-				"position.col":   "0",
-				"position.width": "",
-			}),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"type":            "TEXT",
-				"position.row":    "2",
-				"position.col":    "0",
-				"position.width":  "",
-				"key":             "user.username",
-				"label":           "[{\"children\":[{\"text\":\"\"},{\"children\":[{\"text\":\"\"}],\"defaultTranslation\":\"Username\",\"inline\":true,\"key\":\"fields.user.username.label\",\"type\":\"i18n\"},{\"text\":\"\"}],\"type\":\"paragraph\"}]",
-				"required":        "true",
-				"validation.type": "NONE",
-			}),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"type":           "SUBMIT_BUTTON",
-				"position.row":   "3",
-				"position.col":   "0",
-				"position.width": "",
-				"label":          "[{\"children\":[{\"text\":\"\"},{\"children\":[{\"text\":\"\"}],\"defaultTranslation\":\"Sign On\",\"inline\":true,\"key\":\"button.text.signOn\",\"type\":\"i18n\"},{\"text\":\"\"}],\"type\":\"paragraph\"}]",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "ERROR_DISPLAY"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.type", "TEXT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.position.row", "2"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.key", "user.username"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.label", "[{\"children\":[{\"text\":\"\"},{\"children\":[{\"text\":\"\"}],\"defaultTranslation\":\"Username\",\"inline\":true,\"key\":\"fields.user.username.label\",\"type\":\"i18n\"},{\"text\":\"\"}],\"type\":\"paragraph\"}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.required", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.validation.type", "NONE"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.2.type", "SLATE_TEXTBLOB"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.2.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.2.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.2.content", "[{\"children\":[{\"text\":\"Sign On\"}],\"type\":\"heading-1\"},{\"children\":[{\"text\":\"\"}],\"type\":\"divider\"},{\"children\":[{\"text\":\"\"}],\"type\":\"paragraph\"}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.type", "SUBMIT_BUTTON"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.position.row", "3"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.label", "[{\"children\":[{\"text\":\"\"},{\"children\":[{\"text\":\"\"}],\"defaultTranslation\":\"Sign On\",\"inline\":true,\"key\":\"button.text.signOn\",\"type\":\"i18n\"},{\"text\":\"\"}],\"type\":\"paragraph\"}]"),
 		),
 	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -378,26 +340,24 @@ func TestAccForm_FieldCheckbox(t *testing.T) {
 		Config: testAccFormConfig_FieldCheckboxFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":                    "0",
-				"position.col":                    "0",
-				"position.width":                  "50",
-				"type":                            "CHECKBOX",
-				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.locale.label\",\"defaultTranslation\":\"Locale\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
-				"label_mode":                      "FLOAT",
-				"layout":                          "VERTICAL",
-				"key":                             fmt.Sprintf("user.%s", name),
-				"required":                        "true",
-				"attribute_disabled":              "false",
-				"other_option_enabled":            "false",
-				"other_option_attribute_disabled": "false",
-				"options.0.value":                 "Option1",
-				"options.0.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]",
-				"options.1.value":                 "Option2",
-				"options.1.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 2\"}]}]",
-				"options.2.value":                 "Option3",
-				"options.2.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "CHECKBOX"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.locale.label\",\"defaultTranslation\":\"Locale\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label_mode", "FLOAT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.layout", "VERTICAL"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", fmt.Sprintf("user.%s", name)),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.value", "Option1"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.value", "Option2"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 2\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.2.value", "Option3"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.2.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"),
 		),
 	}
 
@@ -405,28 +365,26 @@ func TestAccForm_FieldCheckbox(t *testing.T) {
 		Config: testAccFormConfig_FieldCheckboxMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":                    "0",
-				"position.col":                    "0",
-				"position.width":                  "",
-				"type":                            "CHECKBOX",
-				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
-				"key":                             "checkbox-field",
-				"layout":                          "HORIZONTAL",
-				"required":                        "false",
-				"attribute_disabled":              "false",
-				"other_option_enabled":            "false",
-				"other_option_attribute_disabled": "false",
-				"options.0.value":                 "Option1",
-				"options.0.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]",
-				"options.1.value":                 "Option3",
-				"options.1.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "CHECKBOX"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "checkbox-field"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.layout", "HORIZONTAL"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.value", "Option1"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.value", "Option3"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"),
 		),
 	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -487,26 +445,24 @@ func TestAccForm_FieldCombobox(t *testing.T) {
 		Config: testAccFormConfig_FieldComboboxFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":                    "0",
-				"position.col":                    "0",
-				"position.width":                  "50",
-				"type":                            "COMBOBOX",
-				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.locale.label\",\"defaultTranslation\":\"Locale\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
-				"label_mode":                      "FLOAT",
-				"layout":                          "VERTICAL",
-				"key":                             "user.locale",
-				"required":                        "true",
-				"attribute_disabled":              "false",
-				"other_option_enabled":            "false",
-				"other_option_attribute_disabled": "false",
-				"options.0.value":                 "Option1",
-				"options.0.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]",
-				"options.1.value":                 "Option2",
-				"options.1.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 2\"}]}]",
-				"options.2.value":                 "Option3",
-				"options.2.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "COMBOBOX"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.locale.label\",\"defaultTranslation\":\"Locale\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label_mode", "FLOAT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.layout", "VERTICAL"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "user.locale"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.value", "Option1"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.value", "Option2"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 2\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.2.value", "Option3"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.2.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"),
 		),
 	}
 
@@ -514,27 +470,25 @@ func TestAccForm_FieldCombobox(t *testing.T) {
 		Config: testAccFormConfig_FieldComboboxMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":                    "0",
-				"position.col":                    "0",
-				"position.width":                  "",
-				"type":                            "COMBOBOX",
-				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
-				"key":                             "combobox-field",
-				"required":                        "false",
-				"attribute_disabled":              "false",
-				"other_option_enabled":            "false",
-				"other_option_attribute_disabled": "false",
-				"options.0.value":                 "Option1",
-				"options.0.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]",
-				"options.1.value":                 "Option3",
-				"options.1.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "COMBOBOX"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "combobox-field"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.value", "Option1"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.value", "Option3"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"),
 		),
 	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -595,26 +549,24 @@ func TestAccForm_FieldDropdown(t *testing.T) {
 		Config: testAccFormConfig_FieldDropdownFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":                    "0",
-				"position.col":                    "0",
-				"position.width":                  "50",
-				"type":                            "DROPDOWN",
-				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.locale.label\",\"defaultTranslation\":\"Locale\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
-				"label_mode":                      "FLOAT",
-				"layout":                          "VERTICAL",
-				"key":                             "user.locale",
-				"required":                        "true",
-				"attribute_disabled":              "false",
-				"other_option_enabled":            "false",
-				"other_option_attribute_disabled": "false",
-				"options.0.value":                 "Option1",
-				"options.0.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]",
-				"options.1.value":                 "Option2",
-				"options.1.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 2\"}]}]",
-				"options.2.value":                 "Option3",
-				"options.2.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "DROPDOWN"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.locale.label\",\"defaultTranslation\":\"Locale\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label_mode", "FLOAT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.layout", "VERTICAL"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "user.locale"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.value", "Option1"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.value", "Option2"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 2\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.2.value", "Option3"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.2.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"),
 		),
 	}
 
@@ -622,27 +574,25 @@ func TestAccForm_FieldDropdown(t *testing.T) {
 		Config: testAccFormConfig_FieldDropdownMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":                    "0",
-				"position.col":                    "0",
-				"position.width":                  "",
-				"type":                            "DROPDOWN",
-				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
-				"key":                             "dropdown-field",
-				"required":                        "false",
-				"attribute_disabled":              "false",
-				"other_option_enabled":            "false",
-				"other_option_attribute_disabled": "false",
-				"options.0.value":                 "Option1",
-				"options.0.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]",
-				"options.1.value":                 "Option3",
-				"options.1.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "DROPDOWN"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "dropdown-field"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.value", "Option1"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.value", "Option3"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"),
 		),
 	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -703,22 +653,20 @@ func TestAccForm_FieldPassword(t *testing.T) {
 		Config: testAccFormConfig_FieldPasswordFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":                    "0",
-				"position.col":                    "0",
-				"position.width":                  "50",
-				"type":                            "PASSWORD",
-				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.password.label\",\"defaultTranslation\":\"Password\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
-				"label_mode":                      "FLOAT",
-				"layout":                          "VERTICAL",
-				"key":                             "user.password",
-				"required":                        "true",
-				"attribute_disabled":              "false",
-				"other_option_enabled":            "false",
-				"other_option_attribute_disabled": "false",
-				"show_password_requirements":      "true",
-				"validation.type":                 "NONE",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "PASSWORD"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.password.label\",\"defaultTranslation\":\"Password\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label_mode", "FLOAT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.layout", "VERTICAL"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "user.password"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.show_password_requirements", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.validation.type", "NONE"),
 		),
 	}
 
@@ -726,24 +674,22 @@ func TestAccForm_FieldPassword(t *testing.T) {
 		Config: testAccFormConfig_FieldPasswordMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":                    "0",
-				"position.col":                    "0",
-				"position.width":                  "",
-				"type":                            "PASSWORD",
-				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
-				"key":                             "password-field",
-				"required":                        "false",
-				"attribute_disabled":              "false",
-				"other_option_enabled":            "false",
-				"other_option_attribute_disabled": "false",
-				"show_password_requirements":      "false",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "PASSWORD"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "password-field"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.show_password_requirements", "false"),
 		),
 	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -808,23 +754,21 @@ func TestAccForm_FieldPasswordVerify(t *testing.T) {
 		Config: testAccFormConfig_FieldPasswordVerifyFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":                    "0",
-				"position.col":                    "0",
-				"position.width":                  "50",
-				"type":                            "PASSWORD_VERIFY",
-				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.password.label\",\"defaultTranslation\":\"Password\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
-				"label_mode":                      "FLOAT",
-				"label_password_verify":           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.password.labelPasswordVerify\",\"defaultTranslation\":\"Verify Password\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
-				"layout":                          "VERTICAL",
-				"key":                             "user.password",
-				"required":                        "true",
-				"attribute_disabled":              "false",
-				"other_option_enabled":            "false",
-				"other_option_attribute_disabled": "false",
-				"show_password_requirements":      "true",
-				"validation.type":                 "NONE",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "PASSWORD_VERIFY"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.password.label\",\"defaultTranslation\":\"Password\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label_mode", "FLOAT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label_password_verify", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.password.labelPasswordVerify\",\"defaultTranslation\":\"Verify Password\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.layout", "VERTICAL"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "user.password"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.show_password_requirements", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.validation.type", "NONE"),
 		),
 	}
 
@@ -832,24 +776,22 @@ func TestAccForm_FieldPasswordVerify(t *testing.T) {
 		Config: testAccFormConfig_FieldPasswordVerifyMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":                    "0",
-				"position.col":                    "0",
-				"position.width":                  "",
-				"type":                            "PASSWORD_VERIFY",
-				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
-				"key":                             "password-field",
-				"required":                        "false",
-				"attribute_disabled":              "false",
-				"other_option_enabled":            "false",
-				"other_option_attribute_disabled": "false",
-				"show_password_requirements":      "false",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "PASSWORD_VERIFY"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "password-field"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.show_password_requirements", "false"),
 		),
 	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -914,26 +856,24 @@ func TestAccForm_FieldRadio(t *testing.T) {
 		Config: testAccFormConfig_FieldRadioFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":                    "0",
-				"position.col":                    "0",
-				"position.width":                  "50",
-				"type":                            "RADIO",
-				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.locale.label\",\"defaultTranslation\":\"Locale\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
-				"label_mode":                      "FLOAT",
-				"layout":                          "VERTICAL",
-				"key":                             "user.locale",
-				"required":                        "true",
-				"attribute_disabled":              "false",
-				"other_option_enabled":            "false",
-				"other_option_attribute_disabled": "false",
-				"options.0.value":                 "Option1",
-				"options.0.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]",
-				"options.1.value":                 "Option2",
-				"options.1.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 2\"}]}]",
-				"options.2.value":                 "Option3",
-				"options.2.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "RADIO"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.locale.label\",\"defaultTranslation\":\"Locale\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label_mode", "FLOAT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.layout", "VERTICAL"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "user.locale"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.value", "Option1"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.value", "Option2"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 2\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.2.value", "Option3"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.2.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"),
 		),
 	}
 
@@ -941,28 +881,26 @@ func TestAccForm_FieldRadio(t *testing.T) {
 		Config: testAccFormConfig_FieldRadioMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":                    "0",
-				"position.col":                    "0",
-				"position.width":                  "",
-				"type":                            "RADIO",
-				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
-				"key":                             "radio-field",
-				"layout":                          "HORIZONTAL",
-				"required":                        "false",
-				"attribute_disabled":              "false",
-				"other_option_enabled":            "false",
-				"other_option_attribute_disabled": "false",
-				"options.0.value":                 "Option1",
-				"options.0.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]",
-				"options.1.value":                 "Option3",
-				"options.1.label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "RADIO"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "radio-field"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.layout", "HORIZONTAL"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.value", "Option1"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.value", "Option3"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"),
 		),
 	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -1023,25 +961,23 @@ func TestAccForm_FieldSubmitButton(t *testing.T) {
 		Config: testAccFormConfig_FieldSubmitButtonFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "1"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":            "0",
-				"position.col":            "0",
-				"position.width":          "50",
-				"type":                    "SUBMIT_BUTTON",
-				"label":                   "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
-				"styles.width":            "25",
-				"styles.width_unit":       "PERCENT",
-				"styles.height":           "36",
-				"styles.padding.top":      "10",
-				"styles.padding.right":    "12",
-				"styles.padding.bottom":   "14",
-				"styles.padding.left":     "16",
-				"styles.alignment":        "RIGHT",
-				"styles.background_color": "#FF0000",
-				"styles.text_color":       "#00FF00",
-				"styles.border_color":     "#0000FF",
-				"styles.enabled":          "true",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "SUBMIT_BUTTON"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.width", "25"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.width_unit", "PERCENT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.height", "36"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.padding.top", "10"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.padding.right", "12"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.padding.bottom", "14"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.padding.left", "16"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.alignment", "RIGHT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.background_color", "#FF0000"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.text_color", "#00FF00"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.border_color", "#0000FF"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.enabled", "true"),
 		),
 	}
 
@@ -1049,18 +985,16 @@ func TestAccForm_FieldSubmitButton(t *testing.T) {
 		Config: testAccFormConfig_FieldSubmitButtonMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "1"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":   "0",
-				"position.col":   "0",
-				"position.width": "",
-				"type":           "SUBMIT_BUTTON",
-				"label":          "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "SUBMIT_BUTTON"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"),
 		),
 	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -1121,23 +1055,21 @@ func TestAccForm_FieldText(t *testing.T) {
 		Config: testAccFormConfig_FieldTextFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":                    "0",
-				"position.col":                    "0",
-				"position.width":                  "50",
-				"type":                            "TEXT",
-				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.username.label\",\"defaultTranslation\":\"Username\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
-				"label_mode":                      "FLOAT",
-				"layout":                          "VERTICAL",
-				"key":                             "user.username",
-				"required":                        "true",
-				"attribute_disabled":              "false",
-				"validation.type":                 "CUSTOM",
-				"validation.regex":                "[a-zA-Z0-9]+",
-				"validation.error_message":        "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Must be alphanumeric\"}]}]",
-				"other_option_enabled":            "false",
-				"other_option_attribute_disabled": "false",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "TEXT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.username.label\",\"defaultTranslation\":\"Username\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label_mode", "FLOAT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.layout", "VERTICAL"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "user.username"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.validation.type", "CUSTOM"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.validation.regex", "[a-zA-Z0-9]+"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.validation.error_message", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Must be alphanumeric\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
 		),
 	}
 
@@ -1145,24 +1077,22 @@ func TestAccForm_FieldText(t *testing.T) {
 		Config: testAccFormConfig_FieldTextMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":                    "0",
-				"position.col":                    "0",
-				"position.width":                  "",
-				"type":                            "TEXT",
-				"label":                           "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
-				"key":                             "text-field",
-				"required":                        "false",
-				"attribute_disabled":              "false",
-				"validation.type":                 "NONE",
-				"other_option_enabled":            "false",
-				"other_option_attribute_disabled": "false",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "TEXT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "text-field"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.validation.type", "NONE"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
 		),
 	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -1223,12 +1153,10 @@ func TestAccForm_ItemDivider(t *testing.T) {
 		Config: testAccFormConfig_ItemDividerFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":   "0",
-				"position.col":   "0",
-				"position.width": "50",
-				"type":           "DIVIDER",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "DIVIDER"),
 		),
 	}
 
@@ -1236,17 +1164,15 @@ func TestAccForm_ItemDivider(t *testing.T) {
 		Config: testAccFormConfig_ItemDividerMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":   "0",
-				"position.col":   "0",
-				"position.width": "",
-				"type":           "DIVIDER",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "DIVIDER"),
 		),
 	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -1303,12 +1229,10 @@ func TestAccForm_ItemEmptyField(t *testing.T) {
 		Config: testAccFormConfig_ItemEmptyFieldFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "3"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":   "0",
-				"position.col":   "1",
-				"position.width": "50",
-				"type":           "EMPTY_FIELD",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.position.col", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.position.width", "50"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.type", "EMPTY_FIELD"),
 		),
 	}
 
@@ -1316,16 +1240,15 @@ func TestAccForm_ItemEmptyField(t *testing.T) {
 		Config: testAccFormConfig_ItemEmptyFieldMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "3"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row": "0",
-				"position.col": "1",
-				"type":         "EMPTY_FIELD",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.position.col", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.type", "EMPTY_FIELD"),
 		),
 	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -1382,12 +1305,10 @@ func TestAccForm_ItemErrorDisplay(t *testing.T) {
 		Config: testAccFormConfig_ItemErrorDisplayFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":   "0",
-				"position.col":   "0",
-				"position.width": "50",
-				"type":           "ERROR_DISPLAY",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "ERROR_DISPLAY"),
 		),
 	}
 
@@ -1395,17 +1316,15 @@ func TestAccForm_ItemErrorDisplay(t *testing.T) {
 		Config: testAccFormConfig_ItemErrorDisplayMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":   "0",
-				"position.col":   "0",
-				"position.width": "",
-				"type":           "ERROR_DISPLAY",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "ERROR_DISPLAY"),
 		),
 	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -1462,26 +1381,24 @@ func TestAccForm_ItemFlowButton(t *testing.T) {
 		Config: testAccFormConfig_ItemFlowButtonFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":            "0",
-				"position.col":            "0",
-				"position.width":          "50",
-				"type":                    "FLOW_BUTTON",
-				"key":                     "button-field-full",
-				"label":                   "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
-				"styles.width":            "25",
-				"styles.width_unit":       "PERCENT",
-				"styles.height":           "36",
-				"styles.padding.top":      "10",
-				"styles.padding.right":    "12",
-				"styles.padding.bottom":   "14",
-				"styles.padding.left":     "16",
-				"styles.alignment":        "RIGHT",
-				"styles.background_color": "#FF0000",
-				"styles.text_color":       "#00FF00",
-				"styles.border_color":     "#0000FF",
-				"styles.enabled":          "true",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "FLOW_BUTTON"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "button-field-full"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.width", "25"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.width_unit", "PERCENT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.height", "36"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.padding.top", "10"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.padding.right", "12"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.padding.bottom", "14"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.padding.left", "16"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.alignment", "RIGHT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.background_color", "#FF0000"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.text_color", "#00FF00"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.border_color", "#0000FF"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.enabled", "true"),
 		),
 	}
 
@@ -1489,19 +1406,17 @@ func TestAccForm_ItemFlowButton(t *testing.T) {
 		Config: testAccFormConfig_ItemFlowButtonMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":   "0",
-				"position.col":   "0",
-				"position.width": "",
-				"type":           "FLOW_BUTTON",
-				"key":            "button-field",
-				"label":          "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "FLOW_BUTTON"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "button-field"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"),
 		),
 	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -1562,21 +1477,19 @@ func TestAccForm_ItemFlowLink(t *testing.T) {
 		Config: testAccFormConfig_ItemFlowLinkFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":          "0",
-				"position.col":          "0",
-				"position.width":        "50",
-				"type":                  "FLOW_LINK",
-				"key":                   "link-field-full",
-				"label":                 "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]",
-				"styles.padding.top":    "10",
-				"styles.padding.right":  "12",
-				"styles.padding.bottom": "14",
-				"styles.padding.left":   "16",
-				"styles.alignment":      "RIGHT",
-				"styles.text_color":     "#00FF00",
-				"styles.enabled":        "true",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "FLOW_LINK"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "link-field-full"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.padding.top", "10"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.padding.right", "12"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.padding.bottom", "14"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.padding.left", "16"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.alignment", "RIGHT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.text_color", "#00FF00"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.enabled", "true"),
 		),
 	}
 
@@ -1584,19 +1497,17 @@ func TestAccForm_ItemFlowLink(t *testing.T) {
 		Config: testAccFormConfig_ItemFlowLinkMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":   "0",
-				"position.col":   "0",
-				"position.width": "",
-				"type":           "FLOW_LINK",
-				"key":            "link-field",
-				"label":          "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "FLOW_LINK"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "link-field"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"),
 		),
 	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -1658,16 +1569,14 @@ func TestAccForm_ItemQRCode(t *testing.T) {
 		Config: testAccFormConfig_ItemQRCodeFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":   "0",
-				"position.col":   "0",
-				"position.width": "50",
-				"type":           "QR_CODE",
-				"key":            "qr-code-field-full",
-				"qr_code_type":   "MFA_AUTH",
-				"show_border":    "true",
-				"alignment":      "RIGHT",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "QR_CODE"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "qr-code-field-full"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.qr_code_type", "MFA_AUTH"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.show_border", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.alignment", "RIGHT"),
 		),
 	}
 
@@ -1675,21 +1584,19 @@ func TestAccForm_ItemQRCode(t *testing.T) {
 		Config: testAccFormConfig_ItemQRCodeMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":   "0",
-				"position.col":   "0",
-				"position.width": "",
-				"type":           "QR_CODE",
-				"key":            "qr-code-field",
-				"qr_code_type":   "MFA_AUTH",
-				"show_border":    "false",
-				"alignment":      "LEFT",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "QR_CODE"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "qr-code-field"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.qr_code_type", "MFA_AUTH"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.show_border", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.alignment", "LEFT"),
 		),
 	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -1750,15 +1657,13 @@ func TestAccForm_ItemRecaptchaV2(t *testing.T) {
 		Config: testAccFormConfig_ItemRecaptchaV2Full(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":   "0",
-				"position.col":   "0",
-				"position.width": "50",
-				"type":           "RECAPTCHA_V2",
-				"theme":          "LIGHT",
-				"size":           "NORMAL",
-				"alignment":      "RIGHT",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "RECAPTCHA_V2"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.theme", "LIGHT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.size", "NORMAL"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.alignment", "RIGHT"),
 		),
 	}
 
@@ -1766,20 +1671,18 @@ func TestAccForm_ItemRecaptchaV2(t *testing.T) {
 		Config: testAccFormConfig_ItemRecaptchaV2Minimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":   "0",
-				"position.col":   "0",
-				"position.width": "",
-				"type":           "RECAPTCHA_V2",
-				"theme":          "DARK",
-				"size":           "COMPACT",
-				"alignment":      "LEFT",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "RECAPTCHA_V2"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.theme", "DARK"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.size", "COMPACT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.alignment", "LEFT"),
 		),
 	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -1840,13 +1743,11 @@ func TestAccForm_ItemSlateTextblob(t *testing.T) {
 		Config: testAccFormConfig_ItemSlateTextblobFull(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-				"position.row":   "0",
-				"position.col":   "0",
-				"position.width": "50",
-				"type":           "SLATE_TEXTBLOB",
-				"content":        "[{\"children\":[{\"text\":\"Two baguettes in a zoo cage, the sign says 'Bread in captivity'.\"}]}]",
-			}),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "SLATE_TEXTBLOB"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.content", "[{\"children\":[{\"text\":\"Two baguettes in a zoo cage, the sign says 'Bread in captivity'.\"}]}]"),
 		),
 	}
 
@@ -1863,6 +1764,7 @@ func TestAccForm_ItemSlateTextblob(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -1911,6 +1813,7 @@ func TestAccForm_ItemSlateTextblob(t *testing.T) {
 	})
 }
 
+// Deprecated start
 func TestAccForm_ItemTextblob(t *testing.T) {
 	t.Parallel()
 
@@ -1948,6 +1851,7 @@ func TestAccForm_ItemTextblob(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -1992,6 +1896,8 @@ func TestAccForm_ItemTextblob(t *testing.T) {
 	})
 }
 
+// Deprecated end
+
 func TestAccForm_BadParameters(t *testing.T) {
 	t.Parallel()
 
@@ -2002,6 +1908,7 @@ func TestAccForm_BadParameters(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
@@ -2382,14 +2289,14 @@ resource "pingone_form" "%[2]s" {
         }
       },
       {
-        type = "TEXTBLOB"
+        type = "SLATE_TEXTBLOB"
 
         position = {
           row = 0
           col = 0
         }
 
-        content = "<h2>Sign On</h2><hr>"
+        content = jsonencode([{ "children" : [{ "text" : "Sign On" }], "type" : "heading-1" }, { "type" : "divider", "children" : [{ "text" : "" }] }, { "type" : "paragraph", "children" : [{ "text" : "" }] }])
       },
       {
         type = "SUBMIT_BUTTON"
@@ -2498,14 +2405,14 @@ resource "pingone_form" "%[2]s" {
         }
       },
       {
-        type = "TEXTBLOB"
+        type = "SLATE_TEXTBLOB"
 
         position = {
           row = 0
           col = 0
         }
 
-        content = "<h2>Sign On</h2><hr>"
+        content = jsonencode([{ "children" : [{ "text" : "Sign On" }], "type" : "heading-1" }, { "type" : "divider", "children" : [{ "text" : "" }] }, { "type" : "paragraph", "children" : [{ "text" : "" }] }])
       },
       {
         type = "SUBMIT_BUTTON"
@@ -4764,6 +4671,7 @@ resource "pingone_form" "%[2]s" {
 // }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 // }
 
+// Deprecated start
 func testAccFormConfig_ItemTextblobFull(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -4845,6 +4753,8 @@ resource "pingone_form" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
+// Deprecated end
+
 func testAccFormConfig_NoSubmitButton(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -4862,13 +4772,19 @@ resource "pingone_form" "%[2]s" {
   components = {
     fields = [
       {
-        type = "TEXTBLOB"
-
+        attribute_disabled = false
+        key                = "user.username"
+        label              = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"fields.user.username.label\",\"defaultTranslation\":\"Enter your email address\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
         position = {
-          row = 0
           col = 0
+          row = 0
         }
-      }
+        required = true
+        type     = "TEXT"
+        validation = {
+          type = "NONE"
+        }
+      },
     ]
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)

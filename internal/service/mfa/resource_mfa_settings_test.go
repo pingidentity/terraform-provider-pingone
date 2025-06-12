@@ -105,7 +105,7 @@ func TestAccMFASettings_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.failure_count", "13"),
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.duration_seconds", "8"),
 					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "users.mfa_enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "users.mfa_enabled", "false"),
 				),
 			},
 			// Test importing the resource
@@ -159,7 +159,7 @@ func TestAccMFASettings_Minimal(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "lockout.failure_count"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "lockout.duration_seconds"),
 					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions.enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "users.mfa_enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "users.mfa_enabled", "true"),
 				),
 			},
 			{
@@ -171,7 +171,7 @@ func TestAccMFASettings_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.failure_count", "13"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "lockout.duration_seconds"),
 					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions.enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "users.mfa_enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "users.mfa_enabled", "true"),
 				),
 			},
 		},
@@ -208,7 +208,7 @@ func TestAccMFASettings_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.failure_count", "13"),
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.duration_seconds", "8"),
 					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "users.mfa_enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "users.mfa_enabled", "false"),
 				),
 			},
 			{
@@ -220,7 +220,7 @@ func TestAccMFASettings_Change(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "lockout.failure_count"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "lockout.duration_seconds"),
 					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions.enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "users.mfa_enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "users.mfa_enabled", "true"),
 				),
 			},
 			{
@@ -232,7 +232,7 @@ func TestAccMFASettings_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.failure_count", "13"),
 					resource.TestCheckResourceAttr(resourceFullName, "lockout.duration_seconds", "8"),
 					resource.TestCheckResourceAttr(resourceFullName, "phone_extensions.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "users.mfa_enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "users.mfa_enabled", "false"),
 				),
 			},
 		},
@@ -302,7 +302,7 @@ resource "pingone_mfa_settings" "%[3]s" {
   }
 
   users = {
-    mfa_enabled = true
+    mfa_enabled = false
   }
 
 }`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)

@@ -8,6 +8,7 @@ import (
 	"os"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -39,6 +40,7 @@ func TestAccPopulation_RemovalDrift(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
@@ -91,6 +93,7 @@ func TestAccPopulation_NewEnv(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
@@ -103,6 +106,8 @@ func TestAccPopulation_NewEnv(t *testing.T) {
 				Config: testAccPopulationConfig_NewEnv(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "preferred_language", "en"),
+					resource.TestMatchResourceAttr(resourceFullName, "theme.id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -119,6 +124,7 @@ func TestAccPopulation_Full(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -133,7 +139,12 @@ func TestAccPopulation_Full(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "Test description"),
-					resource.TestMatchResourceAttr(resourceFullName, "password_policy_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "password_policy.id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "alternative_identifiers.#", "2"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "alternative_identifiers.*", "identifier1"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "alternative_identifiers.*", "identifier2"),
+					resource.TestCheckResourceAttr(resourceFullName, "preferred_language", "es"),
+					resource.TestMatchResourceAttr(resourceFullName, "theme.id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 			// Test importing the resource
@@ -166,6 +177,7 @@ func TestAccPopulation_Minimal(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -180,14 +192,53 @@ func TestAccPopulation_Minimal(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckNoResourceAttr(resourceFullName, "description"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "password_policy_id"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "password_policy.id"),
+					resource.TestCheckResourceAttr(resourceFullName, "preferred_language", "en"),
+					resource.TestMatchResourceAttr(resourceFullName, "theme.id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
 	})
 }
 
+func TestAccPopulation_PasswordPolicy(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.Population_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccPopulationConfig_PasswordPolicyNested(resourceName, name),
+			},
+			{
+				Config: testAccPopulationConfig_PasswordPolicyString(resourceName, name),
+			},
+			{
+				Config:      testAccPopulationConfig_PasswordPolicyConflict(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Combination`),
+			},
+		},
+	})
+}
+
 func TestAccPopulation_DataProtection(t *testing.T) {
+	// If it is before the week of the next release, skip this test
+	if time.Now().Before(time.Date(2025, time.June, 14, 0, 0, 0, 0, time.UTC)) {
+		t.Skipf("Skipping TestAccPopulation_DataProtection as it requires creating a production environment")
+	} else {
+		t.Fatal("Remove skip logic from TestAccPopulation_DataProtection")
+	}
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -206,6 +257,7 @@ func TestAccPopulation_DataProtection(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
@@ -268,6 +320,7 @@ func TestAccPopulation_BadParameters(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -320,11 +373,46 @@ resource "pingone_password_policy" "%[2]s" {
   name           = "%[3]s"
 }
 
+data "pingone_language" "%[3]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  locale = "es"
+}
+
+resource "pingone_language_update" "%[3]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  language_id = data.pingone_language.%[3]s.id
+  enabled     = true
+}
+
+resource "pingone_branding_theme" "%[3]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name     = "%[3]s"
+  template = "split"
+
+  background_color   = "#FF00F0"
+  button_text_color  = "#FF6C6C"
+  heading_text_color = "#FF0005"
+  card_color         = "#0FFF39"
+  body_text_color    = "#8620FF"
+  link_text_color    = "#8A7F06"
+  button_color       = "#0CFFFB"
+}
+
 resource "pingone_population" "%[2]s" {
-  environment_id     = data.pingone_environment.general_test.id
-  name               = "%[3]s"
-  description        = "Test description"
-  password_policy_id = pingone_password_policy.%[2]s.id
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "Test description"
+  password_policy = {
+    id = pingone_password_policy.%[2]s.id
+  }
+  preferred_language      = pingone_language_update.%[3]s.locale
+  alternative_identifiers = ["identifier1", "identifier2"]
+  theme = {
+    id = pingone_branding_theme.%[3]s.id
+  }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -335,6 +423,56 @@ func testAccPopulationConfig_Minimal(resourceName, name string) string {
 resource "pingone_population" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccPopulationConfig_PasswordPolicyNested(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+resource "pingone_password_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+}
+
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  password_policy = {
+    id = pingone_password_policy.%[2]s.id
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccPopulationConfig_PasswordPolicyString(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+resource "pingone_password_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+}
+
+resource "pingone_population" "%[2]s" {
+  environment_id     = data.pingone_environment.general_test.id
+  name               = "%[3]s"
+  password_policy_id = pingone_password_policy.%[2]s.id
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccPopulationConfig_PasswordPolicyConflict(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+resource "pingone_password_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+}
+
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  password_policy = {
+    id = pingone_password_policy.%[2]s.id
+  }
+  password_policy_id = pingone_password_policy.%[2]s.id
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 

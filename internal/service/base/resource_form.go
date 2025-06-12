@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -54,7 +54,7 @@ type formResourceModel struct {
 }
 
 type formComponentsResourceModel struct {
-	Fields types.Set `tfsdk:"fields"`
+	Fields types.List `tfsdk:"fields"`
 }
 
 type formComponentsFieldResourceModel struct {
@@ -137,7 +137,7 @@ type formComponentsFieldsSchemaDef struct {
 var (
 	// Form Components
 	formComponentsTFObjectTypes = map[string]attr.Type{
-		"fields": types.SetType{ElemType: types.ObjectType{
+		"fields": types.ListType{ElemType: types.ObjectType{
 			AttrTypes: formComponentsFieldsTFObjectTypes,
 		}},
 	}
@@ -488,7 +488,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	)
 
 	componentsFieldsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A set of objects that specifies the form fields that make up the form.",
+		"An ordered list of objects that specifies the form fields that make up the form.",
 	)
 
 	componentsFieldsPositionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -509,7 +509,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 
 	componentsFieldsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of form field.",
-	).AllowedValuesEnum(supportedFormFieldTypes)
+	).AllowedValuesEnum(supportedFormFieldTypes).AppendMarkdownString(fmt.Sprintf("The `%s` form field type has been deprecated and will be removed in a future release.", string(management.ENUMFORMFIELDTYPE_TEXTBLOB)))
 
 	componentsFieldsAttributeDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		formFieldValidationDocumentation("attribute_disabled"),
@@ -520,7 +520,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	componentsFieldsContentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		formFieldValidationDocumentation("content"),
 	).AppendMarkdownString(
-		fmt.Sprintf("A string that specifies the field's content (for example, HTML when the field type is `%s`.)", string(management.ENUMFORMFIELDTYPE_TEXTBLOB)),
+		fmt.Sprintf("A string that specifies the field's content (for example, escaped JSON string when the field type is `%s` - use `jsonencode` to convert JSON to escaped JSON string.)", string(management.ENUMFORMFIELDTYPE_SLATE_TEXTBLOB)),
 	)
 
 	componentsFieldsKeyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -777,7 +777,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Required:            true,
 
 				Attributes: map[string]schema.Attribute{
-					"fields": schema.SetNestedAttribute{
+					"fields": schema.ListNestedAttribute{
 						Description:         componentsFieldsDescription.Description,
 						MarkdownDescription: componentsFieldsDescription.MarkdownDescription,
 						Required:            true,
@@ -1130,8 +1130,8 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 							},
 						},
 
-						Validators: []validator.Set{
-							setvalidator.SizeAtLeast(attrMinLength),
+						Validators: []validator.List{
+							listvalidator.SizeAtLeast(attrMinLength),
 						},
 					},
 				},
@@ -1668,8 +1668,17 @@ func (p *formResourceModel) validate(ctx context.Context, allowUnknowns bool) di
 					continue
 				}
 
-				if !field.Type.IsNull() && !field.Type.IsUnknown() && field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON))) {
-					hasSubmitButton = true
+				if !field.Type.IsNull() && !field.Type.IsUnknown() {
+					if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON))) {
+						hasSubmitButton = true
+					}
+					if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_TEXTBLOB))) {
+						diags.AddAttributeWarning(
+							path.Root("components").AtName("fields"),
+							"Deprecated form field type",
+							fmt.Sprintf("The %s form field type has been deprecated and will be removed in a future release.", field.Type.ValueString()),
+						)
+					}
 				}
 
 				// Validate Position conflicts
@@ -2689,13 +2698,13 @@ func formComponentsOkToTF(apiObject *management.FormComponents, ok bool) (basety
 	return objValue, diags
 }
 
-func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (basetypes.SetValue, diag.Diagnostics) {
+func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (basetypes.ListValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	tfObjType := types.ObjectType{AttrTypes: formComponentsFieldsTFObjectTypes}
 
 	if !ok || apiObject == nil {
-		return types.SetNull(tfObjType), diags
+		return types.ListNull(tfObjType), diags
 	}
 
 	objectList := []attr.Value{}
@@ -3030,7 +3039,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 		objectList = append(objectList, objValue)
 	}
 
-	returnVar, d := types.SetValue(tfObjType, objectList)
+	returnVar, d := types.ListValue(tfObjType, objectList)
 	diags.Append(d...)
 
 	return returnVar, diags
