@@ -1,6 +1,6 @@
 // Copyright © 2025 Ping Identity Corporation
 
-package framework
+package frameworklegacysdk
 
 import (
 	"context"
@@ -18,27 +18,23 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	clientconfig "github.com/pingidentity/pingone-go-client/config"
-	"github.com/pingidentity/pingone-go-client/oauth2"
-	"github.com/pingidentity/pingone-go-client/pingone"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/client"
+	pingone "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
-	"github.com/pingidentity/terraform-provider-pingone/internal/service/davinci"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service/authorize"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service/credentials"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service/mfa"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service/risk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
 // Ensure PingOneProvider satisfies various provider interfaces.
-var (
-	_ provider.Provider = &pingOneProvider{}
-
-	regionMappingSuffixMap = map[string]string{
-		"na": "com",
-		"eu": "eu",
-		"ap": "asia",
-		"au": "com.au",
-		"ca": "ca",
-	}
-)
+var _ provider.Provider = &pingOneProvider{}
 
 // PingOneProvider defines the provider implementation.
 type pingOneProvider struct {
@@ -165,7 +161,7 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 				Optional:            true,
 
 				Validators: []validator.String{
-					stringvalidator.OneOf(utils.EnumSliceToStringSlice(pingone.AllowedEnvironmentRegionCodeEnumValues)...),
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumRegionCodeEnumValues)...),
 				},
 			},
 
@@ -247,7 +243,7 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 }
 
 func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	tflog.Debug(ctx, "[v6] Provider configure start")
+	tflog.Debug(ctx, "[v6] [legacy sdk] Provider configure start")
 	var data pingOneProviderModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -256,7 +252,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 	}
 
 	// Set the defaults
-	tflog.Info(ctx, "[v6] Provider setting defaults..")
+	tflog.Info(ctx, "[v6] [legacy sdk] Provider setting defaults..")
 
 	if v := strings.TrimSpace(os.Getenv("PINGONE_REGION")); v != "" {
 		resp.Diagnostics.AddWarning(
@@ -271,30 +267,22 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		},
 	}
 
-	config := clientconfig.NewConfiguration().
-		WithGrantType(oauth2.GrantTypeClientCredentials).
-		WithClientID(data.ClientID.ValueString()).
-		WithClientSecret(data.ClientSecret.ValueString()).
-		WithAuthEnvironmentID(data.EnvironmentID.ValueString()).
-		WithAccessToken(data.APIAccessToken.ValueString())
-
-	var regionCode string
-	if !data.RegionCode.IsNull() && !data.RegionCode.IsUnknown() {
-		regionCode = strings.TrimSpace(data.RegionCode.ValueString())
-	} else {
-		// Region codes are not handled automatically by the client
-		regionCode = strings.TrimSpace(os.Getenv("PINGONE_REGION_CODE"))
+	config := &pingone.Config{
+		ClientID:      data.ClientID.ValueString(),
+		ClientSecret:  data.ClientSecret.ValueString(),
+		EnvironmentID: data.EnvironmentID.ValueString(),
+		AccessToken:   data.APIAccessToken.ValueString(),
+		GlobalOptions: globalOptions,
 	}
-	if regionCode != "" {
-		regionSuffix, ok := regionMappingSuffixMap[strings.ToLower(regionCode)]
-		if !ok {
-			resp.Diagnostics.AddError(
-				"Invalid Region Code",
-				fmt.Sprintf("The region code '%s' is not valid. Valid options are: %s", regionCode, strings.Join(utils.EnumSliceToStringSlice(pingone.AllowedEnvironmentRegionCodeEnumValues), ", ")),
-			)
-			return
-		}
-		config = config.WithTopLevelDomain(regionSuffix)
+
+	if !data.RegionCode.IsNull() && !data.RegionCode.IsUnknown() {
+		regionCode := management.EnumRegionCode(data.RegionCode.ValueString())
+		config.RegionCode = &regionCode
+	}
+
+	if !data.HTTPProxy.IsNull() {
+		v := data.HTTPProxy.ValueString()
+		config.ProxyURL = &v
 	}
 
 	if !data.GlobalOptions.IsNull() {
@@ -324,8 +312,8 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 
 	}
 
-	var overrideApiHostname, overrideAuthHostname string
 	if !data.ServiceEndpoints.IsNull() {
+
 		var serviceEndpointsData []pingOneProviderServiceEndpointsModel
 		resp.Diagnostics.Append(data.ServiceEndpoints.ElementsAs(ctx, &serviceEndpointsData, false)...)
 		if resp.Diagnostics.HasError() {
@@ -333,40 +321,27 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		}
 
 		if len(serviceEndpointsData) > 0 {
-			if !serviceEndpointsData[0].APIHostname.IsNull() {
-				overrideApiHostname = serviceEndpointsData[0].APIHostname.ValueString()
+			if !serviceEndpointsData[0].AuthHostname.IsNull() {
+				v := serviceEndpointsData[0].AuthHostname.ValueString()
+				config.AuthHostnameOverride = &v
 			}
 
-			if !serviceEndpointsData[0].AuthHostname.IsNull() {
-				overrideAuthHostname = serviceEndpointsData[0].AuthHostname.ValueString()
+			if !serviceEndpointsData[0].APIHostname.IsNull() {
+				v := serviceEndpointsData[0].APIHostname.ValueString()
+				config.APIHostnameOverride = &v
 			}
 		}
-	}
-	// Override env vars are not handled in the client
-	if overrideApiHostname == "" {
-		overrideApiHostname = os.Getenv("PINGONE_API_SERVICE_HOSTNAME")
-	}
-	if overrideAuthHostname == "" {
-		overrideAuthHostname = os.Getenv("PINGONE_AUTH_SERVICE_HOSTNAME")
-	}
-	if overrideApiHostname != "" {
-		config = config.WithAPIDomain(overrideApiHostname)
-	}
-	if overrideAuthHostname != "" {
-		config = config.WithCustomDomain(overrideAuthHostname)
-	}
 
-	pingOneConfig := pingone.NewConfiguration(config)
-
-	if !data.HTTPProxy.IsNull() {
-		v := data.HTTPProxy.ValueString()
-		pingOneConfig.ProxyURL = &v
 	}
 
 	if !data.AppendUserAgent.IsNull() {
-		pingOneConfig.UserAgent = data.AppendUserAgent.ValueString()
+		config.UserAgentAppend = data.AppendUserAgent.ValueStringPointer()
 	} else if v := strings.TrimSpace(os.Getenv("PINGONE_TF_APPEND_USER_AGENT")); v != "" {
-		pingOneConfig.UserAgent = v
+		config.UserAgentAppend = &v
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	if globalOptions.Population.ContainsUsersForceDelete {
@@ -377,7 +352,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		)
 	}
 
-	apiClient, err := pingone.NewAPIClient(pingOneConfig)
+	apiClient, err := config.APIClient(ctx, p.version)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client failed to initialize",
@@ -386,9 +361,9 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		return
 	}
 
-	var resourceConfig framework.ResourceType
+	var resourceConfig legacysdk.ResourceType
 	resourceConfig.Client = apiClient
-	tflog.Info(ctx, "[v6] Provider initialized client")
+	tflog.Info(ctx, "[v6] [legacy sdk] Provider initialized client")
 
 	resp.ResourceData = resourceConfig
 	resp.DataSourceData = resourceConfig
@@ -397,13 +372,25 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 
 func (p *pingOneProvider) Resources(ctx context.Context) []func() resource.Resource {
 	v := make([]func() resource.Resource, 0)
-	v = append(v, davinci.Resources()...)
+	v = append(v, authorize.Resources()...)
+	v = append(v, base.Resources()...)
+	v = append(v, mfa.Resources()...)
+	v = append(v, sso.Resources()...)
+	v = append(v, risk.Resources()...)
+	v = append(v, credentials.Resources()...)
+	v = append(v, verify.Resources()...)
 	return v
 }
 
 func (p *pingOneProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	v := make([]func() datasource.DataSource, 0)
-	v = append(v, davinci.DataSources()...)
+	v = append(v, authorize.DataSources()...)
+	v = append(v, base.DataSources()...)
+	v = append(v, mfa.DataSources()...)
+	v = append(v, sso.DataSources()...)
+	v = append(v, risk.DataSources()...)
+	v = append(v, credentials.DataSources()...)
+	v = append(v, verify.DataSources()...)
 	return v
 }
 

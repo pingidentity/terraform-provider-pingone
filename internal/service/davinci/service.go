@@ -5,13 +5,11 @@ package davinci
 import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	oldsdk "github.com/patrickcping/pingone-go-sdk-v2/pingone"
 	"github.com/pingidentity/pingone-go-client/pingone"
 )
 
 type serviceClientType struct {
-	Client           *pingone.APIClient
-	ManagementClient *oldsdk.Client
+	Client *pingone.APIClient
 }
 
 func Resources() []func() resource.Resource {

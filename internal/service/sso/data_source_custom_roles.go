@@ -67,7 +67,7 @@ func (r *CustomRolesDataSource) Configure(ctx context.Context, req datasource.Co
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",

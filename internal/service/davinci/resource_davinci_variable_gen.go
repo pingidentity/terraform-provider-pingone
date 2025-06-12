@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 	"regexp"
 
 	"encoding/json"
@@ -27,8 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	clientconfig "github.com/pingidentity/pingone-go-client/config"
-	"github.com/pingidentity/pingone-go-client/oauth2"
 	"github.com/pingidentity/pingone-go-client/pingone"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -56,7 +53,7 @@ func (r *davinciVariableResource) Configure(ctx context.Context, req resource.Co
 		return
 	}
 
-	/*resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -66,35 +63,11 @@ func (r *davinciVariableResource) Configure(ctx context.Context, req resource.Co
 		return
 	}
 
-	//r.Client = resourceConfig.Client
-	//TODO
-
-
-
+	r.Client = resourceConfig.Client
 	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialised",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
-		)
-		return
-	}*/
-
-	//TODO getting config from provider config
-
-	config := clientconfig.NewConfiguration().
-		WithGrantType(oauth2.GrantTypeClientCredentials).
-		WithClientID(os.Getenv("PINGONE_CLIENT_ID")).
-		WithClientSecret(os.Getenv("PINGONE_CLIENT_SECRET")).
-		WithAuthEnvironmentID(os.Getenv("PINGONE_ENVIRONMENT_ID")).
-		WithRootDomain("pingone.com") //TODO just using NA directly for now
-
-	//TODO user-agent suffix like the current sdk
-	var err error
-	r.Client, err = pingone.NewAPIClient(pingone.NewConfiguration(config))
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client not initialized",
-			fmt.Sprintf("Expected the PingOne client, got an error: %v. Please report this issue to the provider maintainers.", err),
 		)
 		return
 	}

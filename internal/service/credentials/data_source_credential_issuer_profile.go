@@ -97,7 +97,7 @@ func (r *CredentialIssuerProfileDataSource) Configure(ctx context.Context, req d
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
