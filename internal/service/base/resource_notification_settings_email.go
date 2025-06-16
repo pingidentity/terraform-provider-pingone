@@ -6,9 +6,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -32,6 +33,7 @@ type NotificationSettingsEmailResource serviceClientType
 type requestsModel struct {
 	Body           types.String `tfsdk:"body"`
 	DeliveryMethod types.String `tfsdk:"delivery_method"`
+	Headers        types.Map    `tfsdk:"headers"`
 	Method         types.String `tfsdk:"method"`
 	URL            types.String `tfsdk:"url"`
 }
@@ -46,9 +48,9 @@ type notificationSettingsEmailResourceModelV1 struct {
 	Password           types.String                 `tfsdk:"password"`
 	Protocol           types.String                 `tfsdk:"protocol"`
 	Port               types.Int32                  `tfsdk:"port"`
-	Provider           types.String                 `tfsdk:"provider"`
+	ProviderType       types.String                 `tfsdk:"provider_type"`
 	ReplyTo            types.Object                 `tfsdk:"reply_to"`
-	Requests           types.List                   `tfsdk:"requests"`
+	Requests           types.Set                    `tfsdk:"requests"`
 	Username           types.String                 `tfsdk:"username"`
 }
 
@@ -92,19 +94,70 @@ func (p *NotificationSettingsEmailResource) ValidateConfig(ctx context.Context, 
 	}
 
 	// Validate either host or custom provider name is set
-	if data.Host.IsNull() && data.CustomProviderName.IsNull() {
+	if data.Host.IsNull() && data.Host.IsUnknown() && data.CustomProviderName.IsNull() && data.CustomProviderName.IsUnknown() {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("host"),
 			"Host or Custom Provider Name Required",
 			"Either `host` or `custom_provider_name` must be set to configure email settings.",
 		)
 	}
-	if !data.Host.IsNull() && !data.CustomProviderName.IsNull() {
+
+	if !data.Host.IsNull() && !data.Host.IsUnknown() && !data.CustomProviderName.IsNull() && !data.CustomProviderName.IsUnknown() {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("host"),
 			"Host and Custom Provider Name Conflict",
 			"`host` and `custom_provider_name` cannot be set at the same time. Please set only one of them.",
 		)
+	}
+
+	// Custom provider validation
+	if !data.CustomProviderName.IsNull() && !data.CustomProviderName.IsUnknown() {
+		for _, request := range data.Requests.Elements() {
+			reqObj, ok := request.(types.Object)
+			if !ok {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("requests"),
+					"Invalid Request Object",
+					"The `requests` attribute must be a valid object. Please ensure the requests are defined correctly.",
+				)
+			}
+
+			// Check if the method is set to POST and body is provided
+			// If method is not POST, body should be empty
+			methodAttr := reqObj.Attributes()["method"].(types.String).ValueString()
+			bodyAttr := reqObj.Attributes()["body"].(types.String)
+
+			if methodAttr != string(management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMREQUESTSMETHOD_POST) &&
+				bodyAttr.ValueString() != "" {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("requests").AtName("body"),
+					"Invalid Request Body",
+					"The `body` in `requests` must be empty if the `method` is not set to `POST`. Please ensure the body is empty or the method is set to `POST`.",
+				)
+			}
+		}
+	}
+
+	// Authentication validation
+	if (data.AuthToken.IsNull() || data.AuthToken.IsUnknown()) &&
+		(data.Username.IsNull() || data.Username.IsUnknown()) &&
+		(data.Password.IsNull() || data.Password.IsUnknown()) {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("auth_token"),
+			"Authentication Conflict",
+			"Either `auth_token` or `username` and `password` must be set.)",
+		)
+	}
+
+	// SMTP provider validation
+	if !data.Host.IsNull() && !data.Host.IsUnknown() {
+		if !data.Protocol.IsNull() && !data.Protocol.IsUnknown() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("protocol"),
+				"Protocol Conflict",
+				"`protocol` cannot be set when configuring a SMTP provider. Please remove the `protocol` attribute.",
+			)
+		}
 	}
 }
 
@@ -137,10 +190,10 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
-					stringvalidator.ConflictsWith(path.MatchRelative().AtName("auth_token")),
-					stringvalidator.ConflictsWith(path.MatchRelative().AtName("custom_provider_name")),
-					stringvalidator.ConflictsWith(path.MatchRelative().AtName("requests")),
-					stringvalidator.AlsoRequires(path.MatchRelative().AtName("from").AtName("email_address")),
+					stringvalidator.ConflictsWith(path.MatchRoot("auth_token")),
+					stringvalidator.ConflictsWith(path.MatchRoot("custom_provider_name")),
+					stringvalidator.ConflictsWith(path.MatchRoot("requests")),
+					stringvalidator.AlsoRequires(path.MatchRoot("from").AtName("email_address")),
 				},
 			},
 
@@ -150,38 +203,42 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 				Optional:            true,
 				Validators: []validator.Int32{
 					int32validator.AtLeast(attrMinLength),
-					int32validator.ConflictsWith(path.MatchRelative().AtName("custom_provider_name")),
-					int32validator.ConflictsWith(path.MatchRelative().AtName("requests")),
+					int32validator.ConflictsWith(path.MatchRoot("custom_provider_name")),
+					int32validator.ConflictsWith(path.MatchRoot("requests")),
 				},
 			},
 
 			"protocol": schema.StringAttribute{
 				Description: "A string that specifies the current protocol in use.",
 				Computed:    true,
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsSettingsEmailDeliverySettingsProtocolEnumValues)...),
+				},
 			},
 
 			"username": schema.StringAttribute{
 				Description: "A string that specifies the organization's server's username.",
-				Required:    true,
+				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
-					stringvalidator.ConflictsWith(path.MatchRelative().AtName("auth_token")),
+					stringvalidator.ConflictsWith(path.MatchRoot("auth_token")),
 				},
 			},
 
 			"password": schema.StringAttribute{
 				Description: "A string that specifies the organization's server's password.",
-				Required:    true,
+				Optional:    true,
 				Sensitive:   true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
-					stringvalidator.ConflictsWith(path.MatchRelative().AtName("auth_token")),
+					stringvalidator.ConflictsWith(path.MatchRoot("auth_token")),
 				},
 			},
 
 			"from": schema.SingleNestedAttribute{
 				Description: "A single block that specifies the email sender's \"from\" name and email address.",
-				Optional:    true,
+				Required:    true,
 
 				Attributes: map[string]schema.Attribute{
 					"name": schema.StringAttribute{
@@ -193,7 +250,7 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 					},
 					"email_address": schema.StringAttribute{
 						Description: "A string that specifies the email sender's \"from\" email address.",
-						Optional:    true,
+						Required:    true,
 						Validators: []validator.String{
 							stringvalidator.LengthAtLeast(emailAddressMaxLength),
 						},
@@ -226,8 +283,8 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
-					stringvalidator.ConflictsWith(path.MatchRelative().AtName("username")),
-					stringvalidator.ConflictsWith(path.MatchRelative().AtName("password")),
+					stringvalidator.ConflictsWith(path.MatchRoot("username")),
+					stringvalidator.ConflictsWith(path.MatchRoot("password")),
 				},
 			},
 
@@ -236,18 +293,19 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
-					stringvalidator.AlsoRequires(path.MatchRelative().AtName("requests")),
-					stringvalidator.ConflictsWith(path.MatchRelative().AtName("host")),
-					stringvalidator.ConflictsWith(path.MatchRelative().AtName("port")),
+					stringvalidator.AlsoRequires(path.MatchRoot("protocol")),
+					stringvalidator.AlsoRequires(path.MatchRoot("requests")),
+					stringvalidator.ConflictsWith(path.MatchRoot("host")),
+					stringvalidator.ConflictsWith(path.MatchRoot("port")),
 				},
 			},
 
-			"provider": schema.StringAttribute{
+			"provider_type": schema.StringAttribute{
 				Description: "A string that spefifies the provider type.",
 				Computed:    true,
 			},
 
-			"requests": schema.ListNestedAttribute{
+			"requests": schema.SetNestedAttribute{
 				Description: "A list of objects that is used to configure the API requests sent to the custom email provider.",
 				Optional:    true,
 				NestedObject: schema.NestedAttributeObject{
@@ -263,11 +321,16 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 							Description: "A string that specifies the delivery method for the request.",
 							Computed:    true,
 						},
+						"headers": schema.MapAttribute{
+							Description: "A map of key-value pairs to specify the headers that your email provider's API expects.",
+							Optional:    true,
+							ElementType: types.StringType,
+						},
 						"method": schema.StringAttribute{
-							Description: fmt.Sprintf("Use method to specify the type of API request the email provider requires. Valid values are `GET` and `POST`."),
+							Description: "Use method to specify the type of API request the email provider requires. Valid values are `GET` and `POST`.",
 							Required:    true,
 							Validators: []validator.String{
-								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsSettingsEmailDeliverySettingsCustomAuthenticationMethodEnumValues)...),
+								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsSettingsEmailDeliverySettingsCustomRequestsMethodEnumValues)...),
 							},
 						},
 						"url": schema.StringAttribute{
@@ -279,11 +342,11 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 						},
 					},
 				},
-				Validators: []validator.List{
-					listvalidator.SizeAtLeast(1),
-					listvalidator.AlsoRequires(path.MatchRelative().AtName("custom_provider_name")),
-					listvalidator.ConflictsWith(path.MatchRelative().AtName("port")),
-					listvalidator.ConflictsWith(path.MatchRelative().AtName("host")),
+				Validators: []validator.Set{
+					setvalidator.SizeAtLeast(1),
+					setvalidator.AlsoRequires(path.MatchRoot("custom_provider_name")),
+					setvalidator.ConflictsWith(path.MatchRoot("port")),
+					setvalidator.ConflictsWith(path.MatchRoot("host")),
 				},
 			},
 		},
@@ -519,6 +582,7 @@ func (r *NotificationSettingsEmailResource) ImportState(ctx context.Context, req
 func (p *notificationSettingsEmailResourceModelV1) expand(ctx context.Context) (*management.NotificationsSettingsEmailDeliverySettings, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	// SMTP settings
 	if !p.Host.IsNull() && !p.Host.IsUnknown() {
 		data := management.NewNotificationsSettingsEmailDeliverySettingsSMTP()
 
@@ -581,11 +645,85 @@ func (p *notificationSettingsEmailResourceModelV1) expand(ctx context.Context) (
 		}, diags
 	}
 
+	// Custom provider settings
 	if !p.CustomProviderName.IsNull() && !p.CustomProviderName.IsUnknown() {
-		var authMethod string
-		if p.AuthToken.IsNull() && !p.Username.IsNull() && !p.Password.IsNull() {
+		requests := []management.NotificationsSettingsEmailDeliverySettingsCustomAllOfRequests{}
+		if !p.Requests.IsNull() && !p.Requests.IsUnknown() {
+			var requestModels []requestsModel
+			d := p.Requests.ElementsAs(ctx, &requestModels, true)
+			diags.Append(d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			deliveryMethod, err := management.NewEnumNotificationsSettingsEmailDeliverySettingsCustomRequestsDeliveryMethodFromValue(string(management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMREQUESTSDELIVERYMETHOD_EMAIL))
+			if err != nil {
+				diags.AddError(
+					"Invalid Delivery Method",
+					fmt.Sprintf("Error: '%v'\n Verify the value used is use one of the allowed values: %v", err, management.AllowedEnumNotificationsSettingsEmailDeliverySettingsCustomRequestsDeliveryMethodEnumValues),
+				)
+				return nil, diags
+			}
+
+			for _, request := range requestModels {
+				req := management.NewNotificationsSettingsEmailDeliverySettingsCustomAllOfRequests(
+					*deliveryMethod,
+					management.EnumNotificationsSettingsEmailDeliverySettingsCustomRequestsMethod(request.Method.ValueString()),
+					request.URL.ValueString(),
+				)
+
+				if !request.Headers.IsNull() && !request.Headers.IsUnknown() {
+					headers := make(map[string]string, len(request.Headers.Elements()))
+					diags.Append(request.Headers.ElementsAs(ctx, &headers, true)...)
+					if diags.HasError() {
+						return nil, diags
+					}
+					req.SetHeaders(headers)
+				}
+
+				method, err := management.NewEnumNotificationsSettingsEmailDeliverySettingsCustomRequestsMethodFromValue(request.Method.ValueString())
+				if err != nil {
+					diags.AddError(
+						"Invalid Method",
+						fmt.Sprintf("The method '%s' is not valid. Please use one of the allowed values: %v", request.Method.ValueString(), management.AllowedEnumNotificationsSettingsEmailDeliverySettingsCustomRequestsMethodEnumValues),
+					)
+					return nil, diags
+				}
+
+				req.SetMethod(*method)
+				req.SetUrl(request.URL.ValueString())
+
+				if !request.Body.IsNull() && !request.Body.IsUnknown() {
+					// Check if the body contains the required variables - ${to}, ${message}
+					if !strings.Contains(request.Body.ValueString(), "${to}") || !strings.Contains(request.Body.ValueString(), "${message}") {
+						diags.AddError(
+							"Invalid Body Content",
+							"The body must contain the variables `${to}` and `${message}`. Please ensure these variables are included in the body content.",
+						)
+						return nil, diags
+					}
+
+					req.SetBody(request.Body.ValueString())
+				}
+
+				requests = append(requests, *req)
+			}
+		}
+
+		protocolEnum, err := management.NewEnumNotificationsSettingsEmailDeliverySettingsProtocolFromValue(p.Protocol.ValueString())
+		if err != nil {
+			diags.AddError(
+				"Invalid Protocol",
+				fmt.Sprintf("The protocol '%s' is not valid. Please use one of the allowed values: %v", p.Protocol.ValueString(), management.AllowedEnumNotificationsSettingsEmailDeliverySettingsProtocolEnumValues),
+			)
+			return nil, diags
+		}
+		var authMethod, authToken, username, password string
+		if !p.Username.IsNull() && !p.Username.IsUnknown() && !p.Password.IsNull() && !p.Password.IsUnknown() {
+			username = p.Username.ValueString()
+			password = p.Password.ValueString()
 			authMethod = string(management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMAUTHENTICATIONMETHOD_BASIC)
-		} else if !p.AuthToken.IsNull() {
+		} else if !p.AuthToken.IsNull() && !p.AuthToken.IsUnknown() {
 			authMethod = string(management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMAUTHENTICATIONMETHOD_BEARER)
 		}
 
@@ -601,31 +739,74 @@ func (p *notificationSettingsEmailResourceModelV1) expand(ctx context.Context) (
 		authentication := management.NewNotificationsSettingsEmailDeliverySettingsCustomAllOfAuthentication(*authenticationMethod)
 
 		data := management.NewNotificationsSettingsEmailDeliverySettingsCustom(
-			p.Protocol.ValueString(),
-			authentication,
+			*protocolEnum,
+			*authentication,
 			p.CustomProviderName.ValueString(),
+			requests,
 		)
-		data.SetName(p.CustomProviderName.ValueString())
 
-		data.SetRequests([]management.NotificationsSettingsEmailDeliverySettingsCustomRequest{})
-		if !p.Requests.IsNull() && !p.Requests.IsUnknown() {
-			var requests []requestsModel
-			d := p.Requests.ElementsAs(ctx, &requests, true)
+		if !p.From.IsNull() && !p.From.IsUnknown() {
+			var plan emailSourceModelV1
+			d := p.From.As(ctx, &plan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})
 			diags.Append(d...)
-			for _, request := range requests {
-				req := management.NewNotificationsSettingsEmailDeliverySettingsCustomRequest()
-				req.SetMethod(request.Method.ValueString())
-				req.SetUrl(request.URL.ValueString())
-				if !request.Body.IsNull() && !request.Body.IsUnknown() {
-					req.SetBody(request.Body.ValueString())
-				}
-				if !request.DeliveryMethod.IsNull() && !request.DeliveryMethod.IsUnknown() {
-					req.SetDeliveryMethod(request.DeliveryMethod.ValueString())
-				}
 
-				data.Requests = append(data.Requests, *req)
+			from := management.NewNotificationsSettingsEmailDeliverySettingsCustomAllOfFrom()
+
+			if !plan.EmailAddress.IsNull() && !plan.EmailAddress.IsUnknown() {
+				from.SetAddress(plan.EmailAddress.ValueString())
 			}
+
+			if !plan.Name.IsNull() && !plan.Name.IsUnknown() {
+				from.SetName(plan.Name.ValueString())
+			}
+
+			data.SetFrom(*from)
 		}
+
+		if !p.ReplyTo.IsNull() && !p.ReplyTo.IsUnknown() {
+			var plan emailSourceModelV1
+			d := p.ReplyTo.As(ctx, &plan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})
+			diags.Append(d...)
+			replyTo := management.NewNotificationsSettingsEmailDeliverySettingsCustomAllOfReplyTo()
+
+			if !plan.EmailAddress.IsNull() && !plan.EmailAddress.IsUnknown() {
+				replyTo.SetAddress(plan.EmailAddress.ValueString())
+			}
+
+			if !plan.Name.IsNull() && !plan.Name.IsUnknown() {
+				replyTo.SetName(plan.Name.ValueString())
+			}
+
+			data.SetReplyTo(*replyTo)
+		}
+
+		switch *authenticationMethod {
+		case management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMAUTHENTICATIONMETHOD_BEARER:
+			data.Authentication.SetAuthToken(authToken)
+		case management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMAUTHENTICATIONMETHOD_BASIC:
+			data.Authentication.SetUsername(username)
+			data.Authentication.SetPassword(password)
+		default:
+			diags.AddError(
+				"Unsupported Authentication Method",
+				fmt.Sprintf("The authentication method '%s' is not supported. Please use one of the allowed values: %v", utils.EnumToString(*authenticationMethod), management.AllowedEnumNotificationsSettingsEmailDeliverySettingsCustomAuthenticationMethodEnumValues),
+			)
+			// Return early if the authentication method is not supported
+			return nil, diags
+		}
+
+		p.Host = types.StringNull()
+		p.Port = types.Int32Null()
+
+		return &management.NotificationsSettingsEmailDeliverySettings{
+			NotificationsSettingsEmailDeliverySettingsCustom: data,
+		}, diags
 	}
 
 	return nil, diags
@@ -641,6 +822,14 @@ func (p *notificationSettingsEmailResourceModelV1) toState(apiObject *management
 		)
 
 		return diags
+	}
+
+	reqAttrTypes := map[string]attr.Type{
+		"body":            types.StringType,
+		"delivery_method": types.StringType,
+		"headers":         types.MapType{ElemType: types.StringType},
+		"method":          types.StringType,
+		"url":             types.StringType,
 	}
 
 	p.Id = p.EnvironmentId
@@ -660,12 +849,23 @@ func (p *notificationSettingsEmailResourceModelV1) toState(apiObject *management
 		diags.Append(d...)
 		p.ReplyTo = replyTo
 
+		p.AuthToken = types.StringNull()
+		p.CustomProviderName = types.StringNull()
+		p.ProviderType = types.StringNull()
+		p.Requests = types.SetNull(types.ObjectType{AttrTypes: reqAttrTypes})
+
 	case *management.NotificationsSettingsEmailDeliverySettingsCustom:
-		p.AuthToken = framework.StringOkToTF(t.Authentication.GetAuthTokenOk())
+
+		if t.Authentication.AuthToken != nil {
+			p.AuthToken = framework.StringOkToTF(t.Authentication.GetAuthTokenOk())
+		}
+
+		if t.Authentication.Username != nil {
+			p.Username = framework.StringOkToTF(t.Authentication.GetUsernameOk())
+		}
+
 		p.CustomProviderName = framework.StringOkToTF(t.GetNameOk())
-		p.Provider = framework.EnumOkToTF(t.GetProviderOk())
-		p.Username = framework.StringOkToTF(t.Authentication.GetUsernameOk())
-		p.Password = framework.StringOkToTF(t.Authentication.GetPasswordOk())
+		p.ProviderType = framework.EnumOkToTF(t.GetProviderOk())
 		p.Protocol = framework.EnumOkToTF(t.GetProtocolOk())
 
 		from, d := toStateEmailSource(t.GetFromOk())
@@ -675,6 +875,57 @@ func (p *notificationSettingsEmailResourceModelV1) toState(apiObject *management
 		replyTo, d := toStateEmailSource(t.GetReplyToOk())
 		diags.Append(d...)
 		p.ReplyTo = replyTo
+
+		if t.Requests != nil {
+			requests := make([]attr.Value, 0, len(t.Requests))
+			for _, request := range t.Requests {
+				req := map[string]attr.Value{
+					"delivery_method": framework.EnumOkToTF(request.GetDeliveryMethodOk()),
+					"headers":         framework.StringMapOkToTF(request.GetHeadersOk()),
+					"method":          framework.EnumOkToTF(request.GetMethodOk()),
+					"url":             framework.StringOkToTF(request.GetUrlOk()),
+				}
+
+				if request.GetBody() != "" {
+					req["body"] = framework.StringOkToTF(request.GetBodyOk())
+				} else {
+					req["body"] = types.StringNull()
+				}
+
+				reqValue, d := types.ObjectValue(reqAttrTypes, req)
+				diags.Append(d...)
+				if diags.HasError() {
+					return diags
+				}
+
+				requests = append(requests, reqValue)
+			}
+			p.Requests, diags = types.SetValue(
+				types.ObjectType{
+					AttrTypes: map[string]attr.Type{
+						"body":            types.StringType,
+						"delivery_method": types.StringType,
+						"headers":         types.MapType{ElemType: types.StringType},
+						"method":          types.StringType,
+						"url":             types.StringType,
+					},
+				},
+				requests,
+			)
+			if diags.HasError() {
+				return diags
+			}
+		} else {
+			p.Requests = types.SetNull(types.ObjectType{
+				AttrTypes: map[string]attr.Type{
+					"body":            types.StringType,
+					"delivery_method": types.StringType,
+					"headers":         types.MapType{ElemType: types.StringType},
+					"method":          types.StringType,
+					"url":             types.StringType,
+				},
+			})
+		}
 
 	}
 
@@ -711,6 +962,24 @@ func toStateEmailSource(emailSource interface{}, ok bool) (types.Object, diag.Di
 			"email_address": framework.StringOkToTF(t.GetAddressOk()),
 		}
 
+		emailSourceMap["name"] = framework.StringOkToTF(t.GetNameOk())
+
+	case *management.NotificationsSettingsEmailDeliverySettingsCustomAllOfFrom:
+		if t.GetAddress() == "" {
+			return types.ObjectNull(emailSourceTFObjectTypes), diags
+		}
+		emailSourceMap = map[string]attr.Value{
+			"email_address": framework.StringOkToTF(t.GetAddressOk()),
+		}
+		emailSourceMap["name"] = framework.StringOkToTF(t.GetNameOk())
+
+	case *management.NotificationsSettingsEmailDeliverySettingsCustomAllOfReplyTo:
+		if t.GetAddress() == "" {
+			return types.ObjectNull(emailSourceTFObjectTypes), diags
+		}
+		emailSourceMap = map[string]attr.Value{
+			"email_address": framework.StringOkToTF(t.GetAddressOk()),
+		}
 		emailSourceMap["name"] = framework.StringOkToTF(t.GetNameOk())
 
 	default:
