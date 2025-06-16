@@ -3,7 +3,7 @@ SWEEP_DIR=./internal/sweep
 NAMESPACE=pingidentity
 PKG_NAME=pingone
 BINARY=terraform-provider-${NAME}
-VERSION=1.7.0
+VERSION=1.8.0
 OS_ARCH=linux_amd64
 
 default: install
@@ -100,4 +100,6 @@ fmt: terrafmt fmtcheck
 
 devcheck: build vet fmt generate docscategorycheck lint test sweep testacc
 
-.PHONY: build install generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck
+devchecknotest: build vet fmt generate docscategorycheck lint
+
+.PHONY: build install generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck devcheck devchecknotest

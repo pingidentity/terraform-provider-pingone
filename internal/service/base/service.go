@@ -35,6 +35,7 @@ func Resources() []func() resource.Resource {
 		NewImageResource,
 		NewKeyResource,
 		NewKeyRotationPolicyResource,
+		NewLanguageTranslationResource,
 		NewNotificationPolicyResource,
 		NewNotificationSettingsEmailResource,
 		NewNotificationSettingsResource,

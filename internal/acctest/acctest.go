@@ -110,6 +110,12 @@ func PreCheckFeatureFlag(t *testing.T, flag EnumFeatureFlag) {
 	}
 }
 
+func PreCheckNoTestAccFlaky(t *testing.T) {
+	if v := os.Getenv("TESTACC_FLAKY"); v == "true" {
+		t.Skip("Skipping test because TESTACC_FLAKY is set to true")
+	}
+}
+
 func PreCheckTestAccFlaky(t *testing.T) {
 	if v := os.Getenv("TESTACC_FLAKY"); v != "true" {
 		t.Skip("Skipping test because TESTACC_FLAKY is not set to true")

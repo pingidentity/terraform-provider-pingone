@@ -33,6 +33,10 @@ description: |-
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-externallink.tf") }}
 
+## Example Usage - WS-Fed
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-wsfed.tf") }}
+
 {{ .SchemaMarkdown | trimspace }}
 
 ## Import

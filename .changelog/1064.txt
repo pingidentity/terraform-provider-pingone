@@ -1,0 +1,11 @@
+```release-note:enhancement
+`resource/pingone_custom_role`: Added support for `APPLICATION` scope in `applicable_to` attribute.
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.16 => 0.12.17
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.56.0 => 0.57.0
+```

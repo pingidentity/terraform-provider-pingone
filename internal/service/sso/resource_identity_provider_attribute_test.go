@@ -37,6 +37,7 @@ func TestAccIdentityProviderAttribute_RemovalDrift(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
@@ -87,6 +88,40 @@ func TestAccIdentityProviderAttribute_RemovalDrift(t *testing.T) {
 	})
 }
 
+func TestAccIdentityProviderAttribute_MicrosoftIdentityProvider(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_identity_provider_attribute.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.IdentityProviderAttribute_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccIdentityProviderMicrosoftAttributeConfig(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "identity_provider_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "name", "username"),
+					resource.TestCheckResourceAttr(resourceFullName, "update", "EMPTY_ONLY"),
+					resource.TestCheckResourceAttr(resourceFullName, "value", "${providerAttributes.email}"),
+					resource.TestCheckResourceAttr(resourceFullName, "mapping_type", "CORE"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccIdentityProviderAttribute_Full(t *testing.T) {
 	t.Parallel()
 
@@ -132,6 +167,7 @@ func TestAccIdentityProviderAttribute_Full(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -206,6 +242,7 @@ func TestAccIdentityProviderAttribute_ReservedAttributeName(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -270,6 +307,7 @@ func TestAccIdentityProviderAttribute_Core(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -329,6 +367,7 @@ func TestAccIdentityProviderAttribute_BadParameters(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
@@ -430,6 +469,30 @@ resource "pingone_identity_provider_attribute" "%[2]s" {
 
   name  = "email"
   value = "$${providerAttributes.name.givenName}"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccIdentityProviderMicrosoftAttributeConfig(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  microsoft = {
+    client_id     = "testclientid"
+    client_secret = "testclientsecret"
+  }
+}
+
+resource "pingone_identity_provider_attribute" "%[2]s" {
+  environment_id       = data.pingone_environment.general_test.id
+  identity_provider_id = pingone_identity_provider.%[2]s.id
+
+  name  = "username"
+  value = "$${providerAttributes.email}"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 

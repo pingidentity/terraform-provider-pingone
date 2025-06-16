@@ -118,7 +118,7 @@ func (r *MFASettingsResource) Schema(ctx context.Context, req resource.SchemaReq
 
 	usersMfaEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, will enable MFA by default for new users.",
-	)
+	).DefaultValue(true)
 
 	resp.Schema = schema.Schema{
 
@@ -216,7 +216,7 @@ func (r *MFASettingsResource) Schema(ctx context.Context, req resource.SchemaReq
 				Default: objectdefault.StaticValue(types.ObjectValueMust(
 					MFASettingsUsersTFObjectTypes,
 					map[string]attr.Value{
-						"mfa_enabled": types.BoolValue(false),
+						"mfa_enabled": types.BoolValue(true),
 					},
 				)),
 

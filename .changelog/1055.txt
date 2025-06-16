@@ -1,0 +1,15 @@
+```release-note:enhancement
+`resource/pingone_application`: Added support for WS-Fed applications via the `wsfed_options` attribute.
+```
+
+```release-note:enhancement
+`data-source/pingone_application`: Added support for WS-Fed applications via the `wsfed_options` attribute.
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.15 => 0.12.16
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.55.0 => 0.56.0
+```
