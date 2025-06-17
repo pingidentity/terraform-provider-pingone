@@ -327,7 +327,7 @@ resource "pingone_davinci_variable" "%[3]s" {
 `, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
-// TODO update to cover setting the value bool to false, which currently fails due to an API issue
+// TODO update to cover setting the value bool to false, which currently fails due to an API issue TRIAGE-27920
 func davinciVariable_BooleanHCL(resourceName string) string {
 	return fmt.Sprintf(`
 		%[1]s

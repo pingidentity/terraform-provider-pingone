@@ -43,7 +43,20 @@ var (
 
 		return nil
 	}
+
+	regionMappingSuffixMap = map[string]string{
+		"na": "com",
+		"eu": "eu",
+		"ap": "asia",
+		"au": "com.au",
+		"ca": "ca",
+	}
 )
+
+func RegionSuffixFromCode(regionCode string) (string, bool) {
+	suffix, ok := regionMappingSuffixMap[regionCode]
+	return suffix, ok
+}
 
 func CheckEnvironmentExistsOnPermissionsError(ctx context.Context, apiClient *pingone.APIClient, environmentID string, fO any, fR *http.Response, fErr error) (any, *http.Response, error) {
 	if fR != nil && (fR.StatusCode == http.StatusUnauthorized || fR.StatusCode == http.StatusForbidden || fR.StatusCode == http.StatusBadRequest) {

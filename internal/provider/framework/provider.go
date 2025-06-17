@@ -30,14 +30,6 @@ import (
 // Ensure PingOneProvider satisfies various provider interfaces.
 var (
 	_ provider.Provider = &pingOneProvider{}
-
-	regionMappingSuffixMap = map[string]string{
-		"na": "com",
-		"eu": "eu",
-		"ap": "asia",
-		"au": "com.au",
-		"ca": "ca",
-	}
 )
 
 // PingOneProvider defines the provider implementation.
@@ -286,7 +278,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		regionCode = strings.TrimSpace(os.Getenv("PINGONE_REGION_CODE"))
 	}
 	if regionCode != "" {
-		regionSuffix, ok := regionMappingSuffixMap[strings.ToLower(regionCode)]
+		regionSuffix, ok := framework.RegionSuffixFromCode(strings.ToLower(regionCode))
 		if !ok {
 			resp.Diagnostics.AddError(
 				"Invalid Region Code",

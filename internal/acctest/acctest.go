@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -18,6 +19,7 @@ import (
 	clientconfig "github.com/pingidentity/pingone-go-client/config"
 	"github.com/pingidentity/pingone-go-client/oauth2"
 	"github.com/pingidentity/pingone-go-client/pingone"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/provider"
 )
 
@@ -303,12 +305,10 @@ func ResourceNameGenEnvironment() string {
 }
 
 func TestClient(ctx context.Context) (*pingone.APIClient, error) {
+	regionSuffix, _ := framework.RegionSuffixFromCode(strings.ToLower(os.Getenv("PINGONE_REGION_CODE")))
 	config := clientconfig.NewConfiguration().
 		WithGrantType(oauth2.GrantTypeClientCredentials).
-		WithClientID(os.Getenv("PINGONE_CLIENT_ID")).
-		WithClientSecret(os.Getenv("PINGONE_CLIENT_SECRET")).
-		WithAuthEnvironmentID(os.Getenv("PINGONE_ENVIRONMENT_ID")).
-		WithRootDomain("pingone.com") //TODO just using NA directly for now
+		WithTopLevelDomain(regionSuffix)
 
 	//TODO user-agent suffix like the current sdk
 	return pingone.NewAPIClient(pingone.NewConfiguration(config))

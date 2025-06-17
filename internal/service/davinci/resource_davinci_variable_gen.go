@@ -124,7 +124,7 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 				Optional: true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(256),
-					//TODO this syntax from the api spec may not be valid in go
+					//TODO this syntax from the api spec is not valid in go
 					//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
 				},
 			},
