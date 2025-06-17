@@ -11,7 +11,7 @@ Resource to manage the email sender settings in a PingOne environment.
 
 ~> Only one `pingone_notification_settings_email` resource should be configured for an environment.  If multiple `pingone_notification_settings_email` resource definitions exist in HCL code, these are likely to conflict with each other on apply. The `pingone_notification_settings` resource should be used if using the Ping-hosted SMTP email service.
 
-## Example Usage
+## Example Usage - SMTP
 
 ```terraform
 resource "pingone_environment" "my_environment" {
@@ -32,10 +32,17 @@ resource "pingone_notification_settings_email" "my_awesome_smtp_settings" {
     name          = "Customer Services"
   }
 }
+```
 
-# Example custom email provider configuration
+## Example Usage - Custom Provider
+
+```terraform
+resource "pingone_environment" "my_environment" {
+  # ...
+}
+
 resource "pingone_notification_settings_email" "my_awesome_custom_provider_settings" {
-  environment_id       = pingone_environment.test_language_env.id
+  environment_id       = pingone_environment.my_environment.id
   custom_provider_name = "My Custom Email Provider"
 
   username = var.custom_provider_username
@@ -43,13 +50,13 @@ resource "pingone_notification_settings_email" "my_awesome_custom_provider_setti
   protocol = "HTTP"
 
   from = {
-    name          = "Customer Services"
-    email_address = "services@bxretail.org"
+    name          = "From Services"
+    email_address = "noreply@bxretail.org"
   }
 
   reply_to = {
-    name          = "Customer Services"
-    email_address = "customerservices@bxretail.org"
+    name          = "Reply To Services"
+    email_address = "services@bxretail.org"
   }
 
   requests = [
@@ -91,7 +98,7 @@ resource "pingone_notification_settings_email" "my_awesome_custom_provider_setti
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `provider_type` (String) A string that spefifies the provider type.
+- `provider_type` (String) A string that specifies the provider type.
 
 <a id="nestedatt--from"></a>
 ### Nested Schema for `from`

@@ -22,6 +22,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -68,10 +69,9 @@ var (
 
 // Framework interfaces
 var (
-	_ resource.Resource                   = &NotificationSettingsEmailResource{}
-	_ resource.ResourceWithConfigure      = &NotificationSettingsEmailResource{}
-	_ resource.ResourceWithImportState    = &NotificationSettingsEmailResource{}
-	_ resource.ResourceWithValidateConfig = &NotificationSettingsEmailResource{}
+	_ resource.Resource                = &NotificationSettingsEmailResource{}
+	_ resource.ResourceWithConfigure   = &NotificationSettingsEmailResource{}
+	_ resource.ResourceWithImportState = &NotificationSettingsEmailResource{}
 )
 
 // New Object
@@ -82,83 +82,6 @@ func NewNotificationSettingsEmailResource() resource.Resource {
 // Metadata
 func (r *NotificationSettingsEmailResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_notification_settings_email"
-}
-
-// ValidateConfig
-func (p *NotificationSettingsEmailResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var data notificationSettingsEmailResourceModelV1
-
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Validate either host or custom provider name is set
-	if data.Host.IsNull() && data.Host.IsUnknown() && data.CustomProviderName.IsNull() && data.CustomProviderName.IsUnknown() {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("host"),
-			"Host or Custom Provider Name Required",
-			"Either `host` or `custom_provider_name` must be set to configure email settings.",
-		)
-	}
-
-	if !data.Host.IsNull() && !data.Host.IsUnknown() && !data.CustomProviderName.IsNull() && !data.CustomProviderName.IsUnknown() {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("host"),
-			"Host and Custom Provider Name Conflict",
-			"`host` and `custom_provider_name` cannot be set at the same time. Please set only one of them.",
-		)
-	}
-
-	// Custom provider validation
-	if !data.CustomProviderName.IsNull() && !data.CustomProviderName.IsUnknown() {
-		for _, request := range data.Requests.Elements() {
-			reqObj, ok := request.(types.Object)
-			if !ok {
-				resp.Diagnostics.AddAttributeError(
-					path.Root("requests"),
-					"Invalid Request Object",
-					"The `requests` attribute must be a valid object. Please ensure the requests are defined correctly.",
-				)
-			}
-
-			// Check if the method is set to POST and body is provided
-			// If method is not POST, body should be empty
-			methodAttr := reqObj.Attributes()["method"].(types.String).ValueString()
-			bodyAttr := reqObj.Attributes()["body"].(types.String)
-
-			if methodAttr != string(management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMREQUESTSMETHOD_POST) &&
-				bodyAttr.ValueString() != "" {
-				resp.Diagnostics.AddAttributeError(
-					path.Root("requests").AtName("body"),
-					"Invalid Request Body",
-					"The `body` in `requests` must be empty if the `method` is not set to `POST`. Please ensure the body is empty or the method is set to `POST`.",
-				)
-			}
-		}
-	}
-
-	// Authentication validation
-	if (data.AuthToken.IsNull() || data.AuthToken.IsUnknown()) &&
-		(data.Username.IsNull() || data.Username.IsUnknown()) &&
-		(data.Password.IsNull() || data.Password.IsUnknown()) {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("auth_token"),
-			"Authentication Conflict",
-			"Either `auth_token` or `username` and `password` must be set.)",
-		)
-	}
-
-	// SMTP provider validation
-	if !data.Host.IsNull() && !data.Host.IsUnknown() {
-		if !data.Protocol.IsNull() && !data.Protocol.IsUnknown() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("protocol"),
-				"Protocol Conflict",
-				"`protocol` cannot be set when configuring a SMTP provider. Please remove the `protocol` attribute.",
-			)
-		}
-	}
 }
 
 // Schema
@@ -190,6 +113,8 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.ExactlyOneOf(path.MatchRoot("custom_provider_name"), path.MatchRoot("host")),
+					stringvalidator.ConflictsWith(path.MatchRoot("protocol")),
 					stringvalidator.ConflictsWith(path.MatchRoot("auth_token")),
 					stringvalidator.ConflictsWith(path.MatchRoot("custom_provider_name")),
 					stringvalidator.ConflictsWith(path.MatchRoot("requests")),
@@ -223,6 +148,7 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
 					stringvalidator.ConflictsWith(path.MatchRoot("auth_token")),
+					stringvalidator.AlsoRequires(path.MatchRoot("password")),
 				},
 			},
 
@@ -283,6 +209,8 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.ExactlyOneOf(path.MatchRoot("username")),
+					stringvalidator.ConflictsWith(path.MatchRoot("host")),
 					stringvalidator.ConflictsWith(path.MatchRoot("username")),
 					stringvalidator.ConflictsWith(path.MatchRoot("password")),
 				},
@@ -301,7 +229,7 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 			},
 
 			"provider_type": schema.StringAttribute{
-				Description: "A string that spefifies the provider type.",
+				Description: "A string that specifies the provider type.",
 				Computed:    true,
 			},
 
@@ -315,6 +243,10 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 							Optional:    true,
 							Validators: []validator.String{
 								stringvalidator.LengthAtLeast(attrMinLength),
+								stringvalidatorinternal.ConflictsIfMatchesPathValue(
+									types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMREQUESTSMETHOD_GET)),
+									path.MatchRelative().AtParent().AtName("method"),
+								),
 							},
 						},
 						"delivery_method": schema.StringAttribute{
@@ -343,7 +275,7 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 					},
 				},
 				Validators: []validator.Set{
-					setvalidator.SizeAtLeast(1),
+					setvalidator.SizeBetween(1, 1),
 					setvalidator.AlsoRequires(path.MatchRoot("custom_provider_name")),
 					setvalidator.ConflictsWith(path.MatchRoot("port")),
 					setvalidator.ConflictsWith(path.MatchRoot("host")),
@@ -880,16 +812,11 @@ func (p *notificationSettingsEmailResourceModelV1) toState(apiObject *management
 			requests := make([]attr.Value, 0, len(t.Requests))
 			for _, request := range t.Requests {
 				req := map[string]attr.Value{
+					"body":            framework.StringOkToTF(request.GetBodyOk()),
 					"delivery_method": framework.EnumOkToTF(request.GetDeliveryMethodOk()),
 					"headers":         framework.StringMapOkToTF(request.GetHeadersOk()),
 					"method":          framework.EnumOkToTF(request.GetMethodOk()),
 					"url":             framework.StringOkToTF(request.GetUrlOk()),
-				}
-
-				if request.GetBody() != "" {
-					req["body"] = framework.StringOkToTF(request.GetBodyOk())
-				} else {
-					req["body"] = types.StringNull()
 				}
 
 				reqValue, d := types.ObjectValue(reqAttrTypes, req)
