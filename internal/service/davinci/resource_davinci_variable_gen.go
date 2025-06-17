@@ -223,17 +223,6 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 							),
 						},
 					},
-					"string": schema.StringAttribute{
-						Optional: true,
-						Validators: []validator.String{
-							stringvalidator.ExactlyOneOf(
-								path.MatchRelative().AtParent().AtName("bool"),
-								path.MatchRelative().AtParent().AtName("float32"),
-								path.MatchRelative().AtParent().AtName("json_object"),
-								path.MatchRelative().AtParent().AtName("secret_string"),
-							),
-						},
-					},
 					"secret_string": schema.StringAttribute{
 						Optional:  true,
 						Sensitive: true,
@@ -243,6 +232,17 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 								path.MatchRelative().AtParent().AtName("float32"),
 								path.MatchRelative().AtParent().AtName("json_object"),
 								path.MatchRelative().AtParent().AtName("string"),
+							),
+						},
+					},
+					"string": schema.StringAttribute{
+						Optional: true,
+						Validators: []validator.String{
+							stringvalidator.ExactlyOneOf(
+								path.MatchRelative().AtParent().AtName("bool"),
+								path.MatchRelative().AtParent().AtName("float32"),
+								path.MatchRelative().AtParent().AtName("json_object"),
+								path.MatchRelative().AtParent().AtName("secret_string"),
 							),
 						},
 					},
