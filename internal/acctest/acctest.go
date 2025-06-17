@@ -310,8 +310,10 @@ func TestClient(ctx context.Context) (*pingone.APIClient, error) {
 		WithGrantType(oauth2.GrantTypeClientCredentials).
 		WithTopLevelDomain(regionSuffix)
 
-	//TODO user-agent suffix like the current sdk
-	return pingone.NewAPIClient(pingone.NewConfiguration(config))
+	pingOneConfig := pingone.NewConfiguration(config)
+	pingOneConfig.UserAgent = framework.UserAgent("", GetProviderTestingVersion())
+
+	return pingone.NewAPIClient(pingOneConfig)
 
 }
 

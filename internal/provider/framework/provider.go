@@ -355,10 +355,11 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		pingOneConfig.ProxyURL = &v
 	}
 
-	if !data.AppendUserAgent.IsNull() {
-		pingOneConfig.UserAgent = data.AppendUserAgent.ValueString()
+	pingOneConfig.UserAgent = framework.UserAgent("", p.version)
+	if !data.AppendUserAgent.IsNull() && data.AppendUserAgent.ValueString() != "" {
+		pingOneConfig.UserAgent = framework.UserAgent(data.AppendUserAgent.ValueString(), p.version)
 	} else if v := strings.TrimSpace(os.Getenv("PINGONE_TF_APPEND_USER_AGENT")); v != "" {
-		pingOneConfig.UserAgent = v
+		pingOneConfig.UserAgent = framework.UserAgent(v, p.version)
 	}
 
 	if globalOptions.Population.ContainsUsersForceDelete {

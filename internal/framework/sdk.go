@@ -58,6 +58,17 @@ func RegionSuffixFromCode(regionCode string) (string, bool) {
 	return suffix, ok
 }
 
+func UserAgent(suffix, version string) string {
+	var agentBuilder strings.Builder
+	agentBuilder.WriteString("terraform-provider-pingone/")
+	agentBuilder.WriteString(version)
+	if suffix != "" {
+		agentBuilder.WriteString(" ")
+		agentBuilder.WriteString(suffix)
+	}
+	return agentBuilder.String()
+}
+
 func CheckEnvironmentExistsOnPermissionsError(ctx context.Context, apiClient *pingone.APIClient, environmentID string, fO any, fR *http.Response, fErr error) (any, *http.Response, error) {
 	if fR != nil && (fR.StatusCode == http.StatusUnauthorized || fR.StatusCode == http.StatusForbidden || fR.StatusCode == http.StatusBadRequest) {
 		environmentIdUuid, err := uuid.Parse(environmentID)
