@@ -517,10 +517,7 @@ func (p *notificationSettingsEmailResourceModelV1) expand(ctx context.Context) (
 	// SMTP settings
 	if !p.Host.IsNull() && !p.Host.IsUnknown() {
 		data := management.NewNotificationsSettingsEmailDeliverySettingsSMTP()
-
-		if !p.Host.IsNull() && !p.Host.IsUnknown() {
-			data.SetHost(p.Host.ValueString())
-		}
+		data.SetHost(p.Host.ValueString())
 
 		if !p.Port.IsNull() && !p.Port.IsUnknown() {
 			data.SetPort(p.Port.ValueInt32())
@@ -588,18 +585,9 @@ func (p *notificationSettingsEmailResourceModelV1) expand(ctx context.Context) (
 				return nil, diags
 			}
 
-			deliveryMethod, err := management.NewEnumNotificationsSettingsEmailDeliverySettingsCustomRequestsDeliveryMethodFromValue(string(management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMREQUESTSDELIVERYMETHOD_EMAIL))
-			if err != nil {
-				diags.AddError(
-					"Invalid Delivery Method",
-					fmt.Sprintf("Error: '%v'\n Verify the value used is use one of the allowed values: %v", err, management.AllowedEnumNotificationsSettingsEmailDeliverySettingsCustomRequestsDeliveryMethodEnumValues),
-				)
-				return nil, diags
-			}
-
 			for _, request := range requestModels {
 				req := management.NewNotificationsSettingsEmailDeliverySettingsCustomAllOfRequests(
-					*deliveryMethod,
+					management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMREQUESTSDELIVERYMETHOD_EMAIL,
 					management.EnumNotificationsSettingsEmailDeliverySettingsCustomRequestsMethod(request.Method.ValueString()),
 					request.URL.ValueString(),
 				)
@@ -650,29 +638,23 @@ func (p *notificationSettingsEmailResourceModelV1) expand(ctx context.Context) (
 			)
 			return nil, diags
 		}
-		var authMethod, authToken, username, password string
+		var authMethod management.NotificationsSettingsEmailDeliverySettingsCustomAllOfAuthentication
+		var authToken, username, password string
 		if !p.Username.IsNull() && !p.Username.IsUnknown() && !p.Password.IsNull() && !p.Password.IsUnknown() {
 			username = p.Username.ValueString()
 			password = p.Password.ValueString()
-			authMethod = string(management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMAUTHENTICATIONMETHOD_BASIC)
+			authMethod.Username = &username
+			authMethod.Password = &password
+			authMethod.Method = management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMAUTHENTICATIONMETHOD_BASIC
 		} else if !p.AuthToken.IsNull() && !p.AuthToken.IsUnknown() {
-			authMethod = string(management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMAUTHENTICATIONMETHOD_BEARER)
+			authToken = p.AuthToken.ValueString()
+			authMethod.AuthToken = &authToken
+			authMethod.Method = management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMAUTHENTICATIONMETHOD_BEARER
 		}
-
-		authenticationMethod, err := management.NewEnumNotificationsSettingsEmailDeliverySettingsCustomAuthenticationMethodFromValue(authMethod)
-		if err != nil {
-			diags.AddError(
-				"Invalid Authentication Method",
-				fmt.Sprintf("The authentication method '%s' is not valid. Please use one of the allowed values: %v", authMethod, management.AllowedEnumNotificationsSettingsEmailDeliverySettingsCustomAuthenticationMethodEnumValues),
-			)
-			return nil, diags
-		}
-
-		authentication := management.NewNotificationsSettingsEmailDeliverySettingsCustomAllOfAuthentication(*authenticationMethod)
 
 		data := management.NewNotificationsSettingsEmailDeliverySettingsCustom(
 			*protocolEnum,
-			*authentication,
+			authMethod,
 			p.CustomProviderName.ValueString(),
 			requests,
 		)
@@ -717,24 +699,6 @@ func (p *notificationSettingsEmailResourceModelV1) expand(ctx context.Context) (
 
 			data.SetReplyTo(*replyTo)
 		}
-
-		switch *authenticationMethod {
-		case management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMAUTHENTICATIONMETHOD_BEARER:
-			data.Authentication.SetAuthToken(authToken)
-		case management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMAUTHENTICATIONMETHOD_BASIC:
-			data.Authentication.SetUsername(username)
-			data.Authentication.SetPassword(password)
-		default:
-			diags.AddError(
-				"Unsupported Authentication Method",
-				fmt.Sprintf("The authentication method '%s' is not supported. Please use one of the allowed values: %v", utils.EnumToString(*authenticationMethod), management.AllowedEnumNotificationsSettingsEmailDeliverySettingsCustomAuthenticationMethodEnumValues),
-			)
-			// Return early if the authentication method is not supported
-			return nil, diags
-		}
-
-		p.Host = types.StringNull()
-		p.Port = types.Int32Null()
 
 		return &management.NotificationsSettingsEmailDeliverySettings{
 			NotificationsSettingsEmailDeliverySettingsCustom: data,
@@ -787,11 +751,6 @@ func (p *notificationSettingsEmailResourceModelV1) toState(apiObject *management
 		p.Requests = types.SetNull(types.ObjectType{AttrTypes: reqAttrTypes})
 
 	case *management.NotificationsSettingsEmailDeliverySettingsCustom:
-
-		if t.Authentication.AuthToken != nil {
-			p.AuthToken = framework.StringOkToTF(t.Authentication.GetAuthTokenOk())
-		}
-
 		if t.Authentication.Username != nil {
 			p.Username = framework.StringOkToTF(t.Authentication.GetUsernameOk())
 		}
@@ -829,13 +788,7 @@ func (p *notificationSettingsEmailResourceModelV1) toState(apiObject *management
 			}
 			p.Requests, diags = types.SetValue(
 				types.ObjectType{
-					AttrTypes: map[string]attr.Type{
-						"body":            types.StringType,
-						"delivery_method": types.StringType,
-						"headers":         types.MapType{ElemType: types.StringType},
-						"method":          types.StringType,
-						"url":             types.StringType,
-					},
+					AttrTypes: reqAttrTypes,
 				},
 				requests,
 			)
@@ -844,13 +797,7 @@ func (p *notificationSettingsEmailResourceModelV1) toState(apiObject *management
 			}
 		} else {
 			p.Requests = types.SetNull(types.ObjectType{
-				AttrTypes: map[string]attr.Type{
-					"body":            types.StringType,
-					"delivery_method": types.StringType,
-					"headers":         types.MapType{ElemType: types.StringType},
-					"method":          types.StringType,
-					"url":             types.StringType,
-				},
+				AttrTypes: reqAttrTypes,
 			})
 		}
 
