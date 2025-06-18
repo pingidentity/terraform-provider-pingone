@@ -21,6 +21,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/pingidentity/terraform-provider-pingone/buildflags"
 	"github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
@@ -60,6 +61,10 @@ func (r *populationResource) Configure(ctx context.Context, req resource.Configu
 		)
 
 		return
+	}
+
+	if len(resourceConfig.Flags) > 0 && resourceConfig.Flags[0] == buildflags.Beta {
+		panic("BETAAAA")
 	}
 
 	r.Client = resourceConfig.Client.API

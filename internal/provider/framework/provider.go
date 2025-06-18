@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/pingidentity/terraform-provider-pingone/buildflags"
 	"github.com/pingidentity/terraform-provider-pingone/internal/client"
 	pingone "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -40,6 +41,8 @@ type pingOneProvider struct {
 	// provider is built and ran locally, and "test" when running acceptance
 	// testing.
 	version string
+
+	Flags []buildflags.BuildFlag
 }
 
 // pingOneProviderModel describes the provider data model.
@@ -364,6 +367,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 	var resourceConfig framework.ResourceType
 	resourceConfig.Client = apiClient
 	tflog.Info(ctx, "[v6] Provider initialized client")
+	resourceConfig.Flags = p.Flags
 
 	resp.ResourceData = resourceConfig
 	resp.DataSourceData = resourceConfig
@@ -394,10 +398,11 @@ func (p *pingOneProvider) DataSources(ctx context.Context) []func() datasource.D
 	return v
 }
 
-func New(version string) func() provider.Provider {
+func New(version string, flags []buildflags.BuildFlag) func() provider.Provider {
 	return func() provider.Provider {
 		return &pingOneProvider{
 			version: version,
+			Flags:   flags,
 		}
 	}
 }
