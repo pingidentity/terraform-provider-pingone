@@ -11,18 +11,18 @@ description: |-
 
 ~> Only one `pingone_notification_settings_email` resource should be configured for an environment.  If multiple `pingone_notification_settings_email` resource definitions exist in HCL code, these are likely to conflict with each other on apply. The `pingone_notification_settings` resource should be used if using the Ping-hosted SMTP email service.
 
-{{ if .HasExample -}}
-## Example Usage
+## Example Usage - SMTP
 
-{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource.tf") }}
-{{- end }}
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-smtp.tf") }}
+
+## Example Usage - Custom Provider
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-custom-provider.tf") }}
 
 {{ .SchemaMarkdown | trimspace }}
 
-{{ if .HasImport -}}
 ## Import
 
 Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
 
 {{ codefile "shell" (printf "%s%s%s" "examples/resources/" .Name "/import.sh") }}
-{{- end }}
