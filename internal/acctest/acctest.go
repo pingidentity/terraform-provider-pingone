@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/pingidentity/terraform-provider-pingone/buildflags"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/provider"
 )
@@ -42,10 +43,13 @@ var ProtoV6ProviderFactories map[string]func() (tfprotov6.ProviderServer, error)
 func protoV6ProviderFactoriesInit(ctx context.Context, providerNames ...string) map[string]func() (tfprotov6.ProviderServer, error) {
 	factories := make(map[string]func() (tfprotov6.ProviderServer, error), len(providerNames))
 
+	//TODO get build flags from env vars
+	var buildFlags []buildflags.BuildFlag
+
 	for _, name := range providerNames {
 
 		factories[name] = func() (tfprotov6.ProviderServer, error) {
-			providerServerFactory, err := provider.ProviderServerFactoryV6(ctx, getProviderTestingVersion())
+			providerServerFactory, err := provider.ProviderServerFactoryV6(ctx, getProviderTestingVersion(), buildFlags)
 
 			if err != nil {
 				return nil, err
