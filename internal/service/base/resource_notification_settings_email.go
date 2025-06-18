@@ -639,16 +639,12 @@ func (p *notificationSettingsEmailResourceModelV1) expand(ctx context.Context) (
 			return nil, diags
 		}
 		var authMethod management.NotificationsSettingsEmailDeliverySettingsCustomAllOfAuthentication
-		var authToken, username, password string
 		if !p.Username.IsNull() && !p.Username.IsUnknown() && !p.Password.IsNull() && !p.Password.IsUnknown() {
-			username = p.Username.ValueString()
-			password = p.Password.ValueString()
-			authMethod.Username = &username
-			authMethod.Password = &password
+			authMethod.Username = p.Username.ValueStringPointer()
+			authMethod.Password = p.Password.ValueStringPointer()
 			authMethod.Method = management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMAUTHENTICATIONMETHOD_BASIC
 		} else if !p.AuthToken.IsNull() && !p.AuthToken.IsUnknown() {
-			authToken = p.AuthToken.ValueString()
-			authMethod.AuthToken = &authToken
+			authMethod.AuthToken = p.AuthToken.ValueStringPointer()
 			authMethod.Method = management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMAUTHENTICATIONMETHOD_BEARER
 		}
 
