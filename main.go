@@ -8,6 +8,7 @@ import (
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6/tf6server"
+	"github.com/pingidentity/terraform-provider-pingone/buildflags"
 	"github.com/pingidentity/terraform-provider-pingone/internal/provider"
 )
 
@@ -18,6 +19,8 @@ var (
 
 	// goreleaser can also pass the specific commit if you want
 	// commit  string = ""
+
+	buildFlags []buildflags.BuildFlag
 )
 
 func main() {
@@ -26,7 +29,7 @@ func main() {
 
 	ctx := context.Background()
 
-	muxServer, err := provider.ProviderServerFactoryV6(ctx, version)
+	muxServer, err := provider.ProviderServerFactoryV6(ctx, version, buildFlags)
 	if err != nil {
 		log.Fatal(err)
 	}
