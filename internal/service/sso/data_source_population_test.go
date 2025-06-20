@@ -47,7 +47,7 @@ func TestAccPopulationDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "alternative_identifiers.#", "2"),
 					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "alternative_identifiers.*", "identifier1"),
 					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "alternative_identifiers.*", "identifier2"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "preferred_language", "es"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "preferred_language", "pl"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "theme.id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
@@ -89,7 +89,7 @@ func TestAccPopulationDataSource_ByIDFull(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "alternative_identifiers.#", "2"),
 					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "alternative_identifiers.*", "identifier1"),
 					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "alternative_identifiers.*", "identifier2"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "preferred_language", "es"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "preferred_language", "pt"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "theme.id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
@@ -136,7 +136,7 @@ resource "pingone_password_policy" "%[2]s" {
 data "pingone_language" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
-  locale = "es"
+  locale = "pl"
 }
 
 resource "pingone_language_update" "%[2]s" {
@@ -193,7 +193,7 @@ resource "pingone_password_policy" "%[2]s" {
 data "pingone_language" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
-  locale = "es"
+  locale = "pt"
 }
 
 resource "pingone_language_update" "%[2]s" {
