@@ -1,5 +1,41 @@
 ## 1.9.0 (20 June 2025)
 
+BREAKING CHANGES:
+
+* `resource/pingone_mfa_settings`: Updated the default value for `users.mfa_enabled` to `true`, to align with current platform defaults. ([#1068](https://github.com/pingidentity/terraform-provider-pingone/issues/1068))
+* `resource/pingone_user`: Updated the default value for `mfa_enabled` to `true`, to align with current platform defaults. ([#1068](https://github.com/pingidentity/terraform-provider-pingone/issues/1068))
+
+NOTES:
+
+* `resource/pingone_form`: Deprecated the `TEXTBLOB` form field type. `SLATE_TEXTBLOB` can be used instead. This field type will be removed in a future release. ([#1058](https://github.com/pingidentity/terraform-provider-pingone/issues/1058))
+* bump `github.com/hashicorp/terraform-plugin-go` 0.27.0 => 0.28.0 ([#1060](https://github.com/pingidentity/terraform-provider-pingone/issues/1060))
+* bump `github.com/hashicorp/terraform-plugin-mux` 0.19.0 => 0.20.0 ([#1060](https://github.com/pingidentity/terraform-provider-pingone/issues/1060))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` 0.8.0 => 0.8.1 ([#1075](https://github.com/pingidentity/terraform-provider-pingone/issues/1075))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` 0.11.0 => 0.11.1 ([#1075](https://github.com/pingidentity/terraform-provider-pingone/issues/1075))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.56.0 => 0.57.0 ([#1064](https://github.com/pingidentity/terraform-provider-pingone/issues/1064))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.57.0 => 0.57.1 ([#1075](https://github.com/pingidentity/terraform-provider-pingone/issues/1075))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` 0.23.0 => 0.23.1 ([#1075](https://github.com/pingidentity/terraform-provider-pingone/issues/1075))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` 0.19.0 => 0.19.1 ([#1075](https://github.com/pingidentity/terraform-provider-pingone/issues/1075))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/verify` 0.9.0 => 0.9.1 ([#1075](https://github.com/pingidentity/terraform-provider-pingone/issues/1075))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.16 => 0.12.17 ([#1064](https://github.com/pingidentity/terraform-provider-pingone/issues/1064))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.17 => 0.12.18 ([#1075](https://github.com/pingidentity/terraform-provider-pingone/issues/1075))
+
+FEATURES:
+
+* **New Resource:** `pingone_language_translation` ([#1067](https://github.com/pingidentity/terraform-provider-pingone/issues/1067))
+
+ENHANCEMENTS:
+
+* `resource/pingone_application`: Added validation for `saml_options.type` to disallow `TEMPLATE_APP` used for Catalog Applications. See issue ([#1062](https://github.com/pingidentity/terraform-provider-pingone/issues/1062)) for details. ([#1061](https://github.com/pingidentity/terraform-provider-pingone/issues/1061))
+* `resource/pingone_custom_role`: Added support for `APPLICATION` scope in `applicable_to` attribute. ([#1064](https://github.com/pingidentity/terraform-provider-pingone/issues/1064))
+* `resource/pingone_notification_settings_email`: Added support for Custom Email Provider configuration ([#1079](https://github.com/pingidentity/terraform-provider-pingone/issues/1079))
+
+BUG FIXES:
+
+* `resource/pingone_form`: Changed `components.fields` from unordered set to ordered list (resolves field arrangement issues in mobile SDKs) ([#1058](https://github.com/pingidentity/terraform-provider-pingone/issues/1058))
+* `resource/pingone_identity_provider_attribute`: Fixed `Invalid parameter value - Unmappable identity provider type` error when deleting a `microsoft` identity provider type. ([#1073](https://github.com/pingidentity/terraform-provider-pingone/issues/1073))
+* `resource/pingone_phone_delivery_settings`: Fixed `UNIQUENESS_VIOLATION:A resource with the specified name already exists.` error when updating mutable attributes ([#1065](https://github.com/pingidentity/terraform-provider-pingone/issues/1065))
+
 ## 1.8.0 (21 May 2025)
 
 NOTES:
