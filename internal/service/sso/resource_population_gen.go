@@ -302,6 +302,14 @@ func (r *populationResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
+	if responseData.Theme == nil || responseData.Theme.Id == nil {
+		responseData, diags = populationWaitForAssignedThemeId(ctx, r.Client, data.EnvironmentId.ValueString(), *responseData.Id)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+
 	// Read response into the model
 	resp.Diagnostics.Append(data.readClientResponse(responseData)...)
 
