@@ -69,7 +69,11 @@ func populationWaitForAssignedThemeId(ctx context.Context, client *pingone.Clien
 			"Could not find population theme ID",
 			fmt.Sprintf("Expected to find theme id for population %s, got error: %s", populationId, err.Error()))
 	}
-	return responseData.(*management.Population), diags
+	var returnValue *management.Population
+	if responseData != nil {
+		returnValue = responseData.(*management.Population)
+	}
+	return returnValue, diags
 }
 
 func populationDeleteCustomErrorHandler(r *http.Response, p1Error *model.P1Error) diag.Diagnostics {
