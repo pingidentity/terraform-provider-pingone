@@ -105,6 +105,7 @@ func TestAccPopulation_NewEnv(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "preferred_language", "en"),
+					resource.TestMatchResourceAttr(resourceFullName, "theme.id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
