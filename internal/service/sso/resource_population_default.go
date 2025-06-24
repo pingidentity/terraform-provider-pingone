@@ -171,9 +171,6 @@ func (r *PopulationDefaultResource) Create(ctx context.Context, req resource.Cre
 			sdk.DefaultCreateReadRetryable,
 			&response,
 		)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
 	} else {
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,

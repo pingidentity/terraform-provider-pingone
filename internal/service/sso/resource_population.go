@@ -66,7 +66,7 @@ func populationWaitForAssignedThemeId(ctx context.Context, client *pingone.Clien
 	}
 	responseData, err := stateConf.WaitForStateContext(ctx)
 	if err != nil {
-		diags.AddWarning(
+		diags.AddError(
 			"Population theme ID not assigned",
 			fmt.Sprintf("Expected to find theme id for population %s, got error: %s", populationId, err.Error()))
 	}
