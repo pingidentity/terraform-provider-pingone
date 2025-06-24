@@ -22,6 +22,7 @@ import (
 
 // Sometimes the default theme for a brand-new environment takes a few moments to be assigned.
 // We'll wait for new populations to have a theme id set before returning from the resource Create method.
+// If the theme id is not set after the timeout, a warning is returned.
 func populationWaitForAssignedThemeId(ctx context.Context, client *pingone.Client, envId, populationId string) (*management.Population, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	stateConf := &retry.StateChangeConf{
@@ -65,8 +66,8 @@ func populationWaitForAssignedThemeId(ctx context.Context, client *pingone.Clien
 	}
 	responseData, err := stateConf.WaitForStateContext(ctx)
 	if err != nil {
-		diags.AddError(
-			"Could not find population theme ID",
+		diags.AddWarning(
+			"Population theme ID not assigned",
 			fmt.Sprintf("Expected to find theme id for population %s, got error: %s", populationId, err.Error()))
 	}
 	var returnValue *management.Population

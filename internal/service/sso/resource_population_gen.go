@@ -303,10 +303,10 @@ func (r *populationResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	if responseData.Theme == nil || responseData.Theme.Id == nil {
-		responseData, diags = populationWaitForAssignedThemeId(ctx, r.Client, data.EnvironmentId.ValueString(), *responseData.Id)
+		responseWithTheme, diags := populationWaitForAssignedThemeId(ctx, r.Client, data.EnvironmentId.ValueString(), *responseData.Id)
 		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
+		if responseWithTheme != nil {
+			responseData = responseWithTheme
 		}
 	}
 
