@@ -174,14 +174,6 @@ func (r *PopulationDefaultResource) Create(ctx context.Context, req resource.Cre
 		if resp.Diagnostics.HasError() {
 			return
 		}
-
-		if response.Theme == nil || response.Theme.Id == nil {
-			responseWithTheme, d := populationWaitForAssignedThemeId(ctx, r.Client, plan.EnvironmentId.ValueString(), *response.Id)
-			resp.Diagnostics.Append(d...)
-			if responseWithTheme != nil {
-				response = responseWithTheme
-			}
-		}
 	} else {
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
