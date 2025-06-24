@@ -32,6 +32,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	objectplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectplanmodifier"
+	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -159,6 +160,7 @@ type applicationSAMLOptionsResourceModelV1 struct {
 	SpEntityId                  types.String `tfsdk:"sp_entity_id"`
 	SpVerification              types.Object `tfsdk:"sp_verification"`
 	Type                        types.String `tfsdk:"type"`
+	VirtualServerIdSettings     types.Object `tfsdk:"virtual_server_id_settings"`
 }
 
 type applicationOptionsIdpSigningKeyResourceModelV1 struct {
@@ -178,6 +180,16 @@ type applicationSAMLOptionsSpEncryptionCertificateResourceModelV1 struct {
 type applicationSAMLOptionsSpVerificationResourceModelV1 struct {
 	CertificateIds     types.Set  `tfsdk:"certificate_ids"`
 	AuthnRequestSigned types.Bool `tfsdk:"authn_request_signed"`
+}
+
+type applicationSAMLOptionsVirtualServerIdSettingsResourceModelV1 struct {
+	Enabled          types.Bool `tfsdk:"enabled"`
+	VirtualServerIds types.Set  `tfsdk:"virtual_server_ids"`
+}
+
+type applicationSAMLOptionsVirtualServerIdSettingsVirtualServerIdsResourceModelV1 struct {
+	VsId    types.String `tfsdk:"vs_id"`
+	Default types.Bool   `tfsdk:"default"`
 }
 
 type applicationWSFedOptionsResourceModelV1 struct {
@@ -303,6 +315,7 @@ var (
 		"sp_entity_id":                     types.StringType,
 		"sp_verification":                  types.ObjectType{AttrTypes: applicationSamlOptionsSpVerificationTFObjectTypes},
 		"type":                             types.StringType,
+		"virtual_server_id_settings":       types.ObjectType{AttrTypes: applicationSamlOptionsVirtualServerIdSettingsTFObjectTypes},
 	}
 
 	applicationSamlOptionsSpEncryptionTFObjectTypes = map[string]attr.Type{
@@ -317,6 +330,16 @@ var (
 	applicationSamlOptionsSpVerificationTFObjectTypes = map[string]attr.Type{
 		"authn_request_signed": types.BoolType,
 		"certificate_ids":      types.SetType{ElemType: pingonetypes.ResourceIDType{}},
+	}
+
+	applicationSamlOptionsVirtualServerIdSettingsTFObjectTypes = map[string]attr.Type{
+		"enabled":            types.BoolType,
+		"virtual_server_ids": types.SetType{ElemType: types.ObjectType{AttrTypes: applicationSamlOptionsVirtualServerIdSettingsVirtualServerIdsTFObjectTypes}},
+	}
+
+	applicationSamlOptionsVirtualServerIdSettingsVirtualServerIdsTFObjectTypes = map[string]attr.Type{
+		"vs_id":   types.StringType,
+		"default": types.BoolType,
 	}
 
 	applicationExternalLinkOptionsTFObjectTypes = map[string]attr.Type{
@@ -1666,6 +1689,42 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 					},
 
 					"cors_settings": resourceApplicationSchemaCorsSettings(),
+
+					"virtual_server_id_settings": schema.SingleNestedAttribute{
+						Description: "Contains the virtual server ID or IDs to be used.",
+						Optional:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"enabled": schema.BoolAttribute{
+								Description: "Indicates whether the virtual server ID or IDs specified are to be used. Defaults to `false`.",
+								Optional:    true,
+								Computed:    true,
+								Default:     booldefault.StaticBool(false),
+							},
+							"virtual_server_ids": schema.SetNestedAttribute{
+								Description: "Required if `enabled` is `true`. Contains the list of virtual server ID or IDs to be used.",
+								Optional:    true,
+								NestedObject: schema.NestedAttributeObject{
+									Attributes: map[string]schema.Attribute{
+										"vs_id": schema.StringAttribute{
+											Description: "This must be a valid SAML entity ID.",
+											Required:    true,
+										},
+										"default": schema.BoolAttribute{
+											Description: "Indicates whether the virtual server identified by the associated `vs_id` is to be used as the default virtual server.",
+											Optional:    true,
+											Computed:    true,
+											Default:     booldefault.StaticBool(false),
+										},
+									},
+								},
+								Validators: []validator.Set{
+									setvalidator.SizeAtLeast(1),
+									setvalidatorinternal.IsRequiredIfMatchesPathValue(types.StringValue("true"),
+										path.MatchRelative().AtParent().AtName("enabled"))},
+							},
+						},
+					},
 				},
 
 				Validators: []validator.Object{
@@ -2194,8 +2253,8 @@ func applicationWriteCustomError(r *http.Response, p1Error *model.P1Error) diag.
 func (p *applicationResourceModelV1) validate(ctx context.Context, allowUnknown bool) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	var plan *applicationOIDCOptionsResourceModelV1
-	diags.Append(p.OIDCOptions.As(ctx, &plan, basetypes.ObjectAsOptions{
+	var oidcPlan *applicationOIDCOptionsResourceModelV1
+	diags.Append(p.OIDCOptions.As(ctx, &oidcPlan, basetypes.ObjectAsOptions{
 		UnhandledNullAsEmpty:    false,
 		UnhandledUnknownAsEmpty: allowUnknown,
 	})...)
@@ -2203,9 +2262,22 @@ func (p *applicationResourceModelV1) validate(ctx context.Context, allowUnknown 
 		return diags
 	}
 
-	if plan != nil {
-		diags.Append(plan.validateCertificateBasedAuthentication(allowUnknown)...)
-		diags.Append(plan.validateWildcardInRedirectUri(ctx, allowUnknown)...)
+	if oidcPlan != nil {
+		diags.Append(oidcPlan.validateCertificateBasedAuthentication(allowUnknown)...)
+		diags.Append(oidcPlan.validateWildcardInRedirectUri(ctx, allowUnknown)...)
+	}
+
+	var samlPlan *applicationSAMLOptionsResourceModelV1
+	diags.Append(p.SAMLOptions.As(ctx, &samlPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: allowUnknown,
+	})...)
+	if diags.HasError() {
+		return diags
+	}
+
+	if samlPlan != nil {
+		diags.Append(samlPlan.validateVirtualServerIdSettings(ctx, allowUnknown)...)
 	}
 
 	return diags
@@ -2278,6 +2350,58 @@ func (p *applicationOIDCOptionsResourceModelV1) validateWildcardInRedirectUri(ct
 					}
 				}
 			}
+		}
+	}
+
+	return diags
+}
+
+func (p *applicationSAMLOptionsResourceModelV1) validateVirtualServerIdSettings(ctx context.Context, allowUnknown bool) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if p.VirtualServerIdSettings.IsUnknown() && !allowUnknown {
+		diags.AddAttributeError(
+			path.Root("saml_options").AtName("virtual_server_id_settings"),
+			"Invalid configuration",
+			"Current configuration is invalid as the `saml_options.virtual_server_id_settings` value is unknown, cannot validate.",
+		)
+		return diags
+	}
+
+	if !p.VirtualServerIdSettings.IsNull() && !p.VirtualServerIdSettings.IsUnknown() {
+		var vsSettings applicationSAMLOptionsVirtualServerIdSettingsResourceModelV1
+		diags.Append(p.VirtualServerIdSettings.As(ctx, &vsSettings, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return diags
+		}
+		var vsIds []applicationSAMLOptionsVirtualServerIdSettingsVirtualServerIdsResourceModelV1
+		diags.Append(vsSettings.VirtualServerIds.ElementsAs(ctx, &vsIds, false)...)
+		if diags.HasError() {
+			return diags
+		}
+
+		defaultCount := 0
+		for _, vsId := range vsIds {
+			if !vsId.Default.IsNull() && vsId.Default.ValueBool() {
+				defaultCount++
+			}
+		}
+
+		if defaultCount == 0 {
+			diags.AddAttributeError(
+				path.Root("saml_options").AtName("virtual_server_id_settings").AtName("virtual_server_ids"),
+				"Invalid Configuration",
+				"At least one Virtual Server ID must be set as default.",
+			)
+		} else if defaultCount > 1 {
+			diags.AddAttributeError(
+				path.Root("saml_options").AtName("virtual_server_id_settings").AtName("virtual_server_ids"),
+				"Invalid Configuration",
+				"Only one Virtual Server ID can be set as default.",
+			)
 		}
 	}
 
@@ -3015,9 +3139,46 @@ func (p *applicationResourceModelV1) expandApplicationSAML(ctx context.Context) 
 
 			data.SetSpVerification(*spVerification)
 		}
+
+		if !plan.VirtualServerIdSettings.IsNull() && !plan.VirtualServerIdSettings.IsUnknown() {
+			var vsSettingsPlan applicationSAMLOptionsVirtualServerIdSettingsResourceModelV1
+
+			diags.Append(plan.VirtualServerIdSettings.As(ctx, &vsSettingsPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			data.SetVirtualServerIdSettings(*vsSettingsPlan.expand())
+		}
 	}
 
 	return data, diags
+}
+
+func (p *applicationSAMLOptionsVirtualServerIdSettingsResourceModelV1) expand() *management.ApplicationSAMLAllOfVirtualServerIdSettings {
+	vsSettings := management.NewApplicationSAMLAllOfVirtualServerIdSettings()
+
+	if !p.Enabled.IsNull() && !p.Enabled.IsUnknown() {
+		vsSettings.SetEnabled(p.Enabled.ValueBool())
+	}
+
+	if !p.VirtualServerIds.IsNull() && !p.VirtualServerIds.IsUnknown() {
+		virtualServerIdSettingsValue := &[]management.ApplicationSAMLAllOfVirtualServerIdSettingsVirtualServerIds{}
+		for _, virtualServerIdsElement := range p.VirtualServerIds.Elements() {
+			virtualServerIdsAttrs := virtualServerIdsElement.(types.Object).Attributes()
+			serverIds := management.NewApplicationSAMLAllOfVirtualServerIdSettingsVirtualServerIds(virtualServerIdsAttrs["vs_id"].(types.String).ValueString())
+			if !virtualServerIdsAttrs["default"].IsNull() && !virtualServerIdsAttrs["default"].IsUnknown() {
+				serverIds.Default = virtualServerIdsAttrs["default"].(types.Bool).ValueBoolPointer()
+			}
+			*virtualServerIdSettingsValue = append(*virtualServerIdSettingsValue, *serverIds)
+		}
+		vsSettings.SetVirtualServerIds(*virtualServerIdSettingsValue)
+	}
+
+	return vsSettings
 }
 
 func (p *applicationResourceModelV1) expandApplicationExternalLink(ctx context.Context) (*management.ApplicationExternalLink, diag.Diagnostics) {
