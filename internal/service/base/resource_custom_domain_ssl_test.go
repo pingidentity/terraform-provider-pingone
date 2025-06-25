@@ -17,6 +17,7 @@ func TestAccCustomDomainSSL_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
+	domainPrefix := acctest.ResourceNameGen()
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 
@@ -39,21 +40,21 @@ func TestAccCustomDomainSSL_Full(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCustomDomainSSLConfig_Full(environmentName, licenseID, resourceName, certificateFile, intermediateFile, privateKeyFile),
+				Config:      testAccCustomDomainSSLConfig_Full(environmentName, licenseID, resourceName, certificateFile, intermediateFile, privateKeyFile, domainPrefix),
 				ExpectError: regexp.MustCompile(`Cannot add SSL certificate settings to the custom domain - Custom domain status must be 'SSL_CERTIFICATE_REQUIRED' or 'ACTIVE' in order to import a certificate`),
 			},
 		},
 	})
 }
 
-func testAccCustomDomainSSLConfig_Full(environmentName, licenseID, resourceName, certificateFile, intermediateFile, privateKeyFile string) string {
+func testAccCustomDomainSSLConfig_Full(environmentName, licenseID, resourceName, certificateFile, intermediateFile, privateKeyFile, domainPrefix string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
 resource "pingone_custom_domain" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  domain_name = "terraformdev.ping-eng.com"
+  domain_name = "%[7]s.terraformdev.ping-eng.com"
 }
 
 resource "pingone_custom_domain_ssl" "%[3]s" {
@@ -71,5 +72,5 @@ EOT
 %[6]s
 EOT
 
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, certificateFile, intermediateFile, privateKeyFile)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, certificateFile, intermediateFile, privateKeyFile, domainPrefix)
 }
