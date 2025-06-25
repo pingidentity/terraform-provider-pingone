@@ -21,6 +21,7 @@ func TestAccCustomDomain_RemovalDrift(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
+	domainPrefix := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_custom_domain.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
@@ -47,7 +48,7 @@ func TestAccCustomDomain_RemovalDrift(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: testAccCustomDomainConfig_Full(environmentName, licenseID, resourceName),
+				Config: testAccCustomDomainConfig_Full(environmentName, licenseID, resourceName, domainPrefix),
 				Check:  base.CustomDomain_GetIDs(resourceFullName, &environmentID, &customDomainID),
 			},
 			{
@@ -59,7 +60,7 @@ func TestAccCustomDomain_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the environment
 			{
-				Config: testAccCustomDomainConfig_Full(environmentName, licenseID, resourceName),
+				Config: testAccCustomDomainConfig_Full(environmentName, licenseID, resourceName, domainPrefix),
 				Check:  base.CustomDomain_GetIDs(resourceFullName, &environmentID, &customDomainID),
 			},
 			{
@@ -77,6 +78,7 @@ func TestAccCustomDomain_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
+	domainPrefix := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_custom_domain.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
@@ -95,11 +97,11 @@ func TestAccCustomDomain_Full(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCustomDomainConfig_Full(environmentName, licenseID, resourceName),
+				Config: testAccCustomDomainConfig_Full(environmentName, licenseID, resourceName, domainPrefix),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "domain_name", "terraformdev.ping-eng.com"),
+					resource.TestCheckResourceAttr(resourceFullName, "domain_name", fmt.Sprintf("%s.terraformdev.ping-eng.com", domainPrefix)),
 					resource.TestCheckResourceAttr(resourceFullName, "status", "VERIFICATION_REQUIRED"),
 					resource.TestMatchResourceAttr(resourceFullName, "canonical_name", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.[0-9a-zA-Z]+\.pingone.[a-z]+\.$`)),
 					resource.TestCheckNoResourceAttr(resourceFullName, "certificate_expires_at"),
@@ -129,6 +131,7 @@ func TestAccCustomDomain_BadParameters(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
+	domainPrefix := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_custom_domain.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
@@ -148,7 +151,7 @@ func TestAccCustomDomain_BadParameters(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: testAccCustomDomainConfig_Full(environmentName, licenseID, resourceName),
+				Config: testAccCustomDomainConfig_Full(environmentName, licenseID, resourceName, domainPrefix),
 			},
 			// Errors
 			{
@@ -172,13 +175,13 @@ func TestAccCustomDomain_BadParameters(t *testing.T) {
 	})
 }
 
-func testAccCustomDomainConfig_Full(environmentName, licenseID, resourceName string) string {
+func testAccCustomDomainConfig_Full(environmentName, licenseID, resourceName, domainPrefix string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
 resource "pingone_custom_domain" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  domain_name = "terraformdev.ping-eng.com"
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+  domain_name = "%[4]s.terraformdev.ping-eng.com"
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, domainPrefix)
 }
