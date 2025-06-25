@@ -533,7 +533,7 @@ Required:
 
 Optional:
 
-- `default` (Boolean) Indicates whether the virtual server identified by the associated `vs_id` is to be used as the default virtual server.
+- `default` (Boolean) Indicates whether the virtual server identified by the associated `vs_id` is to be used as the default virtual server. Defaults to `false`.
 
 
 

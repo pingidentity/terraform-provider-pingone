@@ -786,6 +786,26 @@ resource "pingone_application" "%[3]s" {
         "https://192.168.1.1",
       ]
     }
+
+    virtual_server_id_settings = {
+      enabled = true
+      virtual_server_ids = [
+        {
+          vs_id = "virtualserver1"
+        },
+        {
+          vs_id   = "virtualserver2"
+          default = false
+        },
+        {
+          vs_id = "virtualserver4"
+        },
+        {
+          vs_id   = "virtualserver3"
+          default = true
+        }
+      ]
+    }
   }
 }
 data "pingone_application" "%[3]s" {

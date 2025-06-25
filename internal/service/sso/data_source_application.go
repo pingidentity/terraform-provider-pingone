@@ -608,6 +608,32 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						},
 					},
 					"cors_settings": datasourceApplicationSchemaCorsSettings(),
+					"virtual_server_id_settings": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies settings for SAML virtual server IDs.").Description,
+						Computed:    true,
+						Attributes: map[string]schema.Attribute{
+							"enabled": schema.BoolAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether virtual server IDs are enabled for this SAML application.").Description,
+								Computed:    true,
+							},
+							"virtual_server_ids": schema.ListNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A list of virtual server ID objects. Each object contains a virtual server ID and a flag indicating if it is the default.").Description,
+								Computed:    true,
+								NestedObject: schema.NestedAttributeObject{
+									Attributes: map[string]schema.Attribute{
+										"vs_id": schema.StringAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("The virtual server ID.").Description,
+											Computed:    true,
+										},
+										"default": schema.BoolAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("Whether this virtual server ID is the default.").Description,
+											Computed:    true,
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 			"wsfed_options": schema.SingleNestedAttribute{

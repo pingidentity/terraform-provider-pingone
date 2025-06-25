@@ -1712,7 +1712,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 											Required:    true,
 										},
 										"default": schema.BoolAttribute{
-											Description: "Indicates whether the virtual server identified by the associated `vs_id` is to be used as the default virtual server.",
+											Description: "Indicates whether the virtual server identified by the associated `vs_id` is to be used as the default virtual server. Defaults to `false`.",
 											Optional:    true,
 											Computed:    true,
 											Default:     booldefault.StaticBool(false),
@@ -3172,16 +3172,16 @@ func (p *applicationSAMLOptionsVirtualServerIdSettingsResourceModelV1) expand() 
 	}
 
 	if !p.VirtualServerIds.IsNull() && !p.VirtualServerIds.IsUnknown() {
-		virtualServerIdSettingsValue := &[]management.ApplicationSAMLAllOfVirtualServerIdSettingsVirtualServerIds{}
+		virtualServerIdSettingsValue := []management.ApplicationSAMLAllOfVirtualServerIdSettingsVirtualServerIds{}
 		for _, virtualServerIdsElement := range p.VirtualServerIds.Elements() {
 			virtualServerIdsAttrs := virtualServerIdsElement.(types.Object).Attributes()
 			serverIds := management.NewApplicationSAMLAllOfVirtualServerIdSettingsVirtualServerIds(virtualServerIdsAttrs["vs_id"].(types.String).ValueString())
 			if !virtualServerIdsAttrs["default"].IsNull() && !virtualServerIdsAttrs["default"].IsUnknown() {
 				serverIds.Default = virtualServerIdsAttrs["default"].(types.Bool).ValueBoolPointer()
 			}
-			*virtualServerIdSettingsValue = append(*virtualServerIdSettingsValue, *serverIds)
+			virtualServerIdSettingsValue = append(virtualServerIdSettingsValue, *serverIds)
 		}
-		vsSettings.SetVirtualServerIds(*virtualServerIdSettingsValue)
+		vsSettings.SetVirtualServerIds(virtualServerIdSettingsValue)
 	}
 
 	return vsSettings

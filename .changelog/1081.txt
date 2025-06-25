@@ -9,3 +9,7 @@ bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.57.1 => v0.58.0
 ```release-note:enhancement
 `resource/pingone_application`: Added support for Virtual Server ID Settings in SAML Applications
 ```
+
+```release-note:enhancement
+`data-source/pingone_application`: Added support for Virtual Server ID Settings in SAML Applications
+```
