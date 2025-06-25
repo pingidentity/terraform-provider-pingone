@@ -455,7 +455,7 @@ func applicationSamlVirtualServerIdSettingsOkToTF(apiObject *management.Applicat
 
 	vsSettingsMap := map[string]attr.Value{
 		"enabled":            framework.BoolOkToTF(apiObject.GetEnabledOk()),
-		"virtual_server_ids": types.SetNull(types.ObjectType{AttrTypes: applicationSamlOptionsVirtualServerIdSettingsVirtualServerIdsTFObjectTypes}),
+		"virtual_server_ids": types.ListNull(types.ObjectType{AttrTypes: applicationSamlOptionsVirtualServerIdSettingsVirtualServerIdsTFObjectTypes}),
 	}
 
 	if vsIds, ok := apiObject.GetVirtualServerIdsOk(); ok {
@@ -469,7 +469,7 @@ func applicationSamlVirtualServerIdSettingsOkToTF(apiObject *management.Applicat
 				return types.ObjectNull(applicationSamlOptionsVirtualServerIdSettingsTFObjectTypes), diags
 			}
 		}
-		vsSettingsMap["virtual_server_ids"], diags = types.SetValue(types.ObjectType{AttrTypes: applicationSamlOptionsVirtualServerIdSettingsVirtualServerIdsTFObjectTypes}, vsIdsTF)
+		vsSettingsMap["virtual_server_ids"], diags = types.ListValue(types.ObjectType{AttrTypes: applicationSamlOptionsVirtualServerIdSettingsVirtualServerIdsTFObjectTypes}, vsIdsTF)
 		if diags.HasError() {
 			return types.ObjectNull(applicationSamlOptionsVirtualServerIdSettingsTFObjectTypes), diags
 		}

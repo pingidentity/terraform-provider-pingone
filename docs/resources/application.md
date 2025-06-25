@@ -522,7 +522,7 @@ Optional:
 Optional:
 
 - `enabled` (Boolean) Indicates whether the virtual server ID or IDs specified are to be used. Defaults to `false`.
-- `virtual_server_ids` (Attributes Set) Required if `enabled` is `true`. Contains the list of virtual server ID or IDs to be used. (see [below for nested schema](#nestedatt--saml_options--virtual_server_id_settings--virtual_server_ids))
+- `virtual_server_ids` (Attributes List) Required if `enabled` is `true`. Contains the list of virtual server ID or IDs to be used. (see [below for nested schema](#nestedatt--saml_options--virtual_server_id_settings--virtual_server_ids))
 
 <a id="nestedatt--saml_options--virtual_server_id_settings--virtual_server_ids"></a>
 ### Nested Schema for `saml_options.virtual_server_id_settings.virtual_server_ids`

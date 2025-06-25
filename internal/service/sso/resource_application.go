@@ -11,6 +11,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -31,8 +32,8 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	listvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/listvalidator"
 	objectplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectplanmodifier"
-	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -184,7 +185,7 @@ type applicationSAMLOptionsSpVerificationResourceModelV1 struct {
 
 type applicationSAMLOptionsVirtualServerIdSettingsResourceModelV1 struct {
 	Enabled          types.Bool `tfsdk:"enabled"`
-	VirtualServerIds types.Set  `tfsdk:"virtual_server_ids"`
+	VirtualServerIds types.List `tfsdk:"virtual_server_ids"`
 }
 
 type applicationSAMLOptionsVirtualServerIdSettingsVirtualServerIdsResourceModelV1 struct {
@@ -334,7 +335,7 @@ var (
 
 	applicationSamlOptionsVirtualServerIdSettingsTFObjectTypes = map[string]attr.Type{
 		"enabled":            types.BoolType,
-		"virtual_server_ids": types.SetType{ElemType: types.ObjectType{AttrTypes: applicationSamlOptionsVirtualServerIdSettingsVirtualServerIdsTFObjectTypes}},
+		"virtual_server_ids": types.ListType{ElemType: types.ObjectType{AttrTypes: applicationSamlOptionsVirtualServerIdSettingsVirtualServerIdsTFObjectTypes}},
 	}
 
 	applicationSamlOptionsVirtualServerIdSettingsVirtualServerIdsTFObjectTypes = map[string]attr.Type{
@@ -1701,7 +1702,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 								Computed:    true,
 								Default:     booldefault.StaticBool(false),
 							},
-							"virtual_server_ids": schema.SetNestedAttribute{
+							"virtual_server_ids": schema.ListNestedAttribute{
 								Description: "Required if `enabled` is `true`. Contains the list of virtual server ID or IDs to be used.",
 								Optional:    true,
 								NestedObject: schema.NestedAttributeObject{
@@ -1718,10 +1719,15 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 										},
 									},
 								},
-								Validators: []validator.Set{
-									setvalidator.SizeAtLeast(1),
-									setvalidatorinternal.IsRequiredIfMatchesPathValue(types.StringValue("true"),
-										path.MatchRelative().AtParent().AtName("enabled"))},
+								Validators: []validator.List{
+									listvalidator.SizeAtLeast(1),
+									listvalidator.UniqueValues(),
+									// Ensure that the virtual server ID settings are only required if the `enabled` field is set to true.
+									listvalidatorinternal.IsRequiredIfMatchesPathValue(
+										types.StringValue("true"),
+										path.MatchRelative().AtParent().AtName("enabled"),
+									),
+								},
 							},
 						},
 					},

@@ -2934,15 +2934,14 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.cors_settings.behavior", "ALLOW_SPECIFIC_ORIGINS"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.#", "4"),
-					// Default goes to the last one in the list
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.3.vs_id", "virtualserver1"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.3.default", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.0.vs_id", "virtualserver2"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.0.default", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.1.vs_id", "virtualserver3"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.0.vs_id", "virtualserver1"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.0.default", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.1.vs_id", "virtualserver2"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.1.default", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.2.vs_id", "virtualserver4"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.2.vs_id", "virtualserver3"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.2.default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.3.vs_id", "virtualserver4"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.3.default", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.cors_settings.origins.#", "8"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.cors_settings.origins.*", "http://localhost"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.cors_settings.origins.*", "https://localhost"),
@@ -3085,9 +3084,14 @@ func TestAccApplication_SAMLVirtualServerIdSettingsOrdering(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.#", "4"),
-					// Ensure the default virtual server ID is returned last
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.3.vs_id", "virtualserver1"),
-					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.3.default", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.0.vs_id", "virtualserver2"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.0.default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.1.vs_id", "virtualserver3"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.1.default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.2.vs_id", "virtualserver1"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.2.default", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.3.vs_id", "virtualserver4"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.3.default", "false"),
 				),
 			},
 			// Change the order of virtual server IDs
@@ -3096,7 +3100,12 @@ func TestAccApplication_SAMLVirtualServerIdSettingsOrdering(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.#", "4"),
-					// Ensure the new default virtual server ID is returned last
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.0.vs_id", "virtualserver1"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.0.default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.1.vs_id", "virtualserver2"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.1.default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.2.vs_id", "virtualserver4"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.2.default", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.3.vs_id", "virtualserver3"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.3.default", "true"),
 				),
@@ -5007,20 +5016,18 @@ resource "pingone_application" "%[3]s" {
       enabled = false
       virtual_server_ids = [
         {
-          vs_id   = "virtualserver2"
-          default = false
+          vs_id = "virtualserver2"
         },
         {
-          vs_id   = "virtualserver3"
-          default = false
-        },
-        {
-          vs_id   = "virtualserver4"
-          default = false
+          vs_id = "virtualserver3"
         },
         {
           vs_id   = "virtualserver1"
           default = true
+        },
+        {
+          vs_id   = "virtualserver4"
+          default = false
         }
       ]
     }
@@ -5136,16 +5143,14 @@ resource "pingone_application" "%[3]s" {
       enabled = true
       virtual_server_ids = [
         {
-          vs_id   = "virtualserver1"
-          default = false
+          vs_id = "virtualserver1"
         },
         {
           vs_id   = "virtualserver2"
           default = false
         },
         {
-          vs_id   = "virtualserver4"
-          default = false
+          vs_id = "virtualserver4"
         },
         {
           vs_id   = "virtualserver3"
