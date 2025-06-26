@@ -1,9 +1,9 @@
-* @patrickcping @henryrecker-pingidentity
-/.github/ @pingidentity/cloud-solutions-cicd-terraform
+* @henryrecker-pingidentity
+/.github/ @patrickcping
 /contributing/ @pingidentity/cloud-solutions-cicd-terraform
-/docs/ @pingidentity/cloud-solutions-cicd-terraform
+/docs/ @patrickcping
 /CONTRIBUTING.md @pingidentity/cloud-solutions-cicd-terraform
 /LICENSE @pingidentity/cloud-solutions-cicd-terraform
 /README.md @pingidentity/cloud-solutions-cicd-terraform
-resource_*.go @pingidentity/cloud-solutions-cicd-terraform
-data_source_*.go @pingidentity/cloud-solutions-cicd-terraform
+resource_*.go @patrickcping
+data_source_*.go @patrickcping
