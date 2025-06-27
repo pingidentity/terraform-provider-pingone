@@ -1,0 +1,23 @@
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` v0.12.19 => v0.13.0
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.58.0 => v0.59.0
+```
+
+```release-note:note
+`resource/pingone_environment`: Confirm limited support for PingID v1 and v2 enabled workforce environments (import only).
+```
+
+```release-note:note
+`resource/pingone_application`: Confirm support for Kerberos configuration in PingID v1 and v2 enabled environments.
+```
+
+```release-note:note
+`resource/pingone_sign_on_policy_action`: Confirm support for PingID action step configuration in PingID v1 and v2 enabled environments.
+```
+
+```release-note:note
+`data-source/pingone_environment`: Confirm support for PingID enabled workforce environments (v1 and v2).
+```
