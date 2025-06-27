@@ -1,0 +1,3 @@
+```release-note:enhancement
+`resource/pingone_population`: Added wait on initial create to ensure `theme.id` is correctly assigned when creating a population in a brand new environment.
+```
