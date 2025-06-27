@@ -183,7 +183,7 @@ func (r *CustomDomainVerifyResource) Create(ctx context.Context, req resource.Cr
 					m, _ = regexp.MatchString("^custom domain does not need to be verified$", details[0].GetMessage())
 					if m {
 						diags.AddWarning(
-							fmt.Sprintf("%s", details[0].GetMessage()),
+							details[0].GetMessage(),
 							"This is expected if the custom domain has already been verified previously.",
 						)
 
