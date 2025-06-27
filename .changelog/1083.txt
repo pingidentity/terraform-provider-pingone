@@ -1,4 +1,12 @@
 ```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` v0.12.19 => v0.13.0
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.58.0 => v0.59.0
+```
+
+```release-note:note
 `resource/pingone_environment`: Confirm limited support for PingID v1 and v2 enabled workforce environments (import only).
 ```
 
