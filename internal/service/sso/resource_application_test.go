@@ -4002,7 +4002,7 @@ func testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationTypeV1(reso
 %[1]s
 
 %[2]s
-`, acctest.WorkforceV1SandboxEnvironment(), testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationTypeV1(resourceName, name))
+`, acctest.WorkforceV1SandboxEnvironment(), testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationType(resourceName, name))
 }
 
 func testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationTypeV2(resourceName, name string) string {
@@ -4010,7 +4010,7 @@ func testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationTypeV2(reso
 %[1]s
 
 %[2]s
-`, acctest.WorkforceV2SandboxEnvironment(), testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationTypeV1(resourceName, name))
+`, acctest.WorkforceV2SandboxEnvironment(), testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationType(resourceName, name))
 }
 
 func testAccApplicationConfig_OIDC_NativeMobile_Full(resourceName, name string) string {
