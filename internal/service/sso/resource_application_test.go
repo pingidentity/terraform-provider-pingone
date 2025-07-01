@@ -821,8 +821,15 @@ func TestAccApplication_NativeKerberos(t *testing.T) {
 
 	name := resourceName
 
-	withKerberosTestStep := resource.TestStep{
-		Config: testAccApplicationConfig_OIDC_NativeKerberos(resourceName, name),
+	withKerberosTestStepV1 := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_NativeKerberosV1(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "oidc_options.certificate_based_authentication.key_id", verify.P1ResourceIDRegexpFullString),
+		),
+	}
+
+	withKerberosTestStepV2 := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_NativeKerberosV2(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "oidc_options.certificate_based_authentication.key_id", verify.P1ResourceIDRegexpFullString),
 		),
@@ -848,17 +855,17 @@ func TestAccApplication_NativeKerberos(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Invalid configs
 			{
-				Config:      testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyType(resourceName, name),
+				Config:      testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyTypeV1(resourceName, name),
 				ExpectError: regexp.MustCompile("Error when calling `CreateApplication`: Key with ID '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' in Environment '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' is not for ISSUANCE. Usage type should be ISSUANCE."),
 			},
 			{
-				Config:      testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationType(resourceName, name),
+				Config:      testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationTypeV1(resourceName, name),
 				ExpectError: regexp.MustCompile("Invalid configuration"),
 			},
 			// With
-			withKerberosTestStep,
+			withKerberosTestStepV1,
 			{
-				Config:  testAccApplicationConfig_OIDC_NativeKerberos(resourceName, name),
+				Config:  testAccApplicationConfig_OIDC_NativeKerberosV1(resourceName, name),
 				Destroy: true,
 			},
 			// Without
@@ -868,9 +875,55 @@ func TestAccApplication_NativeKerberos(t *testing.T) {
 				Destroy: true,
 			},
 			// Change
-			withKerberosTestStep,
+			withKerberosTestStepV1,
 			withoutKerberosTestStep,
-			withKerberosTestStep,
+			withKerberosTestStepV1,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				Config:  testAccApplicationConfig_OIDC_MinimalNative(resourceName, name),
+				Destroy: true,
+			},
+			// v2
+			// Invalid configs
+			{
+				Config:      testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyTypeV2(resourceName, name),
+				ExpectError: regexp.MustCompile("Error when calling `CreateApplication`: Key with ID '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' in Environment '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' is not for ISSUANCE. Usage type should be ISSUANCE."),
+			},
+			{
+				Config:      testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationTypeV2(resourceName, name),
+				ExpectError: regexp.MustCompile("Invalid configuration"),
+			},
+			// With
+			withKerberosTestStepV2,
+			{
+				Config:  testAccApplicationConfig_OIDC_NativeKerberosV2(resourceName, name),
+				Destroy: true,
+			},
+			// Without
+			withoutKerberosTestStep,
+			{
+				Config:  testAccApplicationConfig_OIDC_MinimalNative(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			withKerberosTestStepV2,
+			withoutKerberosTestStep,
+			withKerberosTestStepV2,
 			// Test importing the resource
 			{
 				ResourceName: resourceFullName,
@@ -3818,23 +3871,21 @@ resource "pingone_application" "%[2]s" {
 
 func testAccApplicationConfig_OIDC_NativeKerberos(resourceName, name string) string {
 	return fmt.Sprintf(`
-		%[1]s
-
-resource "pingone_key" "%[2]s" {
+resource "pingone_key" "%[1]s" {
   environment_id = data.pingone_environment.workforce_test.id
 
-  name                = "%[3]s"
+  name                = "%[2]s"
   algorithm           = "EC"
   key_length          = 256
   signature_algorithm = "SHA384withECDSA"
-  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  subject_dn          = "CN=%[2]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   usage_type          = "ISSUANCE"
   validity_period     = 365
 }
 
-resource "pingone_application" "%[2]s" {
+resource "pingone_application" "%[1]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  name           = "%[3]s"
+  name           = "%[2]s"
   enabled        = true
 
   oidc_options = {
@@ -3843,32 +3894,46 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     certificate_based_authentication = {
-      key_id = pingone_key.%[2]s.id
+      key_id = pingone_key.%[1]s.id
     }
   }
 }
-`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
+`, resourceName, name)
+}
+
+func testAccApplicationConfig_OIDC_NativeKerberosV1(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+%[2]s
+`, acctest.WorkforceV1SandboxEnvironment(), testAccApplicationConfig_OIDC_NativeKerberos(resourceName, name))
+}
+
+func testAccApplicationConfig_OIDC_NativeKerberosV2(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+%[2]s
+`, acctest.WorkforceV2SandboxEnvironment(), testAccApplicationConfig_OIDC_NativeKerberos(resourceName, name))
 }
 
 func testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyType(resourceName, name string) string {
 	return fmt.Sprintf(`
-		%[1]s
-
-resource "pingone_key" "%[2]s" {
+resource "pingone_key" "%[1]s" {
   environment_id = data.pingone_environment.workforce_test.id
 
-  name                = "%[3]s"
+  name                = "%[2]s"
   algorithm           = "EC"
   key_length          = 256
   signature_algorithm = "SHA384withECDSA"
-  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  subject_dn          = "CN=%[2]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   usage_type          = "SIGNING"
   validity_period     = 365
 }
 
-resource "pingone_application" "%[2]s" {
+resource "pingone_application" "%[1]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  name           = "%[3]s"
+  name           = "%[2]s"
   enabled        = true
 
   oidc_options = {
@@ -3877,32 +3942,46 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     certificate_based_authentication = {
-      key_id = pingone_key.%[2]s.id
+      key_id = pingone_key.%[1]s.id
     }
   }
 }
-`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
+`, resourceName, name)
+}
+
+func testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyTypeV1(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+%[2]s
+`, acctest.WorkforceV1SandboxEnvironment(), testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyType(resourceName, name))
+}
+
+func testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyTypeV2(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+%[2]s
+`, acctest.WorkforceV2SandboxEnvironment(), testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyType(resourceName, name))
 }
 
 func testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationType(resourceName, name string) string {
 	return fmt.Sprintf(`
-		%[1]s
-
-resource "pingone_key" "%[2]s" {
+resource "pingone_key" "%[1]s" {
   environment_id = data.pingone_environment.workforce_test.id
 
-  name                = "%[3]s"
+  name                = "%[2]s"
   algorithm           = "EC"
   key_length          = 256
   signature_algorithm = "SHA384withECDSA"
-  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  subject_dn          = "CN=%[2]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   usage_type          = "ISSUANCE"
   validity_period     = 365
 }
 
-resource "pingone_application" "%[2]s" {
+resource "pingone_application" "%[1]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  name           = "%[3]s"
+  name           = "%[2]s"
   enabled        = true
 
   oidc_options = {
@@ -3911,11 +3990,27 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     certificate_based_authentication = {
-      key_id = pingone_key.%[2]s.id
+      key_id = pingone_key.%[1]s.id
     }
   }
 }
-`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
+`, resourceName, name)
+}
+
+func testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationTypeV1(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+%[2]s
+`, acctest.WorkforceV1SandboxEnvironment(), testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationType(resourceName, name))
+}
+
+func testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationTypeV2(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+%[2]s
+`, acctest.WorkforceV2SandboxEnvironment(), testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationType(resourceName, name))
 }
 
 func testAccApplicationConfig_OIDC_NativeMobile_Full(resourceName, name string) string {

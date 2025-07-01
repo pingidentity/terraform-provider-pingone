@@ -381,11 +381,25 @@ func GenericSandboxEnvironment() string {
 		}`
 }
 
-func WorkforceSandboxEnvironment() string {
-	return `
+const (
+	WorkforceV1SandboxEnvironmentName = "tf-testacc-static-workforce-test"
+	WorkforceV2SandboxEnvironmentName = "tf-testacc-static-workforce-v2-test"
+)
+
+// Static environment that uses v1 PingID
+func WorkforceV1SandboxEnvironment() string {
+	return fmt.Sprintf(`
 		data "pingone_environment" "workforce_test" {
-			name = "tf-testacc-static-workforce-test"
-		}`
+			name = "%s"
+		}`, WorkforceV1SandboxEnvironmentName)
+}
+
+// Static environment that uses v2 PingID
+func WorkforceV2SandboxEnvironment() string {
+	return fmt.Sprintf(`
+		data "pingone_environment" "workforce_test" {
+			name = "%s"
+		}`, WorkforceV2SandboxEnvironmentName)
 }
 
 func DomainVerifiedSandboxEnvironment() string {
