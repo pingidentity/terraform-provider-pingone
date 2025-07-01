@@ -4,17 +4,78 @@ package sso
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/patrickcping/pingone-go-sdk-v2/pingone"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
+
+// Sometimes the default theme for a brand-new environment takes a few moments to be assigned.
+// We'll wait for new populations to have a theme id set before returning from the resource Create method.
+// If the theme id is not set after the timeout, a warning is returned.
+func populationWaitForAssignedThemeId(ctx context.Context, client *pingone.Client, envId, populationId string) (*management.Population, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	stateConf := &retry.StateChangeConf{
+		Pending: []string{
+			"false",
+		},
+		Target: []string{
+			"true",
+			"err",
+		},
+		Refresh: func() (interface{}, string, error) {
+			var responseData *management.Population
+			diags.Append(framework.ParseResponse(
+				ctx,
+
+				func() (any, *http.Response, error) {
+					fO, fR, fErr := client.ManagementAPIClient.PopulationsApi.ReadOnePopulation(ctx, envId, populationId).Execute()
+					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, client.ManagementAPIClient, envId, fO, fR, fErr)
+				},
+				"WaitForPopulationThemeId",
+				framework.DefaultCustomError,
+				sdk.DefaultCreateReadRetryable,
+				&responseData,
+			)...)
+			if diags.HasError() {
+				return nil, "err", errors.New("Error reading population when checking for theme ID")
+			}
+
+			// Theme id hasn't yet been assigned
+			if responseData.Theme == nil || responseData.Theme.Id == nil {
+				return nil, "false", nil
+			}
+
+			return responseData, "true", nil
+		},
+		// Align with SDK wait time for environment 404s on creation
+		Timeout:                   17 * time.Second,
+		Delay:                     1 * time.Second,
+		MinTimeout:                1 * time.Second,
+		ContinuousTargetOccurence: 1,
+	}
+	responseData, err := stateConf.WaitForStateContext(ctx)
+	if err != nil {
+		diags.AddError(
+			"Population theme ID not assigned",
+			fmt.Sprintf("Expected to find theme id for population %s, got error: %s", populationId, err.Error()))
+	}
+	var returnValue *management.Population
+	if responseData != nil {
+		returnValue = responseData.(*management.Population)
+	}
+	return returnValue, diags
+}
 
 func populationDeleteCustomErrorHandler(r *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 	var diags diag.Diagnostics
