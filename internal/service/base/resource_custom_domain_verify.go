@@ -121,6 +121,7 @@ func (r *CustomDomainVerifyResource) Configure(ctx context.Context, req resource
 
 func (r *CustomDomainVerifyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state CustomDomainVerifyResourceModel
+	existingDomain := false
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -178,6 +179,16 @@ func (r *CustomDomainVerifyResource) Create(ctx context.Context, req resource.Cr
 
 						return diags
 					}
+
+					m, _ = regexp.MatchString("^custom domain does not need to be verified", details[0].GetMessage())
+					if m {
+						diags.AddWarning(
+							details[0].GetMessage(),
+							"This is expected if the custom domain was verified previously.  The verification step has been skipped and the resource now tracks the domain's verified status.",
+						)
+
+						existingDomain = true
+					}
 				}
 			}
 
@@ -187,6 +198,25 @@ func (r *CustomDomainVerifyResource) Create(ctx context.Context, req resource.Cr
 		&response,
 		timeout,
 	)...)
+
+	if existingDomain {
+		resp.Diagnostics.Append(framework.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				fO, fR, fErr := r.Client.ManagementAPIClient.CustomDomainsApi.ReadOneDomain(ctx, plan.EnvironmentId.ValueString(), plan.CustomDomainId.ValueString()).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			},
+			"ReadOneDomain",
+			framework.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+			&response,
+		)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
