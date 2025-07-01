@@ -5,5 +5,4 @@
 /CONTRIBUTING.md @pingidentity/cloud-solutions-cicd-terraform
 /LICENSE @pingidentity/cloud-solutions-cicd-terraform
 /README.md @pingidentity/cloud-solutions-cicd-terraform
-resource_*.go @pingidentity/cloud-solutions-cicd-terraform
-data_source_*.go @pingidentity/cloud-solutions-cicd-terraform
+*.go @pingidentity/cloud-solutions-cicd-terraform
