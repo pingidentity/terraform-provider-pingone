@@ -167,7 +167,7 @@ resource "pingone_branding_theme" "%[2]s" {
 }
 
 resource "pingone_population" "%[2]s-name" {
-  environment_id = pingone_environment.%[4]s.id
+  environment_id          = pingone_environment.%[4]s.id
   name                    = "%[3]s"
   description             = "Test description"
   password_policy_id      = pingone_password_policy.%[2]s.id
