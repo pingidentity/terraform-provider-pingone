@@ -180,11 +180,11 @@ func (r *CustomDomainVerifyResource) Create(ctx context.Context, req resource.Cr
 						return diags
 					}
 
-					m, _ = regexp.MatchString("^custom domain does not need to be verified$", details[0].GetMessage())
+					m, _ = regexp.MatchString("^custom domain does not need to be verified", details[0].GetMessage())
 					if m {
 						diags.AddWarning(
 							details[0].GetMessage(),
-							"This is expected if the custom domain has already been verified previously.",
+							"This is expected if the custom domain was verified previously.  The verification step has been skipped and the resource now tracks the domain's verified status.",
 						)
 
 						existingDomain = true
@@ -208,7 +208,7 @@ func (r *CustomDomainVerifyResource) Create(ctx context.Context, req resource.Cr
 				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneDomain",
-			framework.CustomErrorResourceNotFoundWarning,
+			framework.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&response,
 		)...)
