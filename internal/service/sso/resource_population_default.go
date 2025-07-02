@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -39,6 +40,7 @@ type PopulationDefaultResourceModel struct {
 	Description            types.String                 `tfsdk:"description"`
 	PasswordPolicyId       pingonetypes.ResourceIDValue `tfsdk:"password_policy_id"`
 	AlternativeIdentifiers types.Set                    `tfsdk:"alternative_identifiers"`
+	PreferredLanguage      types.String                 `tfsdk:"preferred_language"`
 	Theme                  types.Object                 `tfsdk:"theme"`
 }
 
@@ -102,6 +104,14 @@ func (r *PopulationDefaultResource) Schema(ctx context.Context, req resource.Sch
 				Optional:            true,
 				Description:         "Alternative identifiers that can be used to search for populations besides \"name\".",
 				MarkdownDescription: "Alternative identifiers that can be used to search for populations besides `name`.",
+			},
+			"preferred_language": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+				Description: "The language locale for the population. If absent, the environment default is used.",
 			},
 			"theme": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -416,6 +426,11 @@ func (p *PopulationDefaultResourceModel) expand() *management.Population {
 		data.SetAlternativeIdentifiers(altIds)
 	}
 
+	// preferred_language
+	if !p.PreferredLanguage.IsNull() && !p.PreferredLanguage.IsUnknown() {
+		data.PreferredLanguage = p.PreferredLanguage.ValueStringPointer()
+	}
+
 	// theme
 	if !p.Theme.IsNull() && !p.Theme.IsUnknown() {
 		themeValue := &management.PopulationTheme{}
@@ -453,6 +468,9 @@ func (p *PopulationDefaultResourceModel) toState(apiObject *management.Populatio
 	var altDiags diag.Diagnostics
 	p.AlternativeIdentifiers, altDiags = types.SetValueFrom(context.Background(), types.StringType, apiObject.AlternativeIdentifiers)
 	diags.Append(altDiags...)
+
+	// preferred_language
+	p.PreferredLanguage = framework.StringOkToTF(apiObject.GetPreferredLanguageOk())
 
 	// theme
 	themeAttrTypes := map[string]attr.Type{

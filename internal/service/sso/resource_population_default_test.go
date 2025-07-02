@@ -98,6 +98,7 @@ func TestAccPopulationDefault_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "alternative_identifiers.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "alternative_identifiers.*", "identifier1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "alternative_identifiers.*", "identifier2"),
+					resource.TestCheckResourceAttr(resourceFullName, "preferred_language", "es"),
 					resource.TestMatchResourceAttr(resourceFullName, "theme.id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
@@ -152,6 +153,8 @@ func TestAccPopulationDefault_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "password_policy_id"),
+					resource.TestCheckResourceAttr(resourceFullName, "preferred_language", "en"),
+					resource.TestMatchResourceAttr(resourceFullName, "theme.id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -211,6 +214,19 @@ resource "pingone_password_policy" "%[3]s" {
   name           = "%[4]s"
 }
 
+data "pingone_language" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  locale = "es"
+}
+
+resource "pingone_language_update" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  language_id = data.pingone_language.%[3]s.id
+  enabled     = true
+}
+
 resource "pingone_branding_theme" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name     = "%[3]s"
@@ -230,6 +246,7 @@ resource "pingone_population_default" "%[3]s" {
   description        = "Test description"
   password_policy_id = pingone_password_policy.%[3]s.id
   alternative_identifiers = ["identifier1", "identifier2"]
+  preferred_language      = pingone_language_update.%[3]s.locale
   theme = {
 	id = pingone_branding_theme.%[3]s.id
   }
