@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -39,6 +40,7 @@ type PopulationDefaultResourceModel struct {
 	Name                   types.String                 `tfsdk:"name"`
 	Description            types.String                 `tfsdk:"description"`
 	PasswordPolicyId       pingonetypes.ResourceIDValue `tfsdk:"password_policy_id"`
+	PasswordPolicy         types.Object                 `tfsdk:"password_policy"`
 	AlternativeIdentifiers types.Set                    `tfsdk:"alternative_identifiers"`
 	PreferredLanguage      types.String                 `tfsdk:"preferred_language"`
 	Theme                  types.Object                 `tfsdk:"theme"`
@@ -92,11 +94,29 @@ func (r *PopulationDefaultResource) Schema(ctx context.Context, req resource.Sch
 				Optional:    true,
 			},
 
-			"password_policy_id": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("The ID of a password policy to assign to the default population.").Description,
+			"password_policy": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Required:    true,
+						CustomType:  pingonetypes.ResourceIDType{},
+						Description: "The ID of the password policy that is used for this population. If absent, the environment's default is used. Must be a valid PingOne resource ID.",
+					},
+				},
 				Optional:    true,
+				Description: "The object reference to the password policy resource. This is an optional property. Conflicts with `password_policy_id`.",
+				Validators: []validator.Object{
+					objectvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("password_policy_id")),
+				},
+			},
 
-				CustomType: pingonetypes.ResourceIDType{},
+			"password_policy_id": schema.StringAttribute{
+				Description:        framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of a password policy to assign to the population.  Must be a valid PingOne resource ID. The `password_policy.id` attribute should be used instead of this attribute.").ConflictsWith([]string{"password_policy"}).Description,
+				DeprecationMessage: "This attribute is deprecated and will be removed in a future release. Please use the `password_policy.id` attribute instead.",
+				Optional:           true,
+				CustomType:         pingonetypes.ResourceIDType{},
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("password_policy")),
+				},
 			},
 
 			"alternative_identifiers": schema.SetAttribute{
@@ -425,10 +445,17 @@ func (p *PopulationDefaultResourceModel) expand() *management.Population {
 		data.SetDescription(p.Description.ValueString())
 	}
 
-	if !p.PasswordPolicyId.IsNull() && !p.PasswordPolicyId.IsUnknown() {
-		data.SetPasswordPolicy(
-			*management.NewPopulationPasswordPolicy(p.PasswordPolicyId.ValueString()),
-		)
+	// password_policy
+	if !p.PasswordPolicy.IsNull() && !p.PasswordPolicy.IsUnknown() {
+		passwordPolicyValue := &management.PopulationPasswordPolicy{}
+		passwordPolicyAttrs := p.PasswordPolicy.Attributes()
+		passwordPolicyValue.Id = passwordPolicyAttrs["id"].(pingonetypes.ResourceIDValue).ValueString()
+		data.PasswordPolicy = passwordPolicyValue
+	} else if !p.PasswordPolicyId.IsNull() && !p.PasswordPolicyId.IsUnknown() {
+		// password_policy_id
+		data.PasswordPolicy = &management.PopulationPasswordPolicy{
+			Id: p.PasswordPolicyId.ValueString(),
+		}
 	}
 
 	// alternative_identifiers
@@ -457,7 +484,7 @@ func (p *PopulationDefaultResourceModel) expand() *management.Population {
 }
 
 func (p *PopulationDefaultResourceModel) toState(apiObject *management.Population) diag.Diagnostics {
-	var diags diag.Diagnostics
+	var diags, buildDiags diag.Diagnostics
 
 	if apiObject == nil {
 		diags.AddError(
@@ -472,16 +499,35 @@ func (p *PopulationDefaultResourceModel) toState(apiObject *management.Populatio
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 
-	if v, ok := apiObject.GetPasswordPolicyOk(); ok {
-		p.PasswordPolicyId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
+	// password_policy_id
+	if !p.PasswordPolicyId.IsNull() {
+		var passwordPolicyIdValue pingonetypes.ResourceIDValue
+		if apiObject.PasswordPolicy == nil {
+			passwordPolicyIdValue = pingonetypes.NewResourceIDNull()
+		} else {
+			passwordPolicyIdValue = framework.PingOneResourceIDToTF(apiObject.PasswordPolicy.Id)
+		}
+		p.PasswordPolicyId = passwordPolicyIdValue
 	} else {
-		p.PasswordPolicyId = pingonetypes.NewResourceIDNull()
+		// password_policy
+		passwordPolicyAttrTypes := map[string]attr.Type{
+			"id": pingonetypes.ResourceIDType{},
+		}
+		var passwordPolicyValue types.Object
+		if apiObject.PasswordPolicy == nil {
+			passwordPolicyValue = types.ObjectNull(passwordPolicyAttrTypes)
+		} else {
+			passwordPolicyValue, buildDiags = types.ObjectValue(passwordPolicyAttrTypes, map[string]attr.Value{
+				"id": framework.PingOneResourceIDToTF(apiObject.PasswordPolicy.Id),
+			})
+			diags.Append(buildDiags...)
+		}
+		p.PasswordPolicy = passwordPolicyValue
 	}
 
 	// alternative_identifiers
-	var altDiags diag.Diagnostics
-	p.AlternativeIdentifiers, altDiags = types.SetValueFrom(context.Background(), types.StringType, apiObject.AlternativeIdentifiers)
-	diags.Append(altDiags...)
+	p.AlternativeIdentifiers, buildDiags = types.SetValueFrom(context.Background(), types.StringType, apiObject.AlternativeIdentifiers)
+	diags.Append(buildDiags...)
 
 	// preferred_language
 	p.PreferredLanguage = framework.StringOkToTF(apiObject.GetPreferredLanguageOk())
