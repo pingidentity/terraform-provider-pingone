@@ -228,9 +228,9 @@ resource "pingone_language_update" "%[3]s" {
 }
 
 resource "pingone_branding_theme" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
-  name     = "%[3]s"
-  template = "split"
+  environment_id     = pingone_environment.%[2]s.id
+  name               = "%[3]s"
+  template           = "split"
   background_color   = "#FF00F0"
   button_text_color  = "#FF6C6C"
   heading_text_color = "#FF0005"
@@ -241,17 +241,16 @@ resource "pingone_branding_theme" "%[3]s" {
 }
 
 resource "pingone_population_default" "%[3]s" {
-  environment_id     = pingone_environment.%[2]s.id
-  name               = "%[4]s"
-  description        = "Test description"
-  password_policy_id = pingone_password_policy.%[3]s.id
+  environment_id          = pingone_environment.%[2]s.id
+  name                    = "%[4]s"
+  description             = "Test description"
+  password_policy_id      = pingone_password_policy.%[3]s.id
   alternative_identifiers = ["identifier1", "identifier2"]
   preferred_language      = pingone_language_update.%[3]s.locale
   theme = {
-	id = pingone_branding_theme.%[3]s.id
+    id = pingone_branding_theme.%[3]s.id
   }
-}`,
-		acctest.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctest.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccPopulationDefaultConfig_Minimal(environmentName, licenseID, resourceName, name string) string {
