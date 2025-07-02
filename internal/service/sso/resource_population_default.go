@@ -208,6 +208,20 @@ func (r *PopulationDefaultResource) Create(ctx context.Context, req resource.Cre
 			sdk.DefaultCreateReadRetryable,
 			&response,
 		)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		if response.Theme == nil || response.Theme.Id == nil {
+			responseWithTheme, diags := populationWaitForAssignedThemeId(ctx, r.Client, plan.EnvironmentId.ValueString(), *response.Id)
+			resp.Diagnostics.Append(diags...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+			if responseWithTheme != nil {
+				response = responseWithTheme
+			}
+		}
 	} else {
 		resp.Diagnostics.Append(framework.ParseResponse(
 			ctx,
