@@ -95,6 +95,9 @@ func TestAccPopulationDefault_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "Test description"),
 					resource.TestMatchResourceAttr(resourceFullName, "password_policy_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "alternative_identifiers.#", "2"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "alternative_identifiers.*", "identifier1"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "alternative_identifiers.*", "identifier2"),
 				),
 			},
 			// Test importing the resource
@@ -212,7 +215,9 @@ resource "pingone_population_default" "%[3]s" {
   name               = "%[4]s"
   description        = "Test description"
   password_policy_id = pingone_password_policy.%[3]s.id
-}`, acctest.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName, resourceName, name)
+  alternative_identifiers = ["identifier1", "identifier2"]
+}`,
+		acctest.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccPopulationDefaultConfig_Minimal(environmentName, licenseID, resourceName, name string) string {

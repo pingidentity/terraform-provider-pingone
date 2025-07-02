@@ -30,11 +30,12 @@ import (
 type PopulationDefaultResource serviceClientType
 
 type PopulationDefaultResourceModel struct {
-	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
-	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	Name             types.String                 `tfsdk:"name"`
-	Description      types.String                 `tfsdk:"description"`
-	PasswordPolicyId pingonetypes.ResourceIDValue `tfsdk:"password_policy_id"`
+	Id                     pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId          pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name                   types.String                 `tfsdk:"name"`
+	Description            types.String                 `tfsdk:"description"`
+	PasswordPolicyId       pingonetypes.ResourceIDValue `tfsdk:"password_policy_id"`
+	AlternativeIdentifiers types.Set                    `tfsdk:"alternative_identifiers"`
 }
 
 // Framework interfaces
@@ -90,6 +91,13 @@ func (r *PopulationDefaultResource) Schema(ctx context.Context, req resource.Sch
 				Optional:    true,
 
 				CustomType: pingonetypes.ResourceIDType{},
+			},
+
+			"alternative_identifiers": schema.SetAttribute{
+				ElementType:         types.StringType,
+				Optional:            true,
+				Description:         "Alternative identifiers that can be used to search for populations besides \"name\".",
+				MarkdownDescription: "Alternative identifiers that can be used to search for populations besides `name`.",
 			},
 		},
 	}
@@ -367,9 +375,7 @@ func (r *PopulationDefaultResource) ImportState(ctx context.Context, req resourc
 }
 
 func (p *PopulationDefaultResourceModel) expand() *management.Population {
-
 	data := management.NewPopulation(p.Name.ValueString())
-
 	data.SetDefault(true)
 
 	if !p.Description.IsNull() && !p.Description.IsUnknown() {
@@ -380,6 +386,15 @@ func (p *PopulationDefaultResourceModel) expand() *management.Population {
 		data.SetPasswordPolicy(
 			*management.NewPopulationPasswordPolicy(p.PasswordPolicyId.ValueString()),
 		)
+	}
+
+	// alternative_identifiers
+	if !p.AlternativeIdentifiers.IsNull() && !p.AlternativeIdentifiers.IsUnknown() {
+		altIds := []string{}
+		for _, elem := range p.AlternativeIdentifiers.Elements() {
+			altIds = append(altIds, elem.(types.String).ValueString())
+		}
+		data.SetAlternativeIdentifiers(altIds)
 	}
 
 	return data
@@ -393,7 +408,6 @@ func (p *PopulationDefaultResourceModel) toState(apiObject *management.Populatio
 			"Data object missing",
 			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
 		)
-
 		return diags
 	}
 
@@ -407,6 +421,11 @@ func (p *PopulationDefaultResourceModel) toState(apiObject *management.Populatio
 	} else {
 		p.PasswordPolicyId = pingonetypes.NewResourceIDNull()
 	}
+
+	// alternative_identifiers
+	var altDiags diag.Diagnostics
+	p.AlternativeIdentifiers, altDiags = types.SetValueFrom(context.Background(), types.StringType, apiObject.AlternativeIdentifiers)
+	diags.Append(altDiags...)
 
 	return diags
 }
