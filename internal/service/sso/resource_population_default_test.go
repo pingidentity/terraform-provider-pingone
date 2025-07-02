@@ -277,12 +277,12 @@ resource "pingone_branding_theme" "%[3]s" {
 }
 
 resource "pingone_population_default" "%[3]s" {
-  environment_id          = pingone_environment.%[2]s.id
-  name                    = "%[4]s"
-  description             = "Test description"
-  password_policy     = {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+  description    = "Test description"
+  password_policy = {
     id = pingone_password_policy.%[3]s.id
-}
+  }
   alternative_identifiers = ["identifier1", "identifier2"]
   preferred_language      = pingone_language_update.%[3]s.locale
   theme = {
@@ -327,7 +327,7 @@ resource "pingone_password_policy" "%[3]s" {
 }
 
 resource "pingone_population_default" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
+  environment_id     = pingone_environment.%[2]s.id
   name               = "%[4]s"
   password_policy_id = pingone_password_policy.%[3]s.id
 }`, acctest.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName, resourceName, name)
