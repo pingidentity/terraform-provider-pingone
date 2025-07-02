@@ -98,6 +98,7 @@ func TestAccPopulationDefault_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "alternative_identifiers.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "alternative_identifiers.*", "identifier1"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "alternative_identifiers.*", "identifier2"),
+					resource.TestMatchResourceAttr(resourceFullName, "theme.id", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 			// Test importing the resource
@@ -210,12 +211,28 @@ resource "pingone_password_policy" "%[3]s" {
   name           = "%[4]s"
 }
 
+resource "pingone_branding_theme" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name     = "%[3]s"
+  template = "split"
+  background_color   = "#FF00F0"
+  button_text_color  = "#FF6C6C"
+  heading_text_color = "#FF0005"
+  card_color         = "#0FFF39"
+  body_text_color    = "#8620FF"
+  link_text_color    = "#8A7F06"
+  button_color       = "#0CFFFB"
+}
+
 resource "pingone_population_default" "%[3]s" {
   environment_id     = pingone_environment.%[2]s.id
   name               = "%[4]s"
   description        = "Test description"
   password_policy_id = pingone_password_policy.%[3]s.id
   alternative_identifiers = ["identifier1", "identifier2"]
+  theme = {
+	id = pingone_branding_theme.%[3]s.id
+  }
 }`,
 		acctest.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName, resourceName, name)
 }

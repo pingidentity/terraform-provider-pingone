@@ -11,10 +11,13 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -36,6 +39,7 @@ type PopulationDefaultResourceModel struct {
 	Description            types.String                 `tfsdk:"description"`
 	PasswordPolicyId       pingonetypes.ResourceIDValue `tfsdk:"password_policy_id"`
 	AlternativeIdentifiers types.Set                    `tfsdk:"alternative_identifiers"`
+	Theme                  types.Object                 `tfsdk:"theme"`
 }
 
 // Framework interfaces
@@ -98,6 +102,21 @@ func (r *PopulationDefaultResource) Schema(ctx context.Context, req resource.Sch
 				Optional:            true,
 				Description:         "Alternative identifiers that can be used to search for populations besides \"name\".",
 				MarkdownDescription: "Alternative identifiers that can be used to search for populations besides `name`.",
+			},
+			"theme": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Required:    true,
+						CustomType:  pingonetypes.ResourceIDType{},
+						Description: "The ID of the theme to use for the population. If absent, the environment's default is used. Must be a valid PingOne resource ID.",
+					},
+				},
+				Optional:    true,
+				Computed:    true,
+				Description: "The object reference to the theme resource.",
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 	}
@@ -397,6 +416,14 @@ func (p *PopulationDefaultResourceModel) expand() *management.Population {
 		data.SetAlternativeIdentifiers(altIds)
 	}
 
+	// theme
+	if !p.Theme.IsNull() && !p.Theme.IsUnknown() {
+		themeValue := &management.PopulationTheme{}
+		themeAttrs := p.Theme.Attributes()
+		themeValue.Id = themeAttrs["id"].(pingonetypes.ResourceIDValue).ValueStringPointer()
+		data.Theme = themeValue
+	}
+
 	return data
 }
 
@@ -426,6 +453,22 @@ func (p *PopulationDefaultResourceModel) toState(apiObject *management.Populatio
 	var altDiags diag.Diagnostics
 	p.AlternativeIdentifiers, altDiags = types.SetValueFrom(context.Background(), types.StringType, apiObject.AlternativeIdentifiers)
 	diags.Append(altDiags...)
+
+	// theme
+	themeAttrTypes := map[string]attr.Type{
+		"id": pingonetypes.ResourceIDType{},
+	}
+	var themeValue types.Object
+	if apiObject.Theme == nil {
+		themeValue = types.ObjectNull(themeAttrTypes)
+	} else {
+		var themeDiags diag.Diagnostics
+		themeValue, themeDiags = types.ObjectValue(themeAttrTypes, map[string]attr.Value{
+			"id": framework.PingOneResourceIDOkToTF(apiObject.Theme.GetIdOk()),
+		})
+		diags.Append(themeDiags...)
+	}
+	p.Theme = themeValue
 
 	return diags
 }
