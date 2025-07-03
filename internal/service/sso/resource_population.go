@@ -58,8 +58,7 @@ func populationWaitForAssignedThemeId(ctx context.Context, client *pingone.Clien
 
 			return responseData, "true", nil
 		},
-		// Align with SDK wait time for environment 404s on creation
-		Timeout:                   17 * time.Second,
+		Timeout:                   30 * time.Second,
 		Delay:                     1 * time.Second,
 		MinTimeout:                1 * time.Second,
 		ContinuousTargetOccurence: 1,
