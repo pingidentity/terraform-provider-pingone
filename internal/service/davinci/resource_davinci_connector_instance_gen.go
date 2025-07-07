@@ -140,8 +140,6 @@ func (r *davinciConnectorInstanceResource) Schema(ctx context.Context, req resou
 
 func (model *davinciConnectorInstanceResourceModel) buildClientStructPost() (*pingone.DaVinciConnectorInstanceCreateRequest, diag.Diagnostics) {
 	result := &pingone.DaVinciConnectorInstanceCreateRequest{}
-	var respDiags diag.Diagnostics
-	var err error
 	// connector
 	connectorValue := pingone.DaVinciConnectorInstanceCreateRequestConnector{}
 	connectorAttrs := model.Connector.Attributes()
@@ -157,13 +155,11 @@ func (model *davinciConnectorInstanceResourceModel) buildClientStructPost() (*pi
 		result.Properties = propertiesValue
 	}
 
-	return result, respDiags
+	return result, nil
 }
 
 func (model *davinciConnectorInstanceResourceModel) buildClientStructPut() (*pingone.DaVinciConnectorInstanceReplaceRequest, diag.Diagnostics) {
 	result := &pingone.DaVinciConnectorInstanceReplaceRequest{}
-	var respDiags diag.Diagnostics
-	var err error
 	// connector
 	connectorValue := pingone.ResourceRelationshipDaVinci{}
 	connectorAttrs := model.Connector.Attributes()
@@ -179,7 +175,7 @@ func (model *davinciConnectorInstanceResourceModel) buildClientStructPut() (*pin
 		result.Properties = propertiesValue
 	}
 
-	return result, respDiags
+	return result, nil
 }
 
 func (state *davinciConnectorInstanceResourceModel) readClientResponse(response *pingone.DaVinciConnectorInstance) diag.Diagnostics {
