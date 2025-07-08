@@ -9,7 +9,10 @@ import (
 	"net/http"
 	"regexp"
 
+	"encoding/json"
+
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -67,12 +70,11 @@ func (r *davinciConnectorInstanceResource) Configure(ctx context.Context, req re
 }
 
 type davinciConnectorInstanceResourceModel struct {
-	Connector     types.Object `tfsdk:"connector"`
-	Environment   types.Object `tfsdk:"environment"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Id            types.String `tfsdk:"id"`
-	Name          types.String `tfsdk:"name"`
-	Properties    types.Object `tfsdk:"properties"`
+	Connector     types.Object         `tfsdk:"connector"`
+	EnvironmentId types.String         `tfsdk:"environment_id"`
+	Id            types.String         `tfsdk:"id"`
+	Name          types.String         `tfsdk:"name"`
+	Properties    jsontypes.Normalized `tfsdk:"properties"`
 }
 
 func (r *davinciConnectorInstanceResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -90,17 +92,6 @@ func (r *davinciConnectorInstanceResource) Schema(ctx context.Context, req resou
 					},
 				},
 				Required: true,
-			},
-			"environment": schema.SingleNestedAttribute{
-				Attributes: map[string]schema.Attribute{
-					"id": schema.StringAttribute{
-						Computed: true,
-						Validators: []validator.String{
-							stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
-						},
-					},
-				},
-				Computed: true,
 			},
 			"environment_id": schema.StringAttribute{
 				Required:    true,
@@ -130,8 +121,8 @@ func (r *davinciConnectorInstanceResource) Schema(ctx context.Context, req resou
 					stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
 				},
 			},
-			"properties": schema.SingleNestedAttribute{
-				Attributes: map[string]schema.Attribute{},
+			"properties": schema.StringAttribute{
+				CustomType: jsontypes.NormalizedType{},
 				Optional:   true,
 			},
 		},
@@ -139,27 +130,8 @@ func (r *davinciConnectorInstanceResource) Schema(ctx context.Context, req resou
 }
 
 func (model *davinciConnectorInstanceResourceModel) buildClientStructPost() (*pingone.DaVinciConnectorInstanceCreateRequest, diag.Diagnostics) {
+	var respDiags diag.Diagnostics
 	result := &pingone.DaVinciConnectorInstanceCreateRequest{}
-	// connector
-	connectorValue := pingone.DaVinciConnectorInstanceCreateRequestConnector{}
-	connectorAttrs := model.Connector.Attributes()
-	connectorValue.Id = connectorAttrs["id"].(types.String).ValueStringPointer()
-	result.Connector = connectorValue
-
-	// name
-	result.Name = model.Name.ValueString()
-	// properties
-	if !model.Properties.IsNull() && !model.Properties.IsUnknown() {
-		propertiesValue := &client.Properties{}
-		propertiesAttrs := model.Properties.Attributes()
-		result.Properties = propertiesValue
-	}
-
-	return result, nil
-}
-
-func (model *davinciConnectorInstanceResourceModel) buildClientStructPut() (*pingone.DaVinciConnectorInstanceReplaceRequest, diag.Diagnostics) {
-	result := &pingone.DaVinciConnectorInstanceReplaceRequest{}
 	// connector
 	connectorValue := pingone.ResourceRelationshipDaVinci{}
 	connectorAttrs := model.Connector.Attributes()
@@ -170,12 +142,39 @@ func (model *davinciConnectorInstanceResourceModel) buildClientStructPut() (*pin
 	result.Name = model.Name.ValueString()
 	// properties
 	if !model.Properties.IsNull() && !model.Properties.IsUnknown() {
-		propertiesValue := &client.Properties{}
-		propertiesAttrs := model.Properties.Attributes()
-		result.Properties = propertiesValue
+		var propertiesMap map[string]interface{}
+		err := json.Unmarshal([]byte(model.Properties.ValueString()), &propertiesMap)
+		if err != nil {
+			respDiags.AddAttributeError(
+				path.Root("properties"),
+				"Error Parsing Properties",
+				fmt.Sprintf("The value provided for properties could not be parsed as json: %s", err.Error()),
+			)
+		}
+		result.Properties = propertiesMap
 	}
+	return result, respDiags
+}
 
-	return result, nil
+func (model *davinciConnectorInstanceResourceModel) buildClientStructPut() (*pingone.DaVinciConnectorInstanceReplaceRequest, diag.Diagnostics) {
+	var respDiags diag.Diagnostics
+	result := &pingone.DaVinciConnectorInstanceReplaceRequest{}
+	// name
+	result.Name = model.Name.ValueString()
+	// properties
+	if !model.Properties.IsNull() && !model.Properties.IsUnknown() {
+		var propertiesMap map[string]interface{}
+		err := json.Unmarshal([]byte(model.Properties.ValueString()), &propertiesMap)
+		if err != nil {
+			respDiags.AddAttributeError(
+				path.Root("properties"),
+				"Error Parsing Properties",
+				fmt.Sprintf("The value provided for properties could not be parsed as json: %s", err.Error()),
+			)
+		}
+		result.Properties = propertiesMap
+	}
+	return result, respDiags
 }
 
 func (state *davinciConnectorInstanceResourceModel) readClientResponse(response *pingone.DaVinciConnectorInstance) diag.Diagnostics {
@@ -189,29 +188,24 @@ func (state *davinciConnectorInstanceResourceModel) readClientResponse(response 
 	})
 	respDiags.Append(diags...)
 	state.Connector = connectorValue
-	// environment
-	environmentAttrTypes := map[string]attr.Type{
-		"id": types.StringType,
-	}
-	environmentValue, diags := types.ObjectValue(environmentAttrTypes, map[string]attr.Value{
-		"id": types.StringValue(response.Environment.Id.String()),
-	})
-	respDiags.Append(diags...)
-	state.Environment = environmentValue
 	// id
-	state.Id = types.StringValue(response.Id)
+	state.Id = types.StringValue(response.Id.String())
 	// name
 	state.Name = types.StringValue(response.Name)
 	// properties
-	propertiesAttrTypes := map[string]attr.Type{}
-	var propertiesValue types.Object
-	if response.Properties == nil {
-		propertiesValue = types.ObjectNull(propertiesAttrTypes)
-	} else {
-		propertiesValue, diags = types.ObjectValue(propertiesAttrTypes, map[string]attr.Value{})
-		respDiags.Append(diags...)
+	state.Properties = jsontypes.NewNormalizedNull()
+	if response.Properties != nil {
+		propertiesBytes, err := json.Marshal(response.Properties)
+		if err != nil {
+			respDiags.AddAttributeError(
+				path.Root("properties"),
+				"Error Marshaling Properties",
+				fmt.Sprintf("An error occurred while marshaling the properties: %s", err.Error()),
+			)
+		} else {
+			state.Properties = jsontypes.NewNormalizedValue(string(propertiesBytes))
+		}
 	}
-	state.Properties = propertiesValue
 	return respDiags
 }
 
@@ -303,12 +297,21 @@ func (r *davinciConnectorInstanceResource) Read(ctx context.Context, req resourc
 		)
 		return
 	}
+	idUuid, err := uuid.Parse(data.Id.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("id"),
+			"Attribute Validation Error",
+			fmt.Sprintf("The value '%s' for attribute '%s' is not a valid UUID: %s", data.Id.ValueString(), "Id", err.Error()),
+		)
+		return
+	}
 	var responseData *pingone.DaVinciConnectorInstance
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciConnectorApi.GetConnectorInstanceById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.DaVinciConnectorApi.GetConnectorInstanceById(ctx, environmentIdUuid, idUuid).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetConnectorInstanceById",
@@ -370,12 +373,21 @@ func (r *davinciConnectorInstanceResource) Update(ctx context.Context, req resou
 		)
 		return
 	}
+	idUuid, err := uuid.Parse(data.Id.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("id"),
+			"Attribute Validation Error",
+			fmt.Sprintf("The value '%s' for attribute '%s' is not a valid UUID: %s", data.Id.ValueString(), "Id", err.Error()),
+		)
+		return
+	}
 	var responseData *pingone.DaVinciConnectorInstance
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciConnectorApi.ReplaceConnectorInstanceById(ctx, environmentIdUuid, data.Id.ValueString()).DaVinciConnectorInstanceReplaceRequest(*clientData).Execute()
+			fO, fR, fErr := r.Client.DaVinciConnectorApi.ReplaceConnectorInstanceById(ctx, environmentIdUuid, idUuid).DaVinciConnectorInstanceReplaceRequest(*clientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReplaceConnectorInstanceById",
@@ -425,11 +437,20 @@ func (r *davinciConnectorInstanceResource) Delete(ctx context.Context, req resou
 		)
 		return
 	}
+	idUuid, err := uuid.Parse(data.Id.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("id"),
+			"Attribute Validation Error",
+			fmt.Sprintf("The value '%s' for attribute '%s' is not a valid UUID: %s", data.Id.ValueString(), "Id", err.Error()),
+		)
+		return
+	}
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := r.Client.DaVinciConnectorApi.DeleteConnectorInstanceById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
+			fR, fErr := r.Client.DaVinciConnectorApi.DeleteConnectorInstanceById(ctx, environmentIdUuid, idUuid).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteConnectorInstanceById",
