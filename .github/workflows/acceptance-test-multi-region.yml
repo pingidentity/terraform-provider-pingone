@@ -43,6 +43,7 @@ jobs:
 
   prepare-ap:
     name: Prepare AP
+    needs: [build]
     runs-on: ubuntu-latest
 
     env:
@@ -257,6 +258,7 @@ jobs:
 
   prepare-ca:
     name: Prepare CA
+    needs: [cleanup-ap]
     runs-on: ubuntu-latest
 
     env:
@@ -291,7 +293,7 @@ jobs:
   # run acceptance tests in a matrix with Terraform core versions
   test-ca:
     name: Acceptance Test CA
-    needs: [build, prepare-ca]
+    needs: [prepare-ca]
     runs-on: ubuntu-latest
 
     env:
@@ -358,7 +360,7 @@ jobs:
   # flaky flag set
   test-ca-flaky:
     name: Acceptance Test CA (FLAKY)
-    needs: [build, prepare-ca]
+    needs: [prepare-ca]
     runs-on: ubuntu-latest
 
     env:
@@ -397,6 +399,7 @@ jobs:
         # list whatever Terraform versions here you would like to support
         terraform:
           - '1.11.*'
+
     steps:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v4
@@ -468,6 +471,7 @@ jobs:
 
   prepare-eu:
     name: Prepare EU
+    needs: [cleanup-ca]
     runs-on: ubuntu-latest
 
     env:
@@ -503,7 +507,7 @@ jobs:
   # run acceptance tests in a matrix with Terraform core versions
   test-eu:
     name: Acceptance Test EU
-    needs: [build, prepare-eu]
+    needs: [prepare-eu]
     runs-on: ubuntu-latest
 
     env:
@@ -571,7 +575,7 @@ jobs:
   # flaky flag set
   test-eu-flaky:
     name: Acceptance Test EU (FLAKY)
-    needs: [build, prepare-eu]
+    needs: [prepare-eu]
     runs-on: ubuntu-latest
 
     env:
@@ -682,6 +686,7 @@ jobs:
 
   prepare-na:
     name: Prepare NA
+    needs: [cleanup-eu]
     runs-on: ubuntu-latest
 
     env:
@@ -717,7 +722,7 @@ jobs:
   # run acceptance tests in a matrix with Terraform core versions
   test-na:
     name: Acceptance Test NA
-    needs: [build, prepare-na]
+    needs: [prepare-na]
     runs-on: ubuntu-latest
 
     env:
@@ -785,7 +790,7 @@ jobs:
   # flaky flag set
   test-na-flaky:
     name: Acceptance Test NA (FLAKY)
-    needs: [build, prepare-na]
+    needs: [prepare-na]
     runs-on: ubuntu-latest
 
     env:
