@@ -261,7 +261,7 @@ jobs:
 
   prepare-ca:
     name: Prepare CA
-    needs: [cleanup-ap]
+    needs: [test-ap, test-ap-flaky]
     runs-on: ubuntu-latest
     continue-on-error: true
 
@@ -478,7 +478,7 @@ jobs:
 
   prepare-eu:
     name: Prepare EU
-    needs: [cleanup-ca]
+    needs: [test-ca, test-ca-flaky]
     runs-on: ubuntu-latest
     continue-on-error: true
 
@@ -697,7 +697,7 @@ jobs:
 
   prepare-na:
     name: Prepare NA
-    needs: [cleanup-eu]
+    needs: [test-eu, test-eu-flaky]
     runs-on: ubuntu-latest
     continue-on-error: true
 
