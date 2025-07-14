@@ -211,11 +211,11 @@ func davinciConnectorInstance_MinimalHCL(resourceName string) string {
 
 resource "pingone_davinci_connector_instance" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  id = //TODO
   // TODO set values for minimal fields
   connector = {
+    id = "1f28abb481bd9c0c4e878697a64f1ae4"
   }
-  name = //TODO
+  name = "My Instance"
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
@@ -227,13 +227,11 @@ func davinciConnectorInstance_CompleteHCL(resourceName string) string {
 
 resource "pingone_davinci_connector_instance" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  id = //TODO
-  // TODO set values for complete fields
   connector = {
-    id = //TODO
+    id = "1234"
   }
-  name = //TODO
-  properties = //TODO
+  name = "My Instance"
+  properties = "{\"key1\":\"value1\",\"key2\":1234,\"key3\":false}"
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
@@ -244,11 +242,11 @@ func davinciConnectorInstance_NewEnvHCL(environmentName, licenseID, resourceName
 
 resource "pingone_davinci_connector_instance" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  id = //TODO
   // TODO set values for minimal fields
   connector = {
+    id = "1f28abb481bd9c0c4e878697a64f1ae4"
   }
-  name = //TODO
+  name = "My Instance"
 }
 `, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }

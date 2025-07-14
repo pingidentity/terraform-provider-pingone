@@ -87,7 +87,7 @@ func (r *davinciConnectorInstanceResource) Schema(ctx context.Context, req resou
 						Optional: true,
 						Validators: []validator.String{
 							stringvalidator.LengthAtMost(256),
-							stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
+							//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
 						},
 					},
 				},
@@ -118,7 +118,7 @@ func (r *davinciConnectorInstanceResource) Schema(ctx context.Context, req resou
 				Required: true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(256),
-					stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
+					//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
 				},
 			},
 			"properties": schema.StringAttribute{
@@ -133,8 +133,12 @@ func (model *davinciConnectorInstanceResourceModel) buildClientStructPost() (*pi
 	var respDiags diag.Diagnostics
 	result := &pingone.DaVinciConnectorInstanceCreateRequest{}
 	// connector
-	connectorValue := pingone.ResourceRelationshipDaVinci{}
+	//TODO is this type wrong in the spec?
+	//connectorValue := pingone.ResourceRelationshipDaVinci{}
+	connectorValue := pingone.DaVinciConnectorInstanceCreateRequestConnector{}
 	connectorAttrs := model.Connector.Attributes()
+	//TODO check if this is actually required, if so this could be considered a bug in the spec
+	//connectorValue.Id = connectorAttrs["id"].(types.String).ValueStringPointer()
 	connectorValue.Id = connectorAttrs["id"].(types.String).ValueStringPointer()
 	result.Connector = connectorValue
 
