@@ -265,7 +265,7 @@ jobs:
         run: |
           go mod download
 
-      - name: Sweep to prepare
+      - name: Sweep to cleanup
         run: |
           make sweep
 
