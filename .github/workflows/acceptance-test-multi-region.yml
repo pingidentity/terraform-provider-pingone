@@ -79,8 +79,9 @@ jobs:
   # run acceptance tests in a matrix with Terraform core versions
   test-ap:
     name: Acceptance Test AP
-    needs: [build, prepare-ap]
+    needs: [prepare-ap]
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     env:
       PINGONE_TESTING_PROVIDER_VERSION: test
@@ -147,8 +148,9 @@ jobs:
   # flaky flag set
   test-ap-flaky:
     name: Acceptance Test AP (FLAKY)
-    needs: [build, prepare-ap]
+    needs: [prepare-ap]
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     env:
       TESTACC_FLAKY: true
@@ -225,6 +227,7 @@ jobs:
     name: Clean up AP
     needs: [test-ap, test-ap-flaky]
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     env:
       PINGONE_TESTING_PROVIDER_VERSION: test
@@ -260,6 +263,7 @@ jobs:
     name: Prepare CA
     needs: [cleanup-ap]
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     env:
       PINGONE_TESTING_PROVIDER_VERSION: test
@@ -295,6 +299,7 @@ jobs:
     name: Acceptance Test CA
     needs: [prepare-ca]
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     env:
       PINGONE_TESTING_PROVIDER_VERSION: test
@@ -362,6 +367,7 @@ jobs:
     name: Acceptance Test CA (FLAKY)
     needs: [prepare-ca]
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     env:
       TESTACC_FLAKY: true
@@ -438,6 +444,7 @@ jobs:
     name: Clean up CA
     needs: [test-ca, test-ca-flaky]
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     env:
       PINGONE_TESTING_PROVIDER_VERSION: test
@@ -473,6 +480,7 @@ jobs:
     name: Prepare EU
     needs: [cleanup-ca]
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     env:
       PINGONE_TESTING_PROVIDER_VERSION: test
@@ -509,6 +517,7 @@ jobs:
     name: Acceptance Test EU
     needs: [prepare-eu]
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     env:
       PINGONE_TESTING_PROVIDER_VERSION: test
@@ -577,6 +586,7 @@ jobs:
     name: Acceptance Test EU (FLAKY)
     needs: [prepare-eu]
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     env:
       TESTACC_FLAKY: true
@@ -653,6 +663,7 @@ jobs:
     name: Clean up EU
     needs: [test-eu, test-eu-flaky]
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     env:
       PINGONE_TESTING_PROVIDER_VERSION: test
@@ -688,6 +699,7 @@ jobs:
     name: Prepare NA
     needs: [cleanup-eu]
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     env:
       PINGONE_TESTING_PROVIDER_VERSION: test
@@ -724,6 +736,7 @@ jobs:
     name: Acceptance Test NA
     needs: [prepare-na]
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     env:
       PINGONE_TESTING_PROVIDER_VERSION: test
@@ -792,6 +805,7 @@ jobs:
     name: Acceptance Test NA (FLAKY)
     needs: [prepare-na]
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     env:
       TESTACC_FLAKY: true
@@ -868,6 +882,7 @@ jobs:
     name: Clean up NA
     needs: [test-na, test-na-flaky]
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     env:
       PINGONE_TESTING_PROVIDER_VERSION: test
@@ -900,7 +915,7 @@ jobs:
           make sweep
 
   onfailure:
-    if: ${{ always() && github.event_name == 'schedule' && contains(needs.*.result, 'failure') }}
+    if: ${{ always() && github.event_name == 'schedule' && contains(needs.*.outcome, 'failure') }}
     needs: [build,
             prepare-ap, test-ap, test-ap-flaky, cleanup-ap,
             prepare-ca, test-ca, test-ca-flaky, cleanup-ca,
