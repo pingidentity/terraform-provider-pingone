@@ -991,3 +991,129 @@ resource "pingone_notification_settings_email" "%[3]s" {
   ]
 }`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
+
+func TestAccNotificationSettingsEmail_CustomProvider_POST_RawBody(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_notification_settings_email.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	// Test switching to SMTP
+	smtpFullSwitchStep := resource.TestStep{
+		Config: testAccNotificationSettingsEmail_SMTPConfig_Full(environmentName, licenseID, resourceName),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "host", "smtp-example.pingidentity.com"),
+			resource.TestCheckResourceAttr(resourceFullName, "port", "25"),
+			resource.TestCheckResourceAttr(resourceFullName, "protocol", "SMTPS"),
+			resource.TestCheckResourceAttr(resourceFullName, "username", "smtpuser"),
+			resource.TestCheckResourceAttr(resourceFullName, "password", "smtpuserpassword"),
+			resource.TestCheckResourceAttr(resourceFullName, "from.email_address", "noreply@pingidentity.com"),
+			resource.TestCheckResourceAttr(resourceFullName, "from.name", "Stubbed From Address"),
+			resource.TestCheckResourceAttr(resourceFullName, "reply_to.email_address", "reply@pingidentity.com"),
+			resource.TestCheckResourceAttr(resourceFullName, "reply_to.name", "Stubbed Reply To Address"),
+		),
+	}
+
+	// Test switching to Custom Provider
+	customProviderSwitchStep := resource.TestStep{
+		Config: testAccNotificationSettingsEmail_CustomProviderConfig_POST_RawBody_Full(environmentName, licenseID, resourceName),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "custom_provider_name", "UpdatedCustomProviderName"),
+			resource.TestCheckResourceAttr(resourceFullName, "auth_token", "customauthtoken"),
+			resource.TestCheckResourceAttr(resourceFullName, "from.name", "Updated Test Sender"),
+			resource.TestCheckResourceAttr(resourceFullName, "from.email_address", "updated-no-reply@pingidentity.com"),
+			resource.TestCheckResourceAttr(resourceFullName, "reply_to.name", "Updated Test Reply To"),
+			resource.TestCheckResourceAttr(resourceFullName, "reply_to.email_address", "updated-reply@pingidentity.com"),
+		),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.NotificationSettingsEmail_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			smtpFullSwitchStep,
+			customProviderSwitchStep,
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return rs.Primary.ID, nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"password",
+					"auth_token",
+				},
+			},
+		},
+	})
+}
+
+func testAccNotificationSettingsEmail_CustomProviderConfig_POST_RawBody_Full(environmentName, licenseID, resourceName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_notification_settings_email" "%[3]s" {
+  environment_id       = pingone_environment.%[2]s.id
+  custom_provider_name = "UpdatedCustomProviderName"
+
+  auth_token = "customauthtoken"
+
+  protocol = "HTTP"
+
+  from = {
+    name          = "Updated Test Sender"
+    email_address = "updated-no-reply@pingidentity.com"
+  }
+
+  reply_to = {
+    name          = "Updated Test Reply To"
+    email_address = "updated-reply@pingidentity.com"
+  }
+
+  requests = [
+    {
+      method = "POST"
+      headers = {
+        "Content-Type"     = "application/json"
+        "updated-subject"  = "updated-$${subject}"
+        "updated-reply-to" = "updated-$${reply_to}"
+        "updated-from"     = "updated-$${from}"
+      }
+      body = <<EOF
+{
+  $${message},
+  "to": [
+    "$${to}"
+  ],
+  "toOverride": [
+    "test@testaddress.com"
+  ]
+}
+EOF
+      url  = "https://api.pingidentity.com/updated-send-email"
+    }
+  ]
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}
