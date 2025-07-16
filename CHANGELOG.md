@@ -1,3 +1,5 @@
+## 1.10.0 (16 July 2025)
+
 ## 1.9.0 (20 June 2025)
 
 BREAKING CHANGES:
