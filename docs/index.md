@@ -74,7 +74,7 @@ resource "pingone_environment" "my_environment" {
 export PINGONE_CLIENT_ID="admin-client-id-value"
 export PINGONE_CLIENT_SECRET="admin-client-secret-value"
 export PINGONE_ENVIRONMENT_ID="admin-environment-id-value"
-export PINGONE_REGION_CODE="AP | AU | CA | EU | NA"
+export PINGONE_REGION_CODE="AP | AU | CA | EU | NA | SG"
 terraform plan
 ```
 
@@ -100,7 +100,7 @@ resource "pingone_environment" "my_environment" {
 
 ```shell
 export PINGONE_API_ACCESS_TOKEN="worker-access-token-value"
-export PINGONE_REGION_CODE="AP | AU | CA | EU | NA"
+export PINGONE_REGION_CODE="AP | AU | CA | EU | NA | SG"
 terraform plan
 ```
 
