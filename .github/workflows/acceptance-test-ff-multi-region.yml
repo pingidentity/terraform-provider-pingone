@@ -17,243 +17,42 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
 
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+        id: go
 
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version-file: 'go.mod'
-        cache: true
-      id: go
+      - name: Get dependencies
+        run: |
+          go mod download
 
-    - name: Get dependencies
-      run: |
-        go mod download
+      - name: Build
+        run: |
+          make build
 
-    - name: Build
-      run: |
-        make build
-
-  prepare-ap:
-    name: Prepare AP
+  prepare:
+    name: Prepare ${{ matrix.region }}
+    needs: [build]
     runs-on: ubuntu-latest
-
-    env:
-      FEATURE_FLAG: DAVINCI
-      PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets.AP_PINGONE_FF_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.AP_PINGONE_FF_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.AP_PINGONE_FF_ENVIRONMENT_ID }}
-      PINGONE_REGION_CODE: "AP"
-      PINGONE_LICENSE_ID: ${{ secrets.AP_PINGONE_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.AP_PINGONE_FF_ORGANIZATION_ID }}
-
-    timeout-minutes: 10
-    steps:
-
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version-file: 'go.mod'
-        cache: true
-      id: go
-
-    - name: Get dependencies
-      run: |
-        go mod download
-
-    - name: Sweep to prepare
-      run: |
-        make sweep
-
-  # run acceptance tests in a matrix with Terraform core versions
-  test-ap:
-    name: Acceptance Test AP
-    needs: [prepare-ap, build]
-    runs-on: ubuntu-latest
-
-    env:
-      FEATURE_FLAG: DAVINCI
-      PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets.AP_PINGONE_FF_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.AP_PINGONE_FF_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.AP_PINGONE_FF_ENVIRONMENT_ID }}
-      PINGONE_REGION_CODE: "AP"
-      PINGONE_LICENSE_ID: ${{ secrets.AP_PINGONE_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.AP_PINGONE_FF_ORGANIZATION_ID }}
-
-    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        # list whatever Terraform versions here you would like to support
-        terraform:
-          - '1.11.*'
-    steps:
-
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version-file: 'go.mod'
-        cache: true
-      id: go
-
-    - uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: ${{ matrix.terraform }}
-        terraform_wrapper: false
-
-    - name: Get dependencies
-      run: |
-        go mod download
-
-    - name: TF acceptance tests
-      timeout-minutes: 45
-      run: |
-        make testacc
-
-  cleanup-ap:
-    name: Clean up AP
-    needs: test-ap
-    runs-on: ubuntu-latest
+        region: [AP, CA, EU, NA]
 
     env:
       FEATURE_FLAG: DAVINCI
       PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets.AP_PINGONE_FF_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.AP_PINGONE_FF_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.AP_PINGONE_FF_ENVIRONMENT_ID }}
-      PINGONE_REGION_CODE: "AP"
-      PINGONE_LICENSE_ID: ${{ secrets.AP_PINGONE_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.AP_PINGONE_FF_ORGANIZATION_ID }}
-
-    timeout-minutes: 10
-    steps:
-
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version-file: 'go.mod'
-        cache: true
-      id: go
-
-    - name: Get dependencies
-      run: |
-        go mod download
-
-    - name: Sweep to prepare
-      run: |
-        make sweep
-
-  prepare-ca:
-    name: Prepare CA
-    runs-on: ubuntu-latest
-
-    env:
-      FEATURE_FLAG: DAVINCI
-      PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets.CA_PINGONE_FF_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.CA_PINGONE_FF_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.CA_PINGONE_FF_ENVIRONMENT_ID }}
-      PINGONE_REGION_CODE: "CA"
-      PINGONE_LICENSE_ID: ${{ secrets.CA_PINGONE_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.CA_PINGONE_FF_ORGANIZATION_ID }}
-
-    timeout-minutes: 10
-    steps:
-
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version-file: 'go.mod'
-        cache: true
-      id: go
-
-    - name: Get dependencies
-      run: |
-        go mod download
-
-    - name: Sweep to prepare
-      run: |
-        make sweep
-
-  # run acceptance tests in a matrix with Terraform core versions
-  test-ca:
-    name: Acceptance Test CA
-    needs: [prepare-ca, build]
-    runs-on: ubuntu-latest
-
-    env:
-      FEATURE_FLAG: DAVINCI
-      PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets.CA_PINGONE_FF_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.CA_PINGONE_FF_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.CA_PINGONE_FF_ENVIRONMENT_ID }}
-      PINGONE_REGION_CODE: "CA"
-      PINGONE_LICENSE_ID: ${{ secrets.CA_PINGONE_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.CA_PINGONE_FF_ORGANIZATION_ID }}
-
-    timeout-minutes: 45
-    strategy:
-      fail-fast: false
-      matrix:
-        # list whatever Terraform versions here you would like to support
-        terraform:
-          - '1.11.*'
-    steps:
-
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version-file: 'go.mod'
-        cache: true
-      id: go
-
-    - uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: ${{ matrix.terraform }}
-        terraform_wrapper: false
-
-    - name: Get dependencies
-      run: |
-        go mod download
-
-    - name: TF acceptance tests
-      timeout-minutes: 45
-      run: |
-        make testacc
-
-  cleanup-ca:
-    name: Clean up CA
-    needs: test-ca
-    runs-on: ubuntu-latest
-
-    env:
-      FEATURE_FLAG: DAVINCI
-      PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets.CA_PINGONE_FF_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.CA_PINGONE_FF_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.CA_PINGONE_FF_ENVIRONMENT_ID }}
-      PINGONE_REGION_CODE: "CA"
-      PINGONE_LICENSE_ID: ${{ secrets.CA_PINGONE_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.CA_PINGONE_FF_ORGANIZATION_ID }}
+      PINGONE_CLIENT_ID: ${{ secrets[format('{0}_PINGONE_FF_CLIENT_ID', matrix.region)] }}
+      PINGONE_CLIENT_SECRET: ${{ secrets[format('{0}_PINGONE_FF_CLIENT_SECRET', matrix.region)] }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets[format('{0}_PINGONE_FF_ENVIRONMENT_ID', matrix.region)] }}
+      PINGONE_REGION_CODE: ${{ matrix.region }}
+      PINGONE_LICENSE_ID: ${{ secrets[format('{0}_PINGONE_FF_LICENSE_ID', matrix.region)] }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets[format('{0}_PINGONE_FF_ORGANIZATION_ID', matrix.region)] }}
 
     timeout-minutes: 10
 
@@ -276,64 +75,32 @@ jobs:
         run: |
           make sweep
 
-  prepare-eu:
-    name: Prepare EU
+  # run acceptance tests in a matrix with Terraform core versions and regions
+  test:
+    name: Acceptance Test ${{ matrix.region }}
+    needs: [prepare]
     runs-on: ubuntu-latest
-
-    env:
-      FEATURE_FLAG: DAVINCI
-      PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets.EU_PINGONE_FF_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.EU_PINGONE_FF_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.EU_PINGONE_FF_ENVIRONMENT_ID }}
-      PINGONE_REGION_CODE: "EU"
-      PINGONE_LICENSE_ID: ${{ secrets.EU_PINGONE_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.EU_PINGONE_FF_ORGANIZATION_ID }}
-
-    timeout-minutes: 10
-
-    steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache: true
-        id: go
-
-      - name: Get dependencies
-        run: |
-          go mod download
-
-      - name: Sweep to prepare
-        run: |
-          make sweep
-
-  # run acceptance tests in a matrix with Terraform core versions
-  test-eu:
-    name: Acceptance Test EU
-    needs: [prepare-eu, build]
-    runs-on: ubuntu-latest
-
-    env:
-      FEATURE_FLAG: DAVINCI
-      PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets.EU_PINGONE_FF_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.EU_PINGONE_FF_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.EU_PINGONE_FF_ENVIRONMENT_ID }}
-      PINGONE_REGION_CODE: "EU"
-      PINGONE_LICENSE_ID: ${{ secrets.EU_PINGONE_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.EU_PINGONE_FF_ORGANIZATION_ID }}
-
-    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
+        region: [AP, CA, EU, NA]
         # list whatever Terraform versions here you would like to support
         terraform:
           - '1.11.*'
+      # If we have issues due to simultaneous tests across regions, max-parallel can be set to 1 to run sequentially
+      #max-parallel: 1
+
+    env:
+      FEATURE_FLAG: DAVINCI
+      PINGONE_TESTING_PROVIDER_VERSION: test
+      PINGONE_CLIENT_ID: ${{ secrets[format('{0}_PINGONE_FF_CLIENT_ID', matrix.region)] }}
+      PINGONE_CLIENT_SECRET: ${{ secrets[format('{0}_PINGONE_FF_CLIENT_SECRET', matrix.region)] }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets[format('{0}_PINGONE_FF_ENVIRONMENT_ID', matrix.region)] }}
+      PINGONE_REGION_CODE: ${{ matrix.region }}
+      PINGONE_LICENSE_ID: ${{ secrets[format('{0}_PINGONE_FF_LICENSE_ID', matrix.region)] }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets[format('{0}_PINGONE_FF_ORGANIZATION_ID', matrix.region)] }}
+
+    timeout-minutes: 45
 
     steps:
       - name: Check out code into the Go module directory
@@ -360,140 +127,25 @@ jobs:
         run: |
           make testacc
 
-  cleanup-eu:
-    name: Clean up EU
-    needs: test-eu
+  cleanup:
+    name: Clean up ${{ matrix.region }}
+    needs: [test]
     runs-on: ubuntu-latest
-
-    env:
-      FEATURE_FLAG: DAVINCI
-      PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets.EU_PINGONE_FF_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.EU_PINGONE_FF_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.EU_PINGONE_FF_ENVIRONMENT_ID }}
-      PINGONE_REGION_CODE: "EU"
-      PINGONE_LICENSE_ID: ${{ secrets.EU_PINGONE_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.EU_PINGONE_FF_ORGANIZATION_ID }}
-
-    timeout-minutes: 10
-
-    steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache: true
-        id: go
-
-      - name: Get dependencies
-        run: |
-          go mod download
-
-      - name: Sweep to prepare
-        run: |
-          make sweep
-
-  prepare-na:
-    name: Prepare NA
-    runs-on: ubuntu-latest
-
-    env:
-      FEATURE_FLAG: DAVINCI
-      PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets.NA_PINGONE_FF_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.NA_PINGONE_FF_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.NA_PINGONE_FF_ENVIRONMENT_ID }}
-      PINGONE_REGION_CODE: "NA"
-      PINGONE_LICENSE_ID: ${{ secrets.NA_PINGONE_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.NA_PINGONE_FF_ORGANIZATION_ID }}
-
-    timeout-minutes: 10
-
-    steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache: true
-        id: go
-
-      - name: Get dependencies
-        run: |
-          go mod download
-
-      - name: Sweep to prepare
-        run: |
-          make sweep
-
-  # run acceptance tests in a matrix with Terraform core versions
-  test-na:
-    name: Acceptance Test NA
-    needs: [prepare-na, build]
-    runs-on: ubuntu-latest
-
-    env:
-      FEATURE_FLAG: DAVINCI
-      PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets.NA_PINGONE_FF_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.NA_PINGONE_FF_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.NA_PINGONE_FF_ENVIRONMENT_ID }}
-      PINGONE_REGION_CODE: "NA"
-      PINGONE_LICENSE_ID: ${{ secrets.NA_PINGONE_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.NA_PINGONE_FF_ORGANIZATION_ID }}
-
-    timeout-minutes: 45
+    if: always()
     strategy:
       fail-fast: false
       matrix:
-        # list whatever Terraform versions here you would like to support
-        terraform:
-          - '1.11.*'
-
-    steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache: true
-        id: go
-
-      - uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: ${{ matrix.terraform }}
-          terraform_wrapper: false
-
-      - name: Get dependencies
-        run: |
-          go mod download
-
-      - name: TF acceptance tests
-        timeout-minutes: 45
-        run: |
-          make testacc
-
-  cleanup-na:
-    name: Clean up NA
-    needs: test-na
-    runs-on: ubuntu-latest
+        region: [AP, CA, EU, NA]
 
     env:
       FEATURE_FLAG: DAVINCI
       PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets.NA_PINGONE_FF_CLIENT_ID }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.NA_PINGONE_FF_CLIENT_SECRET }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets.NA_PINGONE_FF_ENVIRONMENT_ID }}
-      PINGONE_REGION_CODE: "NA"
-      PINGONE_LICENSE_ID: ${{ secrets.NA_PINGONE_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets.NA_PINGONE_FF_ORGANIZATION_ID }}
+      PINGONE_CLIENT_ID: ${{ secrets[format('{0}_PINGONE_FF_CLIENT_ID', matrix.region)] }}
+      PINGONE_CLIENT_SECRET: ${{ secrets[format('{0}_PINGONE_FF_CLIENT_SECRET', matrix.region)] }}
+      PINGONE_ENVIRONMENT_ID: ${{ secrets[format('{0}_PINGONE_FF_ENVIRONMENT_ID', matrix.region)] }}
+      PINGONE_REGION_CODE: ${{ matrix.region }}
+      PINGONE_LICENSE_ID: ${{ secrets[format('{0}_PINGONE_FF_LICENSE_ID', matrix.region)] }}
+      PINGONE_ORGANIZATION_ID: ${{ secrets[format('{0}_PINGONE_FF_ORGANIZATION_ID', matrix.region)] }}
 
     timeout-minutes: 10
 
@@ -512,17 +164,13 @@ jobs:
         run: |
           go mod download
 
-      - name: Sweep to prepare
+      - name: Sweep to cleanup
         run: |
           make sweep
 
   onfailure:
-    if: ${{ always() && github.event_name == 'schedule' && contains(needs.*.result, 'failure') }}
-    needs: [build,
-            prepare-ap, test-ap, cleanup-ap,
-            prepare-ca, test-ca, cleanup-ca,
-            prepare-eu, test-eu, cleanup-eu,
-            prepare-na, test-na, cleanup-na]
+    if: ${{ always() && github.event_name == 'schedule' && contains(needs.*.outcome, 'failure') }}
+    needs: [build, prepare, test, cleanup]
     name: Send failure webhook
     runs-on: ubuntu-latest
     steps:
