@@ -92,7 +92,8 @@ jobs:
         # list whatever Terraform versions here you would like to support
         terraform:
           - '1.11.*'
-      max-parallel: 1
+      # If we have issues due to simultaneous tests across regions, max-parallel can be set to 1 to run sequentially
+      #max-parallel: 1
 
     env:
       PINGONE_TESTING_PROVIDER_VERSION: test
@@ -162,7 +163,8 @@ jobs:
         # list whatever Terraform versions here you would like to support
         terraform:
           - '1.11.*'
-      max-parallel: 1
+      # If we have issues due to simultaneous tests across regions, max-parallel can be set to 1 to run sequentially
+      #max-parallel: 1
 
     env:
       TESTACC_FLAKY: true
