@@ -182,7 +182,7 @@ jobs:
           echo "Cleaning up resources in ${{ matrix.region }}"
 
   onfailure:
-    if: ${{ always() }}
+    if: ${{ failure() }}
     needs: [build, prepare, test, test-flaky, cleanup]
     name: Send failure webhook
     runs-on: ubuntu-latest
