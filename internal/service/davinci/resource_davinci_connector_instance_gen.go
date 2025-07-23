@@ -200,6 +200,7 @@ func (state *davinciConnectorInstanceResourceModel) readClientResponse(response 
 	// name
 	state.Name = types.StringValue(response.Name)
 	// properties
+	originalProperties := state.Properties
 	state.Properties = jsontypes.NewNormalizedNull()
 	if response.Properties != nil {
 		propertiesBytes, err := json.Marshal(response.Properties)
@@ -210,7 +211,18 @@ func (state *davinciConnectorInstanceResourceModel) readClientResponse(response 
 				fmt.Sprintf("An error occurred while marshaling the properties: %s", err.Error()),
 			)
 		} else {
-			state.Properties = jsontypes.NewNormalizedValue(string(propertiesBytes))
+			// Check if any properties were ignored by davinci
+			resultProperties := jsontypes.NewNormalizedValue(string(propertiesBytes))
+			if !originalProperties.Equal(resultProperties) {
+				respDiags.AddAttributeError(
+					path.Root("properties"),
+					"Properties Mismatch",
+					fmt.Sprintf("The properties returned by the DaVinci API do not match the configured properties. Ensure that you are providing properties that are supported by the connector.\n"+
+						"Configured properties: %s\nAPI returned properties: %s", originalProperties.ValueString(), resultProperties.ValueString()),
+				)
+			} else {
+				state.Properties = resultProperties
+			}
 		}
 	}
 	return respDiags
