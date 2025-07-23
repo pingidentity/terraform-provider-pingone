@@ -193,7 +193,7 @@ func (state *davinciConnectorInstanceResourceModel) readClientResponse(response 
 	respDiags.Append(diags...)
 	state.Connector = connectorValue
 	// id
-	state.Id = types.StringValue(response.Id.String())
+	state.Id = types.StringValue(response.Id)
 	// name
 	state.Name = types.StringValue(response.Name)
 	// properties
