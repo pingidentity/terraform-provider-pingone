@@ -23,9 +23,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Pretend to build
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+        id: go
+
+      - name: Get dependencies
         run: |
-          echo "Pretending to build the code"
+          go mod download
+
+      - name: Build
+        run: |
+          make build
 
   prepare:
     name: Prepare ${{ matrix.region }}
@@ -48,9 +62,23 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Pretend to prepare
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+        id: go
+
+      - name: Get dependencies
         run: |
-          echo "Preparing environment for ${{ matrix.region }}"
+          go mod download
+
+      - name: Sweep to prepare
+        run: |
+          make sweep
 
   # run acceptance tests in a matrix with Terraform core versions and regions
   test:
@@ -98,13 +126,29 @@ jobs:
     timeout-minutes: 180
 
     steps:
-      - name: Fail conditionally
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+        id: go
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ matrix.terraform }}
+          terraform_wrapper: false
+
+      - name: Get dependencies
         run: |
-          if [[ "${{ matrix.region }}" == "AP" ]]; then
-            exit 1
-          else
-            echo "Skipping failure for region ${{ matrix.region }}"
-          fi
+          go mod download
+
+      - name: TF acceptance tests
+        timeout-minutes: 180
+        run: |
+          make testacc
 
   # run acceptance tests in a matrix with Terraform core versions and regions
   # flaky flag set
@@ -154,11 +198,38 @@ jobs:
     timeout-minutes: 180
 
     steps:
-      - name: Fail intentionally
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+        id: go
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ matrix.terraform }}
+          terraform_wrapper: false
+
+      - name: Get dependencies
+        run: |
+          go mod download
+
+      - name: TF acceptance tests (FLAKY)
+        id: tf-flaky-acc-test
         continue-on-error: true
         timeout-minutes: 180
         run: |
-          exit 1
+          make testacc
+
+      - name: Check flaky step status
+        run: |
+          echo "ACCTEST-${{ matrix.region }}-FLAKY step outcome: ${{ steps.tf-flaky-acc-test }}"
+           if [[ "${{ steps.tf-flaky-acc-test }}" == "failure" ]]; then
+            echo "Flaky acceptance tests in ${{ matrix.region }} failed: Continuing..."
+          fi
 
   cleanup:
     name: Clean up ${{ matrix.region }}
@@ -182,9 +253,23 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Pretend to do something
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+        id: go
+
+      - name: Get dependencies
         run: |
-          echo "Cleaning up resources in ${{ matrix.region }}"
+          go mod download
+
+      - name: Sweep to cleanup
+        run: |
+          make sweep
 
   onfailure:
     if: ${{ failure() }}
