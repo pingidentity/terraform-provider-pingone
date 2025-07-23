@@ -102,7 +102,6 @@ func TestAccDavinciConnectorInstance_MinimalMaximal(t *testing.T) {
 			{
 				// Re-create with a complete model
 				Config: davinciConnectorInstance_CompleteHCL(resourceName),
-				Check:  davinciConnectorInstance_CheckComputedValuesComplete(resourceName),
 			},
 			{
 				// Back to minimal model
@@ -112,7 +111,6 @@ func TestAccDavinciConnectorInstance_MinimalMaximal(t *testing.T) {
 			{
 				// Back to complete model
 				Config: davinciConnectorInstance_CompleteHCL(resourceName),
-				Check:  davinciConnectorInstance_CheckComputedValuesComplete(resourceName),
 			},
 			{
 				// Test importing the resource
@@ -211,11 +209,10 @@ func davinciConnectorInstance_MinimalHCL(resourceName string) string {
 
 resource "pingone_davinci_connector_instance" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  // TODO set values for minimal fields
   connector = {
-    id = "1f28abb481bd9c0c4e878697a64f1ae4"
+    id = "haveIBeenPwnedConnector"
   }
-  name = "My Instance"
+  name = "%[2]s"
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
@@ -228,10 +225,10 @@ func davinciConnectorInstance_CompleteHCL(resourceName string) string {
 resource "pingone_davinci_connector_instance" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   connector = {
-    id = "1234"
+    id = "connector-oai-pfadminapi"
   }
-  name = "My Instance"
-  properties = "{\"key1\":\"value1\",\"key2\":1234,\"key3\":false}"
+  name = "%[2]s"
+  properties = "{\"key1\":\"value1\",\"key2\":\"1234\",\"key3\":\"false\"}"
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
@@ -242,33 +239,18 @@ func davinciConnectorInstance_NewEnvHCL(environmentName, licenseID, resourceName
 
 resource "pingone_davinci_connector_instance" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  // TODO set values for minimal fields
   connector = {
-    id = "1f28abb481bd9c0c4e878697a64f1ae4"
+    id = "haveIBeenPwnedConnector"
   }
-  name = "My Instance"
+  name = "%[2]s"
 }
-`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+`, acctestlegacysdk.MinimalSandboxDaVinciEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 // Validate any computed values when applying minimal HCL
-// TODO remove any values that are not computed from this check
-// TODO set expected values
 func davinciConnectorInstance_CheckComputedValuesMinimal(resourceName string) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName), "connector.id", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName), "properties", "expected_value"),
-	)
-}
-
-// Validate any computed values when applying complete HCL
-// TODO This may not be needed as a separate function from minimal HCL if the expected values match
-// TODO remove any values that are not computed from this check
-// TODO set expected values
-func davinciConnectorInstance_CheckComputedValuesComplete(resourceName string) resource.TestCheckFunc {
-	return resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName), "connector.id", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName), "properties", "expected_value"),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName), "properties"),
 	)
 }
 
@@ -296,7 +278,7 @@ func davinciConnectorInstance_Delete(ctx context.Context, apiClient *pingone.API
 		t.Fatalf("One of the identifier attributes can't be determined. environmentId: '%s' id: '%s'", environmentId, id)
 	}
 
-	_, err := apiClient.DaVinciConnectorApi.DeleteConnectorInstanceById(ctx, uuid.MustParse(environmentId), uuid.MustParse(id)).Execute()
+	_, err := apiClient.DaVinciConnectorApi.DeleteConnectorInstanceById(ctx, uuid.MustParse(environmentId), id).Execute()
 	if err != nil {
 		t.Fatalf("Failed to delete davinci_connector_instance: %v", err)
 	}
@@ -325,7 +307,7 @@ func davinciConnectorInstance_CheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, r, err := p1Client.DaVinciConnectorApi.GetConnectorInstanceById(ctx, uuid.MustParse(rs.Primary.Attributes["environment_id"]), uuid.MustParse(rs.Primary.Attributes["id"])).Execute()
+		_, r, err := p1Client.DaVinciConnectorApi.GetConnectorInstanceById(ctx, uuid.MustParse(rs.Primary.Attributes["environment_id"]), rs.Primary.Attributes["id"]).Execute()
 
 		shouldContinue, err = acctest.CheckForResourceDestroy(r, err)
 		if err != nil {

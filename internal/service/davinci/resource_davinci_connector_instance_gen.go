@@ -301,21 +301,12 @@ func (r *davinciConnectorInstanceResource) Read(ctx context.Context, req resourc
 		)
 		return
 	}
-	idUuid, err := uuid.Parse(data.Id.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("id"),
-			"Attribute Validation Error",
-			fmt.Sprintf("The value '%s' for attribute '%s' is not a valid UUID: %s", data.Id.ValueString(), "Id", err.Error()),
-		)
-		return
-	}
 	var responseData *pingone.DaVinciConnectorInstance
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciConnectorApi.GetConnectorInstanceById(ctx, environmentIdUuid, idUuid).Execute()
+			fO, fR, fErr := r.Client.DaVinciConnectorApi.GetConnectorInstanceById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetConnectorInstanceById",
@@ -377,21 +368,12 @@ func (r *davinciConnectorInstanceResource) Update(ctx context.Context, req resou
 		)
 		return
 	}
-	idUuid, err := uuid.Parse(data.Id.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("id"),
-			"Attribute Validation Error",
-			fmt.Sprintf("The value '%s' for attribute '%s' is not a valid UUID: %s", data.Id.ValueString(), "Id", err.Error()),
-		)
-		return
-	}
 	var responseData *pingone.DaVinciConnectorInstance
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciConnectorApi.ReplaceConnectorInstanceById(ctx, environmentIdUuid, idUuid).DaVinciConnectorInstanceReplaceRequest(*clientData).Execute()
+			fO, fR, fErr := r.Client.DaVinciConnectorApi.ReplaceConnectorInstanceById(ctx, environmentIdUuid, data.Id.ValueString()).DaVinciConnectorInstanceReplaceRequest(*clientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReplaceConnectorInstanceById",
@@ -441,20 +423,11 @@ func (r *davinciConnectorInstanceResource) Delete(ctx context.Context, req resou
 		)
 		return
 	}
-	idUuid, err := uuid.Parse(data.Id.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("id"),
-			"Attribute Validation Error",
-			fmt.Sprintf("The value '%s' for attribute '%s' is not a valid UUID: %s", data.Id.ValueString(), "Id", err.Error()),
-		)
-		return
-	}
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := r.Client.DaVinciConnectorApi.DeleteConnectorInstanceById(ctx, environmentIdUuid, idUuid).Execute()
+			fR, fErr := r.Client.DaVinciConnectorApi.DeleteConnectorInstanceById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteConnectorInstanceById",
