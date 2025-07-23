@@ -98,8 +98,13 @@ jobs:
     timeout-minutes: 180
 
     steps:
-      - name: Succeed intentionally
-        run: exit 0
+      - name: Fail conditionally
+        run: |
+          if [[ "${{ matrix.region }}" == "AP" ]]; then
+            exit 1
+          else
+            echo "Skipping failure for region ${{ matrix.region }}"
+          fi
 
   # run acceptance tests in a matrix with Terraform core versions and regions
   # flaky flag set
