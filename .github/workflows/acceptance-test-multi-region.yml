@@ -62,23 +62,9 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache: true
-        id: go
-
-      - name: Get dependencies
+      - name: Pretend to prepare
         run: |
-          go mod download
-
-      - name: Sweep to prepare
-        run: |
-          make sweep
+          echo "Preparing environment for ${{ matrix.region }}"
 
   # run acceptance tests in a matrix with Terraform core versions and regions
   test:
@@ -126,29 +112,8 @@ jobs:
     timeout-minutes: 180
 
     steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache: true
-        id: go
-
-      - uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: ${{ matrix.terraform }}
-          terraform_wrapper: false
-
-      - name: Get dependencies
-        run: |
-          go mod download
-
-      - name: TF acceptance tests
-        timeout-minutes: 180
-        run: |
-          make testacc
+      - name: Fail intentionally
+        run: exit 1
 
   # run acceptance tests in a matrix with Terraform core versions and regions
   # flaky flag set
@@ -198,38 +163,11 @@ jobs:
     timeout-minutes: 180
 
     steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache: true
-        id: go
-
-      - uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: ${{ matrix.terraform }}
-          terraform_wrapper: false
-
-      - name: Get dependencies
-        run: |
-          go mod download
-
-      - name: TF acceptance tests (FLAKY)
-        id: tf-flaky-acc-test
+      - name: Fail intentionally
         continue-on-error: true
         timeout-minutes: 180
         run: |
-          make testacc
-
-      - name: Check flaky step status
-        run: |
-          echo "ACCTEST-${{ matrix.region }}-FLAKY step outcome: ${{ steps.tf-flaky-acc-test }}"
-           if [[ "${{ steps.tf-flaky-acc-test }}" == "failure" ]]; then
-            echo "Flaky acceptance tests in ${{ matrix.region }} failed: Continuing..."
-          fi
+          exit 1
 
   cleanup:
     name: Clean up ${{ matrix.region }}
@@ -253,23 +191,9 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache: true
-        id: go
-
-      - name: Get dependencies
+      - name: Pretend to do something
         run: |
-          go mod download
-
-      - name: Sweep to cleanup
-        run: |
-          make sweep
+          echo "Cleaning up resources in ${{ matrix.region }}"
 
   onfailure:
     if: ${{ always() && github.event_name == 'schedule' && contains(needs.*.outcome, 'failure') }}
