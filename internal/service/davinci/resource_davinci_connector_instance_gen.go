@@ -89,6 +89,9 @@ func (r *davinciConnectorInstanceResource) Schema(ctx context.Context, req resou
 							stringvalidator.LengthAtMost(256),
 							//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
 						},
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.RequiresReplace(),
+						},
 					},
 				},
 				Required: true,
@@ -445,7 +448,7 @@ func (r *davinciConnectorInstanceResource) ImportState(ctx context.Context, req 
 		},
 		{
 			Label:     "instance_id",
-			Regexp:    verify.P1ResourceIDRegexp,
+			Regexp:    verify.P1DVResourceIDRegexp,
 			PrimaryID: true,
 		},
 	}
