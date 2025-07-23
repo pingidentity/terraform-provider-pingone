@@ -775,12 +775,11 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						Computed:    true,
 						ElementType: types.StringType,
 
-						Default: setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{})),
-
 						Validators: []validator.Set{
 							setvalidator.ValueStringsAre(
 								stringvalidator.RegexMatches(verify.IsDomain, "Values must be valid domains."),
 							),
+							setvalidator.SizeAtLeast(1),
 						},
 					},
 				},
