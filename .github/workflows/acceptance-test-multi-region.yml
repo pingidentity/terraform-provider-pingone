@@ -272,7 +272,7 @@ jobs:
           make sweep
 
   onfailure:
-    if: ${{ always() && github.event_name == 'schedule' && contains(needs.*.outcome, 'failure') }}
+    if: ${{ failure() }}
     needs: [build, prepare, test, test-flaky, cleanup]
     name: Send failure webhook
     runs-on: ubuntu-latest
