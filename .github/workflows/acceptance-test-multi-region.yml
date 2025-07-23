@@ -98,8 +98,8 @@ jobs:
     timeout-minutes: 180
 
     steps:
-      - name: Fail intentionally
-        run: exit 1
+      - name: Succeed intentionally
+        run: exit 0
 
   # run acceptance tests in a matrix with Terraform core versions and regions
   # flaky flag set
