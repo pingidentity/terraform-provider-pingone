@@ -14,8 +14,9 @@ type serviceClientType struct {
 
 func Resources() []func() resource.Resource {
 	return []func() resource.Resource{
-		NewDavinciVariableResource,
+		NewDavinciApplicationResource,
 		NewDavinciConnectorInstanceResource,
+		NewDavinciVariableResource,
 	}
 }
 
