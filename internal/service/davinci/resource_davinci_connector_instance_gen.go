@@ -84,7 +84,7 @@ func (r *davinciConnectorInstanceResource) Schema(ctx context.Context, req resou
 			"connector": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
-						Optional: true,
+						Required: true,
 						Validators: []validator.String{
 							stringvalidator.LengthAtMost(256),
 							//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
