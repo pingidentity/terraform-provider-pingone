@@ -233,7 +233,6 @@ resource "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   id = //TODO
   // TODO set values for complete fields
-  api_key_enabled = //TODO
   name = //TODO
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
@@ -248,7 +247,6 @@ resource "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   id = //TODO
   // TODO set values for complete fields, with ordering changes
-  api_key_enabled = //TODO
   name = //TODO
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
@@ -274,7 +272,6 @@ func davinciApplication_CheckComputedValuesMinimal(resourceName string) resource
 	return resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "api_key.enabled", "expected_value"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "api_key.value", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "api_key_enabled", "expected_value"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.client_secret", "expected_value"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.enforce_signed_request_openid", "expected_value"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.grant_types.0", "expected_value"),
@@ -294,7 +291,6 @@ func davinciApplication_CheckComputedValuesComplete(resourceName string) resourc
 	return resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "api_key.enabled", "expected_value"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "api_key.value", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "api_key_enabled", "expected_value"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.client_secret", "expected_value"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.enforce_signed_request_openid", "expected_value"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.grant_types.0", "expected_value"),

@@ -68,7 +68,6 @@ func (r *davinciApplicationResource) Configure(ctx context.Context, req resource
 
 type davinciApplicationResourceModel struct {
 	ApiKey        types.Object `tfsdk:"api_key"`
-	ApiKeyEnabled types.Bool   `tfsdk:"api_key_enabled"`
 	EnvironmentId types.String `tfsdk:"environment_id"`
 	Id            types.String `tfsdk:"id"`
 	Name          types.String `tfsdk:"name"`
@@ -89,9 +88,6 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 					},
 				},
 				Computed: true,
-			},
-			"api_key_enabled": schema.BoolAttribute{
-				Optional: true,
 			},
 			"environment_id": schema.StringAttribute{
 				Required:    true,
@@ -171,10 +167,6 @@ func (model *davinciApplicationResourceModel) buildClientStructPost() (*pingone.
 
 func (model *davinciApplicationResourceModel) buildClientStructPut() (*pingone.DaVinciApplicationReplaceRequest, diag.Diagnostics) {
 	result := &pingone.DaVinciApplicationReplaceRequest{}
-	// api_key_enabled
-	if !model.ApiKeyEnabled.IsNull() && !model.ApiKeyEnabled.IsUnknown() {
-		result.ApiKeyEnabled = model.ApiKeyEnabled.ValueBoolPointer()
-	}
 	// name
 	result.Name = model.Name.ValueString()
 	return result, nil
