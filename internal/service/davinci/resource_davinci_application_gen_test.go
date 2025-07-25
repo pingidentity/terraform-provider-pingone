@@ -234,6 +234,15 @@ resource "pingone_davinci_application" "%[2]s" {
   id = //TODO
   // TODO set values for complete fields
   name = //TODO
+  oauth = {
+    enforce_signed_request_openid = //TODO
+    grant_types = //TODO
+    logout_uris = //TODO
+    redirect_uris = //TODO
+    scopes = //TODO
+    sp_jwks_openid = //TODO
+    spjwks_url = //TODO
+  }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
@@ -248,6 +257,15 @@ resource "pingone_davinci_application" "%[2]s" {
   id = //TODO
   // TODO set values for complete fields, with ordering changes
   name = //TODO
+  oauth = {
+    enforce_signed_request_openid = //TODO
+    grant_types = //TODO
+    logout_uris = //TODO
+    redirect_uris = //TODO
+    scopes = //TODO
+    sp_jwks_openid = //TODO
+    spjwks_url = //TODO
+  }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }

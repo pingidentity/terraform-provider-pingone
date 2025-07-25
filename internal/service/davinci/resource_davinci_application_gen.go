@@ -123,35 +123,43 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 						Computed: true,
 					},
 					"enforce_signed_request_openid": schema.BoolAttribute{
+						Optional: true,
 						Computed: true,
 					},
 					"grant_types": schema.ListAttribute{
 						ElementType:         types.StringType,
+						Optional:            true,
 						Computed:            true,
 						Description:         "Options are \"authorizationCode\", \"clientCredentials\", \"implicit\".",
 						MarkdownDescription: "Options are `authorizationCode`, `clientCredentials`, `implicit`.",
 					},
 					"logout_uris": schema.ListAttribute{
 						ElementType: types.StringType,
+						Optional:    true,
 						Computed:    true,
 					},
 					"redirect_uris": schema.ListAttribute{
 						ElementType: types.StringType,
+						Optional:    true,
 						Computed:    true,
 					},
 					"scopes": schema.ListAttribute{
 						ElementType:         types.StringType,
+						Optional:            true,
 						Computed:            true,
 						Description:         "Options are \"flow_analytics\", \"offline_access\", \"openid\", \"profile\".",
 						MarkdownDescription: "Options are `flow_analytics`, `offline_access`, `openid`, `profile`.",
 					},
 					"sp_jwks_openid": schema.StringAttribute{
+						Optional: true,
 						Computed: true,
 					},
 					"spjwks_url": schema.StringAttribute{
+						Optional: true,
 						Computed: true,
 					},
 				},
+				Optional: true,
 				Computed: true,
 			},
 		},
@@ -169,6 +177,40 @@ func (model *davinciApplicationResourceModel) buildClientStructPut() (*pingone.D
 	result := &pingone.DaVinciApplicationReplaceRequest{}
 	// name
 	result.Name = model.Name.ValueString()
+	// oauth
+	if !model.Oauth.IsNull() && !model.Oauth.IsUnknown() {
+		oauthValue := &pingone.DaVinciApplicationReplaceRequestOauth{}
+		oauthAttrs := model.Oauth.Attributes()
+		oauthValue.EnforceSignedRequestOpenid = oauthAttrs["enforce_signed_request_openid"].(types.Bool).ValueBoolPointer()
+		if !oauthAttrs["grant_types"].IsNull() && !oauthAttrs["grant_types"].IsUnknown() {
+			oauthValue.GrantTypes = []string{}
+			for _, grantTypesElement := range oauthAttrs["grant_types"].(types.List).Elements() {
+				oauthValue.GrantTypes = append(oauthValue.GrantTypes, grantTypesElement.(types.String).ValueString())
+			}
+		}
+		if !oauthAttrs["logout_uris"].IsNull() && !oauthAttrs["logout_uris"].IsUnknown() {
+			oauthValue.LogoutUris = []string{}
+			for _, logoutUrisElement := range oauthAttrs["logout_uris"].(types.List).Elements() {
+				oauthValue.LogoutUris = append(oauthValue.LogoutUris, logoutUrisElement.(types.String).ValueString())
+			}
+		}
+		if !oauthAttrs["redirect_uris"].IsNull() && !oauthAttrs["redirect_uris"].IsUnknown() {
+			oauthValue.RedirectUris = []string{}
+			for _, redirectUrisElement := range oauthAttrs["redirect_uris"].(types.List).Elements() {
+				oauthValue.RedirectUris = append(oauthValue.RedirectUris, redirectUrisElement.(types.String).ValueString())
+			}
+		}
+		if !oauthAttrs["scopes"].IsNull() && !oauthAttrs["scopes"].IsUnknown() {
+			oauthValue.Scopes = []string{}
+			for _, scopesElement := range oauthAttrs["scopes"].(types.List).Elements() {
+				oauthValue.Scopes = append(oauthValue.Scopes, scopesElement.(types.String).ValueString())
+			}
+		}
+		oauthValue.SpJwksOpenid = oauthAttrs["sp_jwks_openid"].(types.String).ValueStringPointer()
+		oauthValue.SpjwksUrl = oauthAttrs["spjwks_url"].(types.String).ValueStringPointer()
+		result.Oauth = oauthValue
+	}
+
 	return result, nil
 }
 
