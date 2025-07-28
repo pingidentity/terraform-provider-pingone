@@ -467,7 +467,7 @@ func (r *davinciApplicationResource) Create(ctx context.Context, req resource.Cr
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciApplicationApi.ReplaceDavinciApplicationById(ctx, environmentIdUuid, data.Id.ValueString()).DaVinciApplicationReplaceRequest(*updateClientData).Execute()
+			fO, fR, fErr := r.Client.DaVinciApplicationApi.ReplaceDavinciApplicationById(ctx, environmentIdUuid, createResponseData.Id).DaVinciApplicationReplaceRequest(*updateClientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReplaceDavinciApplicationById-Create",
