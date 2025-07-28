@@ -217,9 +217,7 @@ func davinciApplication_MinimalHCL(resourceName string) string {
 
 resource "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  id = //TODO
-  // TODO set values for minimal fields
-  name = //TODO
+  name = "%[2]s"
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
@@ -231,21 +229,36 @@ func davinciApplication_CompleteHCL(resourceName string) string {
 
 resource "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  id = //TODO
-  // TODO set values for complete fields
-  name = //TODO
+  name = "%[2]s"
+  api_key {
+    enabled = false
+}
   oauth = {
-    enforce_signed_request_openid = //TODO
-    grant_types = //TODO
-    logout_uris = //TODO
-    redirect_uris = //TODO
-    scopes = //TODO
-    sp_jwks_openid = //TODO
-    spjwks_url = //TODO
+    enforce_signed_request_openid = false
+    grant_types = [
+	  "clientCredentials",
+	  "authorizationCode",
+	  "implicit",
+	]
+    logout_uris = [
+	  "https://example.com/logout",
+	]
+    redirect_uris = [
+	  "https://example.com/callback",
+	  "https://example.com/redirect",
+	]
+    scopes = [
+	  "profile",
+	  "flow_analytics",
+	  "openid",
+	]
+    spjwks_url = "https://example.com/jwks"
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
+
+//TODO test the sp_jwks_openid stuff
 
 // Maximal HCL with all values set, with ordering changes in lists and sets from the default CompleteHCL
 func davinciApplication_CompleteReorderedHCL(resourceName string) string {
@@ -254,17 +267,31 @@ func davinciApplication_CompleteReorderedHCL(resourceName string) string {
 
 resource "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  id = //TODO
-  // TODO set values for complete fields, with ordering changes
-  name = //TODO
+  name = "%[2]s"
+  api_key {
+    enabled = false
+}
   oauth = {
-    enforce_signed_request_openid = //TODO
-    grant_types = //TODO
-    logout_uris = //TODO
-    redirect_uris = //TODO
-    scopes = //TODO
-    sp_jwks_openid = //TODO
-    spjwks_url = //TODO
+    enforce_signed_request_openid = false
+    grant_types = [
+	  "authorizationCode",
+	  "implicit",
+	  "clientCredentials",
+	]
+    logout_uris = [
+	  "https://example.com/v2/logout",
+	  "https://example.com/logout",
+	]
+    redirect_uris = [
+	  "https://example.com/redirect",
+	  "https://example.com/callback",
+	]
+    scopes = [
+	  "openid",
+	  "profile",
+	  "flow_analytics",
+	]
+    spjwks_url = "https://example.com/jwks"
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
@@ -276,47 +303,30 @@ func davinciApplication_NewEnvHCL(environmentName, licenseID, resourceName strin
 
 resource "pingone_davinci_application" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  id = //TODO
-  // TODO set values for minimal fields
-  name = //TODO
+  name = "%[3]s"
 }
 `, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 // Validate any computed values when applying minimal HCL
-// TODO remove any values that are not computed from this check
-// TODO set expected values
 func davinciApplication_CheckComputedValuesMinimal(resourceName string) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "api_key.enabled", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "api_key.value", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.client_secret", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.enforce_signed_request_openid", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.grant_types.0", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.logout_uris.0", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.redirect_uris.0", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.scopes.0", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.sp_jwks_openid", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.spjwks_url", "expected_value"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "api_key.enabled", "true"),
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "api_key.value"),
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.client_secret"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.grant_types.#", "1"),
+		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.grant_types.*", "authorizationCode"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.scopes.#", "2"),
+		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.scopes.*", "openid"),
+		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.scopes.*", "profile"),
 	)
 }
 
 // Validate any computed values when applying complete HCL
-// TODO This may not be needed as a separate function from minimal HCL if the expected values match
-// TODO remove any values that are not computed from this check
-// TODO set expected values
 func davinciApplication_CheckComputedValuesComplete(resourceName string) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "api_key.enabled", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "api_key.value", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.client_secret", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.enforce_signed_request_openid", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.grant_types.0", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.logout_uris.0", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.redirect_uris.0", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.scopes.0", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.sp_jwks_openid", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.spjwks_url", "expected_value"),
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "api_key.value"),
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.client_secret"),
 	)
 }
 
