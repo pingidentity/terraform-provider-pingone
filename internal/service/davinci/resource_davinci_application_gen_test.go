@@ -230,11 +230,12 @@ func davinciApplication_CompleteHCL(resourceName string) string {
 resource "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name = "%[2]s"
-  api_key {
+  api_key  = {
     enabled = false
 }
   oauth = {
-    enforce_signed_request_openid = false
+    # Test with false after TRIAGE-27920 fixed
+    enforce_signed_request_openid = true
     grant_types = [
 	  "clientCredentials",
 	  "authorizationCode",
@@ -268,11 +269,13 @@ func davinciApplication_CompleteReorderedHCL(resourceName string) string {
 resource "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name = "%[2]s"
-  api_key {
-    enabled = false
+  api_key = {
+    # Test with enabled false after TRIAGE-28630 fixed
+    enabled = true
 }
   oauth = {
-    enforce_signed_request_openid = false
+    # Test with false after TRIAGE-27920 fixed
+    enforce_signed_request_openid = true
     grant_types = [
 	  "authorizationCode",
 	  "implicit",
