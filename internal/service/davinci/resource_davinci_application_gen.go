@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -78,6 +79,43 @@ type davinciApplicationResourceModel struct {
 }
 
 func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	apiKeyDefault, diags := types.ObjectValue(map[string]attr.Type{
+		"enabled": types.BoolType,
+		"value":   types.StringType,
+	}, map[string]attr.Value{
+		"enabled": types.BoolValue(true),
+		"value":   types.StringUnknown(),
+	})
+	resp.Diagnostics.Append(diags...)
+	oauthGrantTypesDefault, diags := types.SetValue(types.StringType, []attr.Value{
+		types.StringValue("authorizationCode"),
+	})
+	resp.Diagnostics.Append(diags...)
+	oauthScopesDefault, diags := types.SetValue(types.StringType, []attr.Value{
+		types.StringValue("openid"),
+		types.StringValue("profile"),
+	})
+	resp.Diagnostics.Append(diags...)
+	oauthDefault, diags := types.ObjectValue(map[string]attr.Type{
+		"client_secret":                 types.StringType,
+		"enforce_signed_request_openid": types.BoolType,
+		"grant_types":                   types.SetType{ElemType: types.StringType},
+		"logout_uris":                   types.SetType{ElemType: types.StringType},
+		"redirect_uris":                 types.SetType{ElemType: types.StringType},
+		"scopes":                        types.SetType{ElemType: types.StringType},
+		"sp_jwks_openid":                types.StringType,
+		"spjwks_url":                    types.StringType,
+	}, map[string]attr.Value{
+		"client_secret":                 types.StringUnknown(),
+		"enforce_signed_request_openid": types.BoolNull(),
+		"grant_types":                   oauthGrantTypesDefault,
+		"logout_uris":                   types.SetNull(types.StringType),
+		"redirect_uris":                 types.SetNull(types.StringType),
+		"scopes":                        oauthScopesDefault,
+		"sp_jwks_openid":                types.StringNull(),
+		"spjwks_url":                    types.StringNull(),
+	})
+	resp.Diagnostics.Append(diags...)
 	resp.Schema = schema.Schema{
 		Description: "Resource to create and manage a davinci application.",
 		Attributes: map[string]schema.Attribute{
@@ -89,11 +127,16 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 						Default:  booldefault.StaticBool(true),
 					},
 					"value": schema.StringAttribute{
-						Computed: true,
+						Computed:  true,
+						Sensitive: true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
 					},
 				},
 				Computed: true,
 				Optional: true,
+				Default:  objectdefault.StaticValue(apiKeyDefault),
 			},
 			"environment_id": schema.StringAttribute{
 				Required:    true,
@@ -125,7 +168,11 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 			"oauth": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"client_secret": schema.StringAttribute{
-						Computed: true,
+						Computed:  true,
+						Sensitive: true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
 					},
 					"enforce_signed_request_openid": schema.BoolAttribute{
 						Optional: true,
@@ -183,6 +230,7 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 				},
 				Optional: true,
 				Computed: true,
+				Default:  objectdefault.StaticValue(oauthDefault),
 			},
 		},
 	}
@@ -199,6 +247,12 @@ func (model *davinciApplicationResourceModel) buildClientStructPost() (*pingone.
 func (model *davinciApplicationResourceModel) buildClientStructPut() (*pingone.DaVinciApplicationReplaceRequest, diag.Diagnostics) {
 	result := &pingone.DaVinciApplicationReplaceRequest{}
 	var respDiags diag.Diagnostics
+	// api_key
+	if !model.ApiKey.IsNull() && !model.ApiKey.IsUnknown() {
+		if !model.ApiKey.Attributes()["enabled"].IsNull() && !model.ApiKey.Attributes()["enabled"].IsUnknown() {
+			result.ApiKeyEnabled = model.ApiKey.Attributes()["enabled"].(types.Bool).ValueBoolPointer()
+		}
+	}
 	// name
 	result.Name = model.Name.ValueString()
 	// oauth
