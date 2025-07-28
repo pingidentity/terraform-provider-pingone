@@ -662,6 +662,7 @@ func (r *davinciApplicationResource) ImportState(ctx context.Context, req resour
 		{
 			Label:     "application_id",
 			PrimaryID: true,
+			Regexp:    verify.P1DVResourceIDRegexp,
 		},
 	}
 

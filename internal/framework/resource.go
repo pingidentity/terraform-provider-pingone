@@ -478,6 +478,9 @@ func ParseImportID(id string, components ...ImportComponent) (map[string]string,
 
 	i := 0
 	for _, v := range components {
+		if v.Regexp == nil {
+			return nil, fmt.Errorf("cannot parse import ID as component %d has no Regexp", i)
+		}
 		keys[i] = v.Label
 		regexpList[i] = v.Regexp.String()
 		i++
