@@ -10,14 +10,16 @@ import (
 	"regexp"
 
 	"github.com/google/uuid"
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -83,12 +85,15 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 				Attributes: map[string]schema.Attribute{
 					"enabled": schema.BoolAttribute{
 						Computed: true,
+						Optional: true,
+						Default:  booldefault.StaticBool(true),
 					},
 					"value": schema.StringAttribute{
 						Computed: true,
 					},
 				},
 				Computed: true,
+				Optional: true,
 			},
 			"environment_id": schema.StringAttribute{
 				Required:    true,
@@ -124,54 +129,56 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 					},
 					"enforce_signed_request_openid": schema.BoolAttribute{
 						Optional: true,
-						Computed: true,
 					},
-					"grant_types": schema.ListAttribute{
+					"grant_types": schema.SetAttribute{
 						ElementType:         types.StringType,
 						Optional:            true,
 						Computed:            true,
 						Description:         "Options are \"authorizationCode\", \"clientCredentials\", \"implicit\".",
 						MarkdownDescription: "Options are `authorizationCode`, `clientCredentials`, `implicit`.",
-						Validators: []validator.List{
-							listvalidator.ValueStringsAre(stringvalidator.OneOf(
+						Validators: []validator.Set{
+							setvalidator.ValueStringsAre(stringvalidator.OneOf(
 								"authorizationCode",
 								"clientCredentials",
 								"implicit",
 							)),
 						},
+						Default: setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{
+							types.StringValue("authorizationCode"),
+						})),
 					},
-					"logout_uris": schema.ListAttribute{
+					"logout_uris": schema.SetAttribute{
 						ElementType: types.StringType,
 						Optional:    true,
-						Computed:    true,
 					},
-					"redirect_uris": schema.ListAttribute{
+					"redirect_uris": schema.SetAttribute{
 						ElementType: types.StringType,
 						Optional:    true,
-						Computed:    true,
 					},
-					"scopes": schema.ListAttribute{
+					"scopes": schema.SetAttribute{
 						ElementType:         types.StringType,
 						Optional:            true,
 						Computed:            true,
 						Description:         "Options are \"flow_analytics\", \"offline_access\", \"openid\", \"profile\".",
 						MarkdownDescription: "Options are `flow_analytics`, `offline_access`, `openid`, `profile`.",
-						Validators: []validator.List{
-							listvalidator.ValueStringsAre(stringvalidator.OneOf(
+						Validators: []validator.Set{
+							setvalidator.ValueStringsAre(stringvalidator.OneOf(
 								"flow_analytics",
 								"offline_access",
 								"openid",
 								"profile",
 							)),
 						},
+						Default: setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{
+							types.StringValue("openid"),
+							types.StringValue("profile"),
+						})),
 					},
 					"sp_jwks_openid": schema.StringAttribute{
 						Optional: true,
-						Computed: true,
 					},
 					"spjwks_url": schema.StringAttribute{
 						Optional: true,
-						Computed: true,
 					},
 				},
 				Optional: true,
@@ -201,7 +208,7 @@ func (model *davinciApplicationResourceModel) buildClientStructPut() (*pingone.D
 		oauthValue.EnforceSignedRequestOpenid = oauthAttrs["enforce_signed_request_openid"].(types.Bool).ValueBoolPointer()
 		if !oauthAttrs["grant_types"].IsNull() && !oauthAttrs["grant_types"].IsUnknown() {
 			oauthValue.GrantTypes = []pingone.DaVinciApplicationReplaceRequestOauthGrantTypes{}
-			for _, grantTypesElement := range oauthAttrs["grant_types"].(types.List).Elements() {
+			for _, grantTypesElement := range oauthAttrs["grant_types"].(types.Set).Elements() {
 				var grantTypesValue pingone.DaVinciApplicationReplaceRequestOauthGrantTypes
 				grantTypesEnumValue, err := pingone.NewDaVinciApplicationReplaceRequestOauthGrantTypesFromValue(grantTypesElement.(types.String).ValueString())
 				if err != nil {
@@ -218,19 +225,19 @@ func (model *davinciApplicationResourceModel) buildClientStructPut() (*pingone.D
 		}
 		if !oauthAttrs["logout_uris"].IsNull() && !oauthAttrs["logout_uris"].IsUnknown() {
 			oauthValue.LogoutUris = []string{}
-			for _, logoutUrisElement := range oauthAttrs["logout_uris"].(types.List).Elements() {
+			for _, logoutUrisElement := range oauthAttrs["logout_uris"].(types.Set).Elements() {
 				oauthValue.LogoutUris = append(oauthValue.LogoutUris, logoutUrisElement.(types.String).ValueString())
 			}
 		}
 		if !oauthAttrs["redirect_uris"].IsNull() && !oauthAttrs["redirect_uris"].IsUnknown() {
 			oauthValue.RedirectUris = []string{}
-			for _, redirectUrisElement := range oauthAttrs["redirect_uris"].(types.List).Elements() {
+			for _, redirectUrisElement := range oauthAttrs["redirect_uris"].(types.Set).Elements() {
 				oauthValue.RedirectUris = append(oauthValue.RedirectUris, redirectUrisElement.(types.String).ValueString())
 			}
 		}
 		if !oauthAttrs["scopes"].IsNull() && !oauthAttrs["scopes"].IsUnknown() {
 			oauthValue.Scopes = []pingone.DaVinciApplicationReplaceRequestOauthScopes{}
-			for _, scopesElement := range oauthAttrs["scopes"].(types.List).Elements() {
+			for _, scopesElement := range oauthAttrs["scopes"].(types.Set).Elements() {
 				var scopesValue pingone.DaVinciApplicationReplaceRequestOauthScopes
 				scopesEnumValue, err := pingone.NewDaVinciApplicationReplaceRequestOauthScopesFromValue(scopesElement.(types.String).ValueString())
 				if err != nil {
@@ -274,20 +281,20 @@ func (state *davinciApplicationResourceModel) readClientResponse(response *pingo
 	oauthAttrTypes := map[string]attr.Type{
 		"client_secret":                 types.StringType,
 		"enforce_signed_request_openid": types.BoolType,
-		"grant_types":                   types.ListType{ElemType: types.StringType},
-		"logout_uris":                   types.ListType{ElemType: types.StringType},
-		"redirect_uris":                 types.ListType{ElemType: types.StringType},
-		"scopes":                        types.ListType{ElemType: types.StringType},
+		"grant_types":                   types.SetType{ElemType: types.StringType},
+		"logout_uris":                   types.SetType{ElemType: types.StringType},
+		"redirect_uris":                 types.SetType{ElemType: types.StringType},
+		"scopes":                        types.SetType{ElemType: types.StringType},
 		"sp_jwks_openid":                types.StringType,
 		"spjwks_url":                    types.StringType,
 	}
-	oauthGrantTypesValue, diags := types.ListValueFrom(context.Background(), types.StringType, response.Oauth.GrantTypes)
+	oauthGrantTypesValue, diags := types.SetValueFrom(context.Background(), types.StringType, response.Oauth.GrantTypes)
 	respDiags.Append(diags...)
-	oauthLogoutUrisValue, diags := types.ListValueFrom(context.Background(), types.StringType, response.Oauth.LogoutUris)
+	oauthLogoutUrisValue, diags := types.SetValueFrom(context.Background(), types.StringType, response.Oauth.LogoutUris)
 	respDiags.Append(diags...)
-	oauthRedirectUrisValue, diags := types.ListValueFrom(context.Background(), types.StringType, response.Oauth.RedirectUris)
+	oauthRedirectUrisValue, diags := types.SetValueFrom(context.Background(), types.StringType, response.Oauth.RedirectUris)
 	respDiags.Append(diags...)
-	oauthScopesValue, diags := types.ListValueFrom(context.Background(), types.StringType, response.Oauth.Scopes)
+	oauthScopesValue, diags := types.SetValueFrom(context.Background(), types.StringType, response.Oauth.Scopes)
 	respDiags.Append(diags...)
 	oauthValue, diags := types.ObjectValue(oauthAttrTypes, map[string]attr.Value{
 		"client_secret":                 types.StringValue(response.Oauth.ClientSecret),
