@@ -10,6 +10,7 @@ import (
 	"regexp"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -97,7 +98,6 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 				},
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
-					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
 				},
 			},
 			"id": schema.StringAttribute{
@@ -132,6 +132,13 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 						Computed:            true,
 						Description:         "Options are \"authorizationCode\", \"clientCredentials\", \"implicit\".",
 						MarkdownDescription: "Options are `authorizationCode`, `clientCredentials`, `implicit`.",
+						Validators: []validator.List{
+							listvalidator.ValueStringsAre(stringvalidator.OneOf(
+								"authorizationCode",
+								"clientCredentials",
+								"implicit",
+							)),
+						},
 					},
 					"logout_uris": schema.ListAttribute{
 						ElementType: types.StringType,
@@ -149,6 +156,14 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 						Computed:            true,
 						Description:         "Options are \"flow_analytics\", \"offline_access\", \"openid\", \"profile\".",
 						MarkdownDescription: "Options are `flow_analytics`, `offline_access`, `openid`, `profile`.",
+						Validators: []validator.List{
+							listvalidator.ValueStringsAre(stringvalidator.OneOf(
+								"flow_analytics",
+								"offline_access",
+								"openid",
+								"profile",
+							)),
+						},
 					},
 					"sp_jwks_openid": schema.StringAttribute{
 						Optional: true,
@@ -168,13 +183,15 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 
 func (model *davinciApplicationResourceModel) buildClientStructPost() (*pingone.DaVinciApplicationCreateRequest, diag.Diagnostics) {
 	result := &pingone.DaVinciApplicationCreateRequest{}
+	var respDiags diag.Diagnostics
 	// name
 	result.Name = model.Name.ValueString()
-	return result, nil
+	return result, respDiags
 }
 
 func (model *davinciApplicationResourceModel) buildClientStructPut() (*pingone.DaVinciApplicationReplaceRequest, diag.Diagnostics) {
 	result := &pingone.DaVinciApplicationReplaceRequest{}
+	var respDiags diag.Diagnostics
 	// name
 	result.Name = model.Name.ValueString()
 	// oauth
@@ -183,9 +200,20 @@ func (model *davinciApplicationResourceModel) buildClientStructPut() (*pingone.D
 		oauthAttrs := model.Oauth.Attributes()
 		oauthValue.EnforceSignedRequestOpenid = oauthAttrs["enforce_signed_request_openid"].(types.Bool).ValueBoolPointer()
 		if !oauthAttrs["grant_types"].IsNull() && !oauthAttrs["grant_types"].IsUnknown() {
-			oauthValue.GrantTypes = []string{}
+			oauthValue.GrantTypes = []pingone.DaVinciApplicationReplaceRequestOauthGrantTypes{}
 			for _, grantTypesElement := range oauthAttrs["grant_types"].(types.List).Elements() {
-				oauthValue.GrantTypes = append(oauthValue.GrantTypes, grantTypesElement.(types.String).ValueString())
+				var grantTypesValue pingone.DaVinciApplicationReplaceRequestOauthGrantTypes
+				grantTypesEnumValue, err := pingone.NewDaVinciApplicationReplaceRequestOauthGrantTypesFromValue(grantTypesElement.(types.String).ValueString())
+				if err != nil {
+					respDiags.AddAttributeError(
+						path.Root("grant_types"),
+						"Provided value is not valid",
+						fmt.Sprintf("The value provided for grant_types is not valid: %s", err.Error()),
+					)
+				} else {
+					grantTypesValue = *grantTypesEnumValue
+				}
+				oauthValue.GrantTypes = append(oauthValue.GrantTypes, grantTypesValue)
 			}
 		}
 		if !oauthAttrs["logout_uris"].IsNull() && !oauthAttrs["logout_uris"].IsUnknown() {
@@ -201,9 +229,20 @@ func (model *davinciApplicationResourceModel) buildClientStructPut() (*pingone.D
 			}
 		}
 		if !oauthAttrs["scopes"].IsNull() && !oauthAttrs["scopes"].IsUnknown() {
-			oauthValue.Scopes = []string{}
+			oauthValue.Scopes = []pingone.DaVinciApplicationReplaceRequestOauthScopes{}
 			for _, scopesElement := range oauthAttrs["scopes"].(types.List).Elements() {
-				oauthValue.Scopes = append(oauthValue.Scopes, scopesElement.(types.String).ValueString())
+				var scopesValue pingone.DaVinciApplicationReplaceRequestOauthScopes
+				scopesEnumValue, err := pingone.NewDaVinciApplicationReplaceRequestOauthScopesFromValue(scopesElement.(types.String).ValueString())
+				if err != nil {
+					respDiags.AddAttributeError(
+						path.Root("scopes"),
+						"Provided value is not valid",
+						fmt.Sprintf("The value provided for scopes is not valid: %s", err.Error()),
+					)
+				} else {
+					scopesValue = *scopesEnumValue
+				}
+				oauthValue.Scopes = append(oauthValue.Scopes, scopesValue)
 			}
 		}
 		oauthValue.SpJwksOpenid = oauthAttrs["sp_jwks_openid"].(types.String).ValueStringPointer()
@@ -211,7 +250,7 @@ func (model *davinciApplicationResourceModel) buildClientStructPut() (*pingone.D
 		result.Oauth = oauthValue
 	}
 
-	return result, nil
+	return result, respDiags
 }
 
 func (state *davinciApplicationResourceModel) readClientResponse(response *pingone.DaVinciApplication) diag.Diagnostics {
