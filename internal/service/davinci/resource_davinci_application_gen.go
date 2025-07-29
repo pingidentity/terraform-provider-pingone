@@ -104,7 +104,7 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 		"redirect_uris":                 types.SetType{ElemType: types.StringType},
 		"scopes":                        types.SetType{ElemType: types.StringType},
 		"sp_jwks_openid":                types.StringType,
-		"spjwks_url":                    types.StringType,
+		"sp_jwks_url":                   types.StringType,
 	}, map[string]attr.Value{
 		"client_secret":                 types.StringUnknown(),
 		"enforce_signed_request_openid": types.BoolNull(),
@@ -113,7 +113,7 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 		"redirect_uris":                 types.SetNull(types.StringType),
 		"scopes":                        oauthScopesDefault,
 		"sp_jwks_openid":                types.StringNull(),
-		"spjwks_url":                    types.StringNull(),
+		"sp_jwks_url":                   types.StringNull(),
 	})
 	resp.Diagnostics.Append(diags...)
 	resp.Schema = schema.Schema{
@@ -224,7 +224,7 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 					"sp_jwks_openid": schema.StringAttribute{
 						Optional: true,
 					},
-					"spjwks_url": schema.StringAttribute{
+					"sp_jwks_url": schema.StringAttribute{
 						Optional: true,
 					},
 				},
@@ -307,7 +307,7 @@ func (model *davinciApplicationResourceModel) buildClientStructPut() (*pingone.D
 			}
 		}
 		oauthValue.SpJwksOpenid = oauthAttrs["sp_jwks_openid"].(types.String).ValueStringPointer()
-		oauthValue.SpjwksUrl = oauthAttrs["spjwks_url"].(types.String).ValueStringPointer()
+		oauthValue.SpjwksUrl = oauthAttrs["sp_jwks_url"].(types.String).ValueStringPointer()
 		result.Oauth = oauthValue
 	}
 
@@ -399,8 +399,8 @@ func (model *davinciApplicationResourceModel) buildClientStructPutAfterCreate(cr
 		if !oauthAttrs["sp_jwks_openid"].IsNull() && !oauthAttrs["sp_jwks_openid"].IsUnknown() {
 			result.Oauth.SpJwksOpenid = oauthAttrs["sp_jwks_openid"].(types.String).ValueStringPointer()
 		}
-		if !oauthAttrs["spjwks_url"].IsNull() && !oauthAttrs["spjwks_url"].IsUnknown() {
-			result.Oauth.SpjwksUrl = oauthAttrs["spjwks_url"].(types.String).ValueStringPointer()
+		if !oauthAttrs["sp_jwks_url"].IsNull() && !oauthAttrs["sp_jwks_url"].IsUnknown() {
+			result.Oauth.SpjwksUrl = oauthAttrs["sp_jwks_url"].(types.String).ValueStringPointer()
 		}
 	}
 
@@ -433,7 +433,7 @@ func (state *davinciApplicationResourceModel) readClientResponse(response *pingo
 		"redirect_uris":                 types.SetType{ElemType: types.StringType},
 		"scopes":                        types.SetType{ElemType: types.StringType},
 		"sp_jwks_openid":                types.StringType,
-		"spjwks_url":                    types.StringType,
+		"sp_jwks_url":                   types.StringType,
 	}
 	oauthGrantTypesValue, diags := types.SetValueFrom(context.Background(), types.StringType, response.Oauth.GrantTypes)
 	respDiags.Append(diags...)
@@ -451,7 +451,7 @@ func (state *davinciApplicationResourceModel) readClientResponse(response *pingo
 		"redirect_uris":                 oauthRedirectUrisValue,
 		"scopes":                        oauthScopesValue,
 		"sp_jwks_openid":                types.StringPointerValue(response.Oauth.SpJwksOpenid),
-		"spjwks_url":                    types.StringPointerValue(response.Oauth.SpjwksUrl),
+		"sp_jwks_url":                   types.StringPointerValue(response.Oauth.SpjwksUrl),
 	})
 	respDiags.Append(diags...)
 	state.Oauth = oauthValue

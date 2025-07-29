@@ -253,7 +253,7 @@ resource "pingone_davinci_application" "%[2]s" {
 	  "flow_analytics",
 	  "openid",
 	]
-    spjwks_url = "https://example.com/jwks"
+    sp_jwks_url = "https://example.com/jwks"
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
@@ -294,7 +294,7 @@ resource "pingone_davinci_application" "%[2]s" {
 	  "profile",
 	  "flow_analytics",
 	]
-    spjwks_url = "https://example.com/jwks"
+    sp_jwks_url = "https://example.com/jwks"
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
