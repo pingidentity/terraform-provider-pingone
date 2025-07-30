@@ -87,9 +87,6 @@ func (r *davinciApplicationFlowPolicyResource) Schema(ctx context.Context, req r
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
-				Validators: []validator.String{
-					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
-				},
 			},
 			"environment_id": schema.StringAttribute{
 				Required:    true,
@@ -140,7 +137,6 @@ func (r *davinciApplicationFlowPolicyResource) Schema(ctx context.Context, req r
 				},
 				Required: true,
 				Validators: []validator.Set{
-					setvalidator.SizeBetween(0, 100),
 					setvalidator.SizeBetween(1, 100),
 				},
 			},
@@ -159,7 +155,7 @@ func (r *davinciApplicationFlowPolicyResource) Schema(ctx context.Context, req r
 				Computed: true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(256),
-					stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
+					//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
 				},
 			},
 			"status": schema.StringAttribute{
@@ -259,7 +255,7 @@ func (model *davinciApplicationFlowPolicyResourceModel) buildClientStructPost() 
 
 	// name
 	if !model.Name.IsNull() && !model.Name.IsUnknown() {
-		result.Name = model.Name.ValueString()
+		result.Name = model.Name.ValueStringPointer()
 	}
 	// status
 	if !model.Status.IsNull() && !model.Status.IsUnknown() {
@@ -342,7 +338,7 @@ func (model *davinciApplicationFlowPolicyResourceModel) buildClientStructPut() (
 	}
 	// status
 	if !model.Status.IsNull() && !model.Status.IsUnknown() {
-		statusValue, err := pingone.NewDaVinciFlowPolicyReplaceRequestStatusFromValue(model.Status.ValueString())
+		statusValue, err := pingone.NewDaVinciFlowPolicyCreateRequestStatusFromValue(model.Status.ValueString())
 		if err != nil {
 			respDiags.AddAttributeError(
 				path.Root("status"),
@@ -523,21 +519,12 @@ func (r *davinciApplicationFlowPolicyResource) Create(ctx context.Context, req r
 		)
 		return
 	}
-	daVinciApplicationIdUuid, err := uuid.Parse(data.DaVinciApplicationId.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("da_vinci_application_id"),
-			"Attribute Validation Error",
-			fmt.Sprintf("The value '%s' for attribute '%s' is not a valid UUID: %s", data.DaVinciApplicationId.ValueString(), "DaVinciApplicationId", err.Error()),
-		)
-		return
-	}
 	var responseData *pingone.DaVinciFlowPolicyResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciApplicationApi.CreateFlowPolicyByDavinciApplicationId(ctx, environmentIdUuid, daVinciApplicationIdUuid).DaVinciFlowPolicyCreateRequest(*clientData).Execute()
+			fO, fR, fErr := r.Client.DaVinciApplicationApi.CreateFlowPolicyByDavinciApplicationId(ctx, environmentIdUuid, data.DaVinciApplicationId.ValueString()).DaVinciFlowPolicyCreateRequest(*clientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateFlowPolicyByDavinciApplicationId",
@@ -587,21 +574,12 @@ func (r *davinciApplicationFlowPolicyResource) Read(ctx context.Context, req res
 		)
 		return
 	}
-	daVinciApplicationIdUuid, err := uuid.Parse(data.DaVinciApplicationId.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("da_vinci_application_id"),
-			"Attribute Validation Error",
-			fmt.Sprintf("The value '%s' for attribute '%s' is not a valid UUID: %s", data.DaVinciApplicationId.ValueString(), "DaVinciApplicationId", err.Error()),
-		)
-		return
-	}
 	var responseData *pingone.DaVinciFlowPolicyResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciApplicationApi.GetFlowPolicyByIdUsingDavinciApplicationId(ctx, environmentIdUuid, daVinciApplicationIdUuid, data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.DaVinciApplicationApi.GetFlowPolicyByIdUsingDavinciApplicationId(ctx, environmentIdUuid, data.DaVinciApplicationId.ValueString(), data.Id.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetFlowPolicyByIdUsingDavinciApplicationId",
@@ -663,21 +641,12 @@ func (r *davinciApplicationFlowPolicyResource) Update(ctx context.Context, req r
 		)
 		return
 	}
-	daVinciApplicationIdUuid, err := uuid.Parse(data.DaVinciApplicationId.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("da_vinci_application_id"),
-			"Attribute Validation Error",
-			fmt.Sprintf("The value '%s' for attribute '%s' is not a valid UUID: %s", data.DaVinciApplicationId.ValueString(), "DaVinciApplicationId", err.Error()),
-		)
-		return
-	}
 	var responseData *pingone.DaVinciFlowPolicyResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciApplicationApi.ReplaceFlowPolicyByIdUsingDavinciApplicationId(ctx, environmentIdUuid, daVinciApplicationIdUuid, data.Id.ValueString()).DaVinciFlowPolicyReplaceRequest(*clientData).Execute()
+			fO, fR, fErr := r.Client.DaVinciApplicationApi.ReplaceFlowPolicyByIdUsingDavinciApplicationId(ctx, environmentIdUuid, data.DaVinciApplicationId.ValueString(), data.Id.ValueString()).DaVinciFlowPolicyReplaceRequest(*clientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReplaceFlowPolicyByIdUsingDavinciApplicationId",
@@ -727,20 +696,11 @@ func (r *davinciApplicationFlowPolicyResource) Delete(ctx context.Context, req r
 		)
 		return
 	}
-	daVinciApplicationIdUuid, err := uuid.Parse(data.DaVinciApplicationId.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("da_vinci_application_id"),
-			"Attribute Validation Error",
-			fmt.Sprintf("The value '%s' for attribute '%s' is not a valid UUID: %s", data.DaVinciApplicationId.ValueString(), "DaVinciApplicationId", err.Error()),
-		)
-		return
-	}
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := r.Client.DaVinciApplicationApi.DeleteFlowPolicyByIdUsingDavinciApplicationId(ctx, environmentIdUuid, daVinciApplicationIdUuid, data.Id.ValueString()).Execute()
+			fR, fErr := r.Client.DaVinciApplicationApi.DeleteFlowPolicyByIdUsingDavinciApplicationId(ctx, environmentIdUuid, data.DaVinciApplicationId.ValueString(), data.Id.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteFlowPolicyByIdUsingDavinciApplicationId",
