@@ -18,6 +18,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -123,9 +125,13 @@ func (r *davinciApplicationFlowPolicyResource) Schema(ctx context.Context, req r
 								},
 							},
 							Optional: true,
+							Computed: true,
 							Validators: []validator.Set{
 								setvalidator.SizeAtLeast(1),
 							},
+							Default: setdefault.StaticValue(types.SetValueMust(types.ObjectType{AttrTypes: map[string]attr.Type{
+								"id": types.StringType,
+							}}, nil)),
 						},
 						"version": schema.Float32Attribute{
 							Required: true,
@@ -147,12 +153,13 @@ func (r *davinciApplicationFlowPolicyResource) Schema(ctx context.Context, req r
 					stringplanmodifier.UseStateForUnknown(),
 				},
 				Validators: []validator.String{
-					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
+					//stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
 				},
 			},
 			"name": schema.StringAttribute{
 				Optional: true,
 				Computed: true,
+				Default:  stringdefault.StaticString("New Policy"),
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(256),
 					//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
@@ -161,6 +168,7 @@ func (r *davinciApplicationFlowPolicyResource) Schema(ctx context.Context, req r
 			"status": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
+				Default:             stringdefault.StaticString("enabled"),
 				Description:         "Options are \"disabled\", \"enabled\".",
 				MarkdownDescription: "Options are `disabled`, `enabled`.",
 				Validators: []validator.String{
@@ -213,6 +221,8 @@ func (r *davinciApplicationFlowPolicyResource) Schema(ctx context.Context, req r
 					},
 					"type": schema.StringAttribute{
 						Optional: true,
+						Computed: true,
+						Default:  stringdefault.StaticString("AUTHENTICATION"),
 						Validators: []validator.String{
 							stringvalidator.LengthBetween(0, 50),
 						},
