@@ -18,7 +18,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -125,13 +124,9 @@ func (r *davinciApplicationFlowPolicyResource) Schema(ctx context.Context, req r
 								},
 							},
 							Optional: true,
-							Computed: true,
 							Validators: []validator.Set{
 								setvalidator.SizeAtLeast(1),
 							},
-							Default: setdefault.StaticValue(types.SetValueMust(types.ObjectType{AttrTypes: map[string]attr.Type{
-								"id": types.StringType,
-							}}, nil)),
 						},
 						"version": schema.Float32Attribute{
 							Required: true,
@@ -411,16 +406,23 @@ func (state *davinciApplicationFlowPolicyResourceModel) readClientResponse(respo
 	for _, flowDistributionsResponseValue := range response.FlowDistributions {
 		flowDistributionsIpValue, diags := types.SetValueFrom(context.Background(), types.StringType, flowDistributionsResponseValue.Ip)
 		respDiags.Append(diags...)
-		var flowDistributionsSuccessNodesValues []attr.Value
-		for _, flowDistributionsSuccessNodesResponseValue := range flowDistributionsResponseValue.SuccessNodes {
-			flowDistributionsSuccessNodesValue, diags := types.ObjectValue(flowDistributionsSuccessNodesAttrTypes, map[string]attr.Value{
-				"id": types.StringValue(flowDistributionsSuccessNodesResponseValue.Id),
-			})
+		// The API returns successNodes as an empty array, which we want to consider as null to maintain validation
+		// that the size is greater than 1 when actually configured.
+		var flowDistributionsSuccessNodesValue types.Set
+		if len(flowDistributionsResponseValue.SuccessNodes) == 0 {
+			flowDistributionsSuccessNodesValue = types.SetNull(flowDistributionsSuccessNodesElementType)
+		} else {
+			var flowDistributionsSuccessNodesValues []attr.Value
+			for _, flowDistributionsSuccessNodesResponseValue := range flowDistributionsResponseValue.SuccessNodes {
+				flowDistributionsSuccessNodesValue, diags := types.ObjectValue(flowDistributionsSuccessNodesAttrTypes, map[string]attr.Value{
+					"id": types.StringValue(flowDistributionsSuccessNodesResponseValue.Id),
+				})
+				respDiags.Append(diags...)
+				flowDistributionsSuccessNodesValues = append(flowDistributionsSuccessNodesValues, flowDistributionsSuccessNodesValue)
+			}
+			flowDistributionsSuccessNodesValue, diags = types.SetValue(flowDistributionsSuccessNodesElementType, flowDistributionsSuccessNodesValues)
 			respDiags.Append(diags...)
-			flowDistributionsSuccessNodesValues = append(flowDistributionsSuccessNodesValues, flowDistributionsSuccessNodesValue)
 		}
-		flowDistributionsSuccessNodesValue, diags := types.SetValue(flowDistributionsSuccessNodesElementType, flowDistributionsSuccessNodesValues)
-		respDiags.Append(diags...)
 		flowDistributionsValue, diags := types.ObjectValue(flowDistributionsAttrTypes, map[string]attr.Value{
 			"id":            types.StringValue(flowDistributionsResponseValue.Id),
 			"ip":            flowDistributionsIpValue,
