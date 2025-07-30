@@ -16,7 +16,6 @@ import (
 	"github.com/pingidentity/pingone-go-client/pingone"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 )
 
 func TestAccDavinciApplicationFlowPolicy_RemovalDrift(t *testing.T) {
@@ -25,9 +24,9 @@ func TestAccDavinciApplicationFlowPolicy_RemovalDrift(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName)
 
-	environmentName := acctest.ResourceNameGenEnvironment()
+	//environmentName := acctest.ResourceNameGenEnvironment()
 
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	//licenseID := os.Getenv("PINGONE_LICENSE_ID")
 	var environmentId string
 	var daVinciApplicationId string
 	var id string
@@ -60,17 +59,18 @@ func TestAccDavinciApplicationFlowPolicy_RemovalDrift(t *testing.T) {
 				ExpectNonEmptyPlan: true,
 			},
 			// Test removal of the environment
-			{
-				Config: davinciApplicationFlowPolicy_NewEnvHCL(environmentName, licenseID, resourceName),
-				Check:  davinciApplicationFlowPolicy_GetIDs(resourceFullName, &environmentId, &daVinciApplicationId, &id),
-			},
-			{
-				PreConfig: func() {
-					base.Environment_RemovalDrift_PreConfig(ctx, p1Client, t, environmentId)
-				},
-				RefreshState:       true,
-				ExpectNonEmptyPlan: true,
-			},
+			//TODO re-enable this test when the pingone_davinci_flow resource is available
+			// {
+			// 	Config: davinciApplicationFlowPolicy_NewEnvHCL(environmentName, licenseID, resourceName),
+			// 	Check:  davinciApplicationFlowPolicy_GetIDs(resourceFullName, &environmentId, &daVinciApplicationId, &id),
+			// },
+			// {
+			// 	PreConfig: func() {
+			// 		base.Environment_RemovalDrift_PreConfig(ctx, p1Client, t, environmentId)
+			// 	},
+			// 	RefreshState:       true,
+			// 	ExpectNonEmptyPlan: true,
+			// },
 		},
 	})
 }
@@ -103,7 +103,7 @@ func TestAccDavinciApplicationFlowPolicy_MinimalMaximal(t *testing.T) {
 			{
 				// Re-create with a complete model
 				Config: davinciApplicationFlowPolicy_CompleteHCL(resourceName),
-				Check:  davinciApplicationFlowPolicy_CheckComputedValuesComplete(resourceName),
+				// Check:  davinciApplicationFlowPolicy_CheckComputedValuesComplete(resourceName),
 			},
 			{
 				// Back to minimal model
@@ -113,14 +113,14 @@ func TestAccDavinciApplicationFlowPolicy_MinimalMaximal(t *testing.T) {
 			{
 				// Back to complete model
 				Config: davinciApplicationFlowPolicy_CompleteHCL(resourceName),
-				Check:  davinciApplicationFlowPolicy_CheckComputedValuesComplete(resourceName),
+				// Check:  davinciApplicationFlowPolicy_CheckComputedValuesComplete(resourceName),
 			},
-			{
-				// Complete model with reordering of lists and sets
-				Config: davinciApplicationFlowPolicy_CompleteReorderedHCL(resourceName),
-				//TODO update checks if different results are expected after reordering
-				Check: davinciApplicationFlowPolicy_CheckComputedValuesComplete(resourceName),
-			},
+			// {
+			// 	// Complete model with reordering of lists and sets
+			// 	Config: davinciApplicationFlowPolicy_CompleteReorderedHCL(resourceName),
+			// 	//TODO update checks if different results are expected after reordering
+			// 	Check: davinciApplicationFlowPolicy_CheckComputedValuesComplete(resourceName),
+			// },
 			{
 				// Test importing the resource
 				Config:       davinciApplicationFlowPolicy_CompleteHCL(resourceName),
@@ -144,6 +144,7 @@ func TestAccDavinciApplicationFlowPolicy_MinimalMaximal(t *testing.T) {
 }
 
 func TestAccDavinciApplicationFlowPolicy_NewEnv(t *testing.T) {
+	t.Skip("Skipping test as the pingone_davinci_flow resource will be needed for this")
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -216,15 +217,19 @@ func davinciApplicationFlowPolicy_MinimalHCL(resourceName string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_davinci_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name = "%[2]s"
+}
+
 resource "pingone_davinci_application_flow_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  da_vinci_application_id = //TODO
-  id = //TODO
-  // TODO set values for minimal fields
+  da_vinci_application_id = pingone_davinci_application.%[2]s.id
   flow_distributions = [
     {
-      id = //TODO
-      version = //TODO
+	  #TODO use flow resource to create this, rather than using a hardcoded id
+      id = "ea3bf86e79daf74f0262a317190e02dd"
+      version = 0
     }
   ]
 }
@@ -236,41 +241,49 @@ func davinciApplicationFlowPolicy_CompleteHCL(resourceName string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_davinci_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name = "%[2]s"
+}
+
 resource "pingone_davinci_application_flow_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  da_vinci_application_id = //TODO
-  id = //TODO
-  // TODO set values for complete fields
+  da_vinci_application_id = pingone_davinci_application.%[2]s.id
   flow_distributions = [
     {
-      id = //TODO
-      ip = //TODO
+      id = "ea3bf86e79daf74f0262a317190e02dd"
+      ip = [
+	    "0.0.0.0/0",
+		"1.1.1.1/1",
+	  ]
       success_nodes = [
         {
-          id = //TODO
+          id = "1234"
         }
       ]
-      version = //TODO
-      weight = //TODO
+      version = 1
+      weight = 100
     }
+	  #TODO add a second flow
   ]
-  name = //TODO
-  status = //TODO
-  trigger = {
-    configuration = {
-      mfa = {
-        enabled = //TODO
-        time = //TODO
-        time_format = //TODO
-      }
-      pwd = {
-        enabled = //TODO
-        time = //TODO
-        time_format = //TODO
-      }
-    }
-    type = //TODO
-  }
+  name = "Updated policy"
+  status = "disabled"
+  #TODO test trigger with a pingone flow
+//   trigger = {
+//     configuration = {
+//       mfa = {
+//         enabled = //TODO
+//         time = //TODO
+//         time_format = //TODO
+//       }
+//       pwd = {
+//         enabled = //TODO
+//         time = //TODO
+//         time_format = //TODO
+//       }
+//     }
+//     type = //TODO
+//   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
@@ -323,15 +336,19 @@ func davinciApplicationFlowPolicy_NewEnvHCL(environmentName, licenseID, resource
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_davinci_application" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name = "%[3]s"
+}
+
 resource "pingone_davinci_application_flow_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  da_vinci_application_id = //TODO
-  id = //TODO
-  // TODO set values for minimal fields
+  da_vinci_application_id = pingone_davinci_application.%[3]s.id
   flow_distributions = [
     {
-      id = //TODO
-      version = //TODO
+	  #TODO use flow resource to create this, rather than using a hardcoded id
+      id = "ea3bf86e79daf74f0262a317190e02dd"
+      version = 0
     }
   ]
 }
@@ -339,19 +356,14 @@ resource "pingone_davinci_application_flow_policy" "%[3]s" {
 }
 
 // Validate any computed values when applying minimal HCL
-// TODO remove any values that are not computed from this check
-// TODO set expected values
 func davinciApplicationFlowPolicy_CheckComputedValuesMinimal(resourceName string) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "name", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "status", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.mfa.enabled", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.mfa.time", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.mfa.time_format", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.pwd.enabled", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.pwd.time", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.pwd.time_format", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.type", "expected_value"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "name", "New Policy"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "status", "enabled"),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger"),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "flow_distributions.0.ip"),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "flow_distributions.0.success_nodes"),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "flow_distributions.0.weight"),
 	)
 }
 
@@ -359,19 +371,19 @@ func davinciApplicationFlowPolicy_CheckComputedValuesMinimal(resourceName string
 // TODO This may not be needed as a separate function from minimal HCL if the expected values match
 // TODO remove any values that are not computed from this check
 // TODO set expected values
-func davinciApplicationFlowPolicy_CheckComputedValuesComplete(resourceName string) resource.TestCheckFunc {
-	return resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "name", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "status", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.mfa.enabled", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.mfa.time", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.mfa.time_format", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.pwd.enabled", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.pwd.time", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.pwd.time_format", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.type", "expected_value"),
-	)
-}
+// func davinciApplicationFlowPolicy_CheckComputedValuesComplete(resourceName string) resource.TestCheckFunc {
+// 	return resource.ComposeTestCheckFunc(
+// 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "name", "expected_value"),
+// 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "status", "expected_value"),
+// 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.mfa.enabled", "expected_value"),
+// 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.mfa.time", "expected_value"),
+// 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.mfa.time_format", "expected_value"),
+// 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.pwd.enabled", "expected_value"),
+// 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.pwd.time", "expected_value"),
+// 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.pwd.time_format", "expected_value"),
+// 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.type", "expected_value"),
+// 	)
+// }
 
 func davinciApplicationFlowPolicy_GetIDs(resourceName string, environmentId, daVinciApplicationId, id *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
