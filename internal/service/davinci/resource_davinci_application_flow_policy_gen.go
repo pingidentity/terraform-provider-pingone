@@ -406,10 +406,8 @@ func (state *davinciApplicationFlowPolicyResourceModel) readClientResponse(respo
 	for _, flowDistributionsResponseValue := range response.FlowDistributions {
 		flowDistributionsIpValue, diags := types.SetValueFrom(context.Background(), types.StringType, flowDistributionsResponseValue.Ip)
 		respDiags.Append(diags...)
-		// The API returns successNodes as an empty array, which we want to consider as null to maintain validation
-		// that the size is greater than 1 when actually configured.
 		var flowDistributionsSuccessNodesValue types.Set
-		if len(flowDistributionsResponseValue.SuccessNodes) == 0 {
+		if flowDistributionsResponseValue.SuccessNodes == nil {
 			flowDistributionsSuccessNodesValue = types.SetNull(flowDistributionsSuccessNodesElementType)
 		} else {
 			var flowDistributionsSuccessNodesValues []attr.Value
