@@ -728,11 +728,12 @@ func (r *davinciApplicationFlowPolicyResource) ImportState(ctx context.Context, 
 		},
 		{
 			Label:  "da_vinci_application_id",
-			Regexp: verify.P1ResourceIDRegexp,
+			Regexp: verify.P1DVResourceIDRegexp,
 		},
 		{
 			Label:     "policy_id",
 			PrimaryID: true,
+			Regexp:    verify.P1DVResourceIDRegexp,
 		},
 	}
 
