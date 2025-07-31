@@ -289,6 +289,7 @@ resource "pingone_davinci_application_flow_policy" "%[2]s" {
 }
 
 // Maximal HCL with all values set, with ordering changes in lists and sets from the default CompleteHCL
+// TODO update when the pingone_davinci_flow resource is available, reorder the updated CompleteHCL to form this
 func davinciApplicationFlowPolicy_CompleteReorderedHCL(resourceName string) string {
 	return fmt.Sprintf(`
 		%[1]s
