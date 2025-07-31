@@ -213,7 +213,7 @@ func (state *davinciConnectorInstanceResourceModel) readClientResponse(response 
 		} else {
 			// Check if any properties were ignored by davinci
 			resultProperties := jsontypes.NewNormalizedValue(string(propertiesBytes))
-			if !originalProperties.Equal(resultProperties) {
+			if !originalProperties.IsNull() && !originalProperties.Equal(resultProperties) {
 				respDiags.AddAttributeError(
 					path.Root("properties"),
 					"Properties Mismatch",
