@@ -103,7 +103,7 @@ jobs:
       PINGONE_REGION_CODE: ${{ matrix.region }}
       PINGONE_LICENSE_ID: ${{ vars[format('PINGONE_PROD_{0}_LICENSE_ID', matrix.region)] }}
       PINGONE_ORGANIZATION_ID: ${{ vars[format('PINGONE_PROD_{0}_ORG_ID', matrix.region)] }}
-      PINGONE_ORGANIZATION_NAME: ${{ secrets[format('{0}_PINGONE_ORGANIZATION_NAME', matrix.region)] }}
+      PINGONE_ORGANIZATION_NAME: ${{ vars[format('PINGONE_PROD_{0}_ORG_NAME', matrix.region)] }}
       PINGONE_KEY_PKCS12_UNENCRYPTED: ${{ secrets.PINGONE_KEY_PKCS12_UNENCRYPTED }}
       PINGONE_KEY_PKCS12: ${{ secrets.PINGONE_KEY_PKCS12 }}
       PINGONE_KEY_PKCS12_PASSWORD:  ${{ secrets.PINGONE_KEY_PKCS12_PASSWORD }}
@@ -175,7 +175,7 @@ jobs:
       PINGONE_REGION_CODE: ${{ matrix.region }}
       PINGONE_LICENSE_ID: ${{ vars[format('PINGONE_PROD_{0}_LICENSE_ID', matrix.region)] }}
       PINGONE_ORGANIZATION_ID: ${{ vars[format('PINGONE_PROD_{0}_ORG_ID', matrix.region)] }}
-      PINGONE_ORGANIZATION_NAME: ${{ secrets[format('{0}_PINGONE_ORGANIZATION_NAME', matrix.region)] }}
+      PINGONE_ORGANIZATION_NAME: ${{ vars[format('PINGONE_PROD_{0}_ORG_NAME', matrix.region)] }}
       PINGONE_KEY_PKCS12_UNENCRYPTED: ${{ secrets.PINGONE_KEY_PKCS12_UNENCRYPTED }}
       PINGONE_KEY_PKCS12: ${{ secrets.PINGONE_KEY_PKCS12 }}
       PINGONE_KEY_PKCS12_PASSWORD:  ${{ secrets.PINGONE_KEY_PKCS12_PASSWORD }}
