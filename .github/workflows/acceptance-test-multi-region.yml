@@ -48,7 +48,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        region: [AP, CA, EU, NA]
+        region: [AP, CA, EU, NA, SG]
 
     env:
       PINGONE_TESTING_PROVIDER_VERSION: test
@@ -88,7 +88,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        region: [AP, CA, EU, NA]
+        region: [AP, CA, EU, NA, SG]
         # list whatever Terraform versions here you would like to support
         terraform:
           - '1.11.*'
@@ -159,7 +159,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        region: [AP, CA, EU, NA]
+        region: [AP, CA, EU, NA, SG]
         # list whatever Terraform versions here you would like to support
         terraform:
           - '1.11.*'
@@ -239,7 +239,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        region: [AP, CA, EU, NA]
+        region: [AP, CA, EU, NA, SG]
 
     env:
       PINGONE_TESTING_PROVIDER_VERSION: test
