@@ -47,12 +47,12 @@ jobs:
     env:
       FEATURE_FLAG: DAVINCI
       PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets[format('{0}_PINGONE_FF_CLIENT_ID', matrix.region)] }}
-      PINGONE_CLIENT_SECRET: ${{ secrets[format('{0}_PINGONE_FF_CLIENT_SECRET', matrix.region)] }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets[format('{0}_PINGONE_FF_ENVIRONMENT_ID', matrix.region)] }}
+      PINGONE_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
+      PINGONE_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_FF_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
+      PINGONE_ENVIRONMENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_ENVIRONMENT_ID', matrix.region)] }}
       PINGONE_REGION_CODE: ${{ matrix.region }}
-      PINGONE_LICENSE_ID: ${{ secrets[format('{0}_PINGONE_FF_LICENSE_ID', matrix.region)] }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets[format('{0}_PINGONE_FF_ORGANIZATION_ID', matrix.region)] }}
+      PINGONE_LICENSE_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_LICENSE_ID', matrix.region)] }}
+      PINGONE_ORGANIZATION_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_ORG_ID', matrix.region)] }}
 
     timeout-minutes: 10
 
@@ -93,12 +93,12 @@ jobs:
     env:
       FEATURE_FLAG: DAVINCI
       PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets[format('{0}_PINGONE_FF_CLIENT_ID', matrix.region)] }}
-      PINGONE_CLIENT_SECRET: ${{ secrets[format('{0}_PINGONE_FF_CLIENT_SECRET', matrix.region)] }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets[format('{0}_PINGONE_FF_ENVIRONMENT_ID', matrix.region)] }}
+      PINGONE_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
+      PINGONE_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_FF_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
+      PINGONE_ENVIRONMENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_ENVIRONMENT_ID', matrix.region)] }}
       PINGONE_REGION_CODE: ${{ matrix.region }}
-      PINGONE_LICENSE_ID: ${{ secrets[format('{0}_PINGONE_FF_LICENSE_ID', matrix.region)] }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets[format('{0}_PINGONE_FF_ORGANIZATION_ID', matrix.region)] }}
+      PINGONE_LICENSE_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_LICENSE_ID', matrix.region)] }}
+      PINGONE_ORGANIZATION_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_ORG_ID', matrix.region)] }}
 
     timeout-minutes: 45
 
@@ -140,12 +140,12 @@ jobs:
     env:
       FEATURE_FLAG: DAVINCI
       PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ secrets[format('{0}_PINGONE_FF_CLIENT_ID', matrix.region)] }}
-      PINGONE_CLIENT_SECRET: ${{ secrets[format('{0}_PINGONE_FF_CLIENT_SECRET', matrix.region)] }}
-      PINGONE_ENVIRONMENT_ID: ${{ secrets[format('{0}_PINGONE_FF_ENVIRONMENT_ID', matrix.region)] }}
+      PINGONE_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
+      PINGONE_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_FF_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
+      PINGONE_ENVIRONMENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_ENVIRONMENT_ID', matrix.region)] }}
       PINGONE_REGION_CODE: ${{ matrix.region }}
-      PINGONE_LICENSE_ID: ${{ secrets[format('{0}_PINGONE_FF_LICENSE_ID', matrix.region)] }}
-      PINGONE_ORGANIZATION_ID: ${{ secrets[format('{0}_PINGONE_FF_ORGANIZATION_ID', matrix.region)] }}
+      PINGONE_LICENSE_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_LICENSE_ID', matrix.region)] }}
+      PINGONE_ORGANIZATION_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_ORG_ID', matrix.region)] }}
 
     timeout-minutes: 10
 
