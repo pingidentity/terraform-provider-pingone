@@ -1,3 +1,29 @@
+## 1.10.0 (16 July 2025)
+
+NOTES:
+
+* `data-source/pingone_environment`: Confirm support for PingID enabled workforce environments (v1 and v2). ([#1083](https://github.com/pingidentity/terraform-provider-pingone/issues/1083))
+* `resource/pingone_application`: Confirm support for Kerberos configuration in PingID v1 and v2 enabled environments. ([#1083](https://github.com/pingidentity/terraform-provider-pingone/issues/1083))
+* `resource/pingone_environment`: Confirm limited support for PingID v1 and v2 enabled workforce environments (import only). ([#1083](https://github.com/pingidentity/terraform-provider-pingone/issues/1083))
+* `resource/pingone_sign_on_policy_action`: Confirm support for PingID action step configuration in PingID v1 and v2 enabled environments. ([#1083](https://github.com/pingidentity/terraform-provider-pingone/issues/1083))
+* bump `github.com/go-viper/mapstructure/v2` 2.2.1 => 2.3.0 ([#1084](https://github.com/pingidentity/terraform-provider-pingone/issues/1084))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.57.1 => v0.58.0 ([#1081](https://github.com/pingidentity/terraform-provider-pingone/issues/1081))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.58.0 => v0.59.0 ([#1083](https://github.com/pingidentity/terraform-provider-pingone/issues/1083))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.18 => 0.12.19 ([#1081](https://github.com/pingidentity/terraform-provider-pingone/issues/1081))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.12.19 => v0.13.0 ([#1083](https://github.com/pingidentity/terraform-provider-pingone/issues/1083))
+
+ENHANCEMENTS:
+
+* `data-source/pingone_application`: Added support for Virtual Server ID Settings in SAML Applications ([#1081](https://github.com/pingidentity/terraform-provider-pingone/issues/1081))
+* `resource/pingone_application`: Added support for Virtual Server ID Settings in SAML Applications ([#1081](https://github.com/pingidentity/terraform-provider-pingone/issues/1081))
+* `resource/pingone_custom_domain_verify`: Allow use of already verified custom domain ([#1085](https://github.com/pingidentity/terraform-provider-pingone/issues/1085))
+* `resource/pingone_population_default`: Added support for new `alternative_identifiers`, `preferred_language`, and `theme.id` attributes. Also added support for a new `password_policy.id` attribute to better align with the API. `password_policy.id` should be used in place of the now-deprecated `password_policy_id` attribute. `password_policy_id` will be removed in the next major release. ([#1089](https://github.com/pingidentity/terraform-provider-pingone/issues/1089))
+
+BUG FIXES:
+
+* `resource/pingone_population_default`: Added wait on initial create to ensure `theme.id` is correctly assigned when creating a default population in a brand new environment. ([#1089](https://github.com/pingidentity/terraform-provider-pingone/issues/1089))
+* `resource/pingone_population`: Added wait on initial create to ensure `theme.id` is correctly assigned when creating a population in a brand new environment. ([#1080](https://github.com/pingidentity/terraform-provider-pingone/issues/1080))
+
 ## 1.9.0 (20 June 2025)
 
 BREAKING CHANGES:
