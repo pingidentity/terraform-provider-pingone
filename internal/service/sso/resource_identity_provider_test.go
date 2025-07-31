@@ -131,9 +131,9 @@ func TestAccIdentityProvider_Change(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 			resource.TestMatchResourceAttr(resourceFullName, "registration_population_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.id", verify.P1ResourceIDRegexpFullString),
-			resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+			resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 			resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
-			resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+			resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 		),
 	}
 
@@ -1061,9 +1061,9 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 		Config: testAccIdentityProviderConfig_OIDCFull(resourceName, name, image),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.id", verify.P1ResourceIDRegexpFullString),
-			resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+			resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 			resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
-			resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+			resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 			resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
