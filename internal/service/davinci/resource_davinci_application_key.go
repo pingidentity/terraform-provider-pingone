@@ -185,6 +185,8 @@ func (state *davinciApplicationKeyResourceModel) readClientResponse(response *pi
 	})
 	respDiags.Append(diags...)
 	state.ApiKey = apiKeyValue
+	// application_id
+	state.ApplicationId = types.StringValue(response.Id)
 	// id
 	state.Id = types.StringValue(response.Id)
 	return respDiags
@@ -277,7 +279,7 @@ func (r *davinciApplicationKeyResource) Read(ctx context.Context, req resource.R
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciApplicationApi.GetDavinciApplicationById(ctx, environmentIdUuid, data.ApplicationId.ValueString()).Execute()
+			fO, fR, fErr := r.Client.DaVinciApplicationApi.GetDavinciApplicationById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetDavinciApplicationById",
