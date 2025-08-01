@@ -17,6 +17,7 @@ func Resources() []func() resource.Resource {
 		NewDavinciApplicationFlowPolicyResource,
 		NewDavinciApplicationKeyResource,
 		NewDavinciApplicationResource,
+		NewDavinciApplicationSecretResource,
 		NewDavinciConnectorInstanceResource,
 		NewDavinciVariableResource,
 	}

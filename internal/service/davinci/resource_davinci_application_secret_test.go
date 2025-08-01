@@ -19,14 +19,14 @@ import (
 )
 
 var (
-	currentApiKey string
+	currentClientSecret string
 )
 
-func TestAccDavinciApplicationKey_RemovalDrift(t *testing.T) {
+func TestAccDavinciApplicationSecret_RemovalDrift(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_davinci_application_key.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_davinci_application_secret.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 
@@ -51,8 +51,8 @@ func TestAccDavinciApplicationKey_RemovalDrift(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: davinciApplicationKey_FirstRotateHCL(resourceName),
-				Check:  davinciApplicationKey_GetIDs(resourceFullName, &environmentId, &id),
+				Config: davinciApplicationSecret_FirstRotateHCL(resourceName),
+				Check:  davinciApplicationSecret_GetIDs(resourceFullName, &environmentId, &id),
 			},
 			{
 				PreConfig: func() {
@@ -63,8 +63,8 @@ func TestAccDavinciApplicationKey_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the environment
 			{
-				Config: davinciApplicationKey_NewEnvHCL(environmentName, licenseID, resourceName),
-				Check:  davinciApplicationKey_GetIDs(resourceFullName, &environmentId, &id),
+				Config: davinciApplicationSecret_NewEnvHCL(environmentName, licenseID, resourceName),
+				Check:  davinciApplicationSecret_GetIDs(resourceFullName, &environmentId, &id),
 			},
 			{
 				PreConfig: func() {
@@ -77,11 +77,11 @@ func TestAccDavinciApplicationKey_RemovalDrift(t *testing.T) {
 	})
 }
 
-func TestAccDavinciApplicationKey_Rotate(t *testing.T) {
+func TestAccDavinciApplicationSecret_Rotate(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_davinci_application_key.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_davinci_application_secret.%s", resourceName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -94,48 +94,48 @@ func TestAccDavinciApplicationKey_Rotate(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				// Create the application
-				Config: davinciApplicationKey_ApplicationOnlyHCL(resourceName),
-				Check:  davinciApplicationKey_GetApplicationApiKey(fmt.Sprintf("pingone_davinci_application.%s", resourceName), &currentApiKey),
+				Config: davinciApplicationSecret_ApplicationOnlyHCL(resourceName),
+				Check:  davinciApplicationSecret_GetApplicationSecret(fmt.Sprintf("pingone_davinci_application.%s", resourceName), &currentClientSecret),
 			},
 			{
 				// Initial rotation on create
-				Config: davinciApplicationKey_FirstRotateHCL(resourceName),
+				Config: davinciApplicationSecret_FirstRotateHCL(resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					davinciApplicationKey_checkExpectedKey(t, resourceName, true),
-					davinciApplicationKey_CheckComputedValues(resourceName),
-					davinciApplicationKey_GetApplicationApiKey(resourceFullName, &currentApiKey),
+					davinciApplicationSecret_checkExpectedSecret(t, resourceName, true),
+					davinciApplicationSecret_CheckComputedValues(resourceName),
+					davinciApplicationSecret_GetApplicationSecret(resourceFullName, &currentClientSecret),
 				),
 			},
 			{
 				// Expect no additional rotation
-				Config: davinciApplicationKey_FirstNoRotateHCL(resourceName),
+				Config: davinciApplicationSecret_FirstNoRotateHCL(resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					davinciApplicationKey_checkExpectedKey(t, resourceName, false),
-					davinciApplicationKey_CheckComputedValues(resourceName),
-					davinciApplicationKey_GetApplicationApiKey(resourceFullName, &currentApiKey),
+					davinciApplicationSecret_checkExpectedSecret(t, resourceName, false),
+					davinciApplicationSecret_CheckComputedValues(resourceName),
+					davinciApplicationSecret_GetApplicationSecret(resourceFullName, &currentClientSecret),
 				),
 			},
 			{
 				// Expect rotation
-				Config: davinciApplicationKey_SecondRotateHCL(resourceName),
+				Config: davinciApplicationSecret_SecondRotateHCL(resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					davinciApplicationKey_checkExpectedKey(t, resourceName, true),
-					davinciApplicationKey_CheckComputedValues(resourceName),
-					davinciApplicationKey_GetApplicationApiKey(resourceFullName, &currentApiKey),
+					davinciApplicationSecret_checkExpectedSecret(t, resourceName, true),
+					davinciApplicationSecret_CheckComputedValues(resourceName),
+					davinciApplicationSecret_GetApplicationSecret(resourceFullName, &currentClientSecret),
 				),
 			},
 			{
 				// Expect no additional rotation
-				Config: davinciApplicationKey_SecondNoRotateHCL(resourceName),
+				Config: davinciApplicationSecret_SecondNoRotateHCL(resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					davinciApplicationKey_checkExpectedKey(t, resourceName, false),
-					davinciApplicationKey_CheckComputedValues(resourceName),
-					davinciApplicationKey_GetApplicationApiKey(resourceFullName, &currentApiKey),
+					davinciApplicationSecret_checkExpectedSecret(t, resourceName, false),
+					davinciApplicationSecret_CheckComputedValues(resourceName),
+					davinciApplicationSecret_GetApplicationSecret(resourceFullName, &currentClientSecret),
 				),
 			},
 			{
 				// Test importing the resource
-				Config:       davinciApplicationKey_SecondRotateHCL(resourceName),
+				Config:       davinciApplicationSecret_SecondRotateHCL(resourceName),
 				ResourceName: resourceFullName,
 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
 					return func(s *terraform.State) (string, error) {
@@ -156,7 +156,7 @@ func TestAccDavinciApplicationKey_Rotate(t *testing.T) {
 	})
 }
 
-func TestAccDavinciApplicationKey_NewEnv(t *testing.T) {
+func TestAccDavinciApplicationSecret_NewEnv(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -176,18 +176,18 @@ func TestAccDavinciApplicationKey_NewEnv(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: davinciApplicationKey_NewEnvHCL(environmentName, licenseID, resourceName),
-				Check:  davinciApplicationKey_CheckComputedValues(resourceName),
+				Config: davinciApplicationSecret_NewEnvHCL(environmentName, licenseID, resourceName),
+				Check:  davinciApplicationSecret_CheckComputedValues(resourceName),
 			},
 		},
 	})
 }
 
-func TestAccDavinciApplicationKey_BadParameters(t *testing.T) {
+func TestAccDavinciApplicationSecret_BadParameters(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_davinci_application_key.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_davinci_application_secret.%s", resourceName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -200,7 +200,7 @@ func TestAccDavinciApplicationKey_BadParameters(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: davinciApplicationKey_FirstRotateHCL(resourceName),
+				Config: davinciApplicationSecret_FirstRotateHCL(resourceName),
 			},
 			// Errors
 			{
@@ -224,7 +224,7 @@ func TestAccDavinciApplicationKey_BadParameters(t *testing.T) {
 	})
 }
 
-func davinciApplicationKey_GetIDs(resourceName string, environmentId, id *string) resource.TestCheckFunc {
+func davinciApplicationSecret_GetIDs(resourceName string, environmentId, id *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -242,42 +242,41 @@ func davinciApplicationKey_GetIDs(resourceName string, environmentId, id *string
 	}
 }
 
-func davinciApplicationKey_GetApplicationApiKey(resourceFullName string, apiKey *string) resource.TestCheckFunc {
+func davinciApplicationSecret_GetApplicationSecret(resourceFullName string, clientSecret *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceFullName]
 		if !ok {
 			return fmt.Errorf("Resource Not found: %s", resourceFullName)
 		}
-		if apiKey != nil {
-			*apiKey = rs.Primary.Attributes["api_key.value"]
+		if clientSecret != nil {
+			*clientSecret = rs.Primary.Attributes["oauth.client_secret"]
 		}
 
 		return nil
 	}
 }
 
-func davinciApplicationKey_CheckComputedValues(resourceName string) resource.TestCheckFunc {
+func davinciApplicationSecret_CheckComputedValues(resourceName string) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_key.%s", resourceName), "api_key.enabled", "true"),
-		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_application_key.%s", resourceName), "api_key.value"),
-		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_application_key.%s", resourceName), "id"),
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_application_secret.%s", resourceName), "oauth.client_secret"),
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_application_secret.%s", resourceName), "id"),
 	)
 }
 
-func davinciApplicationKey_checkExpectedKey(t *testing.T, resourceName string, expectRotation bool) resource.TestCheckFunc {
+func davinciApplicationSecret_checkExpectedSecret(t *testing.T, resourceName string, expectRotation bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		err := resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_key.%s", resourceName), "api_key.value", currentApiKey)(s)
+		err := resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_secret.%s", resourceName), "oauth.client_secret", currentClientSecret)(s)
 		if err != nil && !expectRotation {
 			return err
 		} else if err == nil && expectRotation {
-			return errors.New("Expected the current API key to have rotated, but the key has not changed")
+			return errors.New("Expected the current client secret to have rotated, but the secret has not changed")
 		}
 		return nil
 	}
 }
 
-func davinciApplicationKey_ApplicationOnlyHCL(resourceName string) string {
+func davinciApplicationSecret_ApplicationOnlyHCL(resourceName string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -288,7 +287,7 @@ resource "pingone_davinci_application" "%[2]s" {
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
-func davinciApplicationKey_FirstRotateHCL(resourceName string) string {
+func davinciApplicationSecret_FirstRotateHCL(resourceName string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -297,7 +296,7 @@ resource "pingone_davinci_application" "%[2]s" {
   name = "%[2]s"
 }
 
-resource "pingone_davinci_application_key" "%[2]s" {
+resource "pingone_davinci_application_secret" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_davinci_application.%[2]s.id
 }
@@ -305,7 +304,7 @@ resource "pingone_davinci_application_key" "%[2]s" {
 }
 
 // Ensure that adding triggers doesn't cause a rotation
-func davinciApplicationKey_FirstNoRotateHCL(resourceName string) string {
+func davinciApplicationSecret_FirstNoRotateHCL(resourceName string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -314,7 +313,7 @@ resource "pingone_davinci_application" "%[2]s" {
   name = "%[2]s"
 }
 
-resource "pingone_davinci_application_key" "%[2]s" {
+resource "pingone_davinci_application_secret" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_davinci_application.%[2]s.id
 	rotation_trigger_values = {
@@ -324,7 +323,7 @@ resource "pingone_davinci_application_key" "%[2]s" {
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
-func davinciApplicationKey_SecondRotateHCL(resourceName string) string {
+func davinciApplicationSecret_SecondRotateHCL(resourceName string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -333,7 +332,7 @@ resource "pingone_davinci_application" "%[2]s" {
   name = "%[2]s"
 }
 
-resource "pingone_davinci_application_key" "%[2]s" {
+resource "pingone_davinci_application_secret" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_davinci_application.%[2]s.id
 	rotation_trigger_values = {
@@ -345,7 +344,7 @@ resource "pingone_davinci_application_key" "%[2]s" {
 }
 
 // Ensure that removing triggers doesn't cause a rotation
-func davinciApplicationKey_SecondNoRotateHCL(resourceName string) string {
+func davinciApplicationSecret_SecondNoRotateHCL(resourceName string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -354,7 +353,7 @@ resource "pingone_davinci_application" "%[2]s" {
   name = "%[2]s"
 }
 
-resource "pingone_davinci_application_key" "%[2]s" {
+resource "pingone_davinci_application_secret" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_davinci_application.%[2]s.id
 	rotation_trigger_values = {
@@ -364,7 +363,7 @@ resource "pingone_davinci_application_key" "%[2]s" {
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
-func davinciApplicationKey_NewEnvHCL(environmentName, licenseID, resourceName string) string {
+func davinciApplicationSecret_NewEnvHCL(environmentName, licenseID, resourceName string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -373,7 +372,7 @@ resource "pingone_davinci_application" "%[3]s" {
   name = "%[3]s"
 }
 
-resource "pingone_davinci_application_key" "%[3]s" {
+resource "pingone_davinci_application_secret" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   application_id = pingone_davinci_application.%[3]s.id
 	rotation_trigger_values = {
