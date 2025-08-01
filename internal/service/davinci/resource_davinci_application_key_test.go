@@ -3,18 +3,79 @@
 package davinci_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/pingidentity/pingone-go-client/pingone"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 )
 
 var (
 	currentApiKey string
 )
+
+func TestAccDavinciApplicationKey_RemovalDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_davinci_application_key.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	var environmentId string
+	var id string
+
+	var p1Client *pingone.APIClient
+	var ctx = context.Background()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+
+			p1Client = acctest.PreCheckTestClient(ctx, t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             davinciApplication_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: davinciApplicationKey_FirstRotateHCL(resourceName),
+				Check:  davinciApplicationKey_GetIDs(resourceFullName, &environmentId, &id),
+			},
+			{
+				PreConfig: func() {
+					davinciApplication_Delete(ctx, p1Client, t, environmentId, id)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test removal of the environment
+			{
+				Config: davinciApplicationKey_NewEnvHCL(environmentName, licenseID, resourceName),
+				Check:  davinciApplicationKey_GetIDs(resourceFullName, &environmentId, &id),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client, t, environmentId)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
 
 func TestAccDavinciApplicationKey_Rotate(t *testing.T) {
 	t.Parallel()
@@ -90,6 +151,74 @@ func TestAccDavinciApplicationKey_Rotate(t *testing.T) {
 				ImportStateVerify: true,
 				// The rotation trigger values are terraform-only, so they can't be imported
 				ImportStateVerifyIgnore: []string{"rotation_trigger_values"},
+			},
+		},
+	})
+}
+
+func TestAccDavinciApplicationKey_NewEnv(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             davinciApplication_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: davinciApplicationKey_NewEnvHCL(environmentName, licenseID, resourceName),
+				Check:  davinciApplicationKey_CheckComputedValues(resourceName),
+			},
+		},
+	})
+}
+
+func TestAccDavinciApplicationKey_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_davinci_application_key.%s", resourceName)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             davinciApplication_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure
+			{
+				Config: davinciApplicationKey_FirstRotateHCL(resourceName),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})
@@ -234,4 +363,23 @@ resource "pingone_davinci_application_key" "%[2]s" {
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func davinciApplicationKey_NewEnvHCL(environmentName, licenseID, resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_application" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name = "%[3]s"
+}
+
+resource "pingone_davinci_application_key" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  application_id = pingone_davinci_application.%[3]s.id
+	rotation_trigger_values = {
+    "trigger" = "initial"
+  }
+}
+`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
