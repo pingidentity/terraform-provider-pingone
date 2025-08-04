@@ -26,6 +26,12 @@ func TestAccLicenseDataSource_ByIDFull(t *testing.T) {
 
 	positiveIntegerRegex := regexp.MustCompile(`^[1-9][0-9]*$`)
 
+	terminatesAtCheck := resource.TestCheckNoResourceAttr(dataSourceFullName, "terminates_at")
+	if os.Getenv("PINGONE_REGION_CODE") == "SG" {
+		// The SG license has a terminates_at date
+		terminatesAtCheck = resource.TestMatchResourceAttr(dataSourceFullName, "terminates_at", verify.RFC3339Regexp)
+	}
+
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
@@ -49,7 +55,7 @@ func TestAccLicenseDataSource_ByIDFull(t *testing.T) {
 					resource.TestMatchResourceAttr(dataSourceFullName, "replaced_by_license_id", regexp.MustCompile(`^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$|^()$`)),
 					resource.TestMatchResourceAttr(dataSourceFullName, "begins_at", verify.RFC3339Regexp),
 					resource.TestMatchResourceAttr(dataSourceFullName, "expires_at", verify.RFC3339Regexp),
-					resource.TestCheckNoResourceAttr(dataSourceFullName, "terminates_at"),
+					terminatesAtCheck,
 					resource.TestCheckResourceAttrWith(dataSourceFullName, "assigned_environments_count", func(value string) error {
 
 						valueInt, err := strconv.Atoi(value)
