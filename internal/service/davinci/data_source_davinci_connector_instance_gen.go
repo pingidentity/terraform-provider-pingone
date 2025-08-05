@@ -5,11 +5,13 @@ package davinci
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"regexp"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -63,12 +65,12 @@ func (r *davinciConnectorInstanceDataSource) Configure(ctx context.Context, req 
 }
 
 type davinciConnectorInstanceDataSourceModel struct {
-	Connector     types.Object `tfsdk:"connector"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Id            types.String `tfsdk:"id"`
-	InstanceId    types.String `tfsdk:"instance_id"`
-	Name          types.String `tfsdk:"name"`
-	Properties    types.Object `tfsdk:"properties"`
+	Connector     types.Object         `tfsdk:"connector"`
+	EnvironmentId types.String         `tfsdk:"environment_id"`
+	Id            types.String         `tfsdk:"id"`
+	InstanceId    types.String         `tfsdk:"instance_id"`
+	Name          types.String         `tfsdk:"name"`
+	Properties    jsontypes.Normalized `tfsdk:"properties"`
 }
 
 func (r *davinciConnectorInstanceDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
@@ -93,32 +95,16 @@ func (r *davinciConnectorInstanceDataSource) Schema(ctx context.Context, req dat
 			"id": schema.StringAttribute{
 				Computed:    true,
 				Description: "The ID of this data source.",
-				Validators: []validator.String{
-					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
-				},
 			},
 			"instance_id": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "A string that specifies the ID of the instance to retrieve configuration for. Must be a valid PingOne resource ID. Exactly one of \"name\" or \"instance_id\" must be defined.",
-				MarkdownDescription: "A string that specifies the ID of the instance to retrieve configuration for. Must be a valid PingOne resource ID. Exactly one of `name` or `instance_id` must be defined.",
-				Validators: []validator.String{
-					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
-					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
-				},
+				Required:    true,
+				Description: "A string that specifies the ID of the instance to retrieve configuration for.",
 			},
 			"name": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "A string that specifies the name of the instance to retrieve configuration for. Exactly one of \"name\" or \"instance_id\" must be defined.",
-				MarkdownDescription: "A string that specifies the name of the instance to retrieve configuration for. Exactly one of `name` or `instance_id` must be defined.",
-				Validators: []validator.String{
-					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("instance_id")),
-					stringvalidator.LengthAtLeast(1),
-				},
+				Computed: true,
 			},
-			"properties": schema.SingleNestedAttribute{
-				Attributes: map[string]schema.Attribute{},
+			"properties": schema.StringAttribute{
+				CustomType: jsontypes.NormalizedType{},
 				Computed:   true,
 			},
 		},
@@ -137,21 +123,23 @@ func (state *davinciConnectorInstanceDataSourceModel) readClientResponse(respons
 	respDiags.Append(diags...)
 	state.Connector = connectorValue
 	// id
-	state.Id = types.StringPointerValue(response.Id)
-	// instance_id
-	state.InstanceId = types.StringPointerValue(response.Id)
+	state.Id = types.StringValue(response.Id)
 	// name
 	state.Name = types.StringValue(response.Name)
 	// properties
-	propertiesAttrTypes := map[string]attr.Type{}
-	var propertiesValue types.Object
-	if response.Properties == nil {
-		propertiesValue = types.ObjectNull(propertiesAttrTypes)
-	} else {
-		propertiesValue, diags = types.ObjectValue(propertiesAttrTypes, map[string]attr.Value{})
-		respDiags.Append(diags...)
+	state.Properties = jsontypes.NewNormalizedNull()
+	if response.Properties != nil {
+		propertiesBytes, err := json.Marshal(response.Properties)
+		if err != nil {
+			respDiags.AddAttributeError(
+				path.Root("properties"),
+				"Error Marshaling Properties",
+				fmt.Sprintf("An error occurred while marshaling the properties: %s", err.Error()),
+			)
+		} else {
+			state.Properties = jsontypes.NewNormalizedValue(string(propertiesBytes))
+		}
 	}
-	state.Properties = propertiesValue
 	return respDiags
 }
 

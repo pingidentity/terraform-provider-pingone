@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func TestAccDavinciConnectorInstanceDataSource_ByIDFull(t *testing.T) {
@@ -23,7 +24,7 @@ func TestAccDavinciConnectorInstanceDataSource_ByIDFull(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             davinciConnectorInstance_CheckDestroy, //TODO this method should exist in the generated resource acceptance test
+		CheckDestroy:             davinciConnectorInstance_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -47,14 +48,13 @@ func TestAccDavinciConnectorInstanceDataSource_NotFound(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             davinciConnectorInstance_CheckDestroy, //TODO this method should exist in the generated resource acceptance test
+		CheckDestroy:             davinciConnectorInstance_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccDavinciConnectorInstanceDataSourceConfig_NotFoundByID(resourceName),
-				ExpectError: regexp.MustCompile("There is no role with id"),
+				ExpectError: regexp.MustCompile("The requested resource was not found"),
 			},
-			//TODO add other checks for selecting by other attributes, if applicable
 		},
 	})
 }
@@ -63,10 +63,30 @@ func testAccDavinciConnectorInstanceDataSourceConfig_Full(resourceName string) s
 	return fmt.Sprintf(`
 resource "pingone_davinci_connector_instance" "%[1]s" {
   environment_id = data.pingone_environment.general_test.id
-  connector_instance_id = //TODO
-  // TODO set values for complete fields
-  instance_id = //TODO
-  name = //TODO
+  connector = {
+    id = "webhookConnector"
+  }
+  name = "%[1]s"
+  properties = jsonencode({
+        "urls": {
+            "type": "string",
+            "displayName": "Register URLs",
+            "createdDate": 12345,
+            "customerId": "12345",
+            "companyId": "singularkey",
+            "preferredControlType": "urlsTableView",
+            "info": "POST requests will be made to these registered url as selected later.",
+            "required": true,
+            "value": [
+                {
+                    "name": "example",
+                    "url": "https://example.com",
+                    "token": "mytoken",
+                    "value": "https://example.com"
+                }
+            ]
+        }
+    })
 }
 `, resourceName)
 }
@@ -79,19 +99,28 @@ func testAccDavinciConnectorInstanceDataSourceConfig_ByIDFull(resourceName strin
 
 data "pingone_davinci_connector_instance" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  connector_instance_id = pingone_davinci_connector_instance.%[2]s.id
+  instance_id = pingone_davinci_connector_instance.%[2]s.id
 }`, acctest.GenericSandboxEnvironment(), resourceName, testAccDavinciConnectorInstanceDataSourceConfig_Full(resourceName))
 }
 
+func testAccDavinciConnectorInstanceDataSourceConfig_NotFoundByID(resourceName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+data "pingone_davinci_connector_instance" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  instance_id = "9c052a8a14be44e48f072662569994ce" // dummy generic ID
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
 // Validate any computed values when applying complete HCL
-// TODO remove any values that are not computed from this check
-// TODO set expected values
 func davinciConnectorInstanceDataSource_CheckComputedValuesComplete(resourceName string) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "connector.id", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "id", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "instance_id", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "name", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "properties", "expected_value"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "connector.id", "webhookConnector"),
+		resource.TestMatchResourceAttr(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "id", verify.P1DVResourceIDRegexp),
+		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "name", resourceName),
+		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "properties",
+			"{\"urls\":{\"companyId\":\"singularkey\",\"createdDate\":12345,\"customerId\":\"12345\",\"displayName\":\"Register URLs\",\"info\":\"POST requests will be made to these registered url as selected later.\",\"preferredControlType\":\"urlsTableView\",\"required\":true,\"type\":\"string\",\"value\":[{\"name\":\"example\",\"token\":\"mytoken\",\"url\":\"https://example.com\",\"value\":\"https://example.com\"}]}}"),
 	)
 }
