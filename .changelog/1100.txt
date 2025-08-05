@@ -1,3 +1,0 @@
-```release-note:note
-bump `github.com/hashicorp/terraform-plugin-framework` 1.15.0 => 1.15.1
-```
