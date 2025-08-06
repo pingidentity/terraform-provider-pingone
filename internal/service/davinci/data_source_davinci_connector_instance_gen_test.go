@@ -35,8 +35,6 @@ func TestAccDavinciConnectorInstanceDataSource_ByIDFull(t *testing.T) {
 	})
 }
 
-//TODO test for selecting by other attributes, if applicable
-
 func TestAccDavinciConnectorInstanceDataSource_NotFound(t *testing.T) {
 	t.Parallel()
 

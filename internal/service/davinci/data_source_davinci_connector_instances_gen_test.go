@@ -22,8 +22,8 @@ func TestAccDavinciConnectorInstancesDataSource_Get(t *testing.T) {
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		//TODO add CheckDestroy if necessary for any created resources
-		ErrorCheck: acctest.ErrorCheck(t),
+		CheckDestroy:             davinciConnectorInstance_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDavinciConnectorInstancesDataSourceConfig_Get(resourceName),
@@ -37,19 +37,87 @@ func testAccDavinciConnectorInstancesDataSourceConfig_Get(resourceName string) s
 	return fmt.Sprintf(`
 	%[1]s
 
-	//TODO create any resource dependencies
+resource "pingone_davinci_connector_instance" "%[2]s-first" {
+  environment_id = data.pingone_environment.general_test.id
+  connector = {
+    id = "webhookConnector"
+  }
+  name = "%[2]s-first"
+  properties = jsonencode({
+        "urls": {
+            "type": "string",
+            "displayName": "Register URLs",
+            "createdDate": 12345,
+            "customerId": "12345",
+            "companyId": "singularkey",
+            "preferredControlType": "urlsTableView",
+            "info": "POST requests will be made to these registered url as selected later.",
+            "required": true,
+            "value": [
+                {
+                    "name": "example",
+                    "url": "https://example.com",
+                    "token": "mytoken",
+                    "value": "https://example.com"
+                }
+            ]
+        }
+    })
+}
+
+resource "pingone_davinci_connector_instance" "%[2]s-second" {
+  environment_id = data.pingone_environment.general_test.id
+  connector = {
+    id = "webhookConnector"
+  }
+  name = "%[2]s-second"
+  properties = jsonencode({
+        "urls": {
+            "type": "string",
+            "displayName": "Register URLs",
+            "createdDate": 12345,
+            "customerId": "12345",
+            "companyId": "singularkey",
+            "preferredControlType": "urlsTableView",
+            "info": "POST requests will be made to these registered url as selected later.",
+            "required": true,
+            "value": [
+                {
+                    "name": "example",
+                    "url": "https://example.com",
+                    "token": "mytoken",
+                    "value": "https://example.com"
+                }
+            ]
+        }
+    })
+}
 
 data "pingone_davinci_connector_instances" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
-  //TODO add depends_on for any dependencies if necessary
-  //depends_on = []
+  depends_on = [
+	pingone_davinci_connector_instance.%[2]s-first,
+	pingone_davinci_connector_instance.%[2]s-second,
+  ]
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
 // Validate any computed values when applying complete HCL
 func davinciConnectorInstancesDataSource_CheckComputedValuesComplete(resourceName string) resource.TestCheckFunc {
-	return resource.TestCheckResourceAttrSet(fmt.Sprintf("data.pingone_davinci_connector_instances.%s", resourceName), "id")
+	return resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("data.pingone_davinci_connector_instances.%s", resourceName), "id"),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("data.pingone_davinci_connector_instances.%s", resourceName), "connector_instances.*", map[string]string{
+			"connector.id": "webhookConnector",
+			"name":         fmt.Sprintf("%s-first", resourceName),
+			"properties":   "{\"urls\":{\"companyId\":\"singularkey\",\"createdDate\":12345,\"customerId\":\"12345\",\"displayName\":\"Register URLs\",\"info\":\"POST requests will be made to these registered url as selected later.\",\"preferredControlType\":\"urlsTableView\",\"required\":true,\"type\":\"string\",\"value\":[{\"name\":\"example\",\"token\":\"mytoken\",\"url\":\"https://example.com\",\"value\":\"https://example.com\"}]}}",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("data.pingone_davinci_connector_instances.%s", resourceName), "connector_instances.*", map[string]string{
+			"connector.id": "webhookConnector",
+			"name":         fmt.Sprintf("%s-second", resourceName),
+			"properties":   "{\"urls\":{\"companyId\":\"singularkey\",\"createdDate\":12345,\"customerId\":\"12345\",\"displayName\":\"Register URLs\",\"info\":\"POST requests will be made to these registered url as selected later.\",\"preferredControlType\":\"urlsTableView\",\"required\":true,\"type\":\"string\",\"value\":[{\"name\":\"example\",\"token\":\"mytoken\",\"url\":\"https://example.com\",\"value\":\"https://example.com\"}]}}",
+		}),
+	)
 
 }
