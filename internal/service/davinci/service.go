@@ -26,5 +26,6 @@ func Resources() []func() resource.Resource {
 func DataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewDavinciConnectorInstanceDataSource,
+		NewDavinciConnectorInstancesDataSource,
 	}
 }
