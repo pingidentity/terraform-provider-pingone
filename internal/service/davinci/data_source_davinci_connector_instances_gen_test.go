@@ -119,5 +119,4 @@ func davinciConnectorInstancesDataSource_CheckComputedValuesComplete(resourceNam
 			"properties":   "{\"urls\":{\"companyId\":\"singularkey\",\"createdDate\":12345,\"customerId\":\"12345\",\"displayName\":\"Register URLs\",\"info\":\"POST requests will be made to these registered url as selected later.\",\"preferredControlType\":\"urlsTableView\",\"required\":true,\"type\":\"string\",\"value\":[{\"name\":\"example\",\"token\":\"mytoken\",\"url\":\"https://example.com\",\"value\":\"https://example.com\"}]}}",
 		}),
 	)
-
 }
