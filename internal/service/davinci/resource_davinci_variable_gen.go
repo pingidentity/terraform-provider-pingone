@@ -5,11 +5,10 @@ package davinci
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"regexp"
-
-	"encoding/json"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
@@ -88,7 +87,7 @@ type davinciVariableResourceModel struct {
 
 func (r *davinciVariableResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Resource to create and manage a davinci variable.",
+		Description: "Resource to create and manage a DaVinci variable.",
 		Attributes: map[string]schema.Attribute{
 			"context": schema.StringAttribute{
 				Required:            true,
