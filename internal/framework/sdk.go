@@ -50,6 +50,7 @@ var (
 		"ap": "asia",
 		"au": "com.au",
 		"ca": "ca",
+		"sg": "sg",
 	}
 )
 
