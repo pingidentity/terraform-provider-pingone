@@ -118,7 +118,7 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, req
 			if jsonErr == nil {
 				var targetError pingone.ServiceError
 				jsonErr = json.Unmarshal(errBytes, &targetError)
-				if jsonErr == nil && targetError.Id != nil {
+				if jsonErr == nil {
 					// Apply custom error handler
 					diags = customError(r, &targetError)
 					// If no custom error handling was applied, format the error for output
@@ -165,7 +165,15 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, req
 
 func FormatPingOneError(sdkMethod string, v pingone.ServiceError) (summaryText, detailText string) {
 	summaryText = fmt.Sprintf("Error when calling `%s`: %v", sdkMethod, v.GetMessage())
-	detailText = fmt.Sprintf("PingOne Error Details:\nID:\t\t%s\nCode:\t\t%s\nMessage:\t%s", v.GetId(), v.GetCode(), v.GetMessage())
+	var detailTextBuilder strings.Builder
+	detailTextBuilder.WriteString("PingOne Error Details:\n")
+	if v.Id != nil {
+		detailTextBuilder.WriteString(fmt.Sprintf("ID:\t\t%s\n", v.GetId()))
+	}
+	if v.Code != nil {
+		detailTextBuilder.WriteString(fmt.Sprintf("Code:\t\t%s\n", v.GetCode()))
+	}
+	detailTextBuilder.WriteString(fmt.Sprintf("Message:\t%s\n", v.GetMessage()))
 
 	if details, ok := v.GetDetailsOk(); ok {
 
@@ -234,8 +242,9 @@ func FormatPingOneError(sdkMethod string, v pingone.ServiceError) (summaryText, 
 			detailsStrList = append(detailsStrList, detailsStr)
 		}
 
-		detailText += fmt.Sprintf("\nDetails:\n%s", strings.Join(detailsStrList, "\n"))
+		detailTextBuilder.WriteString(fmt.Sprintf("\nDetails:\n%s", strings.Join(detailsStrList, "\n")))
 	}
 
+	detailText = detailTextBuilder.String()
 	return summaryText, detailText
 }
