@@ -205,6 +205,165 @@ func TestAccDavinciVariable_Secret(t *testing.T) {
 	})
 }
 
+func TestAccDavinciVariable_ChangeDataType(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_davinci_variable.%s", resourceName)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             davinciVariable_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				// Start with number data type
+				Config: davinciVariable_NumberHCL(resourceName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "data_type", "number"),
+				),
+			},
+			{
+				// Change to string data type
+				Config: davinciVariable_StringHCL(resourceName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "data_type", "string"),
+				),
+			},
+			{
+				// Change back to number
+				Config: davinciVariable_NumberHCL(resourceName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "data_type", "number"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDavinciVariable_UserContext(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_davinci_variable.%s", resourceName)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             davinciVariable_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				// Create with full model for user context
+				Config: davinciVariable_UserContextFullHCL(resourceName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "context", "user"),
+					resource.TestCheckResourceAttr(resourceFullName, "data_type", "number"),
+					resource.TestCheckResourceAttr(resourceFullName, "display_name", "User Variable Display"),
+					resource.TestCheckResourceAttr(resourceFullName, "min", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "max", "10"),
+					resource.TestCheckResourceAttr(resourceFullName, "mutable", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "value.float32", "7"),
+				),
+			},
+			{
+				// Create with minimal model for user context
+				Config: davinciVariable_UserContextMinimalHCL(resourceName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "context", "user"),
+					resource.TestCheckResourceAttr(resourceFullName, "data_type", "string"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "display_name"),
+					resource.TestCheckResourceAttr(resourceFullName, "min", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "max", "2000"),
+					resource.TestCheckResourceAttr(resourceFullName, "mutable", "true"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "value"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDavinciVariable_FlowContext(t *testing.T) {
+	t.Skip("Skipping TestAccDavinciVariable_FlowContext until pingone_davinci_flow is available for use in tests")
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_davinci_variable.%s", resourceName)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             davinciVariable_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				// Create with full model for flow context
+				Config: davinciVariable_FlowContextHCL(resourceName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "context", "flow"),
+					resource.TestCheckResourceAttr(resourceFullName, "data_type", "string"),
+					resource.TestCheckResourceAttr(resourceFullName, "display_name", "Flow Variable Display"),
+					resource.TestCheckResourceAttr(resourceFullName, "mutable", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "value.string", "flow-test-value"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDavinciVariable_SecretValueTypes(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_davinci_variable.%s", resourceName)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             davinciVariable_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				// Create dynamic secret
+				Config: davinciVariable_SecretDynamicHCL(resourceName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "data_type", "secret"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "value"),
+				),
+			},
+			{
+				// Switch to static secret
+				Config: davinciVariable_SecretStaticHCL(resourceName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "data_type", "secret"),
+					resource.TestCheckResourceAttr(resourceFullName, "value.secret_string", "mysecretvalue"),
+				),
+			},
+			{
+				// Switch back to dynamic secret
+				Config: davinciVariable_SecretDynamicHCL(resourceName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "data_type", "secret"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "value"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccDavinciVariable_NewEnv(t *testing.T) {
 	t.Parallel()
 
@@ -289,7 +448,7 @@ resource "pingone_davinci_variable" "%[2]s" {
 }
 
 // Maximal HCL with all values set where possible
-// TODO test with flow id once we have API/resource available
+// TODO test with flow id once we have API/resource available - see TestAccDavinciVariable_FlowContext
 func davinciVariable_CompleteHCL(resourceName string) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -374,6 +533,106 @@ resource "pingone_davinci_variable" "%[2]s" {
   name           = "%[2]s"
   value = {
     secret_string = "asdf"
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func davinciVariable_StringHCL(resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_variable" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  context        = "flowInstance"
+  data_type      = "string"
+  mutable        = false
+  name           = "%[2]s"
+  value = {
+    string = "test-string-value"
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func davinciVariable_UserContextFullHCL(resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_variable" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  context        = "user"
+  data_type      = "number"
+  display_name   = "User Variable Display"
+  min            = 5
+  max            = 10
+  mutable        = false
+  name           = "%[2]s"
+  value = {
+    float32 = 7
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func davinciVariable_UserContextMinimalHCL(resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_variable" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  context        = "user"
+  data_type      = "string"
+  mutable        = true
+  name           = "%[2]s"
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func davinciVariable_FlowContextHCL(resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_variable" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  context        = "flow"
+  data_type      = "string"
+  display_name   = "Flow Variable Display"
+  mutable        = false
+  name           = "%[2]s"
+  value = {
+    string = "flow-test-value"
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func davinciVariable_SecretDynamicHCL(resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_variable" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  context        = "company"
+  data_type      = "secret"
+  mutable        = true
+  name           = "%[2]s"
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func davinciVariable_SecretStaticHCL(resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_variable" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  context        = "company"
+  data_type      = "secret"
+  mutable        = true
+  name           = "%[2]s"
+  value = {
+    secret_string = "mysecretvalue"
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)

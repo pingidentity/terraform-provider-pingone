@@ -31,12 +31,6 @@ The following example shows the recommended usage of a variable where the variab
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-static-value.tf") }}
 
-## Example Usage - Static, Empty Variable Values
-
-The following example shows the recommended usage of a variable where the variable value is static, has an empty value and should be managed in Terraform state.
-
-{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-empty-value.tf") }}
-
 {{ .SchemaMarkdown | trimspace }}
 
 {{ if .HasImport -}}
