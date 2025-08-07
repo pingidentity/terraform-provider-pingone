@@ -5,11 +5,10 @@ package davinci
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"regexp"
-
-	"encoding/json"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
@@ -79,7 +78,7 @@ type davinciConnectorInstanceResourceModel struct {
 
 func (r *davinciConnectorInstanceResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Resource to create and manage a davinci connector instance.",
+		Description: "Resource to create and manage a DaVinci connector instance.",
 		Attributes: map[string]schema.Attribute{
 			"connector": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
