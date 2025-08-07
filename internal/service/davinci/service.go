@@ -27,6 +27,8 @@ func DataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewDavinciApplicationDataSource,
 		NewDavinciApplicationsDataSource,
+		NewDavinciConnectorDataSource,
+		NewDavinciConnectorsDataSource,
 		NewDavinciConnectorInstanceDataSource,
 		NewDavinciConnectorInstancesDataSource,
 	}
