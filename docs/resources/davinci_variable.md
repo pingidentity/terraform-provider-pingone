@@ -9,13 +9,7 @@ description: |-
 
 Resource to create and manage a DaVinci variable.
 
-~> When using "company" or "flow instance" variables, it is recommended to define these variables before the flows that depend on them. This is shown in the example using the `depends_on` meta argument.
-
-~> When using "flow" variables, it is recommended to define these variables after the flows that depends on them have been imported, as shown in the example.
-
 ## Example Usage
-
-The following example shows the recommended usage of this resource when combined with the `pingone_davinci_flow` resource.
 
 ```terraform
 resource "pingone_davinci_variable" "my_awesome_region_variable" {
