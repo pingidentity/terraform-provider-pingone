@@ -167,52 +167,6 @@ func TestAccDavinciConnectorInstance_ComplexProperties(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName)
 
-	mixedTypeStep := resource.TestStep{
-		Config: davinciConnectorInstance_PropertyDataTypesMixed_HCL(resourceName),
-		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttrSet(resourceFullName, "properties"),
-			// We can't easily check the exact properties value as it's a JSON string
-			// and the formatting might be different, but we can check that it's set
-		),
-	}
-
-	// The following test steps will be uncommented as we implement them
-
-	jsonCustomAttributesTypeStep := resource.TestStep{
-		Config: davinciConnectorInstance_PropertyDataTypesJsonCustomAttributes_HCL(resourceName),
-		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttrSet(resourceFullName, "properties"),
-		),
-	}
-
-	jsonOpenIDTypeStep := resource.TestStep{
-		Config: davinciConnectorInstance_PropertyDataTypesJsonOpenID_HCL(resourceName),
-		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttrSet(resourceFullName, "properties"),
-		),
-	}
-
-	jsonCustomAuthTypeStep := resource.TestStep{
-		Config: davinciConnectorInstance_PropertyDataTypesJsonCustomAuth_HCL(resourceName),
-		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttrSet(resourceFullName, "properties"),
-		),
-	}
-
-	jsonOAuth2TypeStep := resource.TestStep{
-		Config: davinciConnectorInstance_PropertyDataTypesJsonOAuth2_HCL(resourceName),
-		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttrSet(resourceFullName, "properties"),
-		),
-	}
-
-	jsonSAMLTypeStep := resource.TestStep{
-		Config: davinciConnectorInstance_PropertyDataTypesJsonSAML_HCL(resourceName),
-		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttrSet(resourceFullName, "properties"),
-		),
-	}
-
 	importStateFunc := func() resource.ImportStateIdFunc {
 		return func(s *terraform.State) (string, error) {
 			rs, ok := s.RootModule().Resources[resourceFullName]
@@ -233,8 +187,9 @@ func TestAccDavinciConnectorInstance_ComplexProperties(t *testing.T) {
 		CheckDestroy:             davinciConnectorInstance_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			// Test for mixed types (string, number, boolean)
-			mixedTypeStep,
+			{
+				Config: davinciConnectorInstance_PropertyDataTypesMixed_HCL(resourceName),
+			},
 			{
 				ResourceName:      resourceFullName,
 				ImportStateIdFunc: importStateFunc(),
@@ -245,9 +200,9 @@ func TestAccDavinciConnectorInstance_ComplexProperties(t *testing.T) {
 				Config:  davinciConnectorInstance_PropertyDataTypesMixed_HCL(resourceName),
 				Destroy: true,
 			},
-
-			// Test for JSON custom attributes type
-			jsonCustomAttributesTypeStep,
+			{
+				Config: davinciConnectorInstance_PropertyDataTypesJsonCustomAttributes_HCL(resourceName),
+			},
 			{
 				ResourceName:      resourceFullName,
 				ImportStateIdFunc: importStateFunc(),
@@ -258,14 +213,15 @@ func TestAccDavinciConnectorInstance_ComplexProperties(t *testing.T) {
 				Config:  davinciConnectorInstance_PropertyDataTypesJsonCustomAttributes_HCL(resourceName),
 				Destroy: true,
 			},
-
-			// Test for JSON OpenID type
-			jsonOpenIDTypeStep,
+			{
+				Config: davinciConnectorInstance_PropertyDataTypesJsonOpenID_HCL(resourceName),
+			},
 			{
 				ResourceName:      resourceFullName,
 				ImportStateIdFunc: importStateFunc(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				// properties contains sensitive attributes obfuscated by the API, so it can't be verified
 				ImportStateVerifyIgnore: []string{
 					"properties",
 				},
@@ -274,14 +230,15 @@ func TestAccDavinciConnectorInstance_ComplexProperties(t *testing.T) {
 				Config:  davinciConnectorInstance_PropertyDataTypesJsonOpenID_HCL(resourceName),
 				Destroy: true,
 			},
-
-			// Test for JSON custom auth type
-			jsonCustomAuthTypeStep,
+			{
+				Config: davinciConnectorInstance_PropertyDataTypesJsonCustomAuth_HCL(resourceName),
+			},
 			{
 				ResourceName:      resourceFullName,
 				ImportStateIdFunc: importStateFunc(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				// properties contains sensitive attributes obfuscated by the API, so it can't be verified
 				ImportStateVerifyIgnore: []string{
 					"properties",
 				},
@@ -290,14 +247,15 @@ func TestAccDavinciConnectorInstance_ComplexProperties(t *testing.T) {
 				Config:  davinciConnectorInstance_PropertyDataTypesJsonCustomAuth_HCL(resourceName),
 				Destroy: true,
 			},
-
-			// Test for JSON OAuth2 type
-			jsonOAuth2TypeStep,
+			{
+				Config: davinciConnectorInstance_PropertyDataTypesJsonOAuth2_HCL(resourceName),
+			},
 			{
 				ResourceName:      resourceFullName,
 				ImportStateIdFunc: importStateFunc(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				// properties contains sensitive attributes obfuscated by the API, so it can't be verified
 				ImportStateVerifyIgnore: []string{
 					"properties",
 				},
@@ -306,17 +264,14 @@ func TestAccDavinciConnectorInstance_ComplexProperties(t *testing.T) {
 				Config:  davinciConnectorInstance_PropertyDataTypesJsonOAuth2_HCL(resourceName),
 				Destroy: true,
 			},
-
-			// Test for JSON SAML type
-			jsonSAMLTypeStep,
+			{
+				Config: davinciConnectorInstance_PropertyDataTypesJsonSAML_HCL(resourceName),
+			},
 			{
 				ResourceName:      resourceFullName,
 				ImportStateIdFunc: importStateFunc(),
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{
-					"properties",
-				},
 			},
 		},
 	})
