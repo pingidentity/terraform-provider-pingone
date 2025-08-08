@@ -161,6 +161,151 @@ func TestAccDavinciConnectorInstance_NewEnv(t *testing.T) {
 	})
 }
 
+func TestAccDavinciConnectorInstance_ComplexProperties(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName)
+
+	name := resourceName
+
+	mixedTypeStep := resource.TestStep{
+		Config: davinciConnectorInstance_PropertyDataTypesMixed_HCL(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttrSet(resourceFullName, "properties"),
+			// We can't easily check the exact properties value as it's a JSON string
+			// and the formatting might be different, but we can check that it's set
+		),
+	}
+
+	// The following test steps will be uncommented and implemented later
+	/*
+		jsonCustomAttributesTypeStep := resource.TestStep{
+			Config: davinciConnectorInstance_PropertyDataTypesJsonCustomAttributes_HCL(resourceName, name),
+			Check: resource.ComposeTestCheckFunc(
+				resource.TestCheckResourceAttrSet(resourceFullName, "properties"),
+			),
+		}
+
+		jsonOpenIDTypeStep := resource.TestStep{
+			Config: davinciConnectorInstance_PropertyDataTypesJsonOpenID_HCL(resourceName, name),
+			Check: resource.ComposeTestCheckFunc(
+				resource.TestCheckResourceAttrSet(resourceFullName, "properties"),
+			),
+		}
+
+		jsonCustomAuthTypeStep := resource.TestStep{
+			Config: davinciConnectorInstance_PropertyDataTypesJsonCustomAuth_HCL(resourceName, name),
+			Check: resource.ComposeTestCheckFunc(
+				resource.TestCheckResourceAttrSet(resourceFullName, "properties"),
+			),
+		}
+
+		jsonOAuth2TypeStep := resource.TestStep{
+			Config: davinciConnectorInstance_PropertyDataTypesJsonOAuth2_HCL(resourceName, name),
+			Check: resource.ComposeTestCheckFunc(
+				resource.TestCheckResourceAttrSet(resourceFullName, "properties"),
+			),
+		}
+	*/
+
+	importStateFunc := func() resource.ImportStateIdFunc {
+		return func(s *terraform.State) (string, error) {
+			rs, ok := s.RootModule().Resources[resourceFullName]
+			if !ok {
+				return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+			}
+
+			return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["id"]), nil
+		}
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             davinciConnectorInstance_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Test for mixed types (string, number, boolean)
+			mixedTypeStep,
+			{
+				ResourceName:      resourceFullName,
+				ImportStateIdFunc: importStateFunc(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				Config:  davinciConnectorInstance_PropertyDataTypesMixed_HCL(resourceName, name),
+				Destroy: true,
+			},
+
+			// Test for JSON custom attributes type
+			// jsonCustomAttributesTypeStep,
+			// {
+			//   ResourceName: resourceFullName,
+			//   ImportStateIdFunc: importStateFunc(),
+			//   ImportState: true,
+			//   ImportStateVerify: true,
+			// },
+			// {
+			//   Config: davinciConnectorInstance_PropertyDataTypesJsonCustomAttributes_HCL(resourceName, name),
+			//   Destroy: true,
+			// },
+
+			// Test for JSON OpenID type
+			// jsonOpenIDTypeStep,
+			// {
+			//   ResourceName: resourceFullName,
+			//   ImportStateIdFunc: importStateFunc(),
+			//   ImportState: true,
+			//   ImportStateVerify: true,
+			//   ImportStateVerifyIgnore: []string{
+			//     "properties",
+			//   },
+			// },
+			// {
+			//   Config: davinciConnectorInstance_PropertyDataTypesJsonOpenID_HCL(resourceName, name),
+			//   Destroy: true,
+			// },
+
+			// Test for JSON custom auth type
+			// jsonCustomAuthTypeStep,
+			// {
+			//   ResourceName: resourceFullName,
+			//   ImportStateIdFunc: importStateFunc(),
+			//   ImportState: true,
+			//   ImportStateVerify: true,
+			//   ImportStateVerifyIgnore: []string{
+			//     "properties",
+			//   },
+			// },
+			// {
+			//   Config: davinciConnectorInstance_PropertyDataTypesJsonCustomAuth_HCL(resourceName, name),
+			//   Destroy: true,
+			// },
+
+			// Test for JSON OAuth2 type
+			// jsonOAuth2TypeStep,
+			// {
+			//   ResourceName: resourceFullName,
+			//   ImportStateIdFunc: importStateFunc(),
+			//   ImportState: true,
+			//   ImportStateVerify: true,
+			//   ImportStateVerifyIgnore: []string{
+			//     "properties",
+			//   },
+			// },
+			// {
+			//   Config: davinciConnectorInstance_PropertyDataTypesJsonOAuth2_HCL(resourceName, name),
+			//   Destroy: true,
+			// },
+		},
+	})
+}
+
 func TestAccDavinciConnectorInstance_BadParameters(t *testing.T) {
 	t.Parallel()
 
@@ -261,10 +406,75 @@ resource "pingone_davinci_connector_instance" "%[3]s" {
   connector = {
     id = "haveIBeenPwnedConnector"
   }
-  name = "%[2]s"
+  name = "%[3]s"
 }
 `, acctestlegacysdk.MinimalSandboxDaVinciEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
+
+func davinciConnectorInstance_PropertyDataTypesMixed_HCL(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_connector_instance" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  connector = {
+    id = "smtpConnector"
+  }
+  name = "%[2]s"
+  
+  properties = jsonencode({
+    "name": {
+      "type": "string",
+      "value": "test"
+    },
+    "hostname": {
+      "type": "string",
+      "value": "localhost"
+    },
+    "port": {
+      "type": "number",
+      "value": 2525
+    },
+    "secureFlag": {
+      "type": "boolean",
+      "value": true
+    },
+    "username": {
+      "type": "string",
+      "value": "test"
+    },
+    "password": {
+      "type": "string",
+      "value": "test"
+    }
+  })
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+// These functions will be implemented later when we add the corresponding test cases
+
+/*
+func davinciConnectorInstance_PropertyDataTypesJsonCustomAttributes_HCL(resourceName, name string) string {
+	// This function will be implemented later
+	return ""
+}
+
+func davinciConnectorInstance_PropertyDataTypesJsonOpenID_HCL(resourceName, name string) string {
+	// This function will be implemented later
+	return ""
+}
+
+func davinciConnectorInstance_PropertyDataTypesJsonCustomAuth_HCL(resourceName, name string) string {
+	// This function will be implemented later
+	return ""
+}
+
+func davinciConnectorInstance_PropertyDataTypesJsonOAuth2_HCL(resourceName, name string) string {
+	// This function will be implemented later
+	return ""
+}
+*/
 
 // Validate any computed values when applying minimal HCL
 func davinciConnectorInstance_CheckComputedValuesMinimal(resourceName string) resource.TestCheckFunc {
