@@ -335,7 +335,11 @@ func TestAccDavinciConnectorInstance_ComplexProperties(t *testing.T) {
 				Destroy: true,
 			},
 			{
-				Config: davinciConnectorInstance_PropertyDataTypesJsonOAuth2_HCL(resourceName),
+				Config: davinciConnectorInstance_PropertyDataTypesJsonOAuth2_HCL(resourceName, "initialClientSecret"),
+			},
+			{
+				// Test modifying a sensitive property
+				Config: davinciConnectorInstance_PropertyDataTypesJsonOAuth2_HCL(resourceName, "updatedClientSecret"),
 			},
 			{
 				ResourceName:      resourceFullName,
@@ -348,7 +352,7 @@ func TestAccDavinciConnectorInstance_ComplexProperties(t *testing.T) {
 				},
 			},
 			{
-				Config:  davinciConnectorInstance_PropertyDataTypesJsonOAuth2_HCL(resourceName),
+				Config:  davinciConnectorInstance_PropertyDataTypesJsonOAuth2_HCL(resourceName, "updatedClientSecret"),
 				Destroy: true,
 			},
 			{
@@ -849,7 +853,7 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
-func davinciConnectorInstance_PropertyDataTypesJsonOAuth2_HCL(resourceName string) string {
+func davinciConnectorInstance_PropertyDataTypesJsonOAuth2_HCL(resourceName, clientSecret string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -891,7 +895,7 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
           "preferredControlType" : "textField",
           "secure" : true,
           "required" : true,
-          "value" : "dummyClientSecret"
+          "value" : "%[3]s"
         },
         "scope" : {
           "type" : "string",
@@ -982,7 +986,7 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
     }
   })
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.GenericSandboxEnvironment(), resourceName, clientSecret)
 }
 
 func davinciConnectorInstance_PropertyDataTypesJsonSAML_HCL(resourceName string) string {
