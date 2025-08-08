@@ -126,6 +126,7 @@ func (r *davinciConnectorInstanceResource) Schema(ctx context.Context, req resou
 			"properties": schema.StringAttribute{
 				CustomType: jsontypes.NormalizedObfuscatableType{},
 				Optional:   true,
+				Sensitive:  true,
 			},
 		},
 	}

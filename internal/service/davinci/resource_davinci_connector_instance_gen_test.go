@@ -437,31 +437,31 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
     id = "smtpConnector"
   }
   name = "%[2]s"
-  
+
   properties = jsonencode({
-    "name": {
-      "type": "string",
-      "value": "test"
+    "name" : {
+      "type" : "string",
+      "value" : "test"
     },
-    "hostname": {
-      "type": "string",
-      "value": "localhost"
+    "hostname" : {
+      "type" : "string",
+      "value" : "localhost"
     },
-    "port": {
-      "type": "number",
-      "value": 2525
+    "port" : {
+      "type" : "number",
+      "value" : 2525
     },
-    "secureFlag": {
-      "type": "boolean",
-      "value": true
+    "secureFlag" : {
+      "type" : "boolean",
+      "value" : true
     },
-    "username": {
-      "type": "string",
-      "value": "test"
+    "username" : {
+      "type" : "string",
+      "value" : "test"
     },
-    "password": {
-      "type": "string",
-      "value": "test"
+    "password" : {
+      "type" : "string",
+      "value" : "test"
     }
   })
 }
@@ -478,64 +478,64 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
     id = "skUserPool"
   }
   name = "%[2]s"
-  
+
   properties = jsonencode({
-    "customAttributes": {
-      "type": "array",
-      "preferredControlType": "tableViewAttributes",
-      "sections": [
+    "customAttributes" : {
+      "type" : "array",
+      "preferredControlType" : "tableViewAttributes",
+      "sections" : [
         "connectorAttributes"
       ],
-      "value": [
+      "value" : [
         {
-          "name": "username",
-          "description": "Username",
-          "type": "string",
-          "value": null,
-          "minLength": "1",
-          "maxLength": "300",
-          "required": true,
-          "attributeType": "sk"
+          "name" : "username",
+          "description" : "Username",
+          "type" : "string",
+          "value" : null,
+          "minLength" : "1",
+          "maxLength" : "300",
+          "required" : true,
+          "attributeType" : "sk"
         },
         {
-          "name": "firstName",
-          "description": "First Name",
-          "type": "string",
-          "value": null,
-          "minLength": "1",
-          "maxLength": "100",
-          "required": false,
-          "attributeType": "sk"
+          "name" : "firstName",
+          "description" : "First Name",
+          "type" : "string",
+          "value" : null,
+          "minLength" : "1",
+          "maxLength" : "100",
+          "required" : false,
+          "attributeType" : "sk"
         },
         {
-          "name": "lastName",
-          "description": "Last Name",
-          "type": "string",
-          "value": null,
-          "minLength": "1",
-          "maxLength": "100",
-          "required": false,
-          "attributeType": "sk"
+          "name" : "lastName",
+          "description" : "Last Name",
+          "type" : "string",
+          "value" : null,
+          "minLength" : "1",
+          "maxLength" : "100",
+          "required" : false,
+          "attributeType" : "sk"
         },
         {
-          "name": "name",
-          "description": "Display Name",
-          "type": "string",
-          "value": null,
-          "minLength": "1",
-          "maxLength": "250",
-          "required": false,
-          "attributeType": "sk"
+          "name" : "name",
+          "description" : "Display Name",
+          "type" : "string",
+          "value" : null,
+          "minLength" : "1",
+          "maxLength" : "250",
+          "required" : false,
+          "attributeType" : "sk"
         },
         {
-          "name": "email",
-          "description": "Email",
-          "type": "string",
-          "value": null,
-          "minLength": "1",
-          "maxLength": "250",
-          "required": false,
-          "attributeType": "sk"
+          "name" : "email",
+          "description" : "Email",
+          "type" : "string",
+          "value" : null,
+          "minLength" : "1",
+          "maxLength" : "250",
+          "required" : false,
+          "attributeType" : "sk"
         }
       ]
     }
@@ -554,55 +554,55 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
     id = "pingFederateConnectorV2"
   }
   name = "%[2]s"
-  
+
   properties = jsonencode({
-    "openId": {
-      "properties": {
-        "skRedirectUri": {
-          "type": "string",
-          "displayName": "Redirect URL",
-          "info": "Enter this in your identity provider configuration to allow it to redirect the browser back to DaVinci. If you use a custom PingOne domain, modify the URL accordingly.",
-          "preferredControlType": "textField",
-          "disabled": true,
-          "initializeValue": "SINGULARKEY_REDIRECT_URI",
-          "copyToClip": true
+    "openId" : {
+      "properties" : {
+        "skRedirectUri" : {
+          "type" : "string",
+          "displayName" : "Redirect URL",
+          "info" : "Enter this in your identity provider configuration to allow it to redirect the browser back to DaVinci. If you use a custom PingOne domain, modify the URL accordingly.",
+          "preferredControlType" : "textField",
+          "disabled" : true,
+          "initializeValue" : "SINGULARKEY_REDIRECT_URI",
+          "copyToClip" : true
         },
-        "clientId": {
-          "type": "string",
-          "displayName": "Client ID",
-          "placeholder": "",
-          "preferredControlType": "textField",
-          "required": true,
-          "value": "test"
+        "clientId" : {
+          "type" : "string",
+          "displayName" : "Client ID",
+          "placeholder" : "",
+          "preferredControlType" : "textField",
+          "required" : true,
+          "value" : "test"
         },
-        "clientSecret": {
-          "type": "string",
-          "displayName": "Client Secret",
-          "preferredControlType": "textField",
-          "secure": true,
-          "required": true,
-          "value": "test"
+        "clientSecret" : {
+          "type" : "string",
+          "displayName" : "Client Secret",
+          "preferredControlType" : "textField",
+          "secure" : true,
+          "required" : true,
+          "value" : "test"
         },
-        "scope": {
-          "type": "string",
-          "displayName": "Scope",
-          "preferredControlType": "textField",
-          "requiredValue": "openid",
-          "value": "openid",
-          "required": true
+        "scope" : {
+          "type" : "string",
+          "displayName" : "Scope",
+          "preferredControlType" : "textField",
+          "requiredValue" : "openid",
+          "value" : "openid",
+          "required" : true
         },
-        "issuerUrl": {
-          "type": "string",
-          "displayName": "Base URL",
-          "preferredControlType": "textField",
-          "value": "https://ping-eng.com",
-          "required": true
+        "issuerUrl" : {
+          "type" : "string",
+          "displayName" : "Base URL",
+          "preferredControlType" : "textField",
+          "value" : "https://ping-eng.com",
+          "required" : true
         },
-        "returnToUrl": {
-          "displayName": "Application Return To URL",
-          "preferredControlType": "textField",
-          "info": "When using the embedded flow player widget and an IDP/Social Login connector, provide a callback URL to return back to the application.",
-          "value": "https://ping-eng.com/callback"
+        "returnToUrl" : {
+          "displayName" : "Application Return To URL",
+          "preferredControlType" : "textField",
+          "info" : "When using the embedded flow player widget and an IDP/Social Login connector, provide a callback URL to return back to the application.",
+          "value" : "https://ping-eng.com/callback"
         }
       }
     }
@@ -621,150 +621,150 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
     id = "genericConnector"
   }
   name = "%[2]s"
-  
+
   properties = jsonencode({
-    "customAuth": {
-      "properties": {
-        "customAttributes": {
-          "type": "array",
-          "displayName": "Connector Attributes",
-          "preferredControlType": "tableViewAttributes",
-          "info": "These attributes will be available in User Connector Attribute Mapping.",
-          "sections": [
+    "customAuth" : {
+      "properties" : {
+        "customAttributes" : {
+          "type" : "array",
+          "displayName" : "Connector Attributes",
+          "preferredControlType" : "tableViewAttributes",
+          "info" : "These attributes will be available in User Connector Attribute Mapping.",
+          "sections" : [
             "connectorAttributes"
           ],
-          "value": [
+          "value" : [
             {
-              "name": "id",
-              "description": "ID",
-              "type": "string",
-              "value": null,
-              "minLength": "1",
-              "maxLength": "300",
-              "required": true,
-              "attributeType": "sk"
+              "name" : "id",
+              "description" : "ID",
+              "type" : "string",
+              "value" : null,
+              "minLength" : "1",
+              "maxLength" : "300",
+              "required" : true,
+              "attributeType" : "sk"
             },
             {
-              "name": "name",
-              "description": "Display Name",
-              "type": "string",
-              "value": null,
-              "minLength": "1",
-              "maxLength": "250",
-              "required": false,
-              "attributeType": "sk"
+              "name" : "name",
+              "description" : "Display Name",
+              "type" : "string",
+              "value" : null,
+              "minLength" : "1",
+              "maxLength" : "250",
+              "required" : false,
+              "attributeType" : "sk"
             },
             {
-              "name": "email",
-              "description": "Email",
-              "type": "string",
-              "value": null,
-              "minLength": "1",
-              "maxLength": "250",
-              "required": false,
-              "attributeType": "sk"
+              "name" : "email",
+              "description" : "Email",
+              "type" : "string",
+              "value" : null,
+              "minLength" : "1",
+              "maxLength" : "250",
+              "required" : false,
+              "attributeType" : "sk"
             }
           ]
         },
-        "userConnectorAttributeMapping": {
-          "type": "object",
-          "preferredControlType": "userConnectorAttributeMapping",
-          "newMappingAllowed": true,
-          "title1": null,
-          "title2": null,
-          "sections": [
+        "userConnectorAttributeMapping" : {
+          "type" : "object",
+          "preferredControlType" : "userConnectorAttributeMapping",
+          "newMappingAllowed" : true,
+          "title1" : null,
+          "title2" : null,
+          "sections" : [
             "attributeMapping"
           ]
         },
-        "providerName": {
-          "displayName": "Provider Name",
-          "preferredControlType": "textField",
-          "required": true,
-          "value": "fdfs"
+        "providerName" : {
+          "displayName" : "Provider Name",
+          "preferredControlType" : "textField",
+          "required" : true,
+          "value" : "fdfs"
         },
-        "authTypeDropdown": {
-          "displayName": "Auth Type",
-          "preferredControlType": "dropDown",
-          "required": true,
-          "options": [
+        "authTypeDropdown" : {
+          "displayName" : "Auth Type",
+          "preferredControlType" : "dropDown",
+          "required" : true,
+          "options" : [
             {
-              "name": "Oauth2",
-              "value": "oauth2"
+              "name" : "Oauth2",
+              "value" : "oauth2"
             },
             {
-              "name": "OpenId",
-              "value": "openId"
+              "name" : "OpenId",
+              "value" : "openId"
             }
           ],
-          "enum": [
+          "enum" : [
             "oauth2",
             "openId"
           ],
-          "value": "oauth2"
+          "value" : "oauth2"
         },
-        "issuerUrl": {
-          "preferredControlType": "textField",
-          "displayName": "Issuer URL",
-          "info": "Required if auth type is OpenID",
-          "value": "fdsfs"
+        "issuerUrl" : {
+          "preferredControlType" : "textField",
+          "displayName" : "Issuer URL",
+          "info" : "Required if auth type is OpenID",
+          "value" : "fdsfs"
         },
-        "skRedirectUri": {
-          "displayName": "Redirect URL",
-          "preferredControlType": "textField",
-          "disabled": true,
-          "initializeValue": "SINGULARKEY_REDIRECT_URI",
-          "copyToClip": true
+        "skRedirectUri" : {
+          "displayName" : "Redirect URL",
+          "preferredControlType" : "textField",
+          "disabled" : true,
+          "initializeValue" : "SINGULARKEY_REDIRECT_URI",
+          "copyToClip" : true
         },
-        "clientId": {
-          "displayName": "App ID",
-          "preferredControlType": "textField",
-          "required": true,
-          "value": "fdsfs"
+        "clientId" : {
+          "displayName" : "App ID",
+          "preferredControlType" : "textField",
+          "required" : true,
+          "value" : "fdsfs"
         },
-        "clientSecret": {
-          "displayName": "Client Secret",
-          "preferredControlType": "textField",
-          "secure": true,
-          "required": true,
-          "value": "testDummySecret"
+        "clientSecret" : {
+          "displayName" : "Client Secret",
+          "preferredControlType" : "textField",
+          "secure" : true,
+          "required" : true,
+          "value" : "testDummySecret"
         },
-        "scope": {
-          "displayName": "Scope",
-          "preferredControlType": "textField",
-          "required": true,
-          "value": "myscope"
+        "scope" : {
+          "displayName" : "Scope",
+          "preferredControlType" : "textField",
+          "required" : true,
+          "value" : "myscope"
         },
-        "authorizationEndpoint": {
-          "displayName": "Authorization Endpoint",
-          "preferredControlType": "textField",
-          "required": true,
-          "value": "fdsfs"
+        "authorizationEndpoint" : {
+          "displayName" : "Authorization Endpoint",
+          "preferredControlType" : "textField",
+          "required" : true,
+          "value" : "fdsfs"
         },
-        "tokenEndpoint": {
-          "displayName": "Token Endpoint",
-          "preferredControlType": "textField",
-          "required": true,
-          "value": "fdsfs"
+        "tokenEndpoint" : {
+          "displayName" : "Token Endpoint",
+          "preferredControlType" : "textField",
+          "required" : true,
+          "value" : "fdsfs"
         },
-        "bearerToken": {
-          "preferredControlType": "textField",
-          "type": "boolean",
-          "displayName": "Token Attachment",
-          "info": "Optional field. Prepend token with this value. Example: Bearer or Token"
+        "bearerToken" : {
+          "preferredControlType" : "textField",
+          "type" : "boolean",
+          "displayName" : "Token Attachment",
+          "info" : "Optional field. Prepend token with this value. Example: Bearer or Token"
         },
-        "userInfoEndpoint": {
-          "displayName": "User Info Endpoint",
-          "preferredControlType": "textFieldArrayView",
-          "required": true,
-          "value": [
+        "userInfoEndpoint" : {
+          "displayName" : "User Info Endpoint",
+          "preferredControlType" : "textFieldArrayView",
+          "required" : true,
+          "value" : [
             "fdsdsfs"
           ]
         },
-        "returnToUrl": {
-          "displayName": "Application Return To URL",
-          "preferredControlType": "textField",
-          "info": "When using the embedded flow player widget and an IdP/Social Login connector, provide a callback URL to return back to the application.",
-          "value": "test"
+        "returnToUrl" : {
+          "displayName" : "Application Return To URL",
+          "preferredControlType" : "textField",
+          "info" : "When using the embedded flow player widget and an IdP/Social Login connector, provide a callback URL to return back to the application.",
+          "value" : "test"
         }
       }
     }
@@ -783,124 +783,124 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
     id = "githubIdpConnector"
   }
   name = "%[2]s"
-  
+
   properties = jsonencode({
-    "oauth2": {
-      "properties": {
-        "providerName": {
-          "type": "string",
-          "displayName": "Provider Name",
-          "preferredControlType": "textField",
-          "value": "Login with GitHub"
+    "oauth2" : {
+      "properties" : {
+        "providerName" : {
+          "type" : "string",
+          "displayName" : "Provider Name",
+          "preferredControlType" : "textField",
+          "value" : "Login with GitHub"
         },
-        "skRedirectUri": {
-          "type": "string",
-          "displayName": "DaVinci Redirect URL",
-          "info": "Enter this in your identity provider configuration to allow it to redirect the browser back to DaVinci. If you use a custom PingOne domain, modify the URL accordingly.",
-          "preferredControlType": "textField",
-          "disabled": true,
-          "initializeValue": "SINGULARKEY_REDIRECT_URI",
-          "copyToClip": true
+        "skRedirectUri" : {
+          "type" : "string",
+          "displayName" : "DaVinci Redirect URL",
+          "info" : "Enter this in your identity provider configuration to allow it to redirect the browser back to DaVinci. If you use a custom PingOne domain, modify the URL accordingly.",
+          "preferredControlType" : "textField",
+          "disabled" : true,
+          "initializeValue" : "SINGULARKEY_REDIRECT_URI",
+          "copyToClip" : true
         },
-        "clientId": {
-          "type": "string",
-          "displayName": "Application ID",
-          "preferredControlType": "textField",
-          "required": true,
-          "value": "applicationID"
+        "clientId" : {
+          "type" : "string",
+          "displayName" : "Application ID",
+          "preferredControlType" : "textField",
+          "required" : true,
+          "value" : "applicationID"
         },
-        "clientSecret": {
-          "type": "string",
-          "displayName": "Client Secret",
-          "preferredControlType": "textField",
-          "secure": true,
-          "required": true,
-          "value": "dummyClientSecret"
+        "clientSecret" : {
+          "type" : "string",
+          "displayName" : "Client Secret",
+          "preferredControlType" : "textField",
+          "secure" : true,
+          "required" : true,
+          "value" : "dummyClientSecret"
         },
-        "scope": {
-          "type": "string",
-          "displayName": "Scope",
-          "preferredControlType": "textField",
-          "requiredValue": "email",
-          "required": true,
-          "value": "myscope"
+        "scope" : {
+          "type" : "string",
+          "displayName" : "Scope",
+          "preferredControlType" : "textField",
+          "requiredValue" : "email",
+          "required" : true,
+          "value" : "myscope"
         },
-        "customAttributes": {
-          "type": "array",
-          "displayName": "Connector Attributes",
-          "preferredControlType": "tableViewAttributes",
-          "info": "These attributes will be available in User Connector Attribute Mapping.",
-          "sections": [
+        "customAttributes" : {
+          "type" : "array",
+          "displayName" : "Connector Attributes",
+          "preferredControlType" : "tableViewAttributes",
+          "info" : "These attributes will be available in User Connector Attribute Mapping.",
+          "sections" : [
             "connectorAttributes"
           ],
-          "value": [
+          "value" : [
             {
-              "name": "id",
-              "description": "ID",
-              "type": "string",
-              "value": null,
-              "minLength": "1",
-              "maxLength": "300",
-              "required": true,
-              "attributeType": "sk"
+              "name" : "id",
+              "description" : "ID",
+              "type" : "string",
+              "value" : null,
+              "minLength" : "1",
+              "maxLength" : "300",
+              "required" : true,
+              "attributeType" : "sk"
             },
             {
-              "name": "name",
-              "description": "Display Name",
-              "type": "string",
-              "value": null,
-              "minLength": "1",
-              "maxLength": "250",
-              "required": false,
-              "attributeType": "sk"
+              "name" : "name",
+              "description" : "Display Name",
+              "type" : "string",
+              "value" : null,
+              "minLength" : "1",
+              "maxLength" : "250",
+              "required" : false,
+              "attributeType" : "sk"
             },
             {
-              "name": "email",
-              "description": "Email",
-              "type": "string",
-              "value": null,
-              "minLength": "1",
-              "maxLength": "250",
-              "required": false,
-              "attributeType": "sk"
+              "name" : "email",
+              "description" : "Email",
+              "type" : "string",
+              "value" : null,
+              "minLength" : "1",
+              "maxLength" : "250",
+              "required" : false,
+              "attributeType" : "sk"
             }
           ]
         },
-        "userConnectorAttributeMapping": {
-          "type": "object",
-          "preferredControlType": "userConnectorAttributeMapping",
-          "newMappingAllowed": true,
-          "title1": null,
-          "title2": null,
-          "sections": [
+        "userConnectorAttributeMapping" : {
+          "type" : "object",
+          "preferredControlType" : "userConnectorAttributeMapping",
+          "newMappingAllowed" : true,
+          "title1" : null,
+          "title2" : null,
+          "sections" : [
             "attributeMapping"
           ],
-          "value": {
-            "userPoolConnectionId": "defaultUserPool",
-            "mapping": {
-              "username": {
-                "value1": "id"
+          "value" : {
+            "userPoolConnectionId" : "defaultUserPool",
+            "mapping" : {
+              "username" : {
+                "value1" : "id"
               },
-              "name": {
-                "value1": "name"
+              "name" : {
+                "value1" : "name"
               },
-              "email": {
-                "value1": "email"
+              "email" : {
+                "value1" : "email"
               }
             }
           }
         },
-        "disableCreateUser": {
-          "displayName": "Disable Shadow User Creation",
-          "preferredControlType": "toggleSwitch",
-          "value": true,
-          "info": "A shadow user is implicitly created, unless disabled."
+        "disableCreateUser" : {
+          "displayName" : "Disable Shadow User Creation",
+          "preferredControlType" : "toggleSwitch",
+          "value" : true,
+          "info" : "A shadow user is implicitly created, unless disabled."
         },
-        "returnToUrl": {
-          "displayName": "Application Return To URL",
-          "preferredControlType": "textField",
-          "info": "When using the embedded flow player widget and an IDP/Social Login connector, provide a callback URL to return back to the application.",
-          "value": "https://ping-eng.com/callback"
+        "returnToUrl" : {
+          "displayName" : "Application Return To URL",
+          "preferredControlType" : "textField",
+          "info" : "When using the embedded flow player widget and an IDP/Social Login connector, provide a callback URL to return back to the application.",
+          "value" : "https://ping-eng.com/callback"
         }
       }
     }
@@ -919,72 +919,72 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
     id = "samlIdpConnector"
   }
   name = "%[2]s"
-  
+
   properties = jsonencode({
-    "saml": {
-      "properties": {
-        "dvSamlSpMetadataUrl": {
-          "displayName": "DaVinci SAML SP Metadata URL",
-          "info": "Your DaVinci SAML SP Metadata URL. This allows an identity provider to redirect the browser back to DaVinci.",
-          "preferredControlType": "textField",
-          "disabled": true,
-          "initializeValue": "DAVINCI_SAML_SP_METADATA_URI",
-          "copyToClip": true
+    "saml" : {
+      "properties" : {
+        "dvSamlSpMetadataUrl" : {
+          "displayName" : "DaVinci SAML SP Metadata URL",
+          "info" : "Your DaVinci SAML SP Metadata URL. This allows an identity provider to redirect the browser back to DaVinci.",
+          "preferredControlType" : "textField",
+          "disabled" : true,
+          "initializeValue" : "DAVINCI_SAML_SP_METADATA_URI",
+          "copyToClip" : true
         },
-        "providerName": {
-          "type": "string",
-          "displayName": "Provider Name",
-          "value": "SAML Test Provider"
+        "providerName" : {
+          "type" : "string",
+          "displayName" : "Provider Name",
+          "value" : "SAML Test Provider"
         },
-        "metadataXml": {
-          "type": "string",
-          "displayName": "Identity Provider SAML Metadata",
-          "info": "Paste the SAML metadata provided by the identity provider.",
-          "preferredControlType": "textArea",
-          "value": "metadata"
+        "metadataXml" : {
+          "type" : "string",
+          "displayName" : "Identity Provider SAML Metadata",
+          "info" : "Paste the SAML metadata provided by the identity provider.",
+          "preferredControlType" : "textArea",
+          "value" : "metadata"
         },
-        "returnToUrl": {
-          "displayName": "Application Redirect URL",
-          "preferredControlType": "textField",
-          "info": "Your application's redirect URL, such as \"https://app.yourorganization.com/\". Enter this URL if you embed the DaVinci widget in your application. This allows DaVinci to redirect the browser back to your application.",
-          "value": "https://ping-eng.com/callback"
+        "returnToUrl" : {
+          "displayName" : "Application Redirect URL",
+          "preferredControlType" : "textField",
+          "info" : "Your application's redirect URL, such as \"https://app.yourorganization.com/\". Enter this URL if you embed the DaVinci widget in your application. This allows DaVinci to redirect the browser back to your application.",
+          "value" : "https://ping-eng.com/callback"
         },
-        "userConnectorAttributeMapping": {
-          "type": "object",
-          "preferredControlType": "userConnectorAttributeMapping",
-          "newMappingAllowed": true,
-          "title1": "Identity Provider Attributes",
-          "title2": null,
-          "sections": [
+        "userConnectorAttributeMapping" : {
+          "type" : "object",
+          "preferredControlType" : "userConnectorAttributeMapping",
+          "newMappingAllowed" : true,
+          "title1" : "Identity Provider Attributes",
+          "title2" : null,
+          "sections" : [
             "attributeMapping"
           ],
-          "value": {
-            "userPoolConnectionId": "defaultUserPool",
-            "mapping": {
-              "username": {
-                "value1": "saml_subject"
+          "value" : {
+            "userPoolConnectionId" : "defaultUserPool",
+            "mapping" : {
+              "username" : {
+                "value1" : "saml_subject"
               }
             }
           }
         },
-        "customAttributes": {
-          "type": "array",
-          "displayName": "Connector Attributes",
-          "preferredControlType": "tableViewAttributes",
-          "info": "Add the attributes that you expect to receive from the identity provider. This allows you to map them on the Attribute Mapping tab.",
-          "sections": [
+        "customAttributes" : {
+          "type" : "array",
+          "displayName" : "Connector Attributes",
+          "preferredControlType" : "tableViewAttributes",
+          "info" : "Add the attributes that you expect to receive from the identity provider. This allows you to map them on the Attribute Mapping tab.",
+          "sections" : [
             "connectorAttributes"
           ],
-          "value": [
+          "value" : [
             {
-              "name": "saml_subject",
-              "description": "Subject",
-              "type": "string",
-              "value": null,
-              "minLength": "1",
-              "maxLength": "300",
-              "required": true,
-              "attributeType": "sk"
+              "name" : "saml_subject",
+              "description" : "Subject",
+              "type" : "string",
+              "value" : null,
+              "minLength" : "1",
+              "maxLength" : "300",
+              "required" : true,
+              "attributeType" : "sk"
             }
           ]
         }

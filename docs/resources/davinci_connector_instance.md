@@ -49,7 +49,7 @@ resource "pingone_davinci_connector_instance" "crowdstrike_connector_example" {
 
 ### Optional
 
-- `properties` (String)
+- `properties` (String, Sensitive)
 
 ### Read-Only
 
