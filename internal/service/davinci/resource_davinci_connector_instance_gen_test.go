@@ -161,6 +161,93 @@ func TestAccDavinciConnectorInstance_NewEnv(t *testing.T) {
 	})
 }
 
+func TestAccDavinciConnectorInstance_Properties(t *testing.T) {
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName)
+
+	var environmentId string
+	var id string
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             davinciConnectorInstance_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Test updates adding and removing optional properties
+			{
+				Config: davinciConnectorInstance_MissingOptionalPropertiesHCL(resourceName),
+			},
+			{
+				Config: davinciConnectorInstance_CompleteHCL(resourceName),
+			},
+			{
+				Config: davinciConnectorInstance_MissingOptionalPropertiesHCL(resourceName),
+			},
+			{
+				Config: davinciConnectorInstance_CompleteHCL(resourceName),
+				Check:  davinciConnectorInstance_GetIDs(resourceFullName, &environmentId, &id),
+			},
+			// Remove urls property via api and check for non-empty plan
+			{
+				PreConfig: func() {
+					ctx := context.Background()
+					c, err := acctest.TestClient(ctx)
+					if err != nil {
+						t.Fatalf("Failed to get API client: %v", err)
+					}
+
+					if environmentId == "" || id == "" {
+						t.Fatalf("One of environment ID or connector instance ID cannot be determined. Environment ID: %s, Resource ID: %s", environmentId, id)
+					}
+
+					connectorInstance, _, err := c.DaVinciConnectorApi.GetConnectorInstanceById(ctx, uuid.MustParse(environmentId), id).Execute()
+					if err != nil {
+						t.Fatalf("Failed to read connection: - wut %v", err)
+					}
+
+					if _, ok := connectorInstance.Properties["urls"]; ok {
+						//remove urls property via API, outside of terraform
+						delete(connectorInstance.Properties, "urls")
+					} else {
+						t.Fatalf("Failed to read connection property: urls")
+					}
+
+					_, _, err = c.DaVinciConnectorApi.ReplaceConnectorInstanceById(ctx, uuid.MustParse(environmentId), id).DaVinciConnectorInstanceReplaceRequest(
+						pingone.DaVinciConnectorInstanceReplaceRequest{
+							Name:       connectorInstance.Name,
+							Properties: connectorInstance.Properties,
+						}).Execute()
+					if err != nil {
+						t.Fatalf("Failed to update connection: %v", err)
+					}
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccDavinciConnectorInstance_ComplexProperties(t *testing.T) {
 	t.Parallel()
 
@@ -353,6 +440,40 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
       "companyId" : "singularkey",
       "preferredControlType" : "urlsTableView",
       "info" : "POST requests will be made to these registered url as selected later.",
+      "required" : true,
+      "value" : [
+        {
+          "name" : "example",
+          "url" : "https://example.com",
+          "token" : "mytoken",
+          "value" : "https://example.com"
+        }
+      ]
+    }
+  })
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+// Maximal HCL but with a few of the connector properties unset
+func davinciConnectorInstance_MissingOptionalPropertiesHCL(resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_connector_instance" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  connector = {
+    id = "webhookConnector"
+  }
+  name = "%[2]s"
+  # preferredControlType and info are not set
+  properties = jsonencode({
+    "urls" : {
+      "type" : "string",
+      "displayName" : "Register URLs",
+      "createdDate" : 12345,
+      "customerId" : "12345",
+      "companyId" : "singularkey",
       "required" : true,
       "value" : [
         {
