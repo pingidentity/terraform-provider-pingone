@@ -11,7 +11,6 @@ import (
 	"regexp"
 
 	"github.com/google/uuid"
-	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -24,6 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/pingidentity/pingone-go-client/pingone"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/jsontypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -69,11 +69,11 @@ func (r *davinciConnectorInstanceResource) Configure(ctx context.Context, req re
 }
 
 type davinciConnectorInstanceResourceModel struct {
-	Connector     types.Object         `tfsdk:"connector"`
-	EnvironmentId types.String         `tfsdk:"environment_id"`
-	Id            types.String         `tfsdk:"id"`
-	Name          types.String         `tfsdk:"name"`
-	Properties    jsontypes.Normalized `tfsdk:"properties"`
+	Connector     types.Object                     `tfsdk:"connector"`
+	EnvironmentId types.String                     `tfsdk:"environment_id"`
+	Id            types.String                     `tfsdk:"id"`
+	Name          types.String                     `tfsdk:"name"`
+	Properties    jsontypes.NormalizedObfuscatable `tfsdk:"properties"`
 }
 
 func (r *davinciConnectorInstanceResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -124,7 +124,7 @@ func (r *davinciConnectorInstanceResource) Schema(ctx context.Context, req resou
 				},
 			},
 			"properties": schema.StringAttribute{
-				CustomType: jsontypes.NormalizedType{},
+				CustomType: jsontypes.NormalizedObfuscatableType{},
 				Optional:   true,
 			},
 		},
@@ -199,8 +199,7 @@ func (state *davinciConnectorInstanceResourceModel) readClientResponse(response 
 	// name
 	state.Name = types.StringValue(response.Name)
 	// properties
-	originalProperties := state.Properties
-	state.Properties = jsontypes.NewNormalizedNull()
+	state.Properties = jsontypes.NormalizedObfuscatableNull()
 	if response.Properties != nil {
 		propertiesBytes, err := json.Marshal(response.Properties)
 		if err != nil {
@@ -210,18 +209,7 @@ func (state *davinciConnectorInstanceResourceModel) readClientResponse(response 
 				fmt.Sprintf("An error occurred while marshaling the properties: %s", err.Error()),
 			)
 		} else {
-			// Check if any properties were ignored by davinci
-			resultProperties := jsontypes.NewNormalizedValue(string(propertiesBytes))
-			if !originalProperties.IsNull() && !originalProperties.IsUnknown() && !originalProperties.Equal(resultProperties) {
-				respDiags.AddAttributeError(
-					path.Root("properties"),
-					"Properties Mismatch",
-					fmt.Sprintf("The properties returned by the DaVinci API do not match the configured properties. Ensure that you are providing properties that are supported by the connector.\n"+
-						"Configured properties: %s\nAPI returned properties: %s", originalProperties.ValueString(), resultProperties.ValueString()),
-				)
-			} else {
-				state.Properties = resultProperties
-			}
+			state.Properties = jsontypes.NormalizedObfuscatableStringValue(string(propertiesBytes))
 		}
 	}
 	return respDiags

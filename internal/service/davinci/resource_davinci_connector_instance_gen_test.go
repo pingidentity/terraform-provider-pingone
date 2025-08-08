@@ -185,26 +185,26 @@ func TestAccDavinciConnectorInstance_ComplexProperties(t *testing.T) {
 		),
 	}
 
-	// jsonOpenIDTypeStep := resource.TestStep{
-	// 	Config: davinciConnectorInstance_PropertyDataTypesJsonOpenID_HCL(resourceName),
-	// 	Check: resource.ComposeTestCheckFunc(
-	// 		resource.TestCheckResourceAttrSet(resourceFullName, "properties"),
-	// 	),
-	// }
+	jsonOpenIDTypeStep := resource.TestStep{
+		Config: davinciConnectorInstance_PropertyDataTypesJsonOpenID_HCL(resourceName),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttrSet(resourceFullName, "properties"),
+		),
+	}
 
-	// jsonCustomAuthTypeStep := resource.TestStep{
-	// 	Config: davinciConnectorInstance_PropertyDataTypesJsonCustomAuth_HCL(resourceName),
-	// 	Check: resource.ComposeTestCheckFunc(
-	// 		resource.TestCheckResourceAttrSet(resourceFullName, "properties"),
-	// 	),
-	// }
+	jsonCustomAuthTypeStep := resource.TestStep{
+		Config: davinciConnectorInstance_PropertyDataTypesJsonCustomAuth_HCL(resourceName),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttrSet(resourceFullName, "properties"),
+		),
+	}
 
-	// jsonOAuth2TypeStep := resource.TestStep{
-	// 	Config: davinciConnectorInstance_PropertyDataTypesJsonOAuth2_HCL(resourceName),
-	// 	Check: resource.ComposeTestCheckFunc(
-	// 		resource.TestCheckResourceAttrSet(resourceFullName, "properties"),
-	// 	),
-	// }
+	jsonOAuth2TypeStep := resource.TestStep{
+		Config: davinciConnectorInstance_PropertyDataTypesJsonOAuth2_HCL(resourceName),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttrSet(resourceFullName, "properties"),
+		),
+	}
 
 	jsonSAMLTypeStep := resource.TestStep{
 		Config: davinciConnectorInstance_PropertyDataTypesJsonSAML_HCL(resourceName),
@@ -260,52 +260,52 @@ func TestAccDavinciConnectorInstance_ComplexProperties(t *testing.T) {
 			},
 
 			// Test for JSON OpenID type
-			// jsonOpenIDTypeStep,
-			// {
-			// 	ResourceName:      resourceFullName,
-			// 	ImportStateIdFunc: importStateFunc(),
-			// 	ImportState:       true,
-			// 	ImportStateVerify: true,
-			// 	ImportStateVerifyIgnore: []string{
-			// 		"properties",
-			// 	},
-			// },
-			// {
-			// 	Config:  davinciConnectorInstance_PropertyDataTypesJsonOpenID_HCL(resourceName),
-			// 	Destroy: true,
-			// },
+			jsonOpenIDTypeStep,
+			{
+				ResourceName:      resourceFullName,
+				ImportStateIdFunc: importStateFunc(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"properties",
+				},
+			},
+			{
+				Config:  davinciConnectorInstance_PropertyDataTypesJsonOpenID_HCL(resourceName),
+				Destroy: true,
+			},
 
 			// Test for JSON custom auth type
-			// jsonCustomAuthTypeStep,
-			// {
-			// 	ResourceName:      resourceFullName,
-			// 	ImportStateIdFunc: importStateFunc(),
-			// 	ImportState:       true,
-			// 	ImportStateVerify: true,
-			// 	ImportStateVerifyIgnore: []string{
-			// 		"properties",
-			// 	},
-			// },
-			// {
-			// 	Config:  davinciConnectorInstance_PropertyDataTypesJsonCustomAuth_HCL(resourceName),
-			// 	Destroy: true,
-			// },
+			jsonCustomAuthTypeStep,
+			{
+				ResourceName:      resourceFullName,
+				ImportStateIdFunc: importStateFunc(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"properties",
+				},
+			},
+			{
+				Config:  davinciConnectorInstance_PropertyDataTypesJsonCustomAuth_HCL(resourceName),
+				Destroy: true,
+			},
 
 			// Test for JSON OAuth2 type
-			// jsonOAuth2TypeStep,
-			// {
-			// 	ResourceName:      resourceFullName,
-			// 	ImportStateIdFunc: importStateFunc(),
-			// 	ImportState:       true,
-			// 	ImportStateVerify: true,
-			// 	ImportStateVerifyIgnore: []string{
-			// 		"properties",
-			// 	},
-			// },
-			// {
-			// 	Config:  davinciConnectorInstance_PropertyDataTypesJsonOAuth2_HCL(resourceName),
-			// 	Destroy: true,
-			// },
+			jsonOAuth2TypeStep,
+			{
+				ResourceName:      resourceFullName,
+				ImportStateIdFunc: importStateFunc(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"properties",
+				},
+			},
+			{
+				Config:  davinciConnectorInstance_PropertyDataTypesJsonOAuth2_HCL(resourceName),
+				Destroy: true,
+			},
 
 			// Test for JSON SAML type
 			jsonSAMLTypeStep,
