@@ -96,6 +96,8 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 		types.StringValue("profile"),
 	})
 	resp.Diagnostics.Append(diags...)
+	emptySetDefault, diags := types.SetValue(types.StringType, nil)
+	resp.Diagnostics.Append(diags...)
 	oauthDefault, diags := types.ObjectValue(map[string]attr.Type{
 		"client_secret":                 types.StringType,
 		"enforce_signed_request_openid": types.BoolType,
@@ -109,8 +111,8 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 		"client_secret":                 types.StringUnknown(),
 		"enforce_signed_request_openid": types.BoolNull(),
 		"grant_types":                   oauthGrantTypesDefault,
-		"logout_uris":                   types.SetNull(types.StringType),
-		"redirect_uris":                 types.SetNull(types.StringType),
+		"logout_uris":                   emptySetDefault,
+		"redirect_uris":                 emptySetDefault,
 		"scopes":                        oauthScopesDefault,
 		"sp_jwks_openid":                types.StringNull(),
 		"sp_jwks_url":                   types.StringNull(),
@@ -190,17 +192,19 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 								"implicit",
 							)),
 						},
-						Default: setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{
-							types.StringValue("authorizationCode"),
-						})),
+						Default: setdefault.StaticValue(oauthGrantTypesDefault),
 					},
 					"logout_uris": schema.SetAttribute{
 						ElementType: types.StringType,
 						Optional:    true,
+						Computed:    true,
+						Default:     setdefault.StaticValue(emptySetDefault),
 					},
 					"redirect_uris": schema.SetAttribute{
 						ElementType: types.StringType,
 						Optional:    true,
+						Computed:    true,
+						Default:     setdefault.StaticValue(emptySetDefault),
 					},
 					"scopes": schema.SetAttribute{
 						ElementType:         types.StringType,
@@ -216,10 +220,7 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 								"profile",
 							)),
 						},
-						Default: setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{
-							types.StringValue("openid"),
-							types.StringValue("profile"),
-						})),
+						Default: setdefault.StaticValue(oauthScopesDefault),
 					},
 					"sp_jwks_openid": schema.StringAttribute{
 						Optional: true,
@@ -342,14 +343,38 @@ func (state *davinciApplicationResourceModel) readClientResponse(response *pingo
 		"sp_jwks_openid":                types.StringType,
 		"sp_jwks_url":                   types.StringType,
 	}
-	oauthGrantTypesValue, diags := types.SetValueFrom(context.Background(), types.StringType, response.Oauth.GrantTypes)
-	respDiags.Append(diags...)
-	oauthLogoutUrisValue, diags := types.SetValueFrom(context.Background(), types.StringType, response.Oauth.LogoutUris)
-	respDiags.Append(diags...)
-	oauthRedirectUrisValue, diags := types.SetValueFrom(context.Background(), types.StringType, response.Oauth.RedirectUris)
-	respDiags.Append(diags...)
-	oauthScopesValue, diags := types.SetValueFrom(context.Background(), types.StringType, response.Oauth.Scopes)
-	respDiags.Append(diags...)
+	var oauthGrantTypesValue types.Set
+	if response.Oauth.GrantTypes == nil {
+		oauthGrantTypesValue, diags = types.SetValue(types.StringType, []attr.Value{})
+		respDiags.Append(diags...)
+	} else {
+		oauthGrantTypesValue, diags = types.SetValueFrom(context.Background(), types.StringType, response.Oauth.GrantTypes)
+		respDiags.Append(diags...)
+	}
+	var oauthLogoutUrisValue types.Set
+	if response.Oauth.LogoutUris == nil {
+		oauthLogoutUrisValue, diags = types.SetValue(types.StringType, []attr.Value{})
+		respDiags.Append(diags...)
+	} else {
+		oauthLogoutUrisValue, diags = types.SetValueFrom(context.Background(), types.StringType, response.Oauth.LogoutUris)
+		respDiags.Append(diags...)
+	}
+	var oauthRedirectUrisValue types.Set
+	if response.Oauth.RedirectUris == nil {
+		oauthRedirectUrisValue, diags = types.SetValue(types.StringType, []attr.Value{})
+		respDiags.Append(diags...)
+	} else {
+		oauthRedirectUrisValue, diags = types.SetValueFrom(context.Background(), types.StringType, response.Oauth.RedirectUris)
+		respDiags.Append(diags...)
+	}
+	var oauthScopesValue types.Set
+	if response.Oauth.Scopes == nil {
+		oauthScopesValue, diags = types.SetValue(types.StringType, []attr.Value{})
+		respDiags.Append(diags...)
+	} else {
+		oauthScopesValue, diags = types.SetValueFrom(context.Background(), types.StringType, response.Oauth.Scopes)
+		respDiags.Append(diags...)
+	}
 	oauthValue, diags := types.ObjectValue(oauthAttrTypes, map[string]attr.Value{
 		"client_secret":                 types.StringValue(response.Oauth.ClientSecret),
 		"enforce_signed_request_openid": types.BoolPointerValue(response.Oauth.EnforceSignedRequestOpenid),
