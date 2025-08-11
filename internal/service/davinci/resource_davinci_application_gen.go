@@ -119,7 +119,7 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 	})
 	resp.Diagnostics.Append(diags...)
 	resp.Schema = schema.Schema{
-		Description: "Resource to create and manage a davinci application.",
+		Description: "Resource to create and manage a DaVinci application.",
 		Attributes: map[string]schema.Attribute{
 			"api_key": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
