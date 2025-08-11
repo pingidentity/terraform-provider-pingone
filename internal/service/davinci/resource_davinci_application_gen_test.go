@@ -217,7 +217,7 @@ func davinciApplication_MinimalHCL(resourceName string) string {
 
 resource "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  name = "%[2]s"
+  name           = "%[2]s"
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
@@ -229,30 +229,30 @@ func davinciApplication_CompleteHCL(resourceName string) string {
 
 resource "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  name = "%[2]s"
-  api_key  = {
+  name           = "%[2]s"
+  api_key = {
     enabled = false
-}
+  }
   oauth = {
     # Test with false after TRIAGE-27920 fixed
     enforce_signed_request_openid = true
     grant_types = [
-	  "clientCredentials",
-	  "authorizationCode",
-	  "implicit",
-	]
+      "clientCredentials",
+      "authorizationCode",
+      "implicit",
+    ]
     logout_uris = [
-	  "https://example.com/logout",
-	]
+      "https://example.com/logout",
+    ]
     redirect_uris = [
-	  "https://example.com/callback",
-	  "https://example.com/redirect",
-	]
+      "https://example.com/callback",
+      "https://example.com/redirect",
+    ]
     scopes = [
-	  "profile",
-	  "flow_analytics",
-	  "openid",
-	]
+      "profile",
+      "flow_analytics",
+      "openid",
+    ]
     sp_jwks_url = "https://example.com/jwks"
   }
 }
@@ -268,32 +268,32 @@ func davinciApplication_CompleteReorderedHCL(resourceName string) string {
 
 resource "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  name = "%[2]s"
+  name           = "%[2]s"
   api_key = {
     # Test with enabled false after TRIAGE-28630 fixed
     enabled = true
-}
+  }
   oauth = {
     # Test with false after TRIAGE-27920 fixed
     enforce_signed_request_openid = true
     grant_types = [
-	  "authorizationCode",
-	  "implicit",
-	  "clientCredentials",
-	]
+      "authorizationCode",
+      "implicit",
+      "clientCredentials",
+    ]
     logout_uris = [
-	  "https://example.com/v2/logout",
-	  "https://example.com/logout",
-	]
+      "https://example.com/v2/logout",
+      "https://example.com/logout",
+    ]
     redirect_uris = [
-	  "https://example.com/redirect",
-	  "https://example.com/callback",
-	]
+      "https://example.com/redirect",
+      "https://example.com/callback",
+    ]
     scopes = [
-	  "openid",
-	  "profile",
-	  "flow_analytics",
-	]
+      "openid",
+      "profile",
+      "flow_analytics",
+    ]
     sp_jwks_url = "https://example.com/jwks"
   }
 }
@@ -306,7 +306,7 @@ func davinciApplication_NewEnvHCL(environmentName, licenseID, resourceName strin
 
 resource "pingone_davinci_application" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  name = "%[3]s"
+  name           = "%[3]s"
 }
 `, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }

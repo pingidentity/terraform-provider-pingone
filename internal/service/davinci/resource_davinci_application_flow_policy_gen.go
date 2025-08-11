@@ -80,7 +80,7 @@ type davinciApplicationFlowPolicyResourceModel struct {
 
 func (r *davinciApplicationFlowPolicyResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Resource to create and manage a davinci application flow policy.",
+		Description: "Resource to create and manage a DaVinci application flow policy.",
 		Attributes: map[string]schema.Attribute{
 			"da_vinci_application_id": schema.StringAttribute{
 				Required:    true,
