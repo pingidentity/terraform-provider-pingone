@@ -122,7 +122,7 @@ func FetchTaggedEnvironmentsByPrefix(ctx context.Context, apiClient *management.
 	return respList, nil
 }
 
-func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient, region management.EnvironmentRegion, index string) error {
+func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient, region management.EnvironmentRegion, index string, davinciBootstrapped bool) error {
 
 	environmentLicense := os.Getenv("PINGONE_LICENSE_ID")
 
@@ -136,7 +136,9 @@ func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient,
 	productBOMItems := make([]management.BillOfMaterialsProductsInner, 0)
 
 	daVinciService := management.NewBillOfMaterialsProductsInner(management.ENUMPRODUCTTYPE_ONE_DAVINCI)
-	daVinciService.SetTags([]management.EnumBillOfMaterialsProductTags{management.ENUMBILLOFMATERIALSPRODUCTTAGS_DAVINCI_MINIMAL})
+	if !davinciBootstrapped {
+		daVinciService.SetTags([]management.EnumBillOfMaterialsProductTags{management.ENUMBILLOFMATERIALSPRODUCTTAGS_DAVINCI_MINIMAL})
+	}
 
 	productBOMItems = append(productBOMItems, *management.NewBillOfMaterialsProductsInner(management.ENUMPRODUCTTYPE_ONE_AUTHORIZE))
 	productBOMItems = append(productBOMItems, *management.NewBillOfMaterialsProductsInner(management.ENUMPRODUCTTYPE_ONE_BASE))
