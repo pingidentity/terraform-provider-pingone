@@ -48,7 +48,7 @@ func TestAccDavinciConnectorInstance_RemovalDrift(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: davinciConnectorInstance_MinimalHCL(resourceName),
+				Config: davinciConnectorInstance_MinimalHCL(resourceName, false),
 				Check:  davinciConnectorInstance_GetIDs(resourceFullName, &environmentId, &id),
 			},
 			{
@@ -74,7 +74,15 @@ func TestAccDavinciConnectorInstance_RemovalDrift(t *testing.T) {
 	})
 }
 
-func TestAccDavinciConnectorInstance_MinimalMaximal(t *testing.T) {
+func TestAccDavinciConnectorInstance_MinimalMaximalClean(t *testing.T) {
+	testAccDavinciConnectorInstance_MinimalMaximal(t, false)
+}
+
+func TestAccDavinciConnectorInstance_MinimalMaximalWithBootstrap(t *testing.T) {
+	testAccDavinciConnectorInstance_MinimalMaximal(t, true)
+}
+
+func testAccDavinciConnectorInstance_MinimalMaximal(t *testing.T, withBootstrapConfig bool) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -91,30 +99,30 @@ func TestAccDavinciConnectorInstance_MinimalMaximal(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				// Create the resource with a minimal model
-				Config: davinciConnectorInstance_MinimalHCL(resourceName),
+				Config: davinciConnectorInstance_MinimalHCL(resourceName, withBootstrapConfig),
 				Check:  davinciConnectorInstance_CheckComputedValuesMinimal(resourceName),
 			},
 			{
 				// Delete the minimal model
-				Config:  davinciConnectorInstance_MinimalHCL(resourceName),
+				Config:  davinciConnectorInstance_MinimalHCL(resourceName, withBootstrapConfig),
 				Destroy: true,
 			},
 			{
 				// Re-create with a complete model
-				Config: davinciConnectorInstance_CompleteHCL(resourceName),
+				Config: davinciConnectorInstance_CompleteHCL(resourceName, withBootstrapConfig),
 			},
 			{
 				// Back to minimal model
-				Config: davinciConnectorInstance_MinimalHCL(resourceName),
+				Config: davinciConnectorInstance_MinimalHCL(resourceName, withBootstrapConfig),
 				Check:  davinciConnectorInstance_CheckComputedValuesMinimal(resourceName),
 			},
 			{
 				// Back to complete model
-				Config: davinciConnectorInstance_CompleteHCL(resourceName),
+				Config: davinciConnectorInstance_CompleteHCL(resourceName, withBootstrapConfig),
 			},
 			{
 				// Test importing the resource
-				Config:       davinciConnectorInstance_CompleteHCL(resourceName),
+				Config:       davinciConnectorInstance_CompleteHCL(resourceName, withBootstrapConfig),
 				ResourceName: fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName),
 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
 					return func(s *terraform.State) (string, error) {
@@ -182,13 +190,13 @@ func TestAccDavinciConnectorInstance_Properties(t *testing.T) {
 				Config: davinciConnectorInstance_MissingOptionalPropertiesHCL(resourceName),
 			},
 			{
-				Config: davinciConnectorInstance_CompleteHCL(resourceName),
+				Config: davinciConnectorInstance_CompleteHCL(resourceName, false),
 			},
 			{
 				Config: davinciConnectorInstance_MissingOptionalPropertiesHCL(resourceName),
 			},
 			{
-				Config: davinciConnectorInstance_CompleteHCL(resourceName),
+				Config: davinciConnectorInstance_CompleteHCL(resourceName, false),
 				Check:  davinciConnectorInstance_GetIDs(resourceFullName, &environmentId, &id),
 			},
 			// Remove urls property via api and check for non-empty plan
@@ -385,7 +393,7 @@ func TestAccDavinciConnectorInstance_BadParameters(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: davinciConnectorInstance_MinimalHCL(resourceName),
+				Config: davinciConnectorInstance_MinimalHCL(resourceName, false),
 			},
 			// Errors
 			{
@@ -410,7 +418,7 @@ func TestAccDavinciConnectorInstance_BadParameters(t *testing.T) {
 }
 
 // Minimal HCL with only required values set
-func davinciConnectorInstance_MinimalHCL(resourceName string) string {
+func davinciConnectorInstance_MinimalHCL(resourceName string, withBootstrapConfig bool) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -421,11 +429,11 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
   }
   name = "%[2]s"
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
 }
 
 // Maximal HCL with all values set where possible
-func davinciConnectorInstance_CompleteHCL(resourceName string) string {
+func davinciConnectorInstance_CompleteHCL(resourceName string, withBootstrapConfig bool) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -456,7 +464,7 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
     }
   })
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
 }
 
 // Maximal HCL but with a few of the connector properties unset
@@ -490,7 +498,7 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
     }
   })
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(false), resourceName)
 }
 
 func davinciConnectorInstance_NewEnvHCL(environmentName, licenseID, resourceName string) string {
@@ -545,7 +553,7 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
     }
   })
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(false), resourceName)
 }
 
 func davinciConnectorInstance_PropertyDataTypesJsonCustomAttributes_HCL(resourceName string) string {
@@ -621,7 +629,7 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
     }
   })
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(false), resourceName)
 }
 
 func davinciConnectorInstance_PropertyDataTypesJsonOpenID_HCL(resourceName string) string {
@@ -688,7 +696,7 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
     }
   })
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(false), resourceName)
 }
 
 func davinciConnectorInstance_PropertyDataTypesJsonCustomAuth_HCL(resourceName string) string {
@@ -850,7 +858,7 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
     }
   })
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(false), resourceName)
 }
 
 func davinciConnectorInstance_PropertyDataTypesJsonOAuth2_HCL(resourceName, clientSecret string) string {
@@ -986,7 +994,7 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
     }
   })
 }
-`, acctest.GenericSandboxEnvironment(), resourceName, clientSecret)
+`, acctest.DaVinciSandboxEnvironment(false), resourceName, clientSecret)
 }
 
 func davinciConnectorInstance_PropertyDataTypesJsonSAML_HCL(resourceName string) string {
@@ -1072,7 +1080,7 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
     }
   })
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(false), resourceName)
 }
 
 // Validate any computed values when applying minimal HCL
