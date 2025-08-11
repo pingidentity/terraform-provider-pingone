@@ -304,7 +304,7 @@ resource "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name = "%[2]s"
 }
-`, acctest.GenericSandboxEnvironment(), resourceName) //TODO bootstrap
+`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
 }
 
 // Maximal HCL with all values set where possible
@@ -342,12 +342,11 @@ resource "pingone_davinci_application" "%[2]s" {
     sp_jwks_url = "https://example.com/jwks"
   }
 }
-`, acctest.GenericSandboxEnvironment(), resourceName) //TODO bootstrap
+`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
 }
 
-//TODO test the sp_jwks_openid stuff
-
-// Maximal HCL with all values set, with ordering changes in lists and sets from the default CompleteHCL
+// Maximal HCL with all values set, with ordering changes in lists and sets from the default CompleteHCL,
+// as well as coverage for the sp_jwks_openid attribute.
 func davinciApplication_CompleteReorderedHCL(resourceName string, withBootstrapConfig bool) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -381,10 +380,21 @@ resource "pingone_davinci_application" "%[2]s" {
 	  "profile",
 	  "flow_analytics",
 	]
-    sp_jwks_url = "https://example.com/jwks"
-  }
+	sp_jwks_openid = jsonencode({
+    "keys": [
+        {
+            "kty": "RSA",
+            "kid": "mykeyid",
+            "n": "example",
+            "e": "example",
+            "alg": "RS256",
+            "use": "sig"
+        }
+    ]
+})
 }
-`, acctest.GenericSandboxEnvironment(), resourceName) //TODO bootstrap
+}
+`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
 }
 
 func davinciApplication_WithOAuth_Minimal1_HCL(resourceName string, name string) string {
