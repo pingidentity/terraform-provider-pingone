@@ -245,7 +245,15 @@ func TestAccDavinciVariable_ChangeDataType(t *testing.T) {
 	})
 }
 
-func TestAccDavinciVariable_UserContext(t *testing.T) {
+func TestAccDavinciVariable_UserContextClean(t *testing.T) {
+	testAccDavinciVariable_UserContext(t, false)
+}
+
+func TestAccDavinciVariable_UserContextWithBootstrap(t *testing.T) {
+	testAccDavinciVariable_UserContext(t, true)
+}
+
+func testAccDavinciVariable_UserContext(t *testing.T, withBootstrapConfig bool) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -262,7 +270,7 @@ func TestAccDavinciVariable_UserContext(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				// Create with full model for user context
-				Config: davinciVariable_UserContextFullHCL(resourceName),
+				Config: davinciVariable_UserContextFullHCL(resourceName, withBootstrapConfig),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "context", "user"),
 					resource.TestCheckResourceAttr(resourceFullName, "data_type", "number"),
@@ -275,7 +283,7 @@ func TestAccDavinciVariable_UserContext(t *testing.T) {
 			},
 			{
 				// Create with minimal model for user context
-				Config: davinciVariable_UserContextMinimalHCL(resourceName),
+				Config: davinciVariable_UserContextMinimalHCL(resourceName, withBootstrapConfig),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "context", "user"),
 					resource.TestCheckResourceAttr(resourceFullName, "data_type", "string"),
@@ -290,7 +298,15 @@ func TestAccDavinciVariable_UserContext(t *testing.T) {
 	})
 }
 
-func TestAccDavinciVariable_FlowContext(t *testing.T) {
+func TestAccDavinciVariable_FlowContextClean(t *testing.T) {
+	testAccDavinciVariable_FlowContext(t, false)
+}
+
+func TestAccDavinciVariable_FlowContextWithBootstrap(t *testing.T) {
+	testAccDavinciVariable_FlowContext(t, true)
+}
+
+func testAccDavinciVariable_FlowContext(t *testing.T, withBootstrapConfig bool) {
 	t.Skip("Skipping TestAccDavinciVariable_FlowContext until pingone_davinci_flow is available for use in tests")
 	t.Parallel()
 
@@ -308,7 +324,7 @@ func TestAccDavinciVariable_FlowContext(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				// Create with full model for flow context
-				Config: davinciVariable_FlowContextHCL(resourceName),
+				Config: davinciVariable_FlowContextHCL(resourceName, withBootstrapConfig),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "context", "flow"),
 					resource.TestCheckResourceAttr(resourceFullName, "data_type", "string"),
@@ -321,7 +337,15 @@ func TestAccDavinciVariable_FlowContext(t *testing.T) {
 	})
 }
 
-func TestAccDavinciVariable_SecretValueTypes(t *testing.T) {
+func TestAccDavinciVariable_SecretValueTypesClean(t *testing.T) {
+	testAccDavinciVariable_SecretValueTypes(t, false)
+}
+
+func TestAccDavinciVariable_SecretValueTypesWithBootstrap(t *testing.T) {
+	testAccDavinciVariable_SecretValueTypes(t, true)
+}
+
+func testAccDavinciVariable_SecretValueTypes(t *testing.T, withBootstrapConfig bool) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -338,7 +362,7 @@ func TestAccDavinciVariable_SecretValueTypes(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				// Create dynamic secret
-				Config: davinciVariable_SecretDynamicHCL(resourceName),
+				Config: davinciVariable_SecretDynamicHCL(resourceName, withBootstrapConfig),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "data_type", "secret"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "value"),
@@ -346,7 +370,7 @@ func TestAccDavinciVariable_SecretValueTypes(t *testing.T) {
 			},
 			{
 				// Switch to static secret
-				Config: davinciVariable_SecretStaticHCL(resourceName),
+				Config: davinciVariable_SecretStaticHCL(resourceName, withBootstrapConfig),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "data_type", "secret"),
 					resource.TestCheckResourceAttr(resourceFullName, "value.secret_string", "mysecretvalue"),
@@ -354,7 +378,7 @@ func TestAccDavinciVariable_SecretValueTypes(t *testing.T) {
 			},
 			{
 				// Switch back to dynamic secret
-				Config: davinciVariable_SecretDynamicHCL(resourceName),
+				Config: davinciVariable_SecretDynamicHCL(resourceName, withBootstrapConfig),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "data_type", "secret"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "value"),
@@ -555,7 +579,7 @@ resource "pingone_davinci_variable" "%[2]s" {
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
-func davinciVariable_UserContextFullHCL(resourceName string) string {
+func davinciVariable_UserContextFullHCL(resourceName string, withBootstrapConfig bool) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -572,10 +596,10 @@ resource "pingone_davinci_variable" "%[2]s" {
     float32 = 7
   }
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
 }
 
-func davinciVariable_UserContextMinimalHCL(resourceName string) string {
+func davinciVariable_UserContextMinimalHCL(resourceName string, withBootstrapConfig bool) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -586,10 +610,10 @@ resource "pingone_davinci_variable" "%[2]s" {
   mutable        = true
   name           = "%[2]s"
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
 }
 
-func davinciVariable_FlowContextHCL(resourceName string) string {
+func davinciVariable_FlowContextHCL(resourceName string, withBootstrapConfig bool) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -604,10 +628,10 @@ resource "pingone_davinci_variable" "%[2]s" {
     string = "flow-test-value"
   }
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
 }
 
-func davinciVariable_SecretDynamicHCL(resourceName string) string {
+func davinciVariable_SecretDynamicHCL(resourceName string, withBootstrapConfig bool) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -618,10 +642,10 @@ resource "pingone_davinci_variable" "%[2]s" {
   mutable        = true
   name           = "%[2]s"
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
 }
 
-func davinciVariable_SecretStaticHCL(resourceName string) string {
+func davinciVariable_SecretStaticHCL(resourceName string, withBootstrapConfig bool) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -635,7 +659,7 @@ resource "pingone_davinci_variable" "%[2]s" {
     secret_string = "mysecretvalue"
   }
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
 }
 
 // Validate any computed values when applying minimal HCL
