@@ -393,7 +393,7 @@ func CheckParentEnvironmentDestroy(ctx context.Context, apiClient *pingone.APICl
 		return false, fmt.Errorf("unable to parse environment id '%s' as uuid: %v", environmentID, err)
 	}
 
-	environment, r, err := apiClient.EnvironmentApi.GetEnvironmentById(ctx, environmentIdUuid).Execute()
+	environment, r, err := apiClient.EnvironmentsApi.GetEnvironmentById(ctx, environmentIdUuid).Execute()
 
 	destroyed, err := CheckForResourceDestroy(r, err)
 	if err != nil {
@@ -403,7 +403,7 @@ func CheckParentEnvironmentDestroy(ctx context.Context, apiClient *pingone.APICl
 	if destroyed {
 		return destroyed, nil
 	} else {
-		if environment != nil && environment.Type == pingone.ENVIRONMENTTYPE_PRODUCTION {
+		if environment != nil && environment.Type == pingone.ENVIRONMENTTYPEVALUE_PRODUCTION {
 			return true, nil
 		} else {
 			return false, nil

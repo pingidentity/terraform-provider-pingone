@@ -414,7 +414,7 @@ func (model *davinciVariableResourceModel) buildClientStructPut() (*pingone.DaVi
 	return result, respDiags
 }
 
-func (state *davinciVariableResourceModel) readClientResponse(response *pingone.DaVinciVariable) diag.Diagnostics {
+func (state *davinciVariableResourceModel) readClientResponse(response *pingone.DaVinciVariableResponse) diag.Diagnostics {
 	var respDiags, diags diag.Diagnostics
 	// context
 	var contextPtrValue *string
@@ -550,12 +550,12 @@ func (r *davinciVariableResource) Create(ctx context.Context, req resource.Creat
 		)
 		return
 	}
-	var responseData *pingone.DaVinciVariable
+	var responseData *pingone.DaVinciVariableResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciVariableApi.CreateVariable(ctx, environmentIdUuid).DaVinciVariableCreateRequest(*clientData).Execute()
+			fO, fR, fErr := r.Client.DaVinciVariablesApi.CreateVariable(ctx, environmentIdUuid).DaVinciVariableCreateRequest(*clientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateVariable",
@@ -614,12 +614,12 @@ func (r *davinciVariableResource) Read(ctx context.Context, req resource.ReadReq
 		)
 		return
 	}
-	var responseData *pingone.DaVinciVariable
+	var responseData *pingone.DaVinciVariableResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciVariableApi.GetVariableById(ctx, environmentIdUuid, idUuid).Execute()
+			fO, fR, fErr := r.Client.DaVinciVariablesApi.GetVariableById(ctx, environmentIdUuid, idUuid).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetVariableById",
@@ -690,12 +690,12 @@ func (r *davinciVariableResource) Update(ctx context.Context, req resource.Updat
 		)
 		return
 	}
-	var responseData *pingone.DaVinciVariable
+	var responseData *pingone.DaVinciVariableResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciVariableApi.ReplaceVariableById(ctx, environmentIdUuid, idUuid).DaVinciVariableReplaceRequest(*clientData).Execute()
+			fO, fR, fErr := r.Client.DaVinciVariablesApi.ReplaceVariableById(ctx, environmentIdUuid, idUuid).DaVinciVariableReplaceRequest(*clientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReplaceVariableById",
@@ -758,7 +758,7 @@ func (r *davinciVariableResource) Delete(ctx context.Context, req resource.Delet
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := r.Client.DaVinciVariableApi.DeleteVariableById(ctx, environmentIdUuid, idUuid).Execute()
+			fR, fErr := r.Client.DaVinciVariablesApi.DeleteVariableById(ctx, environmentIdUuid, idUuid).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteVariableById",

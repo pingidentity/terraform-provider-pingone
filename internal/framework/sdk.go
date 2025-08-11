@@ -20,12 +20,12 @@ import (
 
 type SDKInterfaceFunc func() (any, *http.Response, error)
 
-type CustomError func(*http.Response, *pingone.ServiceError) diag.Diagnostics
+type CustomError func(*http.Response, *pingone.GeneralError) diag.Diagnostics
 
 var (
-	DefaultCustomError = func(_ *http.Response, _ *pingone.ServiceError) diag.Diagnostics { return nil }
+	DefaultCustomError = func(_ *http.Response, _ *pingone.GeneralError) diag.Diagnostics { return nil }
 
-	CustomErrorResourceNotFoundWarning = func(r *http.Response, p1Error *pingone.ServiceError) diag.Diagnostics {
+	CustomErrorResourceNotFoundWarning = func(r *http.Response, p1Error *pingone.GeneralError) diag.Diagnostics {
 		var diags diag.Diagnostics
 
 		// Deleted outside of TF
@@ -77,7 +77,7 @@ func CheckEnvironmentExistsOnPermissionsError(ctx context.Context, apiClient *pi
 			return fO, nil, fmt.Errorf("unable to parse environment id '%s' as uuid: %v", environmentID, err)
 		}
 
-		_, fER, fEErr := apiClient.EnvironmentApi.GetEnvironmentById(ctx, environmentIdUuid).Execute()
+		_, fER, fEErr := apiClient.EnvironmentsApi.GetEnvironmentById(ctx, environmentIdUuid).Execute()
 
 		if fER.StatusCode == http.StatusNotFound {
 			tflog.Warn(ctx, "API responded with 400, 401 or 403, and the provider determined the environment doesn't exist.  Overriding resource response.")
@@ -116,7 +116,7 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, req
 			errorUnmarshaled := false
 			errBytes, jsonErr := json.Marshal(t)
 			if jsonErr == nil {
-				var targetError pingone.ServiceError
+				var targetError pingone.GeneralError
 				jsonErr = json.Unmarshal(errBytes, &targetError)
 				if jsonErr == nil {
 					// Apply custom error handler
@@ -163,7 +163,7 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, req
 
 }
 
-func FormatPingOneError(sdkMethod string, v pingone.ServiceError) (summaryText, detailText string) {
+func FormatPingOneError(sdkMethod string, v pingone.GeneralError) (summaryText, detailText string) {
 	summaryText = fmt.Sprintf("Error when calling `%s`: %v", sdkMethod, v.GetMessage())
 	var detailTextBuilder strings.Builder
 	detailTextBuilder.WriteString("PingOne Error Details:\n")
@@ -198,45 +198,11 @@ func FormatPingOneError(sdkMethod string, v pingone.ServiceError) (summaryText, 
 			}
 
 			if innerError, ok := detail.GetInnerErrorOk(); ok {
-				innerDetailsStr := ""
-
-				if v, ok := innerError.GetAllowedPatternOk(); ok {
-					innerDetailsStr += fmt.Sprintf("      Allowed Pattern:\t%s\n", *v)
+				// Attempt to convert the interface map into json bytes
+				innerErrorBytes, err := json.Marshal(innerError)
+				if err != nil {
+					detailsStr += fmt.Sprintf("  %s Data:\n%s", nextLineMarker, string(innerErrorBytes))
 				}
-
-				if v, ok := innerError.GetAllowedValuesOk(); ok {
-					// Attempt to convert the interface slice into json bytes
-					allowedValues, err := json.Marshal(v)
-					if err != nil {
-						innerDetailsStr += fmt.Sprintf("      Allowed Values:\t%s\n", string(allowedValues))
-					}
-				}
-
-				if v, ok := innerError.GetMaximumValueOk(); ok {
-					innerDetailsStr += fmt.Sprintf("      Max Value:\t%f\n", *v)
-				}
-
-				if v, ok := innerError.GetQuotaLimitOk(); ok {
-					innerDetailsStr += fmt.Sprintf("      Quota Limit:\t%f\n", *v)
-				}
-
-				if v, ok := innerError.GetQuotaResetTimeOk(); ok {
-					innerDetailsStr += fmt.Sprintf("      Quota Reset Time:\t%s\n", v.Format(time.RFC3339))
-				}
-
-				if v, ok := innerError.GetRangeMaximumValueOk(); ok {
-					innerDetailsStr += fmt.Sprintf("      Range Max Value:\t%f\n", *v)
-				}
-
-				if v, ok := innerError.GetRangeMinimumValueOk(); ok {
-					innerDetailsStr += fmt.Sprintf("      Range Min Value:\t%f\n", *v)
-				}
-
-				if v, ok := innerError.GetRetryAfterOk(); ok {
-					innerDetailsStr += fmt.Sprintf("      Referenced Values:\t%s\n", *v)
-				}
-
-				detailsStr += fmt.Sprintf("  %s Data:\n%s", nextLineMarker, innerDetailsStr)
 			}
 
 			detailsStrList = append(detailsStrList, detailsStr)

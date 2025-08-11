@@ -704,7 +704,7 @@ func davinciVariable_Delete(ctx context.Context, apiClient *pingone.APIClient, t
 		t.Fatalf("One of the identifier attributes can't be determined. environmentId: '%s' id: '%s'", environmentId, id)
 	}
 
-	_, err := apiClient.DaVinciVariableApi.DeleteVariableById(ctx, uuid.MustParse(environmentId), uuid.MustParse(id)).Execute()
+	_, err := apiClient.DaVinciVariablesApi.DeleteVariableById(ctx, uuid.MustParse(environmentId), uuid.MustParse(id)).Execute()
 	if err != nil {
 		t.Fatalf("Failed to delete davinci_variable: %v", err)
 	}
@@ -733,7 +733,7 @@ func davinciVariable_CheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, r, err := p1Client.DaVinciVariableApi.GetVariableById(ctx, uuid.MustParse(rs.Primary.Attributes["environment_id"]), uuid.MustParse(rs.Primary.Attributes["id"])).Execute()
+		_, r, err := p1Client.DaVinciVariablesApi.GetVariableById(ctx, uuid.MustParse(rs.Primary.Attributes["environment_id"]), uuid.MustParse(rs.Primary.Attributes["id"])).Execute()
 
 		shouldContinue, err = acctest.CheckForResourceDestroy(r, err)
 		if err != nil {

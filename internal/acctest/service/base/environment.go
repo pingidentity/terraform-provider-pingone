@@ -39,7 +39,7 @@ func Environment_RemovalDrift_PreConfig(ctx context.Context, apiClient *pingone.
 		t.Fatalf("Environment ID cannot be determined. Environment ID: %s", environmentID)
 	}
 
-	_, err = apiClient.EnvironmentApi.DeleteEnvironmentById(ctx, environmentIdUuid).Execute()
+	_, err = apiClient.EnvironmentsApi.DeleteEnvironmentById(ctx, environmentIdUuid).Execute()
 	if err != nil {
 		t.Fatalf("Failed to delete environment: %v", err)
 	}
