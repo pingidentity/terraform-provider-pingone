@@ -330,11 +330,33 @@ func PreCheckTestClient(ctx context.Context, t *testing.T) *pingone.APIClient {
 	return p1Client
 }
 
+func DaVinciSandboxEnvironment(withBootstrapConfig bool) string {
+	if withBootstrapConfig {
+		generalName := "general_test"
+		return DaVinciBootstrappedSandboxEnvironment(&generalName)
+	} else {
+		return GenericSandboxEnvironment()
+	}
+}
+
 func GenericSandboxEnvironment() string {
 	return `
 		data "pingone_environment" "general_test" {
 			name = "tf-testacc-dynamic-general-test"
 		}`
+}
+
+func DaVinciBootstrappedSandboxEnvironment(dataSourceName *string) string {
+	var name string
+	if dataSourceName != nil {
+		name = *dataSourceName
+	} else {
+		name = "davinci_bootstrapped_test"
+	}
+	return fmt.Sprintf(`
+		data "pingone_environment" "%s" {
+			name = "tf-testacc-dynamic-davinci-bootstrapped-test"
+		}`, name)
 }
 
 func WorkforceSandboxEnvironment() string {
