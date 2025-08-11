@@ -280,10 +280,10 @@ func davinciVariable_MinimalHCL(resourceName string) string {
 
 resource "pingone_davinci_variable" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  context = "flowInstance"
-  data_type = "string"
-  mutable = true
-  name = "%[2]s"
+  context        = "flowInstance"
+  data_type      = "string"
+  mutable        = true
+  name           = "%[2]s"
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
@@ -296,16 +296,16 @@ func davinciVariable_CompleteHCL(resourceName string) string {
 
 resource "pingone_davinci_variable" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  context = "flowInstance"
-  data_type = "object"
-  display_name = "myobj"
-//   flow = {
-//     id = //TODO
-//   }
-  max = 200
-  min = 0
+  context        = "flowInstance"
+  data_type      = "object"
+  display_name   = "myobj"
+  //   flow = {
+  //     id = //TODO
+  //   }
+  max     = 200
+  min     = 0
   mutable = false
-  name = "%[2]s"
+  name    = "%[2]s"
   value = {
     json_object = "{\"key1\":\"value1\",\"key2\":1234,\"key3\":false}"
   }
@@ -319,10 +319,10 @@ func davinciVariable_NewEnvHCL(environmentName, licenseID, resourceName string) 
 
 resource "pingone_davinci_variable" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  context = "flowInstance"
-  data_type = "string"
-  mutable = true
-  name = "%[2]s"
+  context        = "flowInstance"
+  data_type      = "string"
+  mutable        = true
+  name           = "%[2]s"
 }
 `, acctestlegacysdk.MinimalSandboxDaVinciEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
@@ -334,10 +334,10 @@ func davinciVariable_BooleanHCL(resourceName string) string {
 
 resource "pingone_davinci_variable" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  context = "user"
-  data_type = "boolean"
-  mutable = true
-  name = "%[2]s"
+  context        = "user"
+  data_type      = "boolean"
+  mutable        = true
+  name           = "%[2]s"
   value = {
     bool = true
   }
@@ -351,10 +351,10 @@ func davinciVariable_NumberHCL(resourceName string) string {
 
 resource "pingone_davinci_variable" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  context = "flowInstance"
-  data_type = "number"
-  mutable = false
-  name = "%[2]s"
+  context        = "flowInstance"
+  data_type      = "number"
+  mutable        = false
+  name           = "%[2]s"
   value = {
     float32 = 1.23
   }
@@ -368,10 +368,10 @@ func davinciVariable_SecretHCL(resourceName string) string {
 
 resource "pingone_davinci_variable" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  context = "company"
-  data_type = "secret"
-  mutable = false
-  name = "%[2]s"
+  context        = "company"
+  data_type      = "secret"
+  mutable        = false
+  name           = "%[2]s"
   value = {
     secret_string = "asdf"
   }

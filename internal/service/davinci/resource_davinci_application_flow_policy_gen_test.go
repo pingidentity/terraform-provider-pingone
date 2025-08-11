@@ -219,16 +219,16 @@ func davinciApplicationFlowPolicy_MinimalHCL(resourceName string) string {
 
 resource "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  name = "%[2]s"
+  name           = "%[2]s"
 }
 
 resource "pingone_davinci_application_flow_policy" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
+  environment_id          = data.pingone_environment.general_test.id
   da_vinci_application_id = pingone_davinci_application.%[2]s.id
   flow_distributions = [
     {
-	  #TODO use flow resource to create this, rather than using a hardcoded id
-      id = "ea3bf86e79daf74f0262a317190e02dd"
+      #TODO use flow resource to create this, rather than using a hardcoded id
+      id      = "ea3bf86e79daf74f0262a317190e02dd"
       version = 0
     }
   ]
@@ -243,47 +243,47 @@ func davinciApplicationFlowPolicy_CompleteHCL(resourceName string) string {
 
 resource "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  name = "%[2]s"
+  name           = "%[2]s"
 }
 
 resource "pingone_davinci_application_flow_policy" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
+  environment_id          = data.pingone_environment.general_test.id
   da_vinci_application_id = pingone_davinci_application.%[2]s.id
   flow_distributions = [
     {
       id = "ea3bf86e79daf74f0262a317190e02dd"
       ip = [
-	    "0.0.0.0/0",
-		"1.1.1.1/1",
-	  ]
+        "0.0.0.0/0",
+        "1.1.1.1/1",
+      ]
       success_nodes = [
         {
           id = "1234"
         }
       ]
       version = 1
-      weight = 100
+      weight  = 100
     }
-	  #TODO add a second flow
+    #TODO add a second flow
   ]
-  name = "Updated policy"
+  name   = "Updated policy"
   status = "disabled"
   #TODO test trigger with a pingone flow
-//   trigger = {
-//     configuration = {
-//       mfa = {
-//         enabled = //TODO
-//         time = //TODO
-//         time_format = //TODO
-//       }
-//       pwd = {
-//         enabled = //TODO
-//         time = //TODO
-//         time_format = //TODO
-//       }
-//     }
-//     type = //TODO
-//   }
+  //   trigger = {
+  //     configuration = {
+  //       mfa = {
+  //         enabled = //TODO
+  //         time = //TODO
+  //         time_format = //TODO
+  //       }
+  //       pwd = {
+  //         enabled = //TODO
+  //         time = //TODO
+  //         time_format = //TODO
+  //       }
+  //     }
+  //     type = //TODO
+  //   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
@@ -339,16 +339,16 @@ func davinciApplicationFlowPolicy_NewEnvHCL(environmentName, licenseID, resource
 
 resource "pingone_davinci_application" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  name = "%[3]s"
+  name           = "%[3]s"
 }
 
 resource "pingone_davinci_application_flow_policy" "%[3]s" {
-  environment_id = pingone_environment.%[2]s.id
+  environment_id          = pingone_environment.%[2]s.id
   da_vinci_application_id = pingone_davinci_application.%[3]s.id
   flow_distributions = [
     {
-	  #TODO use flow resource to create this, rather than using a hardcoded id
-      id = "ea3bf86e79daf74f0262a317190e02dd"
+      #TODO use flow resource to create this, rather than using a hardcoded id
+      id      = "ea3bf86e79daf74f0262a317190e02dd"
       version = 0
     }
   ]
