@@ -822,8 +822,15 @@ func TestAccApplication_NativeKerberos(t *testing.T) {
 
 	name := resourceName
 
-	withKerberosTestStep := resource.TestStep{
-		Config: testAccApplicationConfig_OIDC_NativeKerberos(resourceName, name),
+	withKerberosTestStepV1 := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_NativeKerberosV1(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "oidc_options.certificate_based_authentication.key_id", verify.P1ResourceIDRegexpFullString),
+		),
+	}
+
+	withKerberosTestStepV2 := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_NativeKerberosV2(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "oidc_options.certificate_based_authentication.key_id", verify.P1ResourceIDRegexpFullString),
 		),
@@ -849,17 +856,17 @@ func TestAccApplication_NativeKerberos(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Invalid configs
 			{
-				Config:      testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyType(resourceName, name),
+				Config:      testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyTypeV1(resourceName, name),
 				ExpectError: regexp.MustCompile("Error when calling `CreateApplication`: Key with ID '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' in Environment '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' is not for ISSUANCE. Usage type should be ISSUANCE."),
 			},
 			{
-				Config:      testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationType(resourceName, name),
+				Config:      testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationTypeV1(resourceName, name),
 				ExpectError: regexp.MustCompile("Invalid configuration"),
 			},
 			// With
-			withKerberosTestStep,
+			withKerberosTestStepV1,
 			{
-				Config:  testAccApplicationConfig_OIDC_NativeKerberos(resourceName, name),
+				Config:  testAccApplicationConfig_OIDC_NativeKerberosV1(resourceName, name),
 				Destroy: true,
 			},
 			// Without
@@ -869,9 +876,55 @@ func TestAccApplication_NativeKerberos(t *testing.T) {
 				Destroy: true,
 			},
 			// Change
-			withKerberosTestStep,
+			withKerberosTestStepV1,
 			withoutKerberosTestStep,
-			withKerberosTestStep,
+			withKerberosTestStepV1,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				Config:  testAccApplicationConfig_OIDC_MinimalNative(resourceName, name),
+				Destroy: true,
+			},
+			// v2
+			// Invalid configs
+			{
+				Config:      testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyTypeV2(resourceName, name),
+				ExpectError: regexp.MustCompile("Error when calling `CreateApplication`: Key with ID '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' in Environment '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' is not for ISSUANCE. Usage type should be ISSUANCE."),
+			},
+			{
+				Config:      testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationTypeV2(resourceName, name),
+				ExpectError: regexp.MustCompile("Invalid configuration"),
+			},
+			// With
+			withKerberosTestStepV2,
+			{
+				Config:  testAccApplicationConfig_OIDC_NativeKerberosV2(resourceName, name),
+				Destroy: true,
+			},
+			// Without
+			withoutKerberosTestStep,
+			{
+				Config:  testAccApplicationConfig_OIDC_MinimalNative(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			withKerberosTestStepV2,
+			withoutKerberosTestStep,
+			withKerberosTestStepV2,
 			// Test importing the resource
 			{
 				ResourceName: resourceFullName,
@@ -2933,6 +2986,16 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "saml_options.sp_verification.certificate_ids.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "saml_options.sp_verification.certificate_ids.1", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.cors_settings.behavior", "ALLOW_SPECIFIC_ORIGINS"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.#", "4"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.0.vs_id", "virtualserver1"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.0.default", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.1.vs_id", "virtualserver2"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.1.default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.2.vs_id", "virtualserver3"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.2.default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.3.vs_id", "virtualserver4"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.3.default", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.cors_settings.origins.#", "8"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.cors_settings.origins.*", "http://localhost"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.cors_settings.origins.*", "https://localhost"),
@@ -3027,10 +3090,78 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options.slo_response_endpoint"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options.slo_window"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options.sp_encryption"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.sp_entity_id", fmt.Sprintf("sp:entity:%s", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.sp_verification.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccApplication_SAMLVirtualServerIdSettingsOrdering(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	image := base64.StdEncoding.EncodeToString(data)
+
+	pem_cert := os.Getenv("PINGONE_KEY_PEM_CERT")
+	pkcs7_cert := os.Getenv("PINGONE_KEY_PKCS7_CERT")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckPKCS7Cert(t)
+			acctest.PreCheckPEMCert(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.Application_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Initial configuration
+			{
+				Config: testAccApplicationConfig_SAML_VirtualServerIdSettingsOrdering(environmentName, licenseID, resourceName, name, image, pkcs7_cert, pem_cert),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.#", "4"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.0.vs_id", "virtualserver2"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.0.default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.1.vs_id", "virtualserver3"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.1.default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.2.vs_id", "virtualserver1"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.2.default", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.3.vs_id", "virtualserver4"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.3.default", "false"),
+				),
+			},
+			// Change the order of virtual server IDs
+			{
+				Config: testAccApplicationConfig_SAML_VirtualServerIdSettingsReordered(environmentName, licenseID, resourceName, name, image, pkcs7_cert, pem_cert),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.#", "4"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.0.vs_id", "virtualserver1"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.0.default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.1.vs_id", "virtualserver2"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.1.default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.2.vs_id", "virtualserver4"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.2.default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.3.vs_id", "virtualserver3"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.3.default", "true"),
 				),
 			},
 		},
@@ -3741,23 +3872,21 @@ resource "pingone_application" "%[2]s" {
 
 func testAccApplicationConfig_OIDC_NativeKerberos(resourceName, name string) string {
 	return fmt.Sprintf(`
-		%[1]s
-
-resource "pingone_key" "%[2]s" {
+resource "pingone_key" "%[1]s" {
   environment_id = data.pingone_environment.workforce_test.id
 
-  name                = "%[3]s"
+  name                = "%[2]s"
   algorithm           = "EC"
   key_length          = 256
   signature_algorithm = "SHA384withECDSA"
-  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  subject_dn          = "CN=%[2]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   usage_type          = "ISSUANCE"
   validity_period     = 365
 }
 
-resource "pingone_application" "%[2]s" {
+resource "pingone_application" "%[1]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  name           = "%[3]s"
+  name           = "%[2]s"
   enabled        = true
 
   oidc_options = {
@@ -3766,32 +3895,46 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     certificate_based_authentication = {
-      key_id = pingone_key.%[2]s.id
+      key_id = pingone_key.%[1]s.id
     }
   }
 }
-`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
+`, resourceName, name)
+}
+
+func testAccApplicationConfig_OIDC_NativeKerberosV1(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+%[2]s
+`, acctest.WorkforceV1SandboxEnvironment(), testAccApplicationConfig_OIDC_NativeKerberos(resourceName, name))
+}
+
+func testAccApplicationConfig_OIDC_NativeKerberosV2(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+%[2]s
+`, acctest.WorkforceV2SandboxEnvironment(), testAccApplicationConfig_OIDC_NativeKerberos(resourceName, name))
 }
 
 func testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyType(resourceName, name string) string {
 	return fmt.Sprintf(`
-		%[1]s
-
-resource "pingone_key" "%[2]s" {
+resource "pingone_key" "%[1]s" {
   environment_id = data.pingone_environment.workforce_test.id
 
-  name                = "%[3]s"
+  name                = "%[2]s"
   algorithm           = "EC"
   key_length          = 256
   signature_algorithm = "SHA384withECDSA"
-  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  subject_dn          = "CN=%[2]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   usage_type          = "SIGNING"
   validity_period     = 365
 }
 
-resource "pingone_application" "%[2]s" {
+resource "pingone_application" "%[1]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  name           = "%[3]s"
+  name           = "%[2]s"
   enabled        = true
 
   oidc_options = {
@@ -3800,32 +3943,46 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     certificate_based_authentication = {
-      key_id = pingone_key.%[2]s.id
+      key_id = pingone_key.%[1]s.id
     }
   }
 }
-`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
+`, resourceName, name)
+}
+
+func testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyTypeV1(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+%[2]s
+`, acctest.WorkforceV1SandboxEnvironment(), testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyType(resourceName, name))
+}
+
+func testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyTypeV2(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+%[2]s
+`, acctest.WorkforceV2SandboxEnvironment(), testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyType(resourceName, name))
 }
 
 func testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationType(resourceName, name string) string {
 	return fmt.Sprintf(`
-		%[1]s
-
-resource "pingone_key" "%[2]s" {
+resource "pingone_key" "%[1]s" {
   environment_id = data.pingone_environment.workforce_test.id
 
-  name                = "%[3]s"
+  name                = "%[2]s"
   algorithm           = "EC"
   key_length          = 256
   signature_algorithm = "SHA384withECDSA"
-  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  subject_dn          = "CN=%[2]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   usage_type          = "ISSUANCE"
   validity_period     = 365
 }
 
-resource "pingone_application" "%[2]s" {
+resource "pingone_application" "%[1]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  name           = "%[3]s"
+  name           = "%[2]s"
   enabled        = true
 
   oidc_options = {
@@ -3834,11 +3991,27 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     certificate_based_authentication = {
-      key_id = pingone_key.%[2]s.id
+      key_id = pingone_key.%[1]s.id
     }
   }
 }
-`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
+`, resourceName, name)
+}
+
+func testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationTypeV1(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+%[2]s
+`, acctest.WorkforceV1SandboxEnvironment(), testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationType(resourceName, name))
+}
+
+func testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationTypeV2(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+%[2]s
+`, acctest.WorkforceV2SandboxEnvironment(), testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationType(resourceName, name))
 }
 
 func testAccApplicationConfig_OIDC_NativeMobile_Full(resourceName, name string) string {
@@ -4717,6 +4890,25 @@ resource "pingone_application" "%[3]s" {
       ]
     }
 
+    virtual_server_id_settings = {
+      enabled = true
+      virtual_server_ids = [
+        {
+          vs_id   = "virtualserver1"
+          default = true
+        },
+        {
+          vs_id = "virtualserver2"
+        },
+        {
+          vs_id = "virtualserver3"
+        },
+        {
+          vs_id = "virtualserver4"
+        },
+      ]
+    }
+
     cors_settings = {
       behavior = "ALLOW_SPECIFIC_ORIGINS"
       origins = [
@@ -4807,6 +4999,260 @@ resource "pingone_application" "%[3]s" {
     idp_signing_key = {
       key_id    = pingone_key.%[3]s.id
       algorithm = pingone_key.%[3]s.signature_algorithm
+    }
+  }
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, image, pkcs7_cert, pem_cert)
+}
+
+func testAccApplicationConfig_SAML_VirtualServerIdSettingsOrdering(environmentName, licenseID, resourceName, name, image, pkcs7_cert, pem_cert string) string {
+	return fmt.Sprintf(`
+			%[1]s
+
+resource "pingone_group" "%[3]s-1" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s-1"
+}
+
+resource "pingone_group" "%[3]s-2" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s-2"
+}
+
+resource "pingone_key" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  name                = "%[4]s"
+  algorithm           = "EC"
+  key_length          = 256
+  signature_algorithm = "SHA384withECDSA"
+  subject_dn          = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}
+
+resource "pingone_image" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  image_file_base64 = "%[5]s"
+}
+
+resource "pingone_certificate" "%[3]s-1" {
+  environment_id = pingone_environment.%[2]s.id
+
+  pkcs7_file_base64 = <<EOT
+%[6]s
+EOT
+
+  usage_type = "SIGNING"
+}
+
+resource "pingone_certificate" "%[3]s-2" {
+  environment_id = pingone_environment.%[2]s.id
+
+  pem_file = <<EOT
+%[7]s
+EOT
+
+  usage_type = "SIGNING"
+}
+
+resource "pingone_certificate" "%[3]s-enc" {
+  environment_id = pingone_environment.%[2]s.id
+  pem_file       = <<EOT
+%[7]s
+EOT
+  usage_type     = "ENCRYPTION"
+}
+
+resource "pingone_application" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+  description    = "Test SAML app with virtual server ID settings ordering"
+  enabled        = true
+
+  saml_options = {
+    type               = "WEB_APP"
+    home_page_url      = "https://www.pingidentity.com"
+    acs_urls           = ["https://www.pingidentity.com", "https://pingidentity.com"]
+    assertion_duration = 3600
+    sp_entity_id       = "sp:entity:%[3]s"
+
+    sp_encryption = {
+      algorithm = "AES_256"
+      certificate = {
+        id = pingone_certificate.%[3]s-enc.id
+      }
+    }
+
+    assertion_signed_enabled = false
+    idp_signing_key = {
+      key_id    = pingone_key.%[3]s.id
+      algorithm = pingone_key.%[3]s.signature_algorithm
+    }
+    enable_requested_authn_context   = true
+    nameid_format                    = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+    response_is_signed               = true
+    session_not_on_or_after_duration = 64
+    slo_binding                      = "HTTP_REDIRECT"
+    slo_endpoint                     = "https://www.pingidentity.com/sloendpoint"
+    slo_response_endpoint            = "https://www.pingidentity.com/sloresponseendpoint"
+    slo_window                       = 3
+
+    default_target_url = "https://www.pingidentity.com/relaystate"
+
+    sp_verification = {
+      authn_request_signed = true
+      certificate_ids = [
+        pingone_certificate.%[3]s-2.id,
+        pingone_certificate.%[3]s-1.id,
+      ]
+    }
+
+    virtual_server_id_settings = {
+      enabled = false
+      virtual_server_ids = [
+        {
+          vs_id = "virtualserver2"
+        },
+        {
+          vs_id = "virtualserver3"
+        },
+        {
+          vs_id   = "virtualserver1"
+          default = true
+        },
+        {
+          vs_id   = "virtualserver4"
+          default = false
+        }
+      ]
+    }
+  }
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, image, pkcs7_cert, pem_cert)
+}
+
+func testAccApplicationConfig_SAML_VirtualServerIdSettingsReordered(environmentName, licenseID, resourceName, name, image, pkcs7_cert, pem_cert string) string {
+	return fmt.Sprintf(`
+			%[1]s
+
+resource "pingone_group" "%[3]s-1" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s-1"
+}
+
+resource "pingone_group" "%[3]s-2" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s-2"
+}
+
+resource "pingone_key" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  name                = "%[4]s"
+  algorithm           = "EC"
+  key_length          = 256
+  signature_algorithm = "SHA384withECDSA"
+  subject_dn          = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}
+
+resource "pingone_image" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  image_file_base64 = "%[5]s"
+}
+
+resource "pingone_certificate" "%[3]s-1" {
+  environment_id = pingone_environment.%[2]s.id
+
+  pkcs7_file_base64 = <<EOT
+%[6]s
+EOT
+
+  usage_type = "SIGNING"
+}
+
+resource "pingone_certificate" "%[3]s-2" {
+  environment_id = pingone_environment.%[2]s.id
+
+  pem_file = <<EOT
+%[7]s
+EOT
+
+  usage_type = "SIGNING"
+}
+
+resource "pingone_certificate" "%[3]s-enc" {
+  environment_id = pingone_environment.%[2]s.id
+  pem_file       = <<EOT
+%[7]s
+EOT
+  usage_type     = "ENCRYPTION"
+}
+
+resource "pingone_application" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+  description    = "Test SAML app with reordered virtual server ID settings"
+  enabled        = true
+
+  saml_options = {
+    type               = "WEB_APP"
+    home_page_url      = "https://www.pingidentity.com"
+    acs_urls           = ["https://www.pingidentity.com", "https://pingidentity.com"]
+    assertion_duration = 3600
+    sp_entity_id       = "sp:entity:%[3]s"
+
+    sp_encryption = {
+      algorithm = "AES_256"
+      certificate = {
+        id = pingone_certificate.%[3]s-enc.id
+      }
+    }
+
+    assertion_signed_enabled = false
+    idp_signing_key = {
+      key_id    = pingone_key.%[3]s.id
+      algorithm = pingone_key.%[3]s.signature_algorithm
+    }
+    enable_requested_authn_context   = true
+    nameid_format                    = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+    response_is_signed               = true
+    session_not_on_or_after_duration = 64
+    slo_binding                      = "HTTP_REDIRECT"
+    slo_endpoint                     = "https://www.pingidentity.com/sloendpoint"
+    slo_response_endpoint            = "https://www.pingidentity.com/sloresponseendpoint"
+    slo_window                       = 3
+
+    default_target_url = "https://www.pingidentity.com/relaystate"
+
+    sp_verification = {
+      authn_request_signed = true
+      certificate_ids = [
+        pingone_certificate.%[3]s-2.id,
+        pingone_certificate.%[3]s-1.id,
+      ]
+    }
+
+    virtual_server_id_settings = {
+      enabled = true
+      virtual_server_ids = [
+        {
+          vs_id = "virtualserver1"
+        },
+        {
+          vs_id   = "virtualserver2"
+          default = false
+        },
+        {
+          vs_id = "virtualserver4"
+        },
+        {
+          vs_id   = "virtualserver3"
+          default = true
+        }
+      ]
     }
   }
 }`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, image, pkcs7_cert, pem_cert)

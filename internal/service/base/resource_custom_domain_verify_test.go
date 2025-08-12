@@ -18,6 +18,7 @@ func TestAccCustomDomainVerify_CannotVerifyNXDOMAIN(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
+	domainPrefix := acctest.ResourceNameGen()
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 
@@ -35,21 +36,21 @@ func TestAccCustomDomainVerify_CannotVerifyNXDOMAIN(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCustomDomainVerifyConfig_CannotVerifyNXDOMAIN(environmentName, licenseID, resourceName),
+				Config:      testAccCustomDomainVerifyConfig_CannotVerifyNXDOMAIN(environmentName, licenseID, resourceName, domainPrefix),
 				ExpectError: regexp.MustCompile(`Cannot verify the domain`),
 			},
 		},
 	})
 }
 
-func testAccCustomDomainVerifyConfig_CannotVerifyNXDOMAIN(environmentName, licenseID, resourceName string) string {
+func testAccCustomDomainVerifyConfig_CannotVerifyNXDOMAIN(environmentName, licenseID, resourceName, domainPrefix string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
 resource "pingone_custom_domain" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  domain_name = "terraformdev-verify.ping-eng.com"
+  domain_name = "%[4]s.terraformdev-verify.ping-eng.com"
 }
 
 resource "pingone_custom_domain_verify" "%[3]s" {
@@ -60,5 +61,5 @@ resource "pingone_custom_domain_verify" "%[3]s" {
   timeouts = {
     create = "5s"
   }
-}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, domainPrefix)
 }

@@ -106,6 +106,25 @@ resource "pingone_application" "my_awesome_saml_app" {
       certificate_ids      = [var.sp_verification_certificate_id]
       authn_request_signed = true
     }
+
+    virtual_server_id_settings = {
+      enabled = true
+      virtual_server_ids = [
+        {
+          vs_id = "virtual-server-1"
+        },
+        {
+          vs_id   = "virtual-server-2"
+          default = true
+        },
+        {
+          vs_id = "virtual-server-3"
+        },
+        {
+          vs_id = "virtual-server-4"
+        },
+      ]
+    }
   }
 }
 ```
@@ -445,6 +464,7 @@ Optional:
 - `sp_encryption` (Attributes) A single object that specifies settings for PingOne to encrypt SAML assertions to be sent to the application. Assertions are not encrypted by default. (see [below for nested schema](#nestedatt--saml_options--sp_encryption))
 - `sp_verification` (Attributes) A single object item that specifies SP signature verification settings. (see [below for nested schema](#nestedatt--saml_options--sp_verification))
 - `type` (String) A string that specifies the type associated with the application.  Options are `CUSTOM_APP`, `WEB_APP`.  Defaults to `WEB_APP`.  This field is immutable and will trigger a replace plan if changed.
+- `virtual_server_id_settings` (Attributes) Contains the virtual server ID or IDs to be used. (see [below for nested schema](#nestedatt--saml_options--virtual_server_id_settings))
 
 <a id="nestedatt--saml_options--idp_signing_key"></a>
 ### Nested Schema for `saml_options.idp_signing_key`
@@ -494,6 +514,27 @@ Required:
 Optional:
 
 - `authn_request_signed` (Boolean) A boolean that specifies whether the Authn Request signing should be enforced.  Defaults to `false`.
+
+
+<a id="nestedatt--saml_options--virtual_server_id_settings"></a>
+### Nested Schema for `saml_options.virtual_server_id_settings`
+
+Optional:
+
+- `enabled` (Boolean) Indicates whether the virtual server ID or IDs specified are to be used. Defaults to `false`.
+- `virtual_server_ids` (Attributes List) Required if `enabled` is `true`. Contains the list of virtual server ID or IDs to be used. (see [below for nested schema](#nestedatt--saml_options--virtual_server_id_settings--virtual_server_ids))
+
+<a id="nestedatt--saml_options--virtual_server_id_settings--virtual_server_ids"></a>
+### Nested Schema for `saml_options.virtual_server_id_settings.virtual_server_ids`
+
+Required:
+
+- `vs_id` (String) This must be a valid SAML entity ID.
+
+Optional:
+
+- `default` (Boolean) Indicates whether the virtual server identified by the associated `vs_id` is to be used as the default virtual server. Defaults to `false`.
+
 
 
 
