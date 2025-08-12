@@ -150,8 +150,8 @@ func TestAccCredentialType_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.description", fmt.Sprintf("%s Example Description", name)),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.version", "5"), // ensures calculated default is 5
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.columns", "1"),
-			resource.TestMatchResourceAttr(resourceFullName, "metadata.background_image", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
-			resource.TestMatchResourceAttr(resourceFullName, "metadata.logo_image", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+			resource.TestMatchResourceAttr(resourceFullName, "metadata.background_image", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)|(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+			resource.TestMatchResourceAttr(resourceFullName, "metadata.logo_image", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)|(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.bg_opacity_percent", "100"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.card_color", "#000000"),
 			resource.TestCheckResourceAttr(resourceFullName, "metadata.text_color", "#eff0f1"),
