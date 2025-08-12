@@ -60,16 +60,16 @@ func testAccDavinciConnectorDataSourceConfig_ByIDFull(resourceName string) strin
 
 data "pingone_davinci_connector" "%[2]s-zendesk" {
   environment_id = data.pingone_environment.general_test.id
-  connector_id = "connectorZendesk"
+  connector_id   = "connectorZendesk"
 }
 
 data "pingone_davinci_connector" "%[2]s-pingauthadapter" {
   environment_id = data.pingone_environment.general_test.id
-  connector_id = "pingauthadapter"
+  connector_id   = "pingauthadapter"
 }
 data "pingone_davinci_connector" "%[2]s-pingoneforms" {
   environment_id = data.pingone_environment.general_test.id
-  connector_id = "pingOneFormsConnector"
+  connector_id   = "pingOneFormsConnector"
 }`, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
@@ -79,7 +79,7 @@ func testAccDavinciConnectorDataSourceConfig_NotFoundByID(resourceName string) s
 
 data "pingone_davinci_connector" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  connector_id = "9c052a8a14be44e48f072662569994ce" // dummy generic ID
+  connector_id   = "9c052a8a14be44e48f072662569994ce" // dummy generic ID
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }

@@ -229,25 +229,25 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
   }
   name = "%[2]s"
   properties = jsonencode({
-        "urls": {
-            "type": "string",
-            "displayName": "Register URLs",
-            "createdDate": 12345,
-            "customerId": "12345",
-            "companyId": "singularkey",
-            "preferredControlType": "urlsTableView",
-            "info": "POST requests will be made to these registered url as selected later.",
-            "required": true,
-            "value": [
-                {
-                    "name": "example",
-                    "url": "https://example.com",
-                    "token": "mytoken",
-                    "value": "https://example.com"
-                }
-            ]
+    "urls" : {
+      "type" : "string",
+      "displayName" : "Register URLs",
+      "createdDate" : 12345,
+      "customerId" : "12345",
+      "companyId" : "singularkey",
+      "preferredControlType" : "urlsTableView",
+      "info" : "POST requests will be made to these registered url as selected later.",
+      "required" : true,
+      "value" : [
+        {
+          "name" : "example",
+          "url" : "https://example.com",
+          "token" : "mytoken",
+          "value" : "https://example.com"
         }
-    })
+      ]
+    }
+  })
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }

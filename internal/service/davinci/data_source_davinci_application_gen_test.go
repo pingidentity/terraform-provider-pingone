@@ -61,29 +61,29 @@ func testAccDavinciApplicationDataSourceConfig_Full(resourceName string) string 
 	return fmt.Sprintf(`
 resource "pingone_davinci_application" "%[1]s" {
   environment_id = data.pingone_environment.general_test.id
-  name = "%[1]s"
-  api_key  = {
+  name           = "%[1]s"
+  api_key = {
     enabled = false
-}
+  }
   oauth = {
     enforce_signed_request_openid = true
     grant_types = [
-	  "clientCredentials",
-	  "authorizationCode",
-	  "implicit",
-	]
+      "clientCredentials",
+      "authorizationCode",
+      "implicit",
+    ]
     logout_uris = [
-	  "https://example.com/logout",
-	]
+      "https://example.com/logout",
+    ]
     redirect_uris = [
-	  "https://example.com/callback",
-	  "https://example.com/redirect",
-	]
+      "https://example.com/callback",
+      "https://example.com/redirect",
+    ]
     scopes = [
-	  "profile",
-	  "flow_analytics",
-	  "openid",
-	]
+      "profile",
+      "flow_analytics",
+      "openid",
+    ]
     sp_jwks_url = "https://example.com/jwks"
   }
 }

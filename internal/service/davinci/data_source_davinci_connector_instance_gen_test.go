@@ -117,25 +117,25 @@ resource "pingone_davinci_connector_instance" "%[1]s" {
   }
   name = "%[1]s"
   properties = jsonencode({
-        "urls": {
-            "type": "string",
-            "displayName": "Register URLs",
-            "createdDate": 12345,
-            "customerId": "12345",
-            "companyId": "singularkey",
-            "preferredControlType": "urlsTableView",
-            "info": "POST requests will be made to these registered url as selected later.",
-            "required": true,
-            "value": [
-                {
-                    "name": "example",
-                    "url": "https://example.com",
-                    "token": "mytoken",
-                    "value": "https://example.com"
-                }
-            ]
+    "urls" : {
+      "type" : "string",
+      "displayName" : "Register URLs",
+      "createdDate" : 12345,
+      "customerId" : "12345",
+      "companyId" : "singularkey",
+      "preferredControlType" : "urlsTableView",
+      "info" : "POST requests will be made to these registered url as selected later.",
+      "required" : true,
+      "value" : [
+        {
+          "name" : "example",
+          "url" : "https://example.com",
+          "token" : "mytoken",
+          "value" : "https://example.com"
         }
-    })
+      ]
+    }
+  })
 }
 `, resourceName)
 }
@@ -148,7 +148,7 @@ func testAccDavinciConnectorInstanceDataSourceConfig_ByIDFull(resourceName strin
 
 data "pingone_davinci_connector_instance" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  instance_id = pingone_davinci_connector_instance.%[2]s.id
+  instance_id    = pingone_davinci_connector_instance.%[2]s.id
 }`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName, testAccDavinciConnectorInstanceDataSourceConfig_Full(resourceName))
 }
 
@@ -158,7 +158,7 @@ func testAccDavinciConnectorInstanceDataSourceConfig_NotFoundByID(resourceName s
 
 data "pingone_davinci_connector_instance" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  instance_id = "9c052a8a14be44e48f072662569994ce" // dummy generic ID
+  instance_id    = "9c052a8a14be44e48f072662569994ce" // dummy generic ID
 }
 `, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
 }
@@ -169,7 +169,7 @@ func testAccDavinciConnectorInstanceDataSourceConfig_BootstrapConnection_ByID_Hc
 
 data "pingone_davinci_connector_instance" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  instance_id             = "94141bf2f1b9b59a5f5365ff135e02bb" // the PingOne connector
+  instance_id    = "94141bf2f1b9b59a5f5365ff135e02bb" // the PingOne connector
 }
 `, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
 }

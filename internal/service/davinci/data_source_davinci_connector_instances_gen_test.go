@@ -62,25 +62,25 @@ resource "pingone_davinci_connector_instance" "%[2]s-first" {
   }
   name = "%[2]s-first"
   properties = jsonencode({
-        "urls": {
-            "type": "string",
-            "displayName": "Register URLs",
-            "createdDate": 12345,
-            "customerId": "12345",
-            "companyId": "singularkey",
-            "preferredControlType": "urlsTableView",
-            "info": "POST requests will be made to these registered url as selected later.",
-            "required": true,
-            "value": [
-                {
-                    "name": "example",
-                    "url": "https://example.com",
-                    "token": "mytoken",
-                    "value": "https://example.com"
-                }
-            ]
+    "urls" : {
+      "type" : "string",
+      "displayName" : "Register URLs",
+      "createdDate" : 12345,
+      "customerId" : "12345",
+      "companyId" : "singularkey",
+      "preferredControlType" : "urlsTableView",
+      "info" : "POST requests will be made to these registered url as selected later.",
+      "required" : true,
+      "value" : [
+        {
+          "name" : "example",
+          "url" : "https://example.com",
+          "token" : "mytoken",
+          "value" : "https://example.com"
         }
-    })
+      ]
+    }
+  })
 }
 
 resource "pingone_davinci_connector_instance" "%[2]s-second" {
@@ -90,33 +90,33 @@ resource "pingone_davinci_connector_instance" "%[2]s-second" {
   }
   name = "%[2]s-second"
   properties = jsonencode({
-        "urls": {
-            "type": "string",
-            "displayName": "Register URLs",
-            "createdDate": 12345,
-            "customerId": "12345",
-            "companyId": "singularkey",
-            "preferredControlType": "urlsTableView",
-            "info": "POST requests will be made to these registered url as selected later.",
-            "required": true,
-            "value": [
-                {
-                    "name": "example",
-                    "url": "https://example.com",
-                    "token": "mytoken",
-                    "value": "https://example.com"
-                }
-            ]
+    "urls" : {
+      "type" : "string",
+      "displayName" : "Register URLs",
+      "createdDate" : 12345,
+      "customerId" : "12345",
+      "companyId" : "singularkey",
+      "preferredControlType" : "urlsTableView",
+      "info" : "POST requests will be made to these registered url as selected later.",
+      "required" : true,
+      "value" : [
+        {
+          "name" : "example",
+          "url" : "https://example.com",
+          "token" : "mytoken",
+          "value" : "https://example.com"
         }
-    })
+      ]
+    }
+  })
 }
 
 data "pingone_davinci_connector_instances" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
   depends_on = [
-	pingone_davinci_connector_instance.%[2]s-first,
-	pingone_davinci_connector_instance.%[2]s-second,
+    pingone_davinci_connector_instance.%[2]s-first,
+    pingone_davinci_connector_instance.%[2]s-second,
   ]
 }
 `, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)

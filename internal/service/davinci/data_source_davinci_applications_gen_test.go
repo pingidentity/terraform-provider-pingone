@@ -39,34 +39,34 @@ func testAccDavinciApplicationsDataSourceConfig_Get(resourceName string) string 
 
 resource "pingone_davinci_application" "%[2]s-simple" {
   environment_id = data.pingone_environment.general_test.id
-  name = "%[2]s-simple"
+  name           = "%[2]s-simple"
 }
 
 resource "pingone_davinci_application" "%[2]s-full" {
   environment_id = data.pingone_environment.general_test.id
-  name = "%[2]s-full"
-  api_key  = {
+  name           = "%[2]s-full"
+  api_key = {
     enabled = false
-}
+  }
   oauth = {
     enforce_signed_request_openid = true
     grant_types = [
-	  "clientCredentials",
-	  "authorizationCode",
-	  "implicit",
-	]
+      "clientCredentials",
+      "authorizationCode",
+      "implicit",
+    ]
     logout_uris = [
-	  "https://example.com/logout",
-	]
+      "https://example.com/logout",
+    ]
     redirect_uris = [
-	  "https://example.com/callback",
-	  "https://example.com/redirect",
-	]
+      "https://example.com/callback",
+      "https://example.com/redirect",
+    ]
     scopes = [
-	  "profile",
-	  "flow_analytics",
-	  "openid",
-	]
+      "profile",
+      "flow_analytics",
+      "openid",
+    ]
     sp_jwks_url = "https://example.com/jwks"
   }
 }
@@ -75,8 +75,8 @@ data "pingone_davinci_applications" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
   depends_on = [
-	pingone_davinci_application.%[2]s-simple,
-	pingone_davinci_application.%[2]s-full,
+    pingone_davinci_application.%[2]s-simple,
+    pingone_davinci_application.%[2]s-full,
   ]
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)

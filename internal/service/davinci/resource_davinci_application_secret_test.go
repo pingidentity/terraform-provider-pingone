@@ -282,7 +282,7 @@ func davinciApplicationSecret_ApplicationOnlyHCL(resourceName string) string {
 
 resource "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  name = "%[2]s"
+  name           = "%[2]s"
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
@@ -293,7 +293,7 @@ func davinciApplicationSecret_FirstRotateHCL(resourceName string) string {
 
 resource "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  name = "%[2]s"
+  name           = "%[2]s"
 }
 
 resource "pingone_davinci_application_secret" "%[2]s" {
@@ -310,13 +310,13 @@ func davinciApplicationSecret_FirstNoRotateHCL(resourceName string) string {
 
 resource "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  name = "%[2]s"
+  name           = "%[2]s"
 }
 
 resource "pingone_davinci_application_secret" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_davinci_application.%[2]s.id
-	rotation_trigger_values = {
+  rotation_trigger_values = {
     "trigger" = "initial"
   }
 }
@@ -329,15 +329,15 @@ func davinciApplicationSecret_SecondRotateHCL(resourceName string) string {
 
 resource "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  name = "%[2]s"
+  name           = "%[2]s"
 }
 
 resource "pingone_davinci_application_secret" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_davinci_application.%[2]s.id
-	rotation_trigger_values = {
-    "trigger" = "updated"
-	"newtrigger" = "new"
+  rotation_trigger_values = {
+    "trigger"    = "updated"
+    "newtrigger" = "new"
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
@@ -350,13 +350,13 @@ func davinciApplicationSecret_SecondNoRotateHCL(resourceName string) string {
 
 resource "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  name = "%[2]s"
+  name           = "%[2]s"
 }
 
 resource "pingone_davinci_application_secret" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_davinci_application.%[2]s.id
-	rotation_trigger_values = {
+  rotation_trigger_values = {
     "trigger" = "updated"
   }
 }
@@ -369,13 +369,13 @@ func davinciApplicationSecret_NewEnvHCL(environmentName, licenseID, resourceName
 
 resource "pingone_davinci_application" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  name = "%[3]s"
+  name           = "%[3]s"
 }
 
 resource "pingone_davinci_application_secret" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   application_id = pingone_davinci_application.%[3]s.id
-	rotation_trigger_values = {
+  rotation_trigger_values = {
     "trigger" = "initial"
   }
 }
