@@ -13,7 +13,15 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func TestAccDavinciConnectorInstanceDataSource_ByIDFull(t *testing.T) {
+func TestAccDavinciConnectorInstanceDataSource_ByIDFull_Clean(t *testing.T) {
+	testAccDavinciConnectorInstanceDataSource_ByIDFull(t, false)
+}
+
+func TestAccDavinciConnectorInstanceDataSource_ByIDFull_WithBootstrap(t *testing.T) {
+	testAccDavinciConnectorInstanceDataSource_ByIDFull(t, true)
+}
+
+func testAccDavinciConnectorInstanceDataSource_ByIDFull(t *testing.T, withBootstrapConfig bool) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -28,14 +36,22 @@ func TestAccDavinciConnectorInstanceDataSource_ByIDFull(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDavinciConnectorInstanceDataSourceConfig_ByIDFull(resourceName),
+				Config: testAccDavinciConnectorInstanceDataSourceConfig_ByIDFull(resourceName, withBootstrapConfig),
 				Check:  davinciConnectorInstanceDataSource_CheckComputedValuesComplete(resourceName),
 			},
 		},
 	})
 }
 
-func TestAccDavinciConnectorInstanceDataSource_NotFound(t *testing.T) {
+func TestAccDavinciConnectorInstanceDataSource_NotFound_Clean(t *testing.T) {
+	testAccDavinciConnectorInstanceDataSource_NotFound(t, false)
+}
+
+func TestAccDavinciConnectorInstanceDataSource_NotFound_WithBootstrap(t *testing.T) {
+	testAccDavinciConnectorInstanceDataSource_NotFound(t, true)
+}
+
+func testAccDavinciConnectorInstanceDataSource_NotFound(t *testing.T, withBootstrapConfig bool) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -50,9 +66,44 @@ func TestAccDavinciConnectorInstanceDataSource_NotFound(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccDavinciConnectorInstanceDataSourceConfig_NotFoundByID(resourceName),
+				Config:      testAccDavinciConnectorInstanceDataSourceConfig_NotFoundByID(resourceName, withBootstrapConfig),
 				ExpectError: regexp.MustCompile("The requested resource was not found"),
 			},
+		},
+	})
+}
+
+func TestAccDavinciConnectorInstanceDataSource_BootstrapConnectionByID_Clean(t *testing.T) {
+	testAccDavinciConnectorInstanceDataSource_BootstrapConnectionByID(t, false)
+}
+
+func TestAccDavinciConnectorInstanceDataSource_BootstrapConnectionByID_WithBootstrap(t *testing.T) {
+	testAccDavinciConnectorInstanceDataSource_BootstrapConnectionByID(t, true)
+}
+
+func testAccDavinciConnectorInstanceDataSource_BootstrapConnectionByID(t *testing.T, withBootstrapConfig bool) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	testStep := resource.TestStep{
+		Config: testAccDavinciConnectorInstanceDataSourceConfig_BootstrapConnection_ByID_Hcl(resourceName, withBootstrapConfig),
+	}
+	if withBootstrapConfig {
+		testStep.Check = davinciConnectorInstanceDataSource_CheckComputedValuesBootstrapConnection(resourceName)
+	} else {
+		testStep.ExpectError = regexp.MustCompile(`The requested resource was not found`)
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			testStep,
 		},
 	})
 }
@@ -89,7 +140,7 @@ resource "pingone_davinci_connector_instance" "%[1]s" {
 `, resourceName)
 }
 
-func testAccDavinciConnectorInstanceDataSourceConfig_ByIDFull(resourceName string) string {
+func testAccDavinciConnectorInstanceDataSourceConfig_ByIDFull(resourceName string, withBootstrapConfig bool) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -98,10 +149,10 @@ func testAccDavinciConnectorInstanceDataSourceConfig_ByIDFull(resourceName strin
 data "pingone_davinci_connector_instance" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   instance_id = pingone_davinci_connector_instance.%[2]s.id
-}`, acctest.GenericSandboxEnvironment(), resourceName, testAccDavinciConnectorInstanceDataSourceConfig_Full(resourceName))
+}`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName, testAccDavinciConnectorInstanceDataSourceConfig_Full(resourceName))
 }
 
-func testAccDavinciConnectorInstanceDataSourceConfig_NotFoundByID(resourceName string) string {
+func testAccDavinciConnectorInstanceDataSourceConfig_NotFoundByID(resourceName string, withBootstrapConfig bool) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -109,7 +160,18 @@ data "pingone_davinci_connector_instance" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   instance_id = "9c052a8a14be44e48f072662569994ce" // dummy generic ID
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
+}
+
+func testAccDavinciConnectorInstanceDataSourceConfig_BootstrapConnection_ByID_Hcl(resourceName string, withBootstrapConfig bool) (hcl string) {
+	return fmt.Sprintf(`
+%[1]s
+
+data "pingone_davinci_connector_instance" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  instance_id             = "94141bf2f1b9b59a5f5365ff135e02bb" // the PingOne connector
+}
+`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
 }
 
 // Validate any computed values when applying complete HCL
@@ -120,5 +182,13 @@ func davinciConnectorInstanceDataSource_CheckComputedValuesComplete(resourceName
 		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "name", resourceName),
 		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "properties",
 			"{\"urls\":{\"companyId\":\"singularkey\",\"createdDate\":12345,\"customerId\":\"12345\",\"displayName\":\"Register URLs\",\"info\":\"POST requests will be made to these registered url as selected later.\",\"preferredControlType\":\"urlsTableView\",\"required\":true,\"type\":\"string\",\"value\":[{\"name\":\"example\",\"token\":\"mytoken\",\"url\":\"https://example.com\",\"value\":\"https://example.com\"}]}}"),
+	)
+}
+func davinciConnectorInstanceDataSource_CheckComputedValuesBootstrapConnection(resourceName string) resource.TestCheckFunc {
+	return resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "connector.id", "pingOneSSOConnector"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "id", "94141bf2f1b9b59a5f5365ff135e02bb"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "name", "PingOne"),
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "properties"),
 	)
 }
