@@ -393,7 +393,8 @@ func CheckParentEnvironmentDestroy(ctx context.Context, apiClient *pingone.APICl
 		return false, fmt.Errorf("unable to parse environment id '%s' as uuid: %v", environmentID, err)
 	}
 
-	environment, r, err := apiClient.EnvironmentsApi.GetEnvironmentById(ctx, environmentIdUuid).Execute()
+	//TODO remove placeholder expand once pingone-go-client is updated to remove this requirement
+	environment, r, err := apiClient.EnvironmentsApi.GetEnvironmentById(ctx, environmentIdUuid).Expand("placeholder").Execute()
 
 	destroyed, err := CheckForResourceDestroy(r, err)
 	if err != nil {
