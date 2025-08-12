@@ -161,8 +161,8 @@ func PreCheckDomainVerification(t *testing.T) {
 }
 
 func PreCheckRegionSupportsWorkforce(t *testing.T) {
-	if v := os.Getenv("PINGONE_REGION_CODE"); v == "CA" {
-		t.Skipf("Workforce environment not supported in the Canada region")
+	if v := os.Getenv("PINGONE_REGION_CODE"); v == "CA" || v == "SG" {
+		t.Skipf("Workforce environment not supported in the Canada or Singapore regions")
 	}
 }
 
