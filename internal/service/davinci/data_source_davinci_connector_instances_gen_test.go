@@ -11,10 +11,28 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
 
-func TestAccDavinciConnectorInstancesDataSource_Get(t *testing.T) {
+func TestAccDavinciConnectorInstancesDataSource_Get_Clean(t *testing.T) {
+	testAccDavinciConnectorInstancesDataSource_Get(t, false)
+}
+
+func TestAccDavinciConnectorInstancesDataSource_Get_WithBootstrap(t *testing.T) {
+	testAccDavinciConnectorInstancesDataSource_Get(t, true)
+}
+
+func testAccDavinciConnectorInstancesDataSource_Get(t *testing.T, withBootstrapConfig bool) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
+
+	var testCheck resource.TestCheckFunc
+	if withBootstrapConfig {
+		testCheck = resource.ComposeTestCheckFunc(
+			davinciConnectorInstancesDataSource_CheckComputedValuesComplete(resourceName),
+			davinciConnectorInstancesDataSource_CheckComputedValuesWithBootstrap(resourceName),
+		)
+	} else {
+		testCheck = davinciConnectorInstancesDataSource_CheckComputedValuesComplete(resourceName)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -26,14 +44,14 @@ func TestAccDavinciConnectorInstancesDataSource_Get(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDavinciConnectorInstancesDataSourceConfig_Get(resourceName),
-				Check:  davinciConnectorInstancesDataSource_CheckComputedValuesComplete(resourceName),
+				Config: testAccDavinciConnectorInstancesDataSourceConfig_Get(resourceName, withBootstrapConfig),
+				Check:  testCheck,
 			},
 		},
 	})
 }
 
-func testAccDavinciConnectorInstancesDataSourceConfig_Get(resourceName string) string {
+func testAccDavinciConnectorInstancesDataSourceConfig_Get(resourceName string, withBootstrapConfig bool) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -101,7 +119,7 @@ data "pingone_davinci_connector_instances" "%[2]s" {
 	pingone_davinci_connector_instance.%[2]s-second,
   ]
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
 }
 
 // Validate any computed values when applying complete HCL
@@ -117,6 +135,16 @@ func davinciConnectorInstancesDataSource_CheckComputedValuesComplete(resourceNam
 			"connector.id": "webhookConnector",
 			"name":         fmt.Sprintf("%s-second", resourceName),
 			"properties":   "{\"urls\":{\"companyId\":\"singularkey\",\"createdDate\":12345,\"customerId\":\"12345\",\"displayName\":\"Register URLs\",\"info\":\"POST requests will be made to these registered url as selected later.\",\"preferredControlType\":\"urlsTableView\",\"required\":true,\"type\":\"string\",\"value\":[{\"name\":\"example\",\"token\":\"mytoken\",\"url\":\"https://example.com\",\"value\":\"https://example.com\"}]}}",
+		}),
+	)
+}
+
+func davinciConnectorInstancesDataSource_CheckComputedValuesWithBootstrap(resourceName string) resource.TestCheckFunc {
+	return resource.ComposeTestCheckFunc(
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("data.pingone_davinci_connector_instances.%s", resourceName), "connector_instances.*", map[string]string{
+			"connector.id": "pingOneSSOConnector",
+			"name":         "PingOne",
+			"id":           "94141bf2f1b9b59a5f5365ff135e02bb",
 		}),
 	)
 }
