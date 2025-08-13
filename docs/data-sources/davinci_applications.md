@@ -2,12 +2,12 @@
 page_title: "pingone_davinci_applications Data Source - terraform-provider-pingone"
 subcategory: "DaVinci"
 description: |-
-  Data source to retrieve all davinci_applications.
+  Data source to retrieve all DaVinci applications.
 ---
 
 # pingone_davinci_applications (Data Source)
 
-Data source to retrieve all davinci_applications.
+Data source to retrieve all DaVinci applications.
 
 ## Example Usage
 

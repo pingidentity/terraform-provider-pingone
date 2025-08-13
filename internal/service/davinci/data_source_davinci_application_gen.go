@@ -73,7 +73,7 @@ type davinciApplicationDataSourceModel struct {
 
 func (r *davinciApplicationDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Data source to retrieve a davinci_application.",
+		Description: "Data source to retrieve a DaVinci application.",
 		Attributes: map[string]schema.Attribute{
 			"api_key": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{

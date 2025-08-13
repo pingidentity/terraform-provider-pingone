@@ -3,12 +3,12 @@
 page_title: "pingone_davinci_connectors Data Source - terraform-provider-pingone"
 subcategory: ""
 description: |-
-  Data source to retrieve all davinci_connectors.
+  Data source to retrieve all DaVinci connectors.
 ---
 
 # pingone_davinci_connectors (Data Source)
 
-Data source to retrieve all davinci_connectors.
+Data source to retrieve all DaVinci connectors.
 
 
 

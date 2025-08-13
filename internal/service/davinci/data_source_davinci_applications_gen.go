@@ -70,7 +70,7 @@ type davinciApplicationsDataSourceModel struct {
 
 func (r *davinciApplicationsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Data source to retrieve all davinci_applications.",
+		Description: "Data source to retrieve all DaVinci applications.",
 		Attributes: map[string]schema.Attribute{
 			"davinci_applications": schema.SetNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{

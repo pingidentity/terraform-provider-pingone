@@ -2,12 +2,12 @@
 page_title: "pingone_davinci_connector_instance Data Source - terraform-provider-pingone"
 subcategory: "DaVinci"
 description: |-
-  Data source to retrieve a davinci_connector_instance.
+  Data source to retrieve a DaVinci connector instance.
 ---
 
 # pingone_davinci_connector_instance (Data Source)
 
-Data source to retrieve a davinci_connector_instance.
+Data source to retrieve a DaVinci connector instance.
 
 ## Example Usage
 

@@ -75,7 +75,7 @@ type davinciConnectorInstanceDataSourceModel struct {
 
 func (r *davinciConnectorInstanceDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Data source to retrieve a davinci_connector_instance.",
+		Description: "Data source to retrieve a DaVinci connector instance.",
 		Attributes: map[string]schema.Attribute{
 			"connector": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{

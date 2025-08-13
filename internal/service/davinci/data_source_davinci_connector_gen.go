@@ -74,7 +74,7 @@ type davinciConnectorDataSourceModel struct {
 
 func (r *davinciConnectorDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Data source to retrieve a davinci_connector.",
+		Description: "Data source to retrieve a DaVinci connector.",
 		Attributes: map[string]schema.Attribute{
 			"connector_id": schema.StringAttribute{
 				Required:    true,

@@ -70,7 +70,7 @@ type davinciConnectorsDataSourceModel struct {
 
 func (r *davinciConnectorsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Data source to retrieve all davinci_connectors.",
+		Description: "Data source to retrieve all DaVinci connectors.",
 		Attributes: map[string]schema.Attribute{
 			"connectors": schema.SetNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
