@@ -13,7 +13,15 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func TestAccDavinciApplicationDataSource_ByIDFull(t *testing.T) {
+func TestAccDavinciApplicationDataSource_ByIDFull_Clean(t *testing.T) {
+	testAccDavinciApplicationDataSource_ByIDFull(t, false)
+}
+
+func TestAccDavinciApplicationDataSource_ByIDFull_WithBootstrap(t *testing.T) {
+	testAccDavinciApplicationDataSource_ByIDFull(t, true)
+}
+
+func testAccDavinciApplicationDataSource_ByIDFull(t *testing.T, withBootstrapConfig bool) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -28,14 +36,43 @@ func TestAccDavinciApplicationDataSource_ByIDFull(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDavinciApplicationDataSourceConfig_ByIDFull(resourceName),
+				Config: testAccDavinciApplicationDataSourceConfig_ByIDFull(resourceName, withBootstrapConfig),
 				Check:  davinciApplicationDataSource_CheckComputedValuesComplete(resourceName),
 			},
 		},
 	})
 }
 
-func TestAccDavinciApplicationDataSource_NotFound(t *testing.T) {
+func TestAccDavinciApplicationDataSource_BootstrapApplicationByIDFull(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDavinciApplicationDataSourceConfig_BootstrapApplicationByID(resourceName),
+				Check:  davinciApplicationDataSource_CheckComputedValuesBootstrapApplication(resourceName),
+			},
+		},
+	})
+}
+
+func TestAccDavinciApplicationDataSource_NotFound_Clean(t *testing.T) {
+	testAccDavinciApplicationDataSource_NotFound(t, false)
+}
+
+func TestAccDavinciApplicationDataSource_NotFound_WithBootstrap(t *testing.T) {
+	testAccDavinciApplicationDataSource_NotFound(t, true)
+}
+
+func testAccDavinciApplicationDataSource_NotFound(t *testing.T, withBootstrapConfig bool) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -50,7 +87,7 @@ func TestAccDavinciApplicationDataSource_NotFound(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccDavinciApplicationDataSourceConfig_NotFoundByID(resourceName),
+				Config:      testAccDavinciApplicationDataSourceConfig_NotFoundByID(resourceName, withBootstrapConfig),
 				ExpectError: regexp.MustCompile("The requested resource was not found"),
 			},
 		},
@@ -90,7 +127,7 @@ resource "pingone_davinci_application" "%[1]s" {
 `, resourceName)
 }
 
-func testAccDavinciApplicationDataSourceConfig_ByIDFull(resourceName string) string {
+func testAccDavinciApplicationDataSourceConfig_ByIDFull(resourceName string, withBootstrapConfig bool) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -99,10 +136,25 @@ func testAccDavinciApplicationDataSourceConfig_ByIDFull(resourceName string) str
 data "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_davinci_application.%[2]s.id
-}`, acctest.GenericSandboxEnvironment(), resourceName, testAccDavinciApplicationDataSourceConfig_Full(resourceName))
+}`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName, testAccDavinciApplicationDataSourceConfig_Full(resourceName))
 }
 
-func testAccDavinciApplicationDataSourceConfig_NotFoundByID(resourceName string) string {
+func testAccDavinciApplicationDataSourceConfig_BootstrapApplicationByID(resourceName string) (hcl string) {
+	return fmt.Sprintf(`
+%[1]s
+
+data "pingone_davinci_applications" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+}
+
+data "pingone_davinci_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = data.pingone_davinci_applications.%[2]s.davinci_applications.* [index(data.pingone_davinci_applications.%[2]s.davinci_applications[*].name, "PingOne SSO Connection")].id
+}
+`, acctest.DaVinciSandboxEnvironment(true), resourceName)
+}
+
+func testAccDavinciApplicationDataSourceConfig_NotFoundByID(resourceName string, withBootstrapConfig bool) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -110,7 +162,7 @@ data "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
 }
 
 // Validate any computed values when applying complete HCL
@@ -137,5 +189,25 @@ func davinciApplicationDataSource_CheckComputedValuesComplete(resourceName strin
 		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.scopes.*", "openid"),
 		resource.TestCheckNoResourceAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.sp_jwks_openid"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.spjwks_url", "https://example.com/jwks"),
+	)
+}
+
+func davinciApplicationDataSource_CheckComputedValuesBootstrapApplication(resourceName string) resource.TestCheckFunc {
+	return resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "api_key.enabled", "true"),
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "api_key.value"),
+		resource.TestMatchResourceAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "id", verify.P1DVResourceIDRegexp),
+		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "name", "PingOne SSO Connection"),
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.client_secret"),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.enforce_signed_request_openid"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.grant_types.#", "1"),
+		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.grant_types.*", "authorizationCode"),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.logout_uris"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.redirect_uris.#", "1"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.scopes.#", "2"),
+		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.scopes.*", "profile"),
+		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.scopes.*", "openid"),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.sp_jwks_openid"),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.spjwks_url"),
 	)
 }
