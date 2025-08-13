@@ -77,8 +77,7 @@ func CheckEnvironmentExistsOnPermissionsError(ctx context.Context, apiClient *pi
 			return fO, nil, fmt.Errorf("unable to parse environment id '%s' as uuid: %v", environmentID, err)
 		}
 
-		//TODO remove placeholder expand once pingone-go-client is updated to remove this requirement
-		_, fER, fEErr := apiClient.EnvironmentsApi.GetEnvironmentById(ctx, environmentIdUuid).Expand("placeholder").Execute()
+		_, fER, fEErr := apiClient.EnvironmentsApi.GetEnvironmentById(ctx, environmentIdUuid).Execute()
 
 		if fER.StatusCode == http.StatusNotFound {
 			tflog.Warn(ctx, "API responded with 400, 401 or 403, and the provider determined the environment doesn't exist.  Overriding resource response.")
