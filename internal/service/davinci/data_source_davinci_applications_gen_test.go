@@ -11,10 +11,26 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
 
-func TestAccDavinciApplicationsDataSource_Get(t *testing.T) {
+func TestAccDavinciApplicationsDataSource_Get_Clean(t *testing.T) {
+	testAccDavinciApplicationsDataSource_Get(t, false)
+}
+
+func TestAccDavinciApplicationsDataSource_Get_WithBootstrap(t *testing.T) {
+	testAccDavinciApplicationsDataSource_Get(t, true)
+}
+
+func testAccDavinciApplicationsDataSource_Get(t *testing.T, withBootstrapConfig bool) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
+
+	check := davinciApplicationsDataSource_CheckComputedValuesComplete(resourceName)
+	if withBootstrapConfig {
+		check = resource.ComposeTestCheckFunc(
+			check,
+			davinciApplicationsDataSource_CheckComputedValuesBootstrapApplication(resourceName),
+		)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -26,14 +42,14 @@ func TestAccDavinciApplicationsDataSource_Get(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDavinciApplicationsDataSourceConfig_Get(resourceName),
-				Check:  davinciApplicationsDataSource_CheckComputedValuesComplete(resourceName),
+				Config: testAccDavinciApplicationsDataSourceConfig_Get(resourceName, withBootstrapConfig),
+				Check:  check,
 			},
 		},
 	})
 }
 
-func testAccDavinciApplicationsDataSourceConfig_Get(resourceName string) string {
+func testAccDavinciApplicationsDataSourceConfig_Get(resourceName string, withBootstrapConfig bool) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -79,7 +95,7 @@ data "pingone_davinci_applications" "%[2]s" {
     pingone_davinci_application.%[2]s-full,
   ]
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
 }
 
 // Validate any computed values when applying complete HCL
@@ -104,4 +120,15 @@ func davinciApplicationsDataSource_CheckComputedValuesComplete(resourceName stri
 		}),
 	)
 
+}
+
+func davinciApplicationsDataSource_CheckComputedValuesBootstrapApplication(resourceName string) resource.TestCheckFunc {
+	return resource.ComposeTestCheckFunc(
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("data.pingone_davinci_applications.%s", resourceName), "davinci_applications.*", map[string]string{
+			"api_key.enabled":     "true",
+			"name":                "PingOne SSO Connection",
+			"oauth.grant_types.#": "1",
+			"oauth.scopes.#":      "2",
+		}),
+	)
 }
