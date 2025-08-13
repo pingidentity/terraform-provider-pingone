@@ -12,7 +12,15 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
-func TestAccDavinciConnectorsDataSource_Get(t *testing.T) {
+func TestAccDavinciConnectorsDataSource_Get_Clean(t *testing.T) {
+	testAccDavinciConnectorsDataSource_Get(t, false)
+}
+
+func TestAccDavinciConnectorsDataSource_Get_WithBootstrap(t *testing.T) {
+	testAccDavinciConnectorsDataSource_Get(t, true)
+}
+
+func testAccDavinciConnectorsDataSource_Get(t *testing.T, withBootstrap bool) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -26,28 +34,27 @@ func TestAccDavinciConnectorsDataSource_Get(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDavinciConnectorsDataSourceConfig_Get(resourceName),
+				Config: testAccDavinciConnectorsDataSourceConfig_Get(resourceName, withBootstrap),
 				Check:  davinciConnectorsDataSource_CheckComputedValuesComplete(resourceName),
 			},
 		},
 	})
 }
 
-func testAccDavinciConnectorsDataSourceConfig_Get(resourceName string) string {
+func testAccDavinciConnectorsDataSourceConfig_Get(resourceName string, withBootstrap bool) string {
 	return fmt.Sprintf(`
 	%[1]s
 
 data "pingone_davinci_connectors" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName)
 }
 
 // Validate any computed values when applying complete HCL
 func davinciConnectorsDataSource_CheckComputedValuesComplete(resourceName string) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
 		resource.TestMatchResourceAttr(fmt.Sprintf("data.pingone_davinci_connectors.%s", resourceName), "id", verify.P1ResourceIDRegexp),
-		// Check for a few known connectors. There are over 200 available.
 		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("data.pingone_davinci_connectors.%s", resourceName), "connectors.*", map[string]string{
 			"id":                                    "httpConnector",
 			"description":                           "Create forms and custom HTML pages, or make REST API calls.",

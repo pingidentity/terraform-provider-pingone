@@ -12,7 +12,15 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
 
-func TestAccDavinciConnectorDataSource_ByIDFull(t *testing.T) {
+func TestAccDavinciConnectorDataSource_ByIDFull_Clean(t *testing.T) {
+	testAccDavinciConnectorDataSource_ByIDFull(t, false)
+}
+
+func TestAccDavinciConnectorDataSource_ByIDFull_WithBootstrap(t *testing.T) {
+	testAccDavinciConnectorDataSource_ByIDFull(t, true)
+}
+
+func testAccDavinciConnectorDataSource_ByIDFull(t *testing.T, withBootstrap bool) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -26,7 +34,7 @@ func TestAccDavinciConnectorDataSource_ByIDFull(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDavinciConnectorDataSourceConfig_ByIDFull(resourceName),
+				Config: testAccDavinciConnectorDataSourceConfig_ByIDFull(resourceName, withBootstrap),
 				Check:  davinciConnectorDataSource_CheckComputedValuesComplete(resourceName),
 			},
 		},
@@ -54,7 +62,7 @@ func TestAccDavinciConnectorDataSource_NotFound(t *testing.T) {
 	})
 }
 
-func testAccDavinciConnectorDataSourceConfig_ByIDFull(resourceName string) string {
+func testAccDavinciConnectorDataSourceConfig_ByIDFull(resourceName string, withBootstrap bool) string {
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -70,7 +78,7 @@ data "pingone_davinci_connector" "%[2]s-pingauthadapter" {
 data "pingone_davinci_connector" "%[2]s-pingoneforms" {
   environment_id = data.pingone_environment.general_test.id
   connector_id   = "pingOneFormsConnector"
-}`, acctest.GenericSandboxEnvironment(), resourceName)
+}`, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName)
 }
 
 func testAccDavinciConnectorDataSourceConfig_NotFoundByID(resourceName string) string {
