@@ -1,5 +1,9 @@
 ## 1.11.0 (13 August 2025)
 
+ENHANCEMENTS:
+
+* Added support for the new Singapore tenant region. ([#1093](https://github.com/pingidentity/terraform-provider-pingone/issues/1093))
+
 ## 1.10.0 (16 July 2025)
 
 NOTES:
