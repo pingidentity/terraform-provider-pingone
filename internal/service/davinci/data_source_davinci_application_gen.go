@@ -135,7 +135,7 @@ func (r *davinciApplicationDataSource) Schema(ctx context.Context, req datasourc
 					"sp_jwks_openid": schema.StringAttribute{
 						Computed: true,
 					},
-					"spjwks_url": schema.StringAttribute{
+					"sp_jwks_url": schema.StringAttribute{
 						Computed: true,
 					},
 				},
@@ -171,7 +171,7 @@ func (state *davinciApplicationDataSourceModel) readClientResponse(response *pin
 		"redirect_uris":                 types.SetType{ElemType: types.StringType},
 		"scopes":                        types.SetType{ElemType: types.StringType},
 		"sp_jwks_openid":                types.StringType,
-		"spjwks_url":                    types.StringType,
+		"sp_jwks_url":                   types.StringType,
 	}
 	oauthGrantTypesValue, diags := types.SetValueFrom(context.Background(), types.StringType, response.Oauth.GrantTypes)
 	respDiags.Append(diags...)
@@ -189,7 +189,7 @@ func (state *davinciApplicationDataSourceModel) readClientResponse(response *pin
 		"redirect_uris":                 oauthRedirectUrisValue,
 		"scopes":                        oauthScopesValue,
 		"sp_jwks_openid":                types.StringPointerValue(response.Oauth.SpJwksOpenid),
-		"spjwks_url":                    types.StringPointerValue(response.Oauth.SpjwksUrl),
+		"sp_jwks_url":                   types.StringPointerValue(response.Oauth.SpjwksUrl),
 	})
 	respDiags.Append(diags...)
 	state.Oauth = oauthValue

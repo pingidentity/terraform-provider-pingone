@@ -188,7 +188,7 @@ func davinciApplicationDataSource_CheckComputedValuesComplete(resourceName strin
 		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.scopes.*", "flow_analytics"),
 		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.scopes.*", "openid"),
 		resource.TestCheckNoResourceAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.sp_jwks_openid"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.spjwks_url", "https://example.com/jwks"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.sp_jwks_url", "https://example.com/jwks"),
 	)
 }
 
@@ -208,6 +208,6 @@ func davinciApplicationDataSource_CheckComputedValuesBootstrapApplication(resour
 		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.scopes.*", "profile"),
 		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.scopes.*", "openid"),
 		resource.TestCheckNoResourceAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.sp_jwks_openid"),
-		resource.TestCheckNoResourceAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.spjwks_url"),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.sp_jwks_url"),
 	)
 }

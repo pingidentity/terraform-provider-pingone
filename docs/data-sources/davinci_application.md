@@ -54,4 +54,4 @@ Read-Only:
 - `redirect_uris` (Set of String)
 - `scopes` (Set of String) Options are `flow_analytics`, `offline_access`, `openid`, `profile`.
 - `sp_jwks_openid` (String)
-- `spjwks_url` (String)
+- `sp_jwks_url` (String)
