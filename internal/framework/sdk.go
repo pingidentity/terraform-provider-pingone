@@ -113,13 +113,13 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, req
 			tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s\n\nResponse code: %d\nResponse content-type: %s", t.Err.Error(), r.StatusCode, r.Header.Get("Content-Type")))
 			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", requestID, t.Error()), "")
 		default:
-			// Attempt to marshal the error into pingone.ServiceError
+			// Attempt to marshal the error into pingone.GeneralError
 			errorUnmarshaled := false
 			errBytes, jsonErr := json.Marshal(t)
 			if jsonErr == nil {
 				var targetError pingone.GeneralError
 				jsonErr = json.Unmarshal(errBytes, &targetError)
-				if jsonErr == nil {
+				if jsonErr == nil && isValidGeneralError(targetError) {
 					// Apply custom error handler
 					diags = customError(r, &targetError)
 					// If no custom error handling was applied, format the error for output
@@ -162,6 +162,12 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, req
 
 	return diags
 
+}
+
+// Ensure that at least one field is set in the GeneralError. json marshal can return without error
+// since all of the GeneralError fields are marked as omitempty, even if none of the fields are set.
+func isValidGeneralError(generalError pingone.GeneralError) bool {
+	return generalError.HasCode() || generalError.HasDetails() || generalError.HasId() || generalError.HasMessage()
 }
 
 func FormatPingOneError(sdkMethod string, v pingone.GeneralError) (summaryText, detailText string) {
