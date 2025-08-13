@@ -296,39 +296,39 @@ func davinciApplicationFlowPolicy_CompleteReorderedHCL(resourceName string) stri
 
 resource "pingone_davinci_application_flow_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  da_vinci_application_id = //TODO
-  id = //TODO
-  // TODO set values for complete fields, with ordering changes
-  flow_distributions = [
-    {
-      id = //TODO
-      ip = //TODO
-      success_nodes = [
-        {
-          id = //TODO
-        }
-      ]
-      version = //TODO
-      weight = //TODO
-    }
-  ]
-  name = //TODO
-  status = //TODO
-  trigger = {
-    configuration = {
-      mfa = {
-        enabled = //TODO
-        time = //TODO
-        time_format = //TODO
-      }
-      pwd = {
-        enabled = //TODO
-        time = //TODO
-        time_format = //TODO
-      }
-    }
-    type = //TODO
-  }
+  //   da_vinci_application_id = //TODO
+  //   id = //TODO
+  //   // TODO set values for complete fields, with ordering changes
+  //   flow_distributions = [
+  //     {
+  //       id = //TODO
+  //       ip = //TODO
+  //       success_nodes = [
+  //         {
+  //           id = //TODO
+  //         }
+  //       ]
+  //       version = //TODO
+  //       weight = //TODO
+  //     }
+  //   ]
+  //   name = //TODO
+  //   status = //TODO
+  //   trigger = {
+  //     configuration = {
+  //       mfa = {
+  //         enabled = //TODO
+  //         time = //TODO
+  //         time_format = //TODO
+  //       }
+  //       pwd = {
+  //         enabled = //TODO
+  //         time = //TODO
+  //         time_format = //TODO
+  //       }
+  //     }
+  //     type = //TODO
+  //   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
