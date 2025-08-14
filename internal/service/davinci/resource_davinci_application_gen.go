@@ -79,43 +79,6 @@ type davinciApplicationResourceModel struct {
 }
 
 func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-	apiKeyDefault, diags := types.ObjectValue(map[string]attr.Type{
-		"enabled": types.BoolType,
-		"value":   types.StringType,
-	}, map[string]attr.Value{
-		"enabled": types.BoolValue(true),
-		"value":   types.StringUnknown(),
-	})
-	resp.Diagnostics.Append(diags...)
-	oauthGrantTypesDefault, diags := types.SetValue(types.StringType, []attr.Value{
-		types.StringValue("authorizationCode"),
-	})
-	resp.Diagnostics.Append(diags...)
-	oauthScopesDefault, diags := types.SetValue(types.StringType, []attr.Value{
-		types.StringValue("openid"),
-		types.StringValue("profile"),
-	})
-	resp.Diagnostics.Append(diags...)
-	oauthDefault, diags := types.ObjectValue(map[string]attr.Type{
-		"client_secret":                 types.StringType,
-		"enforce_signed_request_openid": types.BoolType,
-		"grant_types":                   types.SetType{ElemType: types.StringType},
-		"logout_uris":                   types.SetType{ElemType: types.StringType},
-		"redirect_uris":                 types.SetType{ElemType: types.StringType},
-		"scopes":                        types.SetType{ElemType: types.StringType},
-		"sp_jwks_openid":                types.StringType,
-		"sp_jwks_url":                   types.StringType,
-	}, map[string]attr.Value{
-		"client_secret":                 types.StringUnknown(),
-		"enforce_signed_request_openid": types.BoolNull(),
-		"grant_types":                   oauthGrantTypesDefault,
-		"logout_uris":                   types.SetNull(types.StringType),
-		"redirect_uris":                 types.SetNull(types.StringType),
-		"scopes":                        oauthScopesDefault,
-		"sp_jwks_openid":                types.StringNull(),
-		"sp_jwks_url":                   types.StringNull(),
-	})
-	resp.Diagnostics.Append(diags...)
 	resp.Schema = schema.Schema{
 		Description: "Resource to create and manage a davinci application.",
 		Attributes: map[string]schema.Attribute{
@@ -136,11 +99,11 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 				},
 				Computed: true,
 				Optional: true,
-				Default:  objectdefault.StaticValue(apiKeyDefault),
+				Default:  objectdefault.StaticValue(davinciApplicationApiKeyDefault),
 			},
 			"environment_id": schema.StringAttribute{
 				Required:    true,
-				Description: "The ID of the environment to create and manage the davinci_application in.",
+				Description: "The ID of the environment to create and manage the davinci_application in. Must be a valid PingOne resource ID. This field is immutable and will trigger a replace plan if changed.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -230,7 +193,7 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 				},
 				Optional: true,
 				Computed: true,
-				Default:  objectdefault.StaticValue(oauthDefault),
+				Default:  objectdefault.StaticValue(davinciApplicationOauthDefault),
 			},
 		},
 	}
