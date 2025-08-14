@@ -31,7 +31,7 @@ jobs:
           sarif_file: results.sarif
 
   onfailure:
-    if: ${{ failure() }}
+    if: ${{ failure() && github.event_name == 'schedule' }}
     needs: [tests]
     name: Send failure webhook
     runs-on: ubuntu-latest

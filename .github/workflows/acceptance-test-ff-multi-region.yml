@@ -169,7 +169,7 @@ jobs:
           make sweep
 
   onfailure:
-    if: ${{ failure() }}
+    if: ${{ failure() && github.event_name == 'schedule' }}
     needs: [build, prepare, test, cleanup]
     name: Send failure webhook
     runs-on: ubuntu-latest
