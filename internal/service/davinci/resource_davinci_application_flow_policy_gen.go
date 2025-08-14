@@ -404,8 +404,13 @@ func (state *davinciApplicationFlowPolicyResourceModel) readClientResponse(respo
 	flowDistributionsElementType := types.ObjectType{AttrTypes: flowDistributionsAttrTypes}
 	var flowDistributionsValues []attr.Value
 	for _, flowDistributionsResponseValue := range response.FlowDistributions {
-		flowDistributionsIpValue, diags := types.SetValueFrom(context.Background(), types.StringType, flowDistributionsResponseValue.Ip)
-		respDiags.Append(diags...)
+		var flowDistributionsIpValue types.Set
+		if flowDistributionsResponseValue.Ip == nil {
+			flowDistributionsIpValue = types.SetNull(types.StringType)
+		} else {
+			flowDistributionsIpValue, diags = types.SetValueFrom(context.Background(), types.StringType, flowDistributionsResponseValue.Ip)
+			respDiags.Append(diags...)
+		}
 		var flowDistributionsSuccessNodesValue types.Set
 		if flowDistributionsResponseValue.SuccessNodes == nil {
 			flowDistributionsSuccessNodesValue = types.SetNull(flowDistributionsSuccessNodesElementType)
@@ -732,8 +737,8 @@ func (r *davinciApplicationFlowPolicyResource) ImportState(ctx context.Context, 
 		},
 		{
 			Label:     "policy_id",
-			PrimaryID: true,
 			Regexp:    verify.P1DVResourceIDRegexp,
+			PrimaryID: true,
 		},
 	}
 
