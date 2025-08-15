@@ -123,8 +123,6 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 				Optional: true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(256),
-					//TODO this syntax from the api spec is not valid in go
-					//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
 				},
 			},
 			"environment_id": schema.StringAttribute{
@@ -135,16 +133,12 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 				},
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
-					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
 				},
 			},
 			"flow": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
-						Required:   true,
-						Validators: []validator.String{
-							//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
-						},
+						Required: true,
 						PlanModifiers: []planmodifier.String{
 							stringplanmodifier.RequiresReplace(),
 						},
@@ -156,7 +150,6 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 				Computed:    true,
 				Description: "The ID of this resource.",
 				Validators: []validator.String{
-					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
 					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
 				},
 				PlanModifiers: []planmodifier.String{
@@ -180,7 +173,6 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 				Required: true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(256),
-					//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
 				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -255,7 +247,6 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 func (model *davinciVariableResourceModel) buildClientStructPost() (*pingone.DaVinciVariableCreateRequest, diag.Diagnostics) {
 	result := &pingone.DaVinciVariableCreateRequest{}
 	var respDiags diag.Diagnostics
-	var err error
 	// context
 	contextValue, err := pingone.NewDaVinciVariableCreateRequestContextFromValue(model.Context.ValueString())
 	if err != nil {
@@ -336,7 +327,6 @@ func (model *davinciVariableResourceModel) buildClientStructPost() (*pingone.DaV
 func (model *davinciVariableResourceModel) buildClientStructPut() (*pingone.DaVinciVariableReplaceRequest, diag.Diagnostics) {
 	result := &pingone.DaVinciVariableReplaceRequest{}
 	var respDiags diag.Diagnostics
-	var err error
 	// context
 	contextValue, err := pingone.NewDaVinciVariableReplaceRequestContextFromValue(model.Context.ValueString())
 	if err != nil {
@@ -445,7 +435,6 @@ func (state *davinciVariableResourceModel) readClientResponse(response *pingone.
 	state.Flow = flowValue
 	// id
 	state.Id = types.StringValue(response.Id.String())
-	// max
 	// max
 	if response.Max == nil {
 		state.Max = types.Int32Null()
