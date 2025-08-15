@@ -86,7 +86,6 @@ func (r *davinciConnectorInstanceResource) Schema(ctx context.Context, req resou
 						Required: true,
 						Validators: []validator.String{
 							stringvalidator.LengthAtMost(256),
-							//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
 						},
 						PlanModifiers: []planmodifier.String{
 							stringplanmodifier.RequiresReplace(),
@@ -102,7 +101,6 @@ func (r *davinciConnectorInstanceResource) Schema(ctx context.Context, req resou
 					stringplanmodifier.RequiresReplace(),
 				},
 				Validators: []validator.String{
-					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
 					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
 				},
 			},
@@ -120,7 +118,6 @@ func (r *davinciConnectorInstanceResource) Schema(ctx context.Context, req resou
 				Required: true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(256),
-					//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
 				},
 			},
 			"properties": schema.StringAttribute{
