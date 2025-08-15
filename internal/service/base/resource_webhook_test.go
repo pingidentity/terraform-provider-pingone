@@ -12,7 +12,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	baselegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base/legacysdk"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -41,7 +43,7 @@ func TestAccWebhook_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 
-			p1Client = acctest.PreCheckTestClient(ctx, t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Webhook_CheckDestroy,
@@ -66,7 +68,7 @@ func TestAccWebhook_RemovalDrift(t *testing.T) {
 			},
 			{
 				PreConfig: func() {
-					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+					baselegacysdk.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -528,7 +530,7 @@ resource "pingone_webhook" "%[3]s" {
   filter_options = {
     included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccWebhookConfig_Full(resourceName, name string) string {
@@ -673,7 +675,7 @@ resource "pingone_webhook" "%[3]s" {
   filter_options = {
     included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, pkcs12, keystorePassword)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, pkcs12, keystorePassword)
 }
 
 func testAccWebhookConfig_NoMTLS(environmentName, licenseID, resourceName, name, pkcs12, keystorePassword string) string {
@@ -704,7 +706,7 @@ resource "pingone_webhook" "%[3]s" {
   filter_options = {
     included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, pkcs12, keystorePassword)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, pkcs12, keystorePassword)
 }
 
 func testAccWebhookConfig_Profile1(resourceName, name string) string {

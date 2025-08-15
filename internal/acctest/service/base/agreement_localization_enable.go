@@ -11,12 +11,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 )
 
 func AgreementLocalizationEnable_CheckDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
-	p1Client, err := acctest.TestClient(ctx)
+	p1Client, err := legacysdk.TestClient(ctx)
 
 	if err != nil {
 		return err
@@ -29,7 +30,7 @@ func AgreementLocalizationEnable_CheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		shouldContinue, err := acctest.CheckParentEnvironmentDestroy(ctx, apiClient, rs.Primary.Attributes["environment_id"])
+		shouldContinue, err := legacysdk.CheckParentEnvironmentDestroy(ctx, apiClient, rs.Primary.Attributes["environment_id"])
 		if err != nil {
 			return err
 		}

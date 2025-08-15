@@ -15,6 +15,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 )
 
 // Types
@@ -144,7 +145,7 @@ func (r *TrustedEmailDomainOwnershipDataSource) Configure(ctx context.Context, r
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -183,14 +184,14 @@ func (r *TrustedEmailDomainOwnershipDataSource) Read(ctx context.Context, req da
 	var status *management.EmailDomainOwnershipStatus
 
 	// Run the API call
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			return r.Client.ManagementAPIClient.TrustedEmailDomainsApi.ReadTrustedEmailDomainOwnershipStatus(ctx, data.EnvironmentId.ValueString(), data.TrustedEmailDomainId.ValueString()).Execute()
 		},
 		"ReadTrustedEmailDomainOwnershipStatus",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&status,
 	)...)

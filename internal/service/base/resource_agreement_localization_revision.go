@@ -27,6 +27,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -169,7 +170,7 @@ func (r *AgreementLocalizationRevisionResource) Configure(ctx context.Context, r
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -214,15 +215,15 @@ func (r *AgreementLocalizationRevisionResource) Create(ctx context.Context, req 
 
 	// Run the API call
 	var response *management.AgreementLanguageRevision
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.AgreementRevisionsResourcesApi.CreateAgreementLanguageRevision(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString(), plan.AgreementLocalizationId.ValueString()).AgreementLanguageRevision(*localizationRevision).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateAgreementLanguageRevision",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -234,15 +235,15 @@ func (r *AgreementLocalizationRevisionResource) Create(ctx context.Context, req 
 	var agreementTextIntf map[string]interface{}
 	if halLinks, ok := response.GetLinksOk(); ok && halLinks != nil {
 		halObjectLinks := *halLinks
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.HALApi.ReadHALLink(ctx, halObjectLinks[revisionTextHalLink]).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			fmt.Sprintf("ReadHALLink (%s)", revisionTextHalLink),
-			framework.CustomErrorResourceNotFoundWarning,
+			legacysdk.CustomErrorResourceNotFoundWarning,
 			sdk.DefaultCreateReadRetryable,
 			&agreementTextIntf,
 		)...)
@@ -273,15 +274,15 @@ func (r *AgreementLocalizationRevisionResource) Create(ctx context.Context, req 
 
 				var readResponse *management.AgreementLanguageRevision
 				// Run the API call
-				resp.Diagnostics.Append(framework.ParseResponse(
+				resp.Diagnostics.Append(legacysdk.ParseResponse(
 					ctx,
 
 					func() (any, *http.Response, error) {
 						fO, fR, fErr := r.Client.ManagementAPIClient.AgreementRevisionsResourcesApi.ReadOneAgreementLanguageRevision(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString(), plan.AgreementLocalizationId.ValueString(), response.GetId()).Execute()
-						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+						return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 					},
 					"ReadOneAgreementLanguageRevision",
-					framework.DefaultCustomError,
+					legacysdk.DefaultCustomError,
 					sdk.DefaultCreateReadRetryable,
 					&readResponse,
 				)...)
@@ -335,15 +336,15 @@ func (r *AgreementLocalizationRevisionResource) Read(ctx context.Context, req re
 
 	// Run the API call
 	var response *management.AgreementLanguageRevision
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.AgreementRevisionsResourcesApi.ReadOneAgreementLanguageRevision(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneAgreementLanguageRevision",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -361,15 +362,15 @@ func (r *AgreementLocalizationRevisionResource) Read(ctx context.Context, req re
 	var agreementTextIntf map[string]interface{}
 	if halLinks, ok := response.GetLinksOk(); ok && halLinks != nil {
 		halObjectLinks := *halLinks
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.HALApi.ReadHALLink(ctx, halObjectLinks[revisionTextHalLink]).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			fmt.Sprintf("ReadHALLink (%s)", revisionTextHalLink),
-			framework.CustomErrorResourceNotFoundWarning,
+			legacysdk.CustomErrorResourceNotFoundWarning,
 			sdk.DefaultCreateReadRetryable,
 			&agreementTextIntf,
 		)...)
@@ -412,12 +413,12 @@ func (r *AgreementLocalizationRevisionResource) Delete(ctx context.Context, req 
 	}
 
 	// Run the API call
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fR, fErr := r.Client.ManagementAPIClient.AgreementRevisionsResourcesApi.DeleteAgreementLanguageRevision(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteAgreementLanguageRevision",
 		agreementLocalizationRevisionDeleteErrorHandler,
@@ -554,7 +555,7 @@ func (p *AgreementLocalizationRevisionResourceModel) toState(apiObject *manageme
 func agreementLocalizationRevisionDeleteErrorHandler(r *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	diags.Append(framework.CustomErrorResourceNotFoundWarning(r, p1Error)...)
+	diags.Append(legacysdk.CustomErrorResourceNotFoundWarning(r, p1Error)...)
 
 	if p1Error != nil {
 		// Last action in the policy

@@ -18,6 +18,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -433,7 +434,7 @@ func resourceMFAPolicyRead(ctx context.Context, d *schema.ResourceData, meta int
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.DeviceAuthenticationPolicyApi.ReadOneDeviceAuthenticationPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneDeviceAuthenticationPolicy",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -533,7 +534,7 @@ func resourceMFAPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta i
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.DeviceAuthenticationPolicyApi.UpdateDeviceAuthenticationPolicy(ctx, d.Get("environment_id").(string), d.Id()).DeviceAuthenticationPolicy(*mfaPolicy).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateMFAPolicy",
 		mfaPolicyCreateUpdateCustomErrorHandler,
@@ -558,7 +559,7 @@ func resourceMFAPolicyDelete(ctx context.Context, d *schema.ResourceData, meta i
 
 		func() (any, *http.Response, error) {
 			fR, fErr := apiClient.DeviceAuthenticationPolicyApi.DeleteDeviceAuthenticationPolicy(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), nil, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteDeviceAuthenticationPolicy",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -824,7 +825,7 @@ func checkApplicationForMobileAppSDKv2(ctx context.Context, apiClient *managemen
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.ApplicationsApi.ReadOneApplication(ctx, environmentID, appID).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 		},
 		"ReadOneApplication",
 		sdk.CustomErrorResourceNotFoundWarning,

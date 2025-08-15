@@ -18,6 +18,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -193,7 +194,7 @@ func (r *ResourceScopeDataSource) Configure(ctx context.Context, req datasource.
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -311,15 +312,15 @@ func fetchResourceScopeFromID(ctx context.Context, apiClient *management.APIClie
 	var diags diag.Diagnostics
 
 	var resourceScope *management.ResourceScope
-	diags.Append(framework.ParseResponse(
+	diags.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.ResourceScopesApi.ReadOneResourceScope(ctx, environmentID, resourceID, resourceScopeID).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 		},
 		"ReadOneResourceScope",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&resourceScope,
 	)...)
@@ -376,13 +377,13 @@ func fetchResourceScopesFromNames(ctx context.Context, apiClient *management.API
 func fetchResourceScopesFromIDOrNameSlice(ctx context.Context, apiClient *management.APIClient, environmentID, resourceID string, resourceScopeInputList []string, byName bool, warnIfNotFound bool) ([]management.ResourceScope, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	errorFunction := framework.DefaultCustomError
+	errorFunction := legacysdk.DefaultCustomError
 	if warnIfNotFound {
-		errorFunction = framework.CustomErrorResourceNotFoundWarning
+		errorFunction = legacysdk.CustomErrorResourceNotFoundWarning
 	}
 
 	var resourceScopesMap map[string]management.ResourceScope
-	diags.Append(framework.ParseResponse(
+	diags.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -394,7 +395,7 @@ func fetchResourceScopesFromIDOrNameSlice(ctx context.Context, apiClient *manage
 
 			for pageCursor, err := range pagedIterator {
 				if err != nil {
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, nil, pageCursor.HTTPResponse, err)
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, nil, pageCursor.HTTPResponse, err)
 				}
 
 				if initialHttpResponse == nil {

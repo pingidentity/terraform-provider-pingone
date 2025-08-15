@@ -16,6 +16,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 )
 
 // Types
@@ -90,7 +91,7 @@ func (r *GroupsDataSource) Configure(ctx context.Context, req datasource.Configu
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -173,7 +174,7 @@ func (r *GroupsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	}
 
 	var groupIDs []string
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -185,7 +186,7 @@ func (r *GroupsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 			for pageCursor, err := range pagedIterator {
 				if err != nil {
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
 				}
 
 				if initialHttpResponse == nil {
@@ -202,7 +203,7 @@ func (r *GroupsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 			return foundIDs, initialHttpResponse, nil
 		},
 		"ReadAllGroups",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&groupIDs,
 	)...)

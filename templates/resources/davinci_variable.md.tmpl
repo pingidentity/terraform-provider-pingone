@@ -1,0 +1,36 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: "DaVinci"
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+## Example Usage
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource.tf") }}
+
+## Example Usage - Dynamic Variable Values
+
+The following example shows the recommended usage of a variable where the variable value is dynamically set by flow execution, and should not be managed in Terraform state.
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-dynamic-value.tf") }}
+
+## Example Usage - Static, Non-empty Variable Values
+
+The following example shows the recommended usage of a variable where the variable value is static, has a defined value and should be managed in Terraform state.
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-static-value.tf") }}
+
+{{ .SchemaMarkdown | trimspace }}
+
+{{ if .HasImport -}}
+## Import
+
+Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
+
+{{ codefile "shell" (printf "%s%s%s" "examples/resources/" .Name "/import.sh") }}
+{{- end }}
