@@ -147,9 +147,6 @@ func (r *davinciApplicationFlowPolicyResource) Schema(ctx context.Context, req r
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
-				Validators: []validator.String{
-					//stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
-				},
 			},
 			"name": schema.StringAttribute{
 				Optional: true,
@@ -157,7 +154,6 @@ func (r *davinciApplicationFlowPolicyResource) Schema(ctx context.Context, req r
 				Default:  stringdefault.StaticString("New Policy"),
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(256),
-					//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
 				},
 			},
 			"status": schema.StringAttribute{
