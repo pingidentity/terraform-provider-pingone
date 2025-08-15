@@ -133,12 +133,8 @@ func (model *davinciConnectorInstanceResourceModel) buildClientStructPost() (*pi
 	var respDiags diag.Diagnostics
 	result := &pingone.DaVinciConnectorInstanceCreateRequest{}
 	// connector
-	//TODO is this type wrong in the spec?
-	//connectorValue := pingone.ResourceRelationshipDaVinci{}
 	connectorValue := pingone.DaVinciConnectorInstanceCreateRequestConnector{}
 	connectorAttrs := model.Connector.Attributes()
-	//TODO check if this is actually required, if so this could be considered a bug in the spec
-	//connectorValue.Id = connectorAttrs["id"].(types.String).ValueStringPointer()
 	connectorValue.Id = connectorAttrs["id"].(types.String).ValueStringPointer()
 	result.Connector = connectorValue
 
