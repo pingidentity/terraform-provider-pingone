@@ -82,9 +82,10 @@ func (r *ResourceScopePingOneAPIResource) Schema(ctx context.Context, req resour
 				Required:            true,
 
 				Validators: []validator.String{
+					stringvalidator.LengthBetween(1, 256),
 					stringvalidator.RegexMatches(
-						regexp.MustCompile(`^p1:(read|update):user(:{1}[a-zA-Z0-9]+)*$`),
-						"Resource scope name must be either `p1:read:user`, `p1:update:user`, `p1:read:user:{suffix}` or `p1:update:user:{suffix}`",
+						regexp.MustCompile(`^p1:(read|update):user(:{1}[!\x23-\x5B\x5D-~]+)*$`),
+						"Resource scope name must be either `p1:read:user`, `p1:update:user`, `p1:read:user:{suffix}` or `p1:update:user:{suffix}`. Suffix may only contain alphanumeric characters and/or the following symbols: !#$%&'()*+,-./:;<=>?@[]^_`{|}~",
 					),
 				},
 			},
