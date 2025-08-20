@@ -278,7 +278,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		regionCode = strings.TrimSpace(os.Getenv("PINGONE_REGION_CODE"))
 	}
 	if regionCode != "" {
-		regionSuffix, ok := framework.RegionSuffixFromCode(strings.ToLower(regionCode))
+		regionTopLevelDomain, ok := framework.RegionTopLevelDomainFromCode(strings.ToLower(regionCode))
 		if !ok {
 			resp.Diagnostics.AddError(
 				"Invalid Region Code",
@@ -286,7 +286,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 			)
 			return
 		}
-		config = config.WithTopLevelDomain(regionSuffix)
+		config = config.WithTopLevelDomain(regionTopLevelDomain)
 	}
 
 	if !data.GlobalOptions.IsNull() {

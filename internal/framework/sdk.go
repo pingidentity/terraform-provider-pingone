@@ -44,7 +44,7 @@ var (
 		return nil
 	}
 
-	regionMappingSuffixMap = map[string]string{
+	regionMappingTopLevelDomainMap = map[string]string{
 		"na": "com",
 		"eu": "eu",
 		"ap": "asia",
@@ -54,9 +54,9 @@ var (
 	}
 )
 
-func RegionSuffixFromCode(regionCode string) (string, bool) {
-	suffix, ok := regionMappingSuffixMap[regionCode]
-	return suffix, ok
+func RegionTopLevelDomainFromCode(regionCode string) (string, bool) {
+	domain, ok := regionMappingTopLevelDomainMap[strings.ToLower(regionCode)]
+	return domain, ok
 }
 
 func UserAgent(suffix, version string) string {

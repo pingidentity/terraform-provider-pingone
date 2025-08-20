@@ -305,13 +305,13 @@ func ResourceNameGenEnvironment() string {
 }
 
 func TestClient(ctx context.Context) (*pingone.APIClient, error) {
-	regionSuffix, ok := framework.RegionSuffixFromCode(strings.ToLower(os.Getenv("PINGONE_REGION_CODE")))
+	regionTopLevelDomain, ok := framework.RegionTopLevelDomainFromCode(strings.ToLower(os.Getenv("PINGONE_REGION_CODE")))
 	if !ok {
 		return nil, fmt.Errorf("invalid PINGONE_REGION_CODE: %s", os.Getenv("PINGONE_REGION_CODE"))
 	}
 	config := clientconfig.NewConfiguration().
 		WithGrantType(oauth2.GrantTypeClientCredentials).
-		WithTopLevelDomain(regionSuffix)
+		WithTopLevelDomain(regionTopLevelDomain)
 
 	pingOneConfig := pingone.NewConfiguration(config)
 	pingOneConfig.UserAgent = framework.UserAgent("", GetProviderTestingVersion())
