@@ -88,20 +88,26 @@ func CheckEnvironmentExistsOnPermissionsError(ctx context.Context, apiClient *pi
 	return fO, fR, fErr
 }
 
-func ParseResponse(ctx context.Context, f SDKInterfaceFunc, requestID string, customError CustomError, targetObject any) diag.Diagnostics {
+func ParseResponse(ctx context.Context, f SDKInterfaceFunc, requestID string, customError CustomError, customRetryConditions Retryable, targetObject any) diag.Diagnostics {
 	defaultTimeout := 10
-	return ParseResponseWithCustomTimeout(ctx, f, requestID, customError, targetObject, time.Duration(defaultTimeout)*time.Minute)
+	return ParseResponseWithCustomTimeout(ctx, f, requestID, customError, customRetryConditions, targetObject, time.Duration(defaultTimeout)*time.Minute)
 }
 
-func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, requestID string, customError CustomError, targetObject any, timeout time.Duration) diag.Diagnostics {
+func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, requestID string, customError CustomError, customRetryConditions Retryable, targetObject any, timeout time.Duration) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if customError == nil {
 		customError = DefaultCustomError
 	}
 
-	// Note - retry logic is handled by the client SDK
-	resp, r, err := f()
+	// Note - most retry logic is handled by the client SDK, but customRetryConditions can be defined in the provider here.
+	resp, r, err := RetryWrapper(
+		ctx,
+		timeout,
+		f,
+		requestID,
+		customRetryConditions,
+	)
 
 	if err != nil || r.StatusCode >= 300 {
 		switch t := err.(type) {
