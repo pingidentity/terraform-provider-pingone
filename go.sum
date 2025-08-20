@@ -1496,8 +1496,8 @@ github.com/phpdave11/gofpdf v1.4.2/go.mod h1:zpO6xFn9yxo3YLyMvW8HcKWVdbNqgIfOOp2
 github.com/phpdave11/gofpdi v1.0.12/go.mod h1:vBmVV0Do6hSBHC8uKUQ71JGW+ZGQq74llk/7bXwjDoI=
 github.com/phpdave11/gofpdi v1.0.13/go.mod h1:vBmVV0Do6hSBHC8uKUQ71JGW+ZGQq74llk/7bXwjDoI=
 github.com/pierrec/lz4/v4 v4.1.15/go.mod h1:gZWDp/Ze/IJXGXf23ltt2EXimqmTUXEy0GFuRQyBid4=
-github.com/pingidentity/pingone-go-client v0.1.1 h1:+x8KHu+z0euTia0Mp4G0jmGTyjDfvwz2gGq9TXa2oys=
-github.com/pingidentity/pingone-go-client v0.1.1/go.mod h1:KgORZc7mikIKCClfmJXruf+uydMwDGDNPYo3179pYQo=
+github.com/pingidentity/pingone-go-client v0.2.0 h1:B2rf89grJei47hw0wU7hA1LUzl2nIKQ99yeC87ECaaI=
+github.com/pingidentity/pingone-go-client v0.2.0/go.mod h1:KgORZc7mikIKCClfmJXruf+uydMwDGDNPYo3179pYQo=
 github.com/pjbgf/sha1cd v0.3.2 h1:a9wb0bp1oC2TGwStyn0Umc/IGKQnEgF0vVaZ8QF8eo4=
 github.com/pjbgf/sha1cd v0.3.2/go.mod h1:zQWigSxVmsHEZow5qaLtPYxpcKMMQpa09ixqBxuCS6A=
 github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c h1:+mdjkGKdHQG3305AYmdv1U2eRNDiU2ErMBj1gwrq8eQ=
