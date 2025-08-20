@@ -20,7 +20,7 @@ install: build
 	go install -ldflags="-X main.version=$(VERSION)"
 
 generate: build fmt
-	go tool tfplugindocs generate
+	go tool tfplugindocs generate --provider-name terraform-provider-pingone
 
 test: build
 	go test $(TEST_PATH) $(TESTARGS) -timeout=5m

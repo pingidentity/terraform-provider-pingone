@@ -120,6 +120,20 @@ func TestAccResourceScopePingOneAPI_Full(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "schema_attributes.*", "name.family"),
 				),
 			},
+			{
+				Config: testAccResourceScopePingOneAPIConfig_Full(resourceName, "p1:update:user:email-only"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "name", "p1:update:user:email-only"),
+					resource.TestCheckResourceAttr(resourceFullName, "description", "My resource scope"),
+					resource.TestCheckResourceAttr(resourceFullName, "schema_attributes.#", "2"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "schema_attributes.*", "name.given"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "schema_attributes.*", "name.family"),
+				),
+			},
+
 			// Test importing the resource
 			{
 				ResourceName: resourceFullName,
@@ -317,6 +331,14 @@ func TestAccResourceScopePingOneAPI_InvalidParameters(t *testing.T) {
 			{
 				Config:      testAccResourceScopePingOneAPIConfig_Minimal(resourceName, "testscope"),
 				ExpectError: regexp.MustCompile("Invalid Attribute Value Match"),
+			},
+			{
+				Config:      testAccResourceScopePingOneAPIConfig_Minimal(resourceName, "p1:read:user:testscöpe"),
+				ExpectError: regexp.MustCompile("Invalid Attribute Value Match"),
+			},
+			{
+				Config:      testAccResourceScopePingOneAPIConfig_Minimal(resourceName, ""),
+				ExpectError: regexp.MustCompile("Invalid Attribute Value Length"),
 			},
 			{
 				Config:      testAccResourceScopePingOneAPIConfig_Full(resourceName, "p1:read:user"),
