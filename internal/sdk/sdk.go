@@ -5,7 +5,6 @@ package sdk
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -13,9 +12,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 )
 
-type SDKInterfaceFunc func() (any, *http.Response, error)
 type CustomError func(model.P1Error) diag.Diagnostics
 
 var (
@@ -53,12 +52,12 @@ var (
 	}
 )
 
-func ParseResponse(ctx context.Context, f SDKInterfaceFunc, sdkMethod string, customError CustomError, customRetryConditions Retryable) (interface{}, diag.Diagnostics) {
+func ParseResponse(ctx context.Context, f framework.SDKInterfaceFunc, sdkMethod string, customError CustomError, customRetryConditions Retryable) (interface{}, diag.Diagnostics) {
 	defaultTimeout := 10
 	return ParseResponseWithCustomTimeout(ctx, f, sdkMethod, customError, customRetryConditions, time.Duration(defaultTimeout)*time.Minute)
 }
 
-func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, sdkMethod string, customError CustomError, customRetryConditions Retryable, timeout time.Duration) (interface{}, diag.Diagnostics) {
+func ParseResponseWithCustomTimeout(ctx context.Context, f framework.SDKInterfaceFunc, sdkMethod string, customError CustomError, customRetryConditions Retryable, timeout time.Duration) (interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if customError == nil {

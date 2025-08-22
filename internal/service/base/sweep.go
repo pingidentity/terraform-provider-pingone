@@ -80,7 +80,7 @@ func sweepEnvironments(regionString string) error {
 		}
 	}
 
-	err = sweep.CreateTestEnvironment(ctx, apiClient, region, "general-test")
+	err = sweep.CreateTestEnvironment(ctx, apiClient, region, "general-test", false)
 	if err != nil {
 		log.Printf("Error creating environment `general-test` during sweep: %s", err)
 	}

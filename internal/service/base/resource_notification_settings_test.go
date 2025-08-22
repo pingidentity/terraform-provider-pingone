@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -41,7 +42,7 @@ func TestAccNotificationSettings_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 
-			p1Client = acctest.PreCheckTestClient(ctx, t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.NotificationSettings_CheckDestroy,
@@ -379,7 +380,7 @@ resource "pingone_notification_settings" "%[3]s" {
   reply_to = {
     email_address = "noreply@pingidentity.com"
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccNotificationSettingsConfig_Minimal(environmentName, licenseID, resourceName, name string) string {
@@ -440,7 +441,7 @@ resource "pingone_user" "%[3]s-3" {
 
 resource "pingone_notification_settings" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccNotificationSettingsConfig_FromFull(environmentName, licenseID, resourceName string) string {
@@ -454,7 +455,7 @@ resource "pingone_notification_settings" "%[3]s" {
     email_address = "noreply@pingidentity.com"
     name          = "Stubbed From Address"
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 func testAccNotificationSettingsConfig_FromMinimal(environmentName, licenseID, resourceName string) string {
@@ -467,7 +468,7 @@ resource "pingone_notification_settings" "%[3]s" {
   from = {
     email_address = "noreply@pingidentity.com"
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 func testAccNotificationSettingsConfig_ReplyToFull(environmentName, licenseID, resourceName string) string {
@@ -481,7 +482,7 @@ resource "pingone_notification_settings" "%[3]s" {
     email_address = "noreply@pingidentity.com"
     name          = "Stubbed Reply To Address"
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 func testAccNotificationSettingsConfig_ReplyToMinimal(environmentName, licenseID, resourceName string) string {
@@ -494,5 +495,5 @@ resource "pingone_notification_settings" "%[3]s" {
   reply_to = {
     email_address = "noreply@pingidentity.com"
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }

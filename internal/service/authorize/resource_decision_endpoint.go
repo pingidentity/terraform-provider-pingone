@@ -12,6 +12,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -102,7 +103,7 @@ func resourceDecisionEndpointCreate(ctx context.Context, d *schema.ResourceData,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.PolicyDecisionManagementApi.CreateDecisionEndpoint(ctx, d.Get("environment_id").(string)).DecisionEndpoint(decisionEndpoint).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateDecisionEndpoint",
 		sdk.DefaultCustomError,
@@ -130,7 +131,7 @@ func resourceDecisionEndpointRead(ctx context.Context, d *schema.ResourceData, m
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.PolicyDecisionManagementApi.ReadOneDecisionEndpoint(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneDecisionEndpoint",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -206,7 +207,7 @@ func resourceDecisionEndpointUpdate(ctx context.Context, d *schema.ResourceData,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.PolicyDecisionManagementApi.UpdateDecisionEndpoint(ctx, d.Get("environment_id").(string), d.Id()).DecisionEndpoint(decisionEndpoint).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateDecisionEndpoint",
 		sdk.DefaultCustomError,
@@ -230,7 +231,7 @@ func resourceDecisionEndpointDelete(ctx context.Context, d *schema.ResourceData,
 
 		func() (any, *http.Response, error) {
 			fR, fErr := apiClient.PolicyDecisionManagementApi.DeleteDecisionEndpoint(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), nil, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, p1Client.API.ManagementAPIClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteDecisionEndpoint",
 		sdk.CustomErrorResourceNotFoundWarning,

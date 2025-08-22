@@ -7,9 +7,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/patrickcping/pingone-go-sdk-v2/management"
+	"github.com/pingidentity/pingone-go-client/pingone"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 )
 
@@ -22,14 +23,17 @@ func Environment_CheckDestroy(s *terraform.State) error {
 		return err
 	}
 
-	apiClient := p1Client.API.ManagementAPIClient
-
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "pingone_environment" {
 			continue
 		}
 
-		_, r, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, rs.Primary.ID).Execute()
+		environmentIdUuid, err := uuid.Parse(rs.Primary.ID)
+		if err != nil {
+			return fmt.Errorf("unable to parse environment id '%s' as uuid: %v", environmentIdUuid, err)
+		}
+
+		_, r, err := p1Client.EnvironmentsApi.GetEnvironmentById(ctx, environmentIdUuid).Execute()
 
 		if r.StatusCode == 404 {
 			continue
@@ -50,7 +54,7 @@ func Environment_GetIDs(resourceName string, resourceID *string) resource.TestCh
 
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
+			return fmt.Errorf("resource Not found: %s", resourceName)
 		}
 
 		if resourceID != nil {
@@ -61,12 +65,17 @@ func Environment_GetIDs(resourceName string, resourceID *string) resource.TestCh
 	}
 }
 
-func Environment_RemovalDrift_PreConfig(ctx context.Context, apiClient *management.APIClient, t *testing.T, environmentID string) {
+func Environment_RemovalDrift_PreConfig(ctx context.Context, apiClient *pingone.APIClient, t *testing.T, environmentID string) {
+	environmentIdUuid, err := uuid.Parse(environmentID)
+	if err != nil {
+		t.Fatalf("unable to parse environment id '%s' as uuid: %v", environmentIdUuid, err)
+	}
+
 	if environmentID == "" {
 		t.Fatalf("Environment ID cannot be determined. Environment ID: %s", environmentID)
 	}
 
-	_, err := apiClient.EnvironmentsApi.DeleteEnvironment(ctx, environmentID).Execute()
+	_, err = apiClient.EnvironmentsApi.DeleteEnvironmentById(ctx, environmentIdUuid).Execute()
 	if err != nil {
 		t.Fatalf("Failed to delete environment: %v", err)
 	}

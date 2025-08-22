@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 )
 
@@ -176,7 +177,7 @@ data "pingone_language" "%[3]s" {
     pingone_language.%[3]s
   ]
 }
-`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
+`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
 }
 
 func testAccLanguageDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName, locale string) string {
@@ -193,7 +194,7 @@ data "pingone_language" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
   language_id = pingone_language.%[3]s.id
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
 }
 
 func testAccLanguageDataSourceConfig_SystemDefined(environmentName, licenseID, resourceName, locale string) string {
@@ -204,7 +205,7 @@ data "pingone_language" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
   locale = "%[4]s"
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
 }
 
 func testAccLanguageDataSourceConfig_NotFoundByName(resourceName string) string {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	_ "github.com/pingidentity/terraform-provider-pingone/internal/service/base"
+	_ "github.com/pingidentity/terraform-provider-pingone/internal/service/davinci"
 	_ "github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
 )
 

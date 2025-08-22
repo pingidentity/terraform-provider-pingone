@@ -17,14 +17,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	pingone "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/pingone-go-client/pingone"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/davincitypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
 type ResourceType struct {
-	Client *pingone.Client
+	Client *pingone.APIClient
 }
 
 func PingOneResourceIDToTF(v string) pingonetypes.ResourceIDValue {

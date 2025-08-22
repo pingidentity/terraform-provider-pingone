@@ -15,6 +15,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -54,7 +55,7 @@ func resourceSignOnPolicyActionCreate(ctx context.Context, d *schema.ResourceDat
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.SignOnPolicyActionsApi.CreateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string)).SignOnPolicyAction(*signOnPolicyAction).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateSignOnPolicyAction",
 		customErrorSignOnPolicyActionCreateUpdate,
@@ -82,7 +83,7 @@ func resourceSignOnPolicyActionRead(ctx context.Context, d *schema.ResourceData,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.SignOnPolicyActionsApi.ReadOneSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneSignOnPolicyAction",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -319,7 +320,7 @@ func resourceSignOnPolicyActionUpdate(ctx context.Context, d *schema.ResourceDat
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.SignOnPolicyActionsApi.UpdateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).SignOnPolicyAction(*signOnPolicyAction).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateSignOnPolicyAction",
 		customErrorSignOnPolicyActionCreateUpdate,
@@ -343,7 +344,7 @@ func resourceSignOnPolicyActionDelete(ctx context.Context, d *schema.ResourceDat
 
 		func() (any, *http.Response, error) {
 			fR, fErr := apiClient.SignOnPolicyActionsApi.DeleteSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteSignOnPolicyAction",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -369,7 +370,7 @@ func resourceSignOnPolicyActionDelete(ctx context.Context, d *schema.ResourceDat
 
 								func() (any, *http.Response, error) {
 									fO, fR, fErr := apiClient.SignOnPolicyActionsApi.CreateSignOnPolicyAction(ctx, d.Get("environment_id").(string), d.Get("sign_on_policy_id").(string)).SignOnPolicyAction(*signOnPolicyAction).Execute()
-									return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+									return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 								},
 								"CreateSignOnPolicyAction-Delete",
 								customErrorSignOnPolicyActionCreateUpdate,

@@ -13,7 +13,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	baselegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base/legacysdk"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -45,7 +47,7 @@ func TestAccBrandingSettings_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 
-			p1Client = acctest.PreCheckTestClient(ctx, t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.BrandingSettings_CheckDestroy,
@@ -58,7 +60,7 @@ func TestAccBrandingSettings_RemovalDrift(t *testing.T) {
 			},
 			{
 				PreConfig: func() {
-					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+					baselegacysdk.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -363,7 +365,7 @@ resource "pingone_branding_settings" "%[3]s" {
     id   = pingone_image.%[3]s.id
     href = pingone_image.%[3]s.uploaded_image.href
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, image)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, image)
 }
 
 func testAccBrandingSettingsConfig_Minimal1(environmentName, licenseID, resourceName string) string {
@@ -372,7 +374,7 @@ func testAccBrandingSettingsConfig_Minimal1(environmentName, licenseID, resource
 
 resource "pingone_branding_settings" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 func testAccBrandingSettingsConfig_Minimal2(environmentName, licenseID, resourceName, name string) string {
@@ -383,7 +385,7 @@ resource "pingone_branding_settings" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
   company_name = "%[4]s"
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccBrandingSettingsConfig_Minimal3(environmentName, licenseID, resourceName, image string) string {
@@ -403,5 +405,5 @@ resource "pingone_branding_settings" "%[3]s" {
     id   = pingone_image.%[3]s.id
     href = pingone_image.%[3]s.uploaded_image.href
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, image)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, image)
 }
