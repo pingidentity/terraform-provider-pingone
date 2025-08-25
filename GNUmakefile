@@ -19,6 +19,13 @@ build:
 install: build
 	go install -ldflags="-X main.version=$(VERSION)"
 
+buildbeta:
+	go mod tidy
+	go build -tags beta -v .
+
+installbeta: buildbeta
+	go install -tags beta -ldflags="-X main.version=$(VERSION)-beta"
+
 generate: build fmt
 	go tool tfplugindocs generate --provider-name terraform-provider-pingone
 
