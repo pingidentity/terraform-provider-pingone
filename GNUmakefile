@@ -14,10 +14,10 @@ fmtcheck:
 
 build:
 	go mod tidy
-	go build -tags beta -v .
+	go build -v .
 
 install: build
-	go install -tags beta -ldflags="-X main.version=$(VERSION)"
+	go install -ldflags="-X main.version=$(VERSION)"
 
 generate: build fmt
 	go tool tfplugindocs generate --provider-name terraform-provider-pingone
