@@ -8,7 +8,7 @@ OS_ARCH=linux_amd64
 BETA?=false
 
 ifeq ($(BETA),true)
-	BUILD_TAGS=-tags beta
+	BUILD_TAGS=-tags=beta
 	VERSION_SUFFIX=-beta
 else
 	BUILD_TAGS=
@@ -29,7 +29,7 @@ install: build
 	go install $(BUILD_TAGS) -ldflags="-X main.version=$(VERSION)$(VERSION_SUFFIX)"
 
 generate: build fmt
-	go tool tfplugindocs generate --provider-name terraform-provider-pingone
+	GOFLAGS="$(BUILD_TAGS)" go tool tfplugindocs generate --provider-name terraform-provider-pingone
 
 test: build
 	go test $(TEST_PATH) $(TESTARGS) -timeout=5m
