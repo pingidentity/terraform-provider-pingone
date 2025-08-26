@@ -702,8 +702,8 @@ func TestAccMFADevicePolicy_Mobile_Full(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
-			acctest.PreCheckGoogleFirebaseCredentials(t)
 			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckGoogleFirebaseCredentials(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
@@ -923,8 +923,8 @@ func TestAccMFADevicePolicy_Mobile_Change(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
-			acctest.PreCheckGoogleFirebaseCredentials(t)
 			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckGoogleFirebaseCredentials(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,

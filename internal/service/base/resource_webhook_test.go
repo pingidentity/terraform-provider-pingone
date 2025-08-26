@@ -352,8 +352,8 @@ func TestAccWebhook_MTLS(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
-			acctest.PreCheckPKCS12Key(t)
 			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckPKCS12Key(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Webhook_CheckDestroy,

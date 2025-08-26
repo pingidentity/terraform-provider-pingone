@@ -33,10 +33,10 @@ func TestAccCertificateSigningResponse_Full(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckPKCS12Key(t)
 			acctest.PreCheckPKCS12CSRResponse(t)
-			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.CertificateSigningResponse_CheckDestroy,

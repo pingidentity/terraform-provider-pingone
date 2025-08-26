@@ -162,8 +162,8 @@ func TestAccKeyRotationPolicy_All(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
-			acctest.PreCheckPEMCert(t)
 			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckPEMCert(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.KeyRotationPolicy_CheckDestroy,

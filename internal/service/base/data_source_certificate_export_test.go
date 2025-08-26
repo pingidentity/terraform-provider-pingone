@@ -33,11 +33,11 @@ func TestAccCertificateExportDataSource_ByIDFull(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckPKCS12Key(t)
 			acctest.PreCheckPKCS7Cert(t)
 			acctest.PreCheckPEMCert(t)
-			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -62,11 +62,11 @@ func TestAccCertificateExportDataSource_NotFound(t *testing.T) {
 		// PreCheck:                 func() {
 		// acctest.PreCheckNoTestAccFlaky(t)
 		// 			acctest.PreCheckClient(t)
+		//	acctest.PreCheckNoBeta(t)
 		// 			acctest.PreCheckNewEnvironment(t)
 		// 			acctest.PreCheckPKCS12Key(t)
 		//                         acctest.PreCheckPKCS7Cert(t)
 		// 	acctest.PreCheckPEMCert(t)
-		//	acctest.PreCheckNoBeta(t)
 		// },
 		PreCheck:                 func() { t.Skipf("https://github.com/pingidentity/terraform-provider-pingone/issues/259") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,

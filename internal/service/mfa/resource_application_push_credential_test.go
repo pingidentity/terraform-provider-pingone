@@ -116,8 +116,8 @@ func TestAccApplicationPushCredential_FCM(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
-			acctest.PreCheckGoogleFirebaseCredentials(t)
 			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckGoogleFirebaseCredentials(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             mfa.ApplicationPushCredential_CheckDestroy,
@@ -167,8 +167,8 @@ func TestAccApplicationPushCredential_APNS(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
-			acctest.PreCheckAPNSPKCS8Key(t)
 			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckAPNSPKCS8Key(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             mfa.ApplicationPushCredential_CheckDestroy,
@@ -310,9 +310,9 @@ func TestAccApplicationPushCredential_Change(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckGoogleFirebaseCredentials(t)
 			acctest.PreCheckAPNSPKCS8Key(t)
-			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             mfa.ApplicationPushCredential_CheckDestroy,
@@ -373,8 +373,8 @@ func TestAccApplicationPushCredential_BadParameters(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
-			acctest.PreCheckGoogleFirebaseCredentials(t)
 			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckGoogleFirebaseCredentials(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             mfa.ApplicationPushCredential_CheckDestroy,

@@ -1262,8 +1262,8 @@ func TestAccIdentityProvider_SAML(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
-			acctest.PreCheckPEMCert(t)
 			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckPEMCert(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
