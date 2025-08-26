@@ -104,6 +104,18 @@ func PreCheckClient(t *testing.T) {
 	}
 }
 
+func PreCheckNoBeta(t *testing.T) {
+	if v := os.Getenv("TESTACC_BETA"); v == "true" {
+		t.Skip("Skipping test because TESTACC_BETA is set to true")
+	}
+}
+
+func PreCheckBeta(t *testing.T) {
+	if v := os.Getenv("TESTACC_BETA"); v != "true" {
+		t.Skip("Skipping test because TESTACC_BETA is not set to true")
+	}
+}
+
 func PreCheckNoFeatureFlag(t *testing.T) {
 	PreCheckFeatureFlag(t, "")
 }
