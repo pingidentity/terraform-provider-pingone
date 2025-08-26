@@ -25,6 +25,7 @@ func TestAccApplicationSignOnPolicyAssignmentsDataSource_Full(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.SignOnPolicy_CheckDestroy,
@@ -57,6 +58,7 @@ func TestAccApplicationSignOnPolicyAssignmentsDataSource_NotFound(t *testing.T) 
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.SignOnPolicy_CheckDestroy,
