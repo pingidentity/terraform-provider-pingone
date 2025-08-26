@@ -36,6 +36,10 @@ testacc: build
 	TF_ACC=1 go test $$(go list ./internal/client/...) -v $(TESTARGS) -timeout 120m
 	TF_ACC=1 go test $$(go list ./internal/service/...) -v $(TESTARGS) -timeout 120m
 
+testaccbeta: buildbeta
+	TF_ACC=1 go test -tags beta $$(go list ./internal/client/...) -v $(TESTARGS) -timeout 120m
+	TF_ACC=1 go test -tags beta $$(go list ./internal/service/...) -v $(TESTARGS) -timeout 120m
+
 sweep: build
 	@echo "WARNING: This will destroy infrastructure. Use only in development accounts."
 	go test $(SWEEP_DIR) -v -sweep=all $(SWEEPARGS) -timeout 10m
