@@ -34,7 +34,7 @@ jobs:
 
       - name: Build
         run: |
-          make buildbeta
+          make build BETA=true
 
   # run acceptance tests in a matrix with Terraform core versions
   test:
@@ -88,7 +88,7 @@ jobs:
       - name: TF acceptance tests
         timeout-minutes: 45
         run: |
-          make testaccbeta
+          make testacc BETA=true
 
       - name: Sweep to clean up
         run: |
