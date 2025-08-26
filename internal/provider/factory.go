@@ -9,15 +9,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-mux/tf5to6server"
 	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
-	"github.com/pingidentity/terraform-provider-pingone/buildflags"
 	"github.com/pingidentity/terraform-provider-pingone/internal/provider/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/provider/sdkv2"
 )
 
-func ProviderServerFactoryV6(ctx context.Context, version string, flags []buildflags.BuildFlag) (func() tfprotov6.ProviderServer, error) {
+func ProviderServerFactoryV6(ctx context.Context, version string) (func() tfprotov6.ProviderServer, error) {
 
 	p1V5Provider := sdkv2.New(version)()
-	p1V6Provider := framework.New(version, flags)()
+	p1V6Provider := framework.New(version)()
 
 	upgradedp1V5Provider, err := tf5to6server.UpgradeServer(
 		ctx,
