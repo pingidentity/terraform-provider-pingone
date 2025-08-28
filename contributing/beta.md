@@ -9,4 +9,15 @@ To add a new beta resource or data source to the provider, the corresponding New
 
 Beta versions are released in the same manner as non-beta versions. Goreleaser will automatically run in a Github action when the tag is created. For example, a tag of `v0.0.1` will create a non-beta release, while `v0.0.1-beta` will create a beta release. Goreleaser is configured to set the `beta` build flag based on the tag suffix.
 
-It may be useful when working in VSCode to tell `gopls` to compile with the beta build tag. This can be done by modifying `.vscode/settings.json` to include the build tag.
+It may be useful when working in VSCode to tell `gopls` to compile with the beta build tag. This can be done by modifying `.vscode/settings.json` to include the build tag:
+
+```
+{
+    "gopls": {
+        "build.buildFlags": [
+            // uncomment to build compile beta functionality in vscode
+            //"-tags=beta"
+        ]
+    }
+}
+```
