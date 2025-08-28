@@ -65,7 +65,7 @@ depscheck:
 	@git diff --exit-code -- go.mod go.sum || \
 		(echo; echo "Unexpected difference in go.mod/go.sum files. Run 'go mod tidy' command or revert any go.mod/go.sum changes and commit."; exit 1)
 
-lint: golangci-lint providerlint importlint tflint terrafmtcheck
+lint: golangci-lint providerlint importlint tflint terrafmtcheck betatagscheck
 
 golangci-lint:
 	@echo "==> Checking source code with golangci-lint..."
@@ -105,10 +105,14 @@ terrafmtcheck:
 		exit 1; \
 	fi
 
+betatagscheck:
+	@echo "==> Checking beta resources and data sources for correct build tags..."
+	@go run scripts/check_beta_build_tags.go
+
 fmt: terrafmt fmtcheck
 
 devcheck: build vet fmt generate docscategorycheck lint test sweep testacc
 
 devchecknotest: build vet fmt generate docscategorycheck lint
 
-.PHONY: build install generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck devcheck devchecknotest
+.PHONY: build install generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck betatagscheck devcheck devchecknotest
