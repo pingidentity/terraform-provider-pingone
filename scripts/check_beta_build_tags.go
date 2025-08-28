@@ -29,7 +29,6 @@ const (
 
 func main() {
 	errors := 0
-	warnings := 0
 
 	fmt.Println("Checking for beta resources and data sources without the required build tag...")
 
@@ -52,7 +51,6 @@ func main() {
 				return nil
 			}
 
-			// Extract beta resources and data sources
 			betaResources := []string{}
 			betaDataSources := []string{}
 
@@ -75,14 +73,13 @@ func main() {
 
 			// Check resources for the beta build tag
 			for _, resource := range betaResources {
-				// Convert CamelCase to snake_case
 				snakeCase := camelToSnake(resource)
 				resourceFile := filepath.Join(serviceDir, fmt.Sprintf("resource_%s.go", snakeCase))
 
 				if _, err := os.Stat(resourceFile); os.IsNotExist(err) {
-					fmt.Printf("  %sWarning: Could not find resource file for %s at %s%s\n",
-						colorYellow, resource, resourceFile, colorReset)
-					warnings++
+					fmt.Printf("  %sError: Could not find resource file for %s at %s%s\n",
+						colorRed, resource, resourceFile, colorReset)
+					errors++
 					continue
 				}
 
@@ -99,14 +96,13 @@ func main() {
 
 			// Check data sources for the beta build tag
 			for _, dataSource := range betaDataSources {
-				// Convert CamelCase to snake_case
 				snakeCase := camelToSnake(dataSource)
 				dataSourceFile := filepath.Join(serviceDir, fmt.Sprintf("data_source_%s.go", snakeCase))
 
 				if _, err := os.Stat(dataSourceFile); os.IsNotExist(err) {
-					fmt.Printf("  %sWarning: Could not find data source file for %s at %s%s\n",
-						colorYellow, dataSource, dataSourceFile, colorReset)
-					warnings++
+					fmt.Printf("  %sError: Could not find data source file for %s at %s%s\n",
+						colorRed, dataSource, dataSourceFile, colorReset)
+					errors++
 					continue
 				}
 
@@ -130,13 +126,9 @@ func main() {
 	}
 
 	if errors > 0 {
-		fmt.Printf("\n%sFound %d error(s) and %d warning(s). Some beta resources or data sources are missing the required //go:build beta tag%s\n",
-			colorRed, errors, warnings, colorReset)
+		fmt.Printf("\n%sFound %d error(s). Some beta resources or data sources are missing the required //go:build beta tag%s\n",
+			colorRed, errors, colorReset)
 		os.Exit(1)
-	} else if warnings > 0 {
-		fmt.Printf("\n%sNo errors found, but there were %d warning(s) that might need attention%s\n",
-			colorYellow, warnings, colorReset)
-		os.Exit(0)
 	} else {
 		fmt.Printf("\n%sAll beta resources and data sources have the correct build tag!%s\n",
 			colorGreen, colorReset)
@@ -144,7 +136,6 @@ func main() {
 	}
 }
 
-// camelToSnake converts CamelCase to snake_case
 func camelToSnake(s string) string {
 	var result string
 	for i, r := range s {
@@ -164,7 +155,6 @@ func hasBetaBuildTag(filePath string) bool {
 		return false
 	}
 
-	// Check the first few lines for the build tag
 	lines := strings.Split(string(content), "\n")
 	for i := 0; i < min(10, len(lines)); i++ {
 		if strings.TrimSpace(lines[i]) == "//go:build beta" {
@@ -181,7 +171,6 @@ func min(a, b int) int {
 	return b
 }
 
-// extractResourceNames extracts resource or data source names from a function body
 func extractResourceNames(body *ast.BlockStmt, suffix string) []string {
 	var names []string
 
