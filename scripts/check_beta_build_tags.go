@@ -15,6 +15,7 @@ const (
 	colorGreen  = "\033[32m"
 	colorYellow = "\033[33m"
 	colorReset  = "\033[0m"
+	headerLines = 10
 )
 
 /*
@@ -173,7 +174,7 @@ func hasBetaBuildTag(filePath string) bool {
 	}
 
 	lines := strings.Split(string(content), "\n")
-	for i := 0; i < min(10, len(lines)); i++ {
+	for i := 0; i < min(headerLines, len(lines)); i++ {
 		if strings.TrimSpace(lines[i]) == "//go:build beta" {
 			return true
 		}
