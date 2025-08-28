@@ -5,7 +5,6 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -149,7 +148,7 @@ func camelToSnake(s string) string {
 
 // hasBetaBuildTag checks if a file has the //go:build beta tag
 func hasBetaBuildTag(filePath string) bool {
-	content, err := ioutil.ReadFile(filePath)
+	content, err := os.ReadFile(filePath)
 	if err != nil {
 		fmt.Printf("  %sError reading file %s: %v%s\n", colorRed, filePath, err, colorReset)
 		return false
