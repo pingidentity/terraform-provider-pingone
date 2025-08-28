@@ -148,9 +148,27 @@ func camelToSnake(s string) string {
 
 // hasBetaBuildTag checks if a file has the //go:build beta tag
 func hasBetaBuildTag(filePath string) bool {
-	content, err := os.ReadFile(filePath)
+	cleanPath := filepath.Clean(filePath)
+
+	// Ensure the path is within the project directory
+	absPath, err := filepath.Abs(cleanPath)
 	if err != nil {
-		fmt.Printf("  %sError reading file %s: %v%s\n", colorRed, filePath, err, colorReset)
+		fmt.Printf("  %sError resolving absolute path for %s: %v%s\n", colorRed, cleanPath, err, colorReset)
+		return false
+	}
+	rootDir, err := filepath.Abs(".")
+	if err != nil {
+		fmt.Printf("  %sError resolving project root directory: %v%s\n", colorRed, err, colorReset)
+		return false
+	}
+	if !strings.HasPrefix(absPath, rootDir) {
+		fmt.Printf("  %sError: File path %s is outside project directory%s\n", colorRed, cleanPath, colorReset)
+		return false
+	}
+
+	content, err := os.ReadFile(cleanPath) // #nosec G304 - path is confirmed to be within the project directory above
+	if err != nil {
+		fmt.Printf("  %sError reading file %s: %v%s\n", colorRed, cleanPath, err, colorReset)
 		return false
 	}
 
