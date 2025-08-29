@@ -1529,7 +1529,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			inputSchemaPreferredDataTypeValue := types.StringValue(string(inputSchemaResponseValue.PreferredDataType))
 			inputSchemaValue, diags := types.ObjectValue(inputSchemaAttrTypes, map[string]attr.Value{
 				"description":            types.StringValue(inputSchemaResponseValue.Description),
-				"is_expanded":            types.BoolValue(inputSchemaResponseValue.IsExpanded),
+				"is_expanded":            types.BoolPointerValue(inputSchemaResponseValue.IsExpanded),
 				"preferred_control_type": inputSchemaPreferredControlTypeValue,
 				"preferred_data_type":    inputSchemaPreferredDataTypeValue,
 				"property_name":          types.StringValue(inputSchemaResponseValue.PropertyName),
