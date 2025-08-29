@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -170,8 +171,8 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 						Optional: true,
 					},
 					"data": schema.StringAttribute{
-						//CustomType: jsontypes.NormalizedType{},
-						Optional: true,
+						CustomType: jsontypes.NormalizedType{},
+						Optional:   true,
 					},
 					"elements": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
@@ -304,8 +305,8 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 													},
 												},
 												"properties": schema.StringAttribute{
-													//CustomType: jsontypes.NormalizedType{},
-													Optional: true,
+													CustomType: jsontypes.NormalizedType{},
+													Optional:   true,
 												},
 												"status": schema.StringAttribute{
 													Optional: true,
@@ -376,8 +377,8 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 						Optional: true,
 					},
 					"renderer": schema.StringAttribute{
-						//CustomType: jsontypes.NormalizedType{},
-						Optional: true,
+						CustomType: jsontypes.NormalizedType{},
+						Optional:   true,
 					},
 					"user_panning_enabled": schema.BoolAttribute{
 						Optional: true,
@@ -477,8 +478,8 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 			"output_schema": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"output": schema.StringAttribute{
-						//CustomType: jsontypes.NormalizedType{},
-						Optional: true,
+						CustomType: jsontypes.NormalizedType{},
+						Optional:   true,
 					},
 				},
 				Optional: true,
@@ -683,7 +684,7 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 		graphDataValue.BoxSelectionEnabled = graphDataAttrs["box_selection_enabled"].(types.Bool).ValueBoolPointer()
 		if !graphDataAttrs["data"].IsNull() && !graphDataAttrs["data"].IsUnknown() {
 			var unmarshaled map[string]interface{}
-			err := json.Unmarshal([]byte(graphDataAttrs["data"].(types.String).ValueString()), &unmarshaled)
+			err := json.Unmarshal([]byte(graphDataAttrs["data"].(jsontypes.Normalized).ValueString()), &unmarshaled)
 			if err != nil {
 				respDiags.AddError(
 					"Error Parsing JSON val",
@@ -742,7 +743,7 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 					nodesDataValue.NodeType = nodesDataAttrs["node_type"].(types.String).ValueString()
 					if !nodesDataAttrs["properties"].IsNull() && !nodesDataAttrs["properties"].IsUnknown() {
 						var unmarshaled map[string]interface{}
-						err := json.Unmarshal([]byte(nodesDataAttrs["properties"].(types.String).ValueString()), &unmarshaled)
+						err := json.Unmarshal([]byte(nodesDataAttrs["properties"].(jsontypes.Normalized).ValueString()), &unmarshaled)
 						if err != nil {
 							respDiags.AddError(
 								"Error Parsing JSON val",
@@ -786,7 +787,7 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 		graphDataValue.PanningEnabled = graphDataAttrs["panning_enabled"].(types.Bool).ValueBoolPointer()
 		if !graphDataAttrs["renderer"].IsNull() && !graphDataAttrs["renderer"].IsUnknown() {
 			var newUnmarshaled map[string]interface{}
-			err := json.Unmarshal([]byte(graphDataAttrs["renderer"].(types.String).ValueString()), &newUnmarshaled)
+			err := json.Unmarshal([]byte(graphDataAttrs["renderer"].(jsontypes.Normalized).ValueString()), &newUnmarshaled)
 			if err != nil {
 				respDiags.AddError(
 					"Error Parsing JSON val",
@@ -846,7 +847,7 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 		outputSchemaAttrs := model.OutputSchema.Attributes()
 		if !outputSchemaAttrs["output"].IsNull() && !outputSchemaAttrs["output"].IsUnknown() {
 			var unmarshaled map[string]interface{}
-			err := json.Unmarshal([]byte(outputSchemaAttrs["output"].(types.String).ValueString()), &unmarshaled)
+			err := json.Unmarshal([]byte(outputSchemaAttrs["output"].(jsontypes.Normalized).ValueString()), &unmarshaled)
 			if err != nil {
 				respDiags.AddError(
 					"Error Parsing JSON val",
@@ -952,7 +953,7 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 		graphDataAttrs := model.GraphData.Attributes()
 		graphDataValue.BoxSelectionEnabled = graphDataAttrs["box_selection_enabled"].(types.Bool).ValueBoolPointer()
 		var unmarshaled map[string]interface{}
-		err := json.Unmarshal([]byte(graphDataAttrs["data"].(types.String).ValueString()), &unmarshaled)
+		err := json.Unmarshal([]byte(graphDataAttrs["data"].(jsontypes.Normalized).ValueString()), &unmarshaled)
 		if err != nil {
 			respDiags.AddError(
 				"Error Parsing JSON val",
@@ -1009,7 +1010,7 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 					nodesDataValue.Name = nodesDataAttrs["name"].(types.String).ValueStringPointer()
 					nodesDataValue.NodeType = nodesDataAttrs["node_type"].(types.String).ValueString()
 					var unmarshaled map[string]interface{}
-					err := json.Unmarshal([]byte(nodesDataAttrs["properties"].(types.String).ValueString()), &unmarshaled)
+					err := json.Unmarshal([]byte(nodesDataAttrs["properties"].(jsontypes.Normalized).ValueString()), &unmarshaled)
 					if err != nil {
 						respDiags.AddError(
 							"Error Parsing JSON val",
@@ -1051,7 +1052,7 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 		}
 		graphDataValue.PanningEnabled = graphDataAttrs["panning_enabled"].(types.Bool).ValueBoolPointer()
 		var newUnmarshaled map[string]interface{}
-		err = json.Unmarshal([]byte(graphDataAttrs["renderer"].(types.String).ValueString()), &newUnmarshaled)
+		err = json.Unmarshal([]byte(graphDataAttrs["renderer"].(jsontypes.Normalized).ValueString()), &newUnmarshaled)
 		if err != nil {
 			respDiags.AddError(
 				"Error Parsing JSON val",
@@ -1109,7 +1110,7 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 		outputSchemaValue := &pingone.DaVinciFlowReplaceRequestOutputSchema{}
 		outputSchemaAttrs := model.OutputSchema.Attributes()
 		var unmarshaled map[string]interface{}
-		err := json.Unmarshal([]byte(outputSchemaAttrs["output"].(types.String).ValueString()), &unmarshaled)
+		err := json.Unmarshal([]byte(outputSchemaAttrs["output"].(jsontypes.Normalized).ValueString()), &unmarshaled)
 		if err != nil {
 			respDiags.AddError(
 				"Error Parsing JSON val",
