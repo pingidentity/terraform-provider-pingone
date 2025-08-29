@@ -1564,7 +1564,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 				"preferred_control_type": inputSchemaPreferredControlTypeValue,
 				"preferred_data_type":    inputSchemaPreferredDataTypeValue,
 				"property_name":          types.StringValue(inputSchemaResponseValue.PropertyName),
-				"required":               types.BoolValue(inputSchemaResponseValue.Required),
+				"required":               types.BoolPointerValue(inputSchemaResponseValue.Required),
 			})
 			respDiags.Append(diags...)
 			inputSchemaValues = append(inputSchemaValues, inputSchemaValue)
