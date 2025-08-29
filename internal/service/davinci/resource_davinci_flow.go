@@ -25,7 +25,7 @@ var (
 		"required":               types.BoolType,
 	}
 
-	inputSchemaDefault = types.SetValueMust(
+	inputSchemaDefault = types.ListValueMust(
 		types.ObjectType{AttrTypes: inputSchemaElemAttrTypes},
 		[]attr.Value{
 			types.ObjectValueMust(inputSchemaElemAttrTypes, map[string]attr.Value{
@@ -127,7 +127,7 @@ func (r *davinciFlowResource) ModifyPlan(ctx context.Context, req resource.Modif
 			plan.InputSchema = inputSchemaDefault
 		} else if config.InputSchema.IsNull() {
 			// Set to null if not configured
-			plan.InputSchema = types.SetNull(types.ObjectType{AttrTypes: inputSchemaElemAttrTypes})
+			plan.InputSchema = types.ListNull(types.ObjectType{AttrTypes: inputSchemaElemAttrTypes})
 		}
 		resp.Diagnostics.Append(resp.Plan.Set(ctx, plan)...)
 	}

@@ -82,7 +82,7 @@ type davinciFlowResourceModel struct {
 	EnvironmentId        types.String  `tfsdk:"environment_id"`
 	GraphData            types.Object  `tfsdk:"graph_data"`
 	Id                   types.String  `tfsdk:"id"`
-	InputSchema          types.Set     `tfsdk:"input_schema"`
+	InputSchema          types.List    `tfsdk:"input_schema"`
 	Name                 types.String  `tfsdk:"name"`
 	OutputSchema         types.Object  `tfsdk:"output_schema"`
 	PublishedVersion     types.Float32 `tfsdk:"published_version"`
@@ -406,7 +406,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
 				},
 			},
-			"input_schema": schema.SetNestedAttribute{
+			"input_schema": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"description": schema.StringAttribute{
@@ -1521,9 +1521,9 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		"required":               types.BoolType,
 	}
 	inputSchemaElementType := types.ObjectType{AttrTypes: inputSchemaAttrTypes}
-	var inputSchemaValue types.Set
+	var inputSchemaValue types.List
 	if response.InputSchema == nil {
-		inputSchemaValue = types.SetNull(inputSchemaElementType)
+		inputSchemaValue = types.ListNull(inputSchemaElementType)
 	} else {
 		var inputSchemaValues []attr.Value
 		for _, inputSchemaResponseValue := range response.InputSchema {
@@ -1540,7 +1540,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			respDiags.Append(diags...)
 			inputSchemaValues = append(inputSchemaValues, inputSchemaValue)
 		}
-		inputSchemaValue, diags = types.SetValue(inputSchemaElementType, inputSchemaValues)
+		inputSchemaValue, diags = types.ListValue(inputSchemaElementType, inputSchemaValues)
 		respDiags.Append(diags...)
 	}
 	state.InputSchema = inputSchemaValue
