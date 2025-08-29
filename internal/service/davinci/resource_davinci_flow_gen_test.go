@@ -225,9 +225,95 @@ func davinciFlow_MinimalHCL(resourceName string, withBootstrap bool) string {
 
 resource "pingone_davinci_flow" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  id = //TODO
-  // TODO set values for minimal fields
-  name = //TODO
+  name          = "%[2]s"
+  description   = "This is a demo flow"
+  color         = "#00FF00"
+  
+  graph_data = {
+    elements = {
+      edges = []
+      nodes  = [{
+        data = {
+          id        = "8bnj41592a"
+          node_type = "CONNECTION"
+		  // TODO could set connection_id, but it will automatically be found via the connector_id
+          // connection_id = "94141bf2f1b9b59a5f5365ff135e02bb"
+          connector_id = "pingOneSSOConnector"
+          name      = "PingOne"
+          label     = "PingOne"
+          status    = "configured"
+          capability_name = "userLookup"
+          type      = "action"
+          properties = jsonencode({
+            "additionalUserProperties": {
+              "value": []
+            },
+            "username": {
+              "value": "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+            },
+            "population": {
+              "value": "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+            },
+            "userIdentifierForFindUser": {
+              "value": "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+            }
+          })
+        }
+        position = {
+          x = 420
+          y = 360
+        }
+        group       = "nodes"
+        removed     = false
+        selected    = false
+        selectable  = true
+        locked      = false
+        grabbable   = true
+        pannable    = false
+        classes     = ""
+      }]
+    }
+
+    data = "{}"
+    
+    box_selection_enabled = true
+    user_zooming_enabled  = true
+    zooming_enabled = true
+    zoom                  = 1
+    min_zoom              = 0.01
+    max_zoom              = 10000
+    pannable              = true
+    panning_enabled       = true
+    user_panning_enabled  = true
+    
+    pan = {
+      x = 0
+      y = 0
+    }
+    
+    renderer = jsonencode({
+      "name": "null"
+    })
+  }
+  
+  settings = {
+    csp = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
+    intermediate_loading_screen_css  = ""
+    intermediate_loading_screen_html = ""
+    log_level                        = 2
+  }
+  
+  output_schema = {
+    output = jsonencode({
+      "type": "object",
+      "properties": {},
+      "additionalProperties": true
+    })
+  }
+  
+  trigger = {
+    type = "AUTHENTICATION"
+  }
 }
 `, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName)
 }
@@ -238,131 +324,131 @@ func davinciFlow_CompleteHCL(resourceName string, withBootstrap bool) string {
 		%[1]s
 
 resource "pingone_davinci_flow" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  id = //TODO
-  // TODO set values for complete fields
-  color = //TODO
-  description = //TODO
-  graph_data = {
-    box_selection_enabled = //TODO
-    data = //TODO
-    elements = {
-      edges = [
-        {
-          classes = //TODO
-          data = {
-            id = //TODO
-            source = //TODO
-            target = //TODO
-          }
-          grabbable = //TODO
-          group = //TODO
-          locked = //TODO
-          pannable = //TODO
-          position = {
-            x = //TODO
-            y = //TODO
-          }
-          removed = //TODO
-          selectable = //TODO
-          selected = //TODO
-        }
-      ]
-      nodes = [
-        {
-          classes = //TODO
-          data = {
-            capability_name = //TODO
-            connection_id = //TODO
-            connector_id = //TODO
-            id = //TODO
-            label = //TODO
-            name = //TODO
-            node_type = //TODO
-            properties = //TODO
-            status = //TODO
-            type = //TODO
-          }
-          grabbable = //TODO
-          group = //TODO
-          locked = //TODO
-          pannable = //TODO
-          position = {
-            x = //TODO
-            y = //TODO
-          }
-          removed = //TODO
-          selectable = //TODO
-          selected = //TODO
-        }
-      ]
-    }
-    max_zoom = //TODO
-    min_zoom = //TODO
-    pan = {
-      x = //TODO
-      y = //TODO
-    }
-    panning_enabled = //TODO
-    renderer = //TODO
-    user_panning_enabled = //TODO
-    user_zooming_enabled = //TODO
-    zoom = //TODO
-    zooming_enabled = //TODO
-  }
-  input_schema = [
-    {
-      description = //TODO
-      preferred_control_type = //TODO
-      preferred_data_type = //TODO
-      property_name = //TODO
-      required = //TODO
-    }
-  ]
-  name = //TODO
-  output_schema = {
-    output = //TODO
-  }
-  settings = {
-    csp = //TODO
-    css = //TODO
-    css_links = //TODO
-    custom_error_screen_brand_logo_url = //TODO
-    custom_error_show_footer = //TODO
-    custom_favicon_link = //TODO
-    custom_logo_urlselection = //TODO
-    custom_title = //TODO
-    default_error_screen_brand_logo = //TODO
-    flow_http_timeout_in_seconds = //TODO
-    flow_timeout_in_seconds = //TODO
-    intermediate_loading_screen_css = //TODO
-    intermediate_loading_screen_html = //TODO
-    js_custom_flow_player = //TODO
-    js_links = [
-      {
-        crossorigin = //TODO
-        defer = //TODO
-        integrity = //TODO
-        label = //TODO
-        referrerpolicy = //TODO
-        type = //TODO
-        value = //TODO
-      }
-    ]
-    log_level = //TODO
-    require_authentication_to_initiate = //TODO
-    scrub_sensitive_info = //TODO
-    sensitive_info_fields = //TODO
-    use_csp = //TODO
-    use_custom_css = //TODO
-    use_custom_flow_player = //TODO
-    use_custom_script = //TODO
-    use_intermediate_loading_screen = //TODO
-    validate_on_save = //TODO
-  }
-  trigger = {
-    type = //TODO
-  }
+//   environment_id = data.pingone_environment.general_test.id
+//   id = //TODO
+//   // TODO set values for complete fields
+//   color = //TODO
+//   description = //TODO
+//   graph_data = {
+//     box_selection_enabled = //TODO
+//     data = //TODO
+//     elements = {
+//       edges = [
+//         {
+//           classes = //TODO
+//           data = {
+//             id = //TODO
+//             source = //TODO
+//             target = //TODO
+//           }
+//           grabbable = //TODO
+//           group = //TODO
+//           locked = //TODO
+//           pannable = //TODO
+//           position = {
+//             x = //TODO
+//             y = //TODO
+//           }
+//           removed = //TODO
+//           selectable = //TODO
+//           selected = //TODO
+//         }
+//       ]
+//       nodes = [
+//         {
+//           classes = //TODO
+//           data = {
+//             capability_name = //TODO
+//             connection_id = //TODO
+//             connector_id = //TODO
+//             id = //TODO
+//             label = //TODO
+//             name = //TODO
+//             node_type = //TODO
+//             properties = //TODO
+//             status = //TODO
+//             type = //TODO
+//           }
+//           grabbable = //TODO
+//           group = //TODO
+//           locked = //TODO
+//           pannable = //TODO
+//           position = {
+//             x = //TODO
+//             y = //TODO
+//           }
+//           removed = //TODO
+//           selectable = //TODO
+//           selected = //TODO
+//         }
+//       ]
+//     }
+//     max_zoom = //TODO
+//     min_zoom = //TODO
+//     pan = {
+//       x = //TODO
+//       y = //TODO
+//     }
+//     panning_enabled = //TODO
+//     renderer = //TODO
+//     user_panning_enabled = //TODO
+//     user_zooming_enabled = //TODO
+//     zoom = //TODO
+//     zooming_enabled = //TODO
+//   }
+//   input_schema = [
+//     {
+//       description = //TODO
+//       preferred_control_type = //TODO
+//       preferred_data_type = //TODO
+//       property_name = //TODO
+//       required = //TODO
+//     }
+//   ]
+//   name = //TODO
+//   output_schema = {
+//     output = //TODO
+//   }
+//   settings = {
+//     csp = //TODO
+//     css = //TODO
+//     css_links = //TODO
+//     custom_error_screen_brand_logo_url = //TODO
+//     custom_error_show_footer = //TODO
+//     custom_favicon_link = //TODO
+//     custom_logo_urlselection = //TODO
+//     custom_title = //TODO
+//     default_error_screen_brand_logo = //TODO
+//     flow_http_timeout_in_seconds = //TODO
+//     flow_timeout_in_seconds = //TODO
+//     intermediate_loading_screen_css = //TODO
+//     intermediate_loading_screen_html = //TODO
+//     js_custom_flow_player = //TODO
+//     js_links = [
+//       {
+//         crossorigin = //TODO
+//         defer = //TODO
+//         integrity = //TODO
+//         label = //TODO
+//         referrerpolicy = //TODO
+//         type = //TODO
+//         value = //TODO
+//       }
+//     ]
+//     log_level = //TODO
+//     require_authentication_to_initiate = //TODO
+//     scrub_sensitive_info = //TODO
+//     sensitive_info_fields = //TODO
+//     use_csp = //TODO
+//     use_custom_css = //TODO
+//     use_custom_flow_player = //TODO
+//     use_custom_script = //TODO
+//     use_intermediate_loading_screen = //TODO
+//     validate_on_save = //TODO
+//   }
+//   trigger = {
+//     type = //TODO
+//   }
 }
 `, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName)
 }
@@ -373,131 +459,131 @@ func davinciFlow_CompleteReorderedHCL(resourceName string, withBootstrap bool) s
 		%[1]s
 
 resource "pingone_davinci_flow" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  id = //TODO
-  // TODO set values for complete fields, with ordering changes
-  color = //TODO
-  description = //TODO
-  graph_data = {
-    box_selection_enabled = //TODO
-    data = //TODO
-    elements = {
-      edges = [
-        {
-          classes = //TODO
-          data = {
-            id = //TODO
-            source = //TODO
-            target = //TODO
-          }
-          grabbable = //TODO
-          group = //TODO
-          locked = //TODO
-          pannable = //TODO
-          position = {
-            x = //TODO
-            y = //TODO
-          }
-          removed = //TODO
-          selectable = //TODO
-          selected = //TODO
-        }
-      ]
-      nodes = [
-        {
-          classes = //TODO
-          data = {
-            capability_name = //TODO
-            connection_id = //TODO
-            connector_id = //TODO
-            id = //TODO
-            label = //TODO
-            name = //TODO
-            node_type = //TODO
-            properties = //TODO
-            status = //TODO
-            type = //TODO
-          }
-          grabbable = //TODO
-          group = //TODO
-          locked = //TODO
-          pannable = //TODO
-          position = {
-            x = //TODO
-            y = //TODO
-          }
-          removed = //TODO
-          selectable = //TODO
-          selected = //TODO
-        }
-      ]
-    }
-    max_zoom = //TODO
-    min_zoom = //TODO
-    pan = {
-      x = //TODO
-      y = //TODO
-    }
-    panning_enabled = //TODO
-    renderer = //TODO
-    user_panning_enabled = //TODO
-    user_zooming_enabled = //TODO
-    zoom = //TODO
-    zooming_enabled = //TODO
-  }
-  input_schema = [
-    {
-      description = //TODO
-      preferred_control_type = //TODO
-      preferred_data_type = //TODO
-      property_name = //TODO
-      required = //TODO
-    }
-  ]
-  name = //TODO
-  output_schema = {
-    output = //TODO
-  }
-  settings = {
-    csp = //TODO
-    css = //TODO
-    css_links = //TODO
-    custom_error_screen_brand_logo_url = //TODO
-    custom_error_show_footer = //TODO
-    custom_favicon_link = //TODO
-    custom_logo_urlselection = //TODO
-    custom_title = //TODO
-    default_error_screen_brand_logo = //TODO
-    flow_http_timeout_in_seconds = //TODO
-    flow_timeout_in_seconds = //TODO
-    intermediate_loading_screen_css = //TODO
-    intermediate_loading_screen_html = //TODO
-    js_custom_flow_player = //TODO
-    js_links = [
-      {
-        crossorigin = //TODO
-        defer = //TODO
-        integrity = //TODO
-        label = //TODO
-        referrerpolicy = //TODO
-        type = //TODO
-        value = //TODO
-      }
-    ]
-    log_level = //TODO
-    require_authentication_to_initiate = //TODO
-    scrub_sensitive_info = //TODO
-    sensitive_info_fields = //TODO
-    use_csp = //TODO
-    use_custom_css = //TODO
-    use_custom_flow_player = //TODO
-    use_custom_script = //TODO
-    use_intermediate_loading_screen = //TODO
-    validate_on_save = //TODO
-  }
-  trigger = {
-    type = //TODO
-  }
+//   environment_id = data.pingone_environment.general_test.id
+//   id = //TODO
+//   // TODO set values for complete fields, with ordering changes
+//   color = //TODO
+//   description = //TODO
+//   graph_data = {
+//     box_selection_enabled = //TODO
+//     data = //TODO
+//     elements = {
+//       edges = [
+//         {
+//           classes = //TODO
+//           data = {
+//             id = //TODO
+//             source = //TODO
+//             target = //TODO
+//           }
+//           grabbable = //TODO
+//           group = //TODO
+//           locked = //TODO
+//           pannable = //TODO
+//           position = {
+//             x = //TODO
+//             y = //TODO
+//           }
+//           removed = //TODO
+//           selectable = //TODO
+//           selected = //TODO
+//         }
+//       ]
+//       nodes = [
+//         {
+//           classes = //TODO
+//           data = {
+//             capability_name = //TODO
+//             connection_id = //TODO
+//             connector_id = //TODO
+//             id = //TODO
+//             label = //TODO
+//             name = //TODO
+//             node_type = //TODO
+//             properties = //TODO
+//             status = //TODO
+//             type = //TODO
+//           }
+//           grabbable = //TODO
+//           group = //TODO
+//           locked = //TODO
+//           pannable = //TODO
+//           position = {
+//             x = //TODO
+//             y = //TODO
+//           }
+//           removed = //TODO
+//           selectable = //TODO
+//           selected = //TODO
+//         }
+//       ]
+//     }
+//     max_zoom = //TODO
+//     min_zoom = //TODO
+//     pan = {
+//       x = //TODO
+//       y = //TODO
+//     }
+//     panning_enabled = //TODO
+//     renderer = //TODO
+//     user_panning_enabled = //TODO
+//     user_zooming_enabled = //TODO
+//     zoom = //TODO
+//     zooming_enabled = //TODO
+//   }
+//   input_schema = [
+//     {
+//       description = //TODO
+//       preferred_control_type = //TODO
+//       preferred_data_type = //TODO
+//       property_name = //TODO
+//       required = //TODO
+//     }
+//   ]
+//   name = //TODO
+//   output_schema = {
+//     output = //TODO
+//   }
+//   settings = {
+//     csp = //TODO
+//     css = //TODO
+//     css_links = //TODO
+//     custom_error_screen_brand_logo_url = //TODO
+//     custom_error_show_footer = //TODO
+//     custom_favicon_link = //TODO
+//     custom_logo_urlselection = //TODO
+//     custom_title = //TODO
+//     default_error_screen_brand_logo = //TODO
+//     flow_http_timeout_in_seconds = //TODO
+//     flow_timeout_in_seconds = //TODO
+//     intermediate_loading_screen_css = //TODO
+//     intermediate_loading_screen_html = //TODO
+//     js_custom_flow_player = //TODO
+//     js_links = [
+//       {
+//         crossorigin = //TODO
+//         defer = //TODO
+//         integrity = //TODO
+//         label = //TODO
+//         referrerpolicy = //TODO
+//         type = //TODO
+//         value = //TODO
+//       }
+//     ]
+//     log_level = //TODO
+//     require_authentication_to_initiate = //TODO
+//     scrub_sensitive_info = //TODO
+//     sensitive_info_fields = //TODO
+//     use_csp = //TODO
+//     use_custom_css = //TODO
+//     use_custom_flow_player = //TODO
+//     use_custom_script = //TODO
+//     use_intermediate_loading_screen = //TODO
+//     validate_on_save = //TODO
+//   }
+//   trigger = {
+//     type = //TODO
+//   }
 }
 `, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName)
 }
@@ -508,9 +594,94 @@ func davinciFlow_NewEnvHCL(environmentName, licenseID, resourceName string) stri
 
 resource "pingone_davinci_flow" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  id = //TODO
-  // TODO set values for minimal fields
-  name = //TODO
+  name          = "%[3]s"
+  description   = "This is a demo flow"
+  color         = "#00FF00"
+  
+  graph_data = {
+    elements = {
+      edges = []
+      nodes  = [{
+        data = {
+          id        = "8bnj41592a"
+          node_type = "CONNECTION"
+		  // connection_id will be computed
+          connector_id = "pingOneSSOConnector"
+          name      = "PingOne"
+          label     = "PingOne"
+          status    = "configured"
+          capability_name = "userLookup"
+          type      = "action"
+          properties = jsonencode({
+            "additionalUserProperties": {
+              "value": []
+            },
+            "username": {
+              "value": "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+            },
+            "population": {
+              "value": "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+            },
+            "userIdentifierForFindUser": {
+              "value": "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+            }
+          })
+        }
+        position = {
+          x = 420
+          y = 360
+        }
+        group       = "nodes"
+        removed     = false
+        selected    = false
+        selectable  = true
+        locked      = false
+        grabbable   = true
+        pannable    = false
+        classes     = ""
+      }]
+    }
+
+    data = "{}"
+    
+    box_selection_enabled = true
+    user_zooming_enabled  = true
+    zooming_enabled = true
+    zoom                  = 1
+    min_zoom              = 0.01
+    max_zoom              = 10000
+    pannable              = true
+    panning_enabled       = true
+    user_panning_enabled  = true
+    
+    pan = {
+      x = 0
+      y = 0
+    }
+    
+    renderer = jsonencode({
+      "name": "null"
+    })
+  }
+  
+  settings = {
+    csp = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
+    intermediate_loading_screen_css  = ""
+    intermediate_loading_screen_html = ""
+    log_level                        = 2
+  }
+  
+  output_schema = {
+    output = jsonencode({
+      "type": "object",
+      "properties": {},
+      "additionalProperties": true
+    })
+  }
+  
+  trigger = {
+    type = "AUTHENTICATION"
+  }
 }
 `, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
@@ -520,55 +691,55 @@ resource "pingone_davinci_flow" "%[3]s" {
 // TODO set expected values
 func davinciFlow_CheckComputedValuesMinimal(resourceName string) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "color", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "current_version", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "deployed_at", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "description", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "dvlinter_error_count", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "dvlinter_warning_count", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "enabled", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.box_selection_enabled", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.data", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.max_zoom", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.min_zoom", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.panning_enabled", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.renderer", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.user_panning_enabled", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.user_zooming_enabled", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.zoom", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.zooming_enabled", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "output_schema.output", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "published_version", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.csp", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.css", "expected_value"),
-		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.css_links.*", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.custom_error_screen_brand_logo_url", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.custom_error_show_footer", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.custom_favicon_link", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.custom_logo_urlselection", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.custom_title", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.default_error_screen_brand_logo", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.flow_http_timeout_in_seconds", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.flow_timeout_in_seconds", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.intermediate_loading_screen_css", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.intermediate_loading_screen_html", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.js_custom_flow_player", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.log_level", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.require_authentication_to_initiate", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.scrub_sensitive_info", "expected_value"),
-		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.sensitive_info_fields.*", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.use_csp", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.use_custom_css", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.use_custom_flow_player", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.use_custom_script", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.use_intermediate_loading_screen", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.validate_on_save", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "trigger.configuration.mfa.enabled", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "trigger.configuration.mfa.time", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "trigger.configuration.mfa.time_format", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "trigger.configuration.pwd.enabled", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "trigger.configuration.pwd.time", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "trigger.configuration.pwd.time_format", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "color", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "current_version", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "deployed_at", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "description", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "dvlinter_error_count", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "dvlinter_warning_count", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "enabled", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.box_selection_enabled", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.data", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.max_zoom", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.min_zoom", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.panning_enabled", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.renderer", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.user_panning_enabled", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.user_zooming_enabled", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.zoom", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.zooming_enabled", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "output_schema.output", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "published_version", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.csp", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.css", "expected_value"),
+	// resource.TestCheckTypeSetElemAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.css_links.*", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.custom_error_screen_brand_logo_url", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.custom_error_show_footer", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.custom_favicon_link", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.custom_logo_urlselection", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.custom_title", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.default_error_screen_brand_logo", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.flow_http_timeout_in_seconds", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.flow_timeout_in_seconds", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.intermediate_loading_screen_css", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.intermediate_loading_screen_html", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.js_custom_flow_player", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.log_level", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.require_authentication_to_initiate", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.scrub_sensitive_info", "expected_value"),
+	// resource.TestCheckTypeSetElemAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.sensitive_info_fields.*", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.use_csp", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.use_custom_css", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.use_custom_flow_player", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.use_custom_script", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.use_intermediate_loading_screen", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.validate_on_save", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "trigger.configuration.mfa.enabled", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "trigger.configuration.mfa.time", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "trigger.configuration.mfa.time_format", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "trigger.configuration.pwd.enabled", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "trigger.configuration.pwd.time", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "trigger.configuration.pwd.time_format", "expected_value"),
 	)
 }
 
@@ -578,55 +749,55 @@ func davinciFlow_CheckComputedValuesMinimal(resourceName string) resource.TestCh
 // TODO set expected values
 func davinciFlow_CheckComputedValuesComplete(resourceName string) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "color", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "current_version", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "deployed_at", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "description", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "dvlinter_error_count", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "dvlinter_warning_count", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "enabled", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.box_selection_enabled", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.data", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.max_zoom", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.min_zoom", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.panning_enabled", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.renderer", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.user_panning_enabled", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.user_zooming_enabled", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.zoom", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.zooming_enabled", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "output_schema.output", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "published_version", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.csp", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.css", "expected_value"),
-		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.css_links.*", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.custom_error_screen_brand_logo_url", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.custom_error_show_footer", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.custom_favicon_link", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.custom_logo_urlselection", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.custom_title", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.default_error_screen_brand_logo", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.flow_http_timeout_in_seconds", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.flow_timeout_in_seconds", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.intermediate_loading_screen_css", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.intermediate_loading_screen_html", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.js_custom_flow_player", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.log_level", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.require_authentication_to_initiate", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.scrub_sensitive_info", "expected_value"),
-		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.sensitive_info_fields.*", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.use_csp", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.use_custom_css", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.use_custom_flow_player", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.use_custom_script", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.use_intermediate_loading_screen", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.validate_on_save", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "trigger.configuration.mfa.enabled", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "trigger.configuration.mfa.time", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "trigger.configuration.mfa.time_format", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "trigger.configuration.pwd.enabled", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "trigger.configuration.pwd.time", "expected_value"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "trigger.configuration.pwd.time_format", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "color", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "current_version", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "deployed_at", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "description", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "dvlinter_error_count", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "dvlinter_warning_count", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "enabled", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.box_selection_enabled", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.data", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.max_zoom", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.min_zoom", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.panning_enabled", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.renderer", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.user_panning_enabled", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.user_zooming_enabled", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.zoom", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.zooming_enabled", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "output_schema.output", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "published_version", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.csp", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.css", "expected_value"),
+	// resource.TestCheckTypeSetElemAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.css_links.*", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.custom_error_screen_brand_logo_url", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.custom_error_show_footer", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.custom_favicon_link", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.custom_logo_urlselection", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.custom_title", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.default_error_screen_brand_logo", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.flow_http_timeout_in_seconds", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.flow_timeout_in_seconds", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.intermediate_loading_screen_css", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.intermediate_loading_screen_html", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.js_custom_flow_player", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.log_level", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.require_authentication_to_initiate", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.scrub_sensitive_info", "expected_value"),
+	// resource.TestCheckTypeSetElemAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.sensitive_info_fields.*", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.use_csp", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.use_custom_css", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.use_custom_flow_player", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.use_custom_script", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.use_intermediate_loading_screen", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.validate_on_save", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "trigger.configuration.mfa.enabled", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "trigger.configuration.mfa.time", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "trigger.configuration.mfa.time_format", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "trigger.configuration.pwd.enabled", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "trigger.configuration.pwd.time", "expected_value"),
+	// resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "trigger.configuration.pwd.time_format", "expected_value"),
 	)
 }
 

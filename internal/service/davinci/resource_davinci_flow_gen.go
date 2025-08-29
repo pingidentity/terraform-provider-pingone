@@ -265,6 +265,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 												},
 												"connection_id": schema.StringAttribute{
 													Optional: true,
+													Computed: true,
 												},
 												"connector_id": schema.StringAttribute{
 													Optional: true,
