@@ -413,7 +413,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 							Optional: true,
 						},
 						"is_expanded": schema.BoolAttribute{
-							Computed: true,
+							Optional: true,
 						},
 						"preferred_control_type": schema.StringAttribute{
 							Optional:            true,
@@ -467,6 +467,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 					},
 				},
 				Optional: true,
+				Computed: true,
 			},
 			"name": schema.StringAttribute{
 				Required: true,
@@ -811,6 +812,7 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 			inputSchemaValue := pingone.DaVinciFlowInputSchemaRequestItem{}
 			inputSchemaAttrs := inputSchemaElement.(types.Object).Attributes()
 			inputSchemaValue.Description = inputSchemaAttrs["description"].(types.String).ValueStringPointer()
+			inputSchemaValue.IsExpanded = inputSchemaAttrs["is_expanded"].(types.Bool).ValueBoolPointer()
 			if !inputSchemaAttrs["preferred_control_type"].IsNull() && !inputSchemaAttrs["preferred_control_type"].IsUnknown() {
 				inputSchemaPreferredControlTypeValue, err := pingone.NewDaVinciFlowInputSchemaRequestItemPreferredControlTypeFromValue(inputSchemaAttrs["preferred_control_type"].(types.String).ValueString())
 				if err != nil {
