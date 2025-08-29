@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
@@ -20,7 +19,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float32planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -71,23 +73,23 @@ func (r *davinciFlowResource) Configure(ctx context.Context, req resource.Config
 }
 
 type davinciFlowResourceModel struct {
-	Color                types.String  `tfsdk:"color"`
-	Connectors           types.Set     `tfsdk:"connectors"`
-	CurrentVersion       types.Float32 `tfsdk:"current_version"`
-	DeployedAt           types.String  `tfsdk:"deployed_at"`
-	Description          types.String  `tfsdk:"description"`
-	DvlinterErrorCount   types.Float32 `tfsdk:"dvlinter_error_count"`
-	DvlinterWarningCount types.Float32 `tfsdk:"dvlinter_warning_count"`
-	Enabled              types.Bool    `tfsdk:"enabled"`
-	EnvironmentId        types.String  `tfsdk:"environment_id"`
-	GraphData            types.Object  `tfsdk:"graph_data"`
-	Id                   types.String  `tfsdk:"id"`
-	InputSchema          types.List    `tfsdk:"input_schema"`
-	Name                 types.String  `tfsdk:"name"`
-	OutputSchema         types.Object  `tfsdk:"output_schema"`
-	PublishedVersion     types.Float32 `tfsdk:"published_version"`
-	Settings             types.Object  `tfsdk:"settings"`
-	Trigger              types.Object  `tfsdk:"trigger"`
+	Color          types.String  `tfsdk:"color"`
+	Connectors     types.Set     `tfsdk:"connectors"`
+	CurrentVersion types.Float32 `tfsdk:"current_version"`
+	// DeployedAt     types.String  `tfsdk:"deployed_at"`
+	Description types.String `tfsdk:"description"`
+	// DvlinterErrorCount   types.Float32 `tfsdk:"dvlinter_error_count"`
+	// DvlinterWarningCount types.Float32 `tfsdk:"dvlinter_warning_count"`
+	Enabled       types.Bool   `tfsdk:"enabled"`
+	EnvironmentId types.String `tfsdk:"environment_id"`
+	GraphData     types.Object `tfsdk:"graph_data"`
+	Id            types.String `tfsdk:"id"`
+	InputSchema   types.List   `tfsdk:"input_schema"`
+	Name          types.String `tfsdk:"name"`
+	OutputSchema  types.Object `tfsdk:"output_schema"`
+	// PublishedVersion types.Float32 `tfsdk:"published_version"`
+	Settings types.Object `tfsdk:"settings"`
+	Trigger  types.Object `tfsdk:"trigger"`
 }
 
 func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -106,13 +108,19 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 					},
 				},
 				Computed: true,
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"current_version": schema.Float32Attribute{
 				Computed: true,
+				PlanModifiers: []planmodifier.Float32{
+					float32planmodifier.UseStateForUnknown(),
+				},
 			},
-			"deployed_at": schema.StringAttribute{
-				Computed: true,
-			},
+			// "deployed_at": schema.StringAttribute{
+			// 	Computed: true,
+			// },
 			"description": schema.StringAttribute{
 				Optional: true,
 				Validators: []validator.String{
@@ -121,14 +129,17 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 					// stringvalidator.RegexMatches(regexp.MustCompile("^\\s*[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]?(?!.*((<)|(\\$\\{)))"), ""),
 				},
 			},
-			"dvlinter_error_count": schema.Float32Attribute{
-				Computed: true,
-			},
-			"dvlinter_warning_count": schema.Float32Attribute{
-				Computed: true,
-			},
+			// "dvlinter_error_count": schema.Float32Attribute{
+			// 	Computed: true,
+			// },
+			// "dvlinter_warning_count": schema.Float32Attribute{
+			// 	Computed: true,
+			// },
 			"enabled": schema.BoolAttribute{
 				Computed: true,
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"environment_id": schema.StringAttribute{
 				Required:    true,
@@ -142,31 +153,31 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 			"graph_data": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
-					"all_linter_errors": schema.SetNestedAttribute{
-						NestedObject: schema.NestedAttributeObject{
-							Attributes: map[string]schema.Attribute{
-								"code": schema.StringAttribute{
-									Computed: true,
-								},
-								"flow_id": schema.StringAttribute{
-									Computed: true,
-								},
-								"message": schema.StringAttribute{
-									Computed: true,
-								},
-								"node_id": schema.StringAttribute{
-									Computed: true,
-								},
-								"recommendation": schema.StringAttribute{
-									Computed: true,
-								},
-								"type": schema.StringAttribute{
-									Computed: true,
-								},
-							},
-						},
-						Computed: true,
-					},
+					// "all_linter_errors": schema.SetNestedAttribute{
+					// 	NestedObject: schema.NestedAttributeObject{
+					// 		Attributes: map[string]schema.Attribute{
+					// 			"code": schema.StringAttribute{
+					// 				Computed: true,
+					// 			},
+					// 			"flow_id": schema.StringAttribute{
+					// 				Computed: true,
+					// 			},
+					// 			"message": schema.StringAttribute{
+					// 				Computed: true,
+					// 			},
+					// 			"node_id": schema.StringAttribute{
+					// 				Computed: true,
+					// 			},
+					// 			"recommendation": schema.StringAttribute{
+					// 				Computed: true,
+					// 			},
+					// 			"type": schema.StringAttribute{
+					// 				Computed: true,
+					// 			},
+					// 		},
+					// 	},
+					// 	Computed: true,
+					// },
 					"box_selection_enabled": schema.BoolAttribute{
 						Optional: true,
 					},
@@ -264,37 +275,37 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 														stringvalidator.LengthAtLeast(1),
 													},
 												},
-												"id_unique": schema.StringAttribute{
-													Computed: true,
-												},
+												// "id_unique": schema.StringAttribute{
+												// 	Computed: true,
+												// },
 												"label": schema.StringAttribute{
 													Optional: true,
 												},
-												"linter_error": schema.SetNestedAttribute{
-													NestedObject: schema.NestedAttributeObject{
-														Attributes: map[string]schema.Attribute{
-															"code": schema.StringAttribute{
-																Computed: true,
-															},
-															"flow_id": schema.StringAttribute{
-																Computed: true,
-															},
-															"message": schema.StringAttribute{
-																Computed: true,
-															},
-															"node_id": schema.StringAttribute{
-																Computed: true,
-															},
-															"recommendation": schema.StringAttribute{
-																Computed: true,
-															},
-															"type": schema.StringAttribute{
-																Computed: true,
-															},
-														},
-													},
-													Computed: true,
-												},
+												// "linter_error": schema.SetNestedAttribute{
+												// 	NestedObject: schema.NestedAttributeObject{
+												// 		Attributes: map[string]schema.Attribute{
+												// 			"code": schema.StringAttribute{
+												// 				Computed: true,
+												// 			},
+												// 			"flow_id": schema.StringAttribute{
+												// 				Computed: true,
+												// 			},
+												// 			"message": schema.StringAttribute{
+												// 				Computed: true,
+												// 			},
+												// 			"node_id": schema.StringAttribute{
+												// 				Computed: true,
+												// 			},
+												// 			"recommendation": schema.StringAttribute{
+												// 				Computed: true,
+												// 			},
+												// 			"type": schema.StringAttribute{
+												// 				Computed: true,
+												// 			},
+												// 		},
+												// 	},
+												// 	Computed: true,
+												// },
 												"name": schema.StringAttribute{
 													Optional: true,
 												},
@@ -485,9 +496,9 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 				},
 				Optional: true,
 			},
-			"published_version": schema.Float32Attribute{
-				Computed: true,
-			},
+			// "published_version": schema.Float32Attribute{
+			// 	Computed: true,
+			// },
 			"settings": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"csp": schema.StringAttribute{
@@ -649,7 +660,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 								Computed: true,
 							},
 						},
-						Computed: true,
+						Optional: true,
 					},
 					"type": schema.StringAttribute{
 						Required: true,
@@ -1077,6 +1088,7 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 			inputSchemaValue := pingone.DaVinciFlowInputSchemaRequestItem{}
 			inputSchemaAttrs := inputSchemaElement.(types.Object).Attributes()
 			inputSchemaValue.Description = inputSchemaAttrs["description"].(types.String).ValueStringPointer()
+			inputSchemaValue.IsExpanded = inputSchemaAttrs["is_expanded"].(types.Bool).ValueBoolPointer()
 			if !inputSchemaAttrs["preferred_control_type"].IsNull() && !inputSchemaAttrs["preferred_control_type"].IsUnknown() {
 				inputSchemaPreferredControlTypeValue, err := pingone.NewDaVinciFlowInputSchemaRequestItemPreferredControlTypeFromValue(inputSchemaAttrs["preferred_control_type"].(types.String).ValueString())
 				if err != nil {
@@ -1228,31 +1240,31 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 	// current_version
 	state.CurrentVersion = types.Float32PointerValue(response.CurrentVersion)
 	// deployed_at
-	var deployedAtValue types.String
-	if response.DeployedAt == nil {
-		deployedAtValue = types.StringNull()
-	} else {
-		deployedAtValue = types.StringValue(response.DeployedAt.Format(time.RFC3339))
-	}
-	state.DeployedAt = deployedAtValue
+	// var deployedAtValue types.String
+	// if response.DeployedAt == nil {
+	// 	deployedAtValue = types.StringNull()
+	// } else {
+	// 	deployedAtValue = types.StringValue(response.DeployedAt.Format(time.RFC3339))
+	// }
+	// state.DeployedAt = deployedAtValue
 	// description
 	state.Description = types.StringPointerValue(response.Description)
 	// dvlinter_error_count
-	state.DvlinterErrorCount = types.Float32PointerValue(response.DvlinterErrorCount)
+	// state.DvlinterErrorCount = types.Float32PointerValue(response.DvlinterErrorCount)
 	// dvlinter_warning_count
-	state.DvlinterWarningCount = types.Float32PointerValue(response.DvlinterWarningCount)
+	// state.DvlinterWarningCount = types.Float32PointerValue(response.DvlinterWarningCount)
 	// enabled
 	state.Enabled = types.BoolPointerValue(response.Enabled)
 	// graph_data
-	graphDataAllLinterErrorsAttrTypes := map[string]attr.Type{
-		"code":           types.StringType,
-		"flow_id":        types.StringType,
-		"message":        types.StringType,
-		"node_id":        types.StringType,
-		"recommendation": types.StringType,
-		"type":           types.StringType,
-	}
-	graphDataAllLinterErrorsElementType := types.ObjectType{AttrTypes: graphDataAllLinterErrorsAttrTypes}
+	// graphDataAllLinterErrorsAttrTypes := map[string]attr.Type{
+	// 	"code":           types.StringType,
+	// 	"flow_id":        types.StringType,
+	// 	"message":        types.StringType,
+	// 	"node_id":        types.StringType,
+	// 	"recommendation": types.StringType,
+	// 	"type":           types.StringType,
+	// }
+	// graphDataAllLinterErrorsElementType := types.ObjectType{AttrTypes: graphDataAllLinterErrorsAttrTypes}
 	graphDataElementsEdgesDataAttrTypes := map[string]attr.Type{
 		"id":     types.StringType,
 		"source": types.StringType,
@@ -1275,28 +1287,28 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		"selected":   types.BoolType,
 	}
 	graphDataElementsEdgesElementType := types.ObjectType{AttrTypes: graphDataElementsEdgesAttrTypes}
-	graphDataElementsNodesDataLinterErrorAttrTypes := map[string]attr.Type{
-		"code":           types.StringType,
-		"flow_id":        types.StringType,
-		"message":        types.StringType,
-		"node_id":        types.StringType,
-		"recommendation": types.StringType,
-		"type":           types.StringType,
-	}
-	graphDataElementsNodesDataLinterErrorElementType := types.ObjectType{AttrTypes: graphDataElementsNodesDataLinterErrorAttrTypes}
+	// graphDataElementsNodesDataLinterErrorAttrTypes := map[string]attr.Type{
+	// 	"code":           types.StringType,
+	// 	"flow_id":        types.StringType,
+	// 	"message":        types.StringType,
+	// 	"node_id":        types.StringType,
+	// 	"recommendation": types.StringType,
+	// 	"type":           types.StringType,
+	// }
+	// graphDataElementsNodesDataLinterErrorElementType := types.ObjectType{AttrTypes: graphDataElementsNodesDataLinterErrorAttrTypes}
 	graphDataElementsNodesDataAttrTypes := map[string]attr.Type{
 		"capability_name": types.StringType,
 		"connection_id":   types.StringType,
 		"connector_id":    types.StringType,
 		"id":              types.StringType,
-		"id_unique":       types.StringType,
-		"label":           types.StringType,
-		"linter_error":    types.SetType{ElemType: graphDataElementsNodesDataLinterErrorElementType},
-		"name":            types.StringType,
-		"node_type":       types.StringType,
-		"properties":      jsontypes.NormalizedType{},
-		"status":          types.StringType,
-		"type":            types.StringType,
+		// "id_unique":       types.StringType,
+		"label": types.StringType,
+		// "linter_error":    types.SetType{ElemType: graphDataElementsNodesDataLinterErrorElementType},
+		"name":       types.StringType,
+		"node_type":  types.StringType,
+		"properties": jsontypes.NormalizedType{},
+		"status":     types.StringType,
+		"type":       types.StringType,
 	}
 	graphDataElementsNodesPositionAttrTypes := map[string]attr.Type{
 		"x": types.Float32Type,
@@ -1324,7 +1336,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		"y": types.Float32Type,
 	}
 	graphDataAttrTypes := map[string]attr.Type{
-		"all_linter_errors":     types.SetType{ElemType: graphDataAllLinterErrorsElementType},
+		// "all_linter_errors":     types.SetType{ElemType: graphDataAllLinterErrorsElementType},
 		"box_selection_enabled": types.BoolType,
 		"data":                  jsontypes.NormalizedType{},
 		"elements":              types.ObjectType{AttrTypes: graphDataElementsAttrTypes},
@@ -1342,26 +1354,26 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 	if response.GraphData == nil {
 		graphDataValue = types.ObjectNull(graphDataAttrTypes)
 	} else {
-		var graphDataAllLinterErrorsValue types.Set
-		if response.GraphData.AllLinterErrors == nil {
-			graphDataAllLinterErrorsValue = types.SetNull(graphDataAllLinterErrorsElementType)
-		} else {
-			var graphDataAllLinterErrorsValues []attr.Value
-			for _, graphDataAllLinterErrorsResponseValue := range response.GraphData.AllLinterErrors {
-				graphDataAllLinterErrorsValue, diags := types.ObjectValue(graphDataAllLinterErrorsAttrTypes, map[string]attr.Value{
-					"code":           types.StringValue(graphDataAllLinterErrorsResponseValue.Code),
-					"flow_id":        types.StringValue(graphDataAllLinterErrorsResponseValue.FlowId),
-					"message":        types.StringValue(graphDataAllLinterErrorsResponseValue.Message),
-					"node_id":        types.StringPointerValue(graphDataAllLinterErrorsResponseValue.NodeId),
-					"recommendation": types.StringValue(graphDataAllLinterErrorsResponseValue.Recommendation),
-					"type":           types.StringValue(graphDataAllLinterErrorsResponseValue.Type),
-				})
-				respDiags.Append(diags...)
-				graphDataAllLinterErrorsValues = append(graphDataAllLinterErrorsValues, graphDataAllLinterErrorsValue)
-			}
-			graphDataAllLinterErrorsValue, diags = types.SetValue(graphDataAllLinterErrorsElementType, graphDataAllLinterErrorsValues)
-			respDiags.Append(diags...)
-		}
+		// var graphDataAllLinterErrorsValue types.Set
+		// if response.GraphData.AllLinterErrors == nil {
+		// 	graphDataAllLinterErrorsValue = types.SetNull(graphDataAllLinterErrorsElementType)
+		// } else {
+		// 	var graphDataAllLinterErrorsValues []attr.Value
+		// 	for _, graphDataAllLinterErrorsResponseValue := range response.GraphData.AllLinterErrors {
+		// 		graphDataAllLinterErrorsValue, diags := types.ObjectValue(graphDataAllLinterErrorsAttrTypes, map[string]attr.Value{
+		// 			"code":           types.StringValue(graphDataAllLinterErrorsResponseValue.Code),
+		// 			"flow_id":        types.StringValue(graphDataAllLinterErrorsResponseValue.FlowId),
+		// 			"message":        types.StringValue(graphDataAllLinterErrorsResponseValue.Message),
+		// 			"node_id":        types.StringPointerValue(graphDataAllLinterErrorsResponseValue.NodeId),
+		// 			"recommendation": types.StringValue(graphDataAllLinterErrorsResponseValue.Recommendation),
+		// 			"type":           types.StringValue(graphDataAllLinterErrorsResponseValue.Type),
+		// 		})
+		// 		respDiags.Append(diags...)
+		// 		graphDataAllLinterErrorsValues = append(graphDataAllLinterErrorsValues, graphDataAllLinterErrorsValue)
+		// 	}
+		// 	graphDataAllLinterErrorsValue, diags = types.SetValue(graphDataAllLinterErrorsElementType, graphDataAllLinterErrorsValues)
+		// 	respDiags.Append(diags...)
+		// }
 		graphDataDataValue := jsontypes.NewNormalizedNull()
 		graphDataDataBytes, err := json.Marshal(response.GraphData.Data)
 		if err != nil {
@@ -1404,26 +1416,26 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		respDiags.Append(diags...)
 		var graphDataElementsNodesValues []attr.Value
 		for _, graphDataElementsNodesResponseValue := range response.GraphData.Elements.Nodes {
-			var graphDataElementsNodesDataLinterErrorValue types.Set
-			if graphDataElementsNodesResponseValue.Data.LinterError == nil {
-				graphDataElementsNodesDataLinterErrorValue = types.SetNull(graphDataElementsNodesDataLinterErrorElementType)
-			} else {
-				var graphDataElementsNodesDataLinterErrorValues []attr.Value
-				for _, graphDataElementsNodesDataLinterErrorResponseValue := range graphDataElementsNodesResponseValue.Data.LinterError {
-					graphDataElementsNodesDataLinterErrorValue, diags := types.ObjectValue(graphDataElementsNodesDataLinterErrorAttrTypes, map[string]attr.Value{
-						"code":           types.StringValue(graphDataElementsNodesDataLinterErrorResponseValue.Code),
-						"flow_id":        types.StringValue(graphDataElementsNodesDataLinterErrorResponseValue.FlowId),
-						"message":        types.StringValue(graphDataElementsNodesDataLinterErrorResponseValue.Message),
-						"node_id":        types.StringPointerValue(graphDataElementsNodesDataLinterErrorResponseValue.NodeId),
-						"recommendation": types.StringValue(graphDataElementsNodesDataLinterErrorResponseValue.Recommendation),
-						"type":           types.StringValue(graphDataElementsNodesDataLinterErrorResponseValue.Type),
-					})
-					respDiags.Append(diags...)
-					graphDataElementsNodesDataLinterErrorValues = append(graphDataElementsNodesDataLinterErrorValues, graphDataElementsNodesDataLinterErrorValue)
-				}
-				graphDataElementsNodesDataLinterErrorValue, diags = types.SetValue(graphDataElementsNodesDataLinterErrorElementType, graphDataElementsNodesDataLinterErrorValues)
-				respDiags.Append(diags...)
-			}
+			// var graphDataElementsNodesDataLinterErrorValue types.Set
+			// if graphDataElementsNodesResponseValue.Data.LinterError == nil {
+			// 	graphDataElementsNodesDataLinterErrorValue = types.SetNull(graphDataElementsNodesDataLinterErrorElementType)
+			// } else {
+			// 	var graphDataElementsNodesDataLinterErrorValues []attr.Value
+			// 	for _, graphDataElementsNodesDataLinterErrorResponseValue := range graphDataElementsNodesResponseValue.Data.LinterError {
+			// 		graphDataElementsNodesDataLinterErrorValue, diags := types.ObjectValue(graphDataElementsNodesDataLinterErrorAttrTypes, map[string]attr.Value{
+			// 			"code":           types.StringValue(graphDataElementsNodesDataLinterErrorResponseValue.Code),
+			// 			"flow_id":        types.StringValue(graphDataElementsNodesDataLinterErrorResponseValue.FlowId),
+			// 			"message":        types.StringValue(graphDataElementsNodesDataLinterErrorResponseValue.Message),
+			// 			"node_id":        types.StringPointerValue(graphDataElementsNodesDataLinterErrorResponseValue.NodeId),
+			// 			"recommendation": types.StringValue(graphDataElementsNodesDataLinterErrorResponseValue.Recommendation),
+			// 			"type":           types.StringValue(graphDataElementsNodesDataLinterErrorResponseValue.Type),
+			// 		})
+			// 		respDiags.Append(diags...)
+			// 		graphDataElementsNodesDataLinterErrorValues = append(graphDataElementsNodesDataLinterErrorValues, graphDataElementsNodesDataLinterErrorValue)
+			// 	}
+			// 	graphDataElementsNodesDataLinterErrorValue, diags = types.SetValue(graphDataElementsNodesDataLinterErrorElementType, graphDataElementsNodesDataLinterErrorValues)
+			// 	respDiags.Append(diags...)
+			// }
 			graphDataElementsNodesDataPropertiesValue := jsontypes.NewNormalizedNull()
 			graphDataElementsNodesDataPropertiesBytes, err := json.Marshal(graphDataElementsNodesResponseValue.Data.Properties)
 			if err != nil {
@@ -1439,14 +1451,14 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 				"connection_id":   types.StringPointerValue(graphDataElementsNodesResponseValue.Data.ConnectionId),
 				"connector_id":    types.StringPointerValue(graphDataElementsNodesResponseValue.Data.ConnectorId),
 				"id":              types.StringValue(graphDataElementsNodesResponseValue.Data.Id),
-				"id_unique":       types.StringPointerValue(graphDataElementsNodesResponseValue.Data.IdUnique),
-				"label":           types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Label),
-				"linter_error":    graphDataElementsNodesDataLinterErrorValue,
-				"name":            types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Name),
-				"node_type":       types.StringValue(graphDataElementsNodesResponseValue.Data.NodeType),
-				"properties":      graphDataElementsNodesDataPropertiesValue,
-				"status":          types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Status),
-				"type":            types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Type),
+				// "id_unique":       types.StringPointerValue(graphDataElementsNodesResponseValue.Data.IdUnique),
+				"label": types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Label),
+				// "linter_error":    graphDataElementsNodesDataLinterErrorValue,
+				"name":       types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Name),
+				"node_type":  types.StringValue(graphDataElementsNodesResponseValue.Data.NodeType),
+				"properties": graphDataElementsNodesDataPropertiesValue,
+				"status":     types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Status),
+				"type":       types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Type),
 			})
 			respDiags.Append(diags...)
 			graphDataElementsNodesPositionValue, diags := types.ObjectValue(graphDataElementsNodesPositionAttrTypes, map[string]attr.Value{
@@ -1492,7 +1504,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			graphDataRendererValue = jsontypes.NewNormalizedValue(string(graphDataRendererBytes))
 		}
 		graphDataValue, diags = types.ObjectValue(graphDataAttrTypes, map[string]attr.Value{
-			"all_linter_errors":     graphDataAllLinterErrorsValue,
+			// "all_linter_errors":     graphDataAllLinterErrorsValue,
 			"box_selection_enabled": types.BoolValue(response.GraphData.BoxSelectionEnabled),
 			"data":                  graphDataDataValue,
 			"elements":              graphDataElementsValue,
@@ -1571,7 +1583,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 	}
 	state.OutputSchema = outputSchemaValue
 	// published_version
-	state.PublishedVersion = types.Float32PointerValue(response.PublishedVersion)
+	// state.PublishedVersion = types.Float32PointerValue(response.PublishedVersion)
 	// settings
 	settingsJsLinksAttrTypes := map[string]attr.Type{
 		"crossorigin":    types.StringType,
