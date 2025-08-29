@@ -1226,7 +1226,13 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 	// current_version
 	state.CurrentVersion = types.Float32PointerValue(response.CurrentVersion)
 	// deployed_at
-	state.DeployedAt = types.StringValue(response.DeployedAt.Format(time.RFC3339))
+	var deployedAtValue types.String
+	if response.DeployedAt == nil {
+		deployedAtValue = types.StringNull()
+	} else {
+		deployedAtValue = types.StringValue(response.DeployedAt.Format(time.RFC3339))
+	}
+	state.DeployedAt = deployedAtValue
 	// description
 	state.Description = types.StringPointerValue(response.Description)
 	// dvlinter_error_count
@@ -1286,7 +1292,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		"linter_error":    types.SetType{ElemType: graphDataElementsNodesDataLinterErrorElementType},
 		"name":            types.StringType,
 		"node_type":       types.StringType,
-		"properties":      types.StringType,
+		"properties":      jsontypes.NormalizedType{},
 		"status":          types.StringType,
 		"type":            types.StringType,
 	}
@@ -1318,13 +1324,13 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 	graphDataAttrTypes := map[string]attr.Type{
 		"all_linter_errors":     types.SetType{ElemType: graphDataAllLinterErrorsElementType},
 		"box_selection_enabled": types.BoolType,
-		"data":                  types.StringType,
+		"data":                  jsontypes.NormalizedType{},
 		"elements":              types.ObjectType{AttrTypes: graphDataElementsAttrTypes},
 		"max_zoom":              types.Float32Type,
 		"min_zoom":              types.Float32Type,
 		"pan":                   types.ObjectType{AttrTypes: graphDataPanAttrTypes},
 		"panning_enabled":       types.BoolType,
-		"renderer":              types.StringType,
+		"renderer":              jsontypes.NormalizedType{},
 		"user_panning_enabled":  types.BoolType,
 		"user_zooming_enabled":  types.BoolType,
 		"zoom":                  types.Int32Type,
@@ -1334,26 +1340,36 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 	if response.GraphData == nil {
 		graphDataValue = types.ObjectNull(graphDataAttrTypes)
 	} else {
-		// var graphDataAllLinterErrorsValue types.Set
-		// if response.GraphData.AllLinterErrors == nil {
-		// 	graphDataAllLinterErrorsValue = types.SetNull(graphDataAllLinterErrorsElementType)
-		// } else {
-		// 	var graphDataAllLinterErrorsValues []attr.Value
-		// 	for _, graphDataAllLinterErrorsResponseValue := range response.GraphData.AllLinterErrors {
-		// 		graphDataAllLinterErrorsValue, diags := types.ObjectValue(graphDataAllLinterErrorsAttrTypes, map[string]attr.Value{
-		// 			"code":           types.StringValue(graphDataAllLinterErrorsResponseValue.Code),
-		// 			"flow_id":        types.StringValue(graphDataAllLinterErrorsResponseValue.FlowId),
-		// 			"message":        types.StringValue(graphDataAllLinterErrorsResponseValue.Message),
-		// 			"node_id":        types.StringPointerValue(graphDataAllLinterErrorsResponseValue.NodeId),
-		// 			"recommendation": types.StringValue(graphDataAllLinterErrorsResponseValue.Recommendation),
-		// 			"type":           types.StringValue(graphDataAllLinterErrorsResponseValue.Type),
-		// 		})
-		// 		respDiags.Append(diags...)
-		// 		graphDataAllLinterErrorsValues = append(graphDataAllLinterErrorsValues, graphDataAllLinterErrorsValue)
-		// 	}
-		// 	graphDataAllLinterErrorsValue, diags = types.SetValue(graphDataAllLinterErrorsElementType, graphDataAllLinterErrorsValues)
-		// 	respDiags.Append(diags...)
-		// }
+		var graphDataAllLinterErrorsValue types.Set
+		if response.GraphData.AllLinterErrors == nil {
+			graphDataAllLinterErrorsValue = types.SetNull(graphDataAllLinterErrorsElementType)
+		} else {
+			var graphDataAllLinterErrorsValues []attr.Value
+			for _, graphDataAllLinterErrorsResponseValue := range response.GraphData.AllLinterErrors {
+				graphDataAllLinterErrorsValue, diags := types.ObjectValue(graphDataAllLinterErrorsAttrTypes, map[string]attr.Value{
+					"code":           types.StringValue(graphDataAllLinterErrorsResponseValue.Code),
+					"flow_id":        types.StringValue(graphDataAllLinterErrorsResponseValue.FlowId),
+					"message":        types.StringValue(graphDataAllLinterErrorsResponseValue.Message),
+					"node_id":        types.StringPointerValue(graphDataAllLinterErrorsResponseValue.NodeId),
+					"recommendation": types.StringValue(graphDataAllLinterErrorsResponseValue.Recommendation),
+					"type":           types.StringValue(graphDataAllLinterErrorsResponseValue.Type),
+				})
+				respDiags.Append(diags...)
+				graphDataAllLinterErrorsValues = append(graphDataAllLinterErrorsValues, graphDataAllLinterErrorsValue)
+			}
+			graphDataAllLinterErrorsValue, diags = types.SetValue(graphDataAllLinterErrorsElementType, graphDataAllLinterErrorsValues)
+			respDiags.Append(diags...)
+		}
+		graphDataDataValue := jsontypes.NewNormalizedNull()
+		graphDataDataBytes, err := json.Marshal(response.GraphData.Data)
+		if err != nil {
+			respDiags.AddError(
+				"Error Marshaling graphData.data",
+				fmt.Sprintf("An error occurred while marshaling: %s", err.Error()),
+			)
+		} else {
+			graphDataDataValue = jsontypes.NewNormalizedValue(string(graphDataDataBytes))
+		}
 		var graphDataElementsEdgesValues []attr.Value
 		for _, graphDataElementsEdgesResponseValue := range response.GraphData.Elements.Edges {
 			graphDataElementsEdgesDataValue, diags := types.ObjectValue(graphDataElementsEdgesDataAttrTypes, map[string]attr.Value{
@@ -1382,7 +1398,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			respDiags.Append(diags...)
 			graphDataElementsEdgesValues = append(graphDataElementsEdgesValues, graphDataElementsEdgesValue)
 		}
-		// graphDataElementsEdgesValue, diags := types.SetValue(graphDataElementsEdgesElementType, graphDataElementsEdgesValues)
+		graphDataElementsEdgesValue, diags := types.SetValue(graphDataElementsEdgesElementType, graphDataElementsEdgesValues)
 		respDiags.Append(diags...)
 		var graphDataElementsNodesValues []attr.Value
 		for _, graphDataElementsNodesResponseValue := range response.GraphData.Elements.Nodes {
@@ -1406,6 +1422,16 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 				graphDataElementsNodesDataLinterErrorValue, diags = types.SetValue(graphDataElementsNodesDataLinterErrorElementType, graphDataElementsNodesDataLinterErrorValues)
 				respDiags.Append(diags...)
 			}
+			graphDataElementsNodesDataPropertiesValue := jsontypes.NewNormalizedNull()
+			graphDataElementsNodesDataPropertiesBytes, err := json.Marshal(graphDataElementsNodesResponseValue.Data.Properties)
+			if err != nil {
+				respDiags.AddError(
+					"Error Marshaling graphData.elements.nodes.data.properties",
+					fmt.Sprintf("An error occurred while marshaling: %s", err.Error()),
+				)
+			} else {
+				graphDataElementsNodesDataPropertiesValue = jsontypes.NewNormalizedValue(string(graphDataElementsNodesDataPropertiesBytes))
+			}
 			graphDataElementsNodesDataValue, diags := types.ObjectValue(graphDataElementsNodesDataAttrTypes, map[string]attr.Value{
 				"capability_name": types.StringPointerValue(graphDataElementsNodesResponseValue.Data.CapabilityName),
 				"connection_id":   types.StringPointerValue(graphDataElementsNodesResponseValue.Data.ConnectionId),
@@ -1416,9 +1442,9 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 				"linter_error":    graphDataElementsNodesDataLinterErrorValue,
 				"name":            types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Name),
 				"node_type":       types.StringValue(graphDataElementsNodesResponseValue.Data.NodeType),
-				// "properties":      types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Properties),
-				"status": types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Status),
-				"type":   types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Type),
+				"properties":      graphDataElementsNodesDataPropertiesValue,
+				"status":          types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Status),
+				"type":            types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Type),
 			})
 			respDiags.Append(diags...)
 			graphDataElementsNodesPositionValue, diags := types.ObjectValue(graphDataElementsNodesPositionAttrTypes, map[string]attr.Value{
@@ -1441,32 +1467,42 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			respDiags.Append(diags...)
 			graphDataElementsNodesValues = append(graphDataElementsNodesValues, graphDataElementsNodesValue)
 		}
-		// graphDataElementsNodesValue, diags := types.SetValue(graphDataElementsNodesElementType, graphDataElementsNodesValues)
-		// respDiags.Append(diags...)
-		// graphDataElementsValue, diags := types.ObjectValue(graphDataElementsAttrTypes, map[string]attr.Value{
-		// 	"edges": graphDataElementsEdgesValue,
-		// 	"nodes": graphDataElementsNodesValue,
-		// })
-		// respDiags.Append(diags...)
-		// graphDataPanValue, diags := types.ObjectValue(graphDataPanAttrTypes, map[string]attr.Value{
-		// 	"x": types.Float32Value(response.GraphData.Pan.X),
-		// 	"y": types.Float32Value(response.GraphData.Pan.Y),
-		// })
+		graphDataElementsNodesValue, diags := types.SetValue(graphDataElementsNodesElementType, graphDataElementsNodesValues)
 		respDiags.Append(diags...)
+		graphDataElementsValue, diags := types.ObjectValue(graphDataElementsAttrTypes, map[string]attr.Value{
+			"edges": graphDataElementsEdgesValue,
+			"nodes": graphDataElementsNodesValue,
+		})
+		respDiags.Append(diags...)
+		graphDataPanValue, diags := types.ObjectValue(graphDataPanAttrTypes, map[string]attr.Value{
+			"x": types.Float32Value(response.GraphData.Pan.X),
+			"y": types.Float32Value(response.GraphData.Pan.Y),
+		})
+		respDiags.Append(diags...)
+		graphDataRendererValue := jsontypes.NewNormalizedNull()
+		graphDataRendererBytes, err := json.Marshal(response.GraphData.Renderer)
+		if err != nil {
+			respDiags.AddError(
+				"Error Marshaling graphData.renderer",
+				fmt.Sprintf("An error occurred while marshaling: %s", err.Error()),
+			)
+		} else {
+			graphDataRendererValue = jsontypes.NewNormalizedValue(string(graphDataRendererBytes))
+		}
 		graphDataValue, diags = types.ObjectValue(graphDataAttrTypes, map[string]attr.Value{
-			// "all_linter_errors":     graphDataAllLinterErrorsValue,
-			// "box_selection_enabled": types.BoolValue(response.GraphData.BoxSelectionEnabled),
-			// "data":                  types.StringValue(response.GraphData.Data),
-			// "elements":              graphDataElementsValue,
-			// "max_zoom":              types.Float32Value(response.GraphData.MaxZoom),
-			// "min_zoom":              types.Float32Value(response.GraphData.MinZoom),
-			// "pan":                   graphDataPanValue,
-			// "panning_enabled":       types.BoolValue(response.GraphData.PanningEnabled),
-			// "renderer":              types.StringPointerValue(response.GraphData.Renderer),
-			// "user_panning_enabled":  types.BoolValue(response.GraphData.UserPanningEnabled),
-			// "user_zooming_enabled":  types.BoolValue(response.GraphData.UserZoomingEnabled),
-			// "zoom":                  types.Int32PointerValue(response.GraphData.Zoom),
-			// "zooming_enabled":       types.BoolValue(response.GraphData.ZoomingEnabled),
+			"all_linter_errors":     graphDataAllLinterErrorsValue,
+			"box_selection_enabled": types.BoolValue(response.GraphData.BoxSelectionEnabled),
+			"data":                  graphDataDataValue,
+			"elements":              graphDataElementsValue,
+			"max_zoom":              types.Float32Value(response.GraphData.MaxZoom),
+			"min_zoom":              types.Float32Value(response.GraphData.MinZoom),
+			"pan":                   graphDataPanValue,
+			"panning_enabled":       types.BoolValue(response.GraphData.PanningEnabled),
+			"renderer":              graphDataRendererValue,
+			"user_panning_enabled":  types.BoolValue(response.GraphData.UserPanningEnabled),
+			"user_zooming_enabled":  types.BoolValue(response.GraphData.UserZoomingEnabled),
+			"zoom":                  types.Int32Value(int32(response.GraphData.Zoom)),
+			"zooming_enabled":       types.BoolPointerValue(response.GraphData.ZoomingEnabled),
 		})
 		respDiags.Append(diags...)
 	}
@@ -1490,14 +1526,14 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		var inputSchemaValues []attr.Value
 		for _, inputSchemaResponseValue := range response.InputSchema {
 			inputSchemaPreferredControlTypeValue := types.StringValue(string(inputSchemaResponseValue.PreferredControlType))
-			// inputSchemaPreferredDataTypeValue := types.StringValue(string(inputSchemaResponseValue.PreferredDataType))
+			inputSchemaPreferredDataTypeValue := types.StringValue(string(inputSchemaResponseValue.PreferredDataType))
 			inputSchemaValue, diags := types.ObjectValue(inputSchemaAttrTypes, map[string]attr.Value{
 				"description":            types.StringValue(inputSchemaResponseValue.Description),
 				"is_expanded":            types.BoolValue(inputSchemaResponseValue.IsExpanded),
 				"preferred_control_type": inputSchemaPreferredControlTypeValue,
-				// "preferred_data_type":    inputSchemaPreferredDataTypeValue,
-				"property_name": types.StringValue(inputSchemaResponseValue.PropertyName),
-				"required":      types.BoolValue(inputSchemaResponseValue.Required),
+				"preferred_data_type":    inputSchemaPreferredDataTypeValue,
+				"property_name":          types.StringValue(inputSchemaResponseValue.PropertyName),
+				"required":               types.BoolValue(inputSchemaResponseValue.Required),
 			})
 			respDiags.Append(diags...)
 			inputSchemaValues = append(inputSchemaValues, inputSchemaValue)
@@ -1510,14 +1546,24 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 	state.Name = types.StringValue(response.Name)
 	// output_schema
 	outputSchemaAttrTypes := map[string]attr.Type{
-		"output": types.StringType,
+		"output": jsontypes.NormalizedType{},
 	}
 	var outputSchemaValue types.Object
 	if response.OutputSchema == nil {
 		outputSchemaValue = types.ObjectNull(outputSchemaAttrTypes)
 	} else {
+		outputSchemaOutputValue := jsontypes.NewNormalizedNull()
+		outputSchemaOutputBytes, err := json.Marshal(response.OutputSchema.Output)
+		if err != nil {
+			respDiags.AddError(
+				"Error Marshaling outputSchema.output",
+				fmt.Sprintf("An error occurred while marshaling: %s", err.Error()),
+			)
+		} else {
+			outputSchemaOutputValue = jsontypes.NewNormalizedValue(string(outputSchemaOutputBytes))
+		}
 		outputSchemaValue, diags = types.ObjectValue(outputSchemaAttrTypes, map[string]attr.Value{
-			//"output": types.StringPointerValue(response.OutputSchema.Output),
+			"output": outputSchemaOutputValue,
 		})
 		respDiags.Append(diags...)
 	}
@@ -1566,67 +1612,67 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 	if response.Settings == nil {
 		settingsValue = types.ObjectNull(settingsAttrTypes)
 	} else {
-		// var settingsCssLinksValue types.Set
-		// if response.Settings.CssLinks == nil {
-		// 	settingsCssLinksValue = types.SetNull(types.StringType)
-		// } else {
-		// 	settingsCssLinksValue, diags = types.SetValueFrom(context.Background(), types.StringType, response.Settings.CssLinks)
-		// 	respDiags.Append(diags...)
-		// }
-		// var settingsJsLinksValue types.Set
-		// if response.Settings.JsLinks == nil {
-		// 	settingsJsLinksValue = types.SetNull(settingsJsLinksElementType)
-		// } else {
-		// 	var settingsJsLinksValues []attr.Value
-		// 	for _, settingsJsLinksResponseValue := range response.Settings.JsLinks {
-		// 		settingsJsLinksValue, diags := types.ObjectValue(settingsJsLinksAttrTypes, map[string]attr.Value{
-		// 			"crossorigin":    types.StringValue(settingsJsLinksResponseValue.Crossorigin),
-		// 			"defer":          types.BoolValue(settingsJsLinksResponseValue.Defer),
-		// 			"integrity":      types.StringValue(settingsJsLinksResponseValue.Integrity),
-		// 			"label":          types.StringValue(settingsJsLinksResponseValue.Label),
-		// 			"referrerpolicy": types.StringValue(settingsJsLinksResponseValue.Referrerpolicy),
-		// 			"type":           types.StringValue(settingsJsLinksResponseValue.Type),
-		// 			"value":          types.StringValue(settingsJsLinksResponseValue.Value),
-		// 		})
-		// 		respDiags.Append(diags...)
-		// 		settingsJsLinksValues = append(settingsJsLinksValues, settingsJsLinksValue)
-		// 	}
-		// 	settingsJsLinksValue, diags = types.SetValue(settingsJsLinksElementType, settingsJsLinksValues)
-		// 	respDiags.Append(diags...)
-		// }
-		// var settingsSensitiveInfoFieldsValue types.Set
-		// if response.Settings.SensitiveInfoFields == nil {
-		// 	settingsSensitiveInfoFieldsValue = types.SetNull(types.StringType)
-		// } else {
-		// 	settingsSensitiveInfoFieldsValue, diags = types.SetValueFrom(context.Background(), types.StringType, response.Settings.SensitiveInfoFields)
-		// 	respDiags.Append(diags...)
-		// }
+		var settingsCssLinksValue types.Set
+		if response.Settings.CssLinks == nil {
+			settingsCssLinksValue = types.SetNull(types.StringType)
+		} else {
+			settingsCssLinksValue, diags = types.SetValueFrom(context.Background(), types.StringType, response.Settings.CssLinks)
+			respDiags.Append(diags...)
+		}
+		var settingsJsLinksValue types.Set
+		if response.Settings.JsLinks == nil {
+			settingsJsLinksValue = types.SetNull(settingsJsLinksElementType)
+		} else {
+			var settingsJsLinksValues []attr.Value
+			for _, settingsJsLinksResponseValue := range response.Settings.JsLinks {
+				settingsJsLinksValue, diags := types.ObjectValue(settingsJsLinksAttrTypes, map[string]attr.Value{
+					"crossorigin":    types.StringValue(settingsJsLinksResponseValue.Crossorigin),
+					"defer":          types.BoolValue(settingsJsLinksResponseValue.Defer),
+					"integrity":      types.StringValue(settingsJsLinksResponseValue.Integrity),
+					"label":          types.StringValue(settingsJsLinksResponseValue.Label),
+					"referrerpolicy": types.StringValue(settingsJsLinksResponseValue.Referrerpolicy),
+					"type":           types.StringValue(settingsJsLinksResponseValue.Type),
+					"value":          types.StringValue(settingsJsLinksResponseValue.Value),
+				})
+				respDiags.Append(diags...)
+				settingsJsLinksValues = append(settingsJsLinksValues, settingsJsLinksValue)
+			}
+			settingsJsLinksValue, diags = types.SetValue(settingsJsLinksElementType, settingsJsLinksValues)
+			respDiags.Append(diags...)
+		}
+		var settingsSensitiveInfoFieldsValue types.Set
+		if response.Settings.SensitiveInfoFields == nil {
+			settingsSensitiveInfoFieldsValue = types.SetNull(types.StringType)
+		} else {
+			settingsSensitiveInfoFieldsValue, diags = types.SetValueFrom(context.Background(), types.StringType, response.Settings.SensitiveInfoFields)
+			respDiags.Append(diags...)
+		}
 		settingsValue, diags = types.ObjectValue(settingsAttrTypes, map[string]attr.Value{
-			// "csp":                                types.StringPointerValue(response.Settings.Csp),
-			// "css":                                types.StringPointerValue(response.Settings.Css),
-			// "css_links":                          settingsCssLinksValue,
-			// "custom_error_screen_brand_logo_url": types.StringPointerValue(response.Settings.CustomErrorScreenBrandLogoUrl),
-			// "custom_error_show_footer":           types.BoolPointerValue(response.Settings.CustomErrorShowFooter),
-			// "custom_favicon_link":                types.StringPointerValue(response.Settings.CustomFaviconLink),
-			// "custom_logo_urlselection":           types.Int32PointerValue(response.Settings.CustomLogoURLSelection),
-			// "custom_title":                       types.StringPointerValue(response.Settings.CustomTitle),
-			// "default_error_screen_brand_logo":    types.BoolPointerValue(response.Settings.DefaultErrorScreenBrandLogo),
-			// "flow_http_timeout_in_seconds":       types.Int32PointerValue(response.Settings.FlowHttpTimeoutInSeconds),
-			// "flow_timeout_in_seconds":            types.Int32PointerValue(response.Settings.FlowTimeoutInSeconds),
-			// "intermediate_loading_screen_css":    types.StringPointerValue(response.Settings.IntermediateLoadingScreenCSS),
-			// "intermediate_loading_screen_html":   types.StringPointerValue(response.Settings.IntermediateLoadingScreenHTML),
-			// "js_custom_flow_player":              types.StringPointerValue(response.Settings.JsCustomFlowPlayer),
-			// "js_links":                           settingsJsLinksValue,
-			// "log_level":                          types.Int32PointerValue(response.Settings.LogLevel),
-			// "require_authentication_to_initiate": types.BoolPointerValue(response.Settings.RequireAuthenticationToInitiate),
-			// "scrub_sensitive_info":               types.BoolPointerValue(response.Settings.ScrubSensitiveInfo),
-			// "sensitive_info_fields":              settingsSensitiveInfoFieldsValue,
-			// "use_csp":                            types.BoolPointerValue(response.Settings.UseCSP),
-			// "use_custom_css":                     types.BoolPointerValue(response.Settings.UseCustomCSS),
-			// "use_custom_flow_player":             types.BoolPointerValue(response.Settings.UseCustomFlowPlayer),
-			// "use_custom_script":                  types.BoolPointerValue(response.Settings.UseCustomScript),
-			// "use_intermediate_loading_screen":    types.BoolPointerValue(response.Settings.UseIntermediateLoadingScreen),
-			// "validate_on_save":                   types.BoolPointerValue(response.Settings.ValidateOnSave),
+			"csp":                                types.StringPointerValue(response.Settings.Csp),
+			"css":                                types.StringPointerValue(response.Settings.Css),
+			"css_links":                          settingsCssLinksValue,
+			"custom_error_screen_brand_logo_url": types.StringPointerValue(response.Settings.CustomErrorScreenBrandLogoUrl),
+			"custom_error_show_footer":           types.BoolPointerValue(response.Settings.CustomErrorShowFooter),
+			"custom_favicon_link":                types.StringPointerValue(response.Settings.CustomFaviconLink),
+			"custom_logo_urlselection":           types.Int32PointerValue(response.Settings.CustomLogoURLSelection),
+			"custom_title":                       types.StringPointerValue(response.Settings.CustomTitle),
+			"default_error_screen_brand_logo":    types.BoolPointerValue(response.Settings.DefaultErrorScreenBrandLogo),
+			"flow_http_timeout_in_seconds":       types.Int32PointerValue(response.Settings.FlowHttpTimeoutInSeconds),
+			"flow_timeout_in_seconds":            types.Int32PointerValue(response.Settings.FlowTimeoutInSeconds),
+			"intermediate_loading_screen_css":    types.StringPointerValue(response.Settings.IntermediateLoadingScreenCSS),
+			"intermediate_loading_screen_html":   types.StringPointerValue(response.Settings.IntermediateLoadingScreenHTML),
+			"js_custom_flow_player":              types.StringPointerValue(response.Settings.JsCustomFlowPlayer),
+			"js_links":                           settingsJsLinksValue,
+			"log_level":                          types.Int32PointerValue(response.Settings.LogLevel),
+			"require_authentication_to_initiate": types.BoolPointerValue(response.Settings.RequireAuthenticationToInitiate),
+			"scrub_sensitive_info":               types.BoolPointerValue(response.Settings.ScrubSensitiveInfo),
+			"sensitive_info_fields":              settingsSensitiveInfoFieldsValue,
+			"use_csp":                            types.BoolPointerValue(response.Settings.UseCSP),
+			"use_custom_css":                     types.BoolPointerValue(response.Settings.UseCustomCSS),
+			"use_custom_flow_player":             types.BoolPointerValue(response.Settings.UseCustomFlowPlayer),
+			"use_custom_script":                  types.BoolPointerValue(response.Settings.UseCustomScript),
+			"use_intermediate_loading_screen":    types.BoolPointerValue(response.Settings.UseIntermediateLoadingScreen),
+			"validate_on_save":                   types.BoolPointerValue(response.Settings.ValidateOnSave),
 		})
 		respDiags.Append(diags...)
 	}
