@@ -264,7 +264,6 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 													Optional: true,
 												},
 												"connection_id": schema.StringAttribute{
-													Optional: true,
 													Computed: true,
 												},
 												"connector_id": schema.StringAttribute{
@@ -308,7 +307,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 												// 	Computed: true,
 												// },
 												"name": schema.StringAttribute{
-													Optional: true,
+													Computed: true,
 												},
 												"node_type": schema.StringAttribute{
 													Required: true,
@@ -748,11 +747,9 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 					nodesDataValue := pingone.DaVinciFlowGraphDataRequestElementsNodeData{}
 					nodesDataAttrs := nodesAttrs["data"].(types.Object).Attributes()
 					nodesDataValue.CapabilityName = nodesDataAttrs["capability_name"].(types.String).ValueStringPointer()
-					nodesDataValue.ConnectionId = nodesDataAttrs["connection_id"].(types.String).ValueStringPointer()
 					nodesDataValue.ConnectorId = nodesDataAttrs["connector_id"].(types.String).ValueStringPointer()
 					nodesDataValue.Id = nodesDataAttrs["id"].(types.String).ValueString()
 					nodesDataValue.Label = nodesDataAttrs["label"].(types.String).ValueStringPointer()
-					nodesDataValue.Name = nodesDataAttrs["name"].(types.String).ValueStringPointer()
 					nodesDataValue.NodeType = nodesDataAttrs["node_type"].(types.String).ValueString()
 					if !nodesDataAttrs["properties"].IsNull() && !nodesDataAttrs["properties"].IsUnknown() {
 						var unmarshaled map[string]interface{}
@@ -1025,11 +1022,9 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 					nodesDataValue := pingone.DaVinciFlowGraphDataRequestElementsNodeData{}
 					nodesDataAttrs := nodesAttrs["data"].(types.Object).Attributes()
 					nodesDataValue.CapabilityName = nodesDataAttrs["capability_name"].(types.String).ValueStringPointer()
-					nodesDataValue.ConnectionId = nodesDataAttrs["connection_id"].(types.String).ValueStringPointer()
 					nodesDataValue.ConnectorId = nodesDataAttrs["connector_id"].(types.String).ValueStringPointer()
 					nodesDataValue.Id = nodesDataAttrs["id"].(types.String).ValueString()
 					nodesDataValue.Label = nodesDataAttrs["label"].(types.String).ValueStringPointer()
-					nodesDataValue.Name = nodesDataAttrs["name"].(types.String).ValueStringPointer()
 					nodesDataValue.NodeType = nodesDataAttrs["node_type"].(types.String).ValueString()
 					var unmarshaled map[string]interface{}
 					err := json.Unmarshal([]byte(nodesDataAttrs["properties"].(jsontypes.Normalized).ValueString()), &unmarshaled)
@@ -1415,7 +1410,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			})
 			respDiags.Append(diags...)
 			graphDataElementsEdgesValue, diags := types.ObjectValue(graphDataElementsEdgesAttrTypes, map[string]attr.Value{
-				"classes":    types.StringValue(graphDataElementsEdgesResponseValue.Classes),
+				"classes":    types.StringPointerValue(graphDataElementsEdgesResponseValue.Classes),
 				"data":       graphDataElementsEdgesDataValue,
 				"grabbable":  types.BoolValue(graphDataElementsEdgesResponseValue.Grabbable),
 				"group":      types.StringValue(graphDataElementsEdgesResponseValue.Group),
@@ -1484,7 +1479,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			})
 			respDiags.Append(diags...)
 			graphDataElementsNodesValue, diags := types.ObjectValue(graphDataElementsNodesAttrTypes, map[string]attr.Value{
-				"classes":    types.StringValue(graphDataElementsNodesResponseValue.Classes),
+				"classes":    types.StringPointerValue(graphDataElementsNodesResponseValue.Classes),
 				"data":       graphDataElementsNodesDataValue,
 				"grabbable":  types.BoolValue(graphDataElementsNodesResponseValue.Grabbable),
 				"group":      types.StringValue(graphDataElementsNodesResponseValue.Group),
@@ -1559,7 +1554,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			inputSchemaPreferredControlTypeValue := types.StringValue(string(inputSchemaResponseValue.PreferredControlType))
 			inputSchemaPreferredDataTypeValue := types.StringValue(string(inputSchemaResponseValue.PreferredDataType))
 			inputSchemaValue, diags := types.ObjectValue(inputSchemaAttrTypes, map[string]attr.Value{
-				"description":            types.StringValue(inputSchemaResponseValue.Description),
+				"description":            types.StringPointerValue(inputSchemaResponseValue.Description),
 				"is_expanded":            types.BoolPointerValue(inputSchemaResponseValue.IsExpanded),
 				"preferred_control_type": inputSchemaPreferredControlTypeValue,
 				"preferred_data_type":    inputSchemaPreferredDataTypeValue,
