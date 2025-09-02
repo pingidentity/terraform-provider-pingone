@@ -22,7 +22,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float32planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -108,9 +107,6 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 					},
 				},
 				Computed: true,
-				PlanModifiers: []planmodifier.Set{
-					setplanmodifier.UseStateForUnknown(),
-				},
 			},
 			"current_version": schema.Float32Attribute{
 				Computed: true,
@@ -422,12 +418,15 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 					Attributes: map[string]schema.Attribute{
 						"description": schema.StringAttribute{
 							Optional: true,
+							Computed: true,
 						},
 						"is_expanded": schema.BoolAttribute{
 							Optional: true,
+							Computed: true,
 						},
 						"preferred_control_type": schema.StringAttribute{
 							Optional:            true,
+							Computed:            true,
 							Description:         "Options are \"button\", \"colorPicker\", \"contentEditableTextArea\", \"cssArea\", \"dropDown\", \"dropDownMultiSelect\", \"dropDownMultiSelect2\", \"dropDownWithCreate\", \"functionArgumentList\", \"keyValueList\", \"label\", \"radioSelect\", \"textArea\", \"textField\", \"textFieldArrayView\", \"toggleSwitch\".",
 							MarkdownDescription: "Options are `button`, `colorPicker`, `contentEditableTextArea`, `cssArea`, `dropDown`, `dropDownMultiSelect`, `dropDownMultiSelect2`, `dropDownWithCreate`, `functionArgumentList`, `keyValueList`, `label`, `radioSelect`, `textArea`, `textField`, `textFieldArrayView`, `toggleSwitch`.",
 							Validators: []validator.String{
@@ -452,7 +451,10 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 							},
 						},
 						"preferred_data_type": schema.StringAttribute{
-							Required:            true,
+							//Required: true,
+							Optional: true,
+							Computed: true,
+							//TODO validator to simulate being required
 							Description:         "Options are \"array\", \"boolean\", \"number\", \"object\", \"string\".",
 							MarkdownDescription: "Options are `array`, `boolean`, `number`, `object`, `string`.",
 							Validators: []validator.String{
@@ -467,13 +469,17 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 							},
 						},
 						"property_name": schema.StringAttribute{
-							Required: true,
+							//Required: true,
+							Optional: true,
+							Computed: true,
+							//TODO validator to simulate being required
 							Validators: []validator.String{
 								stringvalidator.LengthAtLeast(1),
 							},
 						},
 						"required": schema.BoolAttribute{
 							Optional: true,
+							Computed: true,
 						},
 					},
 				},
