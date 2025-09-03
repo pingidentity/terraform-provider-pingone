@@ -1,3 +1,3 @@
 ```release-note:enhancement
-`resource/pingone_mfa_fido2_policy`: Added support for userPresenceTimout attribute.
+`resource/pingone_mfa_fido2_policy`: Added support for user_presence_timeout attribute.
 ```
