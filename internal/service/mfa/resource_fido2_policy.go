@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -485,7 +486,13 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single nested object that specifies the user presence timeout settings, used to control the amount of time a user has to perform a user presence gesture with their FIDO device.").Description,
 				Optional:    true,
 				Computed:    true,
-				Default:     nil,
+				Default: objectdefault.StaticValue(types.ObjectValueMust(
+					fido2PolicyUserPresenceTimeoutTFObjectTypes,
+					map[string]attr.Value{
+						"duration":  types.Int32Value(attrDefaultUserPresenceTimeoutDuration),
+						"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+					},
+				)),
 
 				Attributes: map[string]schema.Attribute{
 					"duration": schema.Int32Attribute{
