@@ -250,19 +250,19 @@ func TestAccFIDO2Policy_Errors(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccFIDO2PolicyConfig_ConflictedOptions_1(resourceName, name),
+				Config:      testAccFIDO2PolicyConfig_ConflictedOptions_attestationRequirements(resourceName, name),
 				ExpectError: regexp.MustCompile(`Invalid argument combination`),
 			},
 			{
-				Config:      testAccFIDO2PolicyConfig_ConflictedOptions_2(resourceName, name),
+				Config:      testAccFIDO2PolicyConfig_ConflictedOptions_mdsAuthenticatorsRequirements(resourceName, name),
 				ExpectError: regexp.MustCompile(`Invalid argument combination`),
 			},
 			{
-				Config:      testAccFIDO2PolicyConfig_ConflictedOptions_3(resourceName, name),
+				Config:      testAccFIDO2PolicyConfig_ConflictedOptions_userDisplayNameAttributes(resourceName, name),
 				ExpectError: regexp.MustCompile(`Invalid Attribute Value`),
 			},
 			{
-				Config:      testAccFIDO2PolicyConfig_ConflictedOptions_4(resourceName, name),
+				Config:      testAccFIDO2PolicyConfig_ConflictedOptions_userPresenceTimeout(resourceName, name),
 				ExpectError: regexp.MustCompile(`Invalid Attribute Value`),
 			},
 		},
@@ -467,7 +467,7 @@ resource "pingone_mfa_fido2_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccFIDO2PolicyConfig_ConflictedOptions_1(resourceName, name string) string {
+func testAccFIDO2PolicyConfig_ConflictedOptions_attestationRequirements(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -510,7 +510,7 @@ resource "pingone_mfa_fido2_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccFIDO2PolicyConfig_ConflictedOptions_2(resourceName, name string) string {
+func testAccFIDO2PolicyConfig_ConflictedOptions_mdsAuthenticatorsRequirements(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -559,7 +559,7 @@ resource "pingone_mfa_fido2_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccFIDO2PolicyConfig_ConflictedOptions_3(resourceName, name string) string {
+func testAccFIDO2PolicyConfig_ConflictedOptions_userDisplayNameAttributes(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -602,7 +602,7 @@ resource "pingone_mfa_fido2_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccFIDO2PolicyConfig_ConflictedOptions_4(resourceName, name string) string {
+func testAccFIDO2PolicyConfig_ConflictedOptions_userPresenceTimeout(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
