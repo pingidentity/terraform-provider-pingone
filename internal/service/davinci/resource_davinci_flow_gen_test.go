@@ -151,6 +151,107 @@ func testAccDavinciFlow_MinimalMaximal(t *testing.T, withBootstrap bool) {
 	})
 }
 
+func TestAccDavinciFlow_Basic_Clean(t *testing.T) {
+	testAccDavinciFlow_Basic(t, false)
+}
+
+func TestAccDavinciFlow_Basic_WithBootstrap(t *testing.T) {
+	testAccDavinciFlow_Basic(t, true)
+}
+
+func testAccDavinciFlow_Basic(t *testing.T, withBootstrapConfig bool) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_davinci_flow.%s", resourceName)
+
+	fullStepHcl := davinciFlow_FullWithMappingIDsHCL(t, resourceName, withBootstrapConfig)
+	fullStep := resource.TestStep{
+		Config: fullStepHcl,
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
+		),
+	}
+
+	minimalStepHcl := davinciFlow_MinimalWithMappingIDsHCL(t, resourceName, withBootstrapConfig)
+	minimalStep := resource.TestStep{
+		Config: minimalStepHcl,
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
+		),
+	}
+
+	updateStepHcl := davinciFlow_MinimalWithMappingIDsUpdateHCL(t, resourceName, withBootstrapConfig)
+	updateStep := resource.TestStep{
+		Config: updateStepHcl,
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
+		),
+	}
+
+	updateNoDescriptionStepHcl := davinciFlow_MinimalWithMappingIDsNoDescriptionUpdateHCL(t, resourceName, withBootstrapConfig)
+	updateNoDescriptionStep := resource.TestStep{
+		Config: updateNoDescriptionStepHcl,
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
+		),
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             davinciFlow_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Create full from scratch
+			fullStep,
+			minimalStep,
+			{
+				Config:  minimalStepHcl,
+				Destroy: true,
+			},
+			// Create minimal from scratch
+			minimalStep,
+			fullStep,
+			{
+				Config:  fullStepHcl,
+				Destroy: true,
+			},
+			// Test updates
+			minimalStep,
+			updateStep,
+			{
+				Config:  updateStepHcl,
+				Destroy: true,
+			},
+			// Test updates without description
+			minimalStep,
+			updateNoDescriptionStep,
+			// Test importing the resource
+			{
+				Config:       updateNoDescriptionStepHcl,
+				ResourceName: fmt.Sprintf("pingone_davinci_flow.%s", resourceName),
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["id"]), nil
+					}
+				}(),
+				ImportStateVerifyIdentifierAttribute: "id",
+				ImportState:                          true,
+				ImportStateVerify:                    true,
+			},
+		},
+	})
+}
+
 func TestAccDavinciFlow_NewEnv(t *testing.T) {
 	t.Parallel()
 
@@ -329,6 +430,40 @@ func davinciFlow_DeviceManagementMainFlowReorderedHCL(t *testing.T, resourceName
 	hcl, err := testhcl.ReadTestHcl("pingone_davinci_flow/ootb_device_management_reordered.tf")
 	if err != nil {
 		t.Fatalf("failed to read HCL in davinciFlow_DeviceManagementMainFlowReorderedHCL: %v", err)
+	}
+	return fmt.Sprintf(hcl, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName)
+}
+
+func davinciFlow_FullWithMappingIDsHCL(t *testing.T, resourceName string, withBootstrap bool) string {
+	hcl, err := testhcl.ReadTestHcl("pingone_davinci_flow/full_basic.tf")
+	if err != nil {
+		t.Fatalf("failed to read HCL in davinciFlow_FullWithMappingIDsHCL: %v", err)
+	}
+	return fmt.Sprintf(hcl, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName)
+}
+
+func davinciFlow_MinimalWithMappingIDsHCL(t *testing.T, resourceName string, withBootstrap bool) string {
+	hcl, err := testhcl.ReadTestHcl("pingone_davinci_flow/full_minimal.tf")
+	if err != nil {
+		t.Fatalf("failed to read HCL in davinciFlow_MinimalWithMappingIDsHCL: %v", err)
+	}
+	return fmt.Sprintf(hcl, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName)
+}
+
+func davinciFlow_MinimalWithMappingIDsUpdateHCL(t *testing.T, resourceName string, withBootstrap bool) string {
+	//TODO update description
+	hcl, err := testhcl.ReadTestHcl("pingone_davinci_flow/full_minimal.tf")
+	if err != nil {
+		t.Fatalf("failed to read HCL in davinciFlow_MinimalWithMappingIDsHCL: %v", err)
+	}
+	return fmt.Sprintf(hcl, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName)
+}
+
+func davinciFlow_MinimalWithMappingIDsNoDescriptionUpdateHCL(t *testing.T, resourceName string, withBootstrap bool) string {
+	//TODO remove description
+	hcl, err := testhcl.ReadTestHcl("pingone_davinci_flow/full_minimal.tf")
+	if err != nil {
+		t.Fatalf("failed to read HCL in davinciFlow_MinimalWithMappingIDsHCL: %v", err)
 	}
 	return fmt.Sprintf(hcl, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName)
 }
