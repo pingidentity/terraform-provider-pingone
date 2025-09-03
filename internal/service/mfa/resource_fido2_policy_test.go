@@ -142,6 +142,8 @@ func TestAccFIDO2Policy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "user_display_name_attributes.attributes.1.sub_attributes.0.name", "given"),
 		resource.TestCheckResourceAttr(resourceFullName, "user_display_name_attributes.attributes.1.sub_attributes.1.name", "family"),
 		resource.TestCheckResourceAttr(resourceFullName, "user_display_name_attributes.attributes.2.name", "username"),
+		resource.TestCheckResourceAttr(resourceFullName, "user_presence_timeout.duration", "60"),
+		resource.TestCheckResourceAttr(resourceFullName, "user_presence_timeout.time_unit", "SECONDS"),
 		resource.TestCheckResourceAttr(resourceFullName, "user_verification.enforce_during_authentication", "true"),
 		resource.TestCheckResourceAttr(resourceFullName, "user_verification.option", "REQUIRED"),
 	)
@@ -163,6 +165,8 @@ func TestAccFIDO2Policy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "relying_party_id", "ping-devops.com"),
 		resource.TestCheckResourceAttr(resourceFullName, "user_display_name_attributes.attributes.#", "1"),
 		resource.TestCheckResourceAttr(resourceFullName, "user_display_name_attributes.attributes.0.name", "username"),
+		resource.TestCheckResourceAttr(resourceFullName, "user_presence_timeout.duration", "2"),
+		resource.TestCheckResourceAttr(resourceFullName, "user_presence_timeout.time_unit", "MINUTES"),
 		resource.TestCheckResourceAttr(resourceFullName, "user_verification.enforce_during_authentication", "false"),
 		resource.TestCheckResourceAttr(resourceFullName, "user_verification.option", "DISCOURAGED"),
 	)
@@ -255,6 +259,10 @@ func TestAccFIDO2Policy_Errors(t *testing.T) {
 			},
 			{
 				Config:      testAccFIDO2PolicyConfig_ConflictedOptions_3(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value`),
+			},
+			{
+				Config:      testAccFIDO2PolicyConfig_ConflictedOptions_4(resourceName, name),
 				ExpectError: regexp.MustCompile(`Invalid Attribute Value`),
 			},
 		},
@@ -401,6 +409,11 @@ resource "pingone_mfa_fido2_policy" "%[2]s" {
         name = "username"
       }
     ]
+  }
+
+  user_presence_timeout = {
+    duration  = 60
+    time_unit = "SECONDS"
   }
 
   user_verification = {
@@ -579,6 +592,54 @@ resource "pingone_mfa_fido2_policy" "%[2]s" {
         name = "email"
       }
     ]
+  }
+
+  user_verification = {
+    enforce_during_authentication = false
+    option                        = "DISCOURAGED"
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFIDO2PolicyConfig_ConflictedOptions_4(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_mfa_fido2_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  attestation_requirements = "NONE"
+  authenticator_attachment = "PLATFORM"
+
+  backup_eligibility = {
+    allow                         = false
+    enforce_during_authentication = true
+  }
+
+  device_display_name = "fidoPolicy.deviceDisplayName02"
+
+  discoverable_credentials = "DISCOURAGED"
+
+  mds_authenticators_requirements = {
+    enforce_during_authentication = false
+    option                        = "NONE"
+  }
+
+  relying_party_id = "ping-devops.com"
+
+  user_display_name_attributes = {
+    attributes = [
+      {
+        name = "username"
+      }
+    ]
+  }
+
+  user_presence_timeout = {
+    duration  = 2
+    time_unit = "SECONDS"
   }
 
   user_verification = {
