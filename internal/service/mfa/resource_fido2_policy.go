@@ -149,18 +149,13 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 
 	// schema descriptions and validation settings
 	const attrMinLength = 1
-	const attrMinColumns = 1
-	const attrMaxColumns = 3
-	const attrDefaultVersion = 5
-	const attrMinPercent = 0
-	const attrMaxPercent = 100
-	const imageMaxSize = 50000
 	const attrNameMaxLength = 256
 	const attrDeviceDisplayNameMaxLength = 100
 	const attrMinLifetimeDurationMinutes = 1
 	const attrMaxLifetimeDurationMinutes = 10
 	const attrMinLifetimeDurationSeconds = 60
 	const attrMaxLifetimeDurationSeconds = 600
+	const attrDefaultUserPresenceTimeoutDuration = 2
 
 	attestationRequirementsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the level of attestation to apply.",
@@ -241,15 +236,12 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 	)
 
 	userPresenceTimeoutDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The amount of time a user presence gesture will be accepted for the authentication request. Minimum is one minute, maxiumum is ten minutes. Can be set in minutes or seconds.",
+		"The amount of time (minutes or seconds) a user presence gesture will be accepted for the authentication request. Minimum is one minute (60 seconds); maxiumum is ten minutes (600 seconds).",
 	)
 
 	userPresenceTimeoutTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The units for specifying the amount of time a user presence gesture will be accepted for the authentication request. Can be set to `MINUTES` or `SECONDS`.",
-	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitEnumValues).AllowedValuesComplex(map[string]string{
-		string(mfa.ENUMTIMEUNIT_MINUTES): "minutes",
-		string(mfa.ENUMTIMEUNIT_SECONDS): "seconds",
-	})
+		"The units for specifying the amount of time a user presence gesture will be accepted for the authentication request.",
+	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitEnumValues)
 
 	userVerificationEnforceDuringAuthnDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether device characteristics related to user verification are to be checked again at each authentication attempt. Set to `true` if you want the device characteristics related to user verification to be checked again at each authentication attempt and not just once during registration. Set to `false` to have them checked only at registration.",
@@ -501,7 +493,7 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 						MarkdownDescription: userPresenceTimeoutDurationDescription.MarkdownDescription,
 						Optional:            true,
 						Computed:            true,
-						Default:             int32default.StaticInt32(2),
+						Default:             int32default.StaticInt32(attrDefaultUserPresenceTimeoutDuration),
 
 						Validators: []validator.Int32{
 							int32validator.Any(
