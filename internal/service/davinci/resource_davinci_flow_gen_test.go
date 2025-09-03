@@ -169,6 +169,7 @@ func testAccDavinciFlow_Basic(t *testing.T, withBootstrapConfig bool) {
 	fullStep := resource.TestStep{
 		Config: fullStepHcl,
 		Check: resource.ComposeTestCheckFunc(
+			//TODO expand checks for all these
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
 		),
 	}
@@ -197,7 +198,7 @@ func testAccDavinciFlow_Basic(t *testing.T, withBootstrapConfig bool) {
 		),
 	}
 
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
@@ -443,29 +444,34 @@ func davinciFlow_FullWithMappingIDsHCL(t *testing.T, resourceName string, withBo
 }
 
 func davinciFlow_MinimalWithMappingIDsHCL(t *testing.T, resourceName string, withBootstrap bool) string {
+	descriptionHcl := `
+	description = "base description"
+	`
 	hcl, err := testhcl.ReadTestHcl("pingone_davinci_flow/full_minimal.tf")
 	if err != nil {
 		t.Fatalf("failed to read HCL in davinciFlow_MinimalWithMappingIDsHCL: %v", err)
 	}
-	return fmt.Sprintf(hcl, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName)
+	return fmt.Sprintf(hcl, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName, descriptionHcl)
 }
 
 func davinciFlow_MinimalWithMappingIDsUpdateHCL(t *testing.T, resourceName string, withBootstrap bool) string {
-	//TODO update description
+	descriptionHcl := `
+	description = "updated description"
+	`
 	hcl, err := testhcl.ReadTestHcl("pingone_davinci_flow/full_minimal.tf")
 	if err != nil {
-		t.Fatalf("failed to read HCL in davinciFlow_MinimalWithMappingIDsHCL: %v", err)
+		t.Fatalf("failed to read HCL in davinciFlow_MinimalWithMappingIDsUpdateHCL: %v", err)
 	}
-	return fmt.Sprintf(hcl, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName)
+	return fmt.Sprintf(hcl, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName, descriptionHcl)
 }
 
 func davinciFlow_MinimalWithMappingIDsNoDescriptionUpdateHCL(t *testing.T, resourceName string, withBootstrap bool) string {
-	//TODO remove description
 	hcl, err := testhcl.ReadTestHcl("pingone_davinci_flow/full_minimal.tf")
 	if err != nil {
-		t.Fatalf("failed to read HCL in davinciFlow_MinimalWithMappingIDsHCL: %v", err)
+		t.Fatalf("failed to read HCL in davinciFlow_MinimalWithMappingIDsNoDescriptionUpdateHCL: %v", err)
 	}
-	return fmt.Sprintf(hcl, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName)
+	// No HCL provided for description
+	return fmt.Sprintf(hcl, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName, "")
 }
 
 func davinciFlow_NewEnvHCL(environmentName, licenseID, resourceName string) string {

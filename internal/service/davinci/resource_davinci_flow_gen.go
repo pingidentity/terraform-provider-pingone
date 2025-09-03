@@ -19,7 +19,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -90,6 +93,65 @@ type davinciFlowResourceModel struct {
 }
 
 func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	graphDataElementsEdgesDataAttrTypes := map[string]attr.Type{
+		"id":     types.StringType,
+		"source": types.StringType,
+		"target": types.StringType,
+	}
+	graphDataElementsEdgesPositionAttrTypes := map[string]attr.Type{
+		"x": types.Float32Type,
+		"y": types.Float32Type,
+	}
+	graphDataElementsEdgesAttrTypes := map[string]attr.Type{
+		"classes":    types.StringType,
+		"data":       types.ObjectType{AttrTypes: graphDataElementsEdgesDataAttrTypes},
+		"grabbable":  types.BoolType,
+		"group":      types.StringType,
+		"locked":     types.BoolType,
+		"pannable":   types.BoolType,
+		"position":   types.ObjectType{AttrTypes: graphDataElementsEdgesPositionAttrTypes},
+		"removed":    types.BoolType,
+		"selectable": types.BoolType,
+		"selected":   types.BoolType,
+	}
+	graphDataElementsEdgesElementType := types.ObjectType{AttrTypes: graphDataElementsEdgesAttrTypes}
+	settingsJsLinksAttrTypes := map[string]attr.Type{
+		"crossorigin":    types.StringType,
+		"defer":          types.BoolType,
+		"integrity":      types.StringType,
+		"label":          types.StringType,
+		"referrerpolicy": types.StringType,
+		"type":           types.StringType,
+		"value":          types.StringType,
+	}
+	settingsJsLinksElementType := types.ObjectType{AttrTypes: settingsJsLinksAttrTypes}
+	settingsAttrTypes := map[string]attr.Type{
+		"csp":                                types.StringType,
+		"css":                                types.StringType,
+		"css_links":                          types.SetType{ElemType: types.StringType},
+		"custom_error_screen_brand_logo_url": types.StringType,
+		"custom_error_show_footer":           types.BoolType,
+		"custom_favicon_link":                types.StringType,
+		"custom_logo_urlselection":           types.Int32Type,
+		"custom_title":                       types.StringType,
+		"default_error_screen_brand_logo":    types.BoolType,
+		"flow_http_timeout_in_seconds":       types.Int32Type,
+		"flow_timeout_in_seconds":            types.Int32Type,
+		"intermediate_loading_screen_css":    types.StringType,
+		"intermediate_loading_screen_html":   types.StringType,
+		"js_custom_flow_player":              types.StringType,
+		"js_links":                           types.SetType{ElemType: settingsJsLinksElementType},
+		"log_level":                          types.Int32Type,
+		"require_authentication_to_initiate": types.BoolType,
+		"scrub_sensitive_info":               types.BoolType,
+		"sensitive_info_fields":              types.SetType{ElemType: types.StringType},
+		"use_csp":                            types.BoolType,
+		"use_custom_css":                     types.BoolType,
+		"use_custom_flow_player":             types.BoolType,
+		"use_custom_script":                  types.BoolType,
+		"use_intermediate_loading_screen":    types.BoolType,
+		"validate_on_save":                   types.BoolType,
+	}
 	resp.Schema = schema.Schema{
 		Description: "Resource to create and manage a davinci flow.",
 		Attributes: map[string]schema.Attribute{
@@ -116,6 +178,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 				Optional: true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(1024),
+					stringvalidator.LengthAtLeast(1),
 					// stringvalidator.RegexMatches(regexp.MustCompile("^\\s*[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
 					// stringvalidator.RegexMatches(regexp.MustCompile("^\\s*[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]?(?!.*((<)|(\\$\\{)))"), ""),
 				},
@@ -239,6 +302,8 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 									},
 								},
 								Optional: true,
+								Computed: true,
+								Default:  setdefault.StaticValue(types.SetValueMust(graphDataElementsEdgesElementType, nil)),
 							},
 							"nodes": schema.SetNestedAttribute{
 								NestedObject: schema.NestedAttributeObject{
@@ -590,6 +655,8 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 					},
 					"log_level": schema.Int32Attribute{
 						Optional: true,
+						Computed: true,
+						Default:  int32default.StaticInt32(4),
 						Validators: []validator.Int32{
 							int32validator.Between(1, 4),
 						},
@@ -624,6 +691,34 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 					},
 				},
 				Optional: true,
+				Computed: true,
+				Default: objectdefault.StaticValue(types.ObjectValueMust(settingsAttrTypes, map[string]attr.Value{
+					"csp":                                types.StringNull(),
+					"css":                                types.StringNull(),
+					"css_links":                          types.SetNull(types.StringType),
+					"custom_error_screen_brand_logo_url": types.StringNull(),
+					"custom_error_show_footer":           types.BoolNull(),
+					"custom_favicon_link":                types.StringNull(),
+					"custom_logo_urlselection":           types.Int32Null(),
+					"custom_title":                       types.StringNull(),
+					"default_error_screen_brand_logo":    types.BoolNull(),
+					"flow_http_timeout_in_seconds":       types.Int32Null(),
+					"flow_timeout_in_seconds":            types.Int32Null(),
+					"intermediate_loading_screen_css":    types.StringNull(),
+					"intermediate_loading_screen_html":   types.StringNull(),
+					"js_custom_flow_player":              types.StringNull(),
+					"js_links":                           types.SetNull(settingsJsLinksElementType),
+					"log_level":                          types.Int32Value(4),
+					"require_authentication_to_initiate": types.BoolNull(),
+					"scrub_sensitive_info":               types.BoolNull(),
+					"sensitive_info_fields":              types.SetNull(types.StringType),
+					"use_csp":                            types.BoolNull(),
+					"use_custom_css":                     types.BoolNull(),
+					"use_custom_flow_player":             types.BoolNull(),
+					"use_custom_script":                  types.BoolNull(),
+					"use_intermediate_loading_screen":    types.BoolNull(),
+					"validate_on_save":                   types.BoolNull(),
+				})),
 			},
 			"trigger": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{

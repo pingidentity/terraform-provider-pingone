@@ -3,7 +3,7 @@
 
 resource "pingone_davinci_flow" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  description = "This is a fallback description"
+  %[3]s
   name = "simple"
   settings = {
     csp = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
@@ -21,9 +21,9 @@ resource "pingone_davinci_flow" "%[2]s" {
           data = {
             id = "2pzouq7el7"
             node_type = "CONNECTION"
-            connection_id = "53ab83a4a4ab919d9f2cb02d9e111ac8"
+            # connection_id = "53ab83a4a4ab919d9f2cb02d9e111ac8"
             connector_id = "errorConnector"
-            name = "Error Message"
+            # name = "Error Message"
             label = "Error Message"
             status = "configured"
             capability_name = "customErrorMessage"
@@ -66,7 +66,7 @@ resource "pingone_davinci_flow" "%[2]s" {
     }
     box_selection_enabled = true
     renderer = jsonencode({
-      "name": null
+      "name": "null"
     })
   }
 }
