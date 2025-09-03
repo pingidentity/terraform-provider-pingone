@@ -236,13 +236,17 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 		"The name of a complex attribute's sub attribute in PingOne, for example `given` or `formatted` where the parent object has a name value of `name`.",
 	)
 
+	userPresenceTimeoutDescription := framework.SchemaAttributeDescriptionFromMarkdown("A single nested object that specifies the user presence timeout settings, used to control the amount of time a user has to perform a user presence gesture with their FIDO device.").DefaultValue(
+		fmt.Sprintf(`{ duration: %d, time_unit: "%s" }`, attrDefaultUserPresenceTimeoutDuration, mfa.ENUMTIMEUNIT_MINUTES),
+	)
+
 	userPresenceTimeoutDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The amount of time (minutes or seconds) a user presence gesture will be accepted for the authentication request. Minimum is one minute (60 seconds); maxiumum is ten minutes (600 seconds).",
-	)
+	).DefaultValue(attrDefaultUserPresenceTimeoutDuration)
 
 	userPresenceTimeoutTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The units for specifying the amount of time a user presence gesture will be accepted for the authentication request.",
-	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitEnumValues)
+	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitEnumValues).DefaultValue(string(mfa.ENUMTIMEUNIT_MINUTES))
 
 	userVerificationEnforceDuringAuthnDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether device characteristics related to user verification are to be checked again at each authentication attempt. Set to `true` if you want the device characteristics related to user verification to be checked again at each authentication attempt and not just once during registration. Set to `false` to have them checked only at registration.",
@@ -483,9 +487,10 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 
 			"user_presence_timeout": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single nested object that specifies the user presence timeout settings, used to control the amount of time a user has to perform a user presence gesture with their FIDO device.").Description,
-				Optional:    true,
-				Computed:    true,
+				Description:         userPresenceTimeoutDescription.Description,
+				MarkdownDescription: userPresenceTimeoutDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
 				Default: objectdefault.StaticValue(types.ObjectValueMust(
 					fido2PolicyUserPresenceTimeoutTFObjectTypes,
 					map[string]attr.Value{

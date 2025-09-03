@@ -94,7 +94,7 @@ resource "pingone_mfa_fido2_policy" "my_awesome_fido2_policy" {
 ### Optional
 
 - `description` (String) A string that specifies the description of the FIDO2 policy.
-- `user_presence_timeout` (Attributes) A single nested object that specifies the user presence timeout settings, used to control the amount of time a user has to perform a user presence gesture with their FIDO device. (see [below for nested schema](#nestedatt--user_presence_timeout))
+- `user_presence_timeout` (Attributes) A single nested object that specifies the user presence timeout settings, used to control the amount of time a user has to perform a user presence gesture with their FIDO device.  Defaults to `{ duration: 2, time_unit: "MINUTES" }`. (see [below for nested schema](#nestedatt--user_presence_timeout))
 
 ### Read-Only
 
@@ -170,8 +170,8 @@ Required:
 
 Optional:
 
-- `duration` (Number) The amount of time (minutes or seconds) a user presence gesture will be accepted for the authentication request. Minimum is one minute (60 seconds); maxiumum is ten minutes (600 seconds).
-- `time_unit` (String) The units for specifying the amount of time a user presence gesture will be accepted for the authentication request.  Options are `MINUTES`, `SECONDS`.
+- `duration` (Number) The amount of time (minutes or seconds) a user presence gesture will be accepted for the authentication request. Minimum is one minute (60 seconds); maxiumum is ten minutes (600 seconds).  Defaults to `2`.
+- `time_unit` (String) The units for specifying the amount of time a user presence gesture will be accepted for the authentication request.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
 
 ## Import
 
