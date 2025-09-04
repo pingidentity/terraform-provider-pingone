@@ -263,6 +263,31 @@ func testAccDavinciFlow_Basic(t *testing.T, withBootstrapConfig bool) {
 	})
 }
 
+func TestAccDavinciFlow_EmptyObjectsInSettings(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_davinci_flow.%s", resourceName)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             davinciFlow_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: davinciFlow_EmptyObjectsInSettingsHCL(t, resourceName, false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
+				),
+			},
+		},
+	})
+}
+
 func TestAccDavinciFlow_NewEnv(t *testing.T) {
 	t.Parallel()
 
@@ -493,6 +518,14 @@ func davinciFlow_MinimalWithAddedNodeHCL(t *testing.T, resourceName string, with
 		t.Fatalf("failed to read HCL in davinciFlow_MinimalWithMappingIDsHCL: %v", err)
 	}
 	return fmt.Sprintf(hcl, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName, descriptionHcl)
+}
+
+func davinciFlow_EmptyObjectsInSettingsHCL(t *testing.T, resourceName string, withBootstrap bool) string {
+	hcl, err := testhcl.ReadTestHcl("pingone_davinci_flow/full_minimal_empty_objects_in_settings.tf")
+	if err != nil {
+		t.Fatalf("failed to read HCL in davinciFlow_EmptyObjectsInSettingsHCL: %v", err)
+	}
+	return fmt.Sprintf(hcl, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName)
 }
 
 func davinciFlow_NewEnvHCL(environmentName, licenseID, resourceName string) string {
