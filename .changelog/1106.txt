@@ -1,0 +1,7 @@
+```release-note:new-resource
+pingone_davinci_variable
+```
+
+```release-note:note
+new dependency `github.com/pingidentity/pingone-go-client` 0.1.1
+```

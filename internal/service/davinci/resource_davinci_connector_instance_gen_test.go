@@ -212,7 +212,7 @@ func TestAccDavinciConnectorInstance_Properties(t *testing.T) {
 						t.Fatalf("One of environment ID or connector instance ID cannot be determined. Environment ID: %s, Resource ID: %s", environmentId, id)
 					}
 
-					connectorInstance, _, err := c.DaVinciConnectorApi.GetConnectorInstanceById(ctx, uuid.MustParse(environmentId), id).Execute()
+					connectorInstance, _, err := c.DaVinciConnectorsApi.GetConnectorInstanceById(ctx, uuid.MustParse(environmentId), id).Execute()
 					if err != nil {
 						t.Fatalf("Failed to read connection: - wut %v", err)
 					}
@@ -224,7 +224,7 @@ func TestAccDavinciConnectorInstance_Properties(t *testing.T) {
 						t.Fatalf("Failed to read connection property: urls")
 					}
 
-					_, _, err = c.DaVinciConnectorApi.ReplaceConnectorInstanceById(ctx, uuid.MustParse(environmentId), id).DaVinciConnectorInstanceReplaceRequest(
+					_, _, err = c.DaVinciConnectorsApi.ReplaceConnectorInstanceById(ctx, uuid.MustParse(environmentId), id).DaVinciConnectorInstanceReplaceRequest(
 						pingone.DaVinciConnectorInstanceReplaceRequest{
 							Name:       connectorInstance.Name,
 							Properties: connectorInstance.Properties,
@@ -1114,7 +1114,7 @@ func davinciConnectorInstance_Delete(ctx context.Context, apiClient *pingone.API
 		t.Fatalf("One of the identifier attributes can't be determined. environmentId: '%s' id: '%s'", environmentId, id)
 	}
 
-	_, err := apiClient.DaVinciConnectorApi.DeleteConnectorInstanceById(ctx, uuid.MustParse(environmentId), id).Execute()
+	_, err := apiClient.DaVinciConnectorsApi.DeleteConnectorInstanceById(ctx, uuid.MustParse(environmentId), id).Execute()
 	if err != nil {
 		t.Fatalf("Failed to delete davinci_connector_instance: %v", err)
 	}
@@ -1143,7 +1143,7 @@ func davinciConnectorInstance_CheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, r, err := p1Client.DaVinciConnectorApi.GetConnectorInstanceById(ctx, uuid.MustParse(rs.Primary.Attributes["environment_id"]), rs.Primary.Attributes["id"]).Execute()
+		_, r, err := p1Client.DaVinciConnectorsApi.GetConnectorInstanceById(ctx, uuid.MustParse(rs.Primary.Attributes["environment_id"]), rs.Primary.Attributes["id"]).Execute()
 
 		shouldContinue, err = acctest.CheckForResourceDestroy(r, err)
 		if err != nil {

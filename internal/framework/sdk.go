@@ -20,12 +20,12 @@ import (
 
 type SDKInterfaceFunc func() (any, *http.Response, error)
 
-type CustomError func(*http.Response, *pingone.ServiceError) diag.Diagnostics
+type CustomError func(*http.Response, *pingone.GeneralError) diag.Diagnostics
 
 var (
-	DefaultCustomError = func(_ *http.Response, _ *pingone.ServiceError) diag.Diagnostics { return nil }
+	DefaultCustomError = func(_ *http.Response, _ *pingone.GeneralError) diag.Diagnostics { return nil }
 
-	CustomErrorResourceNotFoundWarning = func(r *http.Response, p1Error *pingone.ServiceError) diag.Diagnostics {
+	CustomErrorResourceNotFoundWarning = func(r *http.Response, p1Error *pingone.GeneralError) diag.Diagnostics {
 		var diags diag.Diagnostics
 
 		// Deleted outside of TF
@@ -44,18 +44,19 @@ var (
 		return nil
 	}
 
-	regionMappingSuffixMap = map[string]string{
+	regionMappingTopLevelDomainMap = map[string]string{
 		"na": "com",
 		"eu": "eu",
 		"ap": "asia",
 		"au": "com.au",
 		"ca": "ca",
+		"sg": "sg",
 	}
 )
 
-func RegionSuffixFromCode(regionCode string) (string, bool) {
-	suffix, ok := regionMappingSuffixMap[regionCode]
-	return suffix, ok
+func RegionTopLevelDomainFromCode(regionCode string) (string, bool) {
+	domain, ok := regionMappingTopLevelDomainMap[strings.ToLower(regionCode)]
+	return domain, ok
 }
 
 func UserAgent(suffix, version string) string {
@@ -76,7 +77,7 @@ func CheckEnvironmentExistsOnPermissionsError(ctx context.Context, apiClient *pi
 			return fO, nil, fmt.Errorf("unable to parse environment id '%s' as uuid: %v", environmentID, err)
 		}
 
-		_, fER, fEErr := apiClient.EnvironmentApi.GetEnvironmentById(ctx, environmentIdUuid).Execute()
+		_, fER, fEErr := apiClient.EnvironmentsApi.GetEnvironmentById(ctx, environmentIdUuid).Execute()
 
 		if fER.StatusCode == http.StatusNotFound {
 			tflog.Warn(ctx, "API responded with 400, 401 or 403, and the provider determined the environment doesn't exist.  Overriding resource response.")
@@ -87,20 +88,26 @@ func CheckEnvironmentExistsOnPermissionsError(ctx context.Context, apiClient *pi
 	return fO, fR, fErr
 }
 
-func ParseResponse(ctx context.Context, f SDKInterfaceFunc, requestID string, customError CustomError, targetObject any) diag.Diagnostics {
+func ParseResponse(ctx context.Context, f SDKInterfaceFunc, requestID string, customError CustomError, customRetryConditions Retryable, targetObject any) diag.Diagnostics {
 	defaultTimeout := 10
-	return ParseResponseWithCustomTimeout(ctx, f, requestID, customError, targetObject, time.Duration(defaultTimeout)*time.Minute)
+	return ParseResponseWithCustomTimeout(ctx, f, requestID, customError, customRetryConditions, targetObject, time.Duration(defaultTimeout)*time.Minute)
 }
 
-func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, requestID string, customError CustomError, targetObject any, timeout time.Duration) diag.Diagnostics {
+func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, requestID string, customError CustomError, customRetryConditions Retryable, targetObject any, timeout time.Duration) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if customError == nil {
 		customError = DefaultCustomError
 	}
 
-	// Note - retry logic is handled by the client SDK
-	resp, r, err := f()
+	// Note - most retry logic is handled by the client SDK, but customRetryConditions can be defined in the provider here.
+	resp, r, err := RetryWrapper(
+		ctx,
+		timeout,
+		f,
+		requestID,
+		customRetryConditions,
+	)
 
 	if err != nil || r.StatusCode >= 300 {
 		switch t := err.(type) {
@@ -111,13 +118,13 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, req
 			tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s\n\nResponse code: %d\nResponse content-type: %s", t.Err.Error(), r.StatusCode, r.Header.Get("Content-Type")))
 			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", requestID, t.Error()), "")
 		default:
-			// Attempt to marshal the error into pingone.ServiceError
+			// Attempt to marshal the error into pingone.GeneralError
 			errorUnmarshaled := false
 			errBytes, jsonErr := json.Marshal(t)
 			if jsonErr == nil {
-				var targetError pingone.ServiceError
+				var targetError pingone.GeneralError
 				jsonErr = json.Unmarshal(errBytes, &targetError)
-				if jsonErr == nil && targetError.Id != nil {
+				if jsonErr == nil && isValidGeneralError(targetError) {
 					// Apply custom error handler
 					diags = customError(r, &targetError)
 					// If no custom error handling was applied, format the error for output
@@ -162,9 +169,23 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, req
 
 }
 
-func FormatPingOneError(sdkMethod string, v pingone.ServiceError) (summaryText, detailText string) {
+// Ensure that at least one field is set in the GeneralError. json marshal can return without error
+// since all of the GeneralError fields are marked as omitempty, even if none of the fields are set.
+func isValidGeneralError(generalError pingone.GeneralError) bool {
+	return generalError.HasCode() || generalError.HasDetails() || generalError.HasId() || generalError.HasMessage()
+}
+
+func FormatPingOneError(sdkMethod string, v pingone.GeneralError) (summaryText, detailText string) {
 	summaryText = fmt.Sprintf("Error when calling `%s`: %v", sdkMethod, v.GetMessage())
-	detailText = fmt.Sprintf("PingOne Error Details:\nID:\t\t%s\nCode:\t\t%s\nMessage:\t%s", v.GetId(), v.GetCode(), v.GetMessage())
+	var detailTextBuilder strings.Builder
+	detailTextBuilder.WriteString("PingOne Error Details:\n")
+	if v.Id != nil {
+		detailTextBuilder.WriteString(fmt.Sprintf("ID:\t\t%s\n", v.GetId()))
+	}
+	if v.Code != nil {
+		detailTextBuilder.WriteString(fmt.Sprintf("Code:\t\t%s\n", v.GetCode()))
+	}
+	detailTextBuilder.WriteString(fmt.Sprintf("Message:\t%s\n", v.GetMessage()))
 
 	if details, ok := v.GetDetailsOk(); ok {
 
@@ -189,52 +210,19 @@ func FormatPingOneError(sdkMethod string, v pingone.ServiceError) (summaryText, 
 			}
 
 			if innerError, ok := detail.GetInnerErrorOk(); ok {
-				innerDetailsStr := ""
-
-				if v, ok := innerError.GetAllowedPatternOk(); ok {
-					innerDetailsStr += fmt.Sprintf("      Allowed Pattern:\t%s\n", *v)
+				// Attempt to convert the interface map into json bytes
+				innerErrorBytes, err := json.Marshal(innerError)
+				if err != nil {
+					detailsStr += fmt.Sprintf("  %s Data:\n%s", nextLineMarker, string(innerErrorBytes))
 				}
-
-				if v, ok := innerError.GetAllowedValuesOk(); ok {
-					// Attempt to convert the interface slice into json bytes
-					allowedValues, err := json.Marshal(v)
-					if err != nil {
-						innerDetailsStr += fmt.Sprintf("      Allowed Values:\t%s\n", string(allowedValues))
-					}
-				}
-
-				if v, ok := innerError.GetMaximumValueOk(); ok {
-					innerDetailsStr += fmt.Sprintf("      Max Value:\t%f\n", *v)
-				}
-
-				if v, ok := innerError.GetQuotaLimitOk(); ok {
-					innerDetailsStr += fmt.Sprintf("      Quota Limit:\t%f\n", *v)
-				}
-
-				if v, ok := innerError.GetQuotaResetTimeOk(); ok {
-					innerDetailsStr += fmt.Sprintf("      Quota Reset Time:\t%s\n", v.Format(time.RFC3339))
-				}
-
-				if v, ok := innerError.GetRangeMaximumValueOk(); ok {
-					innerDetailsStr += fmt.Sprintf("      Range Max Value:\t%f\n", *v)
-				}
-
-				if v, ok := innerError.GetRangeMinimumValueOk(); ok {
-					innerDetailsStr += fmt.Sprintf("      Range Min Value:\t%f\n", *v)
-				}
-
-				if v, ok := innerError.GetRetryAfterOk(); ok {
-					innerDetailsStr += fmt.Sprintf("      Referenced Values:\t%s\n", *v)
-				}
-
-				detailsStr += fmt.Sprintf("  %s Data:\n%s", nextLineMarker, innerDetailsStr)
 			}
 
 			detailsStrList = append(detailsStrList, detailsStr)
 		}
 
-		detailText += fmt.Sprintf("\nDetails:\n%s", strings.Join(detailsStrList, "\n"))
+		detailTextBuilder.WriteString(fmt.Sprintf("\nDetails:\n%s", strings.Join(detailsStrList, "\n")))
 	}
 
+	detailText = detailTextBuilder.String()
 	return summaryText, detailText
 }

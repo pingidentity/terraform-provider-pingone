@@ -735,7 +735,36 @@ func TestAccSignOnPolicyAction_PingIDAction(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSignOnPolicyActionConfig_PingID(resourceName, name),
+				Config: testAccSignOnPolicyActionConfig_PingIDV1(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "sign_on_policy_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "pingid.#", "1"),
+				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				Config:  testAccSignOnPolicyActionConfig_PingIDV1(resourceName, name),
+				Destroy: true,
+			},
+			{
+				Config: testAccSignOnPolicyActionConfig_PingIDV2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -783,7 +812,38 @@ func TestAccSignOnPolicyAction_PingIDWinLoginPasswordlessAction(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSignOnPolicyActionConfig_PingIDWinLoginPasswordless(resourceName, name),
+				Config: testAccSignOnPolicyActionConfig_PingIDWinLoginPasswordlessV1(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "sign_on_policy_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "pingid_windows_login_passwordless.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "pingid_windows_login_passwordless.0.unique_user_attribute_name", "username"),
+					resource.TestCheckResourceAttr(resourceFullName, "pingid_windows_login_passwordless.0.offline_mode_enabled", "true"),
+				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				Config:  testAccSignOnPolicyActionConfig_PingIDWinLoginPasswordlessV1(resourceName, name),
+				Destroy: true,
+			},
+			{
+				Config: testAccSignOnPolicyActionConfig_PingIDWinLoginPasswordlessV2(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -2851,38 +2911,52 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
 func testAccSignOnPolicyActionConfig_PingID(resourceName, name string) string {
 
 	return fmt.Sprintf(`
-		%[1]s
-
-resource "pingone_sign_on_policy" "%[2]s" {
+resource "pingone_sign_on_policy" "%[1]s" {
   environment_id = data.pingone_environment.workforce_test.id
 
-  name = "%[3]s"
+  name = "%[2]s"
 }
 
-resource "pingone_sign_on_policy_action" "%[2]s" {
+resource "pingone_sign_on_policy_action" "%[1]s" {
   environment_id    = data.pingone_environment.workforce_test.id
-  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+  sign_on_policy_id = pingone_sign_on_policy.%[1]s.id
 
   priority = 1
 
   pingid {}
-}`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
+}`, resourceName, name)
+}
+
+func testAccSignOnPolicyActionConfig_PingIDV1(resourceName, name string) string {
+
+	return fmt.Sprintf(`
+%[1]s
+
+%[2]s
+`, acctest.WorkforceV1SandboxEnvironment(), testAccSignOnPolicyActionConfig_PingID(resourceName, name))
+}
+
+func testAccSignOnPolicyActionConfig_PingIDV2(resourceName, name string) string {
+
+	return fmt.Sprintf(`
+%[1]s
+
+%[2]s
+`, acctest.WorkforceV2SandboxEnvironment(), testAccSignOnPolicyActionConfig_PingID(resourceName, name))
 }
 
 func testAccSignOnPolicyActionConfig_PingIDWinLoginPasswordless(resourceName, name string) string {
 
 	return fmt.Sprintf(`
-		%[1]s
-
-resource "pingone_sign_on_policy" "%[2]s" {
+resource "pingone_sign_on_policy" "%[1]s" {
   environment_id = data.pingone_environment.workforce_test.id
 
-  name = "%[3]s"
+  name = "%[2]s"
 }
 
-resource "pingone_sign_on_policy_action" "%[2]s" {
+resource "pingone_sign_on_policy_action" "%[1]s" {
   environment_id    = data.pingone_environment.workforce_test.id
-  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+  sign_on_policy_id = pingone_sign_on_policy.%[1]s.id
 
   priority = 1
 
@@ -2890,7 +2964,23 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
     unique_user_attribute_name = "username"
     offline_mode_enabled       = true
   }
-}`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
+}`, resourceName, name)
+}
+
+func testAccSignOnPolicyActionConfig_PingIDWinLoginPasswordlessV1(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+%[2]s
+`, acctest.WorkforceV1SandboxEnvironment(), testAccSignOnPolicyActionConfig_PingIDWinLoginPasswordless(resourceName, name))
+}
+
+func testAccSignOnPolicyActionConfig_PingIDWinLoginPasswordlessV2(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+%[2]s
+`, acctest.WorkforceV2SandboxEnvironment(), testAccSignOnPolicyActionConfig_PingIDWinLoginPasswordless(resourceName, name))
 }
 
 func testAccSignOnPolicyActionConfig_Multiple1(resourceName, name string) string {

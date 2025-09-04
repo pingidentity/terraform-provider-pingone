@@ -133,9 +133,9 @@ func (model *davinciConnectorInstanceResourceModel) buildClientStructPost() (*pi
 	var respDiags diag.Diagnostics
 	result := &pingone.DaVinciConnectorInstanceCreateRequest{}
 	// connector
-	connectorValue := pingone.DaVinciConnectorInstanceCreateRequestConnector{}
+	connectorValue := pingone.ResourceRelationshipDaVinci{}
 	connectorAttrs := model.Connector.Attributes()
-	connectorValue.Id = connectorAttrs["id"].(types.String).ValueStringPointer()
+	connectorValue.Id = connectorAttrs["id"].(types.String).ValueString()
 	result.Connector = connectorValue
 
 	// name
@@ -177,7 +177,7 @@ func (model *davinciConnectorInstanceResourceModel) buildClientStructPut() (*pin
 	return result, respDiags
 }
 
-func (state *davinciConnectorInstanceResourceModel) readClientResponse(response *pingone.DaVinciConnectorInstance) diag.Diagnostics {
+func (state *davinciConnectorInstanceResourceModel) readClientResponse(response *pingone.DaVinciConnectorInstanceResponse) diag.Diagnostics {
 	var respDiags, diags diag.Diagnostics
 	// connector
 	connectorAttrTypes := map[string]attr.Type{
@@ -242,16 +242,17 @@ func (r *davinciConnectorInstanceResource) Create(ctx context.Context, req resou
 		)
 		return
 	}
-	var responseData *pingone.DaVinciConnectorInstance
+	var responseData *pingone.DaVinciConnectorInstanceResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciConnectorApi.CreateConnectorInstance(ctx, environmentIdUuid).DaVinciConnectorInstanceCreateRequest(*clientData).Execute()
+			fO, fR, fErr := r.Client.DaVinciConnectorsApi.CreateConnectorInstance(ctx, environmentIdUuid).DaVinciConnectorInstanceCreateRequest(*clientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateConnectorInstance",
 		framework.DefaultCustomError,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -297,16 +298,17 @@ func (r *davinciConnectorInstanceResource) Read(ctx context.Context, req resourc
 		)
 		return
 	}
-	var responseData *pingone.DaVinciConnectorInstance
+	var responseData *pingone.DaVinciConnectorInstanceResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciConnectorApi.GetConnectorInstanceById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.DaVinciConnectorsApi.GetConnectorInstanceById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetConnectorInstanceById",
 		framework.CustomErrorResourceNotFoundWarning,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -364,16 +366,17 @@ func (r *davinciConnectorInstanceResource) Update(ctx context.Context, req resou
 		)
 		return
 	}
-	var responseData *pingone.DaVinciConnectorInstance
+	var responseData *pingone.DaVinciConnectorInstanceResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciConnectorApi.ReplaceConnectorInstanceById(ctx, environmentIdUuid, data.Id.ValueString()).DaVinciConnectorInstanceReplaceRequest(*clientData).Execute()
+			fO, fR, fErr := r.Client.DaVinciConnectorsApi.ReplaceConnectorInstanceById(ctx, environmentIdUuid, data.Id.ValueString()).DaVinciConnectorInstanceReplaceRequest(*clientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReplaceConnectorInstanceById",
 		framework.DefaultCustomError,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -423,11 +426,12 @@ func (r *davinciConnectorInstanceResource) Delete(ctx context.Context, req resou
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := r.Client.DaVinciConnectorApi.DeleteConnectorInstanceById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
+			fR, fErr := r.Client.DaVinciConnectorsApi.DeleteConnectorInstanceById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteConnectorInstanceById",
 		framework.CustomErrorResourceNotFoundWarning,
+		framework.DefaultRetryable,
 		nil,
 	)...)
 }
