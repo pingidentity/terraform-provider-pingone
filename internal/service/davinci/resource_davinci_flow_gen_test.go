@@ -198,6 +198,14 @@ func testAccDavinciFlow_Basic(t *testing.T, withBootstrapConfig bool) {
 		),
 	}
 
+	updateNewNodeStepHcl := davinciFlow_MinimalWithAddedNodeHCL(t, resourceName, withBootstrapConfig)
+	updateNewNodeStep := resource.TestStep{
+		Config: updateNewNodeStepHcl,
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
+		),
+	}
+
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
@@ -231,9 +239,11 @@ func testAccDavinciFlow_Basic(t *testing.T, withBootstrapConfig bool) {
 			// Test updates without description
 			minimalStep,
 			updateNoDescriptionStep,
+			// Test adding a node
+			updateNewNodeStep,
 			// Test importing the resource
 			{
-				Config:       updateNoDescriptionStepHcl,
+				Config:       updateNewNodeStepHcl,
 				ResourceName: fmt.Sprintf("pingone_davinci_flow.%s", resourceName),
 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
 					return func(s *terraform.State) (string, error) {
@@ -472,6 +482,17 @@ func davinciFlow_MinimalWithMappingIDsNoDescriptionUpdateHCL(t *testing.T, resou
 	}
 	// No HCL provided for description
 	return fmt.Sprintf(hcl, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName, "")
+}
+
+func davinciFlow_MinimalWithAddedNodeHCL(t *testing.T, resourceName string, withBootstrap bool) string {
+	descriptionHcl := `
+	description = "base description"
+	`
+	hcl, err := testhcl.ReadTestHcl("pingone_davinci_flow/full_minimal_added_node.tf")
+	if err != nil {
+		t.Fatalf("failed to read HCL in davinciFlow_MinimalWithMappingIDsHCL: %v", err)
+	}
+	return fmt.Sprintf(hcl, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName, descriptionHcl)
 }
 
 func davinciFlow_NewEnvHCL(environmentName, licenseID, resourceName string) string {
