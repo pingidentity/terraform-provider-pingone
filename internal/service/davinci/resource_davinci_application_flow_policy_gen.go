@@ -297,7 +297,20 @@ func (model *davinciApplicationFlowPolicyResourceModel) buildClientStructPost() 
 			}
 			triggerValue.Configuration = triggerConfigurationValue
 		}
-		triggerValue.Type = triggerAttrs["type"].(types.String).ValueStringPointer()
+		var triggerTypeValue *pingone.DaVinciFlowPolicyCreateRequestTriggerType
+		if !triggerAttrs["type"].IsNull() && !triggerAttrs["type"].IsUnknown() {
+			typeValue, err := pingone.NewDaVinciFlowPolicyCreateRequestTriggerTypeFromValue(triggerAttrs["type"].(types.String).ValueString())
+			if err != nil {
+				respDiags.AddAttributeError(
+					path.Root("type"),
+					"Provided value is not valid",
+					fmt.Sprintf("The value provided for type is not valid: %s", err.Error()),
+				)
+			} else {
+				triggerTypeValue = typeValue
+			}
+		}
+		triggerValue.Type = triggerTypeValue
 		result.Trigger = triggerValue
 	}
 
@@ -339,7 +352,7 @@ func (model *davinciApplicationFlowPolicyResourceModel) buildClientStructPut() (
 	}
 	// status
 	if !model.Status.IsNull() && !model.Status.IsUnknown() {
-		statusValue, err := pingone.NewDaVinciFlowPolicyCreateRequestStatusFromValue(model.Status.ValueString())
+		statusValue, err := pingone.NewDaVinciFlowPolicyReplaceRequestStatusFromValue(model.Status.ValueString())
 		if err != nil {
 			respDiags.AddAttributeError(
 				path.Root("status"),
@@ -376,7 +389,20 @@ func (model *davinciApplicationFlowPolicyResourceModel) buildClientStructPut() (
 			}
 			triggerValue.Configuration = triggerConfigurationValue
 		}
-		triggerValue.Type = triggerAttrs["type"].(types.String).ValueStringPointer()
+		var triggerTypeValue *pingone.DaVinciFlowPolicyReplaceRequestTriggerType
+		if !triggerAttrs["type"].IsNull() && !triggerAttrs["type"].IsUnknown() {
+			typeValue, err := pingone.NewDaVinciFlowPolicyReplaceRequestTriggerTypeFromValue(triggerAttrs["type"].(types.String).ValueString())
+			if err != nil {
+				respDiags.AddAttributeError(
+					path.Root("type"),
+					"Provided value is not valid",
+					fmt.Sprintf("The value provided for type is not valid: %s", err.Error()),
+				)
+			} else {
+				triggerTypeValue = typeValue
+			}
+		}
+		triggerValue.Type = triggerTypeValue
 		result.Trigger = triggerValue
 	}
 
@@ -535,11 +561,12 @@ func (r *davinciApplicationFlowPolicyResource) Create(ctx context.Context, req r
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciApplicationApi.CreateFlowPolicyByDavinciApplicationId(ctx, environmentIdUuid, data.DaVinciApplicationId.ValueString()).DaVinciFlowPolicyCreateRequest(*clientData).Execute()
+			fO, fR, fErr := r.Client.DaVinciApplicationsApi.CreateFlowPolicyByDavinciApplicationId(ctx, environmentIdUuid, data.DaVinciApplicationId.ValueString()).DaVinciFlowPolicyCreateRequest(*clientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateFlowPolicyByDavinciApplicationId",
 		framework.DefaultCustomError,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -590,11 +617,12 @@ func (r *davinciApplicationFlowPolicyResource) Read(ctx context.Context, req res
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciApplicationApi.GetFlowPolicyByIdUsingDavinciApplicationId(ctx, environmentIdUuid, data.DaVinciApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.DaVinciApplicationsApi.GetFlowPolicyByIdUsingDavinciApplicationId(ctx, environmentIdUuid, data.DaVinciApplicationId.ValueString(), data.Id.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetFlowPolicyByIdUsingDavinciApplicationId",
 		framework.CustomErrorResourceNotFoundWarning,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -657,11 +685,12 @@ func (r *davinciApplicationFlowPolicyResource) Update(ctx context.Context, req r
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciApplicationApi.ReplaceFlowPolicyByIdUsingDavinciApplicationId(ctx, environmentIdUuid, data.DaVinciApplicationId.ValueString(), data.Id.ValueString()).DaVinciFlowPolicyReplaceRequest(*clientData).Execute()
+			fO, fR, fErr := r.Client.DaVinciApplicationsApi.ReplaceFlowPolicyByIdUsingDavinciApplicationId(ctx, environmentIdUuid, data.DaVinciApplicationId.ValueString(), data.Id.ValueString()).DaVinciFlowPolicyReplaceRequest(*clientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReplaceFlowPolicyByIdUsingDavinciApplicationId",
 		framework.DefaultCustomError,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -711,11 +740,12 @@ func (r *davinciApplicationFlowPolicyResource) Delete(ctx context.Context, req r
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := r.Client.DaVinciApplicationApi.DeleteFlowPolicyByIdUsingDavinciApplicationId(ctx, environmentIdUuid, data.DaVinciApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			fR, fErr := r.Client.DaVinciApplicationsApi.DeleteFlowPolicyByIdUsingDavinciApplicationId(ctx, environmentIdUuid, data.DaVinciApplicationId.ValueString(), data.Id.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteFlowPolicyByIdUsingDavinciApplicationId",
 		framework.CustomErrorResourceNotFoundWarning,
+		framework.DefaultRetryable,
 		nil,
 	)...)
 }

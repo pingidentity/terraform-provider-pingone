@@ -90,7 +90,7 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 	)
 
 	regionCodeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The PingOne region to use, which selects the appropriate service endpoints.  Options are `AP` (for Asia-Pacific `.asia` tenants), `AU` (for Asia-Pacific `.com.au` tenants), `CA` (for Canada `.ca` tenants), `EU` (for Europe `.eu` tenants) and `NA` (for North America `.com` tenants).  Default value can be set with the `PINGONE_REGION_CODE` environment variable.",
+		"The PingOne region to use, which selects the appropriate service endpoints.  Options are `AP` (for Asia-Pacific `.asia` tenants), `AU` (for Asia-Pacific `.com.au` tenants), `CA` (for Canada `.ca` tenants), `EU` (for Europe `.eu` tenants), `NA` (for North America `.com` tenants) and `SG` (for Singapore `.sg` tenants).  Default value can be set with the `PINGONE_REGION_CODE` environment variable.",
 	)
 
 	globalOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -278,7 +278,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		regionCode = strings.TrimSpace(os.Getenv("PINGONE_REGION_CODE"))
 	}
 	if regionCode != "" {
-		regionSuffix, ok := framework.RegionSuffixFromCode(strings.ToLower(regionCode))
+		regionTopLevelDomain, ok := framework.RegionTopLevelDomainFromCode(strings.ToLower(regionCode))
 		if !ok {
 			resp.Diagnostics.AddError(
 				"Invalid Region Code",
@@ -286,7 +286,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 			)
 			return
 		}
-		config = config.WithTopLevelDomain(regionSuffix)
+		config = config.WithTopLevelDomain(regionTopLevelDomain)
 	}
 
 	if !data.GlobalOptions.IsNull() {
@@ -355,12 +355,13 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		pingOneConfig.ProxyURL = &v
 	}
 
-	pingOneConfig.UserAgent = framework.UserAgent("", p.version)
+	userAgent := framework.UserAgent("", p.version)
 	if !data.AppendUserAgent.IsNull() && data.AppendUserAgent.ValueString() != "" {
-		pingOneConfig.UserAgent = framework.UserAgent(data.AppendUserAgent.ValueString(), p.version)
+		userAgent = framework.UserAgent(data.AppendUserAgent.ValueString(), p.version)
 	} else if v := strings.TrimSpace(os.Getenv("PINGONE_TF_APPEND_USER_AGENT")); v != "" {
-		pingOneConfig.UserAgent = framework.UserAgent(v, p.version)
+		userAgent = framework.UserAgent(v, p.version)
 	}
+	pingOneConfig.AppendUserAgent(userAgent)
 
 	if globalOptions.Population.ContainsUsersForceDelete {
 		resp.Diagnostics.AddAttributeWarning(

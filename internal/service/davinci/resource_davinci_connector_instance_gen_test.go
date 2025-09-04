@@ -48,7 +48,7 @@ func TestAccDavinciConnectorInstance_RemovalDrift(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: davinciConnectorInstance_MinimalHCL(resourceName),
+				Config: davinciConnectorInstance_MinimalHCL(resourceName, false),
 				Check:  davinciConnectorInstance_GetIDs(resourceFullName, &environmentId, &id),
 			},
 			{
@@ -74,7 +74,15 @@ func TestAccDavinciConnectorInstance_RemovalDrift(t *testing.T) {
 	})
 }
 
-func TestAccDavinciConnectorInstance_MinimalMaximal(t *testing.T) {
+func TestAccDavinciConnectorInstance_MinimalMaximalClean(t *testing.T) {
+	testAccDavinciConnectorInstance_MinimalMaximal(t, false)
+}
+
+func TestAccDavinciConnectorInstance_MinimalMaximalWithBootstrap(t *testing.T) {
+	testAccDavinciConnectorInstance_MinimalMaximal(t, true)
+}
+
+func testAccDavinciConnectorInstance_MinimalMaximal(t *testing.T, withBootstrapConfig bool) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -91,30 +99,30 @@ func TestAccDavinciConnectorInstance_MinimalMaximal(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				// Create the resource with a minimal model
-				Config: davinciConnectorInstance_MinimalHCL(resourceName),
+				Config: davinciConnectorInstance_MinimalHCL(resourceName, withBootstrapConfig),
 				Check:  davinciConnectorInstance_CheckComputedValuesMinimal(resourceName),
 			},
 			{
 				// Delete the minimal model
-				Config:  davinciConnectorInstance_MinimalHCL(resourceName),
+				Config:  davinciConnectorInstance_MinimalHCL(resourceName, withBootstrapConfig),
 				Destroy: true,
 			},
 			{
 				// Re-create with a complete model
-				Config: davinciConnectorInstance_CompleteHCL(resourceName),
+				Config: davinciConnectorInstance_CompleteHCL(resourceName, withBootstrapConfig),
 			},
 			{
 				// Back to minimal model
-				Config: davinciConnectorInstance_MinimalHCL(resourceName),
+				Config: davinciConnectorInstance_MinimalHCL(resourceName, withBootstrapConfig),
 				Check:  davinciConnectorInstance_CheckComputedValuesMinimal(resourceName),
 			},
 			{
 				// Back to complete model
-				Config: davinciConnectorInstance_CompleteHCL(resourceName),
+				Config: davinciConnectorInstance_CompleteHCL(resourceName, withBootstrapConfig),
 			},
 			{
 				// Test importing the resource
-				Config:       davinciConnectorInstance_CompleteHCL(resourceName),
+				Config:       davinciConnectorInstance_CompleteHCL(resourceName, withBootstrapConfig),
 				ResourceName: fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName),
 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
 					return func(s *terraform.State) (string, error) {
@@ -161,6 +169,213 @@ func TestAccDavinciConnectorInstance_NewEnv(t *testing.T) {
 	})
 }
 
+func TestAccDavinciConnectorInstance_Properties(t *testing.T) {
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName)
+
+	var environmentId string
+	var id string
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             davinciConnectorInstance_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Test updates adding and removing optional properties
+			{
+				Config: davinciConnectorInstance_MissingOptionalPropertiesHCL(resourceName),
+			},
+			{
+				Config: davinciConnectorInstance_CompleteHCL(resourceName, false),
+			},
+			{
+				Config: davinciConnectorInstance_MissingOptionalPropertiesHCL(resourceName),
+			},
+			{
+				Config: davinciConnectorInstance_CompleteHCL(resourceName, false),
+				Check:  davinciConnectorInstance_GetIDs(resourceFullName, &environmentId, &id),
+			},
+			// Remove urls property via api and check for non-empty plan
+			{
+				PreConfig: func() {
+					ctx := context.Background()
+					c, err := acctest.TestClient(ctx)
+					if err != nil {
+						t.Fatalf("Failed to get API client: %v", err)
+					}
+
+					if environmentId == "" || id == "" {
+						t.Fatalf("One of environment ID or connector instance ID cannot be determined. Environment ID: %s, Resource ID: %s", environmentId, id)
+					}
+
+					connectorInstance, _, err := c.DaVinciConnectorsApi.GetConnectorInstanceById(ctx, uuid.MustParse(environmentId), id).Execute()
+					if err != nil {
+						t.Fatalf("Failed to read connection: - wut %v", err)
+					}
+
+					if _, ok := connectorInstance.Properties["urls"]; ok {
+						//remove urls property via API, outside of terraform
+						delete(connectorInstance.Properties, "urls")
+					} else {
+						t.Fatalf("Failed to read connection property: urls")
+					}
+
+					_, _, err = c.DaVinciConnectorsApi.ReplaceConnectorInstanceById(ctx, uuid.MustParse(environmentId), id).DaVinciConnectorInstanceReplaceRequest(
+						pingone.DaVinciConnectorInstanceReplaceRequest{
+							Name:       connectorInstance.Name,
+							Properties: connectorInstance.Properties,
+						}).Execute()
+					if err != nil {
+						t.Fatalf("Failed to update connection: %v", err)
+					}
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccDavinciConnectorInstance_ComplexProperties(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName)
+
+	importStateFunc := func() resource.ImportStateIdFunc {
+		return func(s *terraform.State) (string, error) {
+			rs, ok := s.RootModule().Resources[resourceFullName]
+			if !ok {
+				return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+			}
+
+			return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["id"]), nil
+		}
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             davinciConnectorInstance_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: davinciConnectorInstance_PropertyDataTypesMixed_HCL(resourceName),
+			},
+			{
+				ResourceName:      resourceFullName,
+				ImportStateIdFunc: importStateFunc(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				Config:  davinciConnectorInstance_PropertyDataTypesMixed_HCL(resourceName),
+				Destroy: true,
+			},
+			{
+				Config: davinciConnectorInstance_PropertyDataTypesJsonCustomAttributes_HCL(resourceName),
+			},
+			{
+				ResourceName:      resourceFullName,
+				ImportStateIdFunc: importStateFunc(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				Config:  davinciConnectorInstance_PropertyDataTypesJsonCustomAttributes_HCL(resourceName),
+				Destroy: true,
+			},
+			{
+				Config: davinciConnectorInstance_PropertyDataTypesJsonOpenID_HCL(resourceName),
+			},
+			{
+				ResourceName:      resourceFullName,
+				ImportStateIdFunc: importStateFunc(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				// properties contains sensitive attributes obfuscated by the API, so it can't be verified
+				ImportStateVerifyIgnore: []string{
+					"properties",
+				},
+			},
+			{
+				Config:  davinciConnectorInstance_PropertyDataTypesJsonOpenID_HCL(resourceName),
+				Destroy: true,
+			},
+			{
+				Config: davinciConnectorInstance_PropertyDataTypesJsonCustomAuth_HCL(resourceName),
+			},
+			{
+				ResourceName:      resourceFullName,
+				ImportStateIdFunc: importStateFunc(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				// properties contains sensitive attributes obfuscated by the API, so it can't be verified
+				ImportStateVerifyIgnore: []string{
+					"properties",
+				},
+			},
+			{
+				Config:  davinciConnectorInstance_PropertyDataTypesJsonCustomAuth_HCL(resourceName),
+				Destroy: true,
+			},
+			{
+				Config: davinciConnectorInstance_PropertyDataTypesJsonOAuth2_HCL(resourceName, "initialClientSecret"),
+			},
+			{
+				// Test modifying a sensitive property
+				Config: davinciConnectorInstance_PropertyDataTypesJsonOAuth2_HCL(resourceName, "updatedClientSecret"),
+			},
+			{
+				ResourceName:      resourceFullName,
+				ImportStateIdFunc: importStateFunc(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				// properties contains sensitive attributes obfuscated by the API, so it can't be verified
+				ImportStateVerifyIgnore: []string{
+					"properties",
+				},
+			},
+			{
+				Config:  davinciConnectorInstance_PropertyDataTypesJsonOAuth2_HCL(resourceName, "updatedClientSecret"),
+				Destroy: true,
+			},
+			{
+				Config: davinciConnectorInstance_PropertyDataTypesJsonSAML_HCL(resourceName),
+			},
+			{
+				ResourceName:      resourceFullName,
+				ImportStateIdFunc: importStateFunc(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccDavinciConnectorInstance_BadParameters(t *testing.T) {
 	t.Parallel()
 
@@ -178,7 +393,7 @@ func TestAccDavinciConnectorInstance_BadParameters(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: davinciConnectorInstance_MinimalHCL(resourceName),
+				Config: davinciConnectorInstance_MinimalHCL(resourceName, false),
 			},
 			// Errors
 			{
@@ -203,7 +418,7 @@ func TestAccDavinciConnectorInstance_BadParameters(t *testing.T) {
 }
 
 // Minimal HCL with only required values set
-func davinciConnectorInstance_MinimalHCL(resourceName string) string {
+func davinciConnectorInstance_MinimalHCL(resourceName string, withBootstrapConfig bool) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -214,11 +429,11 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
   }
   name = "%[2]s"
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
 }
 
 // Maximal HCL with all values set where possible
-func davinciConnectorInstance_CompleteHCL(resourceName string) string {
+func davinciConnectorInstance_CompleteHCL(resourceName string, withBootstrapConfig bool) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -249,7 +464,41 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
     }
   })
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
+}
+
+// Maximal HCL but with a few of the connector properties unset
+func davinciConnectorInstance_MissingOptionalPropertiesHCL(resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_connector_instance" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  connector = {
+    id = "webhookConnector"
+  }
+  name = "%[2]s"
+  # preferredControlType and info are not set
+  properties = jsonencode({
+    "urls" : {
+      "type" : "string",
+      "displayName" : "Register URLs",
+      "createdDate" : 12345,
+      "customerId" : "12345",
+      "companyId" : "singularkey",
+      "required" : true,
+      "value" : [
+        {
+          "name" : "example",
+          "url" : "https://example.com",
+          "token" : "mytoken",
+          "value" : "https://example.com"
+        }
+      ]
+    }
+  })
+}
+`, acctest.DaVinciSandboxEnvironment(false), resourceName)
 }
 
 func davinciConnectorInstance_NewEnvHCL(environmentName, licenseID, resourceName string) string {
@@ -261,9 +510,577 @@ resource "pingone_davinci_connector_instance" "%[3]s" {
   connector = {
     id = "haveIBeenPwnedConnector"
   }
-  name = "%[2]s"
+  name = "%[3]s"
 }
 `, acctestlegacysdk.MinimalSandboxDaVinciEnvironment(environmentName, licenseID), environmentName, resourceName)
+}
+
+func davinciConnectorInstance_PropertyDataTypesMixed_HCL(resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_connector_instance" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  connector = {
+    id = "smtpConnector"
+  }
+  name = "%[2]s"
+
+  properties = jsonencode({
+    "name" : {
+      "type" : "string",
+      "value" : "test"
+    },
+    "hostname" : {
+      "type" : "string",
+      "value" : "localhost"
+    },
+    "port" : {
+      "type" : "number",
+      "value" : 2525
+    },
+    "secureFlag" : {
+      "type" : "boolean",
+      "value" : true
+    },
+    "username" : {
+      "type" : "string",
+      "value" : "test"
+    },
+    "password" : {
+      "type" : "string",
+      "value" : "test"
+    }
+  })
+}
+`, acctest.DaVinciSandboxEnvironment(false), resourceName)
+}
+
+func davinciConnectorInstance_PropertyDataTypesJsonCustomAttributes_HCL(resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_connector_instance" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  connector = {
+    id = "skUserPool"
+  }
+  name = "%[2]s"
+
+  properties = jsonencode({
+    "customAttributes" : {
+      "type" : "array",
+      "preferredControlType" : "tableViewAttributes",
+      "sections" : [
+        "connectorAttributes"
+      ],
+      "value" : [
+        {
+          "name" : "username",
+          "description" : "Username",
+          "type" : "string",
+          "value" : null,
+          "minLength" : "1",
+          "maxLength" : "300",
+          "required" : true,
+          "attributeType" : "sk"
+        },
+        {
+          "name" : "firstName",
+          "description" : "First Name",
+          "type" : "string",
+          "value" : null,
+          "minLength" : "1",
+          "maxLength" : "100",
+          "required" : false,
+          "attributeType" : "sk"
+        },
+        {
+          "name" : "lastName",
+          "description" : "Last Name",
+          "type" : "string",
+          "value" : null,
+          "minLength" : "1",
+          "maxLength" : "100",
+          "required" : false,
+          "attributeType" : "sk"
+        },
+        {
+          "name" : "name",
+          "description" : "Display Name",
+          "type" : "string",
+          "value" : null,
+          "minLength" : "1",
+          "maxLength" : "250",
+          "required" : false,
+          "attributeType" : "sk"
+        },
+        {
+          "name" : "email",
+          "description" : "Email",
+          "type" : "string",
+          "value" : null,
+          "minLength" : "1",
+          "maxLength" : "250",
+          "required" : false,
+          "attributeType" : "sk"
+        }
+      ]
+    }
+  })
+}
+`, acctest.DaVinciSandboxEnvironment(false), resourceName)
+}
+
+func davinciConnectorInstance_PropertyDataTypesJsonOpenID_HCL(resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_connector_instance" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  connector = {
+    id = "pingFederateConnectorV2"
+  }
+  name = "%[2]s"
+
+  properties = jsonencode({
+    "openId" : {
+      "properties" : {
+        "skRedirectUri" : {
+          "type" : "string",
+          "displayName" : "Redirect URL",
+          "info" : "Enter this in your identity provider configuration to allow it to redirect the browser back to DaVinci. If you use a custom PingOne domain, modify the URL accordingly.",
+          "preferredControlType" : "textField",
+          "disabled" : true,
+          "initializeValue" : "SINGULARKEY_REDIRECT_URI",
+          "copyToClip" : true
+        },
+        "clientId" : {
+          "type" : "string",
+          "displayName" : "Client ID",
+          "placeholder" : "",
+          "preferredControlType" : "textField",
+          "required" : true,
+          "value" : "test"
+        },
+        "clientSecret" : {
+          "type" : "string",
+          "displayName" : "Client Secret",
+          "preferredControlType" : "textField",
+          "secure" : true,
+          "required" : true,
+          "value" : "test"
+        },
+        "scope" : {
+          "type" : "string",
+          "displayName" : "Scope",
+          "preferredControlType" : "textField",
+          "requiredValue" : "openid",
+          "value" : "openid",
+          "required" : true
+        },
+        "issuerUrl" : {
+          "type" : "string",
+          "displayName" : "Base URL",
+          "preferredControlType" : "textField",
+          "value" : "https://ping-eng.com",
+          "required" : true
+        },
+        "returnToUrl" : {
+          "displayName" : "Application Return To URL",
+          "preferredControlType" : "textField",
+          "info" : "When using the embedded flow player widget and an IDP/Social Login connector, provide a callback URL to return back to the application.",
+          "value" : "https://ping-eng.com/callback"
+        }
+      }
+    }
+  })
+}
+`, acctest.DaVinciSandboxEnvironment(false), resourceName)
+}
+
+func davinciConnectorInstance_PropertyDataTypesJsonCustomAuth_HCL(resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_connector_instance" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  connector = {
+    id = "genericConnector"
+  }
+  name = "%[2]s"
+
+  properties = jsonencode({
+    "customAuth" : {
+      "properties" : {
+        "customAttributes" : {
+          "type" : "array",
+          "displayName" : "Connector Attributes",
+          "preferredControlType" : "tableViewAttributes",
+          "info" : "These attributes will be available in User Connector Attribute Mapping.",
+          "sections" : [
+            "connectorAttributes"
+          ],
+          "value" : [
+            {
+              "name" : "id",
+              "description" : "ID",
+              "type" : "string",
+              "value" : null,
+              "minLength" : "1",
+              "maxLength" : "300",
+              "required" : true,
+              "attributeType" : "sk"
+            },
+            {
+              "name" : "name",
+              "description" : "Display Name",
+              "type" : "string",
+              "value" : null,
+              "minLength" : "1",
+              "maxLength" : "250",
+              "required" : false,
+              "attributeType" : "sk"
+            },
+            {
+              "name" : "email",
+              "description" : "Email",
+              "type" : "string",
+              "value" : null,
+              "minLength" : "1",
+              "maxLength" : "250",
+              "required" : false,
+              "attributeType" : "sk"
+            }
+          ]
+        },
+        "userConnectorAttributeMapping" : {
+          "type" : "object",
+          "preferredControlType" : "userConnectorAttributeMapping",
+          "newMappingAllowed" : true,
+          "title1" : null,
+          "title2" : null,
+          "sections" : [
+            "attributeMapping"
+          ]
+        },
+        "providerName" : {
+          "displayName" : "Provider Name",
+          "preferredControlType" : "textField",
+          "required" : true,
+          "value" : "fdfs"
+        },
+        "authTypeDropdown" : {
+          "displayName" : "Auth Type",
+          "preferredControlType" : "dropDown",
+          "required" : true,
+          "options" : [
+            {
+              "name" : "Oauth2",
+              "value" : "oauth2"
+            },
+            {
+              "name" : "OpenId",
+              "value" : "openId"
+            }
+          ],
+          "enum" : [
+            "oauth2",
+            "openId"
+          ],
+          "value" : "oauth2"
+        },
+        "issuerUrl" : {
+          "preferredControlType" : "textField",
+          "displayName" : "Issuer URL",
+          "info" : "Required if auth type is OpenID",
+          "value" : "fdsfs"
+        },
+        "skRedirectUri" : {
+          "displayName" : "Redirect URL",
+          "preferredControlType" : "textField",
+          "disabled" : true,
+          "initializeValue" : "SINGULARKEY_REDIRECT_URI",
+          "copyToClip" : true
+        },
+        "clientId" : {
+          "displayName" : "App ID",
+          "preferredControlType" : "textField",
+          "required" : true,
+          "value" : "fdsfs"
+        },
+        "clientSecret" : {
+          "displayName" : "Client Secret",
+          "preferredControlType" : "textField",
+          "secure" : true,
+          "required" : true,
+          "value" : "testDummySecret"
+        },
+        "scope" : {
+          "displayName" : "Scope",
+          "preferredControlType" : "textField",
+          "required" : true,
+          "value" : "myscope"
+        },
+        "authorizationEndpoint" : {
+          "displayName" : "Authorization Endpoint",
+          "preferredControlType" : "textField",
+          "required" : true,
+          "value" : "fdsfs"
+        },
+        "tokenEndpoint" : {
+          "displayName" : "Token Endpoint",
+          "preferredControlType" : "textField",
+          "required" : true,
+          "value" : "fdsfs"
+        },
+        "bearerToken" : {
+          "preferredControlType" : "textField",
+          "type" : "boolean",
+          "displayName" : "Token Attachment",
+          "info" : "Optional field. Prepend token with this value. Example: Bearer or Token"
+        },
+        "userInfoEndpoint" : {
+          "displayName" : "User Info Endpoint",
+          "preferredControlType" : "textFieldArrayView",
+          "required" : true,
+          "value" : [
+            "fdsdsfs"
+          ]
+        },
+        "returnToUrl" : {
+          "displayName" : "Application Return To URL",
+          "preferredControlType" : "textField",
+          "info" : "When using the embedded flow player widget and an IdP/Social Login connector, provide a callback URL to return back to the application.",
+          "value" : "test"
+        }
+      }
+    }
+  })
+}
+`, acctest.DaVinciSandboxEnvironment(false), resourceName)
+}
+
+func davinciConnectorInstance_PropertyDataTypesJsonOAuth2_HCL(resourceName, clientSecret string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_connector_instance" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  connector = {
+    id = "githubIdpConnector"
+  }
+  name = "%[2]s"
+
+  properties = jsonencode({
+    "oauth2" : {
+      "properties" : {
+        "providerName" : {
+          "type" : "string",
+          "displayName" : "Provider Name",
+          "preferredControlType" : "textField",
+          "value" : "Login with GitHub"
+        },
+        "skRedirectUri" : {
+          "type" : "string",
+          "displayName" : "DaVinci Redirect URL",
+          "info" : "Enter this in your identity provider configuration to allow it to redirect the browser back to DaVinci. If you use a custom PingOne domain, modify the URL accordingly.",
+          "preferredControlType" : "textField",
+          "disabled" : true,
+          "initializeValue" : "SINGULARKEY_REDIRECT_URI",
+          "copyToClip" : true
+        },
+        "clientId" : {
+          "type" : "string",
+          "displayName" : "Application ID",
+          "preferredControlType" : "textField",
+          "required" : true,
+          "value" : "applicationID"
+        },
+        "clientSecret" : {
+          "type" : "string",
+          "displayName" : "Client Secret",
+          "preferredControlType" : "textField",
+          "secure" : true,
+          "required" : true,
+          "value" : "%[3]s"
+        },
+        "scope" : {
+          "type" : "string",
+          "displayName" : "Scope",
+          "preferredControlType" : "textField",
+          "requiredValue" : "email",
+          "required" : true,
+          "value" : "myscope"
+        },
+        "customAttributes" : {
+          "type" : "array",
+          "displayName" : "Connector Attributes",
+          "preferredControlType" : "tableViewAttributes",
+          "info" : "These attributes will be available in User Connector Attribute Mapping.",
+          "sections" : [
+            "connectorAttributes"
+          ],
+          "value" : [
+            {
+              "name" : "id",
+              "description" : "ID",
+              "type" : "string",
+              "value" : null,
+              "minLength" : "1",
+              "maxLength" : "300",
+              "required" : true,
+              "attributeType" : "sk"
+            },
+            {
+              "name" : "name",
+              "description" : "Display Name",
+              "type" : "string",
+              "value" : null,
+              "minLength" : "1",
+              "maxLength" : "250",
+              "required" : false,
+              "attributeType" : "sk"
+            },
+            {
+              "name" : "email",
+              "description" : "Email",
+              "type" : "string",
+              "value" : null,
+              "minLength" : "1",
+              "maxLength" : "250",
+              "required" : false,
+              "attributeType" : "sk"
+            }
+          ]
+        },
+        "userConnectorAttributeMapping" : {
+          "type" : "object",
+          "preferredControlType" : "userConnectorAttributeMapping",
+          "newMappingAllowed" : true,
+          "title1" : null,
+          "title2" : null,
+          "sections" : [
+            "attributeMapping"
+          ],
+          "value" : {
+            "userPoolConnectionId" : "defaultUserPool",
+            "mapping" : {
+              "username" : {
+                "value1" : "id"
+              },
+              "name" : {
+                "value1" : "name"
+              },
+              "email" : {
+                "value1" : "email"
+              }
+            }
+          }
+        },
+        "disableCreateUser" : {
+          "displayName" : "Disable Shadow User Creation",
+          "preferredControlType" : "toggleSwitch",
+          "value" : true,
+          "info" : "A shadow user is implicitly created, unless disabled."
+        },
+        "returnToUrl" : {
+          "displayName" : "Application Return To URL",
+          "preferredControlType" : "textField",
+          "info" : "When using the embedded flow player widget and an IDP/Social Login connector, provide a callback URL to return back to the application.",
+          "value" : "https://ping-eng.com/callback"
+        }
+      }
+    }
+  })
+}
+`, acctest.DaVinciSandboxEnvironment(false), resourceName, clientSecret)
+}
+
+func davinciConnectorInstance_PropertyDataTypesJsonSAML_HCL(resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_connector_instance" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  connector = {
+    id = "samlIdpConnector"
+  }
+  name = "%[2]s"
+
+  properties = jsonencode({
+    "saml" : {
+      "properties" : {
+        "dvSamlSpMetadataUrl" : {
+          "displayName" : "DaVinci SAML SP Metadata URL",
+          "info" : "Your DaVinci SAML SP Metadata URL. This allows an identity provider to redirect the browser back to DaVinci.",
+          "preferredControlType" : "textField",
+          "disabled" : true,
+          "initializeValue" : "DAVINCI_SAML_SP_METADATA_URI",
+          "copyToClip" : true
+        },
+        "providerName" : {
+          "type" : "string",
+          "displayName" : "Provider Name",
+          "value" : "SAML Test Provider"
+        },
+        "metadataXml" : {
+          "type" : "string",
+          "displayName" : "Identity Provider SAML Metadata",
+          "info" : "Paste the SAML metadata provided by the identity provider.",
+          "preferredControlType" : "textArea",
+          "value" : "metadata"
+        },
+        "returnToUrl" : {
+          "displayName" : "Application Redirect URL",
+          "preferredControlType" : "textField",
+          "info" : "Your application's redirect URL, such as \"https://app.yourorganization.com/\". Enter this URL if you embed the DaVinci widget in your application. This allows DaVinci to redirect the browser back to your application.",
+          "value" : "https://ping-eng.com/callback"
+        },
+        "userConnectorAttributeMapping" : {
+          "type" : "object",
+          "preferredControlType" : "userConnectorAttributeMapping",
+          "newMappingAllowed" : true,
+          "title1" : "Identity Provider Attributes",
+          "title2" : null,
+          "sections" : [
+            "attributeMapping"
+          ],
+          "value" : {
+            "userPoolConnectionId" : "defaultUserPool",
+            "mapping" : {
+              "username" : {
+                "value1" : "saml_subject"
+              }
+            }
+          }
+        },
+        "customAttributes" : {
+          "type" : "array",
+          "displayName" : "Connector Attributes",
+          "preferredControlType" : "tableViewAttributes",
+          "info" : "Add the attributes that you expect to receive from the identity provider. This allows you to map them on the Attribute Mapping tab.",
+          "sections" : [
+            "connectorAttributes"
+          ],
+          "value" : [
+            {
+              "name" : "saml_subject",
+              "description" : "Subject",
+              "type" : "string",
+              "value" : null,
+              "minLength" : "1",
+              "maxLength" : "300",
+              "required" : true,
+              "attributeType" : "sk"
+            }
+          ]
+        }
+      }
+    }
+  })
+}
+`, acctest.DaVinciSandboxEnvironment(false), resourceName)
 }
 
 // Validate any computed values when applying minimal HCL
@@ -297,7 +1114,7 @@ func davinciConnectorInstance_Delete(ctx context.Context, apiClient *pingone.API
 		t.Fatalf("One of the identifier attributes can't be determined. environmentId: '%s' id: '%s'", environmentId, id)
 	}
 
-	_, err := apiClient.DaVinciConnectorApi.DeleteConnectorInstanceById(ctx, uuid.MustParse(environmentId), id).Execute()
+	_, err := apiClient.DaVinciConnectorsApi.DeleteConnectorInstanceById(ctx, uuid.MustParse(environmentId), id).Execute()
 	if err != nil {
 		t.Fatalf("Failed to delete davinci_connector_instance: %v", err)
 	}
@@ -326,7 +1143,7 @@ func davinciConnectorInstance_CheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, r, err := p1Client.DaVinciConnectorApi.GetConnectorInstanceById(ctx, uuid.MustParse(rs.Primary.Attributes["environment_id"]), rs.Primary.Attributes["id"]).Execute()
+		_, r, err := p1Client.DaVinciConnectorsApi.GetConnectorInstanceById(ctx, uuid.MustParse(rs.Primary.Attributes["environment_id"]), rs.Primary.Attributes["id"]).Execute()
 
 		shouldContinue, err = acctest.CheckForResourceDestroy(r, err)
 		if err != nil {

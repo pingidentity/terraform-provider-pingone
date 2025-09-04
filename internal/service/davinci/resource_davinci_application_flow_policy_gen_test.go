@@ -304,39 +304,39 @@ func davinciApplicationFlowPolicy_CompleteReorderedHCL(resourceName string) stri
 
 resource "pingone_davinci_application_flow_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-//   da_vinci_application_id = //TODO
-//   id = //TODO
-//   // TODO set values for complete fields, with ordering changes
-//   flow_distributions = [
-//     {
-//       id = //TODO
-//       ip = //TODO
-//       success_nodes = [
-//         {
-//           id = //TODO
-//         }
-//       ]
-//       version = //TODO
-//       weight = //TODO
-//     }
-//   ]
-//   name = //TODO
-//   status = //TODO
-//   trigger = {
-//     configuration = {
-//       mfa = {
-//         enabled = //TODO
-//         time = //TODO
-//         time_format = //TODO
-//       }
-//       pwd = {
-//         enabled = //TODO
-//         time = //TODO
-//         time_format = //TODO
-//       }
-//     }
-//     type = //TODO
-//   }
+  //   da_vinci_application_id = //TODO
+  //   id = //TODO
+  //   // TODO set values for complete fields, with ordering changes
+  //   flow_distributions = [
+  //     {
+  //       id = //TODO
+  //       ip = //TODO
+  //       success_nodes = [
+  //         {
+  //           id = //TODO
+  //         }
+  //       ]
+  //       version = //TODO
+  //       weight = //TODO
+  //     }
+  //   ]
+  //   name = //TODO
+  //   status = //TODO
+  //   trigger = {
+  //     configuration = {
+  //       mfa = {
+  //         enabled = //TODO
+  //         time = //TODO
+  //         time_format = //TODO
+  //       }
+  //       pwd = {
+  //         enabled = //TODO
+  //         time = //TODO
+  //         time_format = //TODO
+  //       }
+  //     }
+  //     type = //TODO
+  //   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
@@ -421,7 +421,7 @@ func davinciApplicationFlowPolicy_Delete(ctx context.Context, apiClient *pingone
 		t.Fatalf("One of the identifier attributes can't be determined. environmentId: '%s' daVinciApplicationId: '%s' id: '%s'", environmentId, daVinciApplicationId, id)
 	}
 
-	_, err := apiClient.DaVinciApplicationApi.DeleteFlowPolicyByIdUsingDavinciApplicationId(ctx, uuid.MustParse(environmentId), daVinciApplicationId, id).Execute()
+	_, err := apiClient.DaVinciApplicationsApi.DeleteFlowPolicyByIdUsingDavinciApplicationId(ctx, uuid.MustParse(environmentId), daVinciApplicationId, id).Execute()
 	if err != nil {
 		t.Fatalf("Failed to delete davinci_application_flow_policy: %v", err)
 	}
@@ -450,7 +450,7 @@ func davinciApplicationFlowPolicy_CheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, r, err := p1Client.DaVinciApplicationApi.GetFlowPolicyByIdUsingDavinciApplicationId(ctx, uuid.MustParse(rs.Primary.Attributes["environment_id"]), rs.Primary.Attributes["da_vinci_application_id"], rs.Primary.Attributes["id"]).Execute()
+		_, r, err := p1Client.DaVinciApplicationsApi.GetFlowPolicyByIdUsingDavinciApplicationId(ctx, uuid.MustParse(rs.Primary.Attributes["environment_id"]), rs.Primary.Attributes["da_vinci_application_id"], rs.Primary.Attributes["id"]).Execute()
 
 		shouldContinue, err = acctest.CheckForResourceDestroy(r, err)
 		if err != nil {

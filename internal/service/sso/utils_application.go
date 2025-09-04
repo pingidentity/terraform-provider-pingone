@@ -329,6 +329,9 @@ func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Ob
 			"The `saml_options.type` value `TEMPLATE_APP` (used for Catalog Applications) is not supported.\nTo proceed, select Enable Advanced Configuration in the UI or change `saml_options.type` to `WEB_APP` before using this resource in Terraform.")
 	}
 
+	virtualServerIdSettings, d := applicationSamlVirtualServerIdSettingsOkToTF(apiObject.GetVirtualServerIdSettingsOk())
+	diags.Append(d...)
+
 	attributesMap := map[string]attr.Value{
 		"acs_urls":                         framework.StringSetOkToTF(apiObject.GetAcsUrlsOk()),
 		"assertion_duration":               framework.Int32OkToTF(apiObject.GetAssertionDurationOk()),
@@ -349,6 +352,7 @@ func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Ob
 		"sp_entity_id":                     framework.StringOkToTF(apiObject.GetSpEntityIdOk()),
 		"sp_verification":                  spVerification,
 		"type":                             typeValue,
+		"virtual_server_id_settings":       virtualServerIdSettings,
 	}
 
 	returnVar, d := types.ObjectValue(applicationSamlOptionsTFObjectTypes, attributesMap)
@@ -437,6 +441,41 @@ func applicationSamlSpVerificationOkToTF(apiObject *management.ApplicationSAMLAl
 	}
 
 	returnVar, d := types.ObjectValue(applicationSamlOptionsSpVerificationTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func applicationSamlVirtualServerIdSettingsOkToTF(apiObject *management.ApplicationSAMLAllOfVirtualServerIdSettings, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(applicationSamlOptionsVirtualServerIdSettingsTFObjectTypes), diags
+	}
+
+	vsSettingsMap := map[string]attr.Value{
+		"enabled":            framework.BoolOkToTF(apiObject.GetEnabledOk()),
+		"virtual_server_ids": types.ListNull(types.ObjectType{AttrTypes: applicationSamlOptionsVirtualServerIdSettingsVirtualServerIdsTFObjectTypes}),
+	}
+
+	if vsIds, ok := apiObject.GetVirtualServerIdsOk(); ok {
+		vsIdsTF := make([]attr.Value, len(vsIds))
+		for i, vsId := range vsIds {
+			vsIdsTF[i], diags = types.ObjectValue(applicationSamlOptionsVirtualServerIdSettingsVirtualServerIdsTFObjectTypes, map[string]attr.Value{
+				"vs_id":   framework.StringOkToTF(vsId.GetVsIdOk()),
+				"default": framework.BoolOkToTF(vsId.GetDefaultOk()),
+			})
+			if diags.HasError() {
+				return types.ObjectNull(applicationSamlOptionsVirtualServerIdSettingsTFObjectTypes), diags
+			}
+		}
+		vsSettingsMap["virtual_server_ids"], diags = types.ListValue(types.ObjectType{AttrTypes: applicationSamlOptionsVirtualServerIdSettingsVirtualServerIdsTFObjectTypes}, vsIdsTF)
+		if diags.HasError() {
+			return types.ObjectNull(applicationSamlOptionsVirtualServerIdSettingsTFObjectTypes), diags
+		}
+	}
+
+	returnVar, d := types.ObjectValue(applicationSamlOptionsVirtualServerIdSettingsTFObjectTypes, vsSettingsMap)
 	diags.Append(d...)
 
 	return returnVar, diags

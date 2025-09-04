@@ -33,7 +33,7 @@ terraform {
   required_providers {
     pingone = {
       source  = "pingidentity/pingone"
-      version = ">= 1.8, < 1.9"
+      version = ">= 1.10, < 1.11"
     }
   }
 }
@@ -57,7 +57,7 @@ terraform {
   required_providers {
     pingone = {
       source  = "pingidentity/pingone"
-      version = ">= 1.8, < 1.9"
+      version = ">= 1.10, < 1.11"
     }
   }
 }
@@ -74,7 +74,7 @@ resource "pingone_environment" "my_environment" {
 export PINGONE_CLIENT_ID="admin-client-id-value"
 export PINGONE_CLIENT_SECRET="admin-client-secret-value"
 export PINGONE_ENVIRONMENT_ID="admin-environment-id-value"
-export PINGONE_REGION_CODE="AP | AU | CA | EU | NA"
+export PINGONE_REGION_CODE="AP | AU | CA | EU | NA | SG"
 terraform plan
 ```
 
@@ -85,7 +85,7 @@ terraform {
   required_providers {
     pingone = {
       source  = "pingidentity/pingone"
-      version = ">= 1.8, < 1.9"
+      version = ">= 1.10, < 1.11"
     }
   }
 }
@@ -100,7 +100,7 @@ resource "pingone_environment" "my_environment" {
 
 ```shell
 export PINGONE_API_ACCESS_TOKEN="worker-access-token-value"
-export PINGONE_REGION_CODE="AP | AU | CA | EU | NA"
+export PINGONE_REGION_CODE="AP | AU | CA | EU | NA | SG"
 terraform plan
 ```
 
@@ -144,7 +144,7 @@ provider "pingone" {
 - `environment_id` (String) Environment ID for the worker app client.  Default value can be set with the `PINGONE_ENVIRONMENT_ID` environment variable.  Must be configured with `client_id` and `client_secret`.
 - `global_options` (Block List) A single block containing configuration items to override API behaviours in PingOne. (see [below for nested schema](#nestedblock--global_options))
 - `http_proxy` (String) Full URL for the http/https proxy service, for example `http://127.0.0.1:8090`.  Default value can be set with the `HTTP_PROXY` or `HTTPS_PROXY` environment variables.
-- `region_code` (String) The PingOne region to use, which selects the appropriate service endpoints.  Options are `AP` (for Asia-Pacific `.asia` tenants), `AU` (for Asia-Pacific `.com.au` tenants), `CA` (for Canada `.ca` tenants), `EU` (for Europe `.eu` tenants) and `NA` (for North America `.com` tenants).  Default value can be set with the `PINGONE_REGION_CODE` environment variable.
+- `region_code` (String) The PingOne region to use, which selects the appropriate service endpoints.  Options are `AP` (for Asia-Pacific `.asia` tenants), `AU` (for Asia-Pacific `.com.au` tenants), `CA` (for Canada `.ca` tenants), `EU` (for Europe `.eu` tenants), `NA` (for North America `.com` tenants) and `SG` (for Singapore `.sg` tenants).  Default value can be set with the `PINGONE_REGION_CODE` environment variable.
 - `service_endpoints` (Block List) A single block containing configuration items to override the service API endpoints of PingOne. (see [below for nested schema](#nestedblock--service_endpoints))
 - `append_user_agent` (String) A custom string value to append to the end of the `User-Agent` header when making API requests to the PingOne service. Default value can be set with the `PINGONE_TF_APPEND_USER_AGENT` environment variable.
 

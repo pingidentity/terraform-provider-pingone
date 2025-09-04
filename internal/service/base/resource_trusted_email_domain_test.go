@@ -23,6 +23,7 @@ func TestAccTrustedEmailDomain_RemovalDrift(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
+	domainPrefix := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_trusted_email_domain.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
@@ -49,7 +50,7 @@ func TestAccTrustedEmailDomain_RemovalDrift(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: testAccTrustedEmailDomainConfig_Full(environmentName, licenseID, resourceName),
+				Config: testAccTrustedEmailDomainConfig_Full(environmentName, licenseID, resourceName, domainPrefix),
 				Check:  base.TrustedEmailDomain_GetIDs(resourceFullName, &environmentID, &trustedEmailDomainID),
 			},
 			{
@@ -61,7 +62,7 @@ func TestAccTrustedEmailDomain_RemovalDrift(t *testing.T) {
 			},
 			// Test removal of the environment
 			{
-				Config: testAccTrustedEmailDomainConfig_Full(environmentName, licenseID, resourceName),
+				Config: testAccTrustedEmailDomainConfig_Full(environmentName, licenseID, resourceName, domainPrefix),
 				Check:  base.TrustedEmailDomain_GetIDs(resourceFullName, &environmentID, &trustedEmailDomainID),
 			},
 			{
@@ -79,6 +80,7 @@ func TestAccTrustedEmailDomain_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
+	domainPrefix := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_trusted_email_domain.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
@@ -97,11 +99,11 @@ func TestAccTrustedEmailDomain_Full(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccTrustedEmailDomainConfig_Full(environmentName, licenseID, resourceName),
+				Config: testAccTrustedEmailDomainConfig_Full(environmentName, licenseID, resourceName, domainPrefix),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "domain_name", "terraformdev.ping-eng.com"),
+					resource.TestCheckResourceAttr(resourceFullName, "domain_name", fmt.Sprintf("%s.terraformdev.ping-eng.com", domainPrefix)),
 				),
 			},
 			// Test importing the resource
@@ -127,6 +129,7 @@ func TestAccTrustedEmailDomain_BadParameters(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
+	domainPrefix := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_trusted_email_domain.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
@@ -146,7 +149,7 @@ func TestAccTrustedEmailDomain_BadParameters(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: testAccTrustedEmailDomainConfig_Full(environmentName, licenseID, resourceName),
+				Config: testAccTrustedEmailDomainConfig_Full(environmentName, licenseID, resourceName, domainPrefix),
 			},
 			// Errors
 			{
@@ -170,13 +173,13 @@ func TestAccTrustedEmailDomain_BadParameters(t *testing.T) {
 	})
 }
 
-func testAccTrustedEmailDomainConfig_Full(environmentName, licenseID, resourceName string) string {
+func testAccTrustedEmailDomainConfig_Full(environmentName, licenseID, resourceName, domainPrefix string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
 resource "pingone_trusted_email_domain" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  domain_name = "terraformdev.ping-eng.com"
-}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+  domain_name = "%[4]s.terraformdev.ping-eng.com"
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, domainPrefix)
 }

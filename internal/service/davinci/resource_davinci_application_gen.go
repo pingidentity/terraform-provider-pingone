@@ -80,7 +80,7 @@ type davinciApplicationResourceModel struct {
 
 func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Resource to create and manage a davinci application.",
+		Description: "Resource to create and manage a DaVinci application.",
 		Attributes: map[string]schema.Attribute{
 			"api_key": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -125,7 +125,6 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 				Required: true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(256),
-					//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
 				},
 			},
 			"oauth": schema.SingleNestedAttribute{
@@ -153,17 +152,19 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 								"implicit",
 							)),
 						},
-						Default: setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{
-							types.StringValue("authorizationCode"),
-						})),
+						Default: setdefault.StaticValue(davinciApplicationOauthGrantTypesDefault),
 					},
 					"logout_uris": schema.SetAttribute{
 						ElementType: types.StringType,
 						Optional:    true,
+						Computed:    true,
+						Default:     setdefault.StaticValue(types.SetValueMust(types.StringType, nil)),
 					},
 					"redirect_uris": schema.SetAttribute{
 						ElementType: types.StringType,
 						Optional:    true,
+						Computed:    true,
+						Default:     setdefault.StaticValue(types.SetValueMust(types.StringType, nil)),
 					},
 					"scopes": schema.SetAttribute{
 						ElementType:         types.StringType,
@@ -179,10 +180,7 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 								"profile",
 							)),
 						},
-						Default: setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{
-							types.StringValue("openid"),
-							types.StringValue("profile"),
-						})),
+						Default: setdefault.StaticValue(davinciApplicationOauthScopesDefault),
 					},
 					"sp_jwks_openid": schema.StringAttribute{
 						Optional: true,
@@ -220,14 +218,14 @@ func (model *davinciApplicationResourceModel) buildClientStructPut() (*pingone.D
 	result.Name = model.Name.ValueString()
 	// oauth
 	if !model.Oauth.IsNull() && !model.Oauth.IsUnknown() {
-		oauthValue := &pingone.DaVinciApplicationReplaceRequestOauth{}
+		oauthValue := &pingone.DaVinciApplicationReplaceRequestOAuth{}
 		oauthAttrs := model.Oauth.Attributes()
 		oauthValue.EnforceSignedRequestOpenid = oauthAttrs["enforce_signed_request_openid"].(types.Bool).ValueBoolPointer()
 		if !oauthAttrs["grant_types"].IsNull() && !oauthAttrs["grant_types"].IsUnknown() {
-			oauthValue.GrantTypes = []pingone.DaVinciApplicationReplaceRequestOauthGrantTypes{}
+			oauthValue.GrantTypes = []pingone.DaVinciApplicationReplaceRequestOAuthGrantType{}
 			for _, grantTypesElement := range oauthAttrs["grant_types"].(types.Set).Elements() {
-				var grantTypesValue pingone.DaVinciApplicationReplaceRequestOauthGrantTypes
-				grantTypesEnumValue, err := pingone.NewDaVinciApplicationReplaceRequestOauthGrantTypesFromValue(grantTypesElement.(types.String).ValueString())
+				var grantTypesValue pingone.DaVinciApplicationReplaceRequestOAuthGrantType
+				grantTypesEnumValue, err := pingone.NewDaVinciApplicationReplaceRequestOAuthGrantTypeFromValue(grantTypesElement.(types.String).ValueString())
 				if err != nil {
 					respDiags.AddAttributeError(
 						path.Root("grant_types"),
@@ -253,10 +251,10 @@ func (model *davinciApplicationResourceModel) buildClientStructPut() (*pingone.D
 			}
 		}
 		if !oauthAttrs["scopes"].IsNull() && !oauthAttrs["scopes"].IsUnknown() {
-			oauthValue.Scopes = []pingone.DaVinciApplicationReplaceRequestOauthScopes{}
+			oauthValue.Scopes = []pingone.DaVinciApplicationReplaceRequestOAuthScope{}
 			for _, scopesElement := range oauthAttrs["scopes"].(types.Set).Elements() {
-				var scopesValue pingone.DaVinciApplicationReplaceRequestOauthScopes
-				scopesEnumValue, err := pingone.NewDaVinciApplicationReplaceRequestOauthScopesFromValue(scopesElement.(types.String).ValueString())
+				var scopesValue pingone.DaVinciApplicationReplaceRequestOAuthScope
+				scopesEnumValue, err := pingone.NewDaVinciApplicationReplaceRequestOAuthScopeFromValue(scopesElement.(types.String).ValueString())
 				if err != nil {
 					respDiags.AddAttributeError(
 						path.Root("scopes"),
@@ -277,7 +275,7 @@ func (model *davinciApplicationResourceModel) buildClientStructPut() (*pingone.D
 	return result, respDiags
 }
 
-func (state *davinciApplicationResourceModel) readClientResponse(response *pingone.DaVinciApplication) diag.Diagnostics {
+func (state *davinciApplicationResourceModel) readClientResponse(response *pingone.DaVinciApplicationResponse) diag.Diagnostics {
 	var respDiags, diags diag.Diagnostics
 	// api_key
 	apiKeyAttrTypes := map[string]attr.Type{
@@ -305,14 +303,38 @@ func (state *davinciApplicationResourceModel) readClientResponse(response *pingo
 		"sp_jwks_openid":                types.StringType,
 		"sp_jwks_url":                   types.StringType,
 	}
-	oauthGrantTypesValue, diags := types.SetValueFrom(context.Background(), types.StringType, response.Oauth.GrantTypes)
-	respDiags.Append(diags...)
-	oauthLogoutUrisValue, diags := types.SetValueFrom(context.Background(), types.StringType, response.Oauth.LogoutUris)
-	respDiags.Append(diags...)
-	oauthRedirectUrisValue, diags := types.SetValueFrom(context.Background(), types.StringType, response.Oauth.RedirectUris)
-	respDiags.Append(diags...)
-	oauthScopesValue, diags := types.SetValueFrom(context.Background(), types.StringType, response.Oauth.Scopes)
-	respDiags.Append(diags...)
+	var oauthGrantTypesValue types.Set
+	if response.Oauth.GrantTypes == nil {
+		oauthGrantTypesValue, diags = types.SetValue(types.StringType, []attr.Value{})
+		respDiags.Append(diags...)
+	} else {
+		oauthGrantTypesValue, diags = types.SetValueFrom(context.Background(), types.StringType, response.Oauth.GrantTypes)
+		respDiags.Append(diags...)
+	}
+	var oauthLogoutUrisValue types.Set
+	if response.Oauth.LogoutUris == nil {
+		oauthLogoutUrisValue, diags = types.SetValue(types.StringType, []attr.Value{})
+		respDiags.Append(diags...)
+	} else {
+		oauthLogoutUrisValue, diags = types.SetValueFrom(context.Background(), types.StringType, response.Oauth.LogoutUris)
+		respDiags.Append(diags...)
+	}
+	var oauthRedirectUrisValue types.Set
+	if response.Oauth.RedirectUris == nil {
+		oauthRedirectUrisValue, diags = types.SetValue(types.StringType, []attr.Value{})
+		respDiags.Append(diags...)
+	} else {
+		oauthRedirectUrisValue, diags = types.SetValueFrom(context.Background(), types.StringType, response.Oauth.RedirectUris)
+		respDiags.Append(diags...)
+	}
+	var oauthScopesValue types.Set
+	if response.Oauth.Scopes == nil {
+		oauthScopesValue, diags = types.SetValue(types.StringType, []attr.Value{})
+		respDiags.Append(diags...)
+	} else {
+		oauthScopesValue, diags = types.SetValueFrom(context.Background(), types.StringType, response.Oauth.Scopes)
+		respDiags.Append(diags...)
+	}
 	oauthValue, diags := types.ObjectValue(oauthAttrTypes, map[string]attr.Value{
 		"client_secret":                 types.StringValue(response.Oauth.ClientSecret),
 		"enforce_signed_request_openid": types.BoolPointerValue(response.Oauth.EnforceSignedRequestOpenid),
@@ -355,16 +377,17 @@ func (r *davinciApplicationResource) Read(ctx context.Context, req resource.Read
 		)
 		return
 	}
-	var responseData *pingone.DaVinciApplication
+	var responseData *pingone.DaVinciApplicationResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciApplicationApi.GetDavinciApplicationById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.DaVinciApplicationsApi.GetDavinciApplicationById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetDavinciApplicationById",
 		framework.CustomErrorResourceNotFoundWarning,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -422,16 +445,17 @@ func (r *davinciApplicationResource) Update(ctx context.Context, req resource.Up
 		)
 		return
 	}
-	var responseData *pingone.DaVinciApplication
+	var responseData *pingone.DaVinciApplicationResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciApplicationApi.ReplaceDavinciApplicationById(ctx, environmentIdUuid, data.Id.ValueString()).DaVinciApplicationReplaceRequest(*clientData).Execute()
+			fO, fR, fErr := r.Client.DaVinciApplicationsApi.ReplaceDavinciApplicationById(ctx, environmentIdUuid, data.Id.ValueString()).DaVinciApplicationReplaceRequest(*clientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReplaceDavinciApplicationById",
 		framework.DefaultCustomError,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -481,11 +505,12 @@ func (r *davinciApplicationResource) Delete(ctx context.Context, req resource.De
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := r.Client.DaVinciApplicationApi.DeleteDavinciApplicationById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
+			fR, fErr := r.Client.DaVinciApplicationsApi.DeleteDavinciApplicationById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteDavinciApplicationById",
 		framework.CustomErrorResourceNotFoundWarning,
+		framework.DefaultRetryable,
 		nil,
 	)...)
 }
