@@ -5,11 +5,16 @@ package davinci
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/pingidentity/pingone-go-client/pingone"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 )
 
 var (
@@ -131,4 +136,123 @@ func (r *davinciFlowResource) ModifyPlan(ctx context.Context, req resource.Modif
 		}
 		resp.Diagnostics.Append(resp.Plan.Set(ctx, plan)...)
 	}
+}
+
+func (m *davinciFlowResourceModel) getGraphDataElementsNodes() *types.Set {
+	if !m.GraphData.IsNull() && !m.GraphData.IsUnknown() {
+		graphDataAttrs := m.GraphData.Attributes()
+		if !graphDataAttrs["elements"].IsNull() && !graphDataAttrs["elements"].IsUnknown() {
+			graphDataElementsAttrs := graphDataAttrs["elements"].(types.Object).Attributes()
+			nodesSet, ok := graphDataElementsAttrs["nodes"].(types.Set)
+			if ok {
+				return &nodesSet
+			}
+		}
+	}
+	return nil
+}
+
+func (r *davinciFlowResource) isUpdateRequiredAfterCreate(plan, createResponse davinciFlowResourceModel) bool {
+	planNodes := plan.getGraphDataElementsNodes()
+	createResponseNodes := createResponse.getGraphDataElementsNodes()
+
+	// Check that the create returned all the nodes, but the content did not match the plan
+	return len(planNodes.Elements()) == len(createResponseNodes.Elements()) && !planNodes.Equal(createResponseNodes)
+}
+
+func (r *davinciFlowResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data, createResponseModel davinciFlowResourceModel
+
+	if r.Client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Create API call logic
+	clientData, diags := data.buildClientStructPost()
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	environmentIdUuid, err := uuid.Parse(data.EnvironmentId.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("environment_id"),
+			"Attribute Validation Error",
+			fmt.Sprintf("The value '%s' for attribute '%s' is not a valid UUID: %s", data.EnvironmentId.ValueString(), "EnvironmentId", err.Error()),
+		)
+		return
+	}
+	var createResponseData *pingone.DaVinciFlowResponse
+	resp.Diagnostics.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			fO, fR, fErr := r.Client.DaVinciFlowsApi.CreateFlow(ctx, environmentIdUuid).DaVinciFlowCreateRequest(*clientData).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
+		},
+		"CreateFlow",
+		framework.DefaultCustomError,
+		framework.DefaultRetryable,
+		&createResponseData,
+	)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Read create response into new model
+	resp.Diagnostics.Append(createResponseModel.readClientResponse(createResponseData)...)
+
+	// Currently certain fields require an update call after initial create to set (TRIAGE-29360)
+	// If the node count is correct but the contents are not equal, an update is necessary
+	if r.isUpdateRequiredAfterCreate(data, createResponseModel) {
+		// Update API call logic
+		putClientData, diags := data.buildClientStructPut()
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		var updateResponseData *pingone.DaVinciFlowResponse
+		resp.Diagnostics.Append(framework.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				fO, fR, fErr := r.Client.DaVinciFlowsApi.ReplaceFlowById(ctx, environmentIdUuid, createResponseData.Id).DaVinciFlowReplaceRequest(*putClientData).Execute()
+				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			},
+			"ReplaceFlowById-Create",
+			framework.DefaultCustomError,
+			framework.DefaultRetryable,
+			&updateResponseData,
+		)...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		// Read response into the model
+		resp.Diagnostics.Append(data.readClientResponse(updateResponseData)...)
+	} else {
+		// Just use the create response directly
+		resp.Diagnostics.Append(data.readClientResponse(createResponseData)...)
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Save data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

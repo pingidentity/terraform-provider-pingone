@@ -317,7 +317,11 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 													Optional: true,
 												},
 												"connection_id": schema.StringAttribute{
+													Optional: true,
 													Computed: true,
+													PlanModifiers: []planmodifier.String{
+														stringplanmodifier.UseStateForUnknown(),
+													},
 												},
 												"connector_id": schema.StringAttribute{
 													Optional: true,
@@ -360,7 +364,11 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 												// 	Computed: true,
 												// },
 												"name": schema.StringAttribute{
+													Optional: true,
 													Computed: true,
+													PlanModifiers: []planmodifier.String{
+														stringplanmodifier.UseStateForUnknown(),
+													},
 												},
 												"node_type": schema.StringAttribute{
 													Required: true,
@@ -840,9 +848,11 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 					nodesDataValue := pingone.DaVinciFlowGraphDataRequestElementsNodeData{}
 					nodesDataAttrs := nodesAttrs["data"].(types.Object).Attributes()
 					nodesDataValue.CapabilityName = nodesDataAttrs["capability_name"].(types.String).ValueStringPointer()
+					nodesDataValue.ConnectionId = nodesDataAttrs["connection_id"].(types.String).ValueStringPointer()
 					nodesDataValue.ConnectorId = nodesDataAttrs["connector_id"].(types.String).ValueStringPointer()
 					nodesDataValue.Id = nodesDataAttrs["id"].(types.String).ValueString()
 					nodesDataValue.Label = nodesDataAttrs["label"].(types.String).ValueStringPointer()
+					nodesDataValue.Name = nodesDataAttrs["name"].(types.String).ValueStringPointer()
 					nodesDataValue.NodeType = nodesDataAttrs["node_type"].(types.String).ValueString()
 					if !nodesDataAttrs["properties"].IsNull() && !nodesDataAttrs["properties"].IsUnknown() {
 						var unmarshaled map[string]interface{}
@@ -1115,9 +1125,11 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 					nodesDataValue := pingone.DaVinciFlowGraphDataRequestElementsNodeData{}
 					nodesDataAttrs := nodesAttrs["data"].(types.Object).Attributes()
 					nodesDataValue.CapabilityName = nodesDataAttrs["capability_name"].(types.String).ValueStringPointer()
+					nodesDataValue.ConnectionId = nodesDataAttrs["connection_id"].(types.String).ValueStringPointer()
 					nodesDataValue.ConnectorId = nodesDataAttrs["connector_id"].(types.String).ValueStringPointer()
 					nodesDataValue.Id = nodesDataAttrs["id"].(types.String).ValueString()
 					nodesDataValue.Label = nodesDataAttrs["label"].(types.String).ValueStringPointer()
+					nodesDataValue.Name = nodesDataAttrs["name"].(types.String).ValueStringPointer()
 					nodesDataValue.NodeType = nodesDataAttrs["node_type"].(types.String).ValueString()
 					var unmarshaled map[string]interface{}
 					err := json.Unmarshal([]byte(nodesDataAttrs["properties"].(jsontypes.Normalized).ValueString()), &unmarshaled)
@@ -1855,68 +1867,6 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 	}
 	state.Trigger = triggerValue
 	return respDiags
-}
-
-func (r *davinciFlowResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data davinciFlowResourceModel
-
-	if r.Client == nil {
-		resp.Diagnostics.AddError(
-			"Client not initialized",
-			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
-		return
-	}
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Create API call logic
-	clientData, diags := data.buildClientStructPost()
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	environmentIdUuid, err := uuid.Parse(data.EnvironmentId.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("environment_id"),
-			"Attribute Validation Error",
-			fmt.Sprintf("The value '%s' for attribute '%s' is not a valid UUID: %s", data.EnvironmentId.ValueString(), "EnvironmentId", err.Error()),
-		)
-		return
-	}
-	var responseData *pingone.DaVinciFlowResponse
-	resp.Diagnostics.Append(framework.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciFlowsApi.CreateFlow(ctx, environmentIdUuid).DaVinciFlowCreateRequest(*clientData).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
-		},
-		"CreateFlow",
-		framework.DefaultCustomError,
-		framework.DefaultRetryable,
-		&responseData,
-	)...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Read response into the model
-	resp.Diagnostics.Append(data.readClientResponse(responseData)...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Save data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *davinciFlowResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
