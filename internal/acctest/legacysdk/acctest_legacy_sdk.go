@@ -62,6 +62,41 @@ func CheckParentEnvironmentDestroy(ctx context.Context, apiClient *management.AP
 	}
 }
 
+func MinimalSandboxDaVinciEnvironmentNoPopulation(resourceName, licenseID string) string {
+	return MinimalDaVinciEnvironmentNoPopulation(resourceName, licenseID, management.ENUMENVIRONMENTTYPE_SANDBOX)
+}
+
+func MinimalDaVinciEnvironmentNoPopulation(resourceName, licenseID string, environmentType management.EnumEnvironmentType) string {
+	return fmt.Sprintf(`
+	resource "pingone_environment" "%[1]s" {
+		name = "%[1]s"
+		license_id = "%[2]s"
+		type = "%[3]s"
+
+	services = [
+		{
+			type = "SSO"
+		},
+		{
+			type = "MFA"
+		},
+		{
+			type = "Risk"
+		},
+		{
+			type = "Credentials"
+		},
+		{
+			type = "Verify"
+		},
+		{
+		    type = "DaVinci"
+		}
+	]
+}
+`, resourceName, licenseID, string(environmentType))
+}
+
 func MinimalSandboxEnvironmentNoPopulation(resourceName, licenseID string) string {
 	return MinimalEnvironmentNoPopulation(resourceName, licenseID, management.ENUMENVIRONMENTTYPE_SANDBOX)
 }
@@ -104,6 +139,18 @@ func MinimalSandboxEnvironment(resourceName, licenseID string) string {
 		name = "%[2]s"
 	}
 `, MinimalSandboxEnvironmentNoPopulation(resourceName, licenseID), resourceName)
+}
+
+func MinimalSandboxDaVinciEnvironment(resourceName, licenseID string) string {
+	return fmt.Sprintf(`
+	%[1]s
+		
+	resource "pingone_population_default" "%[2]s" {
+		environment_id = pingone_environment.%[2]s.id
+
+		name = "%[2]s"
+	}
+`, MinimalSandboxDaVinciEnvironmentNoPopulation(resourceName, licenseID), resourceName)
 }
 
 func CheckParentUserDestroy(ctx context.Context, apiClient *management.APIClient, environmentID, userID string) (bool, error) {

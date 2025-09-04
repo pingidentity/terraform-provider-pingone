@@ -507,7 +507,7 @@ resource "pingone_davinci_variable" "%[3]s" {
   mutable        = true
   name           = "%[2]s"
 }
-`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+`, acctestlegacysdk.MinimalSandboxDaVinciEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 // TODO update to cover setting the value bool to false, which currently fails due to an API issue TRIAGE-27920

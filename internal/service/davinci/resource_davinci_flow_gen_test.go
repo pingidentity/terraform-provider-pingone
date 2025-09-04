@@ -328,34 +328,34 @@ func davinciFlow_MinimalHCL(resourceName string, withBootstrap bool) string {
 
 resource "pingone_davinci_flow" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  name          = "%[2]s"
-  description   = "This is a demo flow"
-  color         = "#00FF00"
-  
+  name           = "%[2]s"
+  description    = "This is a demo flow"
+  color          = "#00FF00"
+
   graph_data = {
     elements = {
       edges = []
-      nodes  = [{
+      nodes = [{
         data = {
-          id        = "8bnj41592a"
-          node_type = "CONNECTION"
-          connector_id = "pingOneSSOConnector"
-          label     = "PingOne"
-          status    = "configured"
+          id              = "8bnj41592a"
+          node_type       = "CONNECTION"
+          connector_id    = "pingOneSSOConnector"
+          label           = "PingOne"
+          status          = "configured"
           capability_name = "userLookup"
-          type      = "action"
+          type            = "action"
           properties = jsonencode({
-            "additionalUserProperties": {
-              "value": []
+            "additionalUserProperties" : {
+              "value" : []
             },
-            "username": {
-              "value": "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+            "username" : {
+              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
             },
-            "population": {
-              "value": "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+            "population" : {
+              "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
             },
-            "userIdentifierForFindUser": {
-              "value": "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+            "userIdentifierForFindUser" : {
+              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
             }
           })
         }
@@ -363,53 +363,53 @@ resource "pingone_davinci_flow" "%[2]s" {
           x = 420
           y = 360
         }
-        group       = "nodes"
-        removed     = false
-        selected    = false
-        selectable  = true
-        locked      = false
-        grabbable   = true
-        pannable    = false
-        classes     = ""
+        group      = "nodes"
+        removed    = false
+        selected   = false
+        selectable = true
+        locked     = false
+        grabbable  = true
+        pannable   = false
+        classes    = ""
       }]
     }
 
     data = "{}"
-    
+
     box_selection_enabled = true
     user_zooming_enabled  = true
-    zooming_enabled = true
+    zooming_enabled       = true
     zoom                  = 1
     min_zoom              = 0.01
     max_zoom              = 10000
     panning_enabled       = true
     user_panning_enabled  = true
-    
+
     pan = {
       x = 0
       y = 0
     }
-    
+
     renderer = jsonencode({
-      "name": "null"
+      "name" : "null"
     })
   }
-  
+
   settings = {
-    csp = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
+    csp                              = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
     intermediate_loading_screen_css  = ""
     intermediate_loading_screen_html = ""
     log_level                        = 2
   }
-  
+
   output_schema = {
     output = jsonencode({
-      "type": "object",
-      "properties": {},
-      "additionalProperties": true
+      "type" : "object",
+      "properties" : {},
+      "additionalProperties" : true
     })
   }
-  
+
   trigger = {
     type = "AUTHENTICATION"
   }
@@ -480,35 +480,35 @@ func davinciFlow_NewEnvHCL(environmentName, licenseID, resourceName string) stri
 
 resource "pingone_davinci_flow" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  name          = "%[3]s"
-  description   = "This is a demo flow"
-  color         = "#00FF00"
-  
+  name           = "%[3]s"
+  description    = "This is a demo flow"
+  color          = "#00FF00"
+
   graph_data = {
     elements = {
       edges = []
-      nodes  = [{
+      nodes = [{
         data = {
           id        = "8bnj41592a"
           node_type = "CONNECTION"
-		  // connection_id will be computed
-          connector_id = "pingOneSSOConnector"
-          label     = "PingOne"
-          status    = "configured"
+          // connection_id will be computed
+          connector_id    = "pingOneSSOConnector"
+          label           = "PingOne"
+          status          = "configured"
           capability_name = "userLookup"
-          type      = "action"
+          type            = "action"
           properties = jsonencode({
-            "additionalUserProperties": {
-              "value": []
+            "additionalUserProperties" : {
+              "value" : []
             },
-            "username": {
-              "value": "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+            "username" : {
+              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
             },
-            "population": {
-              "value": "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+            "population" : {
+              "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
             },
-            "userIdentifierForFindUser": {
-              "value": "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+            "userIdentifierForFindUser" : {
+              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
             }
           })
         }
@@ -516,54 +516,54 @@ resource "pingone_davinci_flow" "%[3]s" {
           x = 420
           y = 360
         }
-        group       = "nodes"
-        removed     = false
-        selected    = false
-        selectable  = true
-        locked      = false
-        grabbable   = true
-        pannable    = false
-        classes     = ""
+        group      = "nodes"
+        removed    = false
+        selected   = false
+        selectable = true
+        locked     = false
+        grabbable  = true
+        pannable   = false
+        classes    = ""
       }]
     }
 
     data = "{}"
-    
+
     box_selection_enabled = true
     user_zooming_enabled  = true
-    zooming_enabled = true
+    zooming_enabled       = true
     zoom                  = 1
     min_zoom              = 0.01
     max_zoom              = 10000
     pannable              = true
     panning_enabled       = true
     user_panning_enabled  = true
-    
+
     pan = {
       x = 0
       y = 0
     }
-    
+
     renderer = jsonencode({
-      "name": "null"
+      "name" : "null"
     })
   }
-  
+
   settings = {
-    csp = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
+    csp                              = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
     intermediate_loading_screen_css  = ""
     intermediate_loading_screen_html = ""
     log_level                        = 2
   }
-  
+
   output_schema = {
     output = jsonencode({
-      "type": "object",
-      "properties": {},
-      "additionalProperties": true
+      "type" : "object",
+      "properties" : {},
+      "additionalProperties" : true
     })
   }
-  
+
   trigger = {
     type = "AUTHENTICATION"
   }
