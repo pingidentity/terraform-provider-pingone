@@ -1,5 +1,338 @@
 		%[1]s
 
+resource "pingone_davinci_connector_instance" "%[2]s-http" {
+  environment_id = data.pingone_environment.general_test.id
+  connector = {
+    id = "httpConnector"
+  }
+  name = "%[2]s-http"
+}
+
+resource "pingone_davinci_connector_instance" "%[2]s-functions" {
+  environment_id = data.pingone_environment.general_test.id
+  connector = {
+    id = "functionsConnector"
+  }
+  name = "%[2]s-functions"
+}
+
+resource "pingone_davinci_connector_instance" "%[2]s-errors" {
+  environment_id = data.pingone_environment.general_test.id
+  connector = {
+    id = "errorConnector"
+  }
+  name = "%[2]s-errors"
+}
+
+resource "pingone_davinci_connector_instance" "%[2]s-flow" {
+  environment_id = data.pingone_environment.general_test.id
+  connector = {
+    id = "flowConnector"
+  }
+  name = "%[2]s-flow"
+}
+
+resource "pingone_davinci_connector_instance" "%[2]s-variables" {
+  environment_id = data.pingone_environment.general_test.id
+  connector = {
+    id = "variablesConnector"
+  }
+  name = "%[2]s-variables"
+}
+
+resource "pingone_davinci_flow" "%[2]s-subflow1" {
+  environment_id = data.pingone_environment.general_test.id
+  name = "subflow 1"
+  description = "subflow 1 desc"
+  color = "#AFD5FF"
+  
+  graph_data = {
+    elements = {
+      nodes = [
+        {
+          data = {
+            id = "9awrr4q360"
+            node_type = "CONNECTION"
+            connection_id = pingone_davinci_connector_instance.%[2]s-http.id
+            connector_id = "httpConnector"
+            name = "Http"
+            label = "Http"
+            status = "configured"
+            capability_name = "customHtmlMessage"
+            type = "trigger"
+            properties = jsonencode({
+              "message": {
+                "value": "[\n  {\n    \"children\": [\n      {\n        \"text\": \"Subflow 1\"\n      }\n    ]\n  }\n]"
+              }
+            })
+          }
+          position = {
+            x = 277
+            y = 236
+          }
+          group = "nodes"
+          removed = false
+          selected = false
+          selectable = true
+          locked = false
+          grabbable = true
+          pannable = false
+          classes = ""
+        },
+        {
+          data = {
+            id = "rbi38g672i"
+            node_type = "EVAL"
+            label = "Evaluator"
+            properties = jsonencode({})
+          }
+          position = {
+            x = 394
+            y = 237.25
+          }
+          group = "nodes"
+          removed = false
+          selected = false
+          selectable = true
+          locked = false
+          grabbable = true
+          pannable = false
+          classes = ""
+        },
+        {
+          data = {
+            id = "exljnczoqz"
+            node_type = "CONNECTION"
+            connection_id = pingone_davinci_connector_instance.%[2]s-http.id
+            connector_id = "httpConnector"
+            name = "Http"
+            label = "HTTP"
+            status = "configured"
+            capability_name = "createSuccessResponse"
+            type = "action"
+            properties = jsonencode({})
+          }
+          position = {
+            x = 511
+            y = 238.5
+          }
+          group = "nodes"
+          removed = false
+          selected = false
+          selectable = true
+          locked = false
+          grabbable = true
+          pannable = false
+          classes = ""
+        }
+      ]
+      edges = [
+        {
+          data = {
+            id = "jv7enynltp"
+            source = "9awrr4q360"
+            target = "rbi38g672i"
+          }
+          position = {
+            x = 0
+            y = 0
+          }
+          group = "edges"
+          removed = false
+          selected = false
+          selectable = true
+          locked = false
+          grabbable = true
+          pannable = true
+          classes = ""
+        },
+        {
+          data = {
+            id = "bn6hy8ycra"
+            source = "rbi38g672i"
+            target = "exljnczoqz"
+          }
+          position = {
+            x = 0
+            y = 0
+          }
+          group = "edges"
+          removed = false
+          selected = false
+          selectable = true
+          locked = false
+          grabbable = true
+          pannable = true
+          classes = ""
+        }
+      ]
+    }
+    data = jsonencode({})
+    zooming_enabled = true
+    user_zooming_enabled = true
+    zoom = 1
+    min_zoom = 1e-50
+    max_zoom = 1e+50
+    panning_enabled = true
+    user_panning_enabled = true
+    pan = {
+      x = 0
+      y = 0
+    }
+    box_selection_enabled = true
+    renderer = jsonencode({
+      "name": "null"
+    })
+  }
+}
+
+
+resource "pingone_davinci_flow" "%[2]s-subflow2" {
+  environment_id = data.pingone_environment.general_test.id
+  name = "subflow 2"
+  description = "Cloned on Wed Jan 31 2024 13:43:43 GMT+0000 (Coordinated Universal Time). \n"
+  color = "#AFD5FF"
+  
+  graph_data = {
+    elements = {
+      nodes = [
+        {
+          data = {
+            id = "9awrr4q360"
+            node_type = "CONNECTION"
+            connection_id = pingone_davinci_connector_instance.%[2]s-http.id
+            connector_id = "httpConnector"
+            name = "Http"
+            label = "Http"
+            status = "configured"
+            capability_name = "customHtmlMessage"
+            type = "trigger"
+            properties = jsonencode({
+              "message": {
+                "value": "[\n  {\n    \"children\": [\n      {\n        \"text\": \"Subflow 2\"\n      }\n    ]\n  }\n]"
+              }
+            })
+          }
+          position = {
+            x = 277
+            y = 236
+          }
+          group = "nodes"
+          removed = false
+          selected = false
+          selectable = true
+          locked = false
+          grabbable = true
+          pannable = false
+          classes = ""
+        },
+        {
+          data = {
+            id = "rbi38g672i"
+            node_type = "EVAL"
+            label = "Evaluator"
+            properties = jsonencode({})
+          }
+          position = {
+            x = 394
+            y = 237.25
+          }
+          group = "nodes"
+          removed = false
+          selected = false
+          selectable = true
+          locked = false
+          grabbable = true
+          pannable = false
+          classes = ""
+        },
+        {
+          data = {
+            id = "exljnczoqz"
+            node_type = "CONNECTION"
+            connection_id = pingone_davinci_connector_instance.%[2]s-http.id
+            connector_id = "httpConnector"
+            name = "Http"
+            label = "HTTP"
+            status = "configured"
+            capability_name = "createSuccessResponse"
+            type = "action"
+            properties = jsonencode({})
+          }
+          position = {
+            x = 511
+            y = 238.5
+          }
+          group = "nodes"
+          removed = false
+          selected = false
+          selectable = true
+          locked = false
+          grabbable = true
+          pannable = false
+          classes = ""
+        }
+      ]
+      edges = [
+        {
+          data = {
+            id = "jv7enynltp"
+            source = "9awrr4q360"
+            target = "rbi38g672i"
+          }
+          position = {
+            x = 0
+            y = 0
+          }
+          group = "edges"
+          removed = false
+          selected = false
+          selectable = true
+          locked = false
+          grabbable = true
+          pannable = true
+          classes = ""
+        },
+        {
+          data = {
+            id = "bn6hy8ycra"
+            source = "rbi38g672i"
+            target = "exljnczoqz"
+          }
+          position = {
+            x = 0
+            y = 0
+          }
+          group = "edges"
+          removed = false
+          selected = false
+          selectable = true
+          locked = false
+          grabbable = true
+          pannable = true
+          classes = ""
+        }
+      ]
+    }
+    data = jsonencode({})
+    zooming_enabled = true
+    user_zooming_enabled = true
+    zoom = 1
+    min_zoom = 1e-50
+    max_zoom = 1e+50
+    panning_enabled = true
+    user_panning_enabled = true
+    pan = {
+      x = 0
+      y = 0
+    }
+    box_selection_enabled = true
+    renderer = jsonencode({
+      "name": "null"
+    })
+  }
+}
+
 resource "pingone_davinci_flow" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name = "full-basic"
@@ -12,9 +345,9 @@ resource "pingone_davinci_flow" "%[2]s" {
           data = {
             id = "1u2m5vzr49"
             node_type = "CONNECTION"
-            # connection_id = "867ed4363b2bc21c860085ad2baa817d"
+            connection_id = pingone_davinci_connector_instance.%[2]s-http.id
             connector_id = "httpConnector"
-            # name = "Http"
+            name = "%[2]s-http"
             label = "Http"
             status = "configured"
             capability_name = "customHtmlMessage"
@@ -63,9 +396,9 @@ resource "pingone_davinci_flow" "%[2]s" {
           data = {
             id = "nx0o1b2cmw"
             node_type = "CONNECTION"
-            # connection_id = "de650ca45593b82c49064ead10b9fe17"
+            connection_id = pingone_davinci_connector_instance.%[2]s-functions.id
             connector_id = "functionsConnector"
-            # name = "Functions"
+            name = "%[2]s-functions"
             label = "Functions"
             status = "configured"
             capability_name = "AEqualsB"
@@ -123,9 +456,9 @@ resource "pingone_davinci_flow" "%[2]s" {
           data = {
             id = "ikt13crnhy"
             node_type = "CONNECTION"
-            # connection_id = "867ed4363b2bc21c860085ad2baa817d"
+            connection_id = pingone_davinci_connector_instance.%[2]s-http.id
             connector_id = "httpConnector"
-            # name = "Http"
+            name = "%[2]s-http"
             label = "Http"
             status = "configured"
             capability_name = "createSuccessResponse"
@@ -149,9 +482,8 @@ resource "pingone_davinci_flow" "%[2]s" {
           data = {
             id = "vsp1ewtr9m"
             node_type = "CONNECTION"
-            # connection_id = "53ab83a4a4ab919d9f2cb02d9e111ac8"
+            connection_id = pingone_davinci_connector_instance.%[2]s-errors.id
             connector_id = "errorConnector"
-            # name = "Error Message"
             label = "Error Message"
             status = "configured"
             capability_name = "customErrorMessage"
@@ -179,9 +511,9 @@ resource "pingone_davinci_flow" "%[2]s" {
           data = {
             id = "xb74p6rkd8"
             node_type = "CONNECTION"
-            # connection_id = "2581eb287bb1d9bd29ae9886d675f89f"
+            connection_id = pingone_davinci_connector_instance.%[2]s-flow.id
             connector_id = "flowConnector"
-            # name = "Flow Connector"
+            name = "%[2]s-flow"
             label = "Flow Conductor"
             status = "configured"
             capability_name = "startUiSubFlow"
@@ -190,7 +522,7 @@ resource "pingone_davinci_flow" "%[2]s" {
               "subFlowId": {
                 "value": {
                   "label": "subflow 2",
-                  "value": "07503fed5c02849dbbd5ee932da654b2"
+                  "value": "${pingone_davinci_flow.%[2]s-subflow2.id}"
                 }
               },
               "subFlowVersionId": {
@@ -215,9 +547,9 @@ resource "pingone_davinci_flow" "%[2]s" {
           data = {
             id = "kq5ybvwvro"
             node_type = "CONNECTION"
-            # connection_id = "2581eb287bb1d9bd29ae9886d675f89f"
+            connection_id = pingone_davinci_connector_instance.%[2]s-flow.id
             connector_id = "flowConnector"
-            # name = "Flow Connector"
+            name = "%[2]s-flow"
             label = "Flow Conductor"
             status = "configured"
             capability_name = "startUiSubFlow"
@@ -226,7 +558,7 @@ resource "pingone_davinci_flow" "%[2]s" {
               "subFlowId": {
                 "value": {
                   "label": "subflow 1",
-                  "value": "00f66e8926ced6ef5b83619fde4a314a"
+                  "value": "${pingone_davinci_flow.%[2]s-subflow1.id}"
                 }
               },
               "subFlowVersionId": {
@@ -291,9 +623,9 @@ resource "pingone_davinci_flow" "%[2]s" {
           data = {
             id = "3zvjdgdljx"
             node_type = "CONNECTION"
-            # connection_id = "06922a684039827499bdbdd97f49827b"
+            connection_id = pingone_davinci_connector_instance.%[2]s-variables.id
             connector_id = "variablesConnector"
-            # name = "Variables"
+            name = "%[2]s-variables"
             label = "Variables"
             status = "configured"
             capability_name = "saveFlowValue"

@@ -1,6 +1,14 @@
 
 		%[1]s
 
+resource "pingone_davinci_connector_instance" "%[2]s-errors" {
+  environment_id = data.pingone_environment.general_test.id
+  connector = {
+    id = "errorConnector"
+  }
+  name = "%[2]s-errors"
+}
+
 resource "pingone_davinci_flow" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   %[3]s
@@ -21,9 +29,8 @@ resource "pingone_davinci_flow" "%[2]s" {
           data = {
             id = "2pzouq7el7"
             node_type = "CONNECTION"
-            # connection_id = "53ab83a4a4ab919d9f2cb02d9e111ac8"
+            connection_id = pingone_davinci_connector_instance.%[2]s-errors.id
             connector_id = "errorConnector"
-            # name = "Error Message"
             label = "Error Message"
             status = "configured"
             capability_name = "customErrorMessage"
