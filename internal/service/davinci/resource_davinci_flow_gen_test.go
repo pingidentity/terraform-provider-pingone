@@ -174,6 +174,15 @@ func testAccDavinciFlow_Basic(t *testing.T, withBootstrapConfig bool) {
 		),
 	}
 
+	fullStepModifyNodePropsHcl := davinciFlow_FullWithMappingIDsModifyNodePropertiesHCL(t, resourceName, withBootstrapConfig)
+	fullStepModifyNodeProps := resource.TestStep{
+		Config: fullStepModifyNodePropsHcl,
+		Check: resource.ComposeTestCheckFunc(
+			//TODO expand checks for all these
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
+		),
+	}
+
 	minimalStepHcl := davinciFlow_MinimalWithMappingIDsHCL(t, resourceName, withBootstrapConfig)
 	minimalStep := resource.TestStep{
 		Config: minimalStepHcl,
@@ -225,8 +234,10 @@ func testAccDavinciFlow_Basic(t *testing.T, withBootstrapConfig bool) {
 			// Create minimal from scratch
 			minimalStep,
 			fullStep,
+			// Test modifying node properties
+			fullStepModifyNodeProps,
 			{
-				Config:  fullStepHcl,
+				Config:  fullStepModifyNodePropsHcl,
 				Destroy: true,
 			},
 			// Test updates
@@ -499,6 +510,14 @@ func davinciFlow_FullWithMappingIDsHCL(t *testing.T, resourceName string, withBo
 	hcl, err := testhcl.ReadTestHcl("pingone_davinci_flow/full_basic.tf")
 	if err != nil {
 		t.Fatalf("failed to read HCL in davinciFlow_FullWithMappingIDsHCL: %v", err)
+	}
+	return fmt.Sprintf(hcl, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName)
+}
+
+func davinciFlow_FullWithMappingIDsModifyNodePropertiesHCL(t *testing.T, resourceName string, withBootstrap bool) string {
+	hcl, err := testhcl.ReadTestHcl("pingone_davinci_flow/full_basic_modify_node_properties.tf")
+	if err != nil {
+		t.Fatalf("failed to read HCL in davinciFlow_FullWithMappingIDsModifyNodePropertiesHCL: %v", err)
 	}
 	return fmt.Sprintf(hcl, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName)
 }
