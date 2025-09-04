@@ -158,13 +158,13 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 						ElementType: types.StringType,
 						Optional:    true,
 						Computed:    true,
-						Default:     setdefault.StaticValue(types.SetValueMust(types.StringType, nil)),
+						Default:     setdefault.StaticValue(emptySetDefault),
 					},
 					"redirect_uris": schema.SetAttribute{
 						ElementType: types.StringType,
 						Optional:    true,
 						Computed:    true,
-						Default:     setdefault.StaticValue(types.SetValueMust(types.StringType, nil)),
+						Default:     setdefault.StaticValue(emptySetDefault),
 					},
 					"scopes": schema.SetAttribute{
 						ElementType:         types.StringType,
