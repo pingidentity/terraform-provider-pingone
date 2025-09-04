@@ -1,0 +1,7 @@
+```release-note:bug
+`resource/pingone_population_default`: Added wait on initial create to ensure `theme.id` is correctly assigned when creating a default population in a brand new environment.
+```
+
+```release-note:enhancement
+`resource/pingone_population_default`: Added support for new `alternative_identifiers`, `preferred_language`, and `theme.id` attributes. Also added support for a new `password_policy.id` attribute to better align with the API. `password_policy.id` should be used in place of the now-deprecated `password_policy_id` attribute. `password_policy_id` will be removed in the next major release.
+```

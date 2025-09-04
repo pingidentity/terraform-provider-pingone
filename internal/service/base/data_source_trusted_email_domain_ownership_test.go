@@ -18,6 +18,7 @@ func TestAccTrustedEmailDomainOwnershipDataSource_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
+	domainPrefix := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_trusted_email_domain_ownership.%s", resourceName)
 	dataSourceFullName := fmt.Sprintf("data.%s", resourceFullName)
 
@@ -36,7 +37,7 @@ func TestAccTrustedEmailDomainOwnershipDataSource_Full(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccTrustedEmailDomainOwnershipDataSourceConfig_Full(environmentName, licenseID, resourceName),
+				Config: testAccTrustedEmailDomainOwnershipDataSourceConfig_Full(environmentName, licenseID, resourceName, domainPrefix),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(dataSourceFullName, "type", "TXT"),
 					resource.TestCheckResourceAttrWith(dataSourceFullName, "regions.#", validateRegionCardinality),
@@ -79,21 +80,21 @@ func TestAccTrustedEmailDomainOwnershipDataSource_NotFound(t *testing.T) {
 	})
 }
 
-func testAccTrustedEmailDomainOwnershipDataSourceConfig_Full(environmentName, licenseID, resourceName string) string {
+func testAccTrustedEmailDomainOwnershipDataSourceConfig_Full(environmentName, licenseID, resourceName, domainPrefix string) string {
 	return fmt.Sprintf(`
 %[1]s
 
 resource "pingone_trusted_email_domain" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  domain_name = "terraformdev.ping-eng.com"
+  domain_name = "%[4]s.terraformdev.ping-eng.com"
 }
 
 data "pingone_trusted_email_domain_ownership" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
   trusted_email_domain_id = pingone_trusted_email_domain.%[3]s.id
-}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, domainPrefix)
 }
 
 func testAccTrustedEmailDomainOwnershipDataSourceConfig_NotFoundByID(resourceName string) string {

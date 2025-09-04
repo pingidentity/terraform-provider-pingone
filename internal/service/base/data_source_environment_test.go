@@ -204,6 +204,50 @@ func TestAccEnvironmentDataSource_ByIDMinimal(t *testing.T) {
 	})
 }
 
+func TestAccEnvironmentDataSource_Workforce(t *testing.T) {
+	t.Parallel()
+
+	dataSourceFullName := "data.pingone_environment.workforce_test"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckRegionSupportsWorkforce(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             nil, // No destroy check as purely data sources
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccEnvironmentDataSourceConfig_WorkForceV1ByName(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(dataSourceFullName, "name", acctest.WorkforceV1SandboxEnvironmentName),
+					resource.TestCheckResourceAttr(dataSourceFullName, "solution", "WORKFORCE"),
+					resource.TestCheckTypeSetElemNestedAttrs(dataSourceFullName, "services.*", map[string]string{
+						"type": "PingID",
+					}),
+				),
+			},
+			{
+				Config: testAccEnvironmentDataSourceConfig_WorkForceV2ByName(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(dataSourceFullName, "name", acctest.WorkforceV2SandboxEnvironmentName),
+					resource.TestCheckResourceAttr(dataSourceFullName, "solution", "WORKFORCE"),
+					resource.TestCheckTypeSetElemNestedAttrs(dataSourceFullName, "services.*", map[string]string{
+						"type": "PingID-v2",
+					}),
+				),
+			},
+		},
+	})
+}
+
 func TestAccEnvironmentDataSource_NotFound(t *testing.T) {
 	t.Parallel()
 
@@ -346,6 +390,14 @@ data "pingone_environment" "%[1]s" {
   environment_id = pingone_environment.%[1]s.id
 }
 `, resourceName, name, environmentType, region, licenseID)
+}
+
+func testAccEnvironmentDataSourceConfig_WorkForceV1ByName() string {
+	return acctest.WorkforceV1SandboxEnvironment()
+}
+
+func testAccEnvironmentDataSourceConfig_WorkForceV2ByName() string {
+	return acctest.WorkforceV2SandboxEnvironment()
 }
 
 func testAccEnvironmentDataSourceConfig_NotFoundByName(resourceName string) string {

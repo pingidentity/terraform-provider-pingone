@@ -265,7 +265,7 @@ func davinciApplicationKey_CheckComputedValues(resourceName string) resource.Tes
 	)
 }
 
-func davinciApplicationKey_checkExpectedKey(t *testing.T, resourceName string, expectRotation bool) resource.TestCheckFunc {
+func davinciApplicationKey_checkExpectedKey(_ *testing.T, resourceName string, expectRotation bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		err := resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_key.%s", resourceName), "api_key.value", currentApiKey)(s)
 		if err != nil && !expectRotation {

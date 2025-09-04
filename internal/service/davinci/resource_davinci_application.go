@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -16,21 +17,57 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 )
 
+var (
+	davinciApplicationApiKeyDefault = types.ObjectValueMust(map[string]attr.Type{
+		"enabled": types.BoolType,
+		"value":   types.StringType,
+	}, map[string]attr.Value{
+		"enabled": types.BoolValue(true),
+		"value":   types.StringUnknown(),
+	})
+	davinciApplicationOauthGrantTypesDefault = types.SetValueMust(types.StringType, []attr.Value{
+		types.StringValue("authorizationCode"),
+	})
+	davinciApplicationOauthScopesDefault = types.SetValueMust(types.StringType, []attr.Value{
+		types.StringValue("openid"),
+		types.StringValue("profile"),
+	})
+	davinciApplicationOauthDefault = types.ObjectValueMust(map[string]attr.Type{
+		"client_secret":                 types.StringType,
+		"enforce_signed_request_openid": types.BoolType,
+		"grant_types":                   types.SetType{ElemType: types.StringType},
+		"logout_uris":                   types.SetType{ElemType: types.StringType},
+		"redirect_uris":                 types.SetType{ElemType: types.StringType},
+		"scopes":                        types.SetType{ElemType: types.StringType},
+		"sp_jwks_openid":                types.StringType,
+		"sp_jwks_url":                   types.StringType,
+	}, map[string]attr.Value{
+		"client_secret":                 types.StringUnknown(),
+		"enforce_signed_request_openid": types.BoolNull(),
+		"grant_types":                   davinciApplicationOauthGrantTypesDefault,
+		"logout_uris":                   types.SetNull(types.StringType),
+		"redirect_uris":                 types.SetNull(types.StringType),
+		"scopes":                        davinciApplicationOauthScopesDefault,
+		"sp_jwks_openid":                types.StringNull(),
+		"sp_jwks_url":                   types.StringNull(),
+	})
+)
+
 // Build the PUT client struct to be used after initial creation
-func (model *davinciApplicationResourceModel) buildClientStructPutAfterCreate(createResponse *pingone.DaVinciApplication) (*pingone.DaVinciApplicationReplaceRequest, diag.Diagnostics) {
+func (model *davinciApplicationResourceModel) buildClientStructPutAfterCreate(createResponse *pingone.DaVinciApplicationResponse) (*pingone.DaVinciApplicationReplaceRequest, diag.Diagnostics) {
 	result := &pingone.DaVinciApplicationReplaceRequest{}
 	var respDiags diag.Diagnostics
 	// First copy over values from the create response
 	result.ApiKeyEnabled = &createResponse.ApiKey.Enabled
-	var grantTypes []pingone.DaVinciApplicationReplaceRequestOauthGrantTypes
+	var grantTypes []pingone.DaVinciApplicationReplaceRequestOAuthGrantType
 	for _, grantType := range createResponse.Oauth.GrantTypes {
-		grantTypes = append(grantTypes, pingone.DaVinciApplicationReplaceRequestOauthGrantTypes(grantType))
+		grantTypes = append(grantTypes, pingone.DaVinciApplicationReplaceRequestOAuthGrantType(grantType))
 	}
-	var scopes []pingone.DaVinciApplicationReplaceRequestOauthScopes
+	var scopes []pingone.DaVinciApplicationReplaceRequestOAuthScope
 	for _, scope := range createResponse.Oauth.Scopes {
-		scopes = append(scopes, pingone.DaVinciApplicationReplaceRequestOauthScopes(scope))
+		scopes = append(scopes, pingone.DaVinciApplicationReplaceRequestOAuthScope(scope))
 	}
-	result.Oauth = &pingone.DaVinciApplicationReplaceRequestOauth{
+	result.Oauth = &pingone.DaVinciApplicationReplaceRequestOAuth{
 		EnforceSignedRequestOpenid: createResponse.Oauth.EnforceSignedRequestOpenid,
 		GrantTypes:                 grantTypes,
 		LogoutUris:                 createResponse.Oauth.LogoutUris,
@@ -53,10 +90,10 @@ func (model *davinciApplicationResourceModel) buildClientStructPutAfterCreate(cr
 			result.Oauth.EnforceSignedRequestOpenid = oauthAttrs["enforce_signed_request_openid"].(types.Bool).ValueBoolPointer()
 		}
 		if !oauthAttrs["grant_types"].IsNull() && !oauthAttrs["grant_types"].IsUnknown() {
-			result.Oauth.GrantTypes = []pingone.DaVinciApplicationReplaceRequestOauthGrantTypes{}
+			result.Oauth.GrantTypes = []pingone.DaVinciApplicationReplaceRequestOAuthGrantType{}
 			for _, grantTypesElement := range oauthAttrs["grant_types"].(types.Set).Elements() {
-				var grantTypesValue pingone.DaVinciApplicationReplaceRequestOauthGrantTypes
-				grantTypesEnumValue, err := pingone.NewDaVinciApplicationReplaceRequestOauthGrantTypesFromValue(grantTypesElement.(types.String).ValueString())
+				var grantTypesValue pingone.DaVinciApplicationReplaceRequestOAuthGrantType
+				grantTypesEnumValue, err := pingone.NewDaVinciApplicationReplaceRequestOAuthGrantTypeFromValue(grantTypesElement.(types.String).ValueString())
 				if err != nil {
 					respDiags.AddAttributeError(
 						path.Root("grant_types"),
@@ -82,10 +119,10 @@ func (model *davinciApplicationResourceModel) buildClientStructPutAfterCreate(cr
 			}
 		}
 		if !oauthAttrs["scopes"].IsNull() && !oauthAttrs["scopes"].IsUnknown() {
-			result.Oauth.Scopes = []pingone.DaVinciApplicationReplaceRequestOauthScopes{}
+			result.Oauth.Scopes = []pingone.DaVinciApplicationReplaceRequestOAuthScope{}
 			for _, scopesElement := range oauthAttrs["scopes"].(types.Set).Elements() {
-				var scopesValue pingone.DaVinciApplicationReplaceRequestOauthScopes
-				scopesEnumValue, err := pingone.NewDaVinciApplicationReplaceRequestOauthScopesFromValue(scopesElement.(types.String).ValueString())
+				var scopesValue pingone.DaVinciApplicationReplaceRequestOAuthScope
+				scopesEnumValue, err := pingone.NewDaVinciApplicationReplaceRequestOAuthScopeFromValue(scopesElement.(types.String).ValueString())
 				if err != nil {
 					respDiags.AddAttributeError(
 						path.Root("scopes"),
@@ -143,16 +180,17 @@ func (r *davinciApplicationResource) Create(ctx context.Context, req resource.Cr
 		)
 		return
 	}
-	var createResponseData *pingone.DaVinciApplication
+	var createResponseData *pingone.DaVinciApplicationResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciApplicationApi.CreateDavinciApplication(ctx, environmentIdUuid).DaVinciApplicationCreateRequest(*clientData).Execute()
+			fO, fR, fErr := r.Client.DaVinciApplicationsApi.CreateDavinciApplication(ctx, environmentIdUuid).DaVinciApplicationCreateRequest(*clientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateDavinciApplication",
 		framework.DefaultCustomError,
+		framework.DefaultRetryable,
 		&createResponseData,
 	)...)
 
@@ -168,16 +206,17 @@ func (r *davinciApplicationResource) Create(ctx context.Context, req resource.Cr
 		return
 	}
 
-	var responseData *pingone.DaVinciApplication
+	var responseData *pingone.DaVinciApplicationResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciApplicationApi.ReplaceDavinciApplicationById(ctx, environmentIdUuid, createResponseData.Id).DaVinciApplicationReplaceRequest(*updateClientData).Execute()
+			fO, fR, fErr := r.Client.DaVinciApplicationsApi.ReplaceDavinciApplicationById(ctx, environmentIdUuid, createResponseData.Id).DaVinciApplicationReplaceRequest(*updateClientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReplaceDavinciApplicationById-Create",
 		framework.DefaultCustomError,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 

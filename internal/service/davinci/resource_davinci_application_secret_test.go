@@ -264,7 +264,7 @@ func davinciApplicationSecret_CheckComputedValues(resourceName string) resource.
 	)
 }
 
-func davinciApplicationSecret_checkExpectedSecret(t *testing.T, resourceName string, expectRotation bool) resource.TestCheckFunc {
+func davinciApplicationSecret_checkExpectedSecret(_ *testing.T, resourceName string, expectRotation bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		err := resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_secret.%s", resourceName), "oauth.client_secret", currentClientSecret)(s)
 		if err != nil && !expectRotation {
