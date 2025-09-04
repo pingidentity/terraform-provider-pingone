@@ -324,11 +324,36 @@ func TestAccDavinciFlow_ComplexObjectsInSettings(t *testing.T) {
 	})
 }
 
-func TestAccDavinciFlow_VariableRefs(t *testing.T) {
+func TestAccDavinciFlow_VariableRefs_Clean(t *testing.T) {
+	testAccDavinciFlow_VariableRefs(t, false)
+}
+
+func TestAccDavinciFlow_VariableRefs_WithBootstrap(t *testing.T) {
+	testAccDavinciFlow_VariableRefs(t, true)
+}
+
+func testAccDavinciFlow_VariableRefs(t *testing.T, withBootstrap bool) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_davinci_flow.%s", resourceName)
+
+	fullWithVarsStepHcl := davinciFlow_VariableRefsHCL(t, resourceName, withBootstrap)
+	fullWithVarsStep := resource.TestStep{
+		Config: fullWithVarsStepHcl,
+		Check: resource.ComposeTestCheckFunc(
+			//TODO expand checks for all these
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
+		),
+	}
+
+	minimalNoDefinedVarsStepHcl := davinciFlow_FullWithMappingIDsHCL(t, resourceName, withBootstrap)
+	minimalNoDefinedVarsStep := resource.TestStep{
+		Config: minimalNoDefinedVarsStepHcl,
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
+		),
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -339,8 +364,18 @@ func TestAccDavinciFlow_VariableRefs(t *testing.T) {
 		CheckDestroy:             davinciFlow_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Create full from scratch
+			fullWithVarsStep,
+			minimalNoDefinedVarsStep,
 			{
-				Config: davinciFlow_VariableRefsHCL(t, resourceName, false),
+				Config:  minimalNoDefinedVarsStepHcl,
+				Destroy: true,
+			},
+			// Create minimal from scratch
+			minimalNoDefinedVarsStep,
+			fullWithVarsStep,
+			{
+				Config: davinciFlow_VariableRefsHCL(t, resourceName, withBootstrap),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
 				),
