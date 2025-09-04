@@ -117,14 +117,12 @@ func (r *davinciApplicationKeyResource) Schema(ctx context.Context, req resource
 				},
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
-					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
 				},
 			},
 			"id": schema.StringAttribute{
 				Computed:    true,
 				Description: "The ID of this resource.",
 				Validators: []validator.String{
-					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
 					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
 				},
 				PlanModifiers: []planmodifier.String{
@@ -172,7 +170,7 @@ func (r *davinciApplicationKeyResource) ModifyPlan(ctx context.Context, req reso
 	}
 }
 
-func (state *davinciApplicationKeyResourceModel) readClientResponse(response *pingone.DaVinciApplication) diag.Diagnostics {
+func (state *davinciApplicationKeyResourceModel) readClientResponse(response *pingone.DaVinciApplicationResponse) diag.Diagnostics {
 	var respDiags, diags diag.Diagnostics
 	// api_key
 	apiKeyAttrTypes := map[string]attr.Type{
@@ -219,16 +217,17 @@ func (r *davinciApplicationKeyResource) Create(ctx context.Context, req resource
 		)
 		return
 	}
-	var responseData *pingone.DaVinciApplication
+	var responseData *pingone.DaVinciApplicationResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciApplicationApi.CreateKeyByDavinciApplicationId(ctx, environmentIdUuid, data.ApplicationId.ValueString()).RequestBody(map[string]interface{}{}).Execute()
+			fO, fR, fErr := r.Client.DaVinciApplicationsApi.RotateKeyByDavinciApplicationId(ctx, environmentIdUuid, data.ApplicationId.ValueString()).RequestBody(map[string]interface{}{}).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"RotateDavinciApplicationApiKey",
 		framework.DefaultCustomError,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -274,16 +273,17 @@ func (r *davinciApplicationKeyResource) Read(ctx context.Context, req resource.R
 		)
 		return
 	}
-	var responseData *pingone.DaVinciApplication
+	var responseData *pingone.DaVinciApplicationResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciApplicationApi.GetDavinciApplicationById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.DaVinciApplicationsApi.GetDavinciApplicationById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetDavinciApplicationById",
 		framework.CustomErrorResourceNotFoundWarning,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 

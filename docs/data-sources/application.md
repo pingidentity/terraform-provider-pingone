@@ -200,6 +200,7 @@ Read-Only:
 - `sp_entity_id` (String) A string that specifies the service provider entity ID used to lookup the application. This is a required property and is unique within the environment.
 - `sp_verification` (Attributes) A single object that specifies SP signature verification settings. (see [below for nested schema](#nestedatt--saml_options--sp_verification))
 - `type` (String) A string that specifies the type associated with the application.
+- `virtual_server_id_settings` (Attributes) A single object that specifies settings for SAML virtual server IDs. (see [below for nested schema](#nestedatt--saml_options--virtual_server_id_settings))
 
 <a id="nestedatt--saml_options--cors_settings"></a>
 ### Nested Schema for `saml_options.cors_settings`
@@ -243,6 +244,24 @@ Read-Only:
 
 - `authn_request_signed` (Boolean) A boolean that specifies whether the Authn Request signing should be enforced.
 - `certificate_ids` (Set of String) A list that specifies the certificate IDs used to verify the service provider signature.
+
+
+<a id="nestedatt--saml_options--virtual_server_id_settings"></a>
+### Nested Schema for `saml_options.virtual_server_id_settings`
+
+Read-Only:
+
+- `enabled` (Boolean) A boolean that specifies whether virtual server IDs are enabled for this SAML application.
+- `virtual_server_ids` (Attributes List) A list of virtual server ID objects. Each object contains a virtual server ID and a flag indicating if it is the default. (see [below for nested schema](#nestedatt--saml_options--virtual_server_id_settings--virtual_server_ids))
+
+<a id="nestedatt--saml_options--virtual_server_id_settings--virtual_server_ids"></a>
+### Nested Schema for `saml_options.virtual_server_id_settings.virtual_server_ids`
+
+Read-Only:
+
+- `default` (Boolean) Whether this virtual server ID is the default.
+- `vs_id` (String) The virtual server ID.
+
 
 
 

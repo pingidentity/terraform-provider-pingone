@@ -48,7 +48,7 @@ func TestAccDavinciApplicationFlowPolicy_RemovalDrift(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: davinciApplicationFlowPolicy_MinimalHCL(resourceName),
+				Config: davinciApplicationFlowPolicy_MinimalHCL(resourceName, false),
 				Check:  davinciApplicationFlowPolicy_GetIDs(resourceFullName, &environmentId, &daVinciApplicationId, &id),
 			},
 			{
@@ -75,7 +75,15 @@ func TestAccDavinciApplicationFlowPolicy_RemovalDrift(t *testing.T) {
 	})
 }
 
-func TestAccDavinciApplicationFlowPolicy_MinimalMaximal(t *testing.T) {
+func TestAccDavinciApplicationFlowPolicy_MinimalMaximalClean(t *testing.T) {
+	testAccDavinciApplicationFlowPolicy_MinimalMaximal(t, false)
+}
+
+func TestAccDavinciApplicationFlowPolicy_MinimalMaximalBootstrapped(t *testing.T) {
+	testAccDavinciApplicationFlowPolicy_MinimalMaximal(t, true)
+}
+
+func testAccDavinciApplicationFlowPolicy_MinimalMaximal(t *testing.T, withBootstrapConfig bool) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -92,27 +100,27 @@ func TestAccDavinciApplicationFlowPolicy_MinimalMaximal(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				// Create the resource with a minimal model
-				Config: davinciApplicationFlowPolicy_MinimalHCL(resourceName),
+				Config: davinciApplicationFlowPolicy_MinimalHCL(resourceName, withBootstrapConfig),
 				Check:  davinciApplicationFlowPolicy_CheckComputedValuesMinimal(resourceName),
 			},
 			{
 				// Delete the minimal model
-				Config:  davinciApplicationFlowPolicy_MinimalHCL(resourceName),
+				Config:  davinciApplicationFlowPolicy_MinimalHCL(resourceName, withBootstrapConfig),
 				Destroy: true,
 			},
 			{
 				// Re-create with a complete model
-				Config: davinciApplicationFlowPolicy_CompleteHCL(resourceName),
+				Config: davinciApplicationFlowPolicy_CompleteHCL(resourceName, withBootstrapConfig),
 				// Check:  davinciApplicationFlowPolicy_CheckComputedValuesComplete(resourceName),
 			},
 			{
 				// Back to minimal model
-				Config: davinciApplicationFlowPolicy_MinimalHCL(resourceName),
+				Config: davinciApplicationFlowPolicy_MinimalHCL(resourceName, withBootstrapConfig),
 				Check:  davinciApplicationFlowPolicy_CheckComputedValuesMinimal(resourceName),
 			},
 			{
 				// Back to complete model
-				Config: davinciApplicationFlowPolicy_CompleteHCL(resourceName),
+				Config: davinciApplicationFlowPolicy_CompleteHCL(resourceName, withBootstrapConfig),
 				// Check:  davinciApplicationFlowPolicy_CheckComputedValuesComplete(resourceName),
 			},
 			// {
@@ -123,7 +131,7 @@ func TestAccDavinciApplicationFlowPolicy_MinimalMaximal(t *testing.T) {
 			// },
 			{
 				// Test importing the resource
-				Config:       davinciApplicationFlowPolicy_CompleteHCL(resourceName),
+				Config:       davinciApplicationFlowPolicy_CompleteHCL(resourceName, withBootstrapConfig),
 				ResourceName: fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName),
 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
 					return func(s *terraform.State) (string, error) {
@@ -188,7 +196,7 @@ func TestAccDavinciApplicationFlowPolicy_BadParameters(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: davinciApplicationFlowPolicy_MinimalHCL(resourceName),
+				Config: davinciApplicationFlowPolicy_MinimalHCL(resourceName, false),
 			},
 			// Errors
 			{
@@ -213,7 +221,7 @@ func TestAccDavinciApplicationFlowPolicy_BadParameters(t *testing.T) {
 }
 
 // Minimal HCL with only required values set
-func davinciApplicationFlowPolicy_MinimalHCL(resourceName string) string {
+func davinciApplicationFlowPolicy_MinimalHCL(resourceName string, withBootstrapConfig bool) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -233,11 +241,11 @@ resource "pingone_davinci_application_flow_policy" "%[2]s" {
     }
   ]
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
 }
 
 // Maximal HCL with all values set where possible
-func davinciApplicationFlowPolicy_CompleteHCL(resourceName string) string {
+func davinciApplicationFlowPolicy_CompleteHCL(resourceName string, withBootstrapConfig bool) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -285,7 +293,7 @@ resource "pingone_davinci_application_flow_policy" "%[2]s" {
   //     type = //TODO
   //   }
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
 }
 
 // Maximal HCL with all values set, with ordering changes in lists and sets from the default CompleteHCL
@@ -413,7 +421,7 @@ func davinciApplicationFlowPolicy_Delete(ctx context.Context, apiClient *pingone
 		t.Fatalf("One of the identifier attributes can't be determined. environmentId: '%s' daVinciApplicationId: '%s' id: '%s'", environmentId, daVinciApplicationId, id)
 	}
 
-	_, err := apiClient.DaVinciApplicationApi.DeleteFlowPolicyByIdUsingDavinciApplicationId(ctx, uuid.MustParse(environmentId), daVinciApplicationId, id).Execute()
+	_, err := apiClient.DaVinciApplicationsApi.DeleteFlowPolicyByIdUsingDavinciApplicationId(ctx, uuid.MustParse(environmentId), daVinciApplicationId, id).Execute()
 	if err != nil {
 		t.Fatalf("Failed to delete davinci_application_flow_policy: %v", err)
 	}
@@ -442,7 +450,7 @@ func davinciApplicationFlowPolicy_CheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, r, err := p1Client.DaVinciApplicationApi.GetFlowPolicyByIdUsingDavinciApplicationId(ctx, uuid.MustParse(rs.Primary.Attributes["environment_id"]), rs.Primary.Attributes["da_vinci_application_id"], rs.Primary.Attributes["id"]).Execute()
+		_, r, err := p1Client.DaVinciApplicationsApi.GetFlowPolicyByIdUsingDavinciApplicationId(ctx, uuid.MustParse(rs.Primary.Attributes["environment_id"]), rs.Primary.Attributes["da_vinci_application_id"], rs.Primary.Attributes["id"]).Execute()
 
 		shouldContinue, err = acctest.CheckForResourceDestroy(r, err)
 		if err != nil {

@@ -145,7 +145,7 @@ func (r *davinciApplicationDataSource) Schema(ctx context.Context, req datasourc
 	}
 }
 
-func (state *davinciApplicationDataSourceModel) readClientResponse(response *pingone.DaVinciApplication) diag.Diagnostics {
+func (state *davinciApplicationDataSourceModel) readClientResponse(response *pingone.DaVinciApplicationResponse) diag.Diagnostics {
 	var respDiags, diags diag.Diagnostics
 	// api_key
 	apiKeyAttrTypes := map[string]attr.Type{
@@ -223,16 +223,17 @@ func (r *davinciApplicationDataSource) Read(ctx context.Context, req datasource.
 		)
 		return
 	}
-	var responseData *pingone.DaVinciApplication
+	var responseData *pingone.DaVinciApplicationResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciApplicationApi.GetDavinciApplicationById(ctx, environmentIdUuid, data.ApplicationId.ValueString()).Execute()
+			fO, fR, fErr := r.Client.DaVinciApplicationsApi.GetDavinciApplicationById(ctx, environmentIdUuid, data.ApplicationId.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetDavinciApplicationById",
 		framework.DefaultCustomError,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 

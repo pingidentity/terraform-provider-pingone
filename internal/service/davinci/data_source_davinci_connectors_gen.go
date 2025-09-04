@@ -222,7 +222,7 @@ func (state *davinciConnectorsDataSourceModel) readClientResponse(response *ping
 		})
 		respDiags.Append(diags...)
 		connectorsValue, diags := types.ObjectValue(connectorsAttrTypes, map[string]attr.Value{
-			"description": types.StringPointerValue(connectorsResponseValue.Description),
+			"description": types.StringValue(connectorsResponseValue.Description),
 			"id":          types.StringValue(connectorsResponseValue.Id),
 			"metadata":    connectorsMetadataValue,
 			"name":        types.StringValue(connectorsResponseValue.Name),
@@ -271,11 +271,12 @@ func (r *davinciConnectorsDataSource) Read(ctx context.Context, req datasource.R
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciConnectorApi.GetConnectors(ctx, environmentIdUuid).Execute()
+			fO, fR, fErr := r.Client.DaVinciConnectorsApi.GetConnectors(ctx, environmentIdUuid).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetConnectors",
 		framework.DefaultCustomError,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 

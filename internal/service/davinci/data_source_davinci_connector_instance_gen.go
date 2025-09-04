@@ -111,7 +111,7 @@ func (r *davinciConnectorInstanceDataSource) Schema(ctx context.Context, req dat
 	}
 }
 
-func (state *davinciConnectorInstanceDataSourceModel) readClientResponse(response *pingone.DaVinciConnectorInstance) diag.Diagnostics {
+func (state *davinciConnectorInstanceDataSourceModel) readClientResponse(response *pingone.DaVinciConnectorInstanceResponse) diag.Diagnostics {
 	var respDiags, diags diag.Diagnostics
 	// connector
 	connectorAttrTypes := map[string]attr.Type{
@@ -170,16 +170,17 @@ func (r *davinciConnectorInstanceDataSource) Read(ctx context.Context, req datas
 		)
 		return
 	}
-	var responseData *pingone.DaVinciConnectorInstance
+	var responseData *pingone.DaVinciConnectorInstanceResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciConnectorApi.GetConnectorInstanceById(ctx, environmentIdUuid, data.InstanceId.ValueString()).Execute()
+			fO, fR, fErr := r.Client.DaVinciConnectorsApi.GetConnectorInstanceById(ctx, environmentIdUuid, data.InstanceId.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetConnectorInstanceById",
 		framework.DefaultCustomError,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 

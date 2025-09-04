@@ -48,7 +48,7 @@ func TestAccDavinciApplication_RemovalDrift(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: davinciApplication_MinimalHCL(resourceName),
+				Config: davinciApplication_MinimalHCL(resourceName, false),
 				Check:  davinciApplication_GetIDs(resourceFullName, &environmentId, &id),
 			},
 			{
@@ -74,7 +74,15 @@ func TestAccDavinciApplication_RemovalDrift(t *testing.T) {
 	})
 }
 
-func TestAccDavinciApplication_MinimalMaximal(t *testing.T) {
+func TestAccDavinciApplication_MinimalMaximalClean(t *testing.T) {
+	testAccDavinciApplication_MinimalMaximal(t, false)
+}
+
+func TestAccDavinciApplication_MinimalMaximalWithBootstrap(t *testing.T) {
+	testAccDavinciApplication_MinimalMaximal(t, true)
+}
+
+func testAccDavinciApplication_MinimalMaximal(t *testing.T, withBootstrapConfig bool) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -91,38 +99,37 @@ func TestAccDavinciApplication_MinimalMaximal(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				// Create the resource with a minimal model
-				Config: davinciApplication_MinimalHCL(resourceName),
+				Config: davinciApplication_MinimalHCL(resourceName, withBootstrapConfig),
 				Check:  davinciApplication_CheckComputedValuesMinimal(resourceName),
 			},
 			{
 				// Delete the minimal model
-				Config:  davinciApplication_MinimalHCL(resourceName),
+				Config:  davinciApplication_MinimalHCL(resourceName, withBootstrapConfig),
 				Destroy: true,
 			},
 			{
 				// Re-create with a complete model
-				Config: davinciApplication_CompleteHCL(resourceName),
+				Config: davinciApplication_CompleteHCL(resourceName, withBootstrapConfig),
 				Check:  davinciApplication_CheckComputedValuesComplete(resourceName),
 			},
 			{
 				// Back to minimal model
-				Config: davinciApplication_MinimalHCL(resourceName),
+				Config: davinciApplication_MinimalHCL(resourceName, withBootstrapConfig),
 				Check:  davinciApplication_CheckComputedValuesMinimal(resourceName),
 			},
 			{
 				// Back to complete model
-				Config: davinciApplication_CompleteHCL(resourceName),
+				Config: davinciApplication_CompleteHCL(resourceName, withBootstrapConfig),
 				Check:  davinciApplication_CheckComputedValuesComplete(resourceName),
 			},
 			{
 				// Complete model with reordering of lists and sets
-				Config: davinciApplication_CompleteReorderedHCL(resourceName),
-				//TODO update checks if different results are expected after reordering
-				Check: davinciApplication_CheckComputedValuesComplete(resourceName),
+				Config: davinciApplication_CompleteReorderedHCL(resourceName, withBootstrapConfig),
+				Check:  davinciApplication_CheckComputedValuesComplete(resourceName),
 			},
 			{
 				// Test importing the resource
-				Config:       davinciApplication_CompleteHCL(resourceName),
+				Config:       davinciApplication_CompleteHCL(resourceName, withBootstrapConfig),
 				ResourceName: fmt.Sprintf("pingone_davinci_application.%s", resourceName),
 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
 					return func(s *terraform.State) (string, error) {
@@ -186,7 +193,7 @@ func TestAccDavinciApplication_BadParameters(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: davinciApplication_MinimalHCL(resourceName),
+				Config: davinciApplication_MinimalHCL(resourceName, false),
 			},
 			// Errors
 			{
@@ -210,8 +217,86 @@ func TestAccDavinciApplication_BadParameters(t *testing.T) {
 	})
 }
 
+// Test detailed OAuth configurations
+func TestAccDavinciApplication_WithOAuth(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_davinci_application.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             davinciApplication_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Create with full OAuth configuration
+			{
+				Config: davinciApplication_CompleteHCL(resourceName, false),
+				Check:  davinciApplication_CheckComputedValuesComplete(resourceName),
+			},
+			{
+				Config:  davinciApplication_CompleteHCL(resourceName, false),
+				Destroy: true,
+			},
+			// Create with minimal OAuth configuration 1
+			{
+				Config: davinciApplication_WithOAuth_Minimal1_HCL(resourceName, name),
+				Check:  davinciApplication_CheckComputedValuesMinimal(resourceName),
+			},
+			{
+				Config:  davinciApplication_WithOAuth_Minimal1_HCL(resourceName, name),
+				Destroy: true,
+			},
+			// Create with minimal OAuth configuration 2
+			{
+				Config: davinciApplication_WithOAuth_Minimal2_HCL(resourceName, name),
+				Check:  davinciApplication_CheckComputedValuesComplete(resourceName),
+			},
+			{
+				Config:  davinciApplication_WithOAuth_Minimal2_HCL(resourceName, name),
+				Destroy: true,
+			},
+			// Test transitions between configurations
+			{
+				Config: davinciApplication_CompleteHCL(resourceName, false),
+				Check:  davinciApplication_CheckComputedValuesComplete(resourceName),
+			},
+			{
+				Config: davinciApplication_WithOAuth_Minimal1_HCL(resourceName, name),
+				Check:  davinciApplication_CheckComputedValuesMinimal(resourceName),
+			},
+			{
+				Config: davinciApplication_CompleteHCL(resourceName, false),
+				Check:  davinciApplication_CheckComputedValuesComplete(resourceName),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["id"]), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 // Minimal HCL with only required values set
-func davinciApplication_MinimalHCL(resourceName string) string {
+func davinciApplication_MinimalHCL(resourceName string, withBootstrapConfig bool) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -219,11 +304,11 @@ resource "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[2]s"
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
 }
 
 // Maximal HCL with all values set where possible
-func davinciApplication_CompleteHCL(resourceName string) string {
+func davinciApplication_CompleteHCL(resourceName string, withBootstrapConfig bool) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -243,6 +328,7 @@ resource "pingone_davinci_application" "%[2]s" {
     ]
     logout_uris = [
       "https://example.com/logout",
+      "https://example.com/logout3",
     ]
     redirect_uris = [
       "https://example.com/callback",
@@ -256,13 +342,12 @@ resource "pingone_davinci_application" "%[2]s" {
     sp_jwks_url = "https://example.com/jwks"
   }
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
 }
 
-//TODO test the sp_jwks_openid stuff
-
-// Maximal HCL with all values set, with ordering changes in lists and sets from the default CompleteHCL
-func davinciApplication_CompleteReorderedHCL(resourceName string) string {
+// Maximal HCL with all values set, with ordering changes in lists and sets from the default CompleteHCL,
+// as well as coverage for the sp_jwks_openid attribute.
+func davinciApplication_CompleteReorderedHCL(resourceName string, withBootstrapConfig bool) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -288,16 +373,58 @@ resource "pingone_davinci_application" "%[2]s" {
     redirect_uris = [
       "https://example.com/redirect",
       "https://example.com/callback",
+      "https://example.com/someotherthing",
     ]
     scopes = [
       "openid",
       "profile",
       "flow_analytics",
     ]
-    sp_jwks_url = "https://example.com/jwks"
+    sp_jwks_openid = jsonencode({
+      "keys" : [
+        {
+          "kty" : "RSA",
+          "kid" : "mykeyid",
+          "n" : "example",
+          "e" : "example",
+          "alg" : "RS256",
+          "use" : "sig"
+        }
+      ]
+    })
   }
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
+}
+
+func davinciApplication_WithOAuth_Minimal1_HCL(resourceName string, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  oauth = {
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func davinciApplication_WithOAuth_Minimal2_HCL(resourceName string, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  oauth = {
+    grant_types   = []
+    scopes        = []
+    redirect_uris = []
+    logout_uris   = []
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func davinciApplication_NewEnvHCL(environmentName, licenseID, resourceName string) string {
@@ -319,6 +446,8 @@ func davinciApplication_CheckComputedValuesMinimal(resourceName string) resource
 		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.client_secret"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.grant_types.#", "1"),
 		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.grant_types.*", "authorizationCode"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.logout_uris.#", "0"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.redirect_uris.#", "0"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.scopes.#", "2"),
 		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.scopes.*", "openid"),
 		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("pingone_davinci_application.%s", resourceName), "oauth.scopes.*", "profile"),
@@ -357,7 +486,7 @@ func davinciApplication_Delete(ctx context.Context, apiClient *pingone.APIClient
 		t.Fatalf("One of the identifier attributes can't be determined. environmentId: '%s' id: '%s'", environmentId, id)
 	}
 
-	_, err := apiClient.DaVinciApplicationApi.DeleteDavinciApplicationById(ctx, uuid.MustParse(environmentId), id).Execute()
+	_, err := apiClient.DaVinciApplicationsApi.DeleteDavinciApplicationById(ctx, uuid.MustParse(environmentId), id).Execute()
 	if err != nil {
 		t.Fatalf("Failed to delete davinci_application: %v", err)
 	}
@@ -386,7 +515,7 @@ func davinciApplication_CheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, r, err := p1Client.DaVinciApplicationApi.GetDavinciApplicationById(ctx, uuid.MustParse(rs.Primary.Attributes["environment_id"]), rs.Primary.Attributes["id"]).Execute()
+		_, r, err := p1Client.DaVinciApplicationsApi.GetDavinciApplicationById(ctx, uuid.MustParse(rs.Primary.Attributes["environment_id"]), rs.Primary.Attributes["id"]).Execute()
 
 		shouldContinue, err = acctest.CheckForResourceDestroy(r, err)
 		if err != nil {

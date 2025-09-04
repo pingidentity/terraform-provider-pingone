@@ -80,7 +80,7 @@ type davinciApplicationFlowPolicyResourceModel struct {
 
 func (r *davinciApplicationFlowPolicyResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Resource to create and manage a davinci application flow policy.",
+		Description: "Resource to create and manage a DaVinci application flow policy.",
 		Attributes: map[string]schema.Attribute{
 			"da_vinci_application_id": schema.StringAttribute{
 				Required:    true,
@@ -147,9 +147,6 @@ func (r *davinciApplicationFlowPolicyResource) Schema(ctx context.Context, req r
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
-				Validators: []validator.String{
-					//stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
-				},
 			},
 			"name": schema.StringAttribute{
 				Optional: true,
@@ -157,7 +154,6 @@ func (r *davinciApplicationFlowPolicyResource) Schema(ctx context.Context, req r
 				Default:  stringdefault.StaticString("New Policy"),
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(256),
-					//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
 				},
 			},
 			"status": schema.StringAttribute{
@@ -301,7 +297,20 @@ func (model *davinciApplicationFlowPolicyResourceModel) buildClientStructPost() 
 			}
 			triggerValue.Configuration = triggerConfigurationValue
 		}
-		triggerValue.Type = triggerAttrs["type"].(types.String).ValueStringPointer()
+		var triggerTypeValue *pingone.DaVinciFlowPolicyCreateRequestTriggerType
+		if !triggerAttrs["type"].IsNull() && !triggerAttrs["type"].IsUnknown() {
+			typeValue, err := pingone.NewDaVinciFlowPolicyCreateRequestTriggerTypeFromValue(triggerAttrs["type"].(types.String).ValueString())
+			if err != nil {
+				respDiags.AddAttributeError(
+					path.Root("type"),
+					"Provided value is not valid",
+					fmt.Sprintf("The value provided for type is not valid: %s", err.Error()),
+				)
+			} else {
+				triggerTypeValue = typeValue
+			}
+		}
+		triggerValue.Type = triggerTypeValue
 		result.Trigger = triggerValue
 	}
 
@@ -343,7 +352,7 @@ func (model *davinciApplicationFlowPolicyResourceModel) buildClientStructPut() (
 	}
 	// status
 	if !model.Status.IsNull() && !model.Status.IsUnknown() {
-		statusValue, err := pingone.NewDaVinciFlowPolicyCreateRequestStatusFromValue(model.Status.ValueString())
+		statusValue, err := pingone.NewDaVinciFlowPolicyReplaceRequestStatusFromValue(model.Status.ValueString())
 		if err != nil {
 			respDiags.AddAttributeError(
 				path.Root("status"),
@@ -380,7 +389,20 @@ func (model *davinciApplicationFlowPolicyResourceModel) buildClientStructPut() (
 			}
 			triggerValue.Configuration = triggerConfigurationValue
 		}
-		triggerValue.Type = triggerAttrs["type"].(types.String).ValueStringPointer()
+		var triggerTypeValue *pingone.DaVinciFlowPolicyReplaceRequestTriggerType
+		if !triggerAttrs["type"].IsNull() && !triggerAttrs["type"].IsUnknown() {
+			typeValue, err := pingone.NewDaVinciFlowPolicyReplaceRequestTriggerTypeFromValue(triggerAttrs["type"].(types.String).ValueString())
+			if err != nil {
+				respDiags.AddAttributeError(
+					path.Root("type"),
+					"Provided value is not valid",
+					fmt.Sprintf("The value provided for type is not valid: %s", err.Error()),
+				)
+			} else {
+				triggerTypeValue = typeValue
+			}
+		}
+		triggerValue.Type = triggerTypeValue
 		result.Trigger = triggerValue
 	}
 
@@ -404,8 +426,13 @@ func (state *davinciApplicationFlowPolicyResourceModel) readClientResponse(respo
 	flowDistributionsElementType := types.ObjectType{AttrTypes: flowDistributionsAttrTypes}
 	var flowDistributionsValues []attr.Value
 	for _, flowDistributionsResponseValue := range response.FlowDistributions {
-		flowDistributionsIpValue, diags := types.SetValueFrom(context.Background(), types.StringType, flowDistributionsResponseValue.Ip)
-		respDiags.Append(diags...)
+		var flowDistributionsIpValue types.Set
+		if flowDistributionsResponseValue.Ip == nil {
+			flowDistributionsIpValue = types.SetNull(types.StringType)
+		} else {
+			flowDistributionsIpValue, diags = types.SetValueFrom(context.Background(), types.StringType, flowDistributionsResponseValue.Ip)
+			respDiags.Append(diags...)
+		}
 		var flowDistributionsSuccessNodesValue types.Set
 		if flowDistributionsResponseValue.SuccessNodes == nil {
 			flowDistributionsSuccessNodesValue = types.SetNull(flowDistributionsSuccessNodesElementType)
@@ -534,11 +561,12 @@ func (r *davinciApplicationFlowPolicyResource) Create(ctx context.Context, req r
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciApplicationApi.CreateFlowPolicyByDavinciApplicationId(ctx, environmentIdUuid, data.DaVinciApplicationId.ValueString()).DaVinciFlowPolicyCreateRequest(*clientData).Execute()
+			fO, fR, fErr := r.Client.DaVinciApplicationsApi.CreateFlowPolicyByDavinciApplicationId(ctx, environmentIdUuid, data.DaVinciApplicationId.ValueString()).DaVinciFlowPolicyCreateRequest(*clientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateFlowPolicyByDavinciApplicationId",
 		framework.DefaultCustomError,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -589,11 +617,12 @@ func (r *davinciApplicationFlowPolicyResource) Read(ctx context.Context, req res
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciApplicationApi.GetFlowPolicyByIdUsingDavinciApplicationId(ctx, environmentIdUuid, data.DaVinciApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.DaVinciApplicationsApi.GetFlowPolicyByIdUsingDavinciApplicationId(ctx, environmentIdUuid, data.DaVinciApplicationId.ValueString(), data.Id.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetFlowPolicyByIdUsingDavinciApplicationId",
 		framework.CustomErrorResourceNotFoundWarning,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -656,11 +685,12 @@ func (r *davinciApplicationFlowPolicyResource) Update(ctx context.Context, req r
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciApplicationApi.ReplaceFlowPolicyByIdUsingDavinciApplicationId(ctx, environmentIdUuid, data.DaVinciApplicationId.ValueString(), data.Id.ValueString()).DaVinciFlowPolicyReplaceRequest(*clientData).Execute()
+			fO, fR, fErr := r.Client.DaVinciApplicationsApi.ReplaceFlowPolicyByIdUsingDavinciApplicationId(ctx, environmentIdUuid, data.DaVinciApplicationId.ValueString(), data.Id.ValueString()).DaVinciFlowPolicyReplaceRequest(*clientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReplaceFlowPolicyByIdUsingDavinciApplicationId",
 		framework.DefaultCustomError,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -710,11 +740,12 @@ func (r *davinciApplicationFlowPolicyResource) Delete(ctx context.Context, req r
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := r.Client.DaVinciApplicationApi.DeleteFlowPolicyByIdUsingDavinciApplicationId(ctx, environmentIdUuid, data.DaVinciApplicationId.ValueString(), data.Id.ValueString()).Execute()
+			fR, fErr := r.Client.DaVinciApplicationsApi.DeleteFlowPolicyByIdUsingDavinciApplicationId(ctx, environmentIdUuid, data.DaVinciApplicationId.ValueString(), data.Id.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteFlowPolicyByIdUsingDavinciApplicationId",
 		framework.CustomErrorResourceNotFoundWarning,
+		framework.DefaultRetryable,
 		nil,
 	)...)
 }
@@ -732,8 +763,8 @@ func (r *davinciApplicationFlowPolicyResource) ImportState(ctx context.Context, 
 		},
 		{
 			Label:     "policy_id",
-			PrimaryID: true,
 			Regexp:    verify.P1DVResourceIDRegexp,
+			PrimaryID: true,
 		},
 	}
 

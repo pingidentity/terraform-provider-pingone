@@ -147,7 +147,7 @@ func (r *davinciConnectorDataSource) Schema(ctx context.Context, req datasource.
 func (state *davinciConnectorDataSourceModel) readClientResponse(response *pingone.DaVinciConnectorMinimalResponse) diag.Diagnostics {
 	var respDiags, diags diag.Diagnostics
 	// description
-	state.Description = types.StringPointerValue(response.Description)
+	state.Description = types.StringValue(response.Description)
 	// id
 	state.Id = types.StringValue(response.Id)
 	// metadata
@@ -250,11 +250,12 @@ func (r *davinciConnectorDataSource) Read(ctx context.Context, req datasource.Re
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciConnectorApi.GetConnectorById(ctx, environmentIdUuid, data.ConnectorId.ValueString()).Execute()
+			fO, fR, fErr := r.Client.DaVinciConnectorsApi.GetConnectorById(ctx, environmentIdUuid, data.ConnectorId.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetConnectorById",
 		framework.DefaultCustomError,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 

@@ -1,0 +1,1 @@
+terraform import pingone_davinci_variable.example <environment_id>/<variable_id>
