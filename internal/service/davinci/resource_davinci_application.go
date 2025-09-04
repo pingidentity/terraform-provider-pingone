@@ -32,6 +32,7 @@ var (
 		types.StringValue("openid"),
 		types.StringValue("profile"),
 	})
+	emptySetDefault                = types.SetValueMust(types.StringType, nil)
 	davinciApplicationOauthDefault = types.ObjectValueMust(map[string]attr.Type{
 		"client_secret":                 types.StringType,
 		"enforce_signed_request_openid": types.BoolType,
@@ -45,8 +46,8 @@ var (
 		"client_secret":                 types.StringUnknown(),
 		"enforce_signed_request_openid": types.BoolNull(),
 		"grant_types":                   davinciApplicationOauthGrantTypesDefault,
-		"logout_uris":                   types.SetNull(types.StringType),
-		"redirect_uris":                 types.SetNull(types.StringType),
+		"logout_uris":                   emptySetDefault,
+		"redirect_uris":                 emptySetDefault,
 		"scopes":                        davinciApplicationOauthScopesDefault,
 		"sp_jwks_openid":                types.StringNull(),
 		"sp_jwks_url":                   types.StringNull(),
