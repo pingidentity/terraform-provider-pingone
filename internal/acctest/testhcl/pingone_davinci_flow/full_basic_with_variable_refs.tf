@@ -66,6 +66,17 @@ resource "pingone_davinci_variable" "%[2]s-flowInstanceVariable1" {
   mutable = true
 }
 
+resource "pingone_davinci_variable" "%[2]s-flowVariable" {
+  environment_id = data.pingone_environment.general_test.id
+  name = "testuser"
+  context = "flow"
+  flow = {
+    id = pingone_davinci_flow.%[2]s.id
+  }
+  data_type = "string"
+  mutable = true
+}
+
 resource "pingone_davinci_flow" "%[2]s-subflow1" {
   environment_id = data.pingone_environment.general_test.id
   name = "subflow 1"
