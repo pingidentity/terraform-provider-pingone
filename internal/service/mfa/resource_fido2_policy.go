@@ -236,9 +236,7 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 		"The name of a complex attribute's sub attribute in PingOne, for example `given` or `formatted` where the parent object has a name value of `name`.",
 	)
 
-	userPresenceTimeoutDescription := framework.SchemaAttributeDescriptionFromMarkdown("A single nested object that specifies the user presence timeout settings, used to control the amount of time a user has to perform a user presence gesture with their FIDO device.").DefaultValue(
-		fmt.Sprintf(`{ duration: %d, time_unit: "%s" }`, attrDefaultUserPresenceTimeoutDuration, mfa.ENUMTIMEUNIT_MINUTES),
-	)
+	userPresenceTimeoutDescription := framework.SchemaAttributeDescriptionFromMarkdown("A single nested object that specifies the user presence timeout settings, used to control the amount of time a user has to perform a user presence gesture with their FIDO device. If not provided, defaults to 2 minutes.")
 
 	userPresenceTimeoutDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The amount of time (minutes or seconds) a user presence gesture will be accepted for the authentication request. Minimum is one minute (60 seconds); maxiumum is ten minutes (600 seconds).",
@@ -487,10 +485,9 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 
 			"user_presence_timeout": schema.SingleNestedAttribute{
-				Description:         userPresenceTimeoutDescription.Description,
-				MarkdownDescription: userPresenceTimeoutDescription.MarkdownDescription,
-				Optional:            true,
-				Computed:            true,
+				Description: userPresenceTimeoutDescription.Description,
+				Optional:    true,
+				Computed:    true,
 				Default: objectdefault.StaticValue(types.ObjectValueMust(
 					fido2PolicyUserPresenceTimeoutTFObjectTypes,
 					map[string]attr.Value{
