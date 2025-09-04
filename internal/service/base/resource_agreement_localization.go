@@ -187,7 +187,7 @@ func (r *AgreementLocalizationResource) Create(ctx context.Context, req resource
 
 	if v, ok := language.GetEnabledOk(); !ok || !*v {
 		resp.Diagnostics.AddError(
-			"Invalid langauage parameter",
+			"Invalid language parameter",
 			fmt.Sprintf("The language with ID %s needs to be enabled in the environment before it can be assigned to a localized agreement", plan.LanguageId.ValueString()),
 		)
 		return
@@ -327,7 +327,7 @@ func (r *AgreementLocalizationResource) Update(ctx context.Context, req resource
 
 	if v, ok := language.GetEnabledOk(); !ok || !*v {
 		resp.Diagnostics.AddError(
-			"Invalid langauage parameter",
+			"Invalid language parameter",
 			fmt.Sprintf("The language with ID %s needs to be enabled in the environment before it can be assigned to a localized agreement", plan.LanguageId.ValueString()),
 		)
 		return

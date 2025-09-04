@@ -5,14 +5,12 @@ package davinci
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"regexp"
 
-	"encoding/json"
-
 	"github.com/google/uuid"
-	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -25,6 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/pingidentity/pingone-go-client/pingone"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/jsontypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -70,16 +69,16 @@ func (r *davinciConnectorInstanceResource) Configure(ctx context.Context, req re
 }
 
 type davinciConnectorInstanceResourceModel struct {
-	Connector     types.Object         `tfsdk:"connector"`
-	EnvironmentId types.String         `tfsdk:"environment_id"`
-	Id            types.String         `tfsdk:"id"`
-	Name          types.String         `tfsdk:"name"`
-	Properties    jsontypes.Normalized `tfsdk:"properties"`
+	Connector     types.Object                     `tfsdk:"connector"`
+	EnvironmentId types.String                     `tfsdk:"environment_id"`
+	Id            types.String                     `tfsdk:"id"`
+	Name          types.String                     `tfsdk:"name"`
+	Properties    jsontypes.NormalizedObfuscatable `tfsdk:"properties"`
 }
 
 func (r *davinciConnectorInstanceResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Resource to create and manage a davinci connector instance.",
+		Description: "Resource to create and manage a DaVinci connector instance.",
 		Attributes: map[string]schema.Attribute{
 			"connector": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -87,7 +86,6 @@ func (r *davinciConnectorInstanceResource) Schema(ctx context.Context, req resou
 						Required: true,
 						Validators: []validator.String{
 							stringvalidator.LengthAtMost(256),
-							//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
 						},
 						PlanModifiers: []planmodifier.String{
 							stringplanmodifier.RequiresReplace(),
@@ -103,7 +101,6 @@ func (r *davinciConnectorInstanceResource) Schema(ctx context.Context, req resou
 					stringplanmodifier.RequiresReplace(),
 				},
 				Validators: []validator.String{
-					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
 					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
 				},
 			},
@@ -121,12 +118,12 @@ func (r *davinciConnectorInstanceResource) Schema(ctx context.Context, req resou
 				Required: true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(256),
-					//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
 				},
 			},
 			"properties": schema.StringAttribute{
-				CustomType: jsontypes.NormalizedType{},
+				CustomType: jsontypes.NormalizedObfuscatableType{},
 				Optional:   true,
+				Sensitive:  true,
 			},
 		},
 	}
@@ -136,13 +133,9 @@ func (model *davinciConnectorInstanceResourceModel) buildClientStructPost() (*pi
 	var respDiags diag.Diagnostics
 	result := &pingone.DaVinciConnectorInstanceCreateRequest{}
 	// connector
-	//TODO is this type wrong in the spec?
-	//connectorValue := pingone.ResourceRelationshipDaVinci{}
-	connectorValue := pingone.DaVinciConnectorInstanceCreateRequestConnector{}
+	connectorValue := pingone.ResourceRelationshipDaVinci{}
 	connectorAttrs := model.Connector.Attributes()
-	//TODO check if this is actually required, if so this could be considered a bug in the spec
-	//connectorValue.Id = connectorAttrs["id"].(types.String).ValueStringPointer()
-	connectorValue.Id = connectorAttrs["id"].(types.String).ValueStringPointer()
+	connectorValue.Id = connectorAttrs["id"].(types.String).ValueString()
 	result.Connector = connectorValue
 
 	// name
@@ -184,7 +177,7 @@ func (model *davinciConnectorInstanceResourceModel) buildClientStructPut() (*pin
 	return result, respDiags
 }
 
-func (state *davinciConnectorInstanceResourceModel) readClientResponse(response *pingone.DaVinciConnectorInstance) diag.Diagnostics {
+func (state *davinciConnectorInstanceResourceModel) readClientResponse(response *pingone.DaVinciConnectorInstanceResponse) diag.Diagnostics {
 	var respDiags, diags diag.Diagnostics
 	// connector
 	connectorAttrTypes := map[string]attr.Type{
@@ -200,8 +193,7 @@ func (state *davinciConnectorInstanceResourceModel) readClientResponse(response 
 	// name
 	state.Name = types.StringValue(response.Name)
 	// properties
-	originalProperties := state.Properties
-	state.Properties = jsontypes.NewNormalizedNull()
+	state.Properties = jsontypes.NormalizedObfuscatableNull()
 	if response.Properties != nil {
 		propertiesBytes, err := json.Marshal(response.Properties)
 		if err != nil {
@@ -211,18 +203,7 @@ func (state *davinciConnectorInstanceResourceModel) readClientResponse(response 
 				fmt.Sprintf("An error occurred while marshaling the properties: %s", err.Error()),
 			)
 		} else {
-			// Check if any properties were ignored by davinci
-			resultProperties := jsontypes.NewNormalizedValue(string(propertiesBytes))
-			if !originalProperties.Equal(resultProperties) {
-				respDiags.AddAttributeError(
-					path.Root("properties"),
-					"Properties Mismatch",
-					fmt.Sprintf("The properties returned by the DaVinci API do not match the configured properties. Ensure that you are providing properties that are supported by the connector.\n"+
-						"Configured properties: %s\nAPI returned properties: %s", originalProperties.ValueString(), resultProperties.ValueString()),
-				)
-			} else {
-				state.Properties = resultProperties
-			}
+			state.Properties = jsontypes.NormalizedObfuscatableStringValue(string(propertiesBytes))
 		}
 	}
 	return respDiags
@@ -261,16 +242,17 @@ func (r *davinciConnectorInstanceResource) Create(ctx context.Context, req resou
 		)
 		return
 	}
-	var responseData *pingone.DaVinciConnectorInstance
+	var responseData *pingone.DaVinciConnectorInstanceResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciConnectorApi.CreateConnectorInstance(ctx, environmentIdUuid).DaVinciConnectorInstanceCreateRequest(*clientData).Execute()
+			fO, fR, fErr := r.Client.DaVinciConnectorsApi.CreateConnectorInstance(ctx, environmentIdUuid).DaVinciConnectorInstanceCreateRequest(*clientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateConnectorInstance",
 		framework.DefaultCustomError,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -316,16 +298,17 @@ func (r *davinciConnectorInstanceResource) Read(ctx context.Context, req resourc
 		)
 		return
 	}
-	var responseData *pingone.DaVinciConnectorInstance
+	var responseData *pingone.DaVinciConnectorInstanceResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciConnectorApi.GetConnectorInstanceById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.DaVinciConnectorsApi.GetConnectorInstanceById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetConnectorInstanceById",
 		framework.CustomErrorResourceNotFoundWarning,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -383,16 +366,17 @@ func (r *davinciConnectorInstanceResource) Update(ctx context.Context, req resou
 		)
 		return
 	}
-	var responseData *pingone.DaVinciConnectorInstance
+	var responseData *pingone.DaVinciConnectorInstanceResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciConnectorApi.ReplaceConnectorInstanceById(ctx, environmentIdUuid, data.Id.ValueString()).DaVinciConnectorInstanceReplaceRequest(*clientData).Execute()
+			fO, fR, fErr := r.Client.DaVinciConnectorsApi.ReplaceConnectorInstanceById(ctx, environmentIdUuid, data.Id.ValueString()).DaVinciConnectorInstanceReplaceRequest(*clientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReplaceConnectorInstanceById",
 		framework.DefaultCustomError,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -442,11 +426,12 @@ func (r *davinciConnectorInstanceResource) Delete(ctx context.Context, req resou
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := r.Client.DaVinciConnectorApi.DeleteConnectorInstanceById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
+			fR, fErr := r.Client.DaVinciConnectorsApi.DeleteConnectorInstanceById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteConnectorInstanceById",
 		framework.CustomErrorResourceNotFoundWarning,
+		framework.DefaultRetryable,
 		nil,
 	)...)
 }

@@ -1,0 +1,1 @@
+terraform import pingone_davinci_connector_instance.example <environment_id>/<instance_id>

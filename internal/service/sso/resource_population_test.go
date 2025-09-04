@@ -8,7 +8,6 @@ import (
 	"os"
 	"regexp"
 	"testing"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -119,13 +118,15 @@ func TestAccPopulation_Full(t *testing.T) {
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_population.%s", resourceName)
-
+	environmentName := acctest.ResourceNameGenEnvironment()
 	name := resourceName
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -133,7 +134,7 @@ func TestAccPopulation_Full(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPopulationConfig_Full(resourceName, name),
+				Config: testAccPopulationConfig_Full(environmentName, licenseID, resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -233,12 +234,6 @@ func TestAccPopulation_PasswordPolicy(t *testing.T) {
 }
 
 func TestAccPopulation_DataProtection(t *testing.T) {
-	// If it is before the week of the next release, skip this test
-	if time.Now().Before(time.Date(2025, time.June, 14, 0, 0, 0, 0, time.UTC)) {
-		t.Skipf("Skipping TestAccPopulation_DataProtection as it requires creating a production environment")
-	} else {
-		t.Fatal("Remove skip logic from TestAccPopulation_DataProtection")
-	}
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -364,30 +359,30 @@ resource "pingone_population" "%[3]s" {
 }`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccPopulationConfig_Full(resourceName, name string) string {
+func testAccPopulationConfig_Full(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
 resource "pingone_password_policy" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
+  environment_id = pingone_environment.%[4]s.id
   name           = "%[3]s"
 }
 
 data "pingone_language" "%[3]s" {
-  environment_id = data.pingone_environment.general_test.id
+  environment_id = pingone_environment.%[4]s.id
 
   locale = "es"
 }
 
 resource "pingone_language_update" "%[3]s" {
-  environment_id = data.pingone_environment.general_test.id
+  environment_id = pingone_environment.%[4]s.id
 
   language_id = data.pingone_language.%[3]s.id
   enabled     = true
 }
 
 resource "pingone_branding_theme" "%[3]s" {
-  environment_id = data.pingone_environment.general_test.id
+  environment_id = pingone_environment.%[4]s.id
 
   name     = "%[3]s"
   template = "split"
@@ -402,7 +397,7 @@ resource "pingone_branding_theme" "%[3]s" {
 }
 
 resource "pingone_population" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
+  environment_id = pingone_environment.%[4]s.id
   name           = "%[3]s"
   description    = "Test description"
   password_policy = {
@@ -413,7 +408,7 @@ resource "pingone_population" "%[2]s" {
   theme = {
     id = pingone_branding_theme.%[3]s.id
   }
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), resourceName, name, environmentName)
 }
 
 func testAccPopulationConfig_Minimal(resourceName, name string) string {

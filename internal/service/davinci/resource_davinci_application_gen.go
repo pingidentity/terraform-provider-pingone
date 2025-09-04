@@ -257,14 +257,14 @@ func (model *davinciApplicationResourceModel) buildClientStructPut() (*pingone.D
 	result.Name = model.Name.ValueString()
 	// oauth
 	if !model.Oauth.IsNull() && !model.Oauth.IsUnknown() {
-		oauthValue := &pingone.DaVinciApplicationReplaceRequestOauth{}
+		oauthValue := &pingone.DaVinciApplicationReplaceRequestOAuth{}
 		oauthAttrs := model.Oauth.Attributes()
 		oauthValue.EnforceSignedRequestOpenid = oauthAttrs["enforce_signed_request_openid"].(types.Bool).ValueBoolPointer()
 		if !oauthAttrs["grant_types"].IsNull() && !oauthAttrs["grant_types"].IsUnknown() {
-			oauthValue.GrantTypes = []pingone.DaVinciApplicationReplaceRequestOauthGrantTypes{}
+			oauthValue.GrantTypes = []pingone.DaVinciApplicationReplaceRequestOAuthGrantType{}
 			for _, grantTypesElement := range oauthAttrs["grant_types"].(types.Set).Elements() {
-				var grantTypesValue pingone.DaVinciApplicationReplaceRequestOauthGrantTypes
-				grantTypesEnumValue, err := pingone.NewDaVinciApplicationReplaceRequestOauthGrantTypesFromValue(grantTypesElement.(types.String).ValueString())
+				var grantTypesValue pingone.DaVinciApplicationReplaceRequestOAuthGrantType
+				grantTypesEnumValue, err := pingone.NewDaVinciApplicationReplaceRequestOAuthGrantTypeFromValue(grantTypesElement.(types.String).ValueString())
 				if err != nil {
 					respDiags.AddAttributeError(
 						path.Root("grant_types"),
@@ -290,10 +290,10 @@ func (model *davinciApplicationResourceModel) buildClientStructPut() (*pingone.D
 			}
 		}
 		if !oauthAttrs["scopes"].IsNull() && !oauthAttrs["scopes"].IsUnknown() {
-			oauthValue.Scopes = []pingone.DaVinciApplicationReplaceRequestOauthScopes{}
+			oauthValue.Scopes = []pingone.DaVinciApplicationReplaceRequestOAuthScope{}
 			for _, scopesElement := range oauthAttrs["scopes"].(types.Set).Elements() {
-				var scopesValue pingone.DaVinciApplicationReplaceRequestOauthScopes
-				scopesEnumValue, err := pingone.NewDaVinciApplicationReplaceRequestOauthScopesFromValue(scopesElement.(types.String).ValueString())
+				var scopesValue pingone.DaVinciApplicationReplaceRequestOAuthScope
+				scopesEnumValue, err := pingone.NewDaVinciApplicationReplaceRequestOAuthScopeFromValue(scopesElement.(types.String).ValueString())
 				if err != nil {
 					respDiags.AddAttributeError(
 						path.Root("scopes"),
@@ -314,7 +314,7 @@ func (model *davinciApplicationResourceModel) buildClientStructPut() (*pingone.D
 	return result, respDiags
 }
 
-func (state *davinciApplicationResourceModel) readClientResponse(response *pingone.DaVinciApplication) diag.Diagnostics {
+func (state *davinciApplicationResourceModel) readClientResponse(response *pingone.DaVinciApplicationResponse) diag.Diagnostics {
 	var respDiags, diags diag.Diagnostics
 	// api_key
 	apiKeyAttrTypes := map[string]attr.Type{
@@ -416,16 +416,17 @@ func (r *davinciApplicationResource) Read(ctx context.Context, req resource.Read
 		)
 		return
 	}
-	var responseData *pingone.DaVinciApplication
+	var responseData *pingone.DaVinciApplicationResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciApplicationApi.GetDavinciApplicationById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.DaVinciApplicationsApi.GetDavinciApplicationById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetDavinciApplicationById",
 		framework.CustomErrorResourceNotFoundWarning,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -483,16 +484,17 @@ func (r *davinciApplicationResource) Update(ctx context.Context, req resource.Up
 		)
 		return
 	}
-	var responseData *pingone.DaVinciApplication
+	var responseData *pingone.DaVinciApplicationResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciApplicationApi.ReplaceDavinciApplicationById(ctx, environmentIdUuid, data.Id.ValueString()).DaVinciApplicationReplaceRequest(*clientData).Execute()
+			fO, fR, fErr := r.Client.DaVinciApplicationsApi.ReplaceDavinciApplicationById(ctx, environmentIdUuid, data.Id.ValueString()).DaVinciApplicationReplaceRequest(*clientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReplaceDavinciApplicationById",
 		framework.DefaultCustomError,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -542,11 +544,12 @@ func (r *davinciApplicationResource) Delete(ctx context.Context, req resource.De
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := r.Client.DaVinciApplicationApi.DeleteDavinciApplicationById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
+			fR, fErr := r.Client.DaVinciApplicationsApi.DeleteDavinciApplicationById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteDavinciApplicationById",
 		framework.CustomErrorResourceNotFoundWarning,
+		framework.DefaultRetryable,
 		nil,
 	)...)
 }

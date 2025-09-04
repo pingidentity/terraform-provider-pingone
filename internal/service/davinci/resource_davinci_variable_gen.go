@@ -5,11 +5,10 @@ package davinci
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"regexp"
-
-	"encoding/json"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
@@ -88,7 +87,7 @@ type davinciVariableResourceModel struct {
 
 func (r *davinciVariableResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Resource to create and manage a davinci variable.",
+		Description: "Resource to create and manage a DaVinci variable.",
 		Attributes: map[string]schema.Attribute{
 			"context": schema.StringAttribute{
 				Required:            true,
@@ -124,8 +123,6 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 				Optional: true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(256),
-					//TODO this syntax from the api spec is not valid in go
-					//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
 				},
 			},
 			"environment_id": schema.StringAttribute{
@@ -136,16 +133,12 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 				},
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
-					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
 				},
 			},
 			"flow": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
-						Required:   true,
-						Validators: []validator.String{
-							//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
-						},
+						Required: true,
 						PlanModifiers: []planmodifier.String{
 							stringplanmodifier.RequiresReplace(),
 						},
@@ -157,7 +150,6 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 				Computed:    true,
 				Description: "The ID of this resource.",
 				Validators: []validator.String{
-					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
 					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
 				},
 				PlanModifiers: []planmodifier.String{
@@ -181,7 +173,6 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 				Required: true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(256),
-					//stringvalidator.RegexMatches(regexp.MustCompile("^(?=\\S)[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
 				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -256,7 +247,6 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 func (model *davinciVariableResourceModel) buildClientStructPost() (*pingone.DaVinciVariableCreateRequest, diag.Diagnostics) {
 	result := &pingone.DaVinciVariableCreateRequest{}
 	var respDiags diag.Diagnostics
-	var err error
 	// context
 	contextValue, err := pingone.NewDaVinciVariableCreateRequestContextFromValue(model.Context.ValueString())
 	if err != nil {
@@ -337,7 +327,6 @@ func (model *davinciVariableResourceModel) buildClientStructPost() (*pingone.DaV
 func (model *davinciVariableResourceModel) buildClientStructPut() (*pingone.DaVinciVariableReplaceRequest, diag.Diagnostics) {
 	result := &pingone.DaVinciVariableReplaceRequest{}
 	var respDiags diag.Diagnostics
-	var err error
 	// context
 	contextValue, err := pingone.NewDaVinciVariableReplaceRequestContextFromValue(model.Context.ValueString())
 	if err != nil {
@@ -415,7 +404,7 @@ func (model *davinciVariableResourceModel) buildClientStructPut() (*pingone.DaVi
 	return result, respDiags
 }
 
-func (state *davinciVariableResourceModel) readClientResponse(response *pingone.DaVinciVariable) diag.Diagnostics {
+func (state *davinciVariableResourceModel) readClientResponse(response *pingone.DaVinciVariableResponse) diag.Diagnostics {
 	var respDiags, diags diag.Diagnostics
 	// context
 	var contextPtrValue *string
@@ -446,7 +435,6 @@ func (state *davinciVariableResourceModel) readClientResponse(response *pingone.
 	state.Flow = flowValue
 	// id
 	state.Id = types.StringValue(response.Id.String())
-	// max
 	// max
 	if response.Max == nil {
 		state.Max = types.Int32Null()
@@ -551,16 +539,17 @@ func (r *davinciVariableResource) Create(ctx context.Context, req resource.Creat
 		)
 		return
 	}
-	var responseData *pingone.DaVinciVariable
+	var responseData *pingone.DaVinciVariableResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciVariableApi.CreateVariable(ctx, environmentIdUuid).DaVinciVariableCreateRequest(*clientData).Execute()
+			fO, fR, fErr := r.Client.DaVinciVariablesApi.CreateVariable(ctx, environmentIdUuid).DaVinciVariableCreateRequest(*clientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateVariable",
 		framework.DefaultCustomError,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -615,16 +604,17 @@ func (r *davinciVariableResource) Read(ctx context.Context, req resource.ReadReq
 		)
 		return
 	}
-	var responseData *pingone.DaVinciVariable
+	var responseData *pingone.DaVinciVariableResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciVariableApi.GetVariableById(ctx, environmentIdUuid, idUuid).Execute()
+			fO, fR, fErr := r.Client.DaVinciVariablesApi.GetVariableById(ctx, environmentIdUuid, idUuid).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetVariableById",
 		framework.CustomErrorResourceNotFoundWarning,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -691,16 +681,17 @@ func (r *davinciVariableResource) Update(ctx context.Context, req resource.Updat
 		)
 		return
 	}
-	var responseData *pingone.DaVinciVariable
+	var responseData *pingone.DaVinciVariableResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciVariableApi.ReplaceVariableById(ctx, environmentIdUuid, idUuid).DaVinciVariableReplaceRequest(*clientData).Execute()
+			fO, fR, fErr := r.Client.DaVinciVariablesApi.ReplaceVariableById(ctx, environmentIdUuid, idUuid).DaVinciVariableReplaceRequest(*clientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReplaceVariableById",
 		framework.DefaultCustomError,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -759,11 +750,12 @@ func (r *davinciVariableResource) Delete(ctx context.Context, req resource.Delet
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fR, fErr := r.Client.DaVinciVariableApi.DeleteVariableById(ctx, environmentIdUuid, idUuid).Execute()
+			fR, fErr := r.Client.DaVinciVariablesApi.DeleteVariableById(ctx, environmentIdUuid, idUuid).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteVariableById",
 		framework.CustomErrorResourceNotFoundWarning,
+		framework.DefaultRetryable,
 		nil,
 	)...)
 }

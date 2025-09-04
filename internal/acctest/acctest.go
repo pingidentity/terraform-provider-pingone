@@ -161,8 +161,8 @@ func PreCheckDomainVerification(t *testing.T) {
 }
 
 func PreCheckRegionSupportsWorkforce(t *testing.T) {
-	if v := os.Getenv("PINGONE_REGION_CODE"); v == "CA" {
-		t.Skipf("Workforce environment not supported in the Canada region")
+	if v := os.Getenv("PINGONE_REGION_CODE"); v == "CA" || v == "SG" {
+		t.Skipf("Workforce environment not supported in the Canada or Singapore regions")
 	}
 }
 
@@ -305,10 +305,13 @@ func ResourceNameGenEnvironment() string {
 }
 
 func TestClient(ctx context.Context) (*pingone.APIClient, error) {
-	regionSuffix, _ := framework.RegionSuffixFromCode(strings.ToLower(os.Getenv("PINGONE_REGION_CODE")))
+	regionTopLevelDomain, ok := framework.RegionTopLevelDomainFromCode(strings.ToLower(os.Getenv("PINGONE_REGION_CODE")))
+	if !ok {
+		return nil, fmt.Errorf("invalid PINGONE_REGION_CODE: %s", os.Getenv("PINGONE_REGION_CODE"))
+	}
 	config := clientconfig.NewConfiguration().
 		WithGrantType(oauth2.GrantTypeClientCredentials).
-		WithTopLevelDomain(regionSuffix)
+		WithTopLevelDomain(regionTopLevelDomain)
 
 	pingOneConfig := pingone.NewConfiguration(config)
 	pingOneConfig.UserAgent = framework.UserAgent("", GetProviderTestingVersion())
@@ -356,11 +359,25 @@ func DaVinciBootstrappedSandboxEnvironment(dataSourceName *string) string {
 		}`, name)
 }
 
-func WorkforceSandboxEnvironment() string {
-	return `
+const (
+	WorkforceV1SandboxEnvironmentName = "tf-testacc-static-workforce-test"
+	WorkforceV2SandboxEnvironmentName = "tf-testacc-static-workforce-v2-test"
+)
+
+// Static environment that uses v1 PingID
+func WorkforceV1SandboxEnvironment() string {
+	return fmt.Sprintf(`
 		data "pingone_environment" "workforce_test" {
-			name = "tf-testacc-static-workforce-test"
-		}`
+			name = "%s"
+		}`, WorkforceV1SandboxEnvironmentName)
+}
+
+// Static environment that uses v2 PingID
+func WorkforceV2SandboxEnvironment() string {
+	return fmt.Sprintf(`
+		data "pingone_environment" "workforce_test" {
+			name = "%s"
+		}`, WorkforceV2SandboxEnvironmentName)
 }
 
 func DomainVerifiedSandboxEnvironment() string {
@@ -390,7 +407,7 @@ func CheckParentEnvironmentDestroy(ctx context.Context, apiClient *pingone.APICl
 		return false, fmt.Errorf("unable to parse environment id '%s' as uuid: %v", environmentID, err)
 	}
 
-	environment, r, err := apiClient.EnvironmentApi.GetEnvironmentById(ctx, environmentIdUuid).Execute()
+	environment, r, err := apiClient.EnvironmentsApi.GetEnvironmentById(ctx, environmentIdUuid).Execute()
 
 	destroyed, err := CheckForResourceDestroy(r, err)
 	if err != nil {
@@ -400,7 +417,7 @@ func CheckParentEnvironmentDestroy(ctx context.Context, apiClient *pingone.APICl
 	if destroyed {
 		return destroyed, nil
 	} else {
-		if environment != nil && environment.Type == pingone.ENVIRONMENTTYPE_PRODUCTION {
+		if environment != nil && environment.Type == pingone.ENVIRONMENTTYPEVALUE_PRODUCTION {
 			return true, nil
 		} else {
 			return false, nil

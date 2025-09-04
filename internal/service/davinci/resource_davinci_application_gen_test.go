@@ -486,7 +486,7 @@ func davinciApplication_Delete(ctx context.Context, apiClient *pingone.APIClient
 		t.Fatalf("One of the identifier attributes can't be determined. environmentId: '%s' id: '%s'", environmentId, id)
 	}
 
-	_, err := apiClient.DaVinciApplicationApi.DeleteDavinciApplicationById(ctx, uuid.MustParse(environmentId), id).Execute()
+	_, err := apiClient.DaVinciApplicationsApi.DeleteDavinciApplicationById(ctx, uuid.MustParse(environmentId), id).Execute()
 	if err != nil {
 		t.Fatalf("Failed to delete davinci_application: %v", err)
 	}
@@ -515,7 +515,7 @@ func davinciApplication_CheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, r, err := p1Client.DaVinciApplicationApi.GetDavinciApplicationById(ctx, uuid.MustParse(rs.Primary.Attributes["environment_id"]), rs.Primary.Attributes["id"]).Execute()
+		_, r, err := p1Client.DaVinciApplicationsApi.GetDavinciApplicationById(ctx, uuid.MustParse(rs.Primary.Attributes["environment_id"]), rs.Primary.Attributes["id"]).Execute()
 
 		shouldContinue, err = acctest.CheckForResourceDestroy(r, err)
 		if err != nil {
