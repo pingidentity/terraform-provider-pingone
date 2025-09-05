@@ -28,6 +28,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/pingidentity/pingone-go-client/pingone"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	internalstringvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -449,10 +450,8 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 							},
 						},
 						"preferred_data_type": schema.StringAttribute{
-							//Required: true,
-							Optional: true,
-							Computed: true,
-							//TODO validator to simulate being required
+							Optional:            true,
+							Computed:            true,
 							Description:         "Options are \"array\", \"boolean\", \"number\", \"object\", \"string\".",
 							MarkdownDescription: "Options are `array`, `boolean`, `number`, `object`, `string`.",
 							Validators: []validator.String{
@@ -464,15 +463,19 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 									"string",
 								),
 								stringvalidator.LengthAtLeast(1),
+								// This attribute is required by the API, but can't be marked as such or it will cause unnecessary plans
+								// See https://github.com/hashicorp/terraform-plugin-framework/issues/898
+								internalstringvalidator.NotNull(),
 							},
 						},
 						"property_name": schema.StringAttribute{
-							//Required: true,
 							Optional: true,
 							Computed: true,
-							//TODO validator to simulate being required
 							Validators: []validator.String{
 								stringvalidator.LengthAtLeast(1),
+								// This attribute is required by the API, but can't be marked as such or it will cause unnecessary plans
+								// See https://github.com/hashicorp/terraform-plugin-framework/issues/898
+								internalstringvalidator.NotNull(),
 							},
 						},
 						"required": schema.BoolAttribute{
