@@ -29,7 +29,7 @@ func TestAccApplication_OIDC_GeneratedClientID(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_CLIENT_ID_CLIENT_SECRET)
+			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI) // its a hack, because I'm not sure this is the best way to do this
 			acctest.PreCheckBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -79,7 +79,7 @@ func TestAccApplication_OIDC_ImportedClientIDClientSecret(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI) // its a hack, because I'm not sure this is the best way to do this
 			acctest.PreCheckBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -179,7 +179,7 @@ func testAccApplicationConfig_OIDC_MinimalCustom(resourceName, name string) stri
 		%[1]s
 
 resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.app_import_ff_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -189,7 +189,7 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
   }
 }
-`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.AppImportFFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_Import(resourceName, name string, clientID, clientSecret *string) string {
@@ -208,7 +208,7 @@ func testAccApplicationConfig_OIDC_Import(resourceName, name string, clientID, c
 		%[1]s
 
 resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
+  environment_id = data.pingone_environment.app_import_ff_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -222,5 +222,5 @@ resource "pingone_application" "%[2]s" {
     %[5]s
   }
 }
-`, acctest.GenericSandboxEnvironment(), resourceName, name, interpolatedClientID, interpolatedClientSecret)
+`, acctest.AppImportFFSandboxEnvironment(), resourceName, name, interpolatedClientID, interpolatedClientSecret)
 }
