@@ -79,7 +79,8 @@ type MinMaxChecks struct {
 type EnumFeatureFlag string
 
 const (
-	ENUMFEATUREFLAG_DAVINCI EnumFeatureFlag = "DAVINCI"
+	ENUMFEATUREFLAG_DAVINCI                 EnumFeatureFlag = "DAVINCI"
+	ENUMFEATUREFLAG_APP_AND_RESOURCE_IMPORT EnumFeatureFlag = "APP_AND_RESOURCE_IMPORT"
 )
 
 func PreCheckClient(t *testing.T) {
@@ -432,6 +433,13 @@ func DaVinciFlowPolicySandboxEnvironment() string {
 	return `
 		data "pingone_environment" "davinci_test" {
 			name = "tf-testacc-static-davinci-test"
+		}`
+}
+
+func AppImportFFSandboxEnvironment() string {
+	return `
+		data "pingone_environment" "app_import_ff_test" {
+			name = "tf-testacc-static-app-import-ff-test"
 		}`
 }
 
