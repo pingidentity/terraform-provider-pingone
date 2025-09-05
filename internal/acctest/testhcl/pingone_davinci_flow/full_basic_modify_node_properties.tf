@@ -84,7 +84,6 @@ resource "pingone_davinci_flow" "%[2]s-subflow1" {
             id = "rbi38g672i"
             node_type = "EVAL"
             label = "Evaluator"
-            properties = jsonencode({})
           }
           position = {
             x = 394
@@ -110,7 +109,6 @@ resource "pingone_davinci_flow" "%[2]s-subflow1" {
             status = "configured"
             capability_name = "createSuccessResponse"
             type = "action"
-            properties = jsonencode({})
           }
           position = {
             x = 511
@@ -231,7 +229,6 @@ resource "pingone_davinci_flow" "%[2]s-subflow2" {
             id = "rbi38g672i"
             node_type = "EVAL"
             label = "Evaluator"
-            properties = jsonencode({})
           }
           position = {
             x = 394
@@ -257,7 +254,6 @@ resource "pingone_davinci_flow" "%[2]s-subflow2" {
             status = "configured"
             capability_name = "createSuccessResponse"
             type = "action"
-            properties = jsonencode({})
           }
           position = {
             x = 511
@@ -376,8 +372,6 @@ resource "pingone_davinci_flow" "%[2]s" {
             id = "8fvg7tfr8j"
             node_type = "EVAL"
             label = "Evaluator"
-            #TODO test without this
-            properties = "null"
           }
           position = {
             x = 426.5
@@ -463,7 +457,6 @@ resource "pingone_davinci_flow" "%[2]s" {
             status = "configured"
             capability_name = "createSuccessResponse"
             type = "action"
-            properties = jsonencode({})
           }
           position = {
             x = 1197
@@ -583,8 +576,6 @@ resource "pingone_davinci_flow" "%[2]s" {
           data = {
             id = "j74pmg6577"
             node_type = "EVAL"
-            #TODO test without this
-            properties = "null"
           }
           position = {
             x = 1017
@@ -603,8 +594,6 @@ resource "pingone_davinci_flow" "%[2]s" {
           data = {
             id = "pensvkew7y"
             node_type = "EVAL"
-            #TODO test without this
-            properties = "null"
           }
           position = {
             x = 1032
@@ -668,8 +657,6 @@ resource "pingone_davinci_flow" "%[2]s" {
           data = {
             id = "bbemfztdyk"
             node_type = "EVAL"
-            #TODO test without this
-            properties = "null"
           }
           position = {
             x = 273.5
