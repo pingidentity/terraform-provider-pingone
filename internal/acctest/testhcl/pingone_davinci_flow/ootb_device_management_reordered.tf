@@ -7,7 +7,6 @@ resource "pingone_davinci_flow" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   graph_data = {
     box_selection_enabled = true
-    data                  = jsonencode({})
     elements = {
       edges = [
         {

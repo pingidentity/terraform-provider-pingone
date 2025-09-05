@@ -204,7 +204,7 @@ resource "pingone_davinci_flow" "%[2]s-subflow1" {
         }
       ]
     }
-    data = jsonencode({})
+    
     zooming_enabled = true
     user_zooming_enabled = true
     zoom = 1
@@ -351,7 +351,7 @@ resource "pingone_davinci_flow" "%[2]s-subflow2" {
         }
       ]
     }
-    data = jsonencode({})
+    
     zooming_enabled = true
     user_zooming_enabled = true
     zoom = 1
@@ -1144,7 +1144,7 @@ resource "pingone_davinci_flow" "%[2]s" {
         }
       ]
     }
-    data = jsonencode({})
+    
     zooming_enabled = true
     user_zooming_enabled = true
     zoom = 1

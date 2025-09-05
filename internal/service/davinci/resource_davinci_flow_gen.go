@@ -1375,15 +1375,19 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 	if response.GraphData == nil {
 		graphDataValue = types.ObjectNull(graphDataAttrTypes)
 	} else {
-		graphDataDataValue := jsontypes.NewNormalizedNull()
-		graphDataDataBytes, err := json.Marshal(response.GraphData.Data)
-		if err != nil {
-			respDiags.AddError(
-				"Error Marshaling graphData.data",
-				fmt.Sprintf("An error occurred while marshaling: %s", err.Error()),
-			)
+		var graphDataDataValue jsontypes.Normalized
+		if response.GraphData.Data == nil {
+			graphDataDataValue = jsontypes.NewNormalizedNull()
 		} else {
-			graphDataDataValue = jsontypes.NewNormalizedValue(string(graphDataDataBytes))
+			graphDataDataBytes, err := json.Marshal(response.GraphData.Data)
+			if err != nil {
+				respDiags.AddError(
+					"Error Marshaling graphData.data",
+					fmt.Sprintf("An error occurred while marshaling: %s", err.Error()),
+				)
+			} else {
+				graphDataDataValue = jsontypes.NewNormalizedValue(string(graphDataDataBytes))
+			}
 		}
 		var graphDataElementsEdgesValues []attr.Value
 		for _, graphDataElementsEdgesResponseValue := range response.GraphData.Elements.Edges {
@@ -1550,15 +1554,19 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 	if response.OutputSchema == nil {
 		outputSchemaValue = types.ObjectNull(outputSchemaAttrTypes)
 	} else {
-		outputSchemaOutputValue := jsontypes.NewNormalizedNull()
-		outputSchemaOutputBytes, err := json.Marshal(response.OutputSchema.Output)
-		if err != nil {
-			respDiags.AddError(
-				"Error Marshaling outputSchema.output",
-				fmt.Sprintf("An error occurred while marshaling: %s", err.Error()),
-			)
+		var outputSchemaOutputValue jsontypes.Normalized
+		if response.OutputSchema.Output == nil {
+			outputSchemaOutputValue = jsontypes.NewNormalizedNull()
 		} else {
-			outputSchemaOutputValue = jsontypes.NewNormalizedValue(string(outputSchemaOutputBytes))
+			outputSchemaOutputBytes, err := json.Marshal(response.OutputSchema.Output)
+			if err != nil {
+				respDiags.AddError(
+					"Error Marshaling outputSchema.output",
+					fmt.Sprintf("An error occurred while marshaling: %s", err.Error()),
+				)
+			} else {
+				outputSchemaOutputValue = jsontypes.NewNormalizedValue(string(outputSchemaOutputBytes))
+			}
 		}
 		outputSchemaValue, diags = types.ObjectValue(outputSchemaAttrTypes, map[string]attr.Value{
 			"output": outputSchemaOutputValue,
