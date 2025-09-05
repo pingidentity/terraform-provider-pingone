@@ -16,6 +16,8 @@ import (
 	"github.com/pingidentity/pingone-go-client/pingone"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func TestAccDavinciApplicationFlowPolicy_RemovalDrift(t *testing.T) {
@@ -24,9 +26,9 @@ func TestAccDavinciApplicationFlowPolicy_RemovalDrift(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName)
 
-	//environmentName := acctest.ResourceNameGenEnvironment()
+	environmentName := acctest.ResourceNameGenEnvironment()
 
-	//licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 	var environmentId string
 	var daVinciApplicationId string
 	var id string
@@ -59,18 +61,17 @@ func TestAccDavinciApplicationFlowPolicy_RemovalDrift(t *testing.T) {
 				ExpectNonEmptyPlan: true,
 			},
 			// Test removal of the environment
-			//TODO re-enable this test when the pingone_davinci_flow resource is available
-			// {
-			// 	Config: davinciApplicationFlowPolicy_NewEnvHCL(environmentName, licenseID, resourceName),
-			// 	Check:  davinciApplicationFlowPolicy_GetIDs(resourceFullName, &environmentId, &daVinciApplicationId, &id),
-			// },
-			// {
-			// 	PreConfig: func() {
-			// 		base.Environment_RemovalDrift_PreConfig(ctx, p1Client, t, environmentId)
-			// 	},
-			// 	RefreshState:       true,
-			// 	ExpectNonEmptyPlan: true,
-			// },
+			{
+				Config: davinciApplicationFlowPolicy_NewEnvHCL(environmentName, licenseID, resourceName),
+				Check:  davinciApplicationFlowPolicy_GetIDs(resourceFullName, &environmentId, &daVinciApplicationId, &id),
+			},
+			{
+				PreConfig: func() {
+					base.Environment_RemovalDrift_PreConfig(ctx, p1Client, t, environmentId)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
 		},
 	})
 }
@@ -111,7 +112,7 @@ func testAccDavinciApplicationFlowPolicy_MinimalMaximal(t *testing.T, withBootst
 			{
 				// Re-create with a complete model
 				Config: davinciApplicationFlowPolicy_CompleteHCL(resourceName, withBootstrapConfig),
-				// Check:  davinciApplicationFlowPolicy_CheckComputedValuesComplete(resourceName),
+				Check:  davinciApplicationFlowPolicy_CheckComputedValuesComplete(resourceName),
 			},
 			{
 				// Back to minimal model
@@ -121,14 +122,13 @@ func testAccDavinciApplicationFlowPolicy_MinimalMaximal(t *testing.T, withBootst
 			{
 				// Back to complete model
 				Config: davinciApplicationFlowPolicy_CompleteHCL(resourceName, withBootstrapConfig),
-				// Check:  davinciApplicationFlowPolicy_CheckComputedValuesComplete(resourceName),
+				Check:  davinciApplicationFlowPolicy_CheckComputedValuesComplete(resourceName),
 			},
-			// {
-			// 	// Complete model with reordering of lists and sets
-			// 	Config: davinciApplicationFlowPolicy_CompleteReorderedHCL(resourceName),
-			// 	//TODO update checks if different results are expected after reordering
-			// 	Check: davinciApplicationFlowPolicy_CheckComputedValuesComplete(resourceName),
-			// },
+			{
+				// Complete model with reordering of lists and sets
+				Config: davinciApplicationFlowPolicy_CompleteReorderedHCL(resourceName),
+				Check:  davinciApplicationFlowPolicy_CheckComputedValuesComplete(resourceName),
+			},
 			{
 				// Test importing the resource
 				Config:       davinciApplicationFlowPolicy_CompleteHCL(resourceName, withBootstrapConfig),
@@ -152,7 +152,6 @@ func testAccDavinciApplicationFlowPolicy_MinimalMaximal(t *testing.T, withBootst
 }
 
 func TestAccDavinciApplicationFlowPolicy_NewEnv(t *testing.T) {
-	t.Skip("Skipping test as the pingone_davinci_flow resource will be needed for this")
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -225,6 +224,96 @@ func davinciApplicationFlowPolicy_MinimalHCL(resourceName string, withBootstrapC
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_davinci_flow" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[2]s"
+  description    = "This is a demo flow"
+  color          = "#00FF00"
+
+  graph_data = {
+    elements = {
+      edges = []
+      nodes = [{
+        data = {
+          id        = "8bnj41592a"
+          node_type = "CONNECTION"
+          connector_id    = "pingOneSSOConnector"
+          label           = "PingOne"
+          status          = "configured"
+          capability_name = "userLookup"
+          type            = "action"
+          properties = jsonencode({
+            "additionalUserProperties" : {
+              "value" : []
+            },
+            "username" : {
+              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+            },
+            "population" : {
+              "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+            },
+            "userIdentifierForFindUser" : {
+              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+            }
+          })
+        }
+        position = {
+          x = 420
+          y = 360
+        }
+        group      = "nodes"
+        removed    = false
+        selected   = false
+        selectable = true
+        locked     = false
+        grabbable  = true
+        pannable   = false
+        classes    = ""
+      }]
+    }
+
+    data = "{}"
+
+    box_selection_enabled = true
+    user_zooming_enabled  = true
+    zooming_enabled       = true
+    zoom                  = 1
+    min_zoom              = 0.01
+    max_zoom              = 10000
+    pannable              = true
+    panning_enabled       = true
+    user_panning_enabled  = true
+
+    pan = {
+      x = 0
+      y = 0
+    }
+
+    renderer = jsonencode({
+      "name" : "null"
+    })
+  }
+
+  settings = {
+    csp                              = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
+    intermediate_loading_screen_css  = ""
+    intermediate_loading_screen_html = ""
+    log_level                        = 2
+  }
+
+  output_schema = {
+    output = jsonencode({
+      "type" : "object",
+      "properties" : {},
+      "additionalProperties" : true
+    })
+  }
+
+  trigger = {
+    type = "AUTHENTICATION"
+  }
+}
+
 resource "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[2]s"
@@ -235,11 +324,14 @@ resource "pingone_davinci_application_flow_policy" "%[2]s" {
   da_vinci_application_id = pingone_davinci_application.%[2]s.id
   flow_distributions = [
     {
-      #TODO use flow resource to create this, rather than using a hardcoded id
-      id      = "ea3bf86e79daf74f0262a317190e02dd"
+      id      = pingone_davinci_flow.%[2]s.id
       version = 0
     }
   ]
+  # Ensures this resource will be updated before deleting the flow
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 `, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
 }
@@ -254,89 +346,570 @@ resource "pingone_davinci_application" "%[2]s" {
   name           = "%[2]s"
 }
 
+resource "pingone_davinci_flow" "%[2]s-first" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[2]s"
+  description    = "This is a first demo flow"
+  color          = "#00FF00"
+
+  graph_data = {
+    elements = {
+      edges = []
+      nodes = [{
+        data = {
+          id        = "nodefirstflow"
+          node_type = "CONNECTION"
+          connector_id    = "pingOneSSOConnector"
+          label           = "PingOne"
+          status          = "configured"
+          capability_name = "userLookup"
+          type            = "action"
+          properties = jsonencode({
+            "additionalUserProperties" : {
+              "value" : []
+            },
+            "username" : {
+              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+            },
+            "population" : {
+              "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+            },
+            "userIdentifierForFindUser" : {
+              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+            }
+          })
+        }
+        position = {
+          x = 420
+          y = 360
+        }
+        group      = "nodes"
+        removed    = false
+        selected   = false
+        selectable = true
+        locked     = false
+        grabbable  = true
+        pannable   = false
+        classes    = ""
+      }]
+    }
+
+    data = "{}"
+
+    box_selection_enabled = true
+    user_zooming_enabled  = true
+    zooming_enabled       = true
+    zoom                  = 1
+    min_zoom              = 0.01
+    max_zoom              = 10000
+    pannable              = true
+    panning_enabled       = true
+    user_panning_enabled  = true
+
+    pan = {
+      x = 0
+      y = 0
+    }
+
+    renderer = jsonencode({
+      "name" : "null"
+    })
+  }
+
+  settings = {
+    csp                              = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
+    intermediate_loading_screen_css  = ""
+    intermediate_loading_screen_html = ""
+    log_level                        = 2
+  }
+
+  output_schema = {
+    output = jsonencode({
+      "type" : "object",
+      "properties" : {},
+      "additionalProperties" : true
+    })
+  }
+
+  trigger = {
+    type = "AUTHENTICATION"
+  }
+}
+
+resource "pingone_davinci_flow" "%[2]s-second" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[2]s"
+  description    = "This is a second demo flow"
+  color          = "#00FF00"
+
+  graph_data = {
+    elements = {
+      edges = []
+      nodes = [{
+        data = {
+          id        = "nodesecondflow1"
+          node_type = "CONNECTION"
+          connector_id    = "pingOneSSOConnector"
+          label           = "PingOne"
+          status          = "configured"
+          capability_name = "userLookup"
+          type            = "action"
+          properties = jsonencode({
+            "additionalUserProperties" : {
+              "value" : []
+            },
+            "username" : {
+              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+            },
+            "population" : {
+              "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+            },
+            "userIdentifierForFindUser" : {
+              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+            }
+          })
+        }
+        position = {
+          x = 420
+          y = 360
+        }
+        group      = "nodes"
+        removed    = false
+        selected   = false
+        selectable = true
+        locked     = false
+        grabbable  = true
+        pannable   = false
+        classes    = ""
+      },
+	  {
+        data = {
+          id        = "nodesecondflow2"
+          node_type = "CONNECTION"
+          connector_id    = "pingOneSSOConnector"
+          label           = "PingOne"
+          status          = "configured"
+          capability_name = "userLookup"
+          type            = "action"
+          properties = jsonencode({
+            "additionalUserProperties" : {
+              "value" : []
+            },
+            "username" : {
+              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+            },
+            "population" : {
+              "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+            },
+            "userIdentifierForFindUser" : {
+              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+            }
+          })
+        }
+        position = {
+          x = 420
+          y = 360
+        }
+        group      = "nodes"
+        removed    = false
+        selected   = false
+        selectable = true
+        locked     = false
+        grabbable  = true
+        pannable   = false
+        classes    = ""
+      }]
+    }
+
+    data = "{}"
+
+    box_selection_enabled = true
+    user_zooming_enabled  = true
+    zooming_enabled       = true
+    zoom                  = 1
+    min_zoom              = 0.01
+    max_zoom              = 10000
+    pannable              = true
+    panning_enabled       = true
+    user_panning_enabled  = true
+
+    pan = {
+      x = 0
+      y = 0
+    }
+
+    renderer = jsonencode({
+      "name" : "null"
+    })
+  }
+
+  settings = {
+    csp                              = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
+    intermediate_loading_screen_css  = ""
+    intermediate_loading_screen_html = ""
+    log_level                        = 2
+  }
+
+  output_schema = {
+    output = jsonencode({
+      "type" : "object",
+      "properties" : {},
+      "additionalProperties" : true
+    })
+  }
+
+  trigger = {
+    type = "AUTHENTICATION"
+  }
+}
+
 resource "pingone_davinci_application_flow_policy" "%[2]s" {
   environment_id          = data.pingone_environment.general_test.id
   da_vinci_application_id = pingone_davinci_application.%[2]s.id
   flow_distributions = [
     {
-      id = "ea3bf86e79daf74f0262a317190e02dd"
+  	  id      = pingone_davinci_flow.%[2]s-first.id
       ip = [
         "0.0.0.0/0",
         "1.1.1.1/1",
       ]
       success_nodes = [
         {
-          id = "1234"
+          id = "nodefirstflow"
         }
       ]
-      version = 1
-      weight  = 100
+      version = 0
+      weight  = 45
+    },
+    {
+  	  id      = pingone_davinci_flow.%[2]s-second.id
+      ip = [
+        "0.0.0.0/0",
+        "1.1.1.1/1",
+		"2.2.2.2/2",
+      ]
+      success_nodes = [
+        {
+          id = "nodesecondflow1"
+        },
+		{
+		  id = "nodesecondflow2"
+		}
+      ]
+      version = 0
+      weight  = 55
     }
-    #TODO add a second flow
   ]
   name   = "Updated policy"
   status = "disabled"
-  #TODO test trigger with a pingone flow
-  //   trigger = {
-  //     configuration = {
-  //       mfa = {
-  //         enabled = //TODO
-  //         time = //TODO
-  //         time_format = //TODO
-  //       }
-  //       pwd = {
-  //         enabled = //TODO
-  //         time = //TODO
-  //         time_format = //TODO
-  //       }
-  //     }
-  //     type = //TODO
-  //   }
+  trigger = {
+    configuration = {
+      mfa = {
+        enabled = true
+        time = 5
+        time_format = "hour"
+      }
+      pwd = {
+        enabled = false
+        time = 3
+        time_format = "day"
+      }
+    }
+    type = "AUTHENTICATION"
+  }
+  # Ensures this resource will be updated before deleting the flow
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 `, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
 }
 
 // Maximal HCL with all values set, with ordering changes in lists and sets from the default CompleteHCL
-// TODO update when the pingone_davinci_flow resource is available, reorder the updated CompleteHCL to form this
 func davinciApplicationFlowPolicy_CompleteReorderedHCL(resourceName string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_davinci_application_flow_policy" "%[2]s" {
+resource "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  //   da_vinci_application_id = //TODO
-  //   id = //TODO
-  //   // TODO set values for complete fields, with ordering changes
-  //   flow_distributions = [
-  //     {
-  //       id = //TODO
-  //       ip = //TODO
-  //       success_nodes = [
-  //         {
-  //           id = //TODO
-  //         }
-  //       ]
-  //       version = //TODO
-  //       weight = //TODO
-  //     }
-  //   ]
-  //   name = //TODO
-  //   status = //TODO
-  //   trigger = {
-  //     configuration = {
-  //       mfa = {
-  //         enabled = //TODO
-  //         time = //TODO
-  //         time_format = //TODO
-  //       }
-  //       pwd = {
-  //         enabled = //TODO
-  //         time = //TODO
-  //         time_format = //TODO
-  //       }
-  //     }
-  //     type = //TODO
-  //   }
+  name           = "%[2]s"
+}
+
+resource "pingone_davinci_flow" "%[2]s-first" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[2]s"
+  description    = "This is a first demo flow"
+  color          = "#00FF00"
+
+  graph_data = {
+    elements = {
+      edges = []
+      nodes = [{
+        data = {
+          id        = "nodefirstflow"
+          node_type = "CONNECTION"
+          connector_id    = "pingOneSSOConnector"
+          label           = "PingOne"
+          status          = "configured"
+          capability_name = "userLookup"
+          type            = "action"
+          properties = jsonencode({
+            "additionalUserProperties" : {
+              "value" : []
+            },
+            "username" : {
+              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+            },
+            "population" : {
+              "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+            },
+            "userIdentifierForFindUser" : {
+              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+            }
+          })
+        }
+        position = {
+          x = 420
+          y = 360
+        }
+        group      = "nodes"
+        removed    = false
+        selected   = false
+        selectable = true
+        locked     = false
+        grabbable  = true
+        pannable   = false
+        classes    = ""
+      }]
+    }
+
+    data = "{}"
+
+    box_selection_enabled = true
+    user_zooming_enabled  = true
+    zooming_enabled       = true
+    zoom                  = 1
+    min_zoom              = 0.01
+    max_zoom              = 10000
+    pannable              = true
+    panning_enabled       = true
+    user_panning_enabled  = true
+
+    pan = {
+      x = 0
+      y = 0
+    }
+
+    renderer = jsonencode({
+      "name" : "null"
+    })
+  }
+
+  settings = {
+    csp                              = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
+    intermediate_loading_screen_css  = ""
+    intermediate_loading_screen_html = ""
+    log_level                        = 2
+  }
+
+  output_schema = {
+    output = jsonencode({
+      "type" : "object",
+      "properties" : {},
+      "additionalProperties" : true
+    })
+  }
+
+  trigger = {
+    type = "AUTHENTICATION"
+  }
+}
+
+resource "pingone_davinci_flow" "%[2]s-second" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[2]s"
+  description    = "This is a second demo flow"
+  color          = "#00FF00"
+
+  graph_data = {
+    elements = {
+      edges = []
+      nodes = [{
+        data = {
+          id        = "nodesecondflow1"
+          node_type = "CONNECTION"
+          connector_id    = "pingOneSSOConnector"
+          label           = "PingOne"
+          status          = "configured"
+          capability_name = "userLookup"
+          type            = "action"
+          properties = jsonencode({
+            "additionalUserProperties" : {
+              "value" : []
+            },
+            "username" : {
+              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+            },
+            "population" : {
+              "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+            },
+            "userIdentifierForFindUser" : {
+              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+            }
+          })
+        }
+        position = {
+          x = 420
+          y = 360
+        }
+        group      = "nodes"
+        removed    = false
+        selected   = false
+        selectable = true
+        locked     = false
+        grabbable  = true
+        pannable   = false
+        classes    = ""
+      },
+	  {
+        data = {
+          id        = "nodesecondflow2"
+          node_type = "CONNECTION"
+          connector_id    = "pingOneSSOConnector"
+          label           = "PingOne"
+          status          = "configured"
+          capability_name = "userLookup"
+          type            = "action"
+          properties = jsonencode({
+            "additionalUserProperties" : {
+              "value" : []
+            },
+            "username" : {
+              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+            },
+            "population" : {
+              "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+            },
+            "userIdentifierForFindUser" : {
+              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+            }
+          })
+        }
+        position = {
+          x = 420
+          y = 360
+        }
+        group      = "nodes"
+        removed    = false
+        selected   = false
+        selectable = true
+        locked     = false
+        grabbable  = true
+        pannable   = false
+        classes    = ""
+      }]
+    }
+
+    data = "{}"
+
+    box_selection_enabled = true
+    user_zooming_enabled  = true
+    zooming_enabled       = true
+    zoom                  = 1
+    min_zoom              = 0.01
+    max_zoom              = 10000
+    pannable              = true
+    panning_enabled       = true
+    user_panning_enabled  = true
+
+    pan = {
+      x = 0
+      y = 0
+    }
+
+    renderer = jsonencode({
+      "name" : "null"
+    })
+  }
+
+  settings = {
+    csp                              = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
+    intermediate_loading_screen_css  = ""
+    intermediate_loading_screen_html = ""
+    log_level                        = 2
+  }
+
+  output_schema = {
+    output = jsonencode({
+      "type" : "object",
+      "properties" : {},
+      "additionalProperties" : true
+    })
+  }
+
+  trigger = {
+    type = "AUTHENTICATION"
+  }
+}
+
+resource "pingone_davinci_application_flow_policy" "%[2]s" {
+  environment_id          = data.pingone_environment.general_test.id
+  da_vinci_application_id = pingone_davinci_application.%[2]s.id
+  flow_distributions = [
+    {
+  	  id      = pingone_davinci_flow.%[2]s-second.id
+      ip = [
+		"2.2.2.2/2",
+        "0.0.0.0/0",
+        "1.1.1.1/1",
+      ]
+      success_nodes = [
+		{
+		  id = "nodesecondflow2"
+		},
+        {
+          id = "nodesecondflow1"
+        },
+      ]
+      version = 0
+      weight  = 55
+    },
+    {
+  	  id      = pingone_davinci_flow.%[2]s-first.id
+      ip = [
+        "1.1.1.1/1",
+        "0.0.0.0/0",
+      ]
+      success_nodes = [
+        {
+          id = "nodefirstflow"
+        }
+      ]
+      version = 0
+      weight  = 45
+    }
+  ]
+  name   = "Updated policy"
+  status = "disabled"
+  trigger = {
+    configuration = {
+      mfa = {
+        enabled = true
+        time = 5
+        time_format = "hour"
+      }
+      pwd = {
+        enabled = false
+        time = 3
+        time_format = "day"
+      }
+    }
+    type = "AUTHENTICATION"
+  }
+  # Ensures this resource will be updated before deleting the flow
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
@@ -350,13 +923,102 @@ resource "pingone_davinci_application" "%[3]s" {
   name           = "%[3]s"
 }
 
+resource "pingone_davinci_flow" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[2]s"
+  description    = "This is a demo flow"
+  color          = "#00FF00"
+
+  graph_data = {
+    elements = {
+      edges = []
+      nodes = [{
+        data = {
+          id        = "8bnj41592a"
+          node_type = "CONNECTION"
+          connector_id    = "pingOneSSOConnector"
+          label           = "PingOne"
+          status          = "configured"
+          capability_name = "userLookup"
+          type            = "action"
+          properties = jsonencode({
+            "additionalUserProperties" : {
+              "value" : []
+            },
+            "username" : {
+              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+            },
+            "population" : {
+              "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+            },
+            "userIdentifierForFindUser" : {
+              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+            }
+          })
+        }
+        position = {
+          x = 420
+          y = 360
+        }
+        group      = "nodes"
+        removed    = false
+        selected   = false
+        selectable = true
+        locked     = false
+        grabbable  = true
+        pannable   = false
+        classes    = ""
+      }]
+    }
+
+    data = "{}"
+
+    box_selection_enabled = true
+    user_zooming_enabled  = true
+    zooming_enabled       = true
+    zoom                  = 1
+    min_zoom              = 0.01
+    max_zoom              = 10000
+    pannable              = true
+    panning_enabled       = true
+    user_panning_enabled  = true
+
+    pan = {
+      x = 0
+      y = 0
+    }
+
+    renderer = jsonencode({
+      "name" : "null"
+    })
+  }
+
+  settings = {
+    csp                              = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
+    intermediate_loading_screen_css  = ""
+    intermediate_loading_screen_html = ""
+    log_level                        = 2
+  }
+
+  output_schema = {
+    output = jsonencode({
+      "type" : "object",
+      "properties" : {},
+      "additionalProperties" : true
+    })
+  }
+
+  trigger = {
+    type = "AUTHENTICATION"
+  }
+}
+
 resource "pingone_davinci_application_flow_policy" "%[3]s" {
   environment_id          = pingone_environment.%[2]s.id
   da_vinci_application_id = pingone_davinci_application.%[3]s.id
   flow_distributions = [
     {
-      #TODO use flow resource to create this, rather than using a hardcoded id
-      id      = "ea3bf86e79daf74f0262a317190e02dd"
+      id      = pingone_davinci_flow.%[2]s.id
       version = 0
     }
   ]
@@ -367,32 +1029,28 @@ resource "pingone_davinci_application_flow_policy" "%[3]s" {
 // Validate any computed values when applying minimal HCL
 func davinciApplicationFlowPolicy_CheckComputedValuesMinimal(resourceName string) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "id", verify.P1DVResourceIDRegexp),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "name", "New Policy"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "status", "enabled"),
-		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger"),
 		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "flow_distributions.0.ip"),
 		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "flow_distributions.0.success_nodes"),
 		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "flow_distributions.0.weight"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.type", "AUTHENTICATION"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.mfa.enabled", "false"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.mfa.time", "0"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.mfa.time_format", "min"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.pwd.enabled", "false"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.pwd.time", "0"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.pwd.time_format", "min"),
 	)
 }
 
 // Validate any computed values when applying complete HCL
-// TODO This may not be needed as a separate function from minimal HCL if the expected values match
-// TODO remove any values that are not computed from this check
-// TODO set expected values
-// func davinciApplicationFlowPolicy_CheckComputedValuesComplete(resourceName string) resource.TestCheckFunc {
-// 	return resource.ComposeTestCheckFunc(
-// 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "name", "expected_value"),
-// 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "status", "expected_value"),
-// 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.mfa.enabled", "expected_value"),
-// 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.mfa.time", "expected_value"),
-// 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.mfa.time_format", "expected_value"),
-// 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.pwd.enabled", "expected_value"),
-// 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.pwd.time", "expected_value"),
-// 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.pwd.time_format", "expected_value"),
-// 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.type", "expected_value"),
-// 	)
-// }
+func davinciApplicationFlowPolicy_CheckComputedValuesComplete(resourceName string) resource.TestCheckFunc {
+	return resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "id", verify.P1DVResourceIDRegexp),
+	)
+}
 
 func davinciApplicationFlowPolicy_GetIDs(resourceName string, environmentId, daVinciApplicationId, id *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
