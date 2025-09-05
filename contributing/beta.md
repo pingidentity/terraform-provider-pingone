@@ -1,21 +1,89 @@
-# Beta PingOne terraform provider releases
-Beta PingOne terraform provider versions allow for releasing of non-GA platform features. Beta releases of the provider will be distinguished by a `-beta` suffix at the end of the version tag, and will follow the same release cadence as non-beta releases.
+# Beta PingOne Terraform provider contribution guide
 
-Functionality specific to the beta version of the provider is not included in the non-beta provider release binary. This is achieved using Go build tags. We use a `beta` build tag on all beta functionality, so that it is only compiled specifically for beta releases.
+This guide outlines the process for developing, managing, and releasing beta versions of the PingOne Terraform provider.
 
-When adding a new beta resource or data source to the provider, the source file will need to include the `//go:build beta` build tag near the top of the file. The `make betatagscheck` target lints the provider to ensure that this tag is included in beta resources and data sources.
+Beta releases allow us to support non-GA platform features in the terraform provider. They are identified by a `-beta` suffix in the version tag (e.g., `v1.2.3-beta`) and follow the same release cadence as standard releases.
 
-To add a new beta resource or data source to the provider, the corresponding NewXResource or NewXDataSource method should be added in the `service_beta.go` file for the given service. The `service_beta_stub.go` file should not be edited, as indicated in the comments.
+---
 
-To add beta functionality to a non-beta resource or data source, you will need to stub out the corresponding functionality into separate files. The idea is to minimize future maintenance by leaving common functionality in the normal resource file, and stubbing out any custom logic (schema, building of API request bodies, etc.) into conditionally-compiled files. The beta logic will be in a file with the `//go:build beta` tag, and GA logic in a file with the `//go:build !beta` tag. Stubs are necessary so that the provider can compile with or without the beta implementation.
+## How It Works: Go Build Tags
 
-Beta versions are released via git tags, just like non-beta versions, but an extra step will be necessary to ensure the generated docs on the terraform registry include beta-specific functionality. The [registry queries the git tag for the docs](https://developer.hashicorp.com/terraform/registry/providers/docs), so the committed doc files for the given tag are what will show up on the registry. Because of this, the release workflow requires first branching for the beta release, and then generating doc files specific to the beta provider using `make generate BETA=true`, so that beta docs don't get committed to main. The branch name should follow the pattern `vX.X.X-beta-release`, where the release tag will be `vX.X.X-beta` (the branch name can't match the tag name because git refs must be unique). *The beta tag should be created from the new branch ONLY AFTER the beta doc files are in place*.
+The core mechanism for separating beta and standard (GA) functionality is **Go build tags**.
 
-Goreleaser will automatically run in a Github action when the beta tag is created. For example, a tag of `v0.0.1` will create a non-beta release, while `v0.0.1-beta` will create a beta release. Goreleaser is configured to set the `beta` build flag based on the tag suffix.
+We use a `beta` build tag on all files containing beta-specific code. This ensures the beta code is only compiled into the provider binary when explicitly requested.
 
-It may be useful when working in VSCode to tell `gopls` to compile with the beta build tag. This can be done by modifying `.vscode/settings.json` to include the build tag:
+* **Beta files** must include the build tag comment at the top:
+    `//go:build beta`
+* **GA-only files** (often used as stubs for beta functionality) must include the inverse tag:
+    `//go:build !beta`
 
-```
+The build system, driven by Goreleaser, automatically adds the `-tags=beta` flag when it detects a Git tag ending in `-beta`, ensuring the correct version is built.
+
+---
+
+## Development Workflow
+
+### Adding a New Beta Resource or Data Source
+
+Use this process for resources and data sources that are entirely new and have no existing GA counterpart.
+
+1.  **Create your source file** for the new resource or data source.
+2.  **Add the build tag** at the very top of the file.
+    ```go
+    //go:build beta
+    ```
+3.  **Register the new resource/data source** by adding its `NewXResource` or `NewXDataSource` method to the `service_beta.go` file for the relevant service.
+    * **Do not** edit the `service_beta_stub.go` file.
+
+You can validate that your beta tags are correctly placed by running `make betatagscheck`.
+
+### Adding Beta Functionality to an Existing Resource
+
+Use this more complex process when you need to add new beta-only attributes or logic to a resource that already exists in the GA provider. The goal is to isolate only the beta changes, leaving the common code untouched.
+
+This requires splitting the logic into multiple files:
+
+1.  The existing resource file will contain all the common, shared logic (e.g., `Read`, `Delete`, common schema attributes) that applies to both GA and beta versions. This file has **no build tags**.
+2.  One or more beta source files will contain the beta-specific logic, such as beta-only schema attributes or custom logic for `Create` and `Update`. These files **must** have the `//go:build beta` tag.
+3.  One or more GA source files will contain the GA-specific logic or, more commonly, empty stubs for the functions defined in the `_beta.go` file. This ensures the provider can compile without the beta code. These files **must** have the `//go:build !beta` tag.
+
+---
+
+## Beta Release Process
+
+Publishing a beta release requires a specific sequence of steps to ensure the Terraform Registry displays the correct documentation.
+
+**Important:** The documentation must be generated and committed to a dedicated branch **before** the tag is created.
+
+1.  **Create a Release Branch:** Create a new branch from `main`. The branch name must be unique and should follow the pattern `vX.X.X-beta-release`.
+    * *Note: Git refs must be unique, so the branch name cannot be identical to the tag name you will create later. This is why a `-release` suffix is included.*
+
+2.  **Generate Beta Documentation:** On your new branch, run the following command to generate documentation that includes the beta-specific resources and attributes:
+    ```shell
+    make generate BETA=true
+    ```
+   
+
+3.  **Commit the Documentation:** Commit the newly generated doc files to your release branch.
+
+4.  **Tag the Release:** Once the beta documentation is committed and pushed, create and push the corresponding git tag. The tag name **must** match the version number and end with `-beta`.
+    ```shell
+    # Example tag
+    git tag v0.0.1-beta
+    git push origin v0.0.1-beta
+    ```
+
+Pushing the tag will automatically trigger a GitHub Action that runs Goreleaser, builds the beta provider binary, and creates the official GitHub release.
+
+---
+
+## VSCode Configuration Tip
+
+To compile files with a `beta` tag in VSCode, you can instruct the Go language server (`gopls`) to always use the `beta` build tag.
+
+Modify your `.vscode/settings.json` file with the following configuration:
+
+```json
 {
     "gopls": {
         "build.buildFlags": [
@@ -24,4 +92,3 @@ It may be useful when working in VSCode to tell `gopls` to compile with the beta
         ]
     }
 }
-```
