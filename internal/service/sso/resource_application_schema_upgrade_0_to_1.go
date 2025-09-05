@@ -17,6 +17,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso/helpers/beta"
 )
 
 type applicationResourceModelV0 struct {
@@ -817,10 +818,10 @@ func (p *applicationResourceModelV0) schemaUpgradeOIDCOptionsV0toV1(ctx context.
 		const devicePollingIntervalDefault = 5
 
 		upgradedStateData := applicationOIDCOptionsResourceModelV1{
+			ApplicationOIDCOptionsResourceModelV1Beta:     beta.SchemaUpgradeV0toV1(priorStateData[0].ClientId),
 			AdditionalRefreshTokenReplayProtectionEnabled: priorStateData[0].AdditionalRefreshTokenReplayProtectionEnabled,
 			AllowWildcardsInRedirectUris:                  priorStateData[0].AllowWildcardsInRedirectUris,
 			CertificateBasedAuthentication:                certificateBasedAuthentication,
-			ClientId:                                      types.StringValue(priorStateData[0].ClientId.ValueString()),
 			CorsSettings:                                  corsSettings,
 			DevicePathId:                                  types.StringNull(),
 			DeviceCustomVerificationUri:                   types.StringNull(),

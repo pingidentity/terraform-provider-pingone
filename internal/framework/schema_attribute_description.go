@@ -129,6 +129,10 @@ func (r SchemaAttributeDescription) UnmodifiableDataLossProtection() SchemaAttri
 	return r.AppendMarkdownString("This field is immutable and cannot be changed once defined.  To protect against accidental data loss, this resource must be replaced manually (for example, by using Terraform's [plan `-replace` command option](https://developer.hashicorp.com/terraform/cli/commands/plan#replace-address)).  Any data that is stored against this resource must be manually exported before the resource is removed and re-imported once the resource has been replaced.")
 }
 
+func (r SchemaAttributeDescription) Beta(text string) SchemaAttributeDescription {
+	return r.AppendMarkdownString(fmt.Sprintf("**This field is in beta or experimental**. Use of this field is subject to change at any time and to be used with caution. The API may change without notice that may lead to errors. %s", text))
+}
+
 func (r SchemaAttributeDescription) AppendSliceValues(pretext string, values []string) SchemaAttributeDescription {
 	pretext = strings.TrimSpace(pretext)
 

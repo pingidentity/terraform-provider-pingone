@@ -14,6 +14,8 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso/helpers/beta"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
 func applicationExternalLinkOptionsToTF(apiObject *management.ApplicationExternalLink) (types.Object, diag.Diagnostics) {
@@ -106,38 +108,40 @@ func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.Appli
 	mobileApp, d := applicationMobileAppOkToTF(ctx, mobileAppObject, ok, mobileAppState)
 	diags.Append(d...)
 
-	attributesMap := map[string]attr.Value{
-		"additional_refresh_token_replay_protection_enabled": framework.BoolOkToTF(apiObject.GetAdditionalRefreshTokenReplayProtectionEnabledOk()),
-		"allow_wildcard_in_redirect_uris":                    framework.BoolOkToTF(apiObject.GetAllowWildcardInRedirectUrisOk()),
-		"certificate_based_authentication":                   kerberos,
-		"client_id":                                          framework.StringOkToTF(apiObject.GetIdOk()),
-		"cors_settings":                                      corsSettings,
-		"device_path_id":                                     framework.StringOkToTF(apiObject.GetDevicePathIdOk()),
-		"device_custom_verification_uri":                     framework.StringOkToTF(apiObject.GetDeviceCustomVerificationUriOk()),
-		"device_timeout":                                     framework.Int32OkToTF(apiObject.GetDeviceTimeoutOk()),
-		"device_polling_interval":                            framework.Int32OkToTF(apiObject.GetDevicePollingIntervalOk()),
-		"grant_types":                                        framework.EnumSetOkToTF(apiObject.GetGrantTypesOk()),
-		"home_page_url":                                      framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
-		"idp_signoff":                                        framework.BoolOkToTF(apiObject.GetIdpSignoffOk()),
-		"initiate_login_uri":                                 framework.StringOkToTF(apiObject.GetInitiateLoginUriOk()),
-		"jwks_url":                                           framework.StringOkToTF(apiObject.GetJwksUrlOk()),
-		"jwks":                                               framework.StringOkToTF(apiObject.GetJwksOk()),
-		"mobile_app":                                         mobileApp,
-		"par_requirement":                                    framework.EnumOkToTF(apiObject.GetParRequirementOk()),
-		"par_timeout":                                        framework.Int32OkToTF(apiObject.GetParTimeoutOk()),
-		"pkce_enforcement":                                   framework.EnumOkToTF(apiObject.GetPkceEnforcementOk()),
-		"post_logout_redirect_uris":                          framework.StringSetOkToTF(apiObject.GetPostLogoutRedirectUrisOk()),
-		"redirect_uris":                                      framework.StringSetOkToTF(apiObject.GetRedirectUrisOk()),
-		"refresh_token_duration":                             framework.Int32OkToTF(apiObject.GetRefreshTokenDurationOk()),
-		"refresh_token_rolling_duration":                     framework.Int32OkToTF(apiObject.GetRefreshTokenRollingDurationOk()),
-		"refresh_token_rolling_grace_period_duration":        framework.Int32OkToTF(apiObject.GetRefreshTokenRollingGracePeriodDurationOk()),
-		"require_signed_request_object":                      framework.BoolOkToTF(apiObject.GetRequireSignedRequestObjectOk()),
-		"response_types":                                     framework.EnumSetOkToTF(apiObject.GetResponseTypesOk()),
-		"support_unsigned_request_object":                    framework.BoolOkToTF(apiObject.GetSupportUnsignedRequestObjectOk()),
-		"target_link_uri":                                    framework.StringOkToTF(apiObject.GetTargetLinkUriOk()),
-		"token_endpoint_auth_method":                         framework.EnumOkToTF(apiObject.GetTokenEndpointAuthMethodOk()),
-		"type":                                               framework.EnumOkToTF(apiObject.GetTypeOk()),
-	}
+	attributesMap := utils.MergeAttributeValueMapsRtn(
+		beta.ApplicationBetaToTF(apiObject, stateValue.ApplicationOIDCOptionsResourceModelV1Beta),
+		map[string]attr.Value{
+			"additional_refresh_token_replay_protection_enabled": framework.BoolOkToTF(apiObject.GetAdditionalRefreshTokenReplayProtectionEnabledOk()),
+			"allow_wildcard_in_redirect_uris":                    framework.BoolOkToTF(apiObject.GetAllowWildcardInRedirectUrisOk()),
+			"certificate_based_authentication":                   kerberos,
+			"cors_settings":                                      corsSettings,
+			"device_path_id":                                     framework.StringOkToTF(apiObject.GetDevicePathIdOk()),
+			"device_custom_verification_uri":                     framework.StringOkToTF(apiObject.GetDeviceCustomVerificationUriOk()),
+			"device_timeout":                                     framework.Int32OkToTF(apiObject.GetDeviceTimeoutOk()),
+			"device_polling_interval":                            framework.Int32OkToTF(apiObject.GetDevicePollingIntervalOk()),
+			"grant_types":                                        framework.EnumSetOkToTF(apiObject.GetGrantTypesOk()),
+			"home_page_url":                                      framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
+			"idp_signoff":                                        framework.BoolOkToTF(apiObject.GetIdpSignoffOk()),
+			"initiate_login_uri":                                 framework.StringOkToTF(apiObject.GetInitiateLoginUriOk()),
+			"jwks_url":                                           framework.StringOkToTF(apiObject.GetJwksUrlOk()),
+			"jwks":                                               framework.StringOkToTF(apiObject.GetJwksOk()),
+			"mobile_app":                                         mobileApp,
+			"par_requirement":                                    framework.EnumOkToTF(apiObject.GetParRequirementOk()),
+			"par_timeout":                                        framework.Int32OkToTF(apiObject.GetParTimeoutOk()),
+			"pkce_enforcement":                                   framework.EnumOkToTF(apiObject.GetPkceEnforcementOk()),
+			"post_logout_redirect_uris":                          framework.StringSetOkToTF(apiObject.GetPostLogoutRedirectUrisOk()),
+			"redirect_uris":                                      framework.StringSetOkToTF(apiObject.GetRedirectUrisOk()),
+			"refresh_token_duration":                             framework.Int32OkToTF(apiObject.GetRefreshTokenDurationOk()),
+			"refresh_token_rolling_duration":                     framework.Int32OkToTF(apiObject.GetRefreshTokenRollingDurationOk()),
+			"refresh_token_rolling_grace_period_duration":        framework.Int32OkToTF(apiObject.GetRefreshTokenRollingGracePeriodDurationOk()),
+			"require_signed_request_object":                      framework.BoolOkToTF(apiObject.GetRequireSignedRequestObjectOk()),
+			"response_types":                                     framework.EnumSetOkToTF(apiObject.GetResponseTypesOk()),
+			"support_unsigned_request_object":                    framework.BoolOkToTF(apiObject.GetSupportUnsignedRequestObjectOk()),
+			"target_link_uri":                                    framework.StringOkToTF(apiObject.GetTargetLinkUriOk()),
+			"token_endpoint_auth_method":                         framework.EnumOkToTF(apiObject.GetTokenEndpointAuthMethodOk()),
+			"type":                                               framework.EnumOkToTF(apiObject.GetTypeOk()),
+		},
+	)
 
 	returnVar, d := types.ObjectValue(applicationOidcOptionsTFObjectTypes, attributesMap)
 	diags.Append(d...)
