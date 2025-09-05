@@ -1486,8 +1486,9 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			"renderer":              graphDataRendererValue,
 			"user_panning_enabled":  types.BoolValue(response.GraphData.UserPanningEnabled),
 			"user_zooming_enabled":  types.BoolValue(response.GraphData.UserZoomingEnabled),
-			"zoom":                  types.Int32Value(int32(response.GraphData.Zoom)),
-			"zooming_enabled":       types.BoolPointerValue(response.GraphData.ZoomingEnabled),
+			// floor the zoom to an integer to match the schema
+			"zoom":            types.Int32Value(int32(response.GraphData.Zoom)),
+			"zooming_enabled": types.BoolPointerValue(response.GraphData.ZoomingEnabled),
 		})
 		respDiags.Append(diags...)
 	}
