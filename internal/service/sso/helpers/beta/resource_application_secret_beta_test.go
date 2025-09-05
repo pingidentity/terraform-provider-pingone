@@ -33,7 +33,7 @@ func TestAccApplicationSecret_ImportedApp_Rotation(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI) // its a hack, because I'm not sure this is the best way to do this
+			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_APP_AND_RESOURCE_IMPORT)
 			acctest.PreCheckBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
