@@ -102,8 +102,8 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
     redirect_uris              = ["https://www.pingidentity.com"]
 
-	client_id             = "%[4]s"
-	initial_client_secret = "%[5]s"
+    client_id             = "%[4]s"
+    initial_client_secret = "%[5]s"
   }
 }
 
@@ -129,8 +129,8 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
     redirect_uris              = ["https://www.pingidentity.com"]
 
-	client_id             = "%[4]s"
-	initial_client_secret = "%[5]s"
+    client_id             = "%[4]s"
+    initial_client_secret = "%[5]s"
   }
 }
 
