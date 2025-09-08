@@ -14,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
-	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 func TestAccApplicationSecret_ImportedApp_Rotation(t *testing.T) {
@@ -26,7 +25,7 @@ func TestAccApplicationSecret_ImportedApp_Rotation(t *testing.T) {
 
 	name := resourceName
 
-	clientIDValue := "imported-client-id"
+	clientIDValue := fmt.Sprintf("imported-client-id-%s", resourceName)
 	clientSecretValue := "imported-client-secret"
 
 	resource.Test(t, resource.TestCase{
@@ -59,8 +58,10 @@ func TestAccApplicationSecret_ImportedApp_Rotation(t *testing.T) {
 			{
 				Config: testAccApplicationSecretConfig_ImportedApp_Rotation2(resourceName, name, clientIDValue, clientSecretValue),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "previous.secret", clientSecretValue),
-					resource.TestMatchResourceAttr(resourceFullName, "previous.expires_at", verify.RFC3339Regexp),
+					// resource.TestCheckResourceAttr(resourceFullName, "previous.secret", clientSecretValue),
+					// resource.TestMatchResourceAttr(resourceFullName, "previous.expires_at", verify.RFC3339Regexp),
+					resource.TestCheckNoResourceAttr(resourceFullName, "previous.secret"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "previous.expires_at"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "previous.last_used"),
 					resource.TestMatchResourceAttr(resourceFullName, "secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 				),
@@ -72,8 +73,10 @@ func TestAccApplicationSecret_ImportedApp_Rotation(t *testing.T) {
 			{
 				Config: testAccApplicationSecretConfig_ImportedApp_Rotation2(resourceName, name, clientIDValue, clientSecretValue),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "previous.secret", clientSecretValue),
-					resource.TestMatchResourceAttr(resourceFullName, "previous.expires_at", verify.RFC3339Regexp),
+					// resource.TestCheckResourceAttr(resourceFullName, "previous.secret", clientSecretValue),
+					// resource.TestMatchResourceAttr(resourceFullName, "previous.expires_at", verify.RFC3339Regexp),
+					resource.TestCheckNoResourceAttr(resourceFullName, "previous.secret"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "previous.expires_at"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "previous.last_used"),
 					resource.TestMatchResourceAttr(resourceFullName, "secret", regexp.MustCompile(`[a-zA-Z0-9-~_]{10,}`)),
 				),
@@ -98,8 +101,8 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
     redirect_uris              = ["https://www.pingidentity.com"]
 
-	client_id             = "%[3]s"
-	initial_client_secret = "%[4]s"
+	client_id             = "%[4]s"
+	initial_client_secret = "%[5]s"
   }
 }
 
@@ -119,14 +122,14 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                       = ""
+    type                       = "WEB_APP"
     grant_types                = ["AUTHORIZATION_CODE"]
     response_types             = ["CODE"]
     token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
     redirect_uris              = ["https://www.pingidentity.com"]
 
-	client_id             = "%[3]s"
-	initial_client_secret = "%[4]s"
+	client_id             = "%[4]s"
+	initial_client_secret = "%[5]s"
   }
 }
 

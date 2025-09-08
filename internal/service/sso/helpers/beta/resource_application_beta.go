@@ -64,8 +64,14 @@ func SchemaUpgradeV0toV1(clientId pingonetypes.ResourceIDValue) ApplicationOIDCO
 }
 
 func ApplicationBetaToTF(apiObject *management.ApplicationOIDC, stateValue ApplicationOIDCOptionsResourceModelV1Beta) map[string]attr.Value {
+	clientId := framework.StringOkToTF(apiObject.GetClientIdOk())
+
+	if clientId.IsNull() {
+		clientId = framework.StringOkToTF(apiObject.GetIdOk())
+	}
+
 	return map[string]attr.Value{
-		"client_id":             framework.StringOkToTF(apiObject.GetClientIdOk()),
+		"client_id":             clientId,
 		"initial_client_secret": stateValue.InitialClientSecret,
 	}
 }
