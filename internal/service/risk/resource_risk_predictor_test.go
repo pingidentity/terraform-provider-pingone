@@ -2275,7 +2275,6 @@ func TestAccRiskPredictor_UserRiskBehavior(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckTestAccFlaky(t)
 			acctest.PreCheckNoBeta(t)
 		},
@@ -2379,7 +2378,6 @@ func TestAccRiskPredictor_UserRiskBehavior_OverwriteUndeletable(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckTestAccFlaky(t)
 			acctest.PreCheckNoBeta(t)
 		},

@@ -111,7 +111,6 @@ func TestAccAgreementEnable_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckTestAccFlaky(t)
 			acctest.PreCheckNoBeta(t)
 		},
