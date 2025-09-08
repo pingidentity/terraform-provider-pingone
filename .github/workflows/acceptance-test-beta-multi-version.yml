@@ -2,7 +2,7 @@ name: Multi-version Acceptance Tests (Beta)
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 6 14,28 * *'
+    - cron: '0 5 14,28 * *'
 jobs:
   # ensure the code builds...
   build:

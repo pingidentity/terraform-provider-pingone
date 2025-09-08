@@ -1,7 +1,8 @@
 {
     "gopls": {
         "build.buildFlags": [
-            // "-tags=beta"
+            // uncomment to build compile beta functionality in vscode
+            //"-tags=beta"
         ]
-    },
+    }
 }

@@ -2,7 +2,7 @@ name: Multi-region Acceptance Tests (Beta)
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 3 * * *'
+    - cron: '0 2 * * *'
 jobs:
   # ensure the code builds...
   build:
