@@ -30,7 +30,6 @@ func TestAccCertificateDataSource_ByNameFull(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckPEMCert(t)
@@ -79,7 +78,6 @@ func TestAccCertificateDataSource_ByIDFull(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckPEMCert(t)
@@ -120,7 +118,6 @@ func TestAccCertificateDataSource_NotFound(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckPEMCert(t)
 		},

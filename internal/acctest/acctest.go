@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"slices"
 	"strconv"
 	"testing"
 
@@ -76,13 +77,6 @@ type MinMaxChecks struct {
 	Full    resource.TestCheckFunc
 }
 
-type EnumFeatureFlag string
-
-const (
-	ENUMFEATUREFLAG_DAVINCI                 EnumFeatureFlag = "DAVINCI"
-	ENUMFEATUREFLAG_APP_AND_RESOURCE_IMPORT EnumFeatureFlag = "APP_AND_RESOURCE_IMPORT"
-)
-
 func PreCheckClient(t *testing.T) {
 	if v := os.Getenv("PINGONE_CLIENT_ID"); v == "" {
 		t.Fatal("PINGONE_CLIENT_ID is missing and must be set")
@@ -110,16 +104,6 @@ func PreCheckNoBeta(t *testing.T) {
 func PreCheckBeta(t *testing.T) {
 	if v := os.Getenv("TESTACC_BETA"); v != "true" {
 		t.Skip("Skipping test because TESTACC_BETA is not set to true")
-	}
-}
-
-func PreCheckNoFeatureFlag(t *testing.T) {
-	PreCheckFeatureFlag(t, "")
-}
-
-func PreCheckFeatureFlag(t *testing.T, flag EnumFeatureFlag) {
-	if v := os.Getenv("FEATURE_FLAG"); v != string(flag) {
-		t.Skipf("Skipping feature flag test.  Flag required: \"%s\"", string(flag))
 	}
 }
 
@@ -166,6 +150,12 @@ func PreCheckDomainVerification(t *testing.T) {
 
 	if v := os.Getenv("PINGONE_VERIFIED_EMAIL_DOMAIN"); v == "" {
 		t.Fatal("PINGONE_VERIFIED_EMAIL_DOMAIN is missing and must be set")
+	}
+}
+
+func PreCheckSupportsRegion(t *testing.T, supportedRegionCodes []string) {
+	if v := os.Getenv("PINGONE_REGION_CODE"); !slices.Contains(supportedRegionCodes, v) {
+		t.Skipf("Test not supported in the %s region", v)
 	}
 }
 
