@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso/helpers/beta"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -30,8 +31,8 @@ func TestAccApplication_OIDC_GeneratedClientID(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_APP_AND_RESOURCE_IMPORT)
 			acctest.PreCheckBeta(t)
+			acctest.PreCheckSupportsRegion(t, []string{"NA"})
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -80,8 +81,8 @@ func TestAccApplication_OIDC_ImportedClientIDClientSecret(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_APP_AND_RESOURCE_IMPORT)
 			acctest.PreCheckBeta(t)
+			acctest.PreCheckSupportsRegion(t, []string{"NA"})
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -164,7 +165,7 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
   }
 }
-`, acctest.AppImportFFSandboxEnvironment(), resourceName, name)
+`, beta.AppImportFFSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_Import(resourceName, name string, clientID, clientSecret *string) string {
@@ -197,5 +198,5 @@ resource "pingone_application" "%[2]s" {
     %[5]s
   }
 }
-`, acctest.AppImportFFSandboxEnvironment(), resourceName, name, interpolatedClientID, interpolatedClientSecret)
+`, beta.AppImportFFSandboxEnvironment(), resourceName, name, interpolatedClientID, interpolatedClientSecret)
 }

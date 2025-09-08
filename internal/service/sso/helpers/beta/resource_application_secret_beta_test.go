@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso/helpers/beta"
 )
 
 func TestAccApplicationSecret_ImportedApp_Rotation(t *testing.T) {
@@ -32,8 +33,8 @@ func TestAccApplicationSecret_ImportedApp_Rotation(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_APP_AND_RESOURCE_IMPORT)
 			acctest.PreCheckBeta(t)
+			acctest.PreCheckSupportsRegion(t, []string{"NA"})
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ExternalProviders: map[string]resource.ExternalProvider{
@@ -109,7 +110,7 @@ resource "pingone_application" "%[2]s" {
 data "pingone_application_secret" "%[2]s" {
   environment_id = data.pingone_environment.app_import_ff_test.id
   application_id = pingone_application.%[2]s.id
-}`, acctest.AppImportFFSandboxEnvironment(), resourceName, name, clientID, clientSecret)
+}`, beta.AppImportFFSandboxEnvironment(), resourceName, name, clientID, clientSecret)
 }
 
 func testAccApplicationSecretConfig_ImportedApp_Rotation2(resourceName, name, clientID, clientSecret string) string {
@@ -140,5 +141,5 @@ resource "time_offset" "%[2]s" {
 resource "pingone_application_secret" "%[2]s" {
   environment_id = data.pingone_environment.app_import_ff_test.id
   application_id = pingone_application.%[2]s.id
-}`, acctest.AppImportFFSandboxEnvironment(), resourceName, name, clientID, clientSecret)
+}`, beta.AppImportFFSandboxEnvironment(), resourceName, name, clientID, clientSecret)
 }

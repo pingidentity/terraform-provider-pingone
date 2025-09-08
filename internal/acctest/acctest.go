@@ -426,13 +426,6 @@ func DaVinciFlowPolicySandboxEnvironment() string {
 		}`
 }
 
-func AppImportFFSandboxEnvironment() string {
-	return `
-		data "pingone_environment" "app_import_ff_test" {
-			name = "tf-testacc-static-app-import-ff-test"
-		}`
-}
-
 func CheckParentEnvironmentDestroy(ctx context.Context, apiClient *management.APIClient, environmentID string) (bool, error) {
 	environment, r, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentID).Execute()
 
