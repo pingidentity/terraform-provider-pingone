@@ -2,7 +2,7 @@ module github.com/pingidentity/terraform-provider-pingone
 
 go 1.24.1
 
-replace github.com/patrickcping/pingone-go-sdk-v2/management => /Users/patrickcowland/Development/sdks/pingone-go-sdk-v2/management
+replace github.com/patrickcping/pingone-go-sdk-v2/management => github.com/patrickcping/pingone-go-sdk-v2/management v0.60.1-0.20250908134142-cbcfc0330ca6
 
 tool (
 	github.com/bflad/tfproviderlint/cmd/tfproviderlintx
