@@ -912,8 +912,8 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 				MarkdownDescription: oidcOptionsDescription.MarkdownDescription,
 				Optional:            true,
 
-				Attributes: utils.MergeSchemaAttributeMapsRtn(
-					beta.ClientIdClientSecretSchemaItems(),
+				Attributes: utils.MergeResourceSchemaAttributeMapsRtn(
+					beta.ResourceSchemaItems(),
 					map[string]schema.Attribute{
 						"type": schema.StringAttribute{
 							Description:         oidcOptionsTypeDescription.Description,

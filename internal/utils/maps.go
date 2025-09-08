@@ -4,10 +4,11 @@ package utils
 
 import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	dataSourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
 
-func MergeSchemaAttributeMaps(dest, src map[string]schema.Attribute, overwrite bool) {
+func MergeSchemaAttributeMaps(dest, src map[string]resourceSchema.Attribute, overwrite bool) {
 	for key, value := range src {
 		if _, exists := dest[key]; !exists || overwrite {
 			dest[key] = value
@@ -15,8 +16,20 @@ func MergeSchemaAttributeMaps(dest, src map[string]schema.Attribute, overwrite b
 	}
 }
 
-func MergeSchemaAttributeMapsRtn(src ...map[string]schema.Attribute) map[string]schema.Attribute {
-	result := make(map[string]schema.Attribute)
+func MergeResourceSchemaAttributeMapsRtn(src ...map[string]resourceSchema.Attribute) map[string]resourceSchema.Attribute {
+	result := make(map[string]resourceSchema.Attribute)
+	for _, m := range src {
+		for key, value := range m {
+			if _, exists := result[key]; !exists {
+				result[key] = value
+			}
+		}
+	}
+	return result
+}
+
+func MergeDataSourceSchemaAttributeMapsRtn(src ...map[string]dataSourceSchema.Attribute) map[string]dataSourceSchema.Attribute {
+	result := make(map[string]dataSourceSchema.Attribute)
 	for _, m := range src {
 		for key, value := range m {
 			if _, exists := result[key]; !exists {

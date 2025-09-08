@@ -27,7 +27,7 @@ var ApplicationOidcOptionsTFObjectTypes = map[string]attr.Type{
 	"initial_client_secret": types.StringType,
 }
 
-func ClientIdClientSecretSchemaItems() map[string]schema.Attribute {
+func ResourceSchemaItems() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"client_id": schema.StringAttribute{
 			Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application client ID used to authenticate to the authorization server. If left undefined, the service will generate a value.").RequiresReplace().Beta("To modify the value of this field, the environment must be enabled with the feature flag to allow importing applications with administrator defined client ID and client secret values.").Description,
