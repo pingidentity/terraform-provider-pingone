@@ -22,6 +22,7 @@ func TestAccApplicationFlowPolicyAssignmentsDataSource_Full(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			t.Skip("Skipping until DaVinci capability merged")
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
@@ -76,10 +77,10 @@ func TestAccApplicationFlowPolicyAssignmentsDataSource_NotFound(t *testing.T) {
 
 func testAccApplicationFlowPolicyAssignmentsDataSourceConfig_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
-	%[1]s
+%[1]s
 
 resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -94,13 +95,18 @@ resource "pingone_application" "%[2]s" {
 }
 
 data "pingone_flow_policies" "%[2]s" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = data.pingone_environment.general_test.id
 
   scim_filter = "(trigger.type eq \"AUTHENTICATION\")"
+
+  depends_on = [
+    davinci_application_flow_policy.%[2]s-1,
+    davinci_application_flow_policy.%[2]s-2,
+  ]
 }
 
 resource "pingone_application_flow_policy_assignment" "%[2]s" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
 
   flow_policy_id = data.pingone_flow_policies.%[2]s.ids[0]
@@ -109,7 +115,7 @@ resource "pingone_application_flow_policy_assignment" "%[2]s" {
 }
 
 resource "pingone_application_flow_policy_assignment" "%[2]s-2" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
 
   flow_policy_id = data.pingone_flow_policies.%[2]s.ids[1]
@@ -118,7 +124,7 @@ resource "pingone_application_flow_policy_assignment" "%[2]s-2" {
 }
 
 data "pingone_application_flow_policy_assignments" "%[2]s" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = data.pingone_environment.general_test.id
 
   application_id = pingone_application.%[2]s.id
 
@@ -127,7 +133,7 @@ data "pingone_application_flow_policy_assignments" "%[2]s" {
     pingone_application_flow_policy_assignment.%[2]s-2,
   ]
 }
-`, acctest.DaVinciFlowPolicySandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationFlowPolicyAssignmentsDataSourceConfig_NotFound(resourceName, name string) string {
@@ -135,7 +141,7 @@ func testAccApplicationFlowPolicyAssignmentsDataSourceConfig_NotFound(resourceNa
 	%[1]s
 
 resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -150,9 +156,9 @@ resource "pingone_application" "%[2]s" {
 }
 
 data "pingone_application_flow_policy_assignments" "%[2]s" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = data.pingone_environment.general_test.id
 
   application_id = pingone_application.%[2]s.id
 }
-`, acctest.DaVinciFlowPolicySandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
