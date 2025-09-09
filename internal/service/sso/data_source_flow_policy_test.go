@@ -21,8 +21,6 @@ func TestAccFlowPolicyDataSource_ByIDFull(t *testing.T) {
 	resourceFullName := fmt.Sprintf("pingone_flow_policy.%s", resourceName)
 	dataSourceFullName := fmt.Sprintf("data.%s", resourceFullName)
 
-	name := resourceName
-
 	environmentName := acctest.ResourceNameGenEnvironment()
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
@@ -39,7 +37,7 @@ func TestAccFlowPolicyDataSource_ByIDFull(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccFlowPolicyDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName, name),
+				Config: testAccFlowPolicyDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexpFullString),
@@ -78,7 +76,7 @@ func TestAccFlowPolicyDataSource_NotFound(t *testing.T) {
 	})
 }
 
-func testAccFlowPolicyDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName, name string) string {
+func testAccFlowPolicyDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName string) string {
 	return fmt.Sprintf(`
 %[1]s
 

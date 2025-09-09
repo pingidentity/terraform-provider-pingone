@@ -19,8 +19,6 @@ func TestAccFlowPoliciesDataSource_BySCIMFilter(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	dataSourceFullName := fmt.Sprintf("data.pingone_flow_policies.%s", resourceName)
 
-	name := resourceName
-
 	environmentName := acctest.ResourceNameGenEnvironment()
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
@@ -37,7 +35,7 @@ func TestAccFlowPoliciesDataSource_BySCIMFilter(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccFlowPoliciesDataSourceConfig_BySCIMFilter(environmentName, licenseID, resourceName, name, `(trigger.type eq \"AUTHENTICATION\")`),
+				Config: testAccFlowPoliciesDataSourceConfig_BySCIMFilter(environmentName, licenseID, resourceName, `(trigger.type eq \"AUTHENTICATION\")`),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -56,8 +54,6 @@ func TestAccFlowPoliciesDataSource_ByDataFilters(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	dataSourceFullName := fmt.Sprintf("data.pingone_flow_policies.%s", resourceName)
 
-	name := resourceName
-
 	environmentName := acctest.ResourceNameGenEnvironment()
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
@@ -74,7 +70,7 @@ func TestAccFlowPoliciesDataSource_ByDataFilters(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccFlowPoliciesDataSourceConfig_ByDataFilters(environmentName, licenseID, resourceName, name),
+				Config: testAccFlowPoliciesDataSourceConfig_ByDataFilters(environmentName, licenseID, resourceName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -115,7 +111,7 @@ func TestAccFlowPoliciesDataSource_NotFound(t *testing.T) {
 	})
 }
 
-func testAccFlowPoliciesDataSourceConfig_BySCIMFilter(environmentName, licenseID, resourceName, name, filter string) string {
+func testAccFlowPoliciesDataSourceConfig_BySCIMFilter(environmentName, licenseID, resourceName, filter string) string {
 	return fmt.Sprintf(`
 %[1]s
 
@@ -132,7 +128,7 @@ data "pingone_flow_policies" "%[2]s" {
 `, acctest.MinimalSandboxEnvironment(environmentName, licenseID), resourceName, filter)
 }
 
-func testAccFlowPoliciesDataSourceConfig_ByDataFilters(environmentName, licenseID, resourceName, name string) string {
+func testAccFlowPoliciesDataSourceConfig_ByDataFilters(environmentName, licenseID, resourceName string) string {
 	return fmt.Sprintf(`
 %[1]s
 
