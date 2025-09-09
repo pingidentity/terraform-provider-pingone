@@ -41,7 +41,7 @@ func TestAccApplication_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			// acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNoBeta(t)
 			p1Client = acctest.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -93,7 +93,7 @@ func TestAccApplication_NewEnv(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			// acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -845,9 +845,8 @@ func TestAccApplication_NativeKerberos(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			// acctest.PreCheckNoBeta(t)
 			acctest.PreCheckRegionSupportsWorkforce(t)
-			// acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -1007,7 +1006,7 @@ func TestAccApplication_NativeMobile(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			// acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -1133,7 +1132,7 @@ func TestAccApplication_NativeMobile_IntegrityDetection(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			// acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckGoogleJSONKey(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -2932,7 +2931,7 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			// acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckPKCS7Cert(t)
 			acctest.PreCheckPEMCert(t)
 		},
@@ -3051,7 +3050,7 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			// acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckPKCS7Cert(t)
 			acctest.PreCheckPEMCert(t)
 		},
@@ -3123,7 +3122,7 @@ func TestAccApplication_SAMLVirtualServerIdSettingsOrdering(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			// acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckPKCS7Cert(t)
 			acctest.PreCheckPEMCert(t)
 		},
@@ -3182,7 +3181,7 @@ func TestAccApplication_ExternalLinkFull(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			// acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -3241,7 +3240,7 @@ func TestAccApplication_ExternalLinkMinimal(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			// acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -3288,7 +3287,7 @@ func TestAccApplication_WSFedFull(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			// acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -3335,7 +3334,7 @@ func TestAccApplication_WSFedMinimal(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			// acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -3365,7 +3364,7 @@ func TestAccApplication_WSFedMinimalMaximal(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			// acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
