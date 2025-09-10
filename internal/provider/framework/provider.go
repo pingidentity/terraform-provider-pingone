@@ -1,5 +1,8 @@
 // Copyright © 2025 Ping Identity Corporation
 
+// Package framework provides the Terraform Plugin Framework implementation of the PingOne provider.
+// This package contains the main provider implementation using the modern Terraform Plugin Framework,
+// including schema definitions, configuration, and resource/data source registration.
 package framework
 
 import (
@@ -34,7 +37,8 @@ import (
 // Ensure PingOneProvider satisfies various provider interfaces.
 var _ provider.Provider = &pingOneProvider{}
 
-// PingOneProvider defines the provider implementation.
+// pingOneProvider defines the provider implementation using the Terraform Plugin Framework.
+// This structure contains the provider version and implements the provider.Provider interface.
 type pingOneProvider struct {
 	// version is set to the provider version on release, "dev" when the
 	// provider is built and ran locally, and "test" when running acceptance
@@ -42,37 +46,65 @@ type pingOneProvider struct {
 	version string
 }
 
-// pingOneProviderModel describes the provider data model.
+// pingOneProviderModel describes the provider configuration data model.
+// This structure defines the schema and configuration options available to users
+// when configuring the PingOne provider in their Terraform configurations.
 type pingOneProviderModel struct {
-	ClientID         types.String `tfsdk:"client_id"`
-	ClientSecret     types.String `tfsdk:"client_secret"`
-	EnvironmentID    types.String `tfsdk:"environment_id"`
-	APIAccessToken   types.String `tfsdk:"api_access_token"`
-	AppendUserAgent  types.String `tfsdk:"append_user_agent"`
-	RegionCode       types.String `tfsdk:"region_code"`
-	ServiceEndpoints types.List   `tfsdk:"service_endpoints"`
-	GlobalOptions    types.List   `tfsdk:"global_options"`
-	HTTPProxy        types.String `tfsdk:"http_proxy"`
+	// ClientID is the OAuth 2.0 client identifier for the worker application
+	ClientID types.String `tfsdk:"client_id"`
+	// ClientSecret is the OAuth 2.0 client secret for the worker application
+	ClientSecret types.String `tfsdk:"client_secret"`
+	// EnvironmentID is the PingOne environment identifier where resources will be managed
+	EnvironmentID types.String `tfsdk:"environment_id"`
+	// APIAccessToken is an optional pre-existing access token for API authentication
+	APIAccessToken types.String `tfsdk:"api_access_token"`
+	// AppendUserAgent is an optional string to append to the HTTP User-Agent header
+	AppendUserAgent types.String `tfsdk:"append_user_agent"`
+	// RegionCode specifies the PingOne region where the environment is hosted
+	RegionCode types.String `tfsdk:"region_code"`
+	// ServiceEndpoints allows customization of API and authentication hostnames
+	ServiceEndpoints types.List `tfsdk:"service_endpoints"`
+	// GlobalOptions contains provider-wide configuration options
+	GlobalOptions types.List `tfsdk:"global_options"`
+	// HTTPProxy specifies an HTTP proxy server URL for API requests
+	HTTPProxy types.String `tfsdk:"http_proxy"`
 }
 
+// pingOneProviderGlobalOptionsModel represents provider-wide configuration settings.
+// These options control default behaviors and global policies for resource management.
 type pingOneProviderGlobalOptionsModel struct {
+	// Population contains population-specific configuration options
 	Population types.List `tfsdk:"population"`
 }
 
+// pingOneProviderGlobalOptionsPopulationModel represents population-specific configuration options.
+// These options control how population resources are handled by the provider.
 type pingOneProviderGlobalOptionsPopulationModel struct {
+	// ContainsUsersForceDelete determines whether populations containing users can be force deleted
 	ContainsUsersForceDelete types.Bool `tfsdk:"contains_users_force_delete"`
 }
 
+// pingOneProviderServiceEndpointsModel represents custom service endpoint configuration.
+// This allows users to override default PingOne service hostnames for custom deployments.
 type pingOneProviderServiceEndpointsModel struct {
+	// AuthHostname is the custom authentication hostname
 	AuthHostname types.String `tfsdk:"auth_hostname"`
-	APIHostname  types.String `tfsdk:"api_hostname"`
+	// APIHostname is the custom API hostname
+	APIHostname types.String `tfsdk:"api_hostname"`
 }
 
+// Metadata sets the provider type name and version in the provider metadata response.
+// This method is called by the Terraform Plugin Framework to identify the provider
+// and report version information during provider initialization.
 func (p *pingOneProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
 	resp.TypeName = "pingone"
 	resp.Version = p.version
 }
 
+// Schema defines the provider configuration schema including all supported configuration options.
+// This method specifies the structure and validation rules for the provider configuration block
+// that users define in their Terraform configurations. It includes authentication settings,
+// regional options, service endpoints, and global provider behaviors.
 func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 
 	clientIDDescription := framework.SchemaAttributeDescriptionFromMarkdown(

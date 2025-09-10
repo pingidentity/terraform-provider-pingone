@@ -1,5 +1,8 @@
 // Copyright © 2025 Ping Identity Corporation
 
+// Package framework provides utilities for Terraform Plugin Framework implementation in the PingOne provider.
+// This package contains data type conversion functions, resource ID utilities, import parsing, and other
+// common functionality that bridges the gap between PingOne SDK responses and Terraform state management.
 package framework
 
 import (
@@ -23,10 +26,17 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
+// ResourceType represents the configuration structure for a framework-based resource.
+// It contains the client connection information required for PingOne API interactions
+// and is used to pass provider-level configuration to individual resources.
 type ResourceType struct {
+	// Client is the configured PingOne API client instance used for making requests to the PingOne platform
 	Client *pingone.Client
 }
 
+// PingOneResourceIDToTF converts a PingOne resource ID string to a Terraform resource ID value.
+// It returns a null resource ID value if the input string is empty, otherwise returns a new resource ID value.
+// The v parameter must be a string representing the PingOne resource identifier.
 func PingOneResourceIDToTF(v string) pingonetypes.ResourceIDValue {
 	if v == "" {
 		return pingonetypes.NewResourceIDNull()
@@ -35,6 +45,10 @@ func PingOneResourceIDToTF(v string) pingonetypes.ResourceIDValue {
 	}
 }
 
+// PingOneResourceIDOkToTF converts a PingOne resource ID pointer and ok boolean to a Terraform resource ID value.
+// It returns a null resource ID value if ok is false or the pointer is nil, otherwise returns a new resource ID value.
+// The v parameter must be a pointer to a string representing the PingOne resource identifier.
+// The ok parameter indicates whether the value was successfully retrieved from the source API response.
 func PingOneResourceIDOkToTF(v *string, ok bool) pingonetypes.ResourceIDValue {
 	if !ok || v == nil {
 		return pingonetypes.NewResourceIDNull()
@@ -43,6 +57,10 @@ func PingOneResourceIDOkToTF(v *string, ok bool) pingonetypes.ResourceIDValue {
 	}
 }
 
+// PingOneResourceIDSetOkToTF converts a slice of PingOne resource ID strings to a Terraform set value.
+// It returns a null set if ok is false or the slice is nil, otherwise returns a set containing resource ID values.
+// The v parameter must be a slice of strings representing PingOne resource identifiers.
+// The ok parameter indicates whether the value was successfully retrieved from the source API response.
 func PingOneResourceIDSetOkToTF(v []string, ok bool) basetypes.SetValue {
 	if !ok || v == nil {
 		return types.SetNull(pingonetypes.ResourceIDType{})
@@ -56,6 +74,9 @@ func PingOneResourceIDSetOkToTF(v []string, ok bool) basetypes.SetValue {
 	}
 }
 
+// PingOneResourceIDSetToTF converts a slice of PingOne resource ID strings to a Terraform set value.
+// It returns a null set if the slice is nil, otherwise returns a set containing resource ID values.
+// The v parameter must be a slice of strings representing PingOne resource identifiers.
 func PingOneResourceIDSetToTF(v []string) basetypes.SetValue {
 	if v == nil {
 		return types.SetNull(pingonetypes.ResourceIDType{})
@@ -69,6 +90,10 @@ func PingOneResourceIDSetToTF(v []string) basetypes.SetValue {
 	}
 }
 
+// PingOneResourceIDListOkToTF converts a slice of PingOne resource ID strings to a Terraform list value.
+// It returns a null list if ok is false or the slice is nil, otherwise returns a list containing resource ID values.
+// The v parameter must be a slice of strings representing PingOne resource identifiers.
+// The ok parameter indicates whether the value was successfully retrieved from the source API response.
 func PingOneResourceIDListOkToTF(v []string, ok bool) basetypes.ListValue {
 	if !ok || v == nil {
 		return types.ListNull(pingonetypes.ResourceIDType{})
@@ -82,6 +107,9 @@ func PingOneResourceIDListOkToTF(v []string, ok bool) basetypes.ListValue {
 	}
 }
 
+// PingOneResourceIDListToTF converts a slice of PingOne resource ID strings to a Terraform list value.
+// It returns a null list if the slice is nil, otherwise returns a list containing resource ID values.
+// The v parameter must be a slice of strings representing PingOne resource identifiers.
 func PingOneResourceIDListToTF(v []string) basetypes.ListValue {
 	if v == nil {
 		return types.ListNull(pingonetypes.ResourceIDType{})
@@ -95,6 +123,11 @@ func PingOneResourceIDListToTF(v []string) basetypes.ListValue {
 	}
 }
 
+// TFTypePingOneResourceIDSliceToStringSlice converts a slice of PingOne resource ID values to a slice of strings.
+// It returns a slice of string values and any diagnostics encountered during conversion.
+// The v parameter must be a slice of PingOne resource ID values from the Terraform state.
+// The path parameter specifies the attribute path for error reporting in case of conversion failures.
+// This function validates that all values are neither unknown nor null before conversion.
 func TFTypePingOneResourceIDSliceToStringSlice(v []pingonetypes.ResourceIDValue, path path.Path) ([]string, diag.Diagnostics) {
 	var sliceOut []string
 	var diags diag.Diagnostics
@@ -122,6 +155,9 @@ func TFTypePingOneResourceIDSliceToStringSlice(v []pingonetypes.ResourceIDValue,
 	return sliceOut, diags
 }
 
+// DaVinciResourceIDToTF converts a DaVinci resource ID string to a Terraform resource ID value.
+// It returns a null resource ID value if the input string is empty, otherwise returns a new resource ID value.
+// The v parameter must be a string representing the DaVinci resource identifier.
 func DaVinciResourceIDToTF(v string) davincitypes.ResourceIDValue {
 	if v == "" {
 		return davincitypes.NewResourceIDNull()
@@ -130,6 +166,10 @@ func DaVinciResourceIDToTF(v string) davincitypes.ResourceIDValue {
 	}
 }
 
+// DaVinciResourceIDOkToTF converts a DaVinci resource ID pointer and ok boolean to a Terraform resource ID value.
+// It returns a null resource ID value if ok is false or the pointer is nil, otherwise returns a new resource ID value.
+// The v parameter must be a pointer to a string representing the DaVinci resource identifier.
+// The ok parameter indicates whether the value was successfully retrieved from the source API response.
 func DaVinciResourceIDOkToTF(v *string, ok bool) davincitypes.ResourceIDValue {
 	if !ok || v == nil {
 		return davincitypes.NewResourceIDNull()
@@ -138,6 +178,10 @@ func DaVinciResourceIDOkToTF(v *string, ok bool) davincitypes.ResourceIDValue {
 	}
 }
 
+// DaVinciResourceIDSetOkToTF converts a slice of DaVinci resource ID strings to a Terraform set value.
+// It returns a null set if ok is false or the slice is nil, otherwise returns a set containing resource ID values.
+// The v parameter must be a slice of strings representing DaVinci resource identifiers.
+// The ok parameter indicates whether the value was successfully retrieved from the source API response.
 func DaVinciResourceIDSetOkToTF(v []string, ok bool) basetypes.SetValue {
 	if !ok || v == nil {
 		return types.SetNull(davincitypes.ResourceIDType{})
@@ -151,6 +195,9 @@ func DaVinciResourceIDSetOkToTF(v []string, ok bool) basetypes.SetValue {
 	}
 }
 
+// DaVinciResourceIDSetToTF converts a slice of DaVinci resource ID strings to a Terraform set value.
+// It returns a null set if the slice is nil, otherwise returns a set containing resource ID values.
+// The v parameter must be a slice of strings representing DaVinci resource identifiers.
 func DaVinciResourceIDSetToTF(v []string) basetypes.SetValue {
 	if v == nil {
 		return types.SetNull(davincitypes.ResourceIDType{})
@@ -164,6 +211,10 @@ func DaVinciResourceIDSetToTF(v []string) basetypes.SetValue {
 	}
 }
 
+// DaVinciResourceIDListOkToTF converts a slice of DaVinci resource ID strings to a Terraform list value.
+// It returns a null list if ok is false or the slice is nil, otherwise returns a list containing resource ID values.
+// The v parameter must be a slice of strings representing DaVinci resource identifiers.
+// The ok parameter indicates whether the value was successfully retrieved from the source API response.
 func DaVinciResourceIDListOkToTF(v []string, ok bool) basetypes.ListValue {
 	if !ok || v == nil {
 		return types.ListNull(pingonetypes.ResourceIDType{})
@@ -177,6 +228,9 @@ func DaVinciResourceIDListOkToTF(v []string, ok bool) basetypes.ListValue {
 	}
 }
 
+// DaVinciResourceIDListToTF converts a slice of DaVinci resource ID strings to a Terraform list value.
+// It returns a null list if the slice is nil, otherwise returns a list containing resource ID values.
+// The v parameter must be a slice of strings representing DaVinci resource identifiers.
 func DaVinciResourceIDListToTF(v []string) basetypes.ListValue {
 	if v == nil {
 		return types.ListNull(pingonetypes.ResourceIDType{})
@@ -190,6 +244,10 @@ func DaVinciResourceIDListToTF(v []string) basetypes.ListValue {
 	}
 }
 
+// JSONNormalizedToTF converts a map of interface values to a Terraform normalized JSON type.
+// It returns a normalized JSON value and any diagnostics encountered during marshaling.
+// The v parameter must be a map containing the JSON data to be normalized and stored in Terraform state.
+// This function marshals the map to JSON and creates a normalized JSON type that preserves formatting.
 func JSONNormalizedToTF(v map[string]interface{}) (jsontypes.Normalized, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -205,6 +263,10 @@ func JSONNormalizedToTF(v map[string]interface{}) (jsontypes.Normalized, diag.Di
 	}
 }
 
+// JSONNormalizedOkToTF converts a map of interface values to a Terraform normalized JSON type with ok boolean check.
+// It returns a null normalized JSON value if ok is false or the map is nil, otherwise returns the converted value.
+// The v parameter must be a map containing the JSON data to be normalized and stored in Terraform state.
+// The ok parameter indicates whether the value was successfully retrieved from the source API response.
 func JSONNormalizedOkToTF(v map[string]interface{}, ok bool) (jsontypes.Normalized, diag.Diagnostics) {
 	if !ok || v == nil {
 		return jsontypes.NewNormalizedNull(), nil
@@ -213,6 +275,12 @@ func JSONNormalizedOkToTF(v map[string]interface{}, ok bool) (jsontypes.Normaliz
 	}
 }
 
+// StringToTF converts a string value to a Terraform string type.
+// It returns a null string value if the input string is empty, otherwise returns a new string value.
+// The v parameter must be a string value to be stored in Terraform state.
+// StringToTF converts a string to a Terraform string type.
+// It returns a null string value if the input string is empty, otherwise returns a new string value.
+// The v parameter must be a string value from the API response.
 func StringToTF(v string) basetypes.StringValue {
 	if v == "" {
 		return types.StringNull()
@@ -221,6 +289,10 @@ func StringToTF(v string) basetypes.StringValue {
 	}
 }
 
+// StringOkToTF converts a string pointer and ok boolean to a Terraform string type.
+// It returns a null string value if ok is false or the pointer is nil, otherwise returns a new string value.
+// The v parameter must be a pointer to a string value from the API response.
+// The ok parameter indicates whether the value was successfully retrieved from the source API response.
 func StringOkToTF(v *string, ok bool) basetypes.StringValue {
 	if !ok || v == nil {
 		return types.StringNull()
@@ -229,14 +301,23 @@ func StringOkToTF(v *string, ok bool) basetypes.StringValue {
 	}
 }
 
+// Int32ToTF converts an int32 value to a Terraform int32 type.
+// It returns a new int32 value for storage in Terraform state.
+// The i parameter must be an int32 value from the API response.
 func Int32ToTF(i int32) basetypes.Int32Value {
 	return types.Int32Value(i)
 }
 
+// Int64ToTF converts an int64 value to a Terraform int64 type.
+// It returns a new int64 value for storage in Terraform state.
+// The i parameter must be an int64 value from the API response.
 func Int64ToTF(i int64) basetypes.Int64Value {
 	return types.Int64Value(i)
 }
 
+// EnumToTF converts an enum interface value to a Terraform string type.
+// It returns a null string value if the enum is nil, otherwise returns the string representation of the enum.
+// The v parameter must be an enum value from the PingOne SDK that implements string conversion.
 func EnumToTF(v interface{}) basetypes.StringValue {
 	if v == nil {
 		return types.StringNull()
@@ -245,6 +326,10 @@ func EnumToTF(v interface{}) basetypes.StringValue {
 	}
 }
 
+// EnumOkToTF converts an enum interface value and ok boolean to a Terraform string type.
+// It returns a null string value if ok is false or the enum is nil, otherwise returns the string representation.
+// The v parameter must be an enum value from the PingOne SDK that implements string conversion.
+// The ok parameter indicates whether the value was successfully retrieved from the source API response.
 func EnumOkToTF(v interface{}, ok bool) basetypes.StringValue {
 	if !ok || v == nil {
 		return types.StringNull()
@@ -253,6 +338,10 @@ func EnumOkToTF(v interface{}, ok bool) basetypes.StringValue {
 	}
 }
 
+// Int32OkToTF converts an int32 pointer and ok boolean to a Terraform int32 type.
+// It returns a null int32 value if ok is false or the pointer is nil, otherwise returns a new int32 value.
+// The i parameter must be a pointer to an int32 value from the API response.
+// The ok parameter indicates whether the value was successfully retrieved from the source API response.
 func Int32OkToTF(i *int32, ok bool) basetypes.Int32Value {
 	if !ok || i == nil {
 		return types.Int32Null()
@@ -261,6 +350,10 @@ func Int32OkToTF(i *int32, ok bool) basetypes.Int32Value {
 	}
 }
 
+// Int64OkToTF converts an int64 pointer and ok boolean to a Terraform int64 type.
+// It returns a null int64 value if ok is false or the pointer is nil, otherwise returns a new int64 value.
+// The i parameter must be a pointer to an int64 value from the API response.
+// The ok parameter indicates whether the value was successfully retrieved from the source API response.
 func Int64OkToTF(i *int64, ok bool) basetypes.Int64Value {
 	if !ok || i == nil {
 		return types.Int64Null()
@@ -269,6 +362,10 @@ func Int64OkToTF(i *int64, ok bool) basetypes.Int64Value {
 	}
 }
 
+// Float32OkToTF converts a float32 pointer and ok boolean to a Terraform float32 type.
+// It returns a null float32 value if ok is false or the pointer is nil, otherwise returns a new float32 value.
+// The i parameter must be a pointer to a float32 value from the API response.
+// The ok parameter indicates whether the value was successfully retrieved from the source API response.
 func Float32OkToTF(i *float32, ok bool) basetypes.Float32Value {
 	if !ok || i == nil {
 		return types.Float32Null()
@@ -277,6 +374,10 @@ func Float32OkToTF(i *float32, ok bool) basetypes.Float32Value {
 	}
 }
 
+// Float64OkToTF converts a float64 pointer and ok boolean to a Terraform float64 type.
+// It returns a null float64 value if ok is false or the pointer is nil, otherwise returns a new float64 value.
+// The i parameter must be a pointer to a float64 value from the API response.
+// The ok parameter indicates whether the value was successfully retrieved from the source API response.
 func Float64OkToTF(i *float64, ok bool) basetypes.Float64Value {
 	if !ok || i == nil {
 		return types.Float64Null()
@@ -285,6 +386,10 @@ func Float64OkToTF(i *float64, ok bool) basetypes.Float64Value {
 	}
 }
 
+// BoolOkToTF converts a boolean pointer and ok boolean to a Terraform boolean type.
+// It returns a null boolean value if ok is false or the pointer is nil, otherwise returns a new boolean value.
+// The b parameter must be a pointer to a boolean value from the API response.
+// The ok parameter indicates whether the value was successfully retrieved from the source API response.
 func BoolOkToTF(b *bool, ok bool) basetypes.BoolValue {
 	if !ok || b == nil {
 		return types.BoolNull()
@@ -293,6 +398,10 @@ func BoolOkToTF(b *bool, ok bool) basetypes.BoolValue {
 	}
 }
 
+// TimeOkToTF converts a time.Time pointer and ok boolean to a Terraform RFC3339 time type.
+// It returns a null RFC3339 time value if ok is false or the pointer is nil, otherwise returns a new time value.
+// The v parameter must be a pointer to a time.Time value from the API response.
+// The ok parameter indicates whether the value was successfully retrieved from the source API response.
 func TimeOkToTF(v *time.Time, ok bool) timetypes.RFC3339 {
 	if !ok || v == nil {
 		return timetypes.NewRFC3339Null()
@@ -301,6 +410,10 @@ func TimeOkToTF(v *time.Time, ok bool) timetypes.RFC3339 {
 	}
 }
 
+// StringSetOkToTF converts a slice of strings and ok boolean to a Terraform set type.
+// It returns a null set if ok is false or the slice is nil, otherwise returns a set containing string values.
+// The v parameter must be a slice of strings from the API response.
+// The ok parameter indicates whether the value was successfully retrieved from the source API response.
 func StringSetOkToTF(v []string, ok bool) basetypes.SetValue {
 	if !ok || v == nil {
 		return types.SetNull(types.StringType)
@@ -314,6 +427,9 @@ func StringSetOkToTF(v []string, ok bool) basetypes.SetValue {
 	}
 }
 
+// StringSetToTF converts a slice of strings to a Terraform set type.
+// It returns a null set if the slice is nil, otherwise returns a set containing string values.
+// The v parameter must be a slice of strings from the API response.
 func StringSetToTF(v []string) basetypes.SetValue {
 	if v == nil {
 		return types.SetNull(types.StringType)
@@ -327,6 +443,10 @@ func StringSetToTF(v []string) basetypes.SetValue {
 	}
 }
 
+// StringListOkToTF converts a slice of strings and ok boolean to a Terraform list type.
+// It returns a null list if ok is false or the slice is nil, otherwise returns a list containing string values.
+// The v parameter must be a slice of strings from the API response.
+// The ok parameter indicates whether the value was successfully retrieved from the source API response.
 func StringListOkToTF(v []string, ok bool) basetypes.ListValue {
 	if !ok || v == nil {
 		return types.ListNull(types.StringType)
@@ -340,6 +460,9 @@ func StringListOkToTF(v []string, ok bool) basetypes.ListValue {
 	}
 }
 
+// StringListToTF converts a slice of strings to a Terraform list type.
+// It returns a null list if the slice is nil, otherwise returns a list containing string values.
+// The v parameter must be a slice of strings from the API response.
 func StringListToTF(v []string) basetypes.ListValue {
 	if v == nil {
 		return types.ListNull(types.StringType)
@@ -353,6 +476,10 @@ func StringListToTF(v []string) basetypes.ListValue {
 	}
 }
 
+// StringMapOkToTF converts a map of strings pointer and ok boolean to a Terraform map type.
+// It returns a null map if ok is false or the pointer is nil, otherwise returns a map containing string values.
+// The v parameter must be a pointer to a map of strings from the API response.
+// The ok parameter indicates whether the value was successfully retrieved from the source API response.
 func StringMapOkToTF(v *map[string]string, ok bool) basetypes.MapValue {
 	if !ok || v == nil {
 		return types.MapNull(types.StringType)
@@ -366,6 +493,10 @@ func StringMapOkToTF(v *map[string]string, ok bool) basetypes.MapValue {
 	}
 }
 
+// EnumSetOkToTF converts an enum slice interface and ok boolean to a Terraform set type.
+// It returns a null set if ok is false or the enum is nil, otherwise returns a set containing string values.
+// The v parameter must be an enum slice from the PingOne SDK that implements string slice conversion.
+// The ok parameter indicates whether the value was successfully retrieved from the source API response.
 func EnumSetOkToTF(v interface{}, ok bool) basetypes.SetValue {
 	if !ok || v == nil {
 		return types.SetNull(types.StringType)
@@ -379,6 +510,10 @@ func EnumSetOkToTF(v interface{}, ok bool) basetypes.SetValue {
 	}
 }
 
+// StringSliceToTF converts a slice of strings to a Terraform list type with error handling.
+// It returns a list value and any diagnostics encountered during conversion.
+// The v parameter must be a slice of strings to be converted to a Terraform list.
+// This function differs from StringListToTF by providing diagnostic information for conversion errors.
 func StringSliceToTF(v []string) (basetypes.ListValue, diag.Diagnostics) {
 	if v == nil {
 		return types.ListNull(types.StringType), nil
@@ -393,6 +528,10 @@ func StringSliceToTF(v []string) (basetypes.ListValue, diag.Diagnostics) {
 	}
 }
 
+// StringSliceToTFSet converts a slice of strings to a Terraform set type with error handling.
+// It returns a set value and any diagnostics encountered during conversion.
+// The v parameter must be a slice of strings to be converted to a Terraform set.
+// This function differs from StringSetToTF by providing diagnostic information for conversion errors.
 func StringSliceToTFSet(v []string) (basetypes.SetValue, diag.Diagnostics) {
 	if v == nil {
 		return types.SetNull(types.StringType), nil
@@ -407,6 +546,11 @@ func StringSliceToTFSet(v []string) (basetypes.SetValue, diag.Diagnostics) {
 	}
 }
 
+// TFListToStringSlice converts a Terraform list to a slice of string pointers.
+// It returns a slice of string pointers extracted from the Terraform list.
+// The ctx parameter provides the context for the conversion operation.
+// The v parameter must be a Terraform list containing string values.
+// This function returns nil if the list is null, unknown, or if conversion errors occur.
 func TFListToStringSlice(ctx context.Context, v types.List) []*string {
 	var sliceOut []*string
 
@@ -422,6 +566,11 @@ func TFListToStringSlice(ctx context.Context, v types.List) []*string {
 	return sliceOut
 }
 
+// TFSetToStringSlice converts a Terraform set to a slice of string pointers.
+// It returns a slice of string pointers extracted from the Terraform set.
+// The ctx parameter provides the context for the conversion operation.
+// The v parameter must be a Terraform set containing string values.
+// This function returns nil if the set is null, unknown, or if conversion errors occur.
 func TFSetToStringSlice(ctx context.Context, v types.Set) []*string {
 	var sliceOut []*string
 
@@ -437,6 +586,11 @@ func TFSetToStringSlice(ctx context.Context, v types.Set) []*string {
 	return sliceOut
 }
 
+// TFTypeStringSliceToStringSlice converts a slice of Terraform string types to a slice of strings.
+// It returns a slice of string values and any diagnostics encountered during conversion.
+// The v parameter must be a slice of Terraform string types from the state.
+// The path parameter specifies the attribute path for error reporting in case of conversion failures.
+// This function validates that all values are neither unknown nor null before conversion.
 func TFTypeStringSliceToStringSlice(v []types.String, path path.Path) ([]string, diag.Diagnostics) {
 	var sliceOut []string
 	var diags diag.Diagnostics
@@ -464,13 +618,22 @@ func TFTypeStringSliceToStringSlice(v []types.String, path path.Path) ([]string,
 	return sliceOut, diags
 }
 
+// ImportComponent represents a single component of a resource import ID format.
+// It defines the label, validation regex, and whether this component represents the primary resource ID.
 type ImportComponent struct {
-	Label     string
-	Regexp    *regexp.Regexp
+	// Label is the human-readable name for this component, used in error messages and documentation
+	Label string
+	// Regexp is the regular expression that validates the format of this component
+	Regexp *regexp.Regexp
+	// PrimaryID indicates whether this component represents the primary resource identifier
 	PrimaryID bool
 }
 
-// Parse Import ID format
+// ParseImportID parses a resource import ID string according to the specified component format.
+// It returns a map of component labels to their extracted values, or an error if parsing fails.
+// The id parameter must be the import ID string provided by the user during resource import.
+// The components parameter defines the expected format and validation rules for each ID component.
+// Components are expected to be separated by forward slashes in the import ID string.
 func ParseImportID(id string, components ...ImportComponent) (map[string]string, error) {
 
 	keys := make([]string, len(components))

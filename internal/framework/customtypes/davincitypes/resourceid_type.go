@@ -1,5 +1,8 @@
 // Copyright © 2025 Ping Identity Corporation
 
+// Package davincitypes provides custom Terraform types specific to DaVinci resources.
+// This package contains type definitions, validation logic, and value handling for
+// DaVinci-specific data types used throughout the provider.
 package davincitypes
 
 import (
@@ -19,6 +22,9 @@ import (
 var _ basetypes.StringTypable = ResourceIDType{}
 var _ xattr.TypeWithValidate = ResourceIDType{}
 
+// ResourceIDType represents a custom Terraform type for DaVinci resource identifiers.
+// It extends the base string type with DaVinci-specific validation to ensure
+// resource IDs match the expected format and structure required by the DaVinci API.
 type ResourceIDType struct {
 	basetypes.StringType
 }
