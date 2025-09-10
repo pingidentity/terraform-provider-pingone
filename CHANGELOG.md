@@ -1,3 +1,5 @@
+## 1.12.0 (10 September 2025)
+
 ## 1.11.0 (13 August 2025)
 
 ENHANCEMENTS:
