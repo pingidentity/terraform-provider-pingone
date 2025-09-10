@@ -2,7 +2,7 @@ name: Multi-region Acceptance Tests (Beta)
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 2 * * *'
+    - cron: '0 3 * * *'
 jobs:
   # ensure the code builds...
   build:
@@ -40,12 +40,12 @@ jobs:
     env:
       TESTACC_BETA: true
       PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_BETA_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
-      PINGONE_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_BETA_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
-      PINGONE_ENVIRONMENT_ID: ${{ vars[format('PINGONE_PROD_{0}_BETA_ENVIRONMENT_ID', matrix.region)] }}
+      PINGONE_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
+      PINGONE_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_FF_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
+      PINGONE_ENVIRONMENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_ENVIRONMENT_ID', matrix.region)] }}
       PINGONE_REGION_CODE: ${{ matrix.region }}
-      PINGONE_LICENSE_ID: ${{ vars[format('PINGONE_PROD_{0}_BETA_LICENSE_ID', matrix.region)] }}
-      PINGONE_ORGANIZATION_ID: ${{ vars[format('PINGONE_PROD_{0}_BETA_ORG_ID', matrix.region)] }}
+      PINGONE_LICENSE_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_LICENSE_ID', matrix.region)] }}
+      PINGONE_ORGANIZATION_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_ORG_ID', matrix.region)] }}
 
     timeout-minutes: 10
 
@@ -66,7 +66,7 @@ jobs:
 
       - name: Sweep to prepare
         run: |
-          make sweep
+          make sweep BETA=true
 
   # run acceptance tests in a matrix with Terraform core versions and regions
   test:
@@ -86,12 +86,12 @@ jobs:
     env:
       TESTACC_BETA: true
       PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_BETA_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
-      PINGONE_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_BETA_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
-      PINGONE_ENVIRONMENT_ID: ${{ vars[format('PINGONE_PROD_{0}_BETA_ENVIRONMENT_ID', matrix.region)] }}
+      PINGONE_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
+      PINGONE_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_FF_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
+      PINGONE_ENVIRONMENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_ENVIRONMENT_ID', matrix.region)] }}
       PINGONE_REGION_CODE: ${{ matrix.region }}
-      PINGONE_LICENSE_ID: ${{ vars[format('PINGONE_PROD_{0}_BETA_LICENSE_ID', matrix.region)] }}
-      PINGONE_ORGANIZATION_ID: ${{ vars[format('PINGONE_PROD_{0}_BETA_ORG_ID', matrix.region)] }}
+      PINGONE_LICENSE_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_LICENSE_ID', matrix.region)] }}
+      PINGONE_ORGANIZATION_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_ORG_ID', matrix.region)] }}
 
     timeout-minutes: 45
 
@@ -133,12 +133,12 @@ jobs:
     env:
       TESTACC_BETA: true
       PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_BETA_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
-      PINGONE_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_BETA_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
-      PINGONE_ENVIRONMENT_ID: ${{ vars[format('PINGONE_PROD_{0}_BETA_ENVIRONMENT_ID', matrix.region)] }}
+      PINGONE_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
+      PINGONE_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_FF_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
+      PINGONE_ENVIRONMENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_ENVIRONMENT_ID', matrix.region)] }}
       PINGONE_REGION_CODE: ${{ matrix.region }}
-      PINGONE_LICENSE_ID: ${{ vars[format('PINGONE_PROD_{0}_BETA_LICENSE_ID', matrix.region)] }}
-      PINGONE_ORGANIZATION_ID: ${{ vars[format('PINGONE_PROD_{0}_BETA_ORG_ID', matrix.region)] }}
+      PINGONE_LICENSE_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_LICENSE_ID', matrix.region)] }}
+      PINGONE_ORGANIZATION_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_ORG_ID', matrix.region)] }}
 
     timeout-minutes: 10
 
@@ -159,7 +159,7 @@ jobs:
 
       - name: Sweep to cleanup
         run: |
-          make sweep
+          make sweep BETA=true
 
   onfailure:
     if: ${{ failure() && github.event_name == 'schedule' }}

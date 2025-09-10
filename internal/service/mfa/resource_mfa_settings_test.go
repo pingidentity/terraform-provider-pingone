@@ -37,7 +37,6 @@ func TestAccMFASettings_RemovalDrift(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckTestAccFlaky(t)
 
 			acctest.PreCheckNoBeta(t)
@@ -89,7 +88,6 @@ func TestAccMFASettings_Full(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckTestAccFlaky(t)
 			acctest.PreCheckNoBeta(t)
 		},
@@ -144,7 +142,6 @@ func TestAccMFASettings_Minimal(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckTestAccFlaky(t)
 			acctest.PreCheckNoBeta(t)
 		},
@@ -194,7 +191,6 @@ func TestAccMFASettings_Change(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckTestAccFlaky(t)
 			acctest.PreCheckNoBeta(t)
 		},
@@ -255,7 +251,6 @@ func TestAccMFASettings_BadParameters(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckTestAccFlaky(t)
 			acctest.PreCheckNoBeta(t)
 		},

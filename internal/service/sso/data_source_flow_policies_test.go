@@ -4,6 +4,7 @@ package sso_test
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -18,13 +19,15 @@ func TestAccFlowPoliciesDataSource_BySCIMFilter(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	dataSourceFullName := fmt.Sprintf("data.pingone_flow_policies.%s", resourceName)
 
-	name := resourceName
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			t.Skip("Skipping until DaVinci capability merged")
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
 			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -32,7 +35,7 @@ func TestAccFlowPoliciesDataSource_BySCIMFilter(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccFlowPoliciesDataSourceConfig_BySCIMFilter(resourceName, `(trigger.type eq \"AUTHENTICATION\")`, name),
+				Config: testAccFlowPoliciesDataSourceConfig_BySCIMFilter(environmentName, licenseID, resourceName, `(trigger.type eq \"AUTHENTICATION\")`),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -51,13 +54,15 @@ func TestAccFlowPoliciesDataSource_ByDataFilters(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	dataSourceFullName := fmt.Sprintf("data.pingone_flow_policies.%s", resourceName)
 
-	name := resourceName
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			t.Skip("Skipping until DaVinci capability merged")
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
 			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -65,7 +70,7 @@ func TestAccFlowPoliciesDataSource_ByDataFilters(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccFlowPoliciesDataSourceConfig_ByDataFilters(resourceName, name),
+				Config: testAccFlowPoliciesDataSourceConfig_ByDataFilters(environmentName, licenseID, resourceName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -88,7 +93,6 @@ func TestAccFlowPoliciesDataSource_NotFound(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
 			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -107,24 +111,29 @@ func TestAccFlowPoliciesDataSource_NotFound(t *testing.T) {
 	})
 }
 
-func testAccFlowPoliciesDataSourceConfig_BySCIMFilter(resourceName, filter, name string) string {
+func testAccFlowPoliciesDataSourceConfig_BySCIMFilter(environmentName, licenseID, resourceName, filter string) string {
 	return fmt.Sprintf(`
-	%[1]s
+%[1]s
 
 data "pingone_flow_policies" "%[2]s" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = pingone_environment.%[2]s.id
 
-  scim_filter = "%[4]s"
+  scim_filter = "%[3]s"
+
+  depends_on = [
+    davinci_application_flow_policy.%[2]s-1,
+    davinci_application_flow_policy.%[2]s-2,
+  ]
 }
-`, acctest.DaVinciFlowPolicySandboxEnvironment(), resourceName, name, filter)
+`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), resourceName, filter)
 }
 
-func testAccFlowPoliciesDataSourceConfig_ByDataFilters(resourceName, name string) string {
+func testAccFlowPoliciesDataSourceConfig_ByDataFilters(environmentName, licenseID, resourceName string) string {
 	return fmt.Sprintf(`
-	%[1]s
+%[1]s
 
 data "pingone_flow_policies" "%[2]s" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = pingone_environment.%[2]s.id
 
   data_filters = [
     {
@@ -132,7 +141,12 @@ data "pingone_flow_policies" "%[2]s" {
       values = ["AUTHENTICATION"]
     }
   ]
-}`, acctest.DaVinciFlowPolicySandboxEnvironment(), resourceName, name)
+
+  depends_on = [
+    davinci_application_flow_policy.%[2]s-1,
+    davinci_application_flow_policy.%[2]s-2,
+  ]
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), resourceName)
 }
 
 func testAccFlowPoliciesDataSourceConfig_NotFound(resourceName, filter string) string {
@@ -140,9 +154,9 @@ func testAccFlowPoliciesDataSourceConfig_NotFound(resourceName, filter string) s
 	%[1]s
 
 data "pingone_flow_policies" "%[2]s" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = data.pingone_environment.general_test.id
 
   scim_filter = "%[3]s"
 }
-`, acctest.DaVinciFlowPolicySandboxEnvironment(), resourceName, filter)
+`, acctest.GenericSandboxEnvironment(), resourceName, filter)
 }

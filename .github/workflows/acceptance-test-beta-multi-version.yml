@@ -2,7 +2,7 @@ name: Multi-version Acceptance Tests (Beta)
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 5 14,28 * *'
+    - cron: '0 6 14,28 * *'
 jobs:
   # ensure the code builds...
   build:
@@ -38,12 +38,12 @@ jobs:
     env:
       TESTACC_BETA: true
       PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_CLIENT_ID: ${{ vars.PINGONE_PROD_EU_BETA_CLIENT_ID_CLIENT_SECRET_BASIC }}
-      PINGONE_CLIENT_SECRET: ${{ secrets.PINGONE_PROD_EU_BETA_CLIENT_SECRET_CLIENT_SECRET_BASIC }}
-      PINGONE_ENVIRONMENT_ID: ${{ vars.PINGONE_PROD_EU_BETA_ENVIRONMENT_ID }}
+      PINGONE_CLIENT_ID: ${{ vars.PINGONE_PROD_EU_FF_CLIENT_ID_CLIENT_SECRET_BASIC }}
+      PINGONE_CLIENT_SECRET: ${{ secrets.PINGONE_PROD_EU_FF_CLIENT_SECRET_CLIENT_SECRET_BASIC }}
+      PINGONE_ENVIRONMENT_ID: ${{ vars.PINGONE_PROD_EU_FF_ENVIRONMENT_ID }}
       PINGONE_REGION_CODE: "EU"
-      PINGONE_LICENSE_ID: ${{ vars.PINGONE_PROD_EU_BETA_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ vars.PINGONE_PROD_EU_BETA_ORG_ID }}
+      PINGONE_LICENSE_ID: ${{ vars.PINGONE_PROD_EU_FF_LICENSE_ID }}
+      PINGONE_ORGANIZATION_ID: ${{ vars.PINGONE_PROD_EU_FF_ORG_ID }}
 
     timeout-minutes: 45
     strategy:
